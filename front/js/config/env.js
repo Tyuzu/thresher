@@ -9,13 +9,13 @@ const ENV = {
     MAIN_URL: "https://localhost:4000",
     BANNERDROP_URL: "https://localhost:4000",
   },
-  staging: {
-    MAIN_URL: "https://gallium.onrender.com",
-    BANNERDROP_URL: "https://bannerdrop.onrender.com",
-  },
+  //staging: {
+  //  MAIN_URL: "https://thresher-o6i4.onrender.com",
+  //  BANNERDROP_URL: "https://thresher-o6i4.onrender.com",
+  //},
   production: {
-    MAIN_URL: "https://gallium.onrender.com",
-    BANNERDROP_URL: "https://bannerdrop.onrender.com",
+    MAIN_URL: "https://thresher-o6i4.onrender.com",
+    BANNERDROP_URL: "https://thresher-o6i4.onrender.com",
   },
 };
 
