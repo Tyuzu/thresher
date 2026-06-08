@@ -91,7 +91,7 @@ function createProfileActions(profile, isLoggedIn) {
                 click: () => FollowUser(followButton, profile.userid)
             },
             "btn follow-button",
-            { backgroundColor: "lightgreen" }
+            { backgroundColor: "green" }
         );
 
         followButton.dataset.action = "toggle-follow";
@@ -113,11 +113,11 @@ function createProfileActions(profile, isLoggedIn) {
             "report-btn",
             {
                 click: () => {
- reportPost(profile.userid, "user"); 
-}
+                    reportPost(profile.userid, "user");
+                }
             },
             "report-btn",
-            { backgroundColor: "#ee9090" }
+            {}
         );
         profileActions.appendChild(reportButton);
     }
@@ -128,35 +128,35 @@ function createProfileActions(profile, isLoggedIn) {
 function createProfileInfo(profile) {
     const profileInfo = document.createElement("div");
     profileInfo.className = "profile-info";
-  
+
     const infoItems = [
-      { label: "Last Login", value: formatDate(profile.last_login) || "Never logged in" },
-      { label: "Verification Status", value: profile.is_verified ? "Verified" : "Not Verified" },
+        { label: "Last Login", value: formatDate(profile.last_login) || "Never logged in" },
+        { label: "Verification Status", value: profile.is_verified ? "Verified" : "Not Verified" },
     ];
-  
+
     infoItems.forEach(({ label, value }) => {
-      const infoItem = document.createElement("div");
-      infoItem.className = "info-item";
-  
-      const strongLabel = document.createElement("strong");
-      strongLabel.textContent = label + ":";
-      infoItem.appendChild(strongLabel);
-  
-      // If value is a DOM element, append it; otherwise, append text
-      if (value instanceof Node) {
-        infoItem.appendChild(document.createTextNode(" "));
-        infoItem.appendChild(value);
-      } else {
-        infoItem.appendChild(document.createTextNode(" " + value));
-      }
-  
-      profileInfo.appendChild(infoItem);
+        const infoItem = document.createElement("div");
+        infoItem.className = "info-item";
+
+        const strongLabel = document.createElement("strong");
+        strongLabel.textContent = label + ":";
+        infoItem.appendChild(strongLabel);
+
+        // If value is a DOM element, append it; otherwise, append text
+        if (value instanceof Node) {
+            infoItem.appendChild(document.createTextNode(" "));
+            infoItem.appendChild(value);
+        } else {
+            infoItem.appendChild(document.createTextNode(" " + value));
+        }
+
+        profileInfo.appendChild(infoItem);
     });
-  
+
     return profileInfo;
-  }
-  
-  
+}
+
+
 function createStatistics(profile) {
     const statistics = document.createElement("div");
     statistics.className = "statistics";

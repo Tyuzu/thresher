@@ -8,8 +8,8 @@ import { makeDraggableScroll } from "../../components/dragnav.js";
 export async function displayChats(contentContainer, isLoggedIn) {
   // Clear previous content
   while (contentContainer.firstChild) {
-contentContainer.removeChild(contentContainer.firstChild);
-}
+    contentContainer.removeChild(contentContainer.firstChild);
+  }
 
   const wrapper = createElement("div", { class: "chat-wrapper" });
 
@@ -74,15 +74,15 @@ export async function userNewChatInit(targetUserId) {
   try {
     const currentUserId = getState("user");
     if (!currentUserId || !targetUserId) {
-throw new Error("Missing user IDs");
-}
+      throw new Error("Missing user IDs");
+    }
 
     const payload = { userA: currentUserId, userB: targetUserId };
-    const data = await chatFetch("/api/v1/newchats/init", "POST", JSON.stringify(payload));
+    const data = await chatFetch("/api/v1/newchats/init", "POST", payload);
 
     if (!data?.chatid) {
-throw new Error("Chat ID missing in response");
-}
+      throw new Error("Chat ID missing in response");
+    }
 
     navigate(`/newchat/${data.chatid}`);
   } catch (err) {

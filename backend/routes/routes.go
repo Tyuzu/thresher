@@ -943,22 +943,22 @@ func AddNewChatRoutes(router *httprouter.Router, hub *newchat.Hub, app *infra.De
 	router.POST("/api/v1/newchats/init", authmidware(newchat.InitChat(app)))
 
 	// This should likely be protected; token could be in query or header
-	router.GET("/ws/newchat/:room", authmidware(newchat.WebSocketHandler(hub, app)))
+	router.GET("/ws/newchat/chat/:room", authmidware(newchat.WebSocketHandler(hub, app)))
 
-	router.POST("/newchat/edit", authmidware(newchat.EditMessageHandler(hub, app)))
-	router.POST("/newchat/delete", authmidware(newchat.DeleteMessageHandler(hub, app)))
+	router.POST("/api/v1/newchat/edit", authmidware(newchat.EditMessageHandler(hub, app)))
+	router.POST("/api/v1/newchat/delete", authmidware(newchat.DeleteMessageHandler(hub, app)))
 
 	// router.GET("/newchat/:room/poll", authmidware(newchat.PollMessagesHandler))
 
-	router.POST("/newchat/upload", authmidware(newchat.UploadHandler(hub, app)))
+	router.POST("/api/v1/newchat/upload", authmidware(newchat.UploadHandler(hub, app)))
 
-	router.GET("/api/v1/newchat/:room", authmidware(newchat.GetChat(app)))
-	router.POST("/api/v1/newchat/:room/message", authmidware(newchat.CreateMessage(app)))
-	router.DELETE("/api/v1/newchat/:room/message/:msgid", authmidware(newchat.DeletesMessage(app)))
+	router.GET("/api/v1/newchat/chat/:room", authmidware(newchat.GetChat(app)))
+	router.POST("/api/v1/newchat/chat/:room/message", authmidware(newchat.CreateMessage(app)))
+	router.DELETE("/api/v1/newchat/chat/:room/message/:msgid", authmidware(newchat.DeletesMessage(app)))
 
 	/**/
 
-	router.PUT("/api/v1/newchat/:room/message/:msgid", authmidware(newchat.UpdateMessage(app)))
+	router.PUT("/api/v1/newchat/chat:room/message/:msgid", authmidware(newchat.UpdateMessage(app)))
 
 }
 

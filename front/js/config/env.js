@@ -63,7 +63,7 @@ export const apiConfig = {
   MERE_URL: `${CONFIG.MAIN_URL}/api/v1`,
   MERE_WS: CONFIG.MAIN_URL,
   CHAT_URL: CONFIG.MAIN_URL,
-  CHAT_WS: `${CONFIG.MAIN_URL.replace("http", "ws").replace("https", "wss")}/ws/newchat`,
+  CHAT_WS: `${CONFIG.MAIN_URL.replace("http", "ws").replace("https", "wss")}/ws/newchat/chat`,
   MUSIC_URL: `${CONFIG.MAIN_URL}/api/v1`,
   LIVE_URL: `${CONFIG.MAIN_URL}/api/v1`,
   EMBED_URL: `${CONFIG.MAIN_URL}/embed`,

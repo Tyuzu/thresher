@@ -1,9 +1,11 @@
 
 import { displayNewChat } from "../../services/newchat/displayNewchat";
+import { getState } from "../../state/state";
 
 async function NewChatPage(isLoggedIn, chatid, contentContainer) {
     contentContainer.innerHTML = '';
-    displayNewChat(contentContainer, chatid, isLoggedIn);
+    let user = getState("user");
+    displayNewChat(contentContainer, chatid, isLoggedIn, user);
 }
 
 export { NewChatPage };

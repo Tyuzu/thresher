@@ -8,12 +8,12 @@ export async function meChat(otherUserId, entityType, entityId) {
     console.log(otherUserId, entityType, entityId);
     const userId = getState("user");
     if (!userId || !otherUserId) {
-return;
-}
+        return;
+    }
     let chat;
     if (entityType == "user") {
         userNewChatInit(otherUserId);
-        navigate(`/merechats/${chat.chatid}`);
+        // navigate(`/merechats/${chat.chatid}`);
     } else {
         const participants = [userId, otherUserId];
 

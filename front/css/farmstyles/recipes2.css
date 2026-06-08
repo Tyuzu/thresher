@@ -118,8 +118,14 @@
 }
 
 .recipe-card p {
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--space-xs);
+    font-size: var(--font-size-sm);
+    width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: var(--space-xs);
+    overflow-wrap: break-word;
+    break-after: column;
 }
 
 .recipe-card .tags {

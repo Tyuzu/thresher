@@ -8,6 +8,7 @@ import Imagex from "../../components/base/Imagex.js";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
 import { uploadFile } from "../media/api/mediaApi.js";
 import { uid } from "../media/ui/mediaUploadForm.js";
+
 // --- Add Merchandise ---
 async function addMerchandise(
     entityType,
