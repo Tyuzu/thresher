@@ -14,7 +14,7 @@ import (
 
 func UploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// 1) Validate JWT
-	_ = utils.GetUserIDFromRequest(r)
+	userid := utils.GetUserIDFromRequest(r)
 
 	// 2) Parse multipart form
 	if err := r.ParseMultipartForm(32 << 20); err != nil { // allow up to 32MB total
@@ -42,7 +42,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 			http.Error(w, "file error", http.StatusBadRequest)
 			return
 		}
-		savedName, ext, err := filemgr.SaveFileForEntity(file, hdr, filemgr.EntityChat, filemgr.PicPhoto)
+		savedName, ext, err := filemgr.SaveFileForEntity(file, hdr, filemgr.EntityChat, filemgr.PicPhoto, userid)
 		file.Close()
 		if err != nil {
 			log.Println("save failed:", err)

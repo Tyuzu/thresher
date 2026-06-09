@@ -11,7 +11,7 @@ import (
 
 // -------------------- Multi-image Upload --------------------
 
-func saveUploadedFiles(r *http.Request, formKey, fileType string, entitytype filemgr.EntityType) ([]string, error) {
+func saveUploadedFiles(r *http.Request, formKey, fileType string, entitytype filemgr.EntityType, userid string) ([]string, error) {
 	files := r.MultipartForm.File[formKey]
 	if len(files) == 0 {
 		return nil, fmt.Errorf("no %s files uploaded", fileType)
@@ -22,7 +22,7 @@ func saveUploadedFiles(r *http.Request, formKey, fileType string, entitytype fil
 	picType := filemgr.PictureType(fileType)
 
 	for _, file := range files {
-		origName, err := processSingleImageUpload(file, entity, picType)
+		origName, err := processSingleImageUpload(file, entity, picType, userid)
 		if err != nil {
 			return nil, fmt.Errorf("failed to process %s: %w", fileType, err)
 		}
@@ -32,14 +32,14 @@ func saveUploadedFiles(r *http.Request, formKey, fileType string, entitytype fil
 	return ids, nil
 }
 
-func processSingleImageUpload(file *multipart.FileHeader, entity filemgr.EntityType, picType filemgr.PictureType) (string, error) {
+func processSingleImageUpload(file *multipart.FileHeader, entity filemgr.EntityType, picType filemgr.PictureType, userid string) (string, error) {
 	src, err := file.Open()
 	if err != nil {
 		return "", fmt.Errorf("cannot open image: %w", err)
 	}
 	defer src.Close()
 
-	origName, ext, err := filemgr.SaveFileForEntity(src, file, entity, picType)
+	origName, ext, err := filemgr.SaveFileForEntity(src, file, entity, picType, userid)
 	if err != nil {
 		return "", fmt.Errorf("saving image failed: %w", err)
 	}

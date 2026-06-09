@@ -30,9 +30,9 @@ const (
 // Public Save Functions
 // -------------------------
 
-func SaveFileForEntity(file multipart.File, header *multipart.FileHeader, entity EntityType, picType PictureType) (string, string, error) {
+func SaveFileForEntity(file multipart.File, header *multipart.FileHeader, entity EntityType, picType PictureType, userid string) (string, string, error) {
 	log.Println("->[SaveFileForEntity] : no error yet")
-	filename, ext, err := saveFileAndProcess(file, header, entity, picType, defaultThumbWidth, "")
+	filename, ext, err := saveFileAndProcess(file, header, entity, picType, defaultThumbWidth, userid)
 	log.Println("[SaveFileForEntity]->")
 	return filename, ext, err
 }
@@ -146,11 +146,11 @@ func saveFileAndProcess(file multipart.File, header *multipart.FileHeader, entit
 	path := ResolvePath(entity, picType)
 
 	log.Println("->[saveFileAndProcess] : no error yet")
-	filename, ext, fullPath, err := writeValidatedFile(file, header, path, picType, maxUploadSize)
+	filename, ext, fullPath, err := writeValidatedFile(file, header, path, picType, entity, maxUploadSize, userid)
 	if err != nil {
-		log.Println("[saveFileAndProcess]->")
 		return "", "", err
 	}
+	log.Println("[saveFileAndProcess]->->", filename)
 
 	log.Println("->[saveFileAndProcess 1] : no error yet")
 
@@ -457,7 +457,7 @@ func normalizeImageFormat(fullPath, ext string, img image.Image) (string, error)
 // File Validation & Writing
 // -------------------------
 
-func writeValidatedFile(reader io.Reader, header *multipart.FileHeader, destDir string, picType PictureType, maxSize int64) (string, string, string, error) {
+func writeValidatedFile(reader io.Reader, header *multipart.FileHeader, destDir string, picType PictureType, entitytype EntityType, maxSize int64, userid string) (string, string, string, error) {
 	log.Println("->[writeValidatedFile] : no error yet")
 	ext := strings.ToLower(filepath.Ext(header.Filename))
 	if !isExtensionAllowed(ext, picType) {
@@ -492,7 +492,8 @@ func writeValidatedFile(reader io.Reader, header *multipart.FileHeader, destDir 
 	}
 
 	// --- updated part ---
-	filenameOnly, safeExt := getSafeFilename(header.Filename, ext, nil)
+	filenameOnly, safeExt := getSafeFilename(header.Filename, ext, userid, entitytype, picType, nil)
+
 	fullPath := filepath.Join(destDir, filenameOnly+safeExt)
 	// --- end update ---
 

@@ -94,6 +94,7 @@ func (s *FileService) ProcessRemoteFile(
 	key string,
 	entityType string,
 	entityId string,
+	userid string,
 ) ([]Attachment, error) {
 
 	_ = entityId // reserved for future use
@@ -232,6 +233,7 @@ func (s *FileService) ProcessRemoteFile(
 		header,
 		entity,
 		picType,
+		userid,
 	)
 	if err != nil {
 		return nil, err

@@ -18,20 +18,19 @@ func AddStaticRoutes(router *httprouter.Router) {
 	router.GET("/static/proxy/*url", mediaproxy.ProxyHandler)
 }
 
-func AddFiledropRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	// Apply rate limiter middleware to file upload endpoint
-	uploadHandler := func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		// Apply rate limiting
-		if !rateLimiter.Allow(r) {
-			http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-			return
-		}
+func AddFiledropRoutes(
+	router *httprouter.Router,
+	app *infra.Deps,
+	rateLimiter *middleware.RateLimiter,
+) {
+	authmidware := middleware.Authenticate(app)
+	router.POST(
+		"/api/v1/filedrop",
+		rateLimiter.Limit(authmidware(droping.FiledropHandler(app))),
+	)
 
-		// Call handler with proper dependency injection
-		droping.FiledropHandler(app, w, r, ps)
-	}
-
-	// Register routes
-	router.POST("/api/v1/filedrop", uploadHandler)
-	router.OPTIONS("/api/v1/filedrop", droping.OptionsHandler)
+	router.OPTIONS(
+		"/api/v1/filedrop",
+		droping.OptionsHandler,
+	)
 }

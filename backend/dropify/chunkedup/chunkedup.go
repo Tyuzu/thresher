@@ -232,7 +232,7 @@ func ChunkedUploads(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 			Size:     int64(meta.TotalChunks) * int64(chunkBuffer), // approximate size
 		}
 
-		savedName, ext, err := filemgr.SaveFileForEntity(mergedFile, fakeHeader, meta.EntityType, meta.PictureType)
+		savedName, ext, err := filemgr.SaveFileForEntity(mergedFile, fakeHeader, meta.EntityType, meta.PictureType, "")
 		if err != nil {
 			lock.Unlock()
 			respondWithError(w, http.StatusInternalServerError, "save failed")

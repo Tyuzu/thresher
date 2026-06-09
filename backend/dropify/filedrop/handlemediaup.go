@@ -7,19 +7,19 @@ import (
 	"net/http"
 )
 
-func HandleMediaUpload(r *http.Request, postType string, entitytype filemgr.EntityType) (paths, names []string, resolutions []int, err error) {
+func HandleMediaUpload(r *http.Request, postType string, entitytype filemgr.EntityType, userid string) (paths, names []string, resolutions []int, err error) {
 	switch postType {
 	case "image":
-		names, err = saveUploadedFiles(r, "images", "photo", entitytype)
+		names, err = saveUploadedFiles(r, "images", "photo", entitytype, userid)
 	case "video":
 		var result *MediaResult
-		result, err = saveUploadedVideoFile(r, "video", entitytype)
+		result, err = saveUploadedVideoFile(r, "video", entitytype, userid)
 		if err == nil {
 			resolutions, paths, names = result.Resolutions, result.Paths, result.IDs
 		}
 	case "audio":
 		var result *MediaResult
-		result, err = saveUploadedAudioFile(r, "audio", entitytype)
+		result, err = saveUploadedAudioFile(r, "audio", entitytype, userid)
 		if err == nil {
 			resolutions, paths, names = result.Resolutions, result.Paths, result.IDs
 		}
@@ -27,10 +27,10 @@ func HandleMediaUpload(r *http.Request, postType string, entitytype filemgr.Enti
 	return
 }
 
-func saveUploadedVideoFile(r *http.Request, formKey string, entitytype filemgr.EntityType) (*MediaResult, error) {
-	return ProcessMediaUpload(r, formKey, Video, entitytype)
+func saveUploadedVideoFile(r *http.Request, formKey string, entitytype filemgr.EntityType, userid string) (*MediaResult, error) {
+	return ProcessMediaUpload(r, formKey, Video, entitytype, userid)
 }
 
-func saveUploadedAudioFile(r *http.Request, formKey string, entitytype filemgr.EntityType) (*MediaResult, error) {
-	return ProcessMediaUpload(r, formKey, Audio, entitytype)
+func saveUploadedAudioFile(r *http.Request, formKey string, entitytype filemgr.EntityType, userid string) (*MediaResult, error) {
+	return ProcessMediaUpload(r, formKey, Audio, entitytype, userid)
 }

@@ -30,6 +30,7 @@ func (fs *FileService) ProcessUploadedFiles(
 	r *http.Request,
 	entityType string,
 	entityId string,
+	userid string,
 ) ([]Attachment, error) {
 
 	_ = entityId // reserved for future use
@@ -53,6 +54,7 @@ func (fs *FileService) ProcessUploadedFiles(
 				fileHeader,
 				keyLower,
 				entity,
+				userid,
 			)
 
 			if err != nil {
@@ -76,15 +78,16 @@ func (fs *FileService) processSingleFile(
 	fileHeader *multipart.FileHeader,
 	fieldKey string,
 	entity filemgr.EntityType,
+	userid string,
 ) ([]Attachment, error) {
 
 	// Feed media special handling
 	if fieldKey == "feed" {
-		return fs.processFeedFile(r, fileHeader, fieldKey)
+		return fs.processFeedFile(r, fileHeader, fieldKey, userid)
 	}
 
 	// Regular uploads
-	return fs.processRegularFile(fileHeader, fieldKey, entity)
+	return fs.processRegularFile(fileHeader, fieldKey, entity, userid)
 }
 
 // processFeedFile handles feed media uploads
@@ -92,6 +95,7 @@ func (fs *FileService) processFeedFile(
 	r *http.Request,
 	fileHeader *multipart.FileHeader,
 	fieldKey string,
+	userid string,
 ) ([]Attachment, error) {
 
 	postType := strings.ToLower(strings.TrimSpace(r.FormValue("postType")))
@@ -109,6 +113,7 @@ func (fs *FileService) processFeedFile(
 			fileHeader,
 			filemgr.EntityFeed,
 			picType,
+			userid,
 		)
 
 		if err != nil {
@@ -165,6 +170,7 @@ func (fs *FileService) processFeedFile(
 		fileHeader,
 		fieldKey,
 		filemgr.EntityFeed,
+		userid,
 	)
 }
 
@@ -173,6 +179,7 @@ func (fs *FileService) processRegularFile(
 	fileHeader *multipart.FileHeader,
 	fieldKey string,
 	entity filemgr.EntityType,
+	userid string,
 ) ([]Attachment, error) {
 
 	file, err := fileHeader.Open()
@@ -203,6 +210,7 @@ func (fs *FileService) processRegularFile(
 		fileHeader,
 		entity,
 		picType,
+		userid,
 	)
 
 	if err != nil {

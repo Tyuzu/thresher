@@ -45,7 +45,7 @@ var mediaProcessors = map[MediaType]mediaProcessor{
 
 // -------------------- Media Upload --------------------
 
-func ProcessMediaUpload(r *http.Request, formKey string, mediaType MediaType, entity filemgr.EntityType) (*MediaResult, error) {
+func ProcessMediaUpload(r *http.Request, formKey string, mediaType MediaType, entity filemgr.EntityType, userid string) (*MediaResult, error) {
 	file, err := getUploadedFile(r, formKey)
 	if err != nil || file == nil {
 		return nil, fmt.Errorf("no file uploaded: %w", err)
@@ -56,7 +56,7 @@ func ProcessMediaUpload(r *http.Request, formKey string, mediaType MediaType, en
 		return nil, fmt.Errorf("unsupported media type: %s", mediaType)
 	}
 
-	savedPath, uniqueID, _, err := SaveUploadedFile(file, entity, picType)
+	savedPath, uniqueID, _, err := SaveUploadedFile(file, entity, picType, userid)
 	if err != nil {
 		return nil, err
 	}
@@ -92,14 +92,14 @@ func getUploadedFile(r *http.Request, formKey string) (*multipart.FileHeader, er
 	return files[0], nil
 }
 
-func SaveUploadedFile(file *multipart.FileHeader, entity filemgr.EntityType, picType filemgr.PictureType) (string, string, string, error) {
+func SaveUploadedFile(file *multipart.FileHeader, entity filemgr.EntityType, picType filemgr.PictureType, userid string) (string, string, string, error) {
 	src, err := file.Open()
 	if err != nil {
 		return "", "", "", fmt.Errorf("cannot open uploaded file: %w", err)
 	}
 	defer src.Close()
 
-	savedName, ext, err := filemgr.SaveFileForEntity(src, file, entity, picType)
+	savedName, ext, err := filemgr.SaveFileForEntity(src, file, entity, picType, userid)
 	if err != nil {
 		return "", "", "", fmt.Errorf("file save failed: %w", err)
 	}

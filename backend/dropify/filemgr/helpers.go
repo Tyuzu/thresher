@@ -216,6 +216,9 @@ func ensureSafeFilename(
 func getSafeFilename(
 	original string,
 	ext string,
+	userid string,
+	entity EntityType,
+	picType PictureType,
 	fn func(string) string,
 ) (string, string) {
 
@@ -225,6 +228,10 @@ func getSafeFilename(
 		name = strings.TrimSpace(
 			fn(original),
 		)
+	}
+
+	if entity == EntityUser && picType == PicPhoto {
+		return userid, ext
 	}
 
 	if name == "" {

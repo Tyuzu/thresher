@@ -162,7 +162,7 @@ function createStatistics(profile) {
     statistics.className = "statistics";
 
     const stats = [
-        { label: "Posts", value: profile.profile_views || 0 },
+        { label: "Rupees", value: profile.wallet_balance || 0 },
         { label: "Followers", value: profile.followerscount || 0 },
         { label: "Following", value: profile.followscount || 0 },
     ];
