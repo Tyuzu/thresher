@@ -1,10 +1,9 @@
 import { apiFetch } from "../../../api/api.js";
-import { FILEDROP_URL } from "../../../state/state.js";
+import { FILEDROP_URL, state } from "../../../state/state.js";
 import { UploadStore } from "../store/uploadStore.js";
 
 /* -------------------------
    API - Service endpoint factory
-   Default service is "media", can be overridden for "fanmade", etc.
 ------------------------- */
 
 export function createMediaApi(service = "media") {
@@ -31,8 +30,8 @@ export function createMediaApi(service = "media") {
   };
 }
 
-// Default media API
 const defaultApi = createMediaApi("media");
+
 export const fetchMedia = defaultApi.fetchMedia.bind(defaultApi);
 export const deleteMedia = defaultApi.deleteMedia.bind(defaultApi);
 export const postMedia = defaultApi.postMedia.bind(defaultApi);
@@ -49,24 +48,21 @@ export function uploadFile(u) {
 
     const formData = new FormData();
 
-    // file
     formData.append("file", u.file);
-
-    // backend-required fields
     formData.append("entityType", u.entityType);
     formData.append("entityId", u.entityId || "");
 
     UploadStore.update(u.id, {
       status: "uploading",
-      progress: 0,
+      progress: 0
     });
 
-    xhr.upload.onprogress = (e) => {
+    xhr.upload.onprogress = e => {
       if (e.lengthComputable) {
-        const pct = Math.round((e.loaded / e.total) * 100);
-
         UploadStore.update(u.id, {
-          progress: pct,
+          progress: Math.round(
+            (e.loaded / e.total) * 100
+          )
         });
       }
     };
@@ -80,31 +76,48 @@ export function uploadFile(u) {
 
           UploadStore.update(u.id, {
             status: "done",
-            progress: 100,
+            progress: 100
           });
 
-          resolve(Array.isArray(data) ? data[0] : data);
+          resolve(
+            Array.isArray(data)
+              ? data[0]
+              : data
+          );
 
         } catch {
           UploadStore.update(u.id, {
-            status: "error",
+            status: "error"
           });
 
-          reject(new Error("Invalid FILEDROP response"));
+          reject(
+            new Error(
+              "Invalid FILEDROP response"
+            )
+          );
         }
 
-      } else {
-        UploadStore.update(u.id, {
-          status: "error",
-        });
-
-        reject(new Error(xhr.responseText || xhr.statusText));
+        return;
       }
+
+      UploadStore.update(u.id, {
+        status: "error"
+      });
+
+      const error = new Error(
+        xhr.responseText ||
+        xhr.statusText ||
+        "Upload failed"
+      );
+
+      error.status = xhr.status;
+
+      reject(error);
     };
 
     xhr.onerror = () => {
       UploadStore.update(u.id, {
-        status: "error",
+        status: "error"
       });
 
       reject(new Error("Network error"));
@@ -112,7 +125,7 @@ export function uploadFile(u) {
 
     xhr.onabort = () => {
       UploadStore.update(u.id, {
-        status: "canceled",
+        status: "canceled"
       });
 
       reject(new Error("Upload canceled"));
@@ -120,16 +133,30 @@ export function uploadFile(u) {
 
     xhr.open("POST", FILEDROP_URL);
 
+    const token = state?.token;
+
+    if (token) {
+      xhr.setRequestHeader(
+        "Authorization",
+        `Bearer ${token}`
+      );
+    }
+
     xhr.send(formData);
   });
 }
 
 /* -------------------------
-   Concurrency Queue (core)
+   Concurrency Queue
 ------------------------- */
 
-async function runUploadQueue(items, worker, concurrency = 3) {
+async function runUploadQueue(
+  items,
+  worker,
+  concurrency = 3
+) {
   const results = new Array(items.length);
+
   let index = 0;
 
   async function next() {
@@ -141,15 +168,21 @@ async function runUploadQueue(items, worker, concurrency = 3) {
     const item = items[currentIndex];
 
     try {
-      results[currentIndex] = await worker(item);
+      results[currentIndex] =
+        await worker(item);
     } catch (err) {
-      results[currentIndex] = { error: err.message || err };
+      results[currentIndex] = {
+        error: err.message || String(err)
+      };
     }
 
-    return next(); // continue queue
+    return next();
   }
 
-  const workers = Array.from({ length: concurrency }, () => next());
+  const workers = Array.from(
+    { length: concurrency },
+    () => next()
+  );
 
   await Promise.all(workers);
 
@@ -157,57 +190,80 @@ async function runUploadQueue(items, worker, concurrency = 3) {
 }
 
 /* -------------------------
-   Retry Wrapper (optional)
+   Retry Wrapper
 ------------------------- */
 
-async function uploadWithRetry(item, retries = 2) {
+async function uploadWithRetry(
+  item,
+  retries = 2
+) {
   try {
     return await uploadFile(item);
   } catch (err) {
-    if (retries > 0) {
-      return uploadWithRetry(item, retries - 1);
+
+    if (
+      err.status === 401 ||
+      err.status === 403
+    ) {
+      throw err;
     }
+
+    if (retries > 0) {
+      return uploadWithRetry(
+        item,
+        retries - 1
+      );
+    }
+
     throw err;
   }
 }
 
 /* -------------------------
-   Public: Upload Multiple Files (LIMITED)
+   Upload Multiple Files
 ------------------------- */
 
-export async function uploadFiles(files, options = {}) {
-
+export async function uploadFiles(
+  files,
+  options = {}
+) {
   const {
     entityType = "media",
     entityId = "",
     concurrency = 3,
-    retry = 0,
+    retry = 0
   } = options;
 
-  const items = Array.from(files).map((file) => {
+  const items = Array.from(files).map(
+    file => {
+      const id = crypto.randomUUID();
 
-    const id = crypto.randomUUID();
+      UploadStore.update(id, {
+        fileName: file.name,
+        progress: 0,
+        status: "queued"
+      });
 
-    UploadStore.update(id, {
-      fileName: file.name,
-      progress: 0,
-      status: "queued",
-    });
-
-    return {
-      id,
-      file,
-      entityType,
-      entityId,
-    };
-  });
+      return {
+        id,
+        file,
+        entityType,
+        entityId
+      };
+    }
+  );
 
   const worker =
     retry > 0
-      ? (item) => uploadWithRetry(item, retry)
-      : (item) => uploadFile(item);
+      ? item =>
+          uploadWithRetry(item, retry)
+      : item => uploadFile(item);
 
-  return runUploadQueue(items, worker, concurrency);
+  return runUploadQueue(
+    items,
+    worker,
+    concurrency
+  );
 }
 
 /* -------------------------
@@ -216,11 +272,14 @@ export async function uploadFiles(files, options = {}) {
 
 export function cancelUpload(id) {
   const xhr = UploadStore.controllers[id];
+
   if (xhr) {
     xhr.abort();
   }
 }
 
 export function cancelAllUploads() {
-  Object.values(UploadStore.controllers).forEach((xhr) => xhr.abort());
+  Object.values(
+    UploadStore.controllers
+  ).forEach(xhr => xhr.abort());
 }

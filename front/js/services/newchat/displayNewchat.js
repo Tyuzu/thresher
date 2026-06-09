@@ -1,5 +1,5 @@
 import { createElement } from "../../components/createElement.js";
-import { CHATDROP_URL, CHAT_WS, state } from "../../state/state.js";
+import { CHAT_WS, state } from "../../state/state.js";
 import { renderMessage } from "./renderMessage.js";
 import { setupFileUpload } from "./fileUpload.js";
 
@@ -13,20 +13,29 @@ export function displayNewChat(
 ) {
   clearContainer(contentContainer);
 
-  // Close previous chat socket if any
   if (activeSocket) {
     activeSocket.close();
     activeSocket = null;
   }
 
-  const chatBox = createElement("div", { class: "chat-box" });
+  const chatBox = createElement("div", {
+    class: "chat-box"
+  });
 
   const messagesContainer = createElement("div", {
     id: "messages",
     class: "messages-container"
   });
 
-  const { inputRow, inputField, sendButton } = createInputRow();
+  let socket = null;
+
+  if (isLoggedIn) {
+    socket = createWebSocket(chatid);
+    activeSocket = socket;
+  }
+
+  const { inputRow, inputField, sendButton } =
+    createInputRow(socket);
 
   const {
     fileInput,
@@ -35,7 +44,17 @@ export function displayNewChat(
     progressBar
   } = createUploadElements();
 
-  const upcon = createElement("div", { class: "upcon" });
+  const upcon = createElement(
+    "div",
+    { class: "upcon" },
+    [
+      inputRow,
+      fileInput,
+      uploadButton,
+      progressBar,
+      dropZone
+    ]
+  );
 
   if (!isLoggedIn) {
     disableInputs([
@@ -46,39 +65,20 @@ export function displayNewChat(
     ]);
 
     chatBox.append(
-      createElement("div", { class: "login-warning" }, [
-        "You are not logged in."
-      ])
+      createElement(
+        "div",
+        { class: "login-warning" },
+        ["You are not logged in."]
+      )
     );
-
-    upcon.append(
-      inputRow,
-      fileInput,
-      uploadButton,
-      progressBar,
-      dropZone
-    );
-
-    chatBox.append(messagesContainer, upcon);
-    contentContainer.appendChild(chatBox);
-
-    return;
   }
-
-  upcon.append(
-    inputRow,
-    fileInput,
-    uploadButton,
-    progressBar,
-    dropZone
-  );
 
   chatBox.append(messagesContainer, upcon);
   contentContainer.appendChild(chatBox);
 
-  const socket = createWebSocket(chatid);
-
-  activeSocket = socket;
+  if (!isLoggedIn) {
+    return;
+  }
 
   setupSocketListeners(
     socket,
@@ -86,8 +86,6 @@ export function displayNewChat(
     currentUserId,
     sendButton
   );
-
-  setupMessageSending(inputField, sendButton, socket);
 
   setupFileUpload(
     fileInput,
@@ -106,14 +104,20 @@ function clearContainer(container) {
   }
 }
 
-function createInputRow() {
-  const inputRow = createElement("div", { class: "input-row" });
-
+function createInputRow(socket) {
   const inputField = createElement("input", {
     type: "text",
     placeholder: "Type a message…",
     id: "messageInput",
-    class: "message-input"
+    class: "message-input",
+    events: {
+      keydown(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          sendButton.click();
+        }
+      }
+    }
   });
 
   const sendButton = createElement(
@@ -121,12 +125,41 @@ function createInputRow() {
     {
       type: "button",
       class: "send-button",
-      disabled: true
+      disabled: true,
+      events: {
+        click() {
+          const content = inputField.value.trim();
+
+          if (!content) {
+            return;
+          }
+
+          if (
+            !socket ||
+            socket.readyState !== WebSocket.OPEN
+          ) {
+            return;
+          }
+
+          socket.send(
+            JSON.stringify({
+              action: "chat",
+              content
+            })
+          );
+
+          inputField.value = "";
+        }
+      }
     },
     ["Send"]
   );
 
-  inputRow.append(inputField, sendButton);
+  const inputRow = createElement(
+    "div",
+    { class: "input-row" },
+    [inputField, sendButton]
+  );
 
   return {
     inputRow,
@@ -154,17 +187,28 @@ function createUploadElements() {
 
   const dropZone = createElement(
     "div",
-    { class: "drop-zone" },
+    {
+      class: "drop-zone",
+      events: {
+        dragover(e) {
+          e.preventDefault();
+        },
+        drop(e) {
+          e.preventDefault();
+        }
+      }
+    },
     ["Drag & drop files here"]
   );
 
   const progressBar = createElement("progress", {
     value: 0,
     max: 100,
-    class: "upload-progress"
+    class: "upload-progress",
+    style: {
+      display: "none"
+    }
   });
-
-  progressBar.style.display = "none";
 
   return {
     fileInput,
@@ -226,6 +270,7 @@ function setupSocketListeners(
   socket.addEventListener("message", async event => {
     try {
       const msg = JSON.parse(event.data);
+
       await renderMessage(
         msg,
         messagesContainer,
@@ -234,40 +279,6 @@ function setupSocketListeners(
       );
     } catch (err) {
       console.error("Invalid WS payload", err);
-    }
-  });
-}
-
-function setupMessageSending(
-  inputField,
-  sendButton,
-  socket
-) {
-  sendButton.addEventListener("click", () => {
-    const content = inputField.value.trim();
-
-    if (!content) {
-      return;
-    }
-
-    if (socket.readyState !== WebSocket.OPEN) {
-      return;
-    }
-
-    socket.send(
-      JSON.stringify({
-        action: "chat",
-        content
-      })
-    );
-
-    inputField.value = "";
-  });
-
-  inputField.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      sendButton.click();
     }
   });
 }
