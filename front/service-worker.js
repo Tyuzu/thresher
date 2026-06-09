@@ -1,7 +1,15 @@
-const CACHE_VERSION = "v14"; // Increment on each deployment
-const CACHE_NAME = `app-cache-${CACHE_VERSION}`;
+// =====================================================
+// Service Worker
+// Version: v15
+// =====================================================
+
+const CACHE_VERSION = "v15";
+
+const STATIC_CACHE = `static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
+const IMAGE_CACHE = `images-${CACHE_VERSION}`;
+
 const OFFLINE_URL = "/offline.html";
-const MAX_CACHE_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const STATIC_ASSETS = [
   "/",
@@ -15,54 +23,84 @@ const STATIC_ASSETS = [
   "/assets/icon-512.png",
 ];
 
-// -------- Install: Precache core assets --------
+// Cache limits
+const MAX_DYNAMIC_ITEMS = 100;
+const MAX_IMAGE_ITEMS = 200;
+
+// =====================================================
+// INSTALL
+// =====================================================
+
 self.addEventListener("install", (event) => {
   self.skipWaiting();
+
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    (async () => {
+      const cache = await caches.open(STATIC_CACHE);
+      await cache.addAll(STATIC_ASSETS);
+    })()
   );
 });
 
-// -------- Activate: Cleanup old caches --------
+// =====================================================
+// ACTIVATE
+// =====================================================
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log(`[SW] Deleting old cache: ${key}`);
-            return caches.delete(key);
+    (async () => {
+      // Enable Navigation Preload
+      if ("navigationPreload" in self.registration) {
+        await self.registration.navigationPreload.enable();
+      }
+
+      const cacheNames = await caches.keys();
+
+      await Promise.all(
+        cacheNames.map((cacheName) => {
+          if (
+            cacheName !== STATIC_CACHE &&
+            cacheName !== DYNAMIC_CACHE &&
+            cacheName !== IMAGE_CACHE
+          ) {
+            console.log("[SW] Removing old cache:", cacheName);
+            return caches.delete(cacheName);
           }
         })
-      )
-    ).then(() => {
-      console.log(`[SW] Activated with cache: ${CACHE_NAME}`);
-      return self.clients.claim();
-    })
+      );
+
+      await self.clients.claim();
+
+      console.log("[SW] Activated:", CACHE_VERSION);
+    })()
   );
 });
 
-// -------- Fetch handling --------
+// =====================================================
+// FETCH
+// =====================================================
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  const url = new URL(req.url);
-  const accept = req.headers.get("accept") || "";
 
   if (req.method !== "GET") return;
 
-  // HTML navigation (pages)
-  if (accept.includes("text/html")) {
-    event.respondWith(networkFirst(req));
+  const url = new URL(req.url);
+
+  // Ignore cross-origin requests
+  if (url.origin !== self.location.origin) {
     return;
   }
 
-  // Static assets (JS, CSS, icons, etc.)
-  if (
-    url.pathname.endsWith(".js") ||
-    url.pathname.endsWith(".css") ||
-    url.pathname.includes("/assets/")
-  ) {
-    event.respondWith(cacheFirst(req));
+  // HTML Navigation
+  if (req.mode === "navigate") {
+    event.respondWith(networkFirst(event, req));
+    return;
+  }
+
+  // API Requests
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(networkFirst(event, req, true));
     return;
   }
 
@@ -72,81 +110,221 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // API calls (fallback to cache if offline)
-  if (url.pathname.startsWith("/api/")) {
-    event.respondWith(networkFirst(req, true));
+  // Fonts
+  if (req.destination === "font") {
+    event.respondWith(cacheFirst(req, STATIC_CACHE));
+    return;
+  }
+
+  // Static assets
+  if (
+    req.destination === "script" ||
+    req.destination === "style" ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".css") ||
+    url.pathname.endsWith(".json")
+  ) {
+    event.respondWith(cacheFirst(req, STATIC_CACHE));
     return;
   }
 });
 
-// -------- Caching Strategies --------
+// =====================================================
+// NETWORK FIRST
+// =====================================================
 
-// Network-first: try network, fallback to cache/offline page
-async function networkFirst(req, isAPI = false) {
+async function networkFirst(event, req, isAPI = false) {
   try {
+    const preloadResponse = await event.preloadResponse;
+
+    if (preloadResponse) {
+      return preloadResponse;
+    }
+
     const fresh = await fetch(req);
-    const cache = await caches.open(CACHE_NAME);
-    cache.put(req, fresh.clone());
+
+    if (fresh.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE);
+      await cache.put(req, fresh.clone());
+
+      limitCacheSize(DYNAMIC_CACHE, MAX_DYNAMIC_ITEMS);
+    }
+
     return fresh;
   } catch {
-    if (isAPI) {
-      const cache = await caches.open(CACHE_NAME);
-      const cached = await cache.match(req);
-      return cached || new Response(JSON.stringify({ error: "offline" }), {
-        headers: { "Content-Type": "application/json" },
-      });
-    } else {
-      const cache = await caches.open(CACHE_NAME);
-      const cached = await cache.match(req);
-      return cached || cache.match(OFFLINE_URL);
+    const cache = await caches.open(DYNAMIC_CACHE);
+
+    const cached = await cache.match(req);
+
+    if (cached) {
+      return cached;
     }
+
+    if (isAPI) {
+      return new Response(
+        JSON.stringify({
+          error: "offline",
+          success: false,
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          status: 503,
+        }
+      );
+    }
+
+    return (await caches.match(OFFLINE_URL)) || Response.error();
   }
 }
 
-// Cache-first: return cache if available, else fetch and cache
-async function cacheFirst(req) {
-  const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(req);
-  if (cached) return cached;
+// =====================================================
+// CACHE FIRST
+// =====================================================
 
-  const fresh = await fetch(req);
-  cache.put(req, fresh.clone());
-  return fresh;
+async function cacheFirst(req, cacheName = STATIC_CACHE) {
+  const cache = await caches.open(cacheName);
+
+  const cached = await cache.match(req);
+
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const fresh = await fetch(req);
+
+    if (fresh.ok) {
+      await cache.put(req, fresh.clone());
+    }
+
+    return fresh;
+  } catch {
+    return cached || Response.error();
+  }
 }
 
-// Stale-while-revalidate: show cached quickly, update in background
+// =====================================================
+// STALE WHILE REVALIDATE
+// =====================================================
+
 async function staleWhileRevalidate(req) {
-  const cache = await caches.open(CACHE_NAME);
+  const cache = await caches.open(IMAGE_CACHE);
+
   const cached = await cache.match(req);
 
-  const fetchPromise = fetch(req)
-    .then((res) => {
-      if (res && res.status === 200) cache.put(req, res.clone());
-      return res;
+  const networkFetch = fetch(req)
+    .then(async (response) => {
+      if (response.ok) {
+        await cache.put(req, response.clone());
+
+        limitCacheSize(IMAGE_CACHE, MAX_IMAGE_ITEMS);
+      }
+
+      return response;
     })
     .catch(() => cached);
 
-  return cached || fetchPromise;
+  return cached || networkFetch;
 }
 
-// -------- Push Notifications --------
+// =====================================================
+// CACHE SIZE LIMITER
+// =====================================================
+
+async function limitCacheSize(cacheName, maxItems) {
+  const cache = await caches.open(cacheName);
+
+  const keys = await cache.keys();
+
+  if (keys.length <= maxItems) {
+    return;
+  }
+
+  await cache.delete(keys[0]);
+
+  return limitCacheSize(cacheName, maxItems);
+}
+
+// =====================================================
+// PUSH NOTIFICATIONS
+// =====================================================
+
 self.addEventListener("push", (event) => {
   if (!event.data) return;
-  const { title, message, url } = event.data.json();
+
+  let data = {};
+
+  try {
+    data = event.data.json();
+  } catch {
+    data = {
+      title: "Notification",
+      message: event.data.text(),
+      url: "/",
+    };
+  }
+
+  const {
+    title = "Notification",
+    message = "",
+    url = "/",
+  } = data;
 
   event.waitUntil(
     self.registration.showNotification(title, {
       body: message,
-      icon: "/assets/icon-128.png",
+      icon: "/assets/icon-192.png",
       badge: "/assets/icon-128.png",
       data: { url },
-      actions: [{ action: "open", title: "Open" }],
+      actions: [
+        {
+          action: "open",
+          title: "Open",
+        },
+      ],
+      requireInteraction: false,
     })
   );
 });
 
+// =====================================================
+// NOTIFICATION CLICK
+// =====================================================
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || "/";
-  event.waitUntil(clients.openWindow(url));
+
+  const targetUrl = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    (async () => {
+      const windowClients = await clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
+      for (const client of windowClients) {
+        if ("focus" in client) {
+          await client.navigate(targetUrl);
+          await client.focus();
+          return;
+        }
+      }
+
+      await clients.openWindow(targetUrl);
+    })()
+  );
+});
+
+// =====================================================
+// MESSAGE EVENTS
+// Allows app to force update SW
+// =====================================================
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
