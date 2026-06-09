@@ -14,8 +14,8 @@ const ENV = {
   //  BANNERDROP_URL: "https://thresher-o6i4.onrender.com",
   //},
   production: {
-    MAIN_URL: "https://thresher-o6i4.onrender.com",
-    BANNERDROP_URL: "https://thresher-o6i4.onrender.com",
+    MAIN_URL: "http://13.50.3.252:4000/",
+    BANNERDROP_URL: "http://13.50.3.252:4000/",
   },
 };
 
