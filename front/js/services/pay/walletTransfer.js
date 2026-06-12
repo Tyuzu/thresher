@@ -4,6 +4,14 @@ import { Button } from "../../components/base/Button.js";
 import { v4 as uuidv4 } from "https://jspm.dev/uuid";
 import Notify from "../../components/ui/Notify.mjs";
 
+function parseAmountToPaise(value) {
+    const amount = Number(value);
+    if (Number.isNaN(amount)) {
+        return 0;
+    }
+    return Math.round(amount * 100);
+}
+
 export function WalletTransfer({ onBalanceChange }) {
     const recipientInput = createElement("input", {
         type: "text",
@@ -22,16 +30,16 @@ export function WalletTransfer({ onBalanceChange }) {
     const transferBtn = Button("Send", "transfer-btn", {
         click: async () => {
             const recipient = recipientInput.value.trim();
-            const amount = parseFloat(amountInput.value);
+            const amountPaise = parseAmountToPaise(amountInput.value);
 
-            if (!recipient || !amount || amount <= 0) {
+            if (!recipient || !amountPaise || amountPaise <= 0) {
                 return Notify("Enter valid recipient and amount", { type: "warning" });
             }
 
             transferBtn.disabled = true;
             try {
                 const idempotencyKey = uuidv4();
-                const res = await apiFetch("/wallet/transfer", "POST", { recipient, amount }, {
+                const res = await apiFetch("/wallet/transfer", "POST", { recipient, amount: amountPaise }, {
                     headers: { "Idempotency-Key": idempotencyKey }
                 });
 

@@ -1,3 +1,5 @@
+// BaitoDash.js
+
 import { apiFetch } from "../../../api/api.js";
 import { createElement } from "../../../components/createElement.js";
 import { formatRelativeTime } from "../../../utils/dateUtils.js";

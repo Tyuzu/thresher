@@ -1,3 +1,5 @@
+// baitoDisplay.js
+
 import { createElement } from "../../../components/createElement.js";
 import { SRC_URL, apiFetch } from "../../../api/api.js";
 import { getState } from "../../../state/state.js";

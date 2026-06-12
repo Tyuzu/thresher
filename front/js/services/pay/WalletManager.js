@@ -4,6 +4,23 @@ import { apiFetch } from "../../api/api.js";
 import { v4 as uuidv4 } from "https://jspm.dev/uuid";
 import Notify from "../../components/ui/Notify.mjs";
 
+const currencyFormatter = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR"
+});
+
+function formatRupees(paise) {
+    return currencyFormatter.format((Number(paise) || 0) / 100);
+}
+
+function parseAmountToPaise(value) {
+    const amount = Number(value);
+    if (Number.isNaN(amount)) {
+        return 0;
+    }
+    return Math.round(amount * 100);
+}
+
 export function WalletManager() {
     const balanceEl = createElement("div", { id: "wallet-balance", class: "balance-display" });
 
@@ -23,17 +40,17 @@ export function WalletManager() {
 
     const topupBtn = Button("Top Up", "topup-btn", {
         click: async () => {
-            const amount = parseFloat(amountInput.value);
+            const amountPaise = parseAmountToPaise(amountInput.value);
             const method = methodSelect.value;
 
-            if (!amount || amount <= 0) {
+            if (!amountPaise || amountPaise <= 0) {
                 return Notify("Enter a valid amount", { type: "warning" });
             }
 
             topupBtn.disabled = true;
             try {
                 const idempotencyKey = uuidv4();
-                const res = await apiFetch("/wallet/topup", "POST", { amount, method }, {
+                const res = await apiFetch("/wallet/topup", "POST", { amount: amountPaise, method }, {
                     headers: { "Idempotency-Key": idempotencyKey }
                 });
 
@@ -57,7 +74,7 @@ export function WalletManager() {
         try {
             const res = await apiFetch("/wallet/balance");
             if (res && res.balance !== undefined) {
-                balanceEl.textContent = "Wallet Balance: ₹" + res.balance.toFixed(2);
+                balanceEl.textContent = `Wallet Balance: ${formatRupees(res.balance)}`;
             } else {
                 balanceEl.textContent = "Error fetching balance";
             }
