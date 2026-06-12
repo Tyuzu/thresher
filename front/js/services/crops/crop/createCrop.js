@@ -13,7 +13,7 @@ export async function createCrop(farmId, closeModal) {
             submitBtn.disabled = true;
 
             try {
-                await apiFetch(`/farms/${farmId}/crops`, "POST", formData);
+                await apiFetch(`/farms/farm/${farmId}/crops`, "POST", formData);
 
                 Notify("✅ Crop created successfully.", {
                     type: "success",

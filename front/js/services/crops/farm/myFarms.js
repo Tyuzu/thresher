@@ -15,7 +15,7 @@ export async function displayMyFarm(container) {
   container.append(page);
 
   try {
-    const res = await apiFetch("/farms/my");
+    const res = await apiFetch("/dash/farms");
     const farms = Array.isArray(res?.farms) ? res.farms : [];
 
     if (!farms.length) {

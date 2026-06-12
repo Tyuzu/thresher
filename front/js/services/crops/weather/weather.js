@@ -1,4 +1,4 @@
-import { apiFetch } from "../../../api/apiClient.js";
+import { apiFetch } from "../../../api/api.js";
 import { createElement } from "../../../components/createElement.js";
 
 async function fetchWeather() {

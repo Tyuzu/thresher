@@ -92,7 +92,7 @@ func GetWorkers(app *infra.Deps) httprouter.Handle {
 		if search != "" {
 			filter["$or"] = []any{
 				map[string]any{"name_contains": search},
-				map[string]any{"address_contains": search},
+				map[string]any{"location_contains": search},
 				map[string]any{"bio_contains": search},
 			}
 		}

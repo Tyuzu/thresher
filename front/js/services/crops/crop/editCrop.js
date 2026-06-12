@@ -1,15 +1,15 @@
 import { createCommonCropForm } from "./createOrEditCrop.js";
 import { apiFetch } from "../../../api/api.js";
 
-export async function editCrop(farmName, crop, container) {
+export async function editCrop(farmId, crop, container) {
     const form = createCommonCropForm({
         crop,
-        currentFarmName: farmName,
+        currentFarmName: farmId,
         isEdit: true,
         onSubmit: async (formData, submitBtn) => {
             submitBtn.disabled = true;
             try {
-                const res = await apiFetch(`/farms/${farmName}/crops/${crop.cropid}`, "PUT", formData);
+                const res = await apiFetch(`/farms/farm/${farmId}/crops/${crop.cropid}`, "PUT", formData);
                 container.textContent = "✅ Crop updated successfully.";
             } catch (err) {
                 container.textContent = `❌ ${err.message}`;

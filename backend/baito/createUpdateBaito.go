@@ -58,11 +58,11 @@ func parseBaitoForm(r *http.Request, isUpdate bool) (models.Baito, bson.M, error
 		set["wage"] = wage
 		set["phone"] = phone
 		set["requirements"] = requirements
-		set["work_hours"] = workHours
+		set["workHours"] = workHours
 		set["benefits"] = benefits
 		set["email"] = email
 		set["tags"] = tags
-		set["updated_at"] = time.Now()
+		set["updatedAt"] = time.Now()
 	} else {
 		b = models.Baito{
 			BaitoId:      utils.GenerateRandomString(15),
