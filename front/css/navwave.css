@@ -79,17 +79,17 @@
 
 .navigation__item:nth-child(3n + 2) .navigation__link {
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 500;
 } 
 
 .navigation__item:nth-child(3n + 1) .navigation__link {
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .navigation__item:nth-child(3n) .navigation__link {
   font-size: 0.9rem;
-  font-weight: 400;
+  font-weight: 900;
 }
 
 .toggle:checked~.navigation__inner {
