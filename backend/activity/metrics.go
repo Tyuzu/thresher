@@ -15,6 +15,98 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+// -------------------- MongoDB Helpers --------------------
+
+func insertActivities(
+	ctx context.Context,
+	app *infra.Deps,
+	activities []models.Activity,
+) error {
+	docs := make([]any, len(activities))
+	for i := range activities {
+		docs[i] = activities[i]
+	}
+
+	return app.DB.WithDB(ctx, func(ctx context.Context) error {
+		return app.DB.InsertMany(ctx, ActivitiesCollection, docs)
+	})
+}
+
+func getActivities(
+	ctx context.Context,
+	app *infra.Deps,
+	userID string,
+	cursor time.Time,
+	limit int,
+) ([]models.Activity, error) {
+	filter := bson.M{
+		"userid": userID,
+	}
+
+	if !cursor.IsZero() {
+		filter["timestamp"] = bson.M{
+			"$lt": cursor,
+		}
+	}
+
+	opts := db.FindManyOptions{
+		Limit: limit,
+		Sort:  bson.D{{Key: "timestamp", Value: -1}},
+	}
+
+	var activities []models.Activity
+
+	err := app.DB.FindManyWithOptions(
+		ctx,
+		ActivitiesCollection,
+		filter,
+		opts,
+		&activities,
+	)
+
+	return activities, err
+}
+
+func insertAnalyticsEvents(
+	ctx context.Context,
+	app *infra.Deps,
+	events []map[string]any,
+	remoteAddr string,
+) (int, error) {
+	inserted := 0
+
+	err := app.DB.WithDB(ctx, func(ctx context.Context) error {
+		for _, ev := range events {
+			key := analyticsIdempotencyKey(ev)
+
+			ok, err := app.Cache.SetNX(ctx, key, []byte("1"), analyticsIdemTTL)
+			if err != nil || !ok {
+				continue
+			}
+
+			doc := bson.M{
+				"type":      ev["type"],
+				"data":      ev["data"],
+				"url":       ev["url"],
+				"user":      ev["user"],
+				"session":   ev["session"],
+				"timestamp": time.Now(),
+				"ip":        remoteAddr,
+			}
+
+			if err := app.DB.Insert(ctx, AnalyticsCollection, doc); err != nil {
+				return err
+			}
+
+			inserted++
+		}
+
+		return nil
+	})
+
+	return inserted, err
+}
+
 // -------------------- Log Activities --------------------
 
 func LogActivities(app *infra.Deps) httprouter.Handle {
@@ -32,30 +124,22 @@ func LogActivities(app *infra.Deps) httprouter.Handle {
 		}
 
 		now := time.Now()
-		docs := make([]any, len(activities))
 
 		for i := range activities {
 			activities[i].UserID = userID
 			activities[i].Timestamp = now
-			docs[i] = activities[i]
 		}
 
-		err := app.DB.WithDB(r.Context(), func(ctx context.Context) error {
-			return app.DB.InsertMany(ctx, ActivitiesCollection, docs)
-		})
-
-		if err != nil {
+		if err := insertActivities(r.Context(), app, activities); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "failed to insert activities")
 			return
 		}
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]int{
-			"inserted": len(docs),
+			"inserted": len(activities),
 		})
 	}
 }
-
-// -------------------- Activity Feed --------------------
 
 // -------------------- Activity Feed --------------------
 
@@ -67,31 +151,16 @@ func GetActivityFeed(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		cursor, limit := parseCursor(r) // cursor is time.Time
+		cursor, limit := parseCursor(r)
 
-		filter := bson.M{
-			"userid": userID,
-		}
-
-		if !cursor.IsZero() {
-			filter["timestamp"] = bson.M{
-				"$lt": cursor,
-			}
-		}
-
-		opts := db.FindManyOptions{
-			Limit: limit,
-			Sort:  bson.D{{Key: "timestamp", Value: -1}},
-		}
-
-		var activities []models.Activity
-		if err := app.DB.FindManyWithOptions(
+		activities, err := getActivities(
 			r.Context(),
-			ActivitiesCollection,
-			filter,
-			opts,
-			&activities,
-		); err != nil {
+			app,
+			userID,
+			cursor,
+			limit,
+		)
+		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "fetch failed")
 			return
 		}
@@ -127,36 +196,12 @@ func HandleAnalyticsEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		inserted := 0
-
-		err := app.DB.WithDB(r.Context(), func(ctx context.Context) error {
-			for _, ev := range payload.Events {
-				key := analyticsIdempotencyKey(ev)
-
-				ok, err := app.Cache.SetNX(ctx, key, []byte("1"), analyticsIdemTTL)
-				if err != nil || !ok {
-					continue
-				}
-
-				doc := bson.M{
-					"type":      ev["type"],
-					"data":      ev["data"],
-					"url":       ev["url"],
-					"user":      ev["user"],
-					"session":   ev["session"],
-					"timestamp": time.Now(),
-					"ip":        r.RemoteAddr,
-				}
-
-				if err := app.DB.Insert(ctx, AnalyticsCollection, doc); err != nil {
-					return err
-				}
-
-				inserted++
-			}
-			return nil
-		})
-
+		inserted, err := insertAnalyticsEvents(
+			r.Context(),
+			app,
+			payload.Events,
+			r.RemoteAddr,
+		)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "analytics insert failed")
 			return

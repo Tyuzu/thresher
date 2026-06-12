@@ -13,10 +13,7 @@ export function displayNewChat(
 ) {
   clearContainer(contentContainer);
 
-  if (activeSocket) {
-    activeSocket.close();
-    activeSocket = null;
-  }
+  cleanupChat();
 
   const chatBox = createElement("div", {
     class: "chat-box"
@@ -34,8 +31,11 @@ export function displayNewChat(
     activeSocket = socket;
   }
 
-  const { inputRow, inputField, sendButton } =
-    createInputRow(socket);
+  const {
+    inputRow,
+    inputField,
+    sendButton
+  } = createInputRow(socket);
 
   const {
     fileInput,
@@ -76,7 +76,7 @@ export function displayNewChat(
   chatBox.append(messagesContainer, upcon);
   contentContainer.appendChild(chatBox);
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn || !socket) {
     return;
   }
 
@@ -96,6 +96,13 @@ export function displayNewChat(
   );
 }
 
+export function cleanupChat() {
+  if (activeSocket) {
+    activeSocket.close();
+    activeSocket = null;
+  }
+}
+
 /* ------------------ Helpers ------------------ */
 
 function clearContainer(container) {
@@ -109,14 +116,37 @@ function createInputRow(socket) {
     type: "text",
     placeholder: "Type a message…",
     id: "messageInput",
-    class: "message-input",
-    events: {
-      keydown(e) {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          sendButton.click();
-        }
-      }
+    class: "message-input"
+  });
+
+  function sendMessage() {
+    const content = inputField.value.trim();
+
+    if (!content) {
+      return;
+    }
+
+    if (
+      !socket ||
+      socket.readyState !== WebSocket.OPEN
+    ) {
+      return;
+    }
+
+    socket.send(
+      JSON.stringify({
+        action: "chat",
+        content
+      })
+    );
+
+    inputField.value = "";
+  }
+
+  inputField.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMessage();
     }
   });
 
@@ -127,29 +157,7 @@ function createInputRow(socket) {
       class: "send-button",
       disabled: true,
       events: {
-        click() {
-          const content = inputField.value.trim();
-
-          if (!content) {
-            return;
-          }
-
-          if (
-            !socket ||
-            socket.readyState !== WebSocket.OPEN
-          ) {
-            return;
-          }
-
-          socket.send(
-            JSON.stringify({
-              action: "chat",
-              content
-            })
-          );
-
-          inputField.value = "";
-        }
+        click: sendMessage
       }
     },
     ["Send"]
@@ -220,14 +228,16 @@ function createUploadElements() {
 
 function disableInputs(elements) {
   elements.forEach(el => {
-    el.disabled = true;
+    if (el) {
+      el.disabled = true;
+    }
   });
 }
 
 function createWebSocket(chatid) {
   const token = state.token ?? "";
 
-  let base = CHAT_WS;
+  let base = CHAT_WS.replace(/\/+$/, "");
 
   if (
     !base.startsWith("ws://") &&
@@ -254,20 +264,40 @@ function setupSocketListeners(
   currentUserId,
   sendButton
 ) {
+  if (!socket) {
+    return;
+  }
+
   socket.addEventListener("open", () => {
+    if (socket !== activeSocket) {
+      return;
+    }
+
     sendButton.disabled = false;
   });
 
   socket.addEventListener("close", () => {
+    if (socket !== activeSocket) {
+      return;
+    }
+
     sendButton.disabled = true;
   });
 
   socket.addEventListener("error", err => {
+    if (socket !== activeSocket) {
+      return;
+    }
+
     console.error("WebSocket error:", err);
     sendButton.disabled = true;
   });
 
   socket.addEventListener("message", async event => {
+    if (socket !== activeSocket) {
+      return;
+    }
+
     try {
       const msg = JSON.parse(event.data);
 
@@ -277,8 +307,14 @@ function setupSocketListeners(
         currentUserId,
         socket
       );
+
+      messagesContainer.scrollTop =
+        messagesContainer.scrollHeight;
     } catch (err) {
-      console.error("Invalid WS payload", err);
+      console.error(
+        "Invalid WebSocket payload:",
+        err
+      );
     }
   });
 }

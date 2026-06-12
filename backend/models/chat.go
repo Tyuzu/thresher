@@ -30,14 +30,15 @@ type Message struct {
 
 type Chat struct {
 	Users        []string        `bson:"users" json:"users"`
-	LastMessage  MessagePreview  `bson:"lastMessage" json:"lastMessage"`
+	LastMessage  *MessagePreview `bson:"lastMessage,omitempty" json:"lastMessage,omitempty"`
 	ReadStatus   map[string]bool `bson:"readStatus,omitempty" json:"readStatus,omitempty"`
 	ChatID       string          `bson:"chatid,omitempty" json:"chatid"`
-	Participants []string        `bson:"participants"      json:"participants"`
-	CreatedAt    time.Time       `bson:"createdAt"         json:"createdAt"`
-	UpdatedAt    time.Time       `bson:"updatedAt"         json:"updatedAt"`
-	EntityType   string          `bson:"entitytype"        json:"entitytype"`
-	EntityId     string          `bson:"entityid"          json:"entityid"`
+	Participants []string        `bson:"participants,omitempty" json:"participants,omitempty"`
+	CreatedAt    time.Time       `bson:"createdAt" json:"createdAt"`
+	UpdatedAt    time.Time       `bson:"updatedAt" json:"updatedAt"`
+	EntityType   string          `bson:"entitytype,omitempty" json:"entitytype,omitempty"`
+	EntityId     string          `bson:"entityid,omitempty" json:"entityid,omitempty"`
+	LastSeq      int64           `bson:"lastSeq" json:"lastSeq"`
 }
 
 type MessagePreview struct {

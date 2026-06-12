@@ -3,71 +3,126 @@ import { RenderVideoPost } from "./renders/renderVideoPost.js";
 import { RenderAudioPost } from "./renders/renderAudioPost.js";
 import { createElement } from "../../components/createElement.js";
 
-/**
- * Create chat-friendly media content
- * Wraps feed renderers into a bubble for chat messages
- * @param {Object} post - metadata { type: "image"|"video"|"audio"|"file" }
- * @param {Array<string>} media - list of media URLs
- * @param {boolean} isOwn - whether the message is sent by current user
- * @returns {Promise<HTMLElement>} chat bubble
- */
-async function createChatContent(post, media = [], isOwn = false) {
-  const bubble = createElement("section", {
-    class: `chat-bubble ${isOwn ? "chat-own" : "chat-other"}`,
-    role: "group",
-    "aria-label": `${post.type} message`
-  });
+async function createChatContent(
+  post,
+  media = [],
+  isOwn = false
+) {
+  const type =
+    post?.type ?? "file";
 
-  const mediaContainer = createElement("figure", {
-    class: "chat-media",
-    "aria-label": `${post.type} attachment`
-  });
+  const bubble = createElement(
+    "section",
+    {
+      class: `chat-bubble ${
+        isOwn
+          ? "chat-own"
+          : "chat-other"
+      }`,
+      role: "group",
+      "aria-label": `${type} message`
+    }
+  );
 
-  if (!Array.isArray(media) || media.length === 0) {
-    bubble.textContent = post.content || "";
+  if (post?.content) {
+    bubble.appendChild(
+      createElement(
+        "p",
+        {
+          class:
+            "chat-message-text"
+        },
+        [post.content]
+      )
+    );
+  }
+
+  if (
+    !Array.isArray(media) ||
+    media.length === 0
+  ) {
     return bubble;
   }
 
-  switch (post.type) {
+  const mediaContainer =
+    createElement("div", {
+      class: "chat-media",
+      "aria-label":
+        `${type} attachment`
+    });
+
+  switch (type) {
     case "image":
       await RenderImagePost(
         mediaContainer,
-        media.map((url, i) => ({ src: url, alt: `Image ${i + 1} in message` }))
+        media.map(
+          (url, index) => ({
+            src: url,
+            alt: `Image ${
+              index + 1
+            }`
+          })
+        )
       );
       break;
 
     case "video":
-      await RenderVideoPost(mediaContainer, media, {
-        controls: true,
-        "aria-label": "Video message"
-      });
+      await RenderVideoPost(
+        mediaContainer,
+        media,
+        {
+          controls: true,
+          "aria-label":
+            "Video message"
+        }
+      );
       break;
 
     case "audio":
-      await RenderAudioPost(mediaContainer, media[0], {
-        controls: true,
-        "aria-label": "Audio message"
-      });
+      await RenderAudioPost(
+        mediaContainer,
+        media[0],
+        {
+          controls: true,
+          "aria-label":
+            "Audio message"
+        }
+      );
       break;
 
     default:
-      media.forEach(url => {
-        const link = createElement(
-          "a",
-          {
-            href: url,
-            target: "_blank",
-            rel: "noopener noreferrer",
-            class: "chat-file-link",
-            "aria-label": "Download attached file"
-          },
-          ["Download file"]
-        );
-        mediaContainer.appendChild(link);
-      });
+      media.forEach(
+        (url, index) => {
+          mediaContainer.appendChild(
+            createElement(
+              "a",
+              {
+                href: url,
+                target: "_blank",
+                rel:
+                  "noopener noreferrer",
+                class:
+                  "chat-file-link",
+                "aria-label":
+                  `Download file ${
+                    index + 1
+                  }`
+              },
+              [
+                `Download file ${
+                  index + 1
+                }`
+              ]
+            )
+          );
+        }
+      );
   }
 
-  bubble.appendChild(mediaContainer);
+  bubble.appendChild(
+    mediaContainer
+  );
+
   return bubble;
 }
 

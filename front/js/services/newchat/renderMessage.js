@@ -1,132 +1,261 @@
 import { createElement } from "../../components/createElement.js";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import {
+  resolveImagePath,
+  EntityType,
+  PictureType
+} from "../../utils/imagePaths.js";
 import Imagex from "../../components/base/Imagex.js";
 import { setupMessageActions } from "./setupMessageActions.js";
-import { renderMedia } from "../merechats/components/renderMedia.js"; // adjust import path if needed
+import { renderMedia } from "../merechats/components/renderMedia.js";
 
-export async function renderMessage(msg, container, currentUserId, socket) {
-  if (!msg || (!msg.id && !msg.messageid && !msg.content && !msg.files)) {
+export async function renderMessage(
+  msg,
+  container,
+  currentUserId,
+  socket
+) {
+  if (
+    !msg ||
+    (
+      !msg.id &&
+      !msg.messageid &&
+      !msg.content &&
+      !msg.files?.length
+    )
+  ) {
     return;
   }
 
-  const messageId = msg.id || msg.messageid || `temp-${msg.timestamp}`;
-  let wrapper = document.getElementById(`msg-${messageId}`);
+  const messageId =
+    msg.id ??
+    msg.messageid ??
+    `temp-${Date.now()}`;
+
+  let wrapper = document.getElementById(
+    `msg-${messageId}`
+  );
+
+  const isUpdate = Boolean(wrapper);
 
   if (!wrapper) {
     wrapper = createElement("article", {
-      class: "chat-message-wrapper",
       id: `msg-${messageId}`,
+      class: "chat-message-wrapper",
       role: "group",
       "aria-label": "Chat message"
     });
 
     container.appendChild(wrapper);
   } else {
-    wrapper.innerHTML = "";
+    while (wrapper.firstChild) {
+      wrapper.removeChild(
+        wrapper.firstChild
+      );
+    }
   }
-
-  const timeStr = new Date(msg.timestamp * 1000).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
 
   const isOwn =
     msg.senderid === currentUserId ||
     msg.userId === currentUserId;
 
+  wrapper.classList.toggle(
+    "chat-message-own",
+    isOwn
+  );
+
+  /* ---------- Timestamp ---------- */
+
+  const timestamp =
+    typeof msg.timestamp === "number"
+      ? msg.timestamp * 1000
+      : Date.parse(msg.timestamp);
+
+  const date = new Date(
+    Number.isFinite(timestamp)
+      ? timestamp
+      : Date.now()
+  );
+
+  const timeText =
+    Number.isNaN(date.getTime())
+      ? ""
+      : date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+  /* ---------- Message Content ---------- */
+
   let contentNode;
 
-  if (msg.files?.length > 0) {
-    const media = msg.files.map(file => {
-      const filename = String(file.filename || "").trim();
-      const ext = filename.includes(".")
-        ? filename.split(".").pop().toLowerCase()
-        : "";
+  if (
+    Array.isArray(msg.files) &&
+    msg.files.length > 0
+  ) {
+    const media = msg.files.map(
+      file => {
+        const filename = String(
+          file?.filename || ""
+        ).trim();
 
-      let type = "file";
-      let mimeType = "";
+        const ext = filename.includes(".")
+          ? filename
+              .split(".")
+              .pop()
+              .toLowerCase()
+          : "";
 
-      if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
-        type = "image";
-        mimeType = `image/${ext === "jpg" ? "jpeg" : ext}`;
-      } else if (["mp4", "webm", "ogg"].includes(ext)) {
-        type = "video";
-        mimeType = `video/${ext}`;
-      } else if (["mp3", "wav"].includes(ext)) {
-        type = "audio";
-        mimeType = `audio/${ext}`;
+        let type = "file";
+        let mimeType = "";
+
+        if (
+          [
+            "jpg",
+            "jpeg",
+            "png",
+            "gif",
+            "webp",
+            "svg"
+          ].includes(ext)
+        ) {
+          type = "image";
+          mimeType =
+            ext === "jpg"
+              ? "image/jpeg"
+              : `image/${ext}`;
+        } else if (
+          [
+            "mp4",
+            "webm",
+            "ogg",
+            "mov"
+          ].includes(ext)
+        ) {
+          type = "video";
+          mimeType = `video/${ext}`;
+        } else if (
+          [
+            "mp3",
+            "wav",
+            "ogg",
+            "m4a"
+          ].includes(ext)
+        ) {
+          type = "audio";
+          mimeType = `audio/${ext}`;
+        }
+
+        return {
+          type,
+          mimeType,
+          extn: ext,
+          url:
+            file?.path?.trim() ||
+            filename
+        };
       }
+    );
 
-      return {
-        type,
-        mimeType,
-        extn: ext,
-        url: file.path?.trim()
-          ? file.path
-          : filename
-      };
-    });
-
-    contentNode = renderMedia({ media });
-
-    if (!contentNode) {
-      contentNode = createElement(
+    contentNode =
+      renderMedia({ media }) ??
+      createElement(
         "p",
-        { class: "chat-message-text system-msg" },
+        {
+          class:
+            "chat-message-text system-msg"
+        },
         ["[media unavailable]"]
       );
-    }
-  } else if (msg.content) {
-    contentNode = createElement(
-      "p",
-      { class: "chat-message-text" },
-      [msg.content]
-    );
   } else {
     contentNode = createElement(
-      "p",
-      { class: "chat-message-text system-msg" },
-      [""]
+      "span",
+      {
+        class:
+          "message-content chat-message-text"
+      },
+      [msg.content || ""]
     );
   }
+
+  /* ---------- Time ---------- */
 
   const timeNode = createElement(
     "time",
     {
       class: "chat-message-time",
-      datetime: new Date(msg.timestamp * 1000).toISOString(),
-      "aria-label": `Sent at ${timeStr}`
+      datetime:
+        Number.isNaN(
+          date.getTime()
+        )
+          ? ""
+          : date.toISOString(),
+      "aria-label":
+        timeText
+          ? `Sent at ${timeText}`
+          : "Message time"
     },
-    [timeStr]
+    [timeText]
   );
 
-  const avatarUrl = resolveImagePath(
-    EntityType.USER,
-    PictureType.THUMB,
-    `${msg.senderid}.jpg`
-  );
+  /* ---------- Avatar ---------- */
+
+  const avatarUrl =
+    msg.senderid
+      ? resolveImagePath(
+          EntityType.USER,
+          PictureType.THUMB,
+          `${msg.senderid}.jpg`
+        )
+      : "";
 
   const avatarNode = Imagex({
     src: avatarUrl,
     alt: "User avatar",
-    classes: "chat-message-avatar"
+    classes:
+      "chat-message-avatar"
   });
+
+  /* ---------- Bubble ---------- */
 
   const bubble = createElement(
     "section",
     {
-      class: "chat-message-bubble",
+      class:
+        "chat-message-bubble",
       role: "group",
-      "aria-label": "Message content"
-    },
-    [contentNode, timeNode]
+      "aria-label":
+        "Message content"
+    }
   );
 
-  wrapper.append(avatarNode, bubble);
+  bubble.append(
+    contentNode,
+    timeNode
+  );
+
+  const fragment =
+    document.createDocumentFragment();
+
+  fragment.append(
+    avatarNode,
+    bubble
+  );
 
   if (isOwn && socket) {
-    wrapper.appendChild(setupMessageActions(msg, socket));
+    fragment.appendChild(
+      setupMessageActions(
+        msg,
+        socket
+      )
+    );
   }
 
-  container.scrollTop = container.scrollHeight;
+  wrapper.appendChild(
+    fragment
+  );
+
+  if (!isUpdate) {
+    container.scrollTop =
+      container.scrollHeight;
+  }
 }

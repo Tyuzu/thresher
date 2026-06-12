@@ -9,37 +9,95 @@ export function setupFileUpload(
   progressBar
 ) {
   const MAX_FILES = 20;
-  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const MAX_FILE_SIZE =
+    10 * 1024 * 1024;
 
-  const validateFile = file =>
-    file.type.startsWith("image/") &&
-    file.size <= MAX_FILE_SIZE;
+  let uploading = false;
+
+  function validateFile(file) {
+    const isImage =
+      file.type.startsWith("image/") ||
+      /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(
+        file.name
+      );
+
+    return (
+      isImage &&
+      file.size <= MAX_FILE_SIZE
+    );
+  }
+
+  function setUploading(state) {
+    uploading = state;
+
+    uploadButton.disabled = state;
+    fileInput.disabled = state;
+
+    progressBar.style.display = state
+      ? "block"
+      : "none";
+
+    if (!state) {
+      progressBar.value = 0;
+    }
+  }
 
   async function processFiles(files) {
-    const validFiles = files.filter(validateFile);
-
-    if (validFiles.length === 0) {
-      alert("No valid image files selected");
+    if (uploading) {
       return;
     }
 
-    progressBar.style.display = "block";
-    progressBar.value = 0;
+    const validFiles =
+      files.filter(validateFile);
+
+    const rejectedCount =
+      files.length -
+      validFiles.length;
+
+    if (
+      validFiles.length === 0
+    ) {
+      alert(
+        "No valid image files selected."
+      );
+      return;
+    }
+
+    if (rejectedCount > 0) {
+      alert(
+        `${rejectedCount} file(s) were skipped.`
+      );
+    }
+
+    setUploading(true);
 
     try {
-      const uploadedFiles = await uploadFiles(validFiles, {
-        entityType: "chat",
-        entityId: String(chatid),
-        concurrency: 3,
-        retry: 1
-      });
+      const uploadedFiles =
+        await uploadFiles(
+          validFiles,
+          {
+            entityType: "chat",
+            entityId: String(
+              chatid
+            ),
+            concurrency: 3,
+            retry: 1
+          }
+        );
 
-      const successfulUploads = uploadedFiles.filter(
-        file => file && !file.error
-      );
+      const successfulUploads =
+        uploadedFiles.filter(
+          file =>
+            file &&
+            !file.error
+        );
 
-      if (successfulUploads.length === 0) {
-        throw new Error("No files uploaded");
+      if (
+        successfulUploads.length === 0
+      ) {
+        throw new Error(
+          "No files uploaded."
+        );
       }
 
       await apiFetch(
@@ -47,66 +105,112 @@ export function setupFileUpload(
         "POST",
         {
           chat: chatid,
-          files: successfulUploads
+          files:
+            successfulUploads
         },
         { json: true }
       );
 
       fileInput.value = "";
     } catch (err) {
-      console.error("Chat upload failed", err);
+      console.error(
+        "Chat upload failed",
+        err
+      );
 
       alert(
         err?.message ||
-        "Upload failed"
+          "Upload failed."
       );
     } finally {
-      progressBar.style.display = "none";
-      progressBar.value = 0;
+      setUploading(false);
     }
   }
 
   function getSelectedFiles() {
-    const files = Array.from(fileInput.files || []);
+    const files = Array.from(
+      fileInput.files || []
+    );
 
-    if (files.length > MAX_FILES) {
+    if (
+      files.length > MAX_FILES
+    ) {
       alert(
-        `Maximum ${MAX_FILES} files allowed`
+        `Maximum ${MAX_FILES} files allowed.`
       );
+
       return null;
     }
 
     return files;
   }
 
-  uploadButton.addEventListener("click", () => {
-    const files = getSelectedFiles();
+  uploadButton.addEventListener(
+    "click",
+    () => {
+      const files =
+        getSelectedFiles();
 
-    if (!files) {
-      return;
+      if (!files) {
+        return;
+      }
+
+      processFiles(files);
     }
+  );
 
-    processFiles(files);
-  });
-
-  dropZone.addEventListener("dragover", e => {
-    e.preventDefault();
-  });
-
-  dropZone.addEventListener("drop", e => {
-    e.preventDefault();
-
-    const files = Array.from(
-      e.dataTransfer?.files || []
-    );
-
-    if (files.length > MAX_FILES) {
-      alert(
-        `Maximum ${MAX_FILES} files allowed`
+  dropZone.addEventListener(
+    "dragenter",
+    e => {
+      e.preventDefault();
+      dropZone.classList.add(
+        "drag-over"
       );
-      return;
     }
+  );
 
-    processFiles(files);
-  });
+  dropZone.addEventListener(
+    "dragover",
+    e => {
+      e.preventDefault();
+    }
+  );
+
+  dropZone.addEventListener(
+    "dragleave",
+    () => {
+      dropZone.classList.remove(
+        "drag-over"
+      );
+    }
+  );
+
+  dropZone.addEventListener(
+    "drop",
+    e => {
+      e.preventDefault();
+
+      dropZone.classList.remove(
+        "drag-over"
+      );
+
+      const files =
+        Array.from(
+          e.dataTransfer
+            ?.files || []
+        );
+
+      if (
+        files.length >
+        MAX_FILES
+      ) {
+        alert(
+          `Maximum ${MAX_FILES} files allowed.`
+        );
+        return;
+      }
+
+      processFiles(files);
+    }
+  );
 }
