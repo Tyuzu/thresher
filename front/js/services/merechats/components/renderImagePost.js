@@ -7,7 +7,7 @@ async function RenderImagePost(mediaContainer, media) {
   imageList.className = "preview_image_wrap";
 
   const fullPaths = media.map(id =>
-    resolveImagePath(EntityType.CHAT, PictureType.PHOTO, `${id}.png`)
+    resolveImagePath(EntityType.CHAT, PictureType.PHOTO, `${id}`)
   );
 
   media.forEach((id, index) => {

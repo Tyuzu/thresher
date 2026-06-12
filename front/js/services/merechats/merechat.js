@@ -14,7 +14,10 @@ export function createSearchBar(chatView) {
 
   const label = createElement(
     "label",
-    { for: inputId, class: "sr-only" },
+    {
+      for: inputId,
+      class: "sr-only"
+    },
     [t("chat.search")]
   );
 
@@ -27,35 +30,47 @@ export function createSearchBar(chatView) {
   });
 
   const handler = debounce(() => {
-    const term = (input.value || "").toLowerCase();
+    const term = (input.value || "").trim().toLowerCase();
+
     if (!chatView) {
-return;
-}
+      return;
+    }
 
-    chatView
-      .querySelectorAll(".message-item")
-      .forEach(item => {
-        const content = item.querySelector(".msg-content");
-        if (!content) {
-return;
-}
+    chatView.querySelectorAll(".message-item").forEach(item => {
+      const content = item.querySelector(".msg-content");
 
-        const text = (content.textContent || "").toLowerCase();
-        item.hidden = term ? !text.includes(term) : false;
-      });
+      if (!content) {
+        return;
+      }
+
+      const text = (content.textContent || "").toLowerCase();
+
+      item.hidden = term ? !text.includes(term) : false;
+    });
   }, 200);
 
   input.addEventListener("input", handler);
 
-  return createElement("div", { class: "search-bar" }, [label, input]);
+  return createElement(
+    "div",
+    {
+      class: "search-bar",
+      role: "search"
+    },
+    [label, input]
+  );
 }
 
 /* -------------------------
    Chat list item
 --------------------------*/
 function createChatButton(chat, user, chatModal) {
+  const participants = Array.isArray(chat.participants)
+    ? chat.participants
+    : [];
+
   const label =
-    (chat.participants || []).filter(p => p !== user).join(", ") ||
+    participants.filter(p => p !== user).join(", ") ||
     t("chat.unknown");
 
   const btn = Button(
@@ -66,8 +81,12 @@ function createChatButton(chat, user, chatModal) {
   );
 
   btn.dataset.id = chat.chatid;
+
   btn.setAttribute("role", "button");
-  btn.setAttribute("aria-label", `${t("chat.with")} ${label}`);
+  btn.setAttribute(
+    "aria-label",
+    `${t("chat.with")} ${label}`
+  );
 
   btn.addEventListener("click", async () => {
     closeExistingSocket("chat-switch");
@@ -83,7 +102,9 @@ function createChatButton(chat, user, chatModal) {
       ["← ", t("chat.back")]
     );
 
-    const chatBody = createElement("div", { class: "chat-body" });
+    const chatBody = createElement("div", {
+      class: "chat-body"
+    });
 
     backBtn.addEventListener("click", () => {
       closeExistingSocket("back");
@@ -92,6 +113,7 @@ function createChatButton(chat, user, chatModal) {
     });
 
     chatModal.replaceChildren(backBtn, chatBody);
+
     await displayOneChat(chatBody, chat.chatid);
   });
 
@@ -101,93 +123,173 @@ function createChatButton(chat, user, chatModal) {
 /* -------------------------
    Chat list + infinite scroll
 --------------------------*/
-export async function loadChatList(listContainer, chatModal, reset = false) {
-  if (listContainer.dataset.loading === "true") {
-return;
-}
-  listContainer.dataset.loading = "true";
+export async function loadChatList(
+  listContainer,
+  chatModal,
+  reset = false
+) {
+  if (
+    listContainer.dataset.loading === "true" ||
+    listContainer.dataset.allLoaded === "true"
+  ) {
+    return;
+  }
 
   if (reset) {
     listContainer.dataset.skip = "0";
+    listContainer.dataset.allLoaded = "false";
     listContainer.replaceChildren();
 
     if (listContainer._observer) {
       listContainer._observer.disconnect();
       delete listContainer._observer;
     }
+
+    delete listContainer._sentinel;
   }
 
-  const skip = Number(listContainer.dataset.skip || "0");
+  listContainer.dataset.loading = "true";
   listContainer.setAttribute("aria-busy", "true");
 
+  const skip = Number(listContainer.dataset.skip || "0");
+  const limit = 20;
+
   let chats = [];
+
   try {
     chats =
       (await safemereFetch(
-        `/merechats/all?skip=${skip}&limit=20`
+        `/merechats/all?skip=${skip}&limit=${limit}`
       )) || [];
   } catch (e) {
     console.error("Failed to load chats", e);
+
     listContainer.appendChild(
-      createElement("p", { class: "error" }, [t("chat.load_error")])
+      createElement(
+        "p",
+        { class: "error" },
+        [t("chat.load_error")]
+      )
     );
+
     listContainer.dataset.loading = "false";
     listContainer.setAttribute("aria-busy", "false");
+
     return;
   }
 
+  listContainer
+    .querySelectorAll(".empty-chats, .error")
+    .forEach(el => el.remove());
+
   if (chats.length === 0 && skip === 0) {
     listContainer.appendChild(
-      createElement("p", { class: "empty-chats" }, [t("chat.no_chats")])
+      createElement(
+        "p",
+        { class: "empty-chats" },
+        [t("chat.no_chats")]
+      )
     );
   }
 
   const user = getState("user") || "";
+
   const existingIds = new Set(
-    Array.from(listContainer.children)
-      .map(el => el.dataset?.id)
+    Array.from(
+      listContainer.querySelectorAll("[data-id]")
+    )
+      .map(el => el.dataset.id)
       .filter(Boolean)
   );
 
   const fragment = document.createDocumentFragment();
 
   chats.forEach(chat => {
-    if (!existingIds.has(chat.chatid)) {
-      fragment.appendChild(createChatButton(chat, user, chatModal));
+    if (
+      !chat ||
+      !chat.chatid ||
+      existingIds.has(chat.chatid)
+    ) {
+      return;
     }
+
+    fragment.appendChild(
+      createChatButton(chat, user, chatModal)
+    );
   });
 
   listContainer.appendChild(fragment);
-  listContainer.dataset.skip = String(skip + chats.length);
-  listContainer.dataset.loading = "false";
-  listContainer.setAttribute("aria-busy", "false");
 
-  // Infinite scroll
-  if (!listContainer._observer && chats.length > 0) {
-    const sentinel = createElement("div", { class: "scroll-sentinel" });
-    listContainer.appendChild(sentinel);
+  listContainer.dataset.skip = String(
+    skip + chats.length
+  );
+
+  if (chats.length < limit) {
+    listContainer.dataset.allLoaded = "true";
+  }
+
+  let sentinel = listContainer._sentinel;
+
+  if (
+    !sentinel &&
+    listContainer.dataset.allLoaded !== "true"
+  ) {
+    sentinel = createElement("div", {
+      class: "scroll-sentinel",
+      "aria-hidden": "true"
+    });
+
+    listContainer._sentinel = sentinel;
 
     const observer = new IntersectionObserver(entries => {
-      if (entries.some(e => e.isIntersecting)) {
-        loadChatList(listContainer, chatModal, false);
+      if (
+        entries.some(entry => entry.isIntersecting) &&
+        listContainer.dataset.loading !== "true" &&
+        listContainer.dataset.allLoaded !== "true"
+      ) {
+        loadChatList(listContainer, chatModal);
       }
     });
 
     listContainer._observer = observer;
     observer.observe(sentinel);
   }
+
+  if (sentinel) {
+    listContainer.appendChild(sentinel);
+  }
+
+  if (
+    listContainer.dataset.allLoaded === "true" &&
+    listContainer._observer
+  ) {
+    listContainer._observer.disconnect();
+  }
+
+  listContainer.dataset.loading = "false";
+  listContainer.setAttribute("aria-busy", "false");
 }
 
 /* -------------------------
    Main chat UI
 --------------------------*/
-export async function displayChats(contentContainer, isLoggedIn) {
+export async function displayChats(
+  contentContainer,
+  isLoggedIn
+) {
   contentContainer.replaceChildren();
 
   if (!isLoggedIn) {
     contentContainer.appendChild(
-      createElement("p", { "aria-live": "polite" }, [t("chat.login_prompt")])
+      createElement(
+        "p",
+        {
+          "aria-live": "polite"
+        },
+        [t("chat.login_prompt")]
+      )
     );
+
     return;
   }
 
@@ -217,7 +319,11 @@ export async function displayChats(contentContainer, isLoggedIn) {
   });
 
   sidebar.append(chatList);
-  main.append(createSearchBar(chatView), chatView);
+  main.append(
+    createSearchBar(chatView),
+    chatView
+  );
+
   wrapper.append(sidebar, main);
   contentContainer.appendChild(wrapper);
 

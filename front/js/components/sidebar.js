@@ -15,6 +15,7 @@ const LINKS = [
   { href: "/recipes", label: "Recipes" },
   { href: "/products", label: "Products" },
   { href: "/tools", label: "Tools" },
+  { href: "/merechats", label: "Textchat" },
 ];
 
 const TILES = [
