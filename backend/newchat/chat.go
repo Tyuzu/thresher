@@ -138,10 +138,11 @@ func CreateMessage(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		previewText := buildLastMessagePreview(text, fileType, replyRef, 0)
 		update := map[string]any{
 			"$set": map[string]any{
 				"lastMessage": models.MessagePreview{
-					Text:      text,
+					Text:      previewText,
 					UserID:    userID,
 					Timestamp: now,
 				},
@@ -153,6 +154,42 @@ func CreateMessage(app *infra.Deps) httprouter.Handle {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(msg)
 	}
+}
+
+func buildLastMessagePreview(text, fileType string, replyRef *models.ReplyRef, fileCount int) string {
+	trimmed := strings.TrimSpace(text)
+	if trimmed != "" {
+		return trimmed
+	}
+
+	if replyRef != nil {
+		replyText := strings.TrimSpace(replyRef.Text)
+		if replyText != "" {
+			return replyText
+		}
+	}
+
+	if fileCount > 0 {
+		if fileCount == 1 {
+			return "Sent a file"
+		}
+		return "Sent multiple files"
+	}
+
+	switch fileType {
+	case "image":
+		return "Sent an image"
+	case "video":
+		return "Sent a video"
+	case "document":
+		return "Sent a document"
+	}
+
+	if replyRef != nil {
+		return "Replied to a message"
+	}
+
+	return ""
 }
 
 func UpdateMessage(app *infra.Deps) httprouter.Handle {

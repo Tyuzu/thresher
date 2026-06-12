@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"naevis/infra"
+	"naevis/models"
 	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
@@ -201,6 +202,20 @@ func UploadHandler(hub *Hub, app *infra.Deps) httprouter.Handle {
 			log.Println("db error:", err)
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return
+		}
+
+		previewText := buildLastMessagePreview(msg.Content, "", nil, len(msg.Files))
+		if previewText != "" {
+			_ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": payload.Chat}, map[string]any{
+				"$set": map[string]any{
+					"lastMessage": models.MessagePreview{
+						Text:      previewText,
+						UserID:    userID,
+						Timestamp: time.Unix(msg.Timestamp, 0),
+					},
+					"updatedAt": time.Now(),
+				},
+			})
 		}
 
 		out := outboundPayload{
