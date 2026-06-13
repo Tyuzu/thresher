@@ -47,7 +47,7 @@ async function displayMerchandise(container, merchData, entityType, eventId, isC
     container.appendChild(merchList);
   
     if (isCreator) {
-      container.appendChild(
+      container.prepend(
         Button(
           "Add Merchandise",
           "add-merch-btn",

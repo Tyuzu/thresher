@@ -88,13 +88,9 @@ async function addMerchandise(
             );
 
             uploadedImage = await uploadFile({
-
                 id: uid(),
-
                 file: imageFile,
-
-                entityType,
-
+                entityType: "merch",
                 entityId: String(eventId)
             });
 

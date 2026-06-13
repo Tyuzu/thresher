@@ -29,22 +29,29 @@ type Attachment struct {
 // valid entity types
 var validEntities = map[string]filemgr.EntityType{
 	"artist":       filemgr.EntityArtist,
-	"user":         filemgr.EntityUser,
 	"baito":        filemgr.EntityBaito,
 	"baito_worker": filemgr.EntityWorker,
-	"song":         filemgr.EntitySong,
-	"post":         filemgr.EntityPost,
+	"blogpost":     filemgr.EntityBlogPost,
 	"chat":         filemgr.EntityChat,
+	"crop":         filemgr.EntityCrop,
 	"event":        filemgr.EntityEvent,
 	"farm":         filemgr.EntityFarm,
-	"crop":         filemgr.EntityCrop,
-	"place":        filemgr.EntityPlace,
-	"media":        filemgr.EntityMedia,
 	"feedpost":     filemgr.EntityFeed,
-	"recipe":       filemgr.EntityRecipe,
-	"product":      filemgr.EntityProduct,
-	"tool":         filemgr.EntityProduct,
 	"live":         filemgr.EntityLive,
+	"media":        filemgr.EntityMedia,
+	"menu":         filemgr.EntityMenu,
+	"merch":        filemgr.EntityMerch,
+	"music":        filemgr.EntityMusic,
+	"place":        filemgr.EntityPlace,
+	"product":      filemgr.EntityProduct,
+	"recipe":       filemgr.EntityRecipe,
+	"report":       filemgr.EntityReport,
+	"review":       filemgr.EntityReview,
+	"song":         filemgr.EntitySong,
+	"tool":         filemgr.EntityProduct,
+	"user":         filemgr.EntityUser,
+	"vendor":       filemgr.EntityVendor,
+	"worker":       filemgr.EntityWorker,
 }
 
 type EntityMeta struct {
@@ -53,69 +60,93 @@ type EntityMeta struct {
 }
 
 var entityMeta = map[string]EntityMeta{
-	"user": {
-		Collection: "users",
-		IDField:    "userid",
-	},
 	"artist": {
 		Collection: "artists",
 		IDField:    "artistid",
-	},
-	"event": {
-		Collection: "events",
-		IDField:    "eventid",
-	},
-	"place": {
-		Collection: "places",
-		IDField:    "placeid",
-	},
-	"farm": {
-		Collection: "farms",
-		IDField:    "farmid",
-	},
-	"crop": {
-		Collection: "crops",
-		IDField:    "cropid",
-	},
-	"recipe": {
-		Collection: "recipes",
-		IDField:    "recipeid",
-	},
-	"product": {
-		Collection: "products",
-		IDField:    "productid",
 	},
 	"baito": {
 		Collection: "baitos",
 		IDField:    "baitoid",
 	},
-	"baito_worker": {
-		Collection: "baito_workers",
-		IDField:    "baito_worker_id",
-	},
-	"post": {
-		Collection: "posts",
-		IDField:    "postid",
-	},
-	"feedpost": {
-		Collection: "feedposts",
-		IDField:    "feedpostid",
-	},
-	"song": {
-		Collection: "songs",
-		IDField:    "songid",
+	"blogpost": {
+		Collection: "blogposts",
+		IDField:    "blogpostid",
 	},
 	"chat": {
 		Collection: "chats",
 		IDField:    "chatid",
 	},
+	"crop": {
+		Collection: "crops",
+		IDField:    "cropid",
+	},
+	"event": {
+		Collection: "events",
+		IDField:    "eventid",
+	},
+	"farm": {
+		Collection: "farms",
+		IDField:    "farmid",
+	},
+	"feedpost": {
+		Collection: "feedposts",
+		IDField:    "feedpostid",
+	},
 	"live": {
-		Collection: "lives",
-		IDField:    "liveid",
+		Collection: "events",
+		IDField:    "eventid",
 	},
 	"media": {
 		Collection: "media",
 		IDField:    "mediaid",
+	},
+	"menu": {
+		Collection: "menu",
+		IDField:    "menuid",
+	},
+	"merch": {
+		Collection: "merch",
+		IDField:    "merchid",
+	},
+	"music": {
+		Collection: "albums",
+		IDField:    "albumid",
+	},
+	"place": {
+		Collection: "places",
+		IDField:    "placeid",
+	},
+	"product": {
+		Collection: "products",
+		IDField:    "productid",
+	},
+	"recipe": {
+		Collection: "recipes",
+		IDField:    "recipeid",
+	},
+	"report": {
+		Collection: "reports",
+		IDField:    "reportid",
+	},
+	"review": {
+		Collection: "reviews",
+		IDField:    "reviewid",
+	},
+	"song": {
+		Collection: "songs",
+		IDField:    "songid",
+	},
+	"user": {
+		Collection: "users",
+		IDField:    "userid",
+	},
+	"vendor": {
+		Collection: "vendors",
+		IDField:    "vendorid",
+	},
+	"worker": {
+		Collection: "baitoworkers",
+		IDField:    "workerid",
 	},
 }
 

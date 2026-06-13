@@ -1,69 +1,95 @@
 import "../../../css/ui/MerchCard.css";
+import { createElement } from "../createElement.js";
+import Sightbox from "./Sightbox_zoom.mjs";
 
-// Updated MerchCard component
-const MerchCard = ({ name, price, image, stock, onBuy, onEdit, onDelete, onReport, isCreator, isLoggedIn }) => {
-    const card = document.createElement('div');
-    card.className = 'merch-card';
+const MerchCard = ({
+    name,
+    price,
+    image,
+    stock,
+    onBuy,
+    onEdit,
+    onDelete,
+    onReport,
+    isCreator,
+    isLoggedIn,
+}) => {
+    const imageElement = createElement("img", {
+        class: "merch-image",
+        src: image,
+        alt: name || "Merch",
+        loading: "lazy",
+    });
 
-    const img = document.createElement('img');
-    img.src = image;
-    img.alt = name;
-
-    const nameElement = document.createElement('h3');
-    nameElement.textContent = name;
-
-    const priceElement = document.createElement('p');
-    priceElement.textContent = `Price: $${(price / 100).toFixed(2)}`;
-
-    const stockElement = document.createElement('p');
-    stockElement.textContent = `Available: ${stock}`;
-
-    const actions = document.createElement('div');
-    actions.className = 'merch-actions';
+    const actions = createElement("div", {
+        class: "merch-actions",
+    });
 
     if (isCreator) {
-        const editButton = document.createElement('button');
-        editButton.textContent = 'Edit';
-        editButton.className = 'buttonx';
-        editButton.addEventListener('click', onEdit);
-
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Delete';
-        deleteButton.className = 'delete-btn buttonx';
-        deleteButton.addEventListener('click', onDelete);
-
-        actions.appendChild(editButton);
-        actions.appendChild(deleteButton);
+        actions.append(
+            createElement("button", {
+                class: "buttonx",
+                textContent: "Edit",
+                events: {
+                    click: onEdit,
+                },
+            }),
+            createElement("button", {
+                class: "delete-btn buttonx",
+                textContent: "Delete",
+                events: {
+                    click: onDelete,
+                },
+            })
+        );
     } else if (isLoggedIn) {
-        const buyButton = document.createElement('button');
-        buyButton.className = "buttonx";
-        if (stock > 0) {
-            buyButton.textContent = 'Buy';
-            buyButton.addEventListener('click', () => onBuy());
-        } else {
-            buyButton.textContent = 'Sold Out';
-            buyButton.style.backgroundColor = '#ddd';
-            buyButton.style.color = '#000';
-            buyButton.disabled = true;
-        }
+        const buyButton =
+            stock > 0
+                ? createElement("button", {
+                    class: "buttonx",
+                    textContent: "Buy",
+                    events: {
+                        click: onBuy,
+                    },
+                })
+                : createElement("button", {
+                    class: "buttonx",
+                    textContent: "Sold Out",
+                    disabled: true,
+                    style: {
+                        backgroundColor: "#ddd",
+                        color: "#000",
+                    },
+                });
 
-        const reportButton = document.createElement('button');
-        reportButton.textContent = 'Report';
-        reportButton.className = 'buttonx';
-        reportButton.addEventListener('click', onReport);
+        const reportButton = createElement("button", {
+            class: "buttonx",
+            textContent: "Report",
+            events: {
+                click: onReport,
+            },
+        });
 
-        actions.appendChild(buyButton);
-        actions.appendChild(reportButton);
-
+        actions.append(buyButton, reportButton);
     }
 
-    card.appendChild(img);
-    card.appendChild(nameElement);
-    card.appendChild(priceElement);
-    card.appendChild(stockElement);
-    card.appendChild(actions);
+    imageElement.addEventListener("click", () => Sightbox(image, "image"));
 
-    return card;
+    return createElement(
+        "div",
+        { class: "merch-card" },
+        [
+            imageElement,
+            createElement("h3", { textContent: name }),
+            createElement("p", {
+                textContent: `Price: $${(price / 100).toFixed(2)}`,
+            }),
+            createElement("p", {
+                textContent: `Available: ${stock}`,
+            }),
+            actions,
+        ]
+    );
 };
 
 export default MerchCard;

@@ -5,58 +5,57 @@ import { SRC_URL } from "../state/state";
 // Entity types
 export const EntityType = {
     ARTIST: "artist",
-    MEMBER: "member",
-    USER: "user",
     BAITO: "baito",
-    WORKER: "worker",
-    SONG: "song",
-    POST: "post",
+    BLOGPOST: "blogpost",
     CHAT: "chat",
+    CROP: "crop",
     EVENT: "event",
     FARM: "farm",
-    CROP: "crop",
-    PLACE: "place",
-    RECIPE: "recipe",
-    PRODUCT: "product",
-    TOOL: "tool",
+    FEED: "feedpost",
     LIVE: "live",
     MEDIA: "media",
-    MERCH: "merch",
     MENU: "menu",
-    FEED: "feedpost",
-    LOOP: "loops",
+    MERCH: "merch",
+    MUSIC: "music",
+    PLACE: "place",
+    PRODUCT: "product",
+    RECIPE: "recipe",
+    REPORT: "report",
+    REVIEW: "review",
+    SONG: "song",
+    USER: "user",
+    VENDOR: "vendor",
+    WORKER: "worker",
 };
 
 // Picture types
 export const PictureType = {
+    AUDIO: "audio",
     BANNER: "banner",
+    DOCUMENT: "document",
+    FILE: "file",
+    MEMBER: "member",
     PHOTO: "photo",
     POSTER: "poster",
     SEATING: "seating",
-    MEMBER: "member",
+    SONG: "song",
     THUMB: "thumb",
-    IMAGE: "images",
-    AUDIO: "audio",
-    VIDEO: "videos",
-    DOCUMENT: "docs",
-    GALLERY: "gallery",
-    FILE: "files",
+    VIDEO: "video",
 };
 
 // Folder mapping
 const PictureSubfolders = {
+    [PictureType.AUDIO]: "audio",
     [PictureType.BANNER]: "banner",
+    [PictureType.DOCUMENT]: "docs",
+    [PictureType.FILE]: "files",
+    [PictureType.MEMBER]: "member",
     [PictureType.PHOTO]: "photo",
     [PictureType.POSTER]: "poster",
     [PictureType.SEATING]: "seating",
-    [PictureType.MEMBER]: "member",
+    [PictureType.SONG]: "song",
     [PictureType.THUMB]: "thumb",
-    [PictureType.IMAGE]: "images",
-    [PictureType.AUDIO]: "audio",
     [PictureType.VIDEO]: "videos",
-    [PictureType.DOCUMENT]: "docs",
-    [PictureType.GALLERY]: "gallery",
-    [PictureType.FILE]: "files",
 };
 
 const VALID_ENTITY_TYPES = new Set(
@@ -78,12 +77,10 @@ export function resolveImagePath(
         return fallback;
     }
 
-    // Validate entity type
     if (!VALID_ENTITY_TYPES.has(entityType)) {
         return fallback;
     }
 
-    // Reject obviously unsafe input
     if (
         /^(file:|data:|javascript:)/i.test(filename) ||
         filename.includes("..")
@@ -91,7 +88,6 @@ export function resolveImagePath(
         return fallback;
     }
 
-    // Handle full external URLs
     if (/^https?:\/\//i.test(filename)) {
         try {
             const url = new URL(filename);
@@ -115,25 +111,20 @@ export function resolveImagePath(
                 return fallback;
             }
 
-            // Proxy external images through backend
             return `${SRC_URL}/proxy?url=${encodeURIComponent(filename)}`;
-
         } catch {
             return fallback;
         }
     }
 
-    // Validate local filename/path
     if (!/^[a-zA-Z0-9._/-]+$/.test(filename)) {
         return fallback;
     }
 
-    const folder =
-        PictureSubfolders[pictureType] || "misc";
+    const folder = PictureSubfolders[pictureType] || "misc";
 
     let finalName = filename;
 
-    // Normalize extensions
     if (pictureType === PictureType.THUMB) {
         if (!finalName.toLowerCase().endsWith(".jpg")) {
             const dotIndex = finalName.lastIndexOf(".");
@@ -159,15 +150,13 @@ export function resolveImagePath(
     return `${SRC_URL}/uploads/${entityType}/${folder}/${finalName}`;
 }
 
-// Helper to check if type is image (non-thumb)
 function isImageType(pictureType) {
     return [
+        PictureType.BANNER,
+        PictureType.MEMBER,
         PictureType.PHOTO,
         PictureType.POSTER,
-        PictureType.BANNER,
         PictureType.SEATING,
-        PictureType.MEMBER,
-        PictureType.IMAGE,
-        PictureType.GALLERY,
+        PictureType.THUMB,
     ].includes(pictureType);
 }

@@ -16,8 +16,8 @@ function showLoadingMessage(message) {
 function removeLoadingMessage() {
     const loadingMsg = document.getElementById("loading-msg");
     if (loadingMsg) {
-loadingMsg.remove();
-}
+        loadingMsg.remove();
+    }
 }
 
 function capitalize(string) {
@@ -39,4 +39,4 @@ function previewAvatar(event) {
     }
 }
 
-export {formatDate, showLoadingMessage, removeLoadingMessage, capitalize, previewAvatar};
+export { formatDate, showLoadingMessage, removeLoadingMessage, capitalize, previewAvatar };

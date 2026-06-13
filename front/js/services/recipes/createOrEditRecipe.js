@@ -4,6 +4,7 @@ import Button from "../../components/base/Button.js";
 import { createFormGroup } from "../../components/createFormGroup.js";
 import { apiFetch } from "../../api/api.js";
 import { displayRecipe } from "./recipePage.js";
+import { navigate } from "../../routes/index.js";
 
 export function createRecipe(container) {
   renderRecipeForm(container, "create", null);
@@ -225,7 +226,8 @@ ingredientsGroup.appendChild(addIngredientBtn);
         form.reset();
       }
       alert("Recipe saved successfully!");
-      displayRecipe(container, true, result?.recipeid);
+      // displayRecipe(container, true, result?.recipeid);
+      navigate(`/recipe/${result?.recipeid}`);
     } catch (err) {
       console.error("Upload failed:", err);
       alert("Failed to save recipe.");
