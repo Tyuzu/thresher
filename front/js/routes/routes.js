@@ -19,6 +19,7 @@ export const staticRoutes = {
   "/create-event": { moduleImport: () => import("../pages/events/createEvent.js"), functionName: "CreateEvent", protected: true },
   "/events": { moduleImport: () => import("../pages/events/events.js"), functionName: "Events" },
   "/artists": { moduleImport: () => import("../pages/artist/artists.js"), functionName: "Artists" },
+  "/vendors": { moduleImport: () => import("../pages/vendors/vendors.js"), functionName: "Vendors" },
 
   "/map": { moduleImport: () => import("../pages/gtamap/mapgta.js"), functionName: "MapGTA" },
   "/places": { moduleImport: () => import("../pages/places/places.js"), functionName: "Places" },
