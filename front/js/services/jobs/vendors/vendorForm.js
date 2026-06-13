@@ -1,97 +1,123 @@
-import { createElement } from "../../../components/createElement.js";
-import Button from "../../../components/base/Button.js";
 import { apiFetch } from "../../../api/api.js";
 import Notify from "../../../components/ui/Notify.mjs";
-import { hireVendors } from "./hireVendors.js";
 
 /**
  * Vendor registration form component
  * Allows users to register as a vendor
  */
-export function vendorForm(anacon, isLoggedIn, eventId) {
-    const form = createElement("form", { id: "vendor-form", class: "vendor-registration-form" }, [
-        createElement("h4", {}, ["List Yourself as a Vendor"]),
+export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null) {
+    const form = document.createElement("form");
+    form.className = "vendor-registration-form";
+    form.noValidate = true;
 
-        createElement("input", {
-            type: "text",
-            placeholder: "Your Full Name",
-            name: "name",
-            required: true,
-            class: "form-input"
-        }),
+    const title = document.createElement("h4");
+    title.textContent = "List Yourself as a Vendor";
+    form.appendChild(title);
 
-        createElement("select", {
-            name: "category",
-            required: true,
-            class: "form-input"
-        }, [
-            createElement("option", { value: "", selected: true, disabled: true }, ["Select a Category"]),
-            createElement("option", { value: "Catering" }, ["Catering & Food Services"]),
-            createElement("option", { value: "Entertainment" }, ["Entertainment & Music"]),
-            createElement("option", { value: "Photography" }, ["Photography & Videography"]),
-            createElement("option", { value: "Decoration" }, ["Decoration & Setup"]),
-            createElement("option", { value: "Transportation" }, ["Transportation"]),
-            createElement("option", { value: "Rentals" }, ["Equipment Rentals"]),
-            createElement("option", { value: "Staffing" }, ["Staff & Personnel"]),
-            createElement("option", { value: "Other" }, ["Other"])
-        ]),
+    const nameInput = createInput({
+        type: "text",
+        placeholder: "Your Full Name",
+        name: "name",
+        required: true,
+        className: "form-input"
+    });
 
-        createElement("textarea", {
-            name: "description",
-            placeholder: "Brief description of your services (optional)",
-            class: "form-input",
-            rows: 3
-        }),
+    const categorySelect = document.createElement("select");
+    categorySelect.name = "category";
+    categorySelect.required = true;
+    categorySelect.className = "form-input";
 
-        createElement("input", {
-            type: "email",
-            placeholder: "Contact Email (optional)",
-            name: "email",
-            class: "form-input"
-        }),
+    const placeholderOption = document.createElement("option");
+    placeholderOption.value = "";
+    placeholderOption.textContent = "Select a Category";
+    placeholderOption.disabled = true;
+    placeholderOption.selected = true;
+    categorySelect.appendChild(placeholderOption);
 
-        createElement("input", {
-            type: "tel",
-            placeholder: "Contact Phone (optional)",
-            name: "phone",
-            class: "form-input"
-        }),
+    const categories = [
+        ["Catering", "Catering & Food Services"],
+        ["Entertainment", "Entertainment & Music"],
+        ["Photography", "Photography & Videography"],
+        ["Decoration", "Decoration & Setup"],
+        ["Transportation", "Transportation"],
+        ["Rentals", "Equipment Rentals"],
+        ["Staffing", "Staff & Personnel"],
+        ["Other", "Other"]
+    ];
 
-        createElement("input", {
-            type: "text",
-            placeholder: "Location/Service Area (optional)",
-            name: "location",
-            class: "form-input"
-        }),
+    for (const [value, label] of categories) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = label;
+        categorySelect.appendChild(option);
+    }
 
-        Button("Register as Vendor", "vendor-submit", {
-            click: async (e) => {
-                e.preventDefault();
-                await handleVendorRegistration(anacon, isLoggedIn, eventId);
-            }
-        })
-    ]);
+    const descriptionInput = createTextarea({
+        name: "description",
+        placeholder: "Brief description of your services (optional)",
+        className: "form-input",
+        rows: 3
+    });
+
+    const emailInput = createInput({
+        type: "email",
+        placeholder: "Contact Email (optional)",
+        name: "email",
+        className: "form-input"
+    });
+
+    const phoneInput = createInput({
+        type: "tel",
+        placeholder: "Contact Phone (optional)",
+        name: "phone",
+        className: "form-input"
+    });
+
+    const locationInput = createInput({
+        type: "text",
+        placeholder: "Location/Service Area (optional)",
+        name: "location",
+        className: "form-input"
+    });
+
+    const submitButton = document.createElement("button");
+    submitButton.type = "submit";
+    submitButton.id = `vendor-submit-${Math.random().toString(36).slice(2, 10)}`;
+    submitButton.className = "btn-primary";
+    submitButton.textContent = "Register as Vendor";
+
+    form.appendChild(nameInput);
+    form.appendChild(categorySelect);
+    form.appendChild(descriptionInput);
+    form.appendChild(emailInput);
+    form.appendChild(phoneInput);
+    form.appendChild(locationInput);
+    form.appendChild(submitButton);
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        await handleVendorRegistration(form, isLoggedIn, eventId, onSuccess);
+    });
 
     return form;
 }
 
-async function handleVendorRegistration(anacon, isLoggedIn, eventId) {
-    const formEl = document.getElementById("vendor-form");
+async function handleVendorRegistration(formEl, isLoggedIn, eventId, onSuccess) {
     const nameInput = formEl.querySelector("input[name='name']");
     const categoryInput = formEl.querySelector("select[name='category']");
     const descriptionInput = formEl.querySelector("textarea[name='description']");
     const emailInput = formEl.querySelector("input[name='email']");
     const phoneInput = formEl.querySelector("input[name='phone']");
     const locationInput = formEl.querySelector("input[name='location']");
+    const submitBtn = formEl.querySelector("button[type='submit']");
 
-    const name = nameInput.value.trim();
-    const category = categoryInput.value.trim();
-    const description = descriptionInput.value.trim();
-    const email = emailInput.value.trim();
-    const phone = phoneInput.value.trim();
-    const location = locationInput.value.trim();
+    const name = nameInput ? nameInput.value.trim() : "";
+    const category = categoryInput ? categoryInput.value.trim() : "";
+    const description = descriptionInput ? descriptionInput.value.trim() : "";
+    const email = emailInput ? emailInput.value.trim() : "";
+    const phone = phoneInput ? phoneInput.value.trim() : "";
+    const location = locationInput ? locationInput.value.trim() : "";
 
-    // Validation
     if (!name || !category) {
         Notify("Please fill in required fields (Name and Category).", {
             type: "warning",
@@ -108,11 +134,12 @@ async function handleVendorRegistration(anacon, isLoggedIn, eventId) {
         return;
     }
 
-    try {
-        const submitBtn = document.getElementById("vendor-submit");
+    if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.textContent = "Registering...";
+    }
 
+    try {
         const payload = {
             name,
             category,
@@ -122,28 +149,40 @@ async function handleVendorRegistration(anacon, isLoggedIn, eventId) {
             ...(location && { location })
         };
 
-        const response = await apiFetch(`/vendors`, "POST", payload);
+        const response = await apiFetch("/vendors", "POST", payload);
 
-        Notify("Vendor registered successfully! 🎉", {
+        if (response?.success === false) {
+            throw new Error(response.error || "Failed to register vendor.");
+        }
+
+        Notify("Vendor registered successfully!", {
             type: "success",
             duration: 3000
         });
 
-        // Reset form
         formEl.reset();
 
-        // Reload vendors list
-        setTimeout(() => {
-            hireVendors(anacon, isLoggedIn, eventId);
-        }, 1000);
+        if (typeof onSuccess === "function") {
+            await onSuccess({
+                eventId,
+                isLoggedIn,
+                response,
+                payload
+            });
+        } else if (typeof document !== "undefined" && typeof CustomEvent === "function") {
+            document.dispatchEvent(
+                new CustomEvent("vendor-registered", {
+                    detail: { eventId, response, payload }
+                })
+            );
+        }
     } catch (error) {
         console.error("Vendor registration error:", error);
         Notify(
-            error.message || "Failed to register vendor. Please try again.",
+            error?.message || "Failed to register vendor. Please try again.",
             { type: "error", duration: 3000 }
         );
     } finally {
-        const submitBtn = document.getElementById("vendor-submit");
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = "Register as Vendor";
@@ -151,8 +190,35 @@ async function handleVendorRegistration(anacon, isLoggedIn, eventId) {
     }
 }
 
+function createInput(attributes) {
+    const input = document.createElement("input");
+    for (const [key, value] of Object.entries(attributes)) {
+        if (value !== undefined && value !== null) {
+            if (key === "className") {
+                input.className = value;
+            } else {
+                input.setAttribute(key, String(value));
+            }
+        }
+    }
+    return input;
+}
+
+function createTextarea(attributes) {
+    const textarea = document.createElement("textarea");
+    for (const [key, value] of Object.entries(attributes)) {
+        if (value !== undefined && value !== null) {
+            if (key === "className") {
+                textarea.className = value;
+            } else {
+                textarea.setAttribute(key, String(value));
+            }
+        }
+    }
+    return textarea;
+}
+
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 }
-

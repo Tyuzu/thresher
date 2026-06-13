@@ -1,17 +1,35 @@
 import { apiFetch } from "../../../api/api.js";
 import Notify from "../../../components/ui/Notify.mjs";
 
+function normalizeErrorMessage(error) {
+    if (!error) {
+        return "";
+    }
+
+    if (typeof error === "string") {
+        return error;
+    }
+
+    return error.message || error.error || "";
+}
+
+function dispatchVendorEvent(eventName, detail) {
+    if (typeof document !== "undefined" && typeof CustomEvent === "function") {
+        document.dispatchEvent(new CustomEvent(eventName, { detail }));
+    }
+}
+
 /**
  * Handle vendor hiring action
  * Sends a POST request to hire a vendor for an event
  */
 export async function hireVendor(eventId, vendorId, vendorName) {
-    if (!eventId) {
-        Notify("Event ID is required to hire vendors.", {
+    if (!eventId || !vendorId) {
+        Notify("Event ID and Vendor ID are required to hire vendors.", {
             type: "error",
             duration: 3000
         });
-        return;
+        return false;
     }
 
     try {
@@ -21,35 +39,52 @@ export async function hireVendor(eventId, vendorId, vendorName) {
             { vendorid: vendorId }
         );
 
-        // Check for specific error conditions
-        if (result.error === "ALREADY_HIRED") {
-            Notify(`${vendorName} is already hired for this event.`, {
+        if (result?.success === false) {
+            const message = normalizeErrorMessage(result).toLowerCase();
+
+            if (message.includes("already hired")) {
+                Notify(`${vendorName || "This vendor"} is already hired for this event.`, {
+                    type: "info",
+                    duration: 3000
+                });
+                return false;
+            }
+
+            throw new Error(result.error || "Failed to hire vendor.");
+        }
+
+        if (result?.error === "ALREADY_HIRED") {
+            Notify(`${vendorName || "This vendor"} is already hired for this event.`, {
                 type: "info",
                 duration: 3000
             });
-            return;
+            return false;
         }
 
-        // Success
-        Notify(`✓ Successfully hired ${vendorName} for your event!`, {
+        Notify(`Successfully hired ${vendorName || "vendor"} for your event!`, {
             type: "success",
             duration: 3000
         });
 
-        // Optional: Trigger a callback or refresh
-        if (typeof window.onVendorHired === "function") {
-            window.onVendorHired(result);
-        }
+        dispatchVendorEvent("vendor-hired", {
+            eventId,
+            vendorId,
+            vendorName,
+            result
+        });
+
+        return true;
     } catch (error) {
         console.error("Error hiring vendor:", error);
 
-        // Handle specific error messages
-        if (error.message && error.message.includes("already hired")) {
-            Notify(`${vendorName} is already hired for this event.`, {
+        const message = normalizeErrorMessage(error).toLowerCase();
+
+        if (message.includes("already hired")) {
+            Notify(`${vendorName || "This vendor"} is already hired for this event.`, {
                 type: "info",
                 duration: 3000
             });
-        } else if (error.message && error.message.includes("not found")) {
+        } else if (message.includes("not found")) {
             Notify("Vendor not found. Please refresh and try again.", {
                 type: "error",
                 duration: 3000
@@ -60,6 +95,8 @@ export async function hireVendor(eventId, vendorId, vendorName) {
                 duration: 3000
             });
         }
+
+        return false;
     }
 }
 
@@ -69,32 +106,41 @@ export async function hireVendor(eventId, vendorId, vendorName) {
 export async function removeVendor(eventId, vendorId, vendorName) {
     if (!eventId || !vendorId) {
         Notify("Invalid event or vendor ID.", {
-            type: "error"
+            type: "error",
+            duration: 3000
         });
-        return;
+        return false;
     }
 
     try {
-        await apiFetch(
+        const result = await apiFetch(
             `/vendors/events/${eventId}/vendor/${vendorId}`,
             "DELETE"
         );
 
-        Notify(`${vendorName} has been removed from your event.`, {
+        if (result?.success === false) {
+            throw new Error(result.error || "Failed to remove vendor.");
+        }
+
+        Notify(`${vendorName || "Vendor"} has been removed from your event.`, {
             type: "success",
             duration: 3000
         });
 
-        // Trigger refresh
-        if (typeof window.onVendorRemoved === "function") {
-            window.onVendorRemoved(vendorId);
-        }
+        dispatchVendorEvent("vendor-removed", {
+            eventId,
+            vendorId,
+            vendorName,
+            result
+        });
+
+        return true;
     } catch (error) {
         console.error("Error removing vendor:", error);
         Notify("Failed to remove vendor. Please try again.", {
             type: "error",
             duration: 3000
         });
+        return false;
     }
 }
-
