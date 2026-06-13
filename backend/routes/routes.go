@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"naevis/ac"
 	"naevis/activity"
 	"naevis/ads"
 	"naevis/analytics"
@@ -521,6 +522,22 @@ func AddSuggestionsRoutes(router *httprouter.Router, app *infra.Deps, rateLimite
 	authmidware := middleware.Authenticate(app)
 	router.GET("/api/v1/suggestions/places/nearby", rateLimiter.Limit(suggestions.GetNearbyPlaces(app)))
 	router.GET("/api/v1/suggestions/follow", rateLimiter.Limit(authmidware(suggestions.SuggestFollowers(app))))
+}
+
+func AddAutocompleteRoutes(
+	router *httprouter.Router,
+	app *infra.Deps,
+	rateLimiter *middleware.RateLimiter,
+) {
+	router.GET(
+		"/api/v1/ac/places",
+		rateLimiter.Limit(ac.AutocompletePlaces(app)),
+	)
+
+	router.GET(
+		"/api/v1/ac/users",
+		rateLimiter.Limit(ac.AutocompleteUsers(app)),
+	)
 }
 
 func AddReviewsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {

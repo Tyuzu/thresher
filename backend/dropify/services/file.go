@@ -6,6 +6,7 @@ import (
 	"naevis/dropify/filedrop"
 	"naevis/dropify/filemgr"
 	"net/http"
+	"path/filepath"
 	"strings"
 )
 
@@ -81,9 +82,15 @@ func (fs *FileService) processSingleFile(
 	userid string,
 ) ([]Attachment, error) {
 
-	// Feed media special handling
-	if fieldKey == "feed" {
-		return fs.processFeedFile(r, fileHeader, fieldKey, userid)
+	// Feed/feedpost media special handling
+	if fieldKey == "feedpost" || entity == filemgr.EntityFeed {
+		return fs.processFeedFile(r, fileHeader, fieldKey, entity, userid)
+	}
+
+	// Auto-detect video for feedpost with file field
+	if entity == filemgr.EntityFeed && fieldKey == "file" && isVideoFile(fileHeader.Filename) {
+		// Convert to feed-style video processing
+		return fs.processFeedFile(r, fileHeader, "feedpost", entity, userid)
 	}
 
 	// Regular uploads
@@ -95,13 +102,21 @@ func (fs *FileService) processFeedFile(
 	r *http.Request,
 	fileHeader *multipart.FileHeader,
 	fieldKey string,
+	entity filemgr.EntityType,
 	userid string,
 ) ([]Attachment, error) {
 
 	postType := strings.ToLower(strings.TrimSpace(r.FormValue("postType")))
 
+	// Auto-detect from filename if postType not provided
 	if postType == "" {
-		postType = "video"
+		if isVideoFile(fileHeader.Filename) {
+			postType = "video"
+		} else if isAudioFile(fileHeader.Filename) {
+			postType = "audio"
+		} else {
+			postType = "video" // default to video for feed
+		}
 	}
 
 	picType := postTypeToImageType(postType)
@@ -111,7 +126,7 @@ func (fs *FileService) processFeedFile(
 
 		savedPath, uniqueID, ext, err := filedrop.SaveUploadedFile(
 			fileHeader,
-			filemgr.EntityFeed,
+			entity,
 			picType,
 			userid,
 		)
@@ -120,7 +135,7 @@ func (fs *FileService) processFeedFile(
 			return nil, fmt.Errorf("failed to save file: %w", err)
 		}
 
-		uploadDir := filemgr.ResolvePath(filemgr.EntityFeed, picType)
+		uploadDir := filemgr.ResolvePath(entity, picType)
 
 		// Video
 		if postType == "video" {
@@ -130,7 +145,7 @@ func (fs *FileService) processFeedFile(
 				savedPath,
 				uploadDir,
 				uniqueID,
-				filemgr.EntityFeed,
+				entity,
 			)
 
 			if err != nil {
@@ -152,7 +167,7 @@ func (fs *FileService) processFeedFile(
 			savedPath,
 			uploadDir,
 			uniqueID,
-			filemgr.EntityFeed,
+			entity,
 		)
 
 		return []Attachment{
@@ -169,7 +184,7 @@ func (fs *FileService) processFeedFile(
 	return fs.processRegularFile(
 		fileHeader,
 		fieldKey,
-		filemgr.EntityFeed,
+		entity,
 		userid,
 	)
 }
@@ -252,4 +267,29 @@ func postTypeToImageType(postType string) filemgr.PictureType {
 	default:
 		return filemgr.PicPhoto
 	}
+}
+
+// isVideoFile checks if a file is a video based on extension
+func isVideoFile(filename string) bool {
+	videoExtensions := map[string]bool{
+		".mp4":  true,
+		".webm": true,
+		".avi":  true,
+		".mov":  true,
+	}
+
+	ext := strings.ToLower(filepath.Ext(filename))
+	return videoExtensions[ext]
+}
+
+// isAudioFile checks if a file is audio based on extension
+func isAudioFile(filename string) bool {
+	audioExtensions := map[string]bool{
+		".mp3": true,
+		".wav": true,
+		".aac": true,
+	}
+
+	ext := strings.ToLower(filepath.Ext(filename))
+	return audioExtensions[ext]
 }

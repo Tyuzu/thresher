@@ -7,6 +7,7 @@ type DB struct {
 	AppealsCollection                  string
 	ArtistEventsCollection             string
 	ArtistsCollection                  string
+	AutocompleteCollection             string
 	BaitoApplicationsCollection        string
 	BaitoCollection                    string
 	BaitoWorkerCollection              string
@@ -76,6 +77,7 @@ var Collections = DB{
 	AppealsCollection:                  "appeals",
 	ArtistEventsCollection:             "artistevents",
 	ArtistsCollection:                  "artists",
+	AutocompleteCollection:             "artists",
 	BaitoApplicationsCollection:        "baitoapply",
 	BaitoCollection:                    "baitos",
 	BaitoWorkerCollection:              "baitoworkers",

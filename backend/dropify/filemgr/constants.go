@@ -6,47 +6,46 @@ type EntityType string
 type PictureType string
 
 const (
-	EntityArtist  EntityType = "artist"
-	EntityUser    EntityType = "user"
-	EntityBaito   EntityType = "baito"
-	EntityWorker  EntityType = "worker"
-	EntitySong    EntityType = "song"
-	EntityPost    EntityType = "post"
-	EntityChat    EntityType = "chat"
-	EntityEvent   EntityType = "event"
-	EntityFarm    EntityType = "farm"
-	EntityCrop    EntityType = "crop"
-	EntityPlace   EntityType = "place"
-	EntityMedia   EntityType = "media"
-	EntityFeed    EntityType = "feed"
-	EntityRecipe  EntityType = "recipe"
-	EntityProduct EntityType = "product"
-	EntityLive    EntityType = "live"
+	EntityArtist   EntityType = "artist"
+	EntityBaito    EntityType = "baito"
+	EntityBlogPost EntityType = "blogpost"
+	EntityChat     EntityType = "chat"
+	EntityCrop     EntityType = "crop"
+	EntityEvent    EntityType = "event"
+	EntityFarm     EntityType = "farm"
+	EntityFeed     EntityType = "feedpost"
+	EntityLive     EntityType = "live"
+	EntityMedia    EntityType = "media"
+	EntityMenu     EntityType = "menu"
+	EntityMerch    EntityType = "merch"
+	EntityMusic    EntityType = "music"
+	EntityPlace    EntityType = "place"
+	EntityProduct  EntityType = "product"
+	EntityRecipe   EntityType = "recipe"
+	EntityReport   EntityType = "report"
+	EntityReview   EntityType = "review"
+	EntitySong     EntityType = "song"
+	EntityUser     EntityType = "user"
+	EntityVendor   EntityType = "vendor"
+	EntityWorker   EntityType = "worker"
 
+	PicAudio    PictureType = "audio"
 	PicBanner   PictureType = "banner"
+	PicDocument PictureType = "document"
+	PicFile     PictureType = "file"
+	PicMember   PictureType = "member"
 	PicPhoto    PictureType = "photo"
 	PicPoster   PictureType = "poster"
 	PicSeating  PictureType = "seating"
-	PicMember   PictureType = "member"
-	PicThumb    PictureType = "thumb"
-	PicAudio    PictureType = "audio"
 	PicSong     PictureType = "song"
+	PicThumb    PictureType = "thumb"
 	PicVideo    PictureType = "video"
-	PicDocument PictureType = "document"
-	PicFile     PictureType = "file"
 )
 
 var (
 	AllowedExtensions = map[PictureType][]string{
-		PicPhoto:    {".jpg", ".jpeg", ".png", ".gif", ".webp"},
-		PicThumb:    {".jpg", ".jpeg", ".png"},
-		PicPoster:   {".jpg", ".jpeg", ".png", ".webp"}, // thumbnail/poster support
-		PicBanner:   {".jpg", ".jpeg", ".png", ".webp"},
-		PicMember:   {".jpg", ".jpeg", ".png", ".webp"},
-		PicSeating:  {".jpg", ".jpeg", ".png", ".webp"},
 		PicAudio:    {".mp3", ".wav", ".aac"},
-		PicSong:     {".mp3", ".wav", ".aac"},
-		PicVideo:    {".mp4", ".webm"},
+		PicBanner:   {".jpg", ".jpeg", ".png", ".webp"},
 		PicDocument: {".pdf"},
 		PicFile: {
 			".pdf",
@@ -54,47 +53,51 @@ var (
 			".mp3", ".wav", ".aac",
 			".mp4", ".webm",
 		},
+		PicMember:  {".jpg", ".jpeg", ".png", ".webp"},
+		PicPhoto:   {".jpg", ".jpeg", ".png", ".gif", ".webp"},
+		PicPoster:  {".jpg", ".jpeg", ".png", ".webp"}, // thumbnail/poster support
+		PicSeating: {".jpg", ".jpeg", ".png", ".webp"},
+		PicSong:    {".mp3", ".wav", ".aac"},
+		PicThumb:   {".jpg", ".jpeg", ".png"},
+		PicVideo:   {".mp4", ".webm"},
 	}
 
 	AllowedMIMEs = map[PictureType][]string{
-		PicPhoto:   {"image/jpeg", "image/png", "image/gif", "image/webp"},
-		PicThumb:   {"image/jpeg", "image/png"},
-		PicPoster:  {"image/jpeg", "image/png", "image/webp"}, // matches PNG/JPEG thumbnail uploads
-		PicBanner:  {"image/jpeg", "image/png", "image/webp"},
-		PicMember:  {"image/jpeg", "image/png", "image/webp"},
-		PicSeating: {"image/jpeg", "image/png", "image/webp"},
-
-		PicAudio: {"audio/mpeg", "audio/wav", "audio/aac", "video/mp4"},
-		PicSong:  {"audio/mpeg", "audio/wav", "audio/aac", "video/mp4"},
-		PicVideo: {"video/mp4", "video/webm"},
-
+		PicAudio:    {"audio/mpeg", "audio/wav", "audio/aac", "video/mp4"},
+		PicBanner:   {"image/jpeg", "image/png", "image/webp"},
 		PicDocument: {"application/pdf"},
-
 		PicFile: {
 			"application/pdf",
 			"image/jpeg", "image/png", "image/gif", "image/webp",
 			"audio/mpeg", "audio/wav", "audio/aac",
 			"video/mp4", "video/webm",
 		},
+		PicMember:  {"image/jpeg", "image/png", "image/webp"},
+		PicPhoto:   {"image/jpeg", "image/png", "image/gif", "image/webp"},
+		PicPoster:  {"image/jpeg", "image/png", "image/webp"}, // matches PNG/JPEG thumbnail uploads
+		PicSeating: {"image/jpeg", "image/png", "image/webp"},
+		PicSong:    {"audio/mpeg", "audio/wav", "audio/aac", "video/mp4"},
+		PicThumb:   {"image/jpeg", "image/png"},
+		PicVideo:   {"video/mp4", "video/webm"},
 	}
 
 	PictureSubfolders = map[PictureType]string{
+		PicAudio:    "audio",
 		PicBanner:   "banner",
+		PicDocument: "docs",
+		PicFile:     "files",
+		PicMember:   "member",
 		PicPhoto:    "photo",
 		PicPoster:   "poster",
 		PicSeating:  "seating",
-		PicMember:   "member",
-		PicThumb:    "thumb",
-		PicAudio:    "audio",
 		PicSong:     "song",
+		PicThumb:    "thumb",
 		PicVideo:    "videos",
-		PicDocument: "docs",
-		PicFile:     "files",
 	}
 
+	ErrFileTooLarge     = errors.New("file size exceeds limit")
 	ErrInvalidExtension = errors.New("invalid file extension")
 	ErrInvalidMIME      = errors.New("invalid MIME type")
-	ErrFileTooLarge     = errors.New("file size exceeds limit")
 
 	LogFunc func(path string, size int64, mimeType string)
 )

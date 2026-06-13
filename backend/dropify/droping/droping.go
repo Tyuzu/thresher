@@ -200,7 +200,7 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 
 		if remoteURL != "" {
 			switch remoteKey {
-			case "banner", "photo", "avatar", "seating", "gallery":
+			case "banner", "photo", "avatar", "seating", "gallery", "video":
 			default:
 				utils.RespondWithError(w, http.StatusBadRequest, "invalid remoteKey")
 				return
@@ -364,6 +364,9 @@ func updateEntityMedia(app *infra.Deps, entityType string, entityId string, atta
 
 		case "gallery":
 			gallery = append(gallery, attachment.Filename)
+
+		case "video":
+			setFields["video"] = attachment.Filename
 		}
 	}
 

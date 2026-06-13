@@ -13,6 +13,7 @@ func RoutesWrapper(router *httprouter.Router, app *infra.Deps, rateLimiter *midd
 	AddAdsRoutes(router, app, rateLimiter)
 	AddAnalyticsRoutes(router, app, rateLimiter)
 	AddArtistRoutes(router, app, rateLimiter)
+	AddAutocompleteRoutes(router, app, rateLimiter)
 	AddBaitoRoutes(router, app, rateLimiter)
 	AddBeatRoutes(router, app, rateLimiter)
 	AddBookingRoutes(router, app, rateLimiter)
