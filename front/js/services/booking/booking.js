@@ -48,13 +48,14 @@ function createBookingsList(api, userId, isAdmin) {
             return;
         }
 
+        const activeBookings = bookings.filter(b => b.status !== "cancelled");
         bookings.sort((a, b) => new Date(`${a.date}T${a.start}`) - new Date(`${b.date}T${b.start}`));
         const userIds = [...new Set(bookings.map(b => b.userId))].filter(id => id && id !== "guest");
         const userMeta = await fetchUserMeta(userIds);
-        const totalSeats = bookings.reduce((s, b) => s + (b.seats || 1), 0);
+        const totalSeats = activeBookings.reduce((s, b) => s + (b.seats || 1), 0);
 
         const header = createElement("div", { class: "booking-header" }, [
-            `Total Bookings: ${bookings.length} — Slots: ${totalSeats}`
+            `Total Bookings: ${activeBookings.length} — Slots: ${totalSeats}`
         ]);
         const toggle = makeButton(showCancelled ? "Hide Cancelled" : "View Cancelled Bookings", {
             class: "btn btn-small",
@@ -110,7 +111,7 @@ return;
 }
 
 // ---------- Tier Management (Admin) ----------
-function renderTierManager(api, container, refreshSlots, entityType, entityId) {
+function renderTierManager(api, container, refreshSlots, entityType, entityId, onTierChange) {
     const tierList = createElement("div", { class: "tier-list" });
 
     async function refreshTiers() {
@@ -133,6 +134,7 @@ function renderTierManager(api, container, refreshSlots, entityType, entityId) {
                         async () => {
                             await api.apiDeleteTier(tier.id);
                             notifySuccess("Tier deleted");
+                            onTierChange?.();
                             return true;
                         },
                         [refreshTiers, refreshSlots]
@@ -166,6 +168,7 @@ function renderTierManager(api, container, refreshSlots, entityType, entityId) {
             await api.apiCreateTier(tier);
             notifySuccess("Tier added");
             nameInput.querySelector("input").value = "";
+            onTierChange?.();
             return true;
         }, [refreshTiers])
     });
@@ -259,17 +262,20 @@ function renderAdminUi(api, storage, modalContent, refreshBookings, entityType, 
     tierGenPanel.appendChild(genBtn);
 
     modalContent.appendChild(tierGenPanel);
-    renderTierManager(api, modalContent, renderAdminSlots, entityType, entityId);
-    renderAdminSlots();
 
-    // refresh tier dropdown
-    api.apiListTiers().then(tiers => {
+    async function refreshTierDropdown() {
         const select = tierSelect.querySelector("select");
+        select.replaceChildren(createElement("option", { value: "" }, ["Choose a tier"]));
+        const tiers = await api.apiListTiers();
         tiers.forEach(t => {
             const opt = createElement("option", { value: t.id }, [t.name]);
             select.appendChild(opt);
         });
-    });
+    }
+
+    renderTierManager(api, modalContent, renderAdminSlots, entityType, entityId, refreshTierDropdown);
+    refreshTierDropdown();
+    renderAdminSlots();
 }
 
 // ---------- User UI ----------
@@ -277,58 +283,75 @@ function renderUserUi(api, storage, modalContent, userId, refreshBookings, entit
     const slotsContainer = createElement("div", { "data-slots-container": "true", class: "slots-container" }, []);
     modalContent.appendChild(slotsContainer);
 
-    async function refreshSlots() {
-        slotsContainer.replaceChildren();
-        const [slots, bookings, tiers] = await Promise.all([
-            api.apiListSlots(), api.apiListBookings(), api.apiListTiers()
-        ]);
-        if (!slots.length) {
-            slotsContainer.appendChild(createElement("div", {}, ["No predefined slots."]));
-            return;
+    function renderTierBookingSection(tiers, bookings) {
+        const section = createElement("div", { class: "tier-booking-section" }, []);
+        section.appendChild(createElement("h3", {}, ["Book by Tier"]));
+
+        if (!tiers.length) {
+            section.appendChild(createElement("div", {}, ["No tiers available for booking."]));
+            return section;
         }
 
-        slots.sort((a, b) => new Date(`${a.date}T${a.start}`) - new Date(`${b.date}T${b.start}`));
-        for (const slot of slots) {
-            const tier = tiers.find(t => t.id === slot.tierId);
-            const bookedSeats = bookings.filter(b => b.slotId === slot.id).reduce((s, bb) => s + (bb.seats || 1), 0);
-            const rem = Math.max(0, (slot.capacity || 0) - bookedSeats);
+        tiers.forEach(tier => {
+            const bookedSeats = bookings
+                .filter(b => b.tierId === tier.id && b.status !== "cancelled")
+                .reduce((s, bb) => s + (bb.seats || 1), 0);
+            const rem = Math.max(0, (tier.capacity || 0) - bookedSeats);
 
-            const slotRow = createElement("div", { class: "slot-row" }, []);
-            slotRow.appendChild(createElement("div", { class: "slot-label" }, [
-                `${slot.date} • ${slot.start}${slot.end ? ` - ${slot.end}` : ""} — ${bookedSeats}/${slot.capacity} taken — ${tier?.name || "No tier"} ($${tier?.price || 0})`
+            const tierRow = createElement("div", { class: "tier-row" }, []);
+            tierRow.appendChild(createElement("div", { class: "tier-label" }, [
+                `${tier.name} — $${tier.price}/seat — ${bookedSeats}/${tier.capacity} taken` +
+                `${tier.timeRange?.[0] ? ` — ${tier.timeRange[0]}${tier.timeRange[1] ? ` - ${tier.timeRange[1]}` : ""}` : ""}`
             ]));
 
-            const actions = createElement("div", { class: "slot-actions" }, []);
+            const form = createElement("div", { class: "tier-booking-form" }, []);
+            const dateInput = createFormGroup({ type: "date", id: `tier-date-${tier.id}`, label: "Date" });
             const seatsInput = createFormGroup({
                 type: "number",
-                id: `seats-${slot.id}`,
+                id: `tier-seats-${tier.id}`,
                 label: "Seats",
                 value: 1,
                 additionalProps: { min: 1, max: rem > 0 ? rem : 1, class: "small-input input" }
             });
 
-            const btn = makeButton(rem <= 0 ? "Full" : `Book (${rem} left)`, {
+            const bookBtn = makeButton(rem <= 0 ? "Full" : `Book Tier (${rem} left)`, {
                 class: `btn btn-small ${rem <= 0 ? "btn-secondary" : "btn-primary"}`,
                 disabled: rem <= 0,
                 onclick: withRefresh(async () => {
                     if (rem <= 0) {
-return false;
-}
+                        return false;
+                    }
+
+                    const dateValue = dateInput.querySelector("input").value;
+                    if (!dateValue) {
+                        notifyError("missing", { missing: "Select a date for tier booking." });
+                        return false;
+                    }
+
                     const seatsToBook = Math.max(
                         1,
                         Math.min(parseInt(seatsInput.querySelector("input").value || "1", 10), rem)
                     );
+
                     const payload = {
-                        userId, entityType, entityId,
-                        slotId: slot.id, date: slot.date, start: slot.start, end: slot.end || null,
-                        seats: seatsToBook, tierId: slot.tierId
+                        userId,
+                        entityType,
+                        entityId,
+                        tierId: tier.id,
+                        date: dateValue,
+                        start: tier.timeRange?.[0] || "09:00",
+                        end: tier.timeRange?.[1] || tier.timeRange?.[0] || "09:00",
+                        seats: seatsToBook,
+                        pricePaid: tier.price
                     };
                     const res = await api.apiCreateBooking(payload);
                     if (!res.ok) {
                         notifyError(res.reason, {
-                            "slot-missing": "Slot no longer available.",
-                            "slot-full": "Slot is full.",
-                            "already-slot": "You already booked this slot."
+                            "tier-missing": "Tier no longer available.",
+                            "tier-full": "This tier is fully booked for the selected date.",
+                            "date-full": "Bookings are full on that date.",
+                            "one-per-day": "You already have a booking on that date.",
+                            "vendor-unavailable": "Vendor is unavailable on that date."
                         });
                         return false;
                     }
@@ -337,11 +360,88 @@ return false;
                 }, [refreshBookings, refreshSlots])
             });
 
-            actions.appendChild(seatsInput);
-            actions.appendChild(btn);
-            slotRow.appendChild(actions);
-            slotsContainer.appendChild(slotRow);
+            form.appendChild(dateInput);
+            form.appendChild(seatsInput);
+            form.appendChild(bookBtn);
+            tierRow.appendChild(form);
+            section.appendChild(tierRow);
+        });
+
+        return section;
+    }
+
+    async function refreshSlots() {
+        slotsContainer.replaceChildren();
+        const [slots, bookings, tiers] = await Promise.all([
+            api.apiListSlots(), api.apiListBookings(), api.apiListTiers()
+        ]);
+
+        if (!slots.length) {
+            slotsContainer.appendChild(createElement("div", {}, ["No predefined slots."]));
+        } else {
+            slots.sort((a, b) => new Date(`${a.date}T${a.start}`) - new Date(`${b.date}T${b.start}`));
+            for (const slot of slots) {
+                const tier = tiers.find(t => t.id === slot.tierId);
+                const bookedSeats = bookings.filter(b => b.slotId === slot.id && b.status !== "cancelled").reduce((s, bb) => s + (bb.seats || 1), 0);
+                const rem = Math.max(0, (slot.capacity || 0) - bookedSeats);
+
+                const slotRow = createElement("div", { class: "slot-row" }, []);
+                slotRow.appendChild(createElement("div", { class: "slot-label" }, [
+                    `${slot.date} • ${slot.start}${slot.end ? ` - ${slot.end}` : ""} — ${bookedSeats}/${slot.capacity} taken — ${tier?.name || "No tier"} ($${tier?.price || 0})`
+                ]));
+
+                const actions = createElement("div", { class: "slot-actions" }, []);
+                const seatsInput = createFormGroup({
+                    type: "number",
+                    id: `seats-${slot.id}`,
+                    label: "Seats",
+                    value: 1,
+                    additionalProps: { min: 1, max: rem > 0 ? rem : 1, class: "small-input input" }
+                });
+
+                const btn = makeButton(rem <= 0 ? "Full" : `Book (${rem} left)`, {
+                    class: `btn btn-small ${rem <= 0 ? "btn-secondary" : "btn-primary"}`,
+                    disabled: rem <= 0,
+                    onclick: withRefresh(async () => {
+                        if (rem <= 0) {
+                            return false;
+                        }
+                        const seatsToBook = Math.max(
+                            1,
+                            Math.min(parseInt(seatsInput.querySelector("input").value || "1", 10), rem)
+                        );
+                        const payload = {
+                            userId, entityType, entityId,
+                            slotId: slot.id, date: slot.date, start: slot.start, end: slot.end || null,
+                            seats: seatsToBook, tierId: slot.tierId
+                        };
+                        const res = await api.apiCreateBooking(payload);
+                        if (!res.ok) {
+                            notifyError(res.reason, {
+                                "slot-missing": "Slot no longer available.",
+                                "slot-full": "Slot is full.",
+                                "already-slot": "You already booked this slot.",
+                                "one-per-day": "You already have a booking on that date.",
+                                "tier-full": "This tier is fully booked for the selected date.",
+                                "date-full": "Bookings are full on that date.",
+                                "vendor-unavailable": "Vendor is unavailable on that date."
+                            });
+                            return false;
+                        }
+                        notifySuccess("Booking confirmed!");
+                        return true;
+                    }, [refreshBookings, refreshSlots])
+                });
+
+                actions.appendChild(seatsInput);
+                actions.appendChild(btn);
+                slotRow.appendChild(actions);
+                slotsContainer.appendChild(slotRow);
+            }
         }
+
+        const tierSection = renderTierBookingSection(tiers, bookings);
+        slotsContainer.appendChild(tierSection);
     }
 
     refreshSlots();

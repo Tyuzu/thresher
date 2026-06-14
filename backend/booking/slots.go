@@ -43,6 +43,7 @@ type Booking struct {
 	Start      string  `json:"start" bson:"start"`
 	End        string  `json:"end,omitempty" bson:"end,omitempty"`
 	Status     string  `json:"status" bson:"status"` // pending, confirmed, cancelled
+	Seats      int     `json:"seats,omitempty" bson:"seats,omitempty"`
 	CreatedAt  int64   `json:"createdAt" bson:"createdAt"`
 }
 

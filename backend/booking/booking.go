@@ -83,18 +83,24 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 				return
 			}
 
-			slotCount, err := app.DB.CountDocuments(ctx, bookingsCollection, bson.M{
+			// Sum seats for this slot (consider seats per booking), not just count documents
+			var slotBookings []Booking
+			if err := app.DB.FindMany(ctx, bookingsCollection, bson.M{
 				"entityType": p.EntityType,
 				"entityId":   p.EntityId,
 				"slotId":     p.SlotId,
 				"status":     bson.M{"$ne": "cancelled"},
-			})
-			if err != nil {
+			}, &slotBookings); err != nil {
 				http.Error(w, "db error", http.StatusInternalServerError)
 				return
 			}
 
-			if int(slotCount) >= slot.Capacity {
+			bookedSeats := 0
+			for _, sb := range slotBookings {
+				bookedSeats += sb.Seats
+			}
+
+			if bookedSeats >= slot.Capacity {
 				_ = json.NewEncoder(w).Encode(map[string]any{
 					"ok":     false,
 					"reason": "slot-full",
@@ -119,19 +125,25 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 				return
 			}
 
-			tCount, err := app.DB.CountDocuments(ctx, bookingsCollection, bson.M{
+			// Sum seats booked for this tier on the date
+			var tierBookings []Booking
+			if err := app.DB.FindMany(ctx, bookingsCollection, bson.M{
 				"entityType": p.EntityType,
 				"entityId":   p.EntityId,
 				"tierId":     p.TierId,
 				"date":       p.Date,
 				"status":     bson.M{"$ne": "cancelled"},
-			})
-			if err != nil {
+			}, &tierBookings); err != nil {
 				http.Error(w, "db error", http.StatusInternalServerError)
 				return
 			}
 
-			if int(tCount) >= tier.Capacity {
+			tierBookedSeats := 0
+			for _, tb := range tierBookings {
+				tierBookedSeats += tb.Seats
+			}
+
+			if tierBookedSeats >= tier.Capacity {
 				_ = json.NewEncoder(w).Encode(map[string]any{
 					"ok":     false,
 					"reason": "tier-full",
@@ -154,18 +166,24 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 				"date":       p.Date,
 			}, &dc); err == nil {
 
-				total, err := app.DB.CountDocuments(ctx, bookingsCollection, bson.M{
+				// Sum seats booked for the date (consider seats per booking)
+				var dateBookings []Booking
+				if err := app.DB.FindMany(ctx, bookingsCollection, bson.M{
 					"entityType": p.EntityType,
 					"entityId":   p.EntityId,
 					"date":       p.Date,
 					"status":     bson.M{"$ne": "cancelled"},
-				})
-				if err != nil {
+				}, &dateBookings); err != nil {
 					http.Error(w, "db error", http.StatusInternalServerError)
 					return
 				}
 
-				if int(total) >= dc.Capacity {
+				dateTotalSeats := 0
+				for _, dbb := range dateBookings {
+					dateTotalSeats += dbb.Seats
+				}
+
+				if dateTotalSeats >= dc.Capacity {
 					_ = json.NewEncoder(w).Encode(map[string]any{
 						"ok":     false,
 						"reason": "date-full",

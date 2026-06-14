@@ -128,7 +128,18 @@ all[entityType] = {};
 all[entityType][entityId] = [];
 }
 
+            const bookings = all[entityType][entityId];
             const seatsToBook = Math.max(1, parseInt(payload.seats || 1, 10));
+
+            // Enforce one booking per user per date locally
+            if (payload.userId && payload.date) {
+                const userHasBookingThisDate = bookings.some(
+                    b => b.userId === payload.userId && b.date === payload.date && b.status !== "cancelled"
+                );
+                if (userHasBookingThisDate) {
+return { ok: false, reason: "one-per-day" };
+}
+            }
 
             // Slot-based booking rules
             if (payload.slotId) {
@@ -138,26 +149,39 @@ all[entityType][entityId] = [];
 return { ok: false, reason: "slot-missing" };
 }
 
-                const bookedSeats = all[entityType][entityId]
-                    .filter(b => b.slotId === slot.id)
+                const bookedSeats = bookings
+                    .filter(b => b.slotId === slot.id && b.status !== "cancelled")
                     .reduce((sum, b) => sum + (b.seats || 1), 0);
 
                 if (bookedSeats + seatsToBook > (slot.capacity || 0)) {
 return { ok: false, reason: "slot-full" };
 }
 
-                const userAlready = all[entityType][entityId].some(
-                    b => b.userId === payload.userId && b.slotId === slot.id
+                const userAlready = bookings.some(
+                    b => b.userId === payload.userId && b.slotId === slot.id && b.status !== "cancelled"
                 );
                 if (userAlready) {
 return { ok: false, reason: "already-slot" };
+}
+            } else if (payload.tierId) {
+                const tier = storage.localGetTiers().find(t => t.id === payload.tierId);
+                if (!tier) {
+return { ok: false, reason: "tier-missing" };
+}
+
+                const bookedTierSeats = bookings
+                    .filter(b => b.tierId === tier.id && b.date === payload.date && b.status !== "cancelled")
+                    .reduce((sum, b) => sum + (b.seats || 1), 0);
+
+                if (bookedTierSeats + seatsToBook > (tier.capacity || 0)) {
+return { ok: false, reason: "tier-full" };
 }
             } else {
                 // Date capacity fallback
                 const dateCap = storage.localGetDateCap(payload.date);
                 if (dateCap !== null) {
-                    const totalForDate = all[entityType][entityId]
-                        .filter(b => b.date === payload.date)
+                    const totalForDate = bookings
+                        .filter(b => b.date === payload.date && b.status !== "cancelled")
                         .reduce((sum, b) => sum + (b.seats || 1), 0);
 
                     if (totalForDate + seatsToBook > dateCap) {
