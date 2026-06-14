@@ -438,6 +438,13 @@ func RegisterFarmRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter 
 	router.GET("/api/v1/crops/types", farms.GetCropTypes(app))               // Public
 	router.GET("/api/v1/crops/crop/:cropname", middleware.OptionalAuth(farms.GetCropTypeFarms(app)))
 
+	// Crop Wiki
+	router.GET("/api/v1/crops/about", rateLimiter.Limit(farms.GetAllCropAboutsHandler(app)))
+	router.POST("/api/v1/crops/about", rateLimiter.Limit(farms.CreateCropAboutHandler(app)))
+	router.GET("/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.GetCropAboutHandler(app)))
+	router.DELETE("/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.DeleteCropAboutHandler(app)))
+	router.PUT("/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.UpdateCropAboutHandler(app)))
+
 	// 🛒 Items, Products, Tools
 	// -- GET
 	router.GET("/api/v1/farm/items", farms.GetItems(app))                     // Public

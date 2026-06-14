@@ -20,6 +20,7 @@ type DB struct {
 	CommentsCollection                 string
 	CouponCollection                   string
 	CropsCollection                    string
+	CropsAboutCollection               string
 	DateCapsCollection                 string
 	EventsCollection                   string
 	FarmsCollection                    string
@@ -90,6 +91,7 @@ var Collections = DB{
 	CommentsCollection:                 "comments",
 	CouponCollection:                   "coupons",
 	CropsCollection:                    "crops",
+	CropsAboutCollection:               "cropsabout",
 	DateCapsCollection:                 "date_caps",
 	EventsCollection:                   "events",
 	FarmsCollection:                    "farms",
