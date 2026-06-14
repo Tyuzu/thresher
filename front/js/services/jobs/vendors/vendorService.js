@@ -47,3 +47,31 @@ export async function removeEventVendor(eventId, vendorId) {
     requireId(vendorId, "Vendor ID");
     return apiFetch(`/vendors/events/${eventId}/vendor/${vendorId}`, "DELETE");
 }
+
+export async function fetchAvailability(vendorId) {
+    requireId(vendorId, "Vendor ID");
+    return apiFetch(`/vendors/${vendorId}/availability`, "GET");
+}
+
+export async function getMyVendorRequests() {
+    return apiFetch(`/vendors/me/requests`, "GET");
+}
+
+export async function updateVendorHiringStatus(hiringId, status) {
+    requireId(hiringId, "Hiring ID");
+    requireId(status, "Status");
+    return apiFetch(`/vendors/hiring/${hiringId}/status`, "PATCH", {
+        status,
+    });
+}
+
+export async function createAvailability(vendorId, slot) {
+    requireId(vendorId, "Vendor ID");
+    return apiFetch(`/vendors/${vendorId}/availability`, "POST", slot);
+}
+
+export async function deleteAvailability(vendorId, slotId) {
+    requireId(vendorId, "Vendor ID");
+    requireId(slotId, "Slot ID");
+    return apiFetch(`/vendors/${vendorId}/availability/${slotId}`, "DELETE");
+}

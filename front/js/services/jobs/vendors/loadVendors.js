@@ -1,5 +1,7 @@
 import Notify from "../../../components/ui/Notify.mjs";
 import { fetchEventVendors, fetchVendors } from "./vendorService.js";
+import { displayBooking } from "../../booking/booking.js";
+import { getState } from "../../../state/state.js";
 import { hireVendor } from "./hireVendorAction.js";
 import { getVendorId, getVendorName, normalizeVendorList } from "./vendorUtils.js";
 
@@ -14,14 +16,36 @@ function createTextElement(tagName, className, textContent) {
     return element;
 }
 
-function isVendorHired(vendorId, eventVendors) {
-    return eventVendors.some((eventVendor) => {
+function getVendorHiringRecord(vendorId, eventVendors) {
+    return eventVendors.find((eventVendor) => {
         const hiredVendorId = getVendorId(eventVendor);
         return String(hiredVendorId) === String(vendorId);
     });
 }
 
+function formatRequestStatus(status) {
+    if (!status) {
+        return "Pending";
+    }
+
+    const normalized = String(status).toLowerCase();
+    switch (normalized) {
+        case "pending":
+            return "Request Pending";
+        case "accepted":
+        case "hired":
+            return "Already Hired ✓";
+        case "completed":
+            return "Completed";
+        case "cancelled":
+            return "Cancelled";
+        default:
+            return status;
+    }
+}
+
 export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
+    console.debug("loadVendors called", { eventId, isLoggedIn });
     const { onHireSuccess } = options;
 
     let vendors = [];
@@ -71,7 +95,9 @@ export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
     vendors.forEach((vendor) => {
         const vendorId = getVendorId(vendor);
         const vendorName = getVendorName(vendor);
-        const hired = Boolean(eventId && vendorId && isVendorHired(vendorId, eventVendors));
+        const hiringRecord = eventId && vendorId ? getVendorHiringRecord(vendorId, eventVendors) : null;
+        const hired = Boolean(hiringRecord);
+        const hiringStatus = hiringRecord?.status;
 
         const vendorCard = document.createElement("div");
         vendorCard.className = "vendor-card";
@@ -87,6 +113,13 @@ export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
 
         const infoEl = document.createElement("div");
         infoEl.className = "vendor-info";
+
+        if (hiringStatus) {
+            const statusEl = document.createElement("div");
+            statusEl.className = `vendor-hiring-status status-${String(hiringStatus).toLowerCase()}`;
+            statusEl.textContent = formatRequestStatus(hiringStatus);
+            vendorCard.appendChild(statusEl);
+        }
 
         if (vendor?.location) {
             const locationEl = document.createElement("div");
@@ -140,7 +173,7 @@ export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
             hireButton.type = "button";
             hireButton.className = `hire-btn${hired ? " hired" : ""}`;
             hireButton.disabled = hired;
-            hireButton.textContent = hired ? "Already Hired ✓" : "Hire Vendor";
+            hireButton.textContent = hired ? formatRequestStatus(hiringStatus) : "Hire Vendor";
 
             hireButton.addEventListener("click", async () => {
                 if (!isLoggedIn) {
@@ -175,6 +208,39 @@ export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
             });
 
             actionsEl.appendChild(hireButton);
+        }
+
+        // Booking integration: allow booking the vendor as an entity
+        if (vendorId) {
+            const bookBtn = document.createElement("button");
+            bookBtn.type = "button";
+            bookBtn.className = "btn-primary book-vendor-btn";
+            bookBtn.textContent = "Book";
+
+            bookBtn.addEventListener("click", async () => {
+                if (!getState || !getState("token")) {
+                    Notify("Please log in to book vendors.", { type: "warning", duration: 3000 });
+                    return;
+                }
+
+                // Create a temporary container and render booking widget then open modal
+                const bookingContainer = document.createElement("div");
+                bookingContainer.style.display = "none";
+                document.body.appendChild(bookingContainer);
+
+                try {
+                    displayBooking({ entityType: "vendor", entityId: vendorId, entityCategory: vendorName, userId: getState("user") || "guest" }, bookingContainer);
+
+                    // trigger the action button inside bookingContainer to open modal
+                    const action = bookingContainer.querySelector(".btn-primary");
+                    if (action) action.click();
+                } catch (err) {
+                    console.error("Failed to open booking modal:", err);
+                    Notify("Failed to open booking interface.", { type: "error", duration: 3000 });
+                }
+            });
+
+            actionsEl.appendChild(bookBtn);
         } else {
             const note = document.createElement("div");
             note.className = "vendor-actions-note";

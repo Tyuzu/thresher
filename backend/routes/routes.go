@@ -1031,11 +1031,11 @@ func AddVendorRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mi
 	router.GET("/api/v1/vendors", rateLimiter.Limit(vendors.GetVendorsHandler(app)))
 	router.GET("/api/v1/vendors/me", rateLimiter.Limit(authmidware(vendors.GetMyVendorHandler(app))))
 
-	// // New canonical vendor endpoints
-	// router.GET("/api/v1/vendors/:vendorID", rateLimiter.Limit(vendors.GetVendorHandler(app)))
-	// router.PATCH("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
-	// router.PUT("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
-	// router.DELETE("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.DeleteVendorHandler(app))))
+	// New canonical vendor endpoints
+	router.GET("/api/v1/vendors/:vendorID", rateLimiter.Limit(vendors.GetVendorHandler(app)))
+	router.PATCH("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
+	router.PUT("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
+	router.DELETE("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.DeleteVendorHandler(app))))
 
 	// Backward-compatible vendor endpoints
 	router.GET("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(vendors.GetVendorHandler(app)))
@@ -1048,6 +1048,12 @@ func AddVendorRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mi
 	router.GET("/api/v1/vendors/events/:eventID", rateLimiter.Limit(vendors.GetEventVendorsHandler(app)))
 	router.DELETE("/api/v1/vendors/events/:eventID/vendor/:vendorID", rateLimiter.Limit(authmidware(vendors.RemoveVendorHandler(app))))
 	router.PATCH("/api/v1/vendors/hiring/:hiringID/status", rateLimiter.Limit(authmidware(vendors.UpdateVendorStatusHandler(app))))
+	router.GET("/api/v1/vendors/me/requests", rateLimiter.Limit(authmidware(vendors.GetMyVendorRequestsHandler(app))))
+
+	// Vendor availability
+	router.GET("/api/v1/vendors/:vendorID/availability", rateLimiter.Limit(vendors.ListAvailabilityHandler(app)))
+	router.POST("/api/v1/vendors/:vendorID/availability", rateLimiter.Limit(authmidware(vendors.CreateAvailabilityHandler(app))))
+	router.DELETE("/api/v1/vendors/:vendorID/availability/:slotID", rateLimiter.Limit(authmidware(vendors.DeleteAvailabilityHandler(app))))
 }
 
 // Search Routes - Public endpoints for search functionality

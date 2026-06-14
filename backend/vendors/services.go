@@ -232,7 +232,7 @@ func HireVendor(ctx context.Context, app *infra.Deps, eventID, vendorID, vendorN
 		VendorName:     vendorName,
 		VendorCategory: vendorCategory,
 		HiredBy:        hiredBy,
-		Status:         "hired",
+		Status:         "pending",
 		HiredAt:        now,
 		CreatedAt:      now,
 		UpdatedAt:      now,
@@ -251,6 +251,24 @@ func GetEventVendors(ctx context.Context, app *infra.Deps, eventID string) ([]mo
 	err := app.DB.FindMany(ctx, hiringCollection, bson.M{
 		"eventid": eventID,
 		"status":  bson.M{"$ne": "rejected"},
+	}, &hirings)
+	if err != nil {
+		return nil, err
+	}
+
+	if hirings == nil {
+		hirings = []models.VendorHiring{}
+	}
+
+	return hirings, nil
+}
+
+// GetVendorHiringsByVendorID retrieves vendor hiring records for a specific vendor.
+func GetVendorHiringsByVendorID(ctx context.Context, app *infra.Deps, vendorID string) ([]models.VendorHiring, error) {
+	var hirings []models.VendorHiring
+	err := app.DB.FindMany(ctx, hiringCollection, bson.M{
+		"vendorid": vendorID,
+		"status":   bson.M{"$ne": "rejected"},
 	}, &hirings)
 	if err != nil {
 		return nil, err
@@ -334,6 +352,9 @@ func GetVendorsByEvent(ctx context.Context, app *infra.Deps, eventID string) ([]
 			ProfileImage: vendor.ProfileImage,
 			Portfolio:    vendor.Portfolio,
 			Verified:     vendor.Verified,
+			Status:       hiring.Status,
+			HiringID:     hiring.HiringID,
+			HiredAt:      hiring.HiredAt,
 		})
 	}
 

@@ -3,6 +3,7 @@ import { loadVendors } from "./loadVendors.js";
 import { vendorForm } from "./vendorForm.js";
 
 export async function hireVendors(anacon, isLoggedIn, eventId, options = {}) {
+    console.debug("hireVendors called", { eventId, isLoggedIn, anacon });
     if (!anacon) {
         console.error("Vendor container element is required.");
         return null;
@@ -61,6 +62,13 @@ export async function hireVendors(anacon, isLoggedIn, eventId, options = {}) {
         registrationTitle.textContent = "Want to Become a Vendor?";
         registrationSection.appendChild(registrationTitle);
 
+        // Toggle button to show/hide the vendor registration form for better UX
+        const toggleBtn = document.createElement("button");
+        toggleBtn.type = "button";
+        toggleBtn.className = "btn-secondary vendor-list-btn";
+        toggleBtn.textContent = "List Yourself as Vendor";
+        registrationSection.appendChild(toggleBtn);
+
         const form = vendorForm(
             anacon,
             isLoggedIn,
@@ -76,7 +84,19 @@ export async function hireVendors(anacon, isLoggedIn, eventId, options = {}) {
             }
         );
 
-        registrationSection.appendChild(form);
+        toggleBtn.addEventListener("click", () => {
+            if (!registrationSection.contains(form)) {
+                registrationSection.appendChild(form);
+                toggleBtn.textContent = "Hide Registration";
+                // focus first input for quicker entry
+                const firstField = form.querySelector("input, select, textarea");
+                if (firstField && typeof firstField.focus === "function") firstField.focus();
+            } else {
+                registrationSection.removeChild(form);
+                toggleBtn.textContent = "List Yourself as Vendor";
+            }
+        });
+
         container.appendChild(registrationSection);
 
         anacon.appendChild(container);

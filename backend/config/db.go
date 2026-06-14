@@ -65,6 +65,7 @@ type DB struct {
 	UserDataCollection                 string
 	UserCollection                     string
 	VendorCollection                   string
+	VendorAvailabilityCollection       string
 	AlbumsCollection                   string
 	PlaylistsCollection                string
 	GlobalLedgerCollection             string
@@ -138,4 +139,5 @@ var Collections = DB{
 	UserDataCollection:                 "userdata",
 	UserCollection:                     "users",
 	VendorCollection:                   "vendors",
+	VendorAvailabilityCollection:       "vendor_availability",
 }

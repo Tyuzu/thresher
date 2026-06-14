@@ -39,16 +39,32 @@ type VendorHiring struct {
 
 // VendorResponse is the response structure for vendor data
 type VendorResponse struct {
-	VendorID     string   `json:"vendorid"`
-	Name         string   `json:"name"`
-	Category     string   `json:"category"`
-	Description  string   `json:"description,omitempty"`
-	Email        string   `json:"email,omitempty"`
-	Phone        string   `json:"phone,omitempty"`
-	Location     string   `json:"location,omitempty"`
-	Rating       float64  `json:"rating,omitempty"`
-	RatingCount  int      `json:"rating_count,omitempty"`
-	ProfileImage string   `json:"profile_image,omitempty"`
-	Portfolio    []string `json:"portfolio,omitempty"`
-	Verified     bool     `json:"verified"`
+	VendorID     string    `json:"vendorid"`
+	Name         string    `json:"name"`
+	Category     string    `json:"category"`
+	Description  string    `json:"description,omitempty"`
+	Email        string    `json:"email,omitempty"`
+	Phone        string    `json:"phone,omitempty"`
+	Location     string    `json:"location,omitempty"`
+	Rating       float64   `json:"rating,omitempty"`
+	RatingCount  int       `json:"rating_count,omitempty"`
+	ProfileImage string    `json:"profile_image,omitempty"`
+	Portfolio    []string  `json:"portfolio,omitempty"`
+	Verified     bool      `json:"verified"`
+	Status       string    `json:"status,omitempty" bson:"status,omitempty"`
+	HiringID     string    `json:"hiringid,omitempty" bson:"hiringid,omitempty"`
+	HiredAt      time.Time `json:"hired_at,omitempty" bson:"hired_at,omitempty"`
+}
+
+// AvailabilitySlot represents a vendor's unavailable or available date range
+type AvailabilitySlot struct {
+	SlotID         string    `json:"slotid" bson:"slotid"`
+	VendorID       string    `json:"vendorid" bson:"vendorid"`
+	StartDate      string    `json:"start_date" bson:"start_date"` // YYYY-MM-DD
+	EndDate        string    `json:"end_date" bson:"end_date"`     // YYYY-MM-DD
+	Recurring      bool      `json:"recurring,omitempty" bson:"recurring,omitempty"`
+	RecurrenceRule string    `json:"recurrence_rule,omitempty" bson:"recurrence_rule,omitempty"` // e.g. RFC5545 or simple rule
+	Notes          string    `json:"notes,omitempty" bson:"notes,omitempty"`
+	CreatedAt      time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 }

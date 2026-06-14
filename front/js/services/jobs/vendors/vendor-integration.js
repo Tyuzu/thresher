@@ -1,7 +1,7 @@
 import { hireVendors } from "./vendors.js";
 import { vendorForm } from "./vendorForm.js";
 import { createModal } from "./modal.js";
-import { fetchEventVendors } from "./vendorService.js";
+import { fetchEventVendors, fetchAvailability, createAvailability, deleteAvailability, getMyVendorRequests, updateVendorHiringStatus } from "./vendorService.js";
 import { removeVendor } from "./hireVendorAction.js";
 import {
     getVendorId,
@@ -371,12 +371,152 @@ export async function showVendorProfile(userId, container) {
 
         profile.appendChild(actions);
         container.appendChild(profile);
+
+        if (vendorId) {
+            const requestsSection = document.createElement("div");
+            requestsSection.className = "vendor-requests-section";
+            const requestsTitle = document.createElement("h3");
+            requestsTitle.textContent = "Incoming Vendor Requests";
+            requestsSection.appendChild(requestsTitle);
+
+            const requestsContainer = document.createElement("div");
+            requestsContainer.className = "vendor-requests-list";
+            requestsSection.appendChild(requestsContainer);
+
+            container.appendChild(requestsSection);
+            await refreshVendorRequests(requestsContainer);
+        }
     } catch (error) {
         console.error("Error loading vendor profile:", error);
         container.innerHTML = "";
         const errorEl = document.createElement("p");
         errorEl.textContent = "Error loading profile";
         container.appendChild(errorEl);
+    }
+}
+
+async function refreshVendorRequests(container) {
+    container.innerHTML = "";
+
+    try {
+        const response = await getMyVendorRequests();
+        if (!response) {
+            throw new Error("No response from server.");
+        }
+
+        if (response.success === false) {
+            throw new Error(response.error || "Failed to load requests.");
+        }
+
+        const requests = Array.isArray(response.requests) ? response.requests : [];
+        if (requests.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "vendor-requests-empty";
+            empty.textContent = "No incoming request at this time.";
+            container.appendChild(empty);
+            return;
+        }
+
+        for (const request of requests) {
+            const requestCard = document.createElement("div");
+            requestCard.className = "vendor-request-card";
+
+            const title = document.createElement("div");
+            title.className = "vendor-request-title";
+            title.textContent = `Event: ${request.eventid || request.eventId || "Unknown"}`;
+            requestCard.appendChild(title);
+
+            const statusText = formatVendorRequestStatus(request.status);
+            const statusBadge = document.createElement("span");
+            statusBadge.className = `vendor-request-status status-${(request.status || "unknown").toLowerCase()}`;
+            statusBadge.textContent = statusText;
+            requestCard.appendChild(statusBadge);
+
+            const details = document.createElement("div");
+            details.className = "vendor-request-details";
+            details.textContent = `Requested by: ${request.hiredby || request.hiredBy || "Unknown organizer"}`;
+            requestCard.appendChild(details);
+
+            if (String(request.status || "").toLowerCase() === "pending") {
+                const actions = document.createElement("div");
+                actions.className = "vendor-request-actions";
+
+                const acceptBtn = document.createElement("button");
+                acceptBtn.type = "button";
+                acceptBtn.className = "btn-primary vendor-request-accept";
+                acceptBtn.textContent = "Accept";
+                acceptBtn.addEventListener("click", async () => {
+                    await handleVendorRequestAction(request, "accepted", acceptBtn, rejectBtn, container);
+                });
+
+                const rejectBtn = document.createElement("button");
+                rejectBtn.type = "button";
+                rejectBtn.className = "btn-danger vendor-request-reject";
+                rejectBtn.textContent = "Reject";
+                rejectBtn.addEventListener("click", async () => {
+                    await handleVendorRequestAction(request, "rejected", acceptBtn, rejectBtn, container);
+                });
+
+                actions.appendChild(acceptBtn);
+                actions.appendChild(rejectBtn);
+                requestCard.appendChild(actions);
+            }
+
+            container.appendChild(requestCard);
+        }
+    } catch (error) {
+        console.error("Error loading vendor requests:", error);
+        const errorMessage = document.createElement("div");
+        errorMessage.className = "vendor-requests-error";
+        errorMessage.textContent = "Unable to load your vendor requests.";
+        container.appendChild(errorMessage);
+    }
+}
+
+async function handleVendorRequestAction(request, status, acceptButton, rejectButton, container) {
+    if (!request || !request.hiringid && !request.hiringID) {
+        Notify("Missing request data.", { type: "error", duration: 3000 });
+        return;
+    }
+
+    const hiringId = request.hiringid || request.hiringID;
+    const actionLabel = status === "accepted" ? "Accept" : "Reject";
+
+    try {
+        acceptButton.disabled = true;
+        rejectButton.disabled = true;
+
+        const result = await updateVendorHiringStatus(hiringId, status);
+        if (result?.success === false) {
+            throw new Error(result.error || "Failed to update request status.");
+        }
+
+        Notify(`Request ${actionLabel.toLowerCase()}ed successfully.`, { type: "success", duration: 3000 });
+        await refreshVendorRequests(container);
+    } catch (error) {
+        console.error(`Failed to ${actionLabel.toLowerCase()} vendor request:`, error);
+        Notify(`Failed to ${actionLabel.toLowerCase()} request. Please try again.`, { type: "error", duration: 3000 });
+        acceptButton.disabled = false;
+        rejectButton.disabled = false;
+    }
+}
+
+function formatVendorRequestStatus(status) {
+    switch (String(status || "").toLowerCase()) {
+        case "pending":
+            return "Pending";
+        case "accepted":
+            return "Accepted";
+        case "rejected":
+            return "Rejected";
+        case "completed":
+            return "Completed";
+        case "cancelled":
+            return "Cancelled";
+        case "hired":
+            return "Hired";
+        default:
+            return "Unknown";
     }
 }
 
@@ -477,6 +617,72 @@ export async function openEditVendorProfile(userId, existingVendorProfile = null
             const actions = document.createElement("div");
             actions.className = "vendor-edit-actions";
 
+            const reserveSection = document.createElement("div");
+            reserveSection.className = "vendor-availability-section";
+
+            const availabilityTitle = document.createElement("h4");
+            availabilityTitle.textContent = "Availability Slots";
+            reserveSection.appendChild(availabilityTitle);
+
+            const availabilityList = document.createElement("div");
+            availabilityList.className = "vendor-availability-list";
+            reserveSection.appendChild(availabilityList);
+
+            const availabilityForm = document.createElement("form");
+            availabilityForm.className = "vendor-availability-form";
+            availabilityForm.innerHTML = `
+                <div class="form-row">
+                    <label>Start Date</label>
+                    <input type="date" name="start_date" required />
+                </div>
+                <div class="form-row">
+                    <label>End Date</label>
+                    <input type="date" name="end_date" required />
+                </div>
+                <div class="form-row">
+                    <label>Notes</label>
+                    <input type="text" name="notes" placeholder="Optional note" />
+                </div>
+                <button type="submit" class="btn-primary">Add Slot</button>
+            `;
+
+            availabilityForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+
+                const startDate = availabilityForm.querySelector("input[name='start_date']").value;
+                const endDate = availabilityForm.querySelector("input[name='end_date']").value;
+                const notes = availabilityForm.querySelector("input[name='notes']").value;
+
+                if (!startDate || !endDate) {
+                    Notify("Please provide both start and end dates.", { type: "warning", duration: 3000 });
+                    return;
+                }
+
+                const submitBtn = availabilityForm.querySelector("button[type='submit']");
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Adding...";
+
+                try {
+                    const response = await createAvailability(vendorId, { start_date: startDate, end_date: endDate, notes });
+                    if (response?.success === false) {
+                        throw new Error(response?.error || response?.message || "Failed to add availability slot.");
+                    }
+
+                    Notify("Availability slot added.", { type: "success", duration: 3000 });
+                    availabilityForm.reset();
+                    await loadAvailability();
+                } catch (error) {
+                    console.error("Unable to add availability slot:", error);
+                    Notify(error?.message || "Failed to add availability slot.", { type: "error", duration: 3000 });
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Add Slot";
+                }
+            });
+
+            reserveSection.appendChild(availabilityForm);
+            actions.appendChild(reserveSection);
+
             const deleteBtn = document.createElement("button");
             deleteBtn.type = "button";
             deleteBtn.className = "btn-danger";
@@ -532,6 +738,60 @@ export async function openEditVendorProfile(userId, existingVendorProfile = null
 
             actions.appendChild(deleteBtn);
             body.appendChild(actions);
+
+            async function loadAvailability() {
+                availabilityList.innerHTML = "Loading availability...";
+                try {
+                    const response = await fetchAvailability(vendorId);
+                    if (response?.success === false) {
+                        throw new Error(response?.error || "Failed to load availability.");
+                    }
+
+                    const slots = response?.slots || [];
+                    if (!slots.length) {
+                        availabilityList.innerHTML = "<p>No availability slots yet.</p>";
+                        return;
+                    }
+
+                    availabilityList.innerHTML = "";
+                    for (const slot of slots) {
+                        const slotRow = document.createElement("div");
+                        slotRow.className = "availability-slot-row";
+
+                        const label = document.createElement("div");
+                        label.className = "availability-slot-label";
+                        label.textContent = `${slot.start_date} → ${slot.end_date}` + (slot.notes ? ` — ${slot.notes}` : "");
+                        slotRow.appendChild(label);
+
+                        const removeBtn = document.createElement("button");
+                        removeBtn.type = "button";
+                        removeBtn.className = "btn-link btn-small";
+                        removeBtn.textContent = "Remove";
+                        removeBtn.addEventListener("click", async () => {
+                            removeBtn.disabled = true;
+                            removeBtn.textContent = "Removing...";
+                            try {
+                                const deleted = await deleteAvailability(vendorId, slot.slotid);
+                                if (deleted?.success === false) {
+                                    throw new Error(deleted?.error || deleted?.message || "Failed to remove slot.");
+                                }
+                                Notify("Slot removed.", { type: "success", duration: 2500 });
+                                await loadAvailability();
+                            } catch (error) {
+                                console.error("Unable to remove availability slot:", error);
+                                Notify(error?.message || "Failed to remove slot.", { type: "error", duration: 3000 });
+                            }
+                        });
+                        slotRow.appendChild(removeBtn);
+                        availabilityList.appendChild(slotRow);
+                    }
+                } catch (error) {
+                    availabilityList.innerHTML = "<p>Failed to load availability.</p>";
+                    console.error("Error loading availability:", error);
+                }
+            }
+
+            await loadAvailability();
         }
     } catch (error) {
         console.error("Error opening vendor edit modal:", error);

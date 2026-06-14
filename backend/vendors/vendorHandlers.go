@@ -462,6 +462,41 @@ func RemoveVendorHandler(app *infra.Deps) httprouter.Handle {
 	}
 }
 
+// GetMyVendorRequestsHandler retrieves hiring requests for the current vendor.
+func GetMyVendorRequestsHandler(app *infra.Deps) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		if !ok || userID == "" {
+			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
+			return
+		}
+
+		vendor, err := GetVendorByUserID(ctx, app, userID)
+		if err != nil || vendor == nil {
+			writeJSONError(w, http.StatusNotFound, "VENDOR_NOT_FOUND", "Vendor profile not found")
+			return
+		}
+
+		hirings, err := GetVendorHiringsByVendorID(ctx, app, vendor.VendorID)
+		if err != nil {
+			writeJSONError(w, http.StatusInternalServerError, "LOAD_FAILED", "Failed to load vendor requests")
+			return
+		}
+
+		if hirings == nil {
+			hirings = []models.VendorHiring{}
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success":  true,
+			"requests": hirings,
+		})
+	}
+}
+
 // UpdateVendorStatusHandler updates the status of a vendor hiring record.
 func UpdateVendorStatusHandler(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -493,7 +528,7 @@ func UpdateVendorStatusHandler(app *infra.Deps) httprouter.Handle {
 
 		status := strings.TrimSpace(strings.ToLower(req.Status))
 		switch status {
-		case "hired", "pending", "completed", "cancelled", "rejected":
+		case "hired", "pending", "completed", "cancelled", "accepted", "rejected":
 		default:
 			writeJSONError(w, http.StatusBadRequest, "INVALID_STATUS", "Invalid status")
 			return
@@ -505,9 +540,25 @@ func UpdateVendorStatusHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		if hiring.HiredBy != userID {
-			writeJSONError(w, http.StatusForbidden, "FORBIDDEN", "Unauthorized")
-			return
+		vendorOwnerID := ""
+		if vendor, err := GetVendorByID(ctx, app, hiring.VendorID); err == nil && vendor != nil {
+			vendorOwnerID = vendor.UserID
+		}
+
+		canUpdateAsRequester := hiring.HiredBy == userID
+		canUpdateAsVendor := vendorOwnerID != "" && vendorOwnerID == userID
+
+		switch status {
+		case "accepted", "rejected":
+			if !canUpdateAsVendor {
+				writeJSONError(w, http.StatusForbidden, "FORBIDDEN", "Only the vendor can accept or reject this request")
+				return
+			}
+		case "cancelled", "completed", "pending", "hired":
+			if !canUpdateAsRequester {
+				writeJSONError(w, http.StatusForbidden, "FORBIDDEN", "Only the event organizer can update this status")
+				return
+			}
 		}
 
 		if err := UpdateVendorStatus(ctx, app, hiringID, status); err != nil {

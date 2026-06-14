@@ -9,7 +9,9 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
+	"naevis/config"
 	"naevis/infra"
+	"naevis/models"
 )
 
 // ---------- Bookings ----------
@@ -29,6 +31,26 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
+
+		if p.EntityType == "vendor" {
+			var unavailable []models.AvailabilitySlot
+			if err := app.DB.FindMany(ctx, config.Collections.VendorAvailabilityCollection, bson.M{
+				"vendorid":   p.EntityId,
+				"start_date": bson.M{"$lte": p.Date},
+				"end_date":   bson.M{"$gte": p.Date},
+			}, &unavailable); err != nil {
+				http.Error(w, "db error", http.StatusInternalServerError)
+				return
+			}
+
+			if len(unavailable) > 0 {
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"ok":     false,
+					"reason": "vendor-unavailable",
+				})
+				return
+			}
+		}
 
 		// one booking per user per date (excluding cancelled)
 		count, err := app.DB.CountDocuments(ctx, bookingsCollection, bson.M{
