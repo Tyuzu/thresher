@@ -2,11 +2,7 @@ import Notify from "../../../components/ui/Notify.mjs";
 import { loadVendors } from "./loadVendors.js";
 import { vendorForm } from "./vendorForm.js";
 
-/**
- * Main vendor management component
- * Displays vendor marketplace and registration form
- */
-export async function hireVendors(anacon, isLoggedIn, eventId) {
+export async function hireVendors(anacon, isLoggedIn, eventId, options = {}) {
     if (!anacon) {
         console.error("Vendor container element is required.");
         return null;
@@ -20,6 +16,13 @@ export async function hireVendors(anacon, isLoggedIn, eventId) {
         });
         return null;
     }
+
+    const refresh = async () => {
+        await render();
+        if (typeof options.onChange === "function") {
+            await options.onChange();
+        }
+    };
 
     const render = async () => {
         anacon.innerHTML = "";
@@ -37,14 +40,16 @@ export async function hireVendors(anacon, isLoggedIn, eventId) {
 
         const subtitle = document.createElement("p");
         subtitle.className = "vendors-subtitle";
-        subtitle.textContent = "Hire multiple vendors for your event";
+        subtitle.textContent = eventId
+            ? "Hire vendors for your event"
+            : "Browse vendors and register your own profile";
 
         header.appendChild(title);
         header.appendChild(subtitle);
         container.appendChild(header);
 
         const vendorListEl = await loadVendors(eventId, isLoggedIn, {
-            onHireSuccess: render
+            onHireSuccess: refresh
         });
         container.appendChild(vendorListEl);
 
@@ -54,9 +59,24 @@ export async function hireVendors(anacon, isLoggedIn, eventId) {
         const registrationTitle = document.createElement("h3");
         registrationTitle.className = "registration-title";
         registrationTitle.textContent = "Want to Become a Vendor?";
-
         registrationSection.appendChild(registrationTitle);
-        registrationSection.appendChild(vendorForm(anacon, isLoggedIn, eventId, render));
+
+        const form = vendorForm(
+            anacon,
+            isLoggedIn,
+            eventId,
+            async () => {
+                if (typeof options.onChange === "function") {
+                    await options.onChange();
+                }
+                await render();
+            },
+            {
+                mode: "create"
+            }
+        );
+
+        registrationSection.appendChild(form);
         container.appendChild(registrationSection);
 
         anacon.appendChild(container);

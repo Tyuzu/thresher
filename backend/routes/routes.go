@@ -1026,16 +1026,28 @@ func AddVliveRoutes(r *httprouter.Router, app *infra.Deps, rateLimiter *middlewa
 func AddVendorRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 
-	// Vendor management - registration and profile
+	// Vendor management
 	router.POST("/api/v1/vendors", rateLimiter.Limit(authmidware(vendors.RegisterVendorHandler(app))))
 	router.GET("/api/v1/vendors", rateLimiter.Limit(vendors.GetVendorsHandler(app)))
+	router.GET("/api/v1/vendors/me", rateLimiter.Limit(authmidware(vendors.GetMyVendorHandler(app))))
+
+	// // New canonical vendor endpoints
+	// router.GET("/api/v1/vendors/:vendorID", rateLimiter.Limit(vendors.GetVendorHandler(app)))
+	// router.PATCH("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
+	// router.PUT("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
+	// router.DELETE("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.DeleteVendorHandler(app))))
+
+	// Backward-compatible vendor endpoints
 	router.GET("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(vendors.GetVendorHandler(app)))
 	router.PATCH("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
+	router.PUT("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
+	router.DELETE("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authmidware(vendors.DeleteVendorHandler(app))))
 
 	// Event vendor hiring
 	router.POST("/api/v1/vendors/events/:eventID/hire", rateLimiter.Limit(authmidware(vendors.HireVendorHandler(app))))
 	router.GET("/api/v1/vendors/events/:eventID", rateLimiter.Limit(vendors.GetEventVendorsHandler(app)))
 	router.DELETE("/api/v1/vendors/events/:eventID/vendor/:vendorID", rateLimiter.Limit(authmidware(vendors.RemoveVendorHandler(app))))
+	router.PATCH("/api/v1/vendors/hiring/:hiringID/status", rateLimiter.Limit(authmidware(vendors.UpdateVendorStatusHandler(app))))
 }
 
 // Search Routes - Public endpoints for search functionality

@@ -2,6 +2,7 @@ package vendors
 
 import (
 	"errors"
+
 	"naevis/config"
 )
 
@@ -13,4 +14,5 @@ var (
 	ErrVendorAlreadyExists = errors.New("vendor profile already exists")
 	ErrVendorAlreadyHired  = errors.New("vendor already hired for this event")
 	ErrVendorNotInEvent    = errors.New("vendor not found for this event")
+	ErrUnauthorizedVendor  = errors.New("unauthorized vendor action")
 )

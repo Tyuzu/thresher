@@ -52,12 +52,20 @@ func RegisterVendorHandler(app *infra.Deps) httprouter.Handle {
 		}
 
 		decoder := json.NewDecoder(r.Body)
+		decoder.DisallowUnknownFields()
 		if err := decoder.Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body")
 			return
 		}
 
-		if strings.TrimSpace(req.Name) == "" || strings.TrimSpace(req.Category) == "" {
+		req.Name = strings.TrimSpace(req.Name)
+		req.Category = strings.TrimSpace(req.Category)
+		req.Description = strings.TrimSpace(req.Description)
+		req.Email = strings.TrimSpace(req.Email)
+		req.Phone = strings.TrimSpace(req.Phone)
+		req.Location = strings.TrimSpace(req.Location)
+
+		if req.Name == "" || req.Category == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Name and category are required")
 			return
 		}
@@ -66,12 +74,12 @@ func RegisterVendorHandler(app *infra.Deps) httprouter.Handle {
 			ctx,
 			app,
 			userID,
-			strings.TrimSpace(req.Name),
-			strings.TrimSpace(req.Category),
-			strings.TrimSpace(req.Description),
-			strings.TrimSpace(req.Email),
-			strings.TrimSpace(req.Phone),
-			strings.TrimSpace(req.Location),
+			req.Name,
+			req.Category,
+			req.Description,
+			req.Email,
+			req.Phone,
+			req.Location,
 		)
 		if err != nil {
 			if errors.Is(err, ErrVendorAlreadyExists) {
@@ -96,19 +104,10 @@ func GetVendorsHandler(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
+		search := strings.TrimSpace(r.URL.Query().Get("search"))
 		category := strings.TrimSpace(r.URL.Query().Get("category"))
 
-		var (
-			vendors []models.Vendor
-			err     error
-		)
-
-		if category != "" {
-			vendors, err = GetVendorsByCategory(ctx, app, category)
-		} else {
-			vendors, err = GetAllVendors(ctx, app)
-		}
-
+		vendors, err := GetAllVendors(ctx, app, search, category)
 		if err != nil {
 			writeJSONError(w, http.StatusInternalServerError, "LOAD_FAILED", "Failed to get vendors")
 			return
@@ -150,6 +149,31 @@ func GetVendorHandler(app *infra.Deps) httprouter.Handle {
 	}
 }
 
+// GetMyVendorHandler retrieves the current user's active vendor profile.
+func GetMyVendorHandler(app *infra.Deps) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		if !ok || userID == "" {
+			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
+			return
+		}
+
+		vendor, err := GetVendorByUserID(ctx, app, userID)
+		if err != nil || vendor == nil {
+			writeJSONError(w, http.StatusNotFound, "VENDOR_NOT_FOUND", "Vendor profile not found")
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"vendor":  vendor,
+		})
+	}
+}
+
 // UpdateVendorHandler updates vendor information.
 func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -169,7 +193,7 @@ func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 		}
 
 		vendor, err := GetVendorByID(ctx, app, vendorID)
-		if err != nil {
+		if err != nil || vendor == nil {
 			writeJSONError(w, http.StatusNotFound, "VENDOR_NOT_FOUND", "Vendor not found")
 			return
 		}
@@ -181,6 +205,7 @@ func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 
 		var updates map[string]any
 		decoder := json.NewDecoder(r.Body)
+		decoder.DisallowUnknownFields()
 		if err := decoder.Decode(&updates); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body")
 			return
@@ -196,8 +221,6 @@ func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 			"location":     {},
 			"profileimage": {},
 			"portfolio":    {},
-			"available":    {},
-			"verified":     {},
 		}
 
 		for k, v := range updates {
@@ -212,13 +235,38 @@ func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		if name, ok := updateDoc["name"].(string); ok {
+			updateDoc["name"] = strings.TrimSpace(name)
+		}
+		if category, ok := updateDoc["category"].(string); ok {
+			updateDoc["category"] = strings.TrimSpace(category)
+		}
+		if description, ok := updateDoc["description"].(string); ok {
+			updateDoc["description"] = strings.TrimSpace(description)
+		}
+		if phone, ok := updateDoc["phone"].(string); ok {
+			updateDoc["phone"] = strings.TrimSpace(phone)
+		}
+		if email, ok := updateDoc["email"].(string); ok {
+			updateDoc["email"] = strings.TrimSpace(email)
+		}
+		if location, ok := updateDoc["location"].(string); ok {
+			updateDoc["location"] = strings.TrimSpace(location)
+		}
+		if profileImage, ok := updateDoc["profileimage"].(string); ok {
+			updateDoc["profileimage"] = strings.TrimSpace(profileImage)
+		}
+		if portfolio, ok := updateDoc["portfolio"].(string); ok {
+			updateDoc["portfolio"] = strings.TrimSpace(portfolio)
+		}
+
 		if err := UpdateVendor(ctx, app, vendorID, updateDoc); err != nil {
 			writeJSONError(w, http.StatusInternalServerError, "UPDATE_FAILED", "Failed to update vendor")
 			return
 		}
 
 		updatedVendor, err := GetVendorByID(ctx, app, vendorID)
-		if err != nil {
+		if err != nil || updatedVendor == nil {
 			writeJSONError(w, http.StatusInternalServerError, "LOAD_FAILED", "Failed to load updated vendor")
 			return
 		}
@@ -226,6 +274,47 @@ func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"vendor":  updatedVendor,
+		})
+	}
+}
+
+// DeleteVendorHandler soft-deletes a vendor profile.
+func DeleteVendorHandler(app *infra.Deps) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		if !ok || userID == "" {
+			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
+			return
+		}
+
+		vendorID := strings.TrimSpace(ps.ByName("vendorID"))
+		if vendorID == "" {
+			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Vendor ID is required")
+			return
+		}
+
+		vendor, err := GetVendorByID(ctx, app, vendorID)
+		if err != nil || vendor == nil {
+			writeJSONError(w, http.StatusNotFound, "VENDOR_NOT_FOUND", "Vendor not found")
+			return
+		}
+
+		if vendor.UserID != userID {
+			writeJSONError(w, http.StatusForbidden, "FORBIDDEN", "Unauthorized")
+			return
+		}
+
+		if err := DeleteVendor(ctx, app, vendorID); err != nil {
+			writeJSONError(w, http.StatusInternalServerError, "DELETE_FAILED", "Failed to delete vendor")
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"message": "Vendor deleted",
 		})
 	}
 }
@@ -249,11 +338,13 @@ func HireVendorHandler(app *infra.Deps) httprouter.Handle {
 		}
 
 		var req struct {
-			VendorID    string `json:"vendorid"`
-			VendorIDAlt string `json:"vendorId"`
+			VendorID     string `json:"vendorid"`
+			VendorIDAlt  string `json:"vendorId"`
+			VendorIDAlt2 string `json:"vendorID"`
 		}
 
 		decoder := json.NewDecoder(r.Body)
+		decoder.DisallowUnknownFields()
 		if err := decoder.Decode(&req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body")
 			return
@@ -264,12 +355,15 @@ func HireVendorHandler(app *infra.Deps) httprouter.Handle {
 			vendorID = strings.TrimSpace(req.VendorIDAlt)
 		}
 		if vendorID == "" {
+			vendorID = strings.TrimSpace(req.VendorIDAlt2)
+		}
+		if vendorID == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Vendor ID is required")
 			return
 		}
 
 		vendor, err := GetVendorByID(ctx, app, vendorID)
-		if err != nil {
+		if err != nil || vendor == nil {
 			writeJSONError(w, http.StatusNotFound, "VENDOR_NOT_FOUND", "Vendor not found")
 			return
 		}
@@ -335,16 +429,24 @@ func RemoveVendorHandler(app *infra.Deps) httprouter.Handle {
 
 		eventID := strings.TrimSpace(ps.ByName("eventID"))
 		vendorID := strings.TrimSpace(ps.ByName("vendorID"))
-
 		if eventID == "" || vendorID == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Event ID and Vendor ID are required")
 			return
 		}
 
-		_ = userID
+		existing, err := GetVendorHiringByEventAndVendor(ctx, app, eventID, vendorID)
+		if err != nil || existing == nil {
+			writeJSONError(w, http.StatusNotFound, "VENDOR_NOT_FOUND", "Vendor not found for this event")
+			return
+		}
+
+		if existing.HiredBy != userID {
+			writeJSONError(w, http.StatusForbidden, "FORBIDDEN", "Unauthorized")
+			return
+		}
 
 		if err := RemoveVendorFromEvent(ctx, app, eventID, vendorID); err != nil {
-			if errors.Is(err, ErrVendorNotFound) {
+			if errors.Is(err, ErrVendorNotInEvent) {
 				writeJSONError(w, http.StatusNotFound, "VENDOR_NOT_FOUND", "Vendor not found for this event")
 				return
 			}
@@ -356,6 +458,66 @@ func RemoveVendorHandler(app *infra.Deps) httprouter.Handle {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "Vendor removed successfully",
+		})
+	}
+}
+
+// UpdateVendorStatusHandler updates the status of a vendor hiring record.
+func UpdateVendorStatusHandler(app *infra.Deps) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		if !ok || userID == "" {
+			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
+			return
+		}
+
+		hiringID := strings.TrimSpace(ps.ByName("hiringID"))
+		if hiringID == "" {
+			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Hiring ID is required")
+			return
+		}
+
+		var req struct {
+			Status string `json:"status"`
+		}
+
+		decoder := json.NewDecoder(r.Body)
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body")
+			return
+		}
+
+		status := strings.TrimSpace(strings.ToLower(req.Status))
+		switch status {
+		case "hired", "pending", "completed", "cancelled", "rejected":
+		default:
+			writeJSONError(w, http.StatusBadRequest, "INVALID_STATUS", "Invalid status")
+			return
+		}
+
+		hiring, err := GetVendorHiringByID(ctx, app, hiringID)
+		if err != nil || hiring == nil {
+			writeJSONError(w, http.StatusNotFound, "HIRING_NOT_FOUND", "Hiring record not found")
+			return
+		}
+
+		if hiring.HiredBy != userID {
+			writeJSONError(w, http.StatusForbidden, "FORBIDDEN", "Unauthorized")
+			return
+		}
+
+		if err := UpdateVendorStatus(ctx, app, hiringID, status); err != nil {
+			writeJSONError(w, http.StatusInternalServerError, "UPDATE_FAILED", "Failed to update status")
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"status":  status,
 		})
 	}
 }

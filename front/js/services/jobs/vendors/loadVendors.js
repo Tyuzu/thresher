@@ -1,36 +1,26 @@
-import { apiFetch } from "../../../api/api.js";
 import Notify from "../../../components/ui/Notify.mjs";
+import { fetchEventVendors, fetchVendors } from "./vendorService.js";
 import { hireVendor } from "./hireVendorAction.js";
-
-function normalizeVendorList(response) {
-    if (Array.isArray(response)) {
-        return response;
-    }
-
-    if (Array.isArray(response?.vendors)) {
-        return response.vendors;
-    }
-
-    if (Array.isArray(response?.data)) {
-        return response.data;
-    }
-
-    return [];
-}
+import { getVendorId, getVendorName, normalizeVendorList } from "./vendorUtils.js";
 
 function createTextElement(tagName, className, textContent) {
     const element = document.createElement(tagName);
+
     if (className) {
         element.className = className;
     }
+
     element.textContent = textContent;
     return element;
 }
 
-/**
- * Load and display available vendors
- * Fetches vendors and displays them in a grid layout
- */
+function isVendorHired(vendorId, eventVendors) {
+    return eventVendors.some((eventVendor) => {
+        const hiredVendorId = getVendorId(eventVendor);
+        return String(hiredVendorId) === String(vendorId);
+    });
+}
+
 export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
     const { onHireSuccess } = options;
 
@@ -43,12 +33,12 @@ export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
     container.appendChild(createTextElement("h4", null, "Available Vendors"));
 
     try {
-        const vendorsResponse = await apiFetch("/vendors", "GET");
+        const vendorsResponse = await fetchVendors();
         vendors = normalizeVendorList(vendorsResponse);
 
         if (eventId) {
             try {
-                const eventVendorsResponse = await apiFetch(`/vendors/events/${eventId}`, "GET");
+                const eventVendorsResponse = await fetchEventVendors(eventId);
                 eventVendors = normalizeVendorList(eventVendorsResponse);
             } catch (error) {
                 console.error("Failed to load event vendors:", error);
@@ -71,7 +61,6 @@ export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
         const emptyMessage = document.createElement("div");
         emptyMessage.className = "no-vendors-message";
         emptyMessage.textContent = "No vendors available yet. Be the first to register!";
-
         container.appendChild(emptyMessage);
         return container;
     }
@@ -80,17 +69,15 @@ export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
     vendorGrid.className = "vendor-grid";
 
     vendors.forEach((vendor) => {
-        const vendorId = vendor?.vendorid ?? vendor?.id ?? null;
-        const isHired = Boolean(vendorId) && eventVendors.some((ev) => {
-            const hiredVendorId = ev?.vendorid ?? ev?.id ?? null;
-            return String(hiredVendorId) === String(vendorId);
-        });
+        const vendorId = getVendorId(vendor);
+        const vendorName = getVendorName(vendor);
+        const hired = Boolean(eventId && vendorId && isVendorHired(vendorId, eventVendors));
 
         const vendorCard = document.createElement("div");
         vendorCard.className = "vendor-card";
 
         const nameEl = document.createElement("h5");
-        nameEl.textContent = vendor?.name || "Unnamed Vendor";
+        nameEl.textContent = vendorName;
         vendorCard.appendChild(nameEl);
 
         const categoryEl = document.createElement("span");
@@ -148,53 +135,53 @@ export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
         const actionsEl = document.createElement("div");
         actionsEl.className = "vendor-actions";
 
-        const hireButton = document.createElement("button");
-        hireButton.type = "button";
-        hireButton.className = `hire-btn${isHired ? " hired" : ""}`;
-        hireButton.disabled = isHired;
-        hireButton.textContent = isHired ? "Already Hired ✓" : "Hire Vendor";
+        if (eventId && vendorId) {
+            const hireButton = document.createElement("button");
+            hireButton.type = "button";
+            hireButton.className = `hire-btn${hired ? " hired" : ""}`;
+            hireButton.disabled = hired;
+            hireButton.textContent = hired ? "Already Hired ✓" : "Hire Vendor";
 
-        hireButton.addEventListener("click", async () => {
-            if (!isLoggedIn) {
-                Notify("Please log in to hire vendors.", {
-                    type: "warning",
-                    duration: 3000
-                });
-                return;
-            }
-
-            if (!eventId || !vendorId) {
-                Notify("Invalid vendor or event ID.", {
-                    type: "error",
-                    duration: 3000
-                });
-                return;
-            }
-
-            const originalLabel = hireButton.textContent;
-            hireButton.disabled = true;
-            hireButton.textContent = "Hiring...";
-
-            const hired = await hireVendor(eventId, vendorId, vendor?.name);
-
-            if (hired) {
-                if (typeof onHireSuccess === "function") {
-                    await onHireSuccess({
-                        eventId,
-                        vendorId,
-                        vendor
+            hireButton.addEventListener("click", async () => {
+                if (!isLoggedIn) {
+                    Notify("Please log in to hire vendors.", {
+                        type: "warning",
+                        duration: 3000
                     });
+                    return;
                 }
-                return;
-            }
 
-            if (!isHired) {
-                hireButton.disabled = false;
-                hireButton.textContent = originalLabel;
-            }
-        });
+                const originalLabel = hireButton.textContent;
+                hireButton.disabled = true;
+                hireButton.textContent = "Hiring...";
 
-        actionsEl.appendChild(hireButton);
+                const hiredSuccessfully = await hireVendor(eventId, vendorId, vendorName);
+
+                if (hiredSuccessfully) {
+                    if (typeof onHireSuccess === "function") {
+                        await onHireSuccess({
+                            eventId,
+                            vendorId,
+                            vendor
+                        });
+                    }
+                    return;
+                }
+
+                if (!hired) {
+                    hireButton.disabled = false;
+                    hireButton.textContent = originalLabel;
+                }
+            });
+
+            actionsEl.appendChild(hireButton);
+        } else {
+            const note = document.createElement("div");
+            note.className = "vendor-actions-note";
+            note.textContent = "Select an event to hire vendors.";
+            actionsEl.appendChild(note);
+        }
+
         vendorCard.appendChild(actionsEl);
         vendorGrid.appendChild(vendorCard);
     });

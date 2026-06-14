@@ -1,51 +1,29 @@
 import { hireVendors } from "./vendors.js";
+import { vendorForm } from "./vendorForm.js";
+import { createModal } from "./modal.js";
+import { fetchEventVendors } from "./vendorService.js";
+import { removeVendor } from "./hireVendorAction.js";
+import {
+    getVendorId,
+    getVendorName,
+    normalizeVendorList
+} from "./vendorUtils.js";
+import { VENDOR_EVENTS } from "./vendorEvents.js";
 import { apiFetch } from "../../../api/api.js";
-import { injectVendorStyles } from "./vendorStyles.js";
+import { deleteVendor } from "./vendorService.js";
+import Notify from "../../../components/ui/Notify.mjs";
 
-function normalizeVendorList(response) {
-    if (Array.isArray(response)) {
-        return response;
-    }
+async function renderEventVendorSummary(eventId, container, options = {}) {
+    const {
+        allowRemove = false,
+        showManageButton = true,
+        onManageClick = null
+    } = options;
 
-    if (Array.isArray(response?.vendors)) {
-        return response.vendors;
-    }
-
-    if (Array.isArray(response?.data)) {
-        return response.data;
-    }
-
-    return [];
-}
-
-/**
- * Add vendor management tab to event details
- * Call this when user views/edits an event
- */
-export async function initEventVendorManagement(eventId, containerElement) {
-    if (!containerElement) {
-        console.error("Container element required");
-        return;
-    }
-
-    const vendorTab = document.createElement("div");
-    vendorTab.id = "event-vendors-tab";
-    vendorTab.className = "event-section";
-
-    await loadEventVendorsSummary(eventId, vendorTab);
-
-    containerElement.appendChild(vendorTab);
-}
-
-/**
- * Load summary of hired vendors for an event
- */
-async function loadEventVendorsSummary(eventId, container) {
     try {
-        const response = await apiFetch(`/vendors/events/${eventId}`, "GET");
+        const response = await fetchEventVendors(eventId);
 
         if (response?.success === false) {
-            console.error("API error loading vendors:", response.error);
             container.innerHTML = "";
             const errorEl = document.createElement("p");
             errorEl.textContent = "Failed to load vendors.";
@@ -76,8 +54,11 @@ async function loadEventVendorsSummary(eventId, container) {
                 const item = document.createElement("div");
                 item.className = "vendor-summary-item";
 
+                const vendorId = getVendorId(vendor);
+                const vendorName = getVendorName(vendor);
+
                 const nameEl = document.createElement("h4");
-                nameEl.textContent = vendor?.name || "Unnamed Vendor";
+                nameEl.textContent = vendorName;
                 item.appendChild(nameEl);
 
                 const categoryEl = document.createElement("span");
@@ -93,82 +74,151 @@ async function loadEventVendorsSummary(eventId, container) {
                     item.appendChild(ratingEl);
                 }
 
+                if (allowRemove && vendorId) {
+                    const actions = document.createElement("div");
+                    actions.className = "vendor-summary-actions";
+
+                    const removeBtn = document.createElement("button");
+                    removeBtn.type = "button";
+                    removeBtn.className = "btn-secondary remove-vendor-btn";
+                    removeBtn.textContent = "Remove";
+
+                    removeBtn.addEventListener("click", async () => {
+                        const confirmed = window.confirm(`Remove ${vendorName} from this event?`);
+                        if (!confirmed) {
+                            return;
+                        }
+
+                        const original = removeBtn.textContent;
+                        removeBtn.disabled = true;
+                        removeBtn.textContent = "Removing...";
+
+                        const removed = await removeVendor(eventId, vendorId, vendorName);
+
+                        removeBtn.disabled = false;
+                        removeBtn.textContent = original;
+
+                        if (removed) {
+                            await renderEventVendorSummary(eventId, container, options);
+                        }
+                    });
+
+                    actions.appendChild(removeBtn);
+                    item.appendChild(actions);
+                }
+
                 list.appendChild(item);
             });
 
             summary.appendChild(list);
         }
 
-        const manageBtn = document.createElement("button");
-        manageBtn.type = "button";
-        manageBtn.className = "btn-primary manage-vendors-btn";
-        manageBtn.textContent = "Manage Vendors";
-        manageBtn.addEventListener("click", () => {
-            openVendorManagementModal(eventId);
-        });
-        summary.appendChild(manageBtn);
+        if (showManageButton) {
+            const manageBtn = document.createElement("button");
+            manageBtn.type = "button";
+            manageBtn.className = "btn-primary manage-vendors-btn";
+            manageBtn.textContent = "Manage Vendors";
+            manageBtn.addEventListener("click", () => {
+                if (typeof onManageClick === "function") {
+                    onManageClick();
+                    return;
+                }
+                openVendorManagementModal(eventId);
+            });
+            summary.appendChild(manageBtn);
+        }
 
         container.innerHTML = "";
         container.appendChild(summary);
     } catch (error) {
         console.error("Error loading vendors summary:", error);
         container.innerHTML = "";
+
         const errorEl = document.createElement("p");
         errorEl.textContent = "Failed to load vendors.";
         container.appendChild(errorEl);
     }
 }
 
-/**
- * Open vendor management modal for an event
- */
-export async function openVendorManagementModal(eventId) {
-    const modal = document.createElement("div");
-    modal.className = "vendor-management-modal modal";
+export async function initEventVendorManagement(eventId, containerElement) {
+    if (!containerElement) {
+        console.error("Container element required");
+        return;
+    }
 
-    const content = document.createElement("div");
-    content.className = "modal-content";
+    const vendorTab = document.createElement("div");
+    vendorTab.id = "event-vendors-tab";
+    vendorTab.className = "event-section";
 
-    const header = document.createElement("div");
-    header.className = "modal-header";
-
-    const title = document.createElement("h2");
-    title.textContent = "Manage Event Vendors";
-
-    const closeBtn = document.createElement("button");
-    closeBtn.type = "button";
-    closeBtn.className = "close-btn";
-    closeBtn.innerHTML = "&times;";
-
-    header.appendChild(title);
-    header.appendChild(closeBtn);
-
-    const body = document.createElement("div");
-    body.id = "vendor-management-container";
-    body.className = "modal-body";
-
-    content.appendChild(header);
-    content.appendChild(body);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-
-    closeBtn.addEventListener("click", () => {
-        modal.remove();
+    await renderEventVendorSummary(eventId, vendorTab, {
+        allowRemove: false,
+        showManageButton: true
     });
 
-    modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-            modal.remove();
+    containerElement.appendChild(vendorTab);
+}
+
+export async function openVendorManagementModal(eventId) {
+    const listeners = [];
+    let refreshSummary = async () => {};
+    let refreshMarketplace = async () => {};
+
+    const { modal, body } = createModal({
+        title: "Manage Event Vendors",
+        className: "vendor-management-modal",
+        onClose: () => {
+            for (const { eventName, handler } of listeners) {
+                document.removeEventListener(eventName, handler);
+            }
+            listeners.length = 0;
         }
     });
 
-    await hireVendors(body, true, eventId);
+    document.body.appendChild(modal);
+
+    const summaryContainer = document.createElement("div");
+    summaryContainer.className = "vendor-management-summary";
+    body.appendChild(summaryContainer);
+
+    const marketplaceContainer = document.createElement("div");
+    marketplaceContainer.className = "vendor-management-marketplace";
+    body.appendChild(marketplaceContainer);
+
+    refreshSummary = async () => {
+        await renderEventVendorSummary(eventId, summaryContainer, {
+            allowRemove: true,
+            showManageButton: false
+        });
+    };
+
+    refreshMarketplace = async () => {
+        await hireVendors(marketplaceContainer, true, eventId, {
+            onChange: refreshSummary
+        });
+    };
+
+    const handleVendorChanged = async (event) => {
+        if (String(event?.detail?.eventId) !== String(eventId)) {
+            return;
+        }
+        await refreshSummary();
+    };
+
+    for (const eventName of [
+        VENDOR_EVENTS.HIRED,
+        VENDOR_EVENTS.REMOVED,
+        VENDOR_EVENTS.REGISTERED,
+        VENDOR_EVENTS.UPDATED,
+        VENDOR_EVENTS.DELETED
+    ]) {
+        document.addEventListener(eventName, handleVendorChanged);
+        listeners.push({ eventName, handler: handleVendorChanged });
+    }
+
+    await refreshSummary();
+    await refreshMarketplace();
 }
 
-/**
- * Add vendor selection step to event creation form
- * Call after event is created
- */
 export async function addVendorSelectionToEventCreation(eventId, formElement) {
     const vendorSection = document.createElement("div");
     vendorSection.className = "event-creation-section";
@@ -191,10 +241,6 @@ export async function addVendorSelectionToEventCreation(eventId, formElement) {
     await hireVendors(vendorContainer, true, eventId);
 }
 
-/**
- * Show vendor profile in user settings
- * Call when user is a vendor
- */
 export async function showVendorProfile(userId, container) {
     try {
         const user = await apiFetch(`/users/${userId}`, "GET");
@@ -226,7 +272,9 @@ export async function showVendorProfile(userId, container) {
             registerBtn.className = "btn-primary";
             registerBtn.textContent = "Register as Vendor";
             registerBtn.addEventListener("click", () => {
-                openVendorRegistration();
+                openVendorRegistration(async () => {
+                    await showVendorProfile(userId, container);
+                });
             });
 
             profile.appendChild(title);
@@ -238,6 +286,7 @@ export async function showVendorProfile(userId, container) {
         }
 
         const vendorData = user.vendor_profile || {};
+        const vendorId = getVendorId(vendorData);
 
         const profile = document.createElement("div");
         profile.className = "vendor-profile";
@@ -255,16 +304,72 @@ export async function showVendorProfile(userId, container) {
             )
         );
 
+        const actions = document.createElement("div");
+        actions.className = "vendor-profile-actions";
+
         const editBtn = document.createElement("button");
         editBtn.type = "button";
         editBtn.id = "edit-vendor-btn";
         editBtn.className = "btn-secondary";
         editBtn.textContent = "Edit Profile";
         editBtn.addEventListener("click", () => {
-            openEditVendorProfile(userId);
+            openEditVendorProfile(userId, vendorData, async () => {
+                await showVendorProfile(userId, container);
+            });
         });
 
-        profile.appendChild(editBtn);
+        actions.appendChild(editBtn);
+
+        if (vendorId) {
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "btn-danger";
+            deleteBtn.textContent = "Delete Vendor Profile";
+
+            deleteBtn.addEventListener("click", async () => {
+                const confirmed = window.confirm("Delete this vendor profile? This cannot be undone.");
+                if (!confirmed) {
+                    return;
+                }
+
+                deleteBtn.disabled = true;
+                deleteBtn.textContent = "Deleting...";
+
+                try {
+                    const response = await deleteVendor(vendorId);
+
+                    if (response?.success === false) {
+                        throw new Error(response?.error || "Failed to delete vendor profile.");
+                    }
+
+                    Notify("Vendor profile deleted.", {
+                        type: "success",
+                        duration: 3000
+                    });
+
+                    dispatchVendorEvent(VENDOR_EVENTS.DELETED, {
+                        userId,
+                        vendorId,
+                        response
+                    });
+
+                    await showVendorProfile(userId, container);
+                } catch (error) {
+                    console.error("Error deleting vendor profile:", error);
+                    Notify("Failed to delete vendor profile.", {
+                        type: "error",
+                        duration: 3000
+                    });
+                } finally {
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = "Delete Vendor Profile";
+                }
+            });
+
+            actions.appendChild(deleteBtn);
+        }
+
+        profile.appendChild(actions);
         container.appendChild(profile);
     } catch (error) {
         console.error("Error loading vendor profile:", error);
@@ -291,68 +396,148 @@ function createProfileField(labelText, valueText) {
     return field;
 }
 
-/**
- * Open vendor registration modal
- */
-export async function openVendorRegistration() {
-    const modal = document.createElement("div");
-    modal.className = "vendor-registration-modal modal";
+export async function openVendorRegistration(onSuccess = null) {
+    const { modal, body } = createModal({
+        title: "Register as a Vendor",
+        className: "vendor-registration-modal"
+    });
 
-    const content = document.createElement("div");
-    content.className = "modal-content";
-
-    const header = document.createElement("div");
-    header.className = "modal-header";
-
-    const title = document.createElement("h2");
-    title.textContent = "Register as a Vendor";
-
-    const closeBtn = document.createElement("button");
-    closeBtn.type = "button";
-    closeBtn.className = "close-btn";
-    closeBtn.innerHTML = "&times;";
-
-    header.appendChild(title);
-    header.appendChild(closeBtn);
-
-    const body = document.createElement("div");
-    body.id = "vendor-reg-container";
-    body.className = "modal-body";
-
-    content.appendChild(header);
-    content.appendChild(body);
-    modal.appendChild(content);
     document.body.appendChild(modal);
 
-    closeBtn.addEventListener("click", () => {
-        modal.remove();
-    });
-
-    modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
+    const form = vendorForm(
+        body,
+        true,
+        null,
+        async (detail) => {
+            if (typeof onSuccess === "function") {
+                await onSuccess(detail);
+            }
             modal.remove();
+        },
+        {
+            mode: "create"
         }
-    });
+    );
 
-    await hireVendors(body, true, null);
+    body.appendChild(form);
 }
 
-// ============================================
-// 7. INITIALIZATION
-// ============================================
+export async function openEditVendorProfile(userId, existingVendorProfile = null, onSuccess = null) {
+    let vendorData = existingVendorProfile;
 
-/**
- * Call this on app startup to set up vendor system
- */
-export function initVendorSystem() {
-    injectVendorStyles();
-    console.warn("Vendor system initialized");
-}
+    try {
+        if (!vendorData) {
+            const user = await apiFetch(`/users/${userId}`, "GET");
 
-/**
- * Placeholder for vendor profile editing
- * Replace with your actual implementation
- */
-export function openEditVendorProfile(userId) {
-    console.warn("openEditVendorProfile is not implemented yet:", userId);
+            if (user?.success === false) {
+                throw new Error(user?.error || "Failed to load vendor profile.");
+            }
+
+            if (!user || !user.is_vendor) {
+                Notify("Vendor profile not found.", {
+                    type: "error",
+                    duration: 3000
+                });
+                return;
+            }
+
+            vendorData = user.vendor_profile || {};
+        }
+
+        const vendorId = getVendorId(vendorData);
+
+        const { modal, body } = createModal({
+            title: "Edit Vendor Profile",
+            className: "vendor-edit-modal"
+        });
+
+        document.body.appendChild(modal);
+
+        const form = vendorForm(
+            body,
+            true,
+            null,
+            async (detail) => {
+                modal.remove();
+                if (typeof onSuccess === "function") {
+                    await onSuccess(detail);
+                }
+            },
+            {
+                mode: "edit",
+                vendorId,
+                initialData: vendorData,
+                submitLabel: "Save Changes"
+            }
+        );
+
+        body.appendChild(form);
+
+        if (vendorId) {
+            const actions = document.createElement("div");
+            actions.className = "vendor-edit-actions";
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "btn-danger";
+            deleteBtn.textContent = "Delete Vendor Profile";
+
+            deleteBtn.addEventListener("click", async () => {
+                const confirmed = window.confirm("Delete this vendor profile? This cannot be undone.");
+                if (!confirmed) {
+                    return;
+                }
+
+                deleteBtn.disabled = true;
+                deleteBtn.textContent = "Deleting...";
+
+                try {
+                    const response = await deleteVendor(vendorId);
+
+                    if (response?.success === false) {
+                        throw new Error(response?.error || "Failed to delete vendor profile.");
+                    }
+
+                    Notify("Vendor profile deleted.", {
+                        type: "success",
+                        duration: 3000
+                    });
+
+                    dispatchVendorEvent(VENDOR_EVENTS.DELETED, {
+                        userId,
+                        vendorId,
+                        response
+                    });
+
+                    modal.remove();
+                    if (typeof onSuccess === "function") {
+                        await onSuccess({
+                            userId,
+                            vendorId,
+                            response,
+                            mode: "delete"
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error deleting vendor profile:", error);
+                    Notify("Failed to delete vendor profile.", {
+                        type: "error",
+                        duration: 3000
+                    });
+                } finally {
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = "Delete Vendor Profile";
+                }
+            });
+
+            actions.appendChild(deleteBtn);
+            body.appendChild(actions);
+        }
+    } catch (error) {
+        console.error("Error opening vendor edit modal:", error);
+        Notify("Failed to open vendor editor.", {
+            type: "error",
+            duration: 3000
+        });
+    }
 }
