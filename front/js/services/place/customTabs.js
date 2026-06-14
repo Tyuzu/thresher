@@ -72,10 +72,9 @@ function createInlineForm(fields, onSubmit, onCancel) {
 async function displayPlaceMenu(container, placeId, isCreator, isLoggedIn) {
   container.replaceChildren();
   try {
-    const containerx = createElement('div', {}, []);
-    container.appendChild(containerx);
-    // RenderMenu(containerx, isCreator, placeId, isLoggedIn);
-    displayMenu(containerx, placeId, isCreator, isLoggedIn);
+    const menuContainer = createElement('div', {}, []);
+    container.appendChild(menuContainer);
+    displayMenu(menuContainer, placeId, isCreator, isLoggedIn);
   } catch (err) {
     container.appendChild(
       createElement("div", { class: "tab-section error" }, [

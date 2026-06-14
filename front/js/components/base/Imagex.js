@@ -1,36 +1,59 @@
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import { createElement } from "../../components/createElement.js";
 
 /**
- * Imagex component, wraps createElement for <img> with fallback & async decoding
- * Supports both `class` and legacy `classes`
+ * Imagex component
+ * - Async image decoding
+ * - Single fallback attempt
+ * - Prevents infinite error loops
  */
 const Imagex = (attributes = {}) => {
-  const { fallback = "/assets/icon-192.png", decodeAsync = true, classes, class: className, ...rest } = attributes;
+    const {
+        fallback = "/assets/icon-192.png",
+        decodeAsync = true,
+        classes,
+        class: className,
+        ...rest
+    } = attributes;
 
-  // Map legacy `classes` to `class` for createElement
-  if (!rest.class && (className || classes)) {
-    rest.class = className || classes;
-  }
-
-  // Create <img> using createElement
-  const img = createElement("img", rest);
-
-  // Async decoding
-  if (decodeAsync) {
-img.decoding = "async";
-}
-
-  // Fallback on error
-  let triedFallback = false;
-  img.onerror = () => {
-    if (!triedFallback) {
-      triedFallback = true;
-      img.src = resolveImagePath(EntityType.DEFAULT, PictureType.STATIC, fallback);
+    if (!rest.class && (className || classes)) {
+        rest.class = className || classes;
     }
-  };
 
-  return img;
+    const img = createElement("img", rest);
+
+    if (decodeAsync) {
+        img.decoding = "async";
+    }
+
+    img.loading ??= "lazy";
+
+    let triedFallback = false;
+
+    img.addEventListener("error", () => {
+        if (triedFallback) {
+            img.onerror = null;
+            img.removeAttribute("src");
+
+            img.alt =
+                img.alt ||
+                "Image unavailable";
+
+            img.classList.add("image-error");
+
+            return;
+        }
+
+        triedFallback = true;
+
+        if (
+            typeof fallback === "string" &&
+            fallback.trim() !== ""
+        ) {
+            img.src = fallback;
+        }
+    });
+
+    return img;
 };
 
 export default Imagex;

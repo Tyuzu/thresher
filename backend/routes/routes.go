@@ -1024,36 +1024,30 @@ func AddVliveRoutes(r *httprouter.Router, app *infra.Deps, rateLimiter *middlewa
 
 // Vendor Routes
 func AddVendorRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
+	authMiddleware := middleware.Authenticate(app)
 
 	// Vendor management
-	router.POST("/api/v1/vendors", rateLimiter.Limit(authmidware(vendors.RegisterVendorHandler(app))))
+	router.POST("/api/v1/vendors", rateLimiter.Limit(authMiddleware(vendors.RegisterVendorHandler(app))))
 	router.GET("/api/v1/vendors", rateLimiter.Limit(vendors.GetVendorsHandler(app)))
-	router.GET("/api/v1/vendors/me", rateLimiter.Limit(authmidware(vendors.GetMyVendorHandler(app))))
+	router.GET("/api/v1/vendors/me", rateLimiter.Limit(authMiddleware(vendors.GetMyVendorHandler(app))))
 
-	// New canonical vendor endpoints
-	router.GET("/api/v1/vendors/:vendorID", rateLimiter.Limit(vendors.GetVendorHandler(app)))
-	router.PATCH("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
-	router.PUT("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
-	router.DELETE("/api/v1/vendors/:vendorID", rateLimiter.Limit(authmidware(vendors.DeleteVendorHandler(app))))
-
-	// Backward-compatible vendor endpoints
+	// Vendor CRUD
 	router.GET("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(vendors.GetVendorHandler(app)))
-	router.PATCH("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
-	router.PUT("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authmidware(vendors.UpdateVendorHandler(app))))
-	router.DELETE("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authmidware(vendors.DeleteVendorHandler(app))))
+	router.PATCH("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.UpdateVendorHandler(app))))
+	router.PUT("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.UpdateVendorHandler(app))))
+	router.DELETE("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.DeleteVendorHandler(app))))
 
 	// Event vendor hiring
-	router.POST("/api/v1/vendors/events/:eventID/hire", rateLimiter.Limit(authmidware(vendors.HireVendorHandler(app))))
+	router.POST("/api/v1/vendors/events/:eventID/hire", rateLimiter.Limit(authMiddleware(vendors.HireVendorHandler(app))))
 	router.GET("/api/v1/vendors/events/:eventID", rateLimiter.Limit(vendors.GetEventVendorsHandler(app)))
-	router.DELETE("/api/v1/vendors/events/:eventID/vendor/:vendorID", rateLimiter.Limit(authmidware(vendors.RemoveVendorHandler(app))))
-	router.PATCH("/api/v1/vendors/hiring/:hiringID/status", rateLimiter.Limit(authmidware(vendors.UpdateVendorStatusHandler(app))))
-	router.GET("/api/v1/vendors/me/requests", rateLimiter.Limit(authmidware(vendors.GetMyVendorRequestsHandler(app))))
+	router.DELETE("/api/v1/vendors/events/:eventID/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.RemoveVendorHandler(app))))
+	router.PATCH("/api/v1/vendors/hiring/:hiringID/status", rateLimiter.Limit(authMiddleware(vendors.UpdateVendorStatusHandler(app))))
+	router.GET("/api/v1/vendors/me/requests", rateLimiter.Limit(authMiddleware(vendors.GetMyVendorRequestsHandler(app))))
 
 	// Vendor availability
-	router.GET("/api/v1/vendors/:vendorID/availability", rateLimiter.Limit(vendors.ListAvailabilityHandler(app)))
-	router.POST("/api/v1/vendors/:vendorID/availability", rateLimiter.Limit(authmidware(vendors.CreateAvailabilityHandler(app))))
-	router.DELETE("/api/v1/vendors/:vendorID/availability/:slotID", rateLimiter.Limit(authmidware(vendors.DeleteAvailabilityHandler(app))))
+	router.GET("/api/v1/vendors/vendor/:vendorID/availability", rateLimiter.Limit(vendors.ListAvailabilityHandler(app)))
+	router.POST("/api/v1/vendors/vendor/:vendorID/availability", rateLimiter.Limit(authMiddleware(vendors.CreateAvailabilityHandler(app))))
+	router.DELETE("/api/v1/vendors/vendor/:vendorID/availability/:slotID", rateLimiter.Limit(authMiddleware(vendors.DeleteAvailabilityHandler(app))))
 }
 
 // Search Routes - Public endpoints for search functionality

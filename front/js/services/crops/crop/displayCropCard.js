@@ -7,7 +7,7 @@ export function displayCropCard(crop) {
 
     if (crop.banner) {
         const cropImg = Imagex( {
-          src: resolveImagePath(EntityType.CROP, PictureType.BANNER, crop.banner),
+          src: resolveImagePath(EntityType.CROP, PictureType.BANNER, crop.Banner),
           alt: crop.name,
           classes: "crop-card-image"
         });

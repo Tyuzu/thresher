@@ -16,6 +16,7 @@ func AddStaticRoutes(router *httprouter.Router) {
 
 	// Proxy handler for external media
 	router.GET("/static/proxy/*url", mediaproxy.ProxyHandler)
+	router.GET("/static/proxy", mediaproxy.ProxyHandler)
 }
 
 func AddFiledropRoutes(

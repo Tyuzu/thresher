@@ -48,11 +48,7 @@ var (
 	encSem   = make(chan struct{}, MaxEncoders)
 )
 
-func ProxyHandler(
-	w http.ResponseWriter,
-	r *http.Request,
-	ps httprouter.Params,
-) {
+func ProxyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	target, err := normalizeTarget(
 		ps.ByName("url"),
 	)

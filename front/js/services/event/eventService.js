@@ -14,8 +14,7 @@ import { displayMedia } from "../media/ui/mediaGallery.js";
 // import { persistTabs } from "../../utils/persistTabs.js";
 import { createTabs } from "../../components/ui/createTabs.js";
 import { showSeatingBanner } from "../tickets/seatingBanner.js";
-import { displayEventChat } from "./eventChat.js";
-import { displayEventNews, displayEventPolls } from "./eventMoreTabs.js";
+import { displayEventNews } from "./eventMoreTabs.js";
 
 
 // --- Helpers ---
@@ -95,9 +94,7 @@ const setupTabs = (eventData, eventId, isCreator, isLoggedIn) => {
             { title: "Tickets", id: "tickets-tab", render: (c) => displayTickets(c, eventData.tickets, eventId, isCreator, isLoggedIn) },
             { title: "FAQ", id: "faq-tab", render: (c) => displayEventFAQ(c, isCreator, eventId, eventData.faqs) },
             { title: "Merchandise", id: "merch-tab", render: (c) => displayMerchandise(c, eventData.merch, "event", eventId, isCreator, isLoggedIn) },
-            { title: "Chat", id: "chat-tab", render: (c) => displayEventChat(c, eventId, isLoggedIn) },
             { title: "News", id: "news-tab", render: (c) => displayEventNews(c, eventId, isLoggedIn) },
-            { title: "Polls", id: "polls-tab", render: (c) => displayEventPolls(c, eventId, isLoggedIn) },
         );
     } else {
         tabs.push(

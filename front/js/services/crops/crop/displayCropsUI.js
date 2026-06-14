@@ -40,7 +40,7 @@ function isSeasonal(crop) {
 // --- card ---
 export function renderCropCard(crop, mode = "catalogue") {
   const card = createElement("div", { class: "crop-card" });
-  card.addEventListener('click', ()=>navigate(`/crop/${crop.name.toLowerCase().replace(/\s+/g, "_")}`));
+  card.addEventListener('click', () => navigate(`/crop/${crop.name.toLowerCase().replace(/\s+/g, "_")}`));
   const img = Imagex({
     src: resolveImagePath(EntityType.CROP, PictureType.THUMB, crop.banner),
     alt: crop.name,
@@ -146,8 +146,8 @@ export function renderCropInterface(container, cropData) {
 
     // Disable tabs with no crops
     if (!cropData[cat].length) {
-btn.disabled = true;
-}
+      btn.disabled = true;
+    }
 
     btn.onclick = () => {
       state.currentTab = cat;
@@ -155,8 +155,8 @@ btn.disabled = true;
     };
 
     if (i === 0) {
-btn.classList.add("active");
-}
+      btn.classList.add("active");
+    }
     tabButtons.appendChild(btn);
 
     const pane = createElement("div", { class: "tab-content", id: cat });

@@ -33,7 +33,7 @@ function createTicketCard(ticket, eventId, isCreator, isLoggedIn) {
         name: ticket.name,
         price: formatCurrency(ticket.price), // CRITICAL FIX: Use proper currency formatting
         quantity: ticket.quantity,
-        color: ticket.color || "#f3f3f3",
+        color: ticket.color || "#a3a3a349",
         attributes: { "data-ticket-id": ticket.ticketid },
         onClick: async () => {
             if (!isLoggedIn || isCreator) {

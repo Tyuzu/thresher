@@ -1,4 +1,4 @@
-import { showLoading, showError } from "../customTabs2";
+import { showLoading, showError } from "./helpers.js";
 import { apiFetch } from "../../../api/api.js";
 
 

@@ -62,12 +62,7 @@ const VALID_ENTITY_TYPES = new Set(
     Object.values(EntityType)
 );
 
-export function resolveImagePath(
-    entityType,
-    pictureType,
-    filename,
-    fallback = "/assets/fallbacks.png"
-) {
+export function resolveImagePath(entityType, pictureType, filename, fallback = "/assets/fallbacks.png") {
     if (
         !entityType ||
         !pictureType ||
@@ -80,7 +75,6 @@ export function resolveImagePath(
     if (!VALID_ENTITY_TYPES.has(entityType)) {
         return fallback;
     }
-
     if (
         /^(file:|data:|javascript:)/i.test(filename) ||
         filename.includes("..")
@@ -111,7 +105,7 @@ export function resolveImagePath(
                 return fallback;
             }
 
-            return `${SRC_URL}/proxy?url=${encodeURIComponent(filename)}`;
+            return `${SRC_URL}/proxy/${encodeURIComponent(filename)}`;
         } catch {
             return fallback;
         }
