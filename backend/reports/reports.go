@@ -85,7 +85,7 @@ func ReportContent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		payload.ReportedBy = stringTrim(payload.ReportedBy)
+		payload.ReportedBy = utils.GetUserIDFromRequest(r)
 		payload.TargetID = stringTrim(payload.TargetID)
 		payload.TargetType = stringTrim(payload.TargetType)
 		payload.Reason = stringTrim(payload.Reason)

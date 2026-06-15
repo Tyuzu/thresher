@@ -20,22 +20,13 @@ import (
 )
 
 func main() {
-
+	env := os.Getenv("ENV")
 	cfg := config.InitConfig()
 
 	app, err := infra.New(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize infrastructure: %v", err)
 	}
-
-	// subscriberCtx := context.Background()
-
-	// if err := bootstrap.RegisterSubscribers(
-	// 	subscriberCtx,
-	// 	app,
-	// ); err != nil {
-	// 	log.Fatalf("subscriber bootstrap failed: %v", err)
-	// }
 
 	// =====================
 	// Rate limiter
@@ -92,17 +83,19 @@ func main() {
 
 	go func() {
 		log.Printf("API server listening on %s", cfg.HTTPPort)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("ListenAndServe error: %v", err)
+
+		var err error
+
+		if env == "development" {
+			err = server.ListenAndServeTLS("cert.pem", "key.pem")
+		} else {
+			err = server.ListenAndServe()
+		}
+
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
 		}
 	}()
-
-	// go func() {
-	// 	log.Printf("API server listening on %s", cfg.HTTPPort)
-	// 	if err := server.ListenAndServeTLS("cert.pem", "key.pem"); err != nil && err != http.ErrServerClosed {
-	// 		log.Fatalf("ListenAndServe error: %v", err)
-	// 	}
-	// }()
 
 	// =====================
 	// Graceful shutdown

@@ -5,7 +5,7 @@ import (
 )
 
 type Report struct {
-	ReportID    string    `bson:"reportid,omitempty" json:"reportid"`
+	ReportID    string    `bson:"reportid,omitempty" json:"id"`
 	ReportedBy  string    `json:"reportedBy"  bson:"reportedBy"`
 	TargetID    string    `json:"targetId"    bson:"targetId"`
 	TargetType  string    `json:"targetType"  bson:"targetType"`
