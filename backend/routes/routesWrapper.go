@@ -43,7 +43,6 @@ func RoutesWrapper(router *httprouter.Router, app *infra.Deps, rateLimiter *midd
 	AddProductRoutes(router, app, rateLimiter)
 	AddProfileRoutes(router, app, rateLimiter)
 	AddRecipeRoutes(router, app, rateLimiter)
-	AddReportRoutes(router, app, rateLimiter)
 	AddReviewsRoutes(router, app, rateLimiter)
 	AddSearchRoutes(router, app, rateLimiter)
 	AddSettingsRoutes(router, app, rateLimiter)

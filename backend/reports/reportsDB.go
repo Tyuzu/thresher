@@ -7,6 +7,8 @@ import "naevis/config"
 ------------------------- */
 
 var (
-	reportsCollection = config.Collections.ReportsCollection
-	appealsCollection = config.Collections.AppealsCollection
+	reportsCollection       = config.Collections.ReportsCollection
+	appealsCollection       = config.Collections.AppealsCollection
+	moderatorAppsCollection = config.Collections.ModeratorApplications
+	usersCollection         = config.Collections.UserCollection
 )

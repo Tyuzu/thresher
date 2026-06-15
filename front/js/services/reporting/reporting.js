@@ -12,8 +12,19 @@ const REPORT_REASONS = [
   { value: "Other", label: "Other" }
 ];
 
+function getUserIdFromState() {
+  const user = getState("user");
+  if (!user) {
+    return "";
+  }
+  if (typeof user === "string") {
+    return user;
+  }
+  return user.id || user.userId || user.userid || "";
+}
+
 export function reportPost(targetId, targetType, parentType = "", parentId = "") {
-  const userId = getState("user");
+  const userId = getUserIdFromState();
   if (!userId) {
     Notify("You must be logged in to report content.", { type: "error" });
     return;
@@ -112,7 +123,7 @@ export function reportPost(targetId, targetType, parentType = "", parentId = "")
 }
 
 export function appealContent(targetId, targetType) {
-  const userId = getState("user");
+  const userId = getUserIdFromState();
   if (!userId) {
     Notify("You must be logged in to submit an appeal.", { type: "error" });
     return;

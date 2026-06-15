@@ -28,7 +28,6 @@ import (
 	"naevis/merch"
 	"naevis/metadata"
 	"naevis/middleware"
-	"naevis/moderator"
 	"naevis/musicon"
 	"naevis/newchat"
 	"naevis/notices"
@@ -67,44 +66,107 @@ func AddActivityRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *
 	router.POST("/api/v1/scitylana/event", activity.HandleAnalyticsEvent(app))
 }
 
-// func AddAdminRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-
-// 	// Moderator-only endpoints
-// 	router.GET("/api/v1/moderator/reports",
-// 		authmidware(
-// 			middleware.RequireRoles("moderator")(
-// 				moderator.GetReports,
-// 			),
-// 		),
-// 	)
-
-// 	router.POST("/api/v1/moderator/apply",
-// 		rateLimiter.Limit(
-// 			authmidware(moderator.ApplyModerator),
-// 		),
-// 	)
-// }
-
 func AddAdminRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 
-	// Moderator-only endpoints
-	router.GET("/api/v1/moderator/reports",
+	router.PUT(
+		"/api/v1/report/:id",
 		authmidware(
 			middleware.RequireRoles("moderator")(
-				moderator.GetReports(app),
+				reports.UpdateReport(app),
 			),
 		),
 	)
 
-	router.POST("/api/v1/moderator/apply",
+	router.POST(
+		"/api/v1/report",
 		rateLimiter.Limit(
-			authmidware(moderator.ApplyModerator(app)),
+			authmidware(
+				reports.ReportContent(app),
+			),
+		),
+	)
+	router.POST(
+		"/api/v1/moderator/appeals",
+		rateLimiter.Limit(
+			authmidware(
+				reports.CreateAppeal(app),
+			),
 		),
 	)
 
-	// Moderator-only: soft-delete entities
-	router.PUT("/api/v1/moderator/delete/:type/:id",
+	router.GET(
+		"/api/v1/moderator/appeals",
+		authmidware(
+			middleware.RequireRoles("moderator")(
+				reports.GetAppeals(app),
+			),
+		),
+	)
+
+	router.PUT(
+		"/api/v1/moderator/appeals/:id",
+		authmidware(
+			middleware.RequireRoles("moderator")(
+				reports.UpdateAppeal(app),
+			),
+		),
+	)
+
+	router.POST(
+		"/api/v1/moderator/apply",
+		authmidware(
+			reports.ApplyModerator(app),
+		),
+	)
+
+	router.GET(
+		"/api/v1/moderator/applications",
+		authmidware(
+			middleware.RequireRoles("moderator")(
+				reports.ListModeratorApplications(app),
+			),
+		),
+	)
+
+	router.PUT(
+		"/api/v1/moderator/approve/:id",
+		authmidware(
+			middleware.RequireRoles("moderator")(
+				reports.ApproveModerator(app),
+			),
+		),
+	)
+
+	router.PUT(
+		"/api/v1/moderator/reject/:id",
+		authmidware(
+			middleware.RequireRoles("moderator")(
+				reports.RejectModerator(app),
+			),
+		),
+	)
+
+	router.GET(
+		"/api/v1/moderator/reports",
+		authmidware(
+			middleware.RequireRoles("moderator")(
+				reports.GetReports(app),
+			),
+		),
+	)
+
+	router.PUT(
+		"/api/v1/moderator/reports/:id",
+		authmidware(
+			middleware.RequireRoles("moderator")(
+				reports.UpdateReport(app),
+			),
+		),
+	)
+
+	router.PUT(
+		"/api/v1/moderator/delete/:type/:id",
 		authmidware(
 			middleware.RequireRoles("moderator")(
 				reports.SoftDeleteEntity(app),
@@ -112,18 +174,11 @@ func AddAdminRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mid
 		),
 	)
 
-	// Moderator-only: appeals management (list + update)
-	router.GET("/api/v1/moderator/appeals",
+	router.PUT(
+		"/api/v1/moderator/users/:id/role",
 		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.GetAppeals(app),
-			),
-		),
-	)
-	router.PUT("/api/v1/moderator/appeals/:id",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.UpdateAppeal(app),
+			middleware.RequireRoles("admin")(
+				reports.SetUserRole(app),
 			),
 		),
 	)
@@ -217,36 +272,6 @@ func AddHomeRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *midd
 
 func AddProductRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	router.GET("/api/v1/products/:entityType/:entityId", middleware.OptionalAuth(products.GetProductDetails(app)))
-}
-
-func AddReportRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	router.PUT("/api/v1/report/:id",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.UpdateReport(app),
-			),
-		),
-	)
-
-	router.POST("/api/v1/report",
-		rateLimiter.Limit(
-			authmidware(reports.ReportContent(app)),
-		),
-	)
-
-	// Public (authenticated) endpoint to create appeals
-	router.POST("/api/v1/appeals",
-		rateLimiter.Limit(
-			authmidware(reports.CreateAppeal(app)),
-		),
-	)
-
-	// router.POST("/api/v1/moderator/apply", moderator.ApplyModerator)
-	router.GET("/api/v1/moderator/applications", moderator.ListModeratorApplications(app))
-	router.PUT("/api/v1/moderator/approve/:id", moderator.ApproveModerator(app))
-	router.PUT("/api/v1/moderator/reject/:id", moderator.RejectModerator(app))
-
 }
 
 // Routes registration

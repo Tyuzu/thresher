@@ -6,9 +6,9 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -16,60 +16,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
-
-/* -------------------------
-   Helpers
-------------------------- */
-
-func stringTrim(s string) string { return strings.TrimSpace(s) }
-
-func getActorID(r *http.Request) string {
-	return utils.GetUserIDFromRequest(r)
-}
-
-func writeJSON(w http.ResponseWriter, v interface{}, status int) {
-	w.Header().Set("Content-Type", "application/json")
-	if status > 0 {
-		w.WriteHeader(status)
-	}
-	_ = json.NewEncoder(w).Encode(v)
-}
-
-func writeError(w http.ResponseWriter, msg string, status int) {
-	writeJSON(w, map[string]string{"error": msg}, status)
-}
-
-func splitAndTrim(s string) []string {
-	parts := strings.Split(s, ",")
-	out := make([]string, 0, len(parts))
-	for _, p := range parts {
-		if t := stringTrim(p); t != "" {
-			out = append(out, t)
-		}
-	}
-	return out
-}
-
-/* -------------------------
-   Payload Types
-------------------------- */
-
-type UpdateReportPayload struct {
-	Status      string `json:"status"`
-	ReviewNotes string `json:"reviewNotes,omitempty"`
-}
-
-type CreateAppealPayload struct {
-	UserID     string `json:"userId"`
-	TargetType string `json:"targetType"`
-	TargetID   string `json:"targetId"`
-	Reason     string `json:"reason"`
-}
-
-type UpdateAppealPayload struct {
-	Status      string `json:"status"`
-	ReviewNotes string `json:"reviewNotes,omitempty"`
-}
 
 /* -------------------------
    1) Submit Report
@@ -122,10 +68,10 @@ func ReportContent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		writeJSON(w, map[string]string{
+		writeJSON(w, http.StatusCreated, map[string]string{
 			"message":  "Report submitted",
 			"reportId": payload.ReportID,
-		}, http.StatusCreated)
+		})
 	}
 }
 
@@ -139,11 +85,12 @@ func GetReports(app *infra.Deps) httprouter.Handle {
 		q := r.URL.Query()
 		filter := bson.M{}
 
-		if status := stringTrim(q.Get("status")); status != "" && status != "all" {
+		status := stringTrim(q.Get("status"))
+		if status != "" && status != "all" {
 			parts := splitAndTrim(status)
 			if len(parts) == 1 {
 				filter["status"] = parts[0]
-			} else {
+			} else if len(parts) > 1 {
 				filter["status"] = bson.M{"$in": parts}
 			}
 		} else if status == "" {
@@ -189,7 +136,11 @@ func GetReports(app *infra.Deps) httprouter.Handle {
 			limit,
 		)
 
-		writeJSON(w, reports, http.StatusOK)
+		if reports == nil {
+			reports = []models.Report{}
+		}
+
+		writeJSON(w, http.StatusOK, reports)
 	}
 }
 
@@ -215,12 +166,18 @@ func UpdateReport(app *infra.Deps) httprouter.Handle {
 		payload.Status = stringTrim(payload.Status)
 		payload.ReviewNotes = stringTrim(payload.ReviewNotes)
 
-		if payload.Status == "" {
-			writeError(w, "Missing required field: status", http.StatusBadRequest)
+		allowed := map[string]struct{}{
+			"pending":  {},
+			"reviewed": {},
+			"resolved": {},
+			"rejected": {},
+		}
+		if _, ok := allowed[payload.Status]; !ok {
+			writeError(w, "Invalid status", http.StatusBadRequest)
 			return
 		}
 
-		err := app.DB.Update(
+		if err := app.DB.Update(
 			ctx,
 			reportsCollection,
 			bson.M{"reportid": reportID},
@@ -231,137 +188,12 @@ func UpdateReport(app *infra.Deps) httprouter.Handle {
 				"updatedAt":   time.Now().UTC(),
 				"notified":    payload.Status != "resolved",
 			},
-		)
-		if err != nil {
+		); err != nil {
 			writeError(w, "Failed to update report", http.StatusInternalServerError)
 			return
 		}
 
-		writeJSON(w, map[string]string{"message": "Report updated"}, http.StatusOK)
-	}
-}
-
-/* -------------------------
-   Appeals
-------------------------- */
-
-func CreateAppeal(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		ctx := r.Context()
-
-		var payload CreateAppealPayload
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			writeError(w, "Invalid JSON payload", http.StatusBadRequest)
-			return
-		}
-
-		payload.UserID = stringTrim(payload.UserID)
-		payload.TargetType = stringTrim(payload.TargetType)
-		payload.TargetID = stringTrim(payload.TargetID)
-		payload.Reason = stringTrim(payload.Reason)
-
-		if payload.UserID == "" || payload.TargetType == "" || payload.TargetID == "" || payload.Reason == "" {
-			writeError(w, "Missing required field", http.StatusBadRequest)
-			return
-		}
-
-		filter := bson.M{
-			"userId":     payload.UserID,
-			"targetType": payload.TargetType,
-			"targetId":   payload.TargetID,
-			"status":     bson.M{"$in": []string{"pending", "submitted"}},
-		}
-
-		var existing bson.M
-		if err := app.DB.FindOne(ctx, appealsCollection, filter, &existing); err == nil {
-			writeError(w, "You already have a pending appeal for this content", http.StatusConflict)
-			return
-		}
-
-		now := time.Now().UTC()
-		appealID := utils.GenerateRandomString(17)
-
-		appeal := bson.M{
-			"appealid":    appealID,
-			"userId":      payload.UserID,
-			"targetType":  payload.TargetType,
-			"targetId":    payload.TargetID,
-			"reason":      payload.Reason,
-			"status":      "pending",
-			"reviewedBy":  "",
-			"reviewNotes": "",
-			"createdAt":   now,
-			"updatedAt":   now,
-		}
-
-		if err := app.DB.Insert(ctx, appealsCollection, appeal); err != nil {
-			writeError(w, "Failed to create appeal", http.StatusInternalServerError)
-			return
-		}
-
-		writeJSON(w, map[string]string{
-			"message":  "Appeal submitted",
-			"appealId": appealID,
-		}, http.StatusCreated)
-	}
-}
-
-func UpdateAppeal(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		ctx := r.Context()
-		appealID := stringTrim(ps.ByName("id"))
-		if appealID == "" {
-			writeError(w, "Missing appeal ID", http.StatusBadRequest)
-			return
-		}
-
-		var payload UpdateAppealPayload
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			writeError(w, "Invalid JSON payload", http.StatusBadRequest)
-			return
-		}
-
-		payload.Status = stringTrim(payload.Status)
-		payload.ReviewNotes = stringTrim(payload.ReviewNotes)
-
-		if payload.Status != "approved" && payload.Status != "denied" {
-			writeError(w, "Invalid status", http.StatusBadRequest)
-			return
-		}
-
-		var appeal bson.M
-		if err := app.DB.FindOne(ctx, appealsCollection, bson.M{"appealid": appealID}, &appeal); err != nil {
-			writeError(w, "Appeal not found", http.StatusNotFound)
-			return
-		}
-
-		if err := app.DB.Update(
-			ctx,
-			appealsCollection,
-			bson.M{"appealid": appealID},
-			bson.M{
-				"status":      payload.Status,
-				"reviewedBy":  getActorID(r),
-				"reviewNotes": payload.ReviewNotes,
-				"updatedAt":   time.Now().UTC(),
-			},
-		); err != nil {
-			writeError(w, "Failed to update appeal", http.StatusInternalServerError)
-			return
-		}
-
-		if payload.Status == "approved" {
-			_ = setEntityDeletedFlag(
-				ctx,
-				appeal["targetType"].(string),
-				appeal["targetId"].(string),
-				false,
-				getActorID(r),
-				app,
-			)
-		}
-
-		writeJSON(w, map[string]string{"message": "Appeal updated"}, http.StatusOK)
+		writeJSON(w, http.StatusOK, map[string]string{"message": "Report updated"})
 	}
 }
 
@@ -386,31 +218,36 @@ func setEntityDeletedFlag(
 
 	switch entityType {
 	case "post":
-		collection = "posts"
+		collection = config.Collections.BlogPostsCollection
 		idField = "postid"
 	case "place":
-		collection = "places"
+		collection = config.Collections.PlacesCollection
 		idField = "placeid"
 	case "event":
-		collection = "events"
+		collection = config.Collections.EventsCollection
 		idField = "eventid"
 	case "user":
-		collection = "users"
+		collection = config.Collections.UserCollection
 		idField = "userid"
 	case "merch":
-		collection = "merch"
+		collection = config.Collections.MerchCollection
 		idField = "merchid"
 	case "message":
-		collection = "messages"
+		collection = config.Collections.MessagesCollection
 		idField = "messageid"
 	case "chat":
-		collection = "chats"
+		collection = config.Collections.ChatsCollection
 		idField = "chatid"
 	case "comment":
-		collection = "comments"
+		collection = config.Collections.CommentsCollection
 		idField = "commentid"
 	default:
 		return errors.New("unsupported entity type")
+	}
+
+	var existing bson.M
+	if err := app.DB.FindOne(ctx, collection, bson.M{idField: id}, &existing); err != nil {
+		return errEntityNotFound
 	}
 
 	err := app.DB.Update(
@@ -465,6 +302,6 @@ func SoftDeleteEntity(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		writeJSON(w, map[string]string{"message": "Entity soft-deleted"}, http.StatusOK)
+		writeJSON(w, http.StatusOK, map[string]string{"message": "Entity soft-deleted"})
 	}
 }

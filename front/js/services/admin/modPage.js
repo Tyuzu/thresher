@@ -25,7 +25,6 @@ export async function displayModerator(contentx, isLoggedIn) {
         return;
     }
 
-    // initial UI state
     const state = {
         LIMIT: 10,
         currentPage: 0,
@@ -41,30 +40,24 @@ export async function displayModerator(contentx, isLoggedIn) {
 function buildModeratorUI(container, state) {
     container.replaceChildren();
 
-    // header
     const header = createElement("div", { class: "moderator-header" });
     const title = createElement("h2", {}, ["Reported Content"]);
     const undoBtn = createUndoButton(state, () => refresh());
     header.append(title, undoBtn);
 
-    // filters
     const filtersWrapper = createElement("div", { class: "moderator-filters-wrapper" });
     const filters = createFilters();
     filtersWrapper.append(filters.wrapper);
 
-    // main content + preview
     const summary = createElement("div", { class: "moderator-summary" });
     const { wrapper, listContainer, entityPreview } = createReportListUI();
 
-    // footer / pagination
     const footer = createElement("div", { class: "moderator-footer" });
     const { pagination, prevBtn, pageIndicator, nextBtn } = createPagination();
     footer.append(summary, pagination);
 
-    // assemble
     container.append(header, filtersWrapper, wrapper, footer);
 
-    // refresh logic
     const refresh = () =>
         fetchAndRenderReports(listContainer, entityPreview, summary, filters, state, undoBtn, prevBtn, pageIndicator, nextBtn);
 
@@ -113,9 +106,6 @@ function attachPaginationListeners(state, prevBtn, nextBtn, refresh) {
     });
 }
 
-/* --------------------------
-   Shared utilities (single copy)
-   -------------------------- */
 function isForbidden(obj) {
     return obj && (
         obj.status === 403 ||
@@ -142,12 +132,6 @@ function renderNotModerator(container) {
     wrapper.append(createElement("p", {}, ["You are not a moderator."]));
 
     const form = createElement("form", { class: "moderator-apply-form" });
-    const userIdInput = createElement("input", {
-        type: "text",
-        name: "userId",
-        placeholder: "Your user ID",
-        style: "display:block;margin:0.5rem 0;"
-    });
 
     const reasonInput = createElement("textarea", {
         name: "reason",
@@ -160,16 +144,15 @@ function renderNotModerator(container) {
         e && e.preventDefault && e.preventDefault();
         submitBtn.disabled = true;
 
-        const userId = userIdInput.value.trim();
         const reason = reasonInput.value.trim();
-        if (!userId || !reason) {
+        if (!reason) {
             submitBtn.disabled = false;
-            showTemporaryError("Both fields are required.", wrapper);
+            showTemporaryError("Reason is required.", wrapper);
             return;
         }
         try {
-            await apiFetch("/moderator/apply", "POST", { userId, reason });
-            wrapper.replaceChildren(createElement("p", {}, ["Application submitted. You will be notified by email."]));
+            await apiFetch("/moderator/apply", "POST", { reason });
+            wrapper.replaceChildren(createElement("p", {}, ["Application submitted. Your request will be reviewed."]));
         } catch (err) {
             console.error("Apply failed:", err);
             showTemporaryError("Failed to submit application.", wrapper);
@@ -182,14 +165,11 @@ function renderNotModerator(container) {
         style: "margin-top:0.5rem;color:#666;"
     }, ["Your application will be reviewed by an administrator."]);
 
-    form.append(userIdInput, reasonInput, submitBtn);
+    form.append(reasonInput, submitBtn);
     wrapper.append(form, note);
     container.appendChild(wrapper);
 }
 
-/* --------------------------
-   Grouped card and report item
-   -------------------------- */
 export function createGroupedCard(reports, entityPreview, state, undoBtn, refreshFn) {
     const container = createElement("div", { class: "report-card" });
     const first = reports[0];
@@ -199,11 +179,11 @@ export function createGroupedCard(reports, entityPreview, state, undoBtn, refres
     const typeSpan = createElement("span", { class: "report-type" }, [`Type: ${first.targetType}`]);
 
     const earliest = reports.reduce((min, r) =>
-        new Date(r.createdAt) < new Date(min.createdAt) ? r : min
-        , reports[0]);
+        new Date(r.createdAt) < new Date(min.createdAt) ? r : min,
+        reports[0]
+    );
 
     const dateSpan = createElement("span", { class: "report-date" }, [
-        // `First Reported: ${new Date(earliest.createdAt).toLocaleString()}`
         `First Reported: ${Datex(earliest.createdAt)}`
     ]);
     const countSpan = createElement("span", { class: "report-count" }, [`Reports: ${reports.length}`]);
@@ -227,14 +207,14 @@ export function createGroupedCard(reports, entityPreview, state, undoBtn, refres
         e && e.stopPropagation && e.stopPropagation();
 
         if (!confirm("Soft-delete this content? It will be hidden from users but kept for appeals/audit.")) {
-return;
-}
+            return;
+        }
 
         try {
             await apiFetch(`/moderator/delete/${first.targetType}/${first.targetId}`, "PUT", {});
             if (typeof refreshFn === "function") {
-refreshFn();
-}
+                refreshFn();
+            }
             showTemporaryInfo("Content hidden (soft-delete).");
         } catch (err) {
             console.error("Soft-delete failed:", err);
@@ -254,6 +234,7 @@ refreshFn();
 
 function createReportItem(report, state, undoBtn, refreshFn) {
     const item = createElement("div", { class: "report-item" });
+    const reportId = report.reportId || report.reportid || report.id || "";
 
     const fields = [
         ["Reason", report.reason],
@@ -263,7 +244,6 @@ function createReportItem(report, state, undoBtn, refreshFn) {
         ["Status", report.status, { class: `status-text status-${report.status}` }],
         ["Reviewed By", report.reviewedBy || "(none)"],
         ["Moderator Notes", report.reviewNotes || "(none)"],
-        // ["Reported At", new Date(report.createdAt).toLocaleString()],
         ["Reported At", Datex(report.createdAt)],
     ];
 
@@ -272,7 +252,8 @@ function createReportItem(report, state, undoBtn, refreshFn) {
         item.appendChild(p);
     });
 
-    const notifySpan = createElement("span",
+    const notifySpan = createElement(
+        "span",
         { class: report.notified ? "notified-yes" : "notified-pending" },
         [report.notified ? "Reporter Notified" : "Notification Pending"]
     );
@@ -281,8 +262,8 @@ function createReportItem(report, state, undoBtn, refreshFn) {
     ["pending", "reviewed", "resolved", "rejected"].forEach((s) => {
         const opt = createElement("option", { value: s }, [s]);
         if (report.status === s) {
-opt.setAttribute("selected", "selected");
-}
+            opt.setAttribute("selected", "selected");
+        }
         statusSelect.appendChild(opt);
     });
 
@@ -294,14 +275,14 @@ opt.setAttribute("selected", "selected");
         const newNotes = reviewTextarea.value.trim();
 
         if (newStatus === report.status && newNotes === (report.reviewNotes || "")) {
-return;
-}
+            return;
+        }
         if (!confirm(`Update this report to status "${newStatus}"?`)) {
-return;
-}
+            return;
+        }
 
         state.lastAction = {
-            reportId: report.id,
+            reportId,
             prevPayload: {
                 status: report.status,
                 reviewedBy: report.reviewedBy || "",
@@ -311,14 +292,13 @@ return;
         undoBtn.disabled = false;
 
         try {
-            await apiFetch(`/report/${report.id}`, "PUT", {
+            await apiFetch(`/report/${reportId}`, "PUT", {
                 status: newStatus,
-                reviewedBy: "moderator",
                 reviewNotes: newNotes,
             });
             if (typeof refreshFn === "function") {
-refreshFn();
-}
+                refreshFn();
+            }
             showTemporaryInfo("Report updated.");
         } catch (err) {
             console.error("Failed to update report:", err);
@@ -373,13 +353,10 @@ function getEntityEndpoint(type, id) {
     }
 }
 
-/* --------------------------
-   Fetch & render reports (helpers)
-   -------------------------- */
 export async function fetchAndRenderReports(listContainer, entityPreview, summaryContainer, filters, state, undoBtn, prevBtn, pageIndicator, nextBtn) {
     if (state.isLoading) {
-return;
-}
+        return;
+    }
     state.isLoading = true;
 
     resetUI(listContainer, entityPreview, summaryContainer, pageIndicator, state);
@@ -421,7 +398,7 @@ function resetUI(listContainer, entityPreview, summaryContainer, pageIndicator, 
     listContainer.replaceChildren();
     entityPreview.replaceChildren(createElement("div", {}, ["Select a report to preview its content."]));
     summaryContainer.replaceChildren();
-    pageIndicator.replaceChildren([`Page ${state.currentPage + 1}`]);
+    pageIndicator.textContent = `Page ${state.currentPage + 1}`;
 }
 
 function handleReportsResponse(reports, listContainer, entityPreview, summaryContainer, state, undoBtn, prevBtn, pageIndicator, nextBtn, filters) {
@@ -453,16 +430,13 @@ function groupReports(reports) {
     return reports.reduce((acc, r) => {
         const key = `${r.targetType}:${r.targetId}`;
         if (!acc[key]) {
-acc[key] = [];
-}
+            acc[key] = [];
+        }
         acc[key].push(r);
         return acc;
     }, {});
 }
 
-/* --------------------------
-   UI pieces: undo, filters, pagination, buttons
-   -------------------------- */
 export function createUndoButton(state, refreshFn) {
     const btn = createActionButton("Undo Last", async () => {
         if (!state.lastAction) {
@@ -474,8 +448,8 @@ export function createUndoButton(state, refreshFn) {
             state.lastAction = null;
             btn.disabled = true;
             if (typeof refreshFn === "function") {
-refreshFn();
-}
+                refreshFn();
+            }
             showTemporaryInfo("Undo successful.");
         } catch (e) {
             console.error("Undo failed:", e);
@@ -518,12 +492,12 @@ function updateSummary(grouped, summaryContainer) {
     keys.forEach((k) => {
         const group = grouped[k];
         if (!group || group.length === 0) {
-return;
-}
+            return;
+        }
         const firstStatus = group[0].status;
         if (statusCounts[firstStatus] !== undefined) {
-statusCounts[firstStatus]++;
-}
+            statusCounts[firstStatus]++;
+        }
     });
 
     summaryContainer.replaceChildren();
@@ -559,19 +533,15 @@ function createDropdown(labelText, options) {
 export function createActionButton(label, handler) {
     const btn = createElement("button", { class: "moderator-btn", style: "margin:0 0.5rem;" }, [label]);
     btn.addEventListener("click", (e) => {
-        // allow handler to optionally use event
         try {
- handler(e); 
-} catch (err) {
- console.error("Action handler error:", err); 
-}
+            handler(e);
+        } catch (err) {
+            console.error("Action handler error:", err);
+        }
     });
     return btn;
 }
 
-/* --------------------------
-   Helpers
-   -------------------------- */
 function buildQueryString(paramsObj) {
     const p = new URLSearchParams();
     Object.keys(paramsObj).forEach((key) => {
