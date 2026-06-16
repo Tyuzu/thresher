@@ -3,7 +3,7 @@ import { Button } from "../../components/base/Button.js";
 import { editEvent } from "./creadit.js";
 import { deleteEvent } from "./eventService.js";
 import { viewEventAnalytics } from "./eventAnalytics.js";
-import { reportPost } from "../reporting/reporting.js";
+import { reportEntity } from "../reporting/reporting.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 // import { updateImageWithCrop } from "../../utils/bannerEditor.js";
 import { starEmptySVG, starFilledSVG } from "../../components/svgs.js";
@@ -193,7 +193,7 @@ function createInfoSection(eventData, isCreator, isLoggedIn) {
         actions.push({ text: '📊 View Analytics', onClick: () => viewEventAnalytics(evanacon, isLoggedIn, eventData.eventid), classes: ['analytics-btn', "buttonx"] });
         actions.push({ text: 'Hire Vendors', onClick: () => hireVendors(evanacon, isLoggedIn, eventData.eventid), classes: ['analytics-btn', "buttonx"] });
     } else if (isLoggedIn) {
-        actions.push({ text: 'Report Event', onClick: () => reportPost(eventData.eventid, 'event') });
+        actions.push({ text: 'Report Event', onClick: () => reportEntity(eventData.eventid, 'event') });
     }
 
     eventInfo.append(

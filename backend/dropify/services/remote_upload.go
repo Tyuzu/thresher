@@ -5,7 +5,6 @@ import (
 	"io"
 	"mime/multipart"
 	"naevis/dropify/filemgr"
-	"net"
 	"net/http"
 	"net/textproto"
 	"net/url"
@@ -15,89 +14,18 @@ import (
 	"time"
 )
 
-// ----------------------------------------------------
-// SSRF Protection
-// ----------------------------------------------------
-
-func isPrivateIP(ip net.IP) bool {
-	if ip == nil {
-		return true
-	}
-
-	if ip.IsLoopback() ||
-		ip.IsPrivate() ||
-		ip.IsLinkLocalUnicast() ||
-		ip.IsLinkLocalMulticast() ||
-		ip.IsMulticast() ||
-		ip.IsUnspecified() {
-		return true
-	}
-
-	// IPv6 localhost
-	if ip.String() == "::1" {
-		return true
-	}
-
-	return false
-}
-
-func validateRemoteHost(rawURL string) error {
-	parsed, err := url.Parse(rawURL)
-	if err != nil {
-		return fmt.Errorf("invalid remote URL")
-	}
-
-	host := parsed.Hostname()
-	if host == "" {
-		return fmt.Errorf("invalid host")
-	}
-
-	switch strings.ToLower(host) {
-	case "localhost", "localhost.localdomain":
-		return fmt.Errorf("localhost addresses are not allowed")
-	}
-
-	// Direct IP address
-	if ip := net.ParseIP(host); ip != nil {
-		if isPrivateIP(ip) {
-			return fmt.Errorf("private network addresses are not allowed")
-		}
-		return nil
-	}
-
-	// DNS resolution
-	ips, err := net.LookupIP(host)
-	if err != nil {
-		return fmt.Errorf("unable to resolve host")
-	}
-
-	if len(ips) == 0 {
-		return fmt.Errorf("host has no valid addresses")
-	}
-
-	for _, ip := range ips {
-		if isPrivateIP(ip) {
-			return fmt.Errorf("host resolves to a private address")
-		}
-	}
-
-	return nil
-}
-
-// ----------------------------------------------------
-// Remote Upload Processing
-// ----------------------------------------------------
-
-// ProcessRemoteFile downloads and stores a remote image
+// ProcessRemoteFile downloads and stores a remote file
 func (s *FileService) ProcessRemoteFile(
 	remoteURL string,
 	key string,
 	entityType string,
-	entityId string,
-	userid string,
+	entityID string,
+	userID string,
 ) ([]Attachment, error) {
 
-	_ = entityId // reserved for future use
+	_ = entityID // reserved for future use
+
+	const maxRemoteUploadBytes = 200 << 20 // 200 MB
 
 	// -------------------------
 	// Validate URL
@@ -121,13 +49,28 @@ func (s *FileService) ProcessRemoteFile(
 	}
 
 	// -------------------------
+	// Resolve entity
+	// -------------------------
+
+	entity := filemgr.EntityType(strings.ToLower(entityType))
+
+	// -------------------------
+	// Resolve picture type
+	// -------------------------
+
+	picType := normalizePictureKey(key)
+
+	if _, ok := filemgr.AllowedExtensions[picType]; !ok {
+		return nil, fmt.Errorf("invalid picture key")
+	}
+
+	// -------------------------
 	// Download file
 	// -------------------------
 
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-
 			if len(via) > 10 {
 				return fmt.Errorf("too many redirects")
 			}
@@ -150,10 +93,44 @@ func (s *FileService) ProcessRemoteFile(
 		return nil, fmt.Errorf("remote server returned %d", resp.StatusCode)
 	}
 
-	contentType := strings.ToLower(resp.Header.Get("Content-Type"))
+	contentType := strings.ToLower(
+		strings.TrimSpace(
+			strings.Split(resp.Header.Get("Content-Type"), ";")[0],
+		),
+	)
 
-	if !strings.HasPrefix(contentType, "image/") {
-		return nil, fmt.Errorf("remote file is not an image")
+	// -------------------------
+	// Validate MIME type
+	// -------------------------
+
+	allowedMIMEs, ok := filemgr.AllowedMIMEs[picType]
+	if !ok {
+		return nil, fmt.Errorf("unsupported picture type")
+	}
+
+	validMIME := false
+	for _, mime := range allowedMIMEs {
+		if strings.EqualFold(mime, contentType) {
+			validMIME = true
+			break
+		}
+	}
+
+	if !validMIME {
+		return nil, fmt.Errorf("invalid MIME type %q for %q", contentType, picType)
+	}
+
+	// -------------------------
+	// Filename
+	// -------------------------
+
+	filename := filepath.Base(parsed.Path)
+	if filename == "." || filename == "/" || filename == "" {
+		filename = "remote-file"
+	}
+
+	if filepath.Ext(filename) == "" {
+		filename += mimeToExtension(contentType)
 	}
 
 	// -------------------------
@@ -166,9 +143,22 @@ func (s *FileService) ProcessRemoteFile(
 	}
 	defer os.Remove(tmpFile.Name())
 
-	if _, err := io.Copy(tmpFile, resp.Body); err != nil {
+	if resp.ContentLength > maxRemoteUploadBytes {
+		tmpFile.Close()
+		return nil, filemgr.ErrFileTooLarge
+	}
+
+	limitedReader := io.LimitReader(resp.Body, maxRemoteUploadBytes+1)
+
+	written, err := io.Copy(tmpFile, limitedReader)
+	if err != nil {
 		tmpFile.Close()
 		return nil, fmt.Errorf("failed to save remote file")
+	}
+
+	if written > maxRemoteUploadBytes {
+		tmpFile.Close()
+		return nil, filemgr.ErrFileTooLarge
 	}
 
 	if err := tmpFile.Close(); err != nil {
@@ -186,42 +176,15 @@ func (s *FileService) ProcessRemoteFile(
 	defer file.Close()
 
 	// -------------------------
-	// Resolve entity
-	// -------------------------
-
-	entity := filemgr.EntityType(strings.ToLower(entityType))
-
-	// -------------------------
-	// Resolve picture type
-	// -------------------------
-
-	picType, ok := map[string]filemgr.PictureType{
-		"banner":  filemgr.PicBanner,
-		"photo":   filemgr.PicPhoto,
-		"avatar":  filemgr.PicPhoto,
-		"seating": filemgr.PicSeating,
-	}[strings.ToLower(key)]
-
-	if !ok {
-		return nil, fmt.Errorf("invalid picture key")
-	}
-
-	// -------------------------
 	// Create multipart header
 	// -------------------------
-
-	filename := filepath.Base(parsed.Path)
-
-	if filename == "." || filename == "/" || filename == "" {
-		filename = "remote.jpg"
-	}
 
 	header := &multipart.FileHeader{
 		Filename: filename,
 		Header: textproto.MIMEHeader{
 			"Content-Type": []string{contentType},
 		},
-		Size: resp.ContentLength,
+		Size: written,
 	}
 
 	// -------------------------
@@ -233,7 +196,7 @@ func (s *FileService) ProcessRemoteFile(
 		header,
 		entity,
 		picType,
-		userid,
+		userID,
 	)
 	if err != nil {
 		return nil, err
@@ -243,7 +206,7 @@ func (s *FileService) ProcessRemoteFile(
 		{
 			Filename:  savedName,
 			Extension: ext,
-			Key:       strings.ToLower(key),
+			Key:       string(picType),
 		},
 	}, nil
 }

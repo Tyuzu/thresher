@@ -6,7 +6,7 @@ import { openEditModal } from "./postEditor.js";
 import { debounce } from "../../../utils/deutils.js";
 import { toggleLike } from "../../beats/likes.js";
 import { createCommentsSection } from "../../comments/comments.js";
-import { reportPost } from "../../reporting/reporting.js";
+import { reportEntity } from "../../reporting/reporting.js";
 import { MAIN_URL, getState } from "../../../state/state.js";
 
 export async function createActions(metadata, isCreator, postElement) {
@@ -72,7 +72,7 @@ export async function createActions(metadata, isCreator, postElement) {
     const reportButton = createElement("button", { class: "report-btn" }, ["Report"]);
     reportButton.addEventListener("click", () => {
         closeDropdown();
-        reportPost(postId, "post");
+        reportEntity(postId, "post");
     });
     dropdownx.appendChild(reportButton);
 

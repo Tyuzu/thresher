@@ -1,11 +1,10 @@
 import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { createGroupedCard } from "./modPage.js";
+import { loadModeratorApplications } from "./modapprovals.js";
 
 export async function fetchAndRenderReports(listContainer, entityPreview, summaryContainer, filters, state, undoBtn, prevBtn, pageIndicator, nextBtn) {
-    if (state.isLoading) {
-        return;
-    }
+    if (state.isLoading) return;
     state.isLoading = true;
 
     resetUI(listContainer, entityPreview, summaryContainer, pageIndicator, state);
@@ -28,7 +27,7 @@ export async function fetchAndRenderReports(listContainer, entityPreview, summar
             return;
         }
 
-        handleReportsResponse(reports, listContainer, entityPreview, summaryContainer, state, undoBtn, prevBtn, pageIndicator, nextBtn, filters);
+        handleReportsResponse(reports, listContainer, entityPreview, summaryContainer, state, undoBtn, prevBtn, pageIndicator, nextBtn);
     } catch (err) {
         if (isForbiddenError(err)) {
             renderNotModerator(listContainer.parentElement || document.body);
@@ -47,10 +46,10 @@ function resetUI(listContainer, entityPreview, summaryContainer, pageIndicator, 
     listContainer.replaceChildren();
     entityPreview.replaceChildren(createElement("div", {}, ["Select a report to preview its content."]));
     summaryContainer.replaceChildren();
-    pageIndicator.textContent = `Page ${state.currentPage + 1}`;
+    pageIndicator.replaceChildren([`Page ${state.currentPage + 1}`]);
 }
 
-function handleReportsResponse(reports, listContainer, entityPreview, summaryContainer, state, undoBtn, prevBtn, pageIndicator, nextBtn, filters) {
+function handleReportsResponse(reports, listContainer, entityPreview, summaryContainer, state, undoBtn, prevBtn, pageIndicator, nextBtn) {
     state.totalFetched = Array.isArray(reports) ? reports.length : 0;
     nextBtn.disabled = state.totalFetched < state.LIMIT;
     prevBtn.disabled = state.currentPage === 0;
@@ -78,9 +77,7 @@ function handleReportsResponse(reports, listContainer, entityPreview, summaryCon
 function groupReports(reports) {
     return reports.reduce((acc, r) => {
         const key = `${r.targetType}:${r.targetId}`;
-        if (!acc[key]) {
-            acc[key] = [];
-        }
+        if (!acc[key]) acc[key] = [];
         acc[key].push(r);
         return acc;
     }, {});
@@ -104,6 +101,12 @@ function renderNotModerator(container) {
     wrapper.append(createElement("p", {}, ["You are not a moderator."]));
 
     const form = createElement("form", { class: "moderator-apply-form" });
+    const userIdInput = createElement("input", {
+        type: "text",
+        name: "userId",
+        placeholder: "Your user ID",
+        style: "display:block;margin:0.5rem 0;"
+    });
 
     const reasonInput = createElement("textarea", {
         name: "reason",
@@ -116,16 +119,16 @@ function renderNotModerator(container) {
         e && e.preventDefault && e.preventDefault();
         submitBtn.disabled = true;
 
+        const userId = userIdInput.value.trim();
         const reason = reasonInput.value.trim();
-        if (!reason) {
+        if (!userId || !reason) {
             submitBtn.disabled = false;
-            showTemporaryError("Reason is required.", wrapper);
+            showTemporaryError("Both fields are required.", wrapper);
             return;
         }
-
         try {
-            await apiFetch("/moderator/apply", "POST", { reason });
-            wrapper.replaceChildren(createElement("p", {}, ["Application submitted. Your request will be reviewed."]));
+            await apiFetch("/moderator/apply", "POST", { userId, reason });
+            wrapper.replaceChildren(createElement("p", {}, ["Application submitted. You will be notified by email."]));
         } catch (err) {
             console.error("Apply failed:", err);
             showTemporaryError("Failed to submit application.", wrapper);
@@ -138,9 +141,10 @@ function renderNotModerator(container) {
         style: "margin-top:0.5rem;color:#666;"
     }, ["Your application will be reviewed by an administrator."]);
 
-    form.append(reasonInput, submitBtn);
+    form.append(userIdInput, reasonInput, submitBtn);
     wrapper.append(form, note);
     container.appendChild(wrapper);
+    // loadModeratorApplications(container);
 }
 
 export function createUndoButton(state, refreshFn) {
@@ -153,9 +157,7 @@ export function createUndoButton(state, refreshFn) {
             await apiFetch(`/report/${state.lastAction.reportId}`, "PUT", state.lastAction.prevPayload);
             state.lastAction = null;
             btn.disabled = true;
-            if (typeof refreshFn === "function") {
-                refreshFn();
-            }
+            if (typeof refreshFn === "function") refreshFn();
         } catch (e) {
             console.error("Undo failed:", e);
             showTemporaryError("Failed to undo last action.");
@@ -196,13 +198,9 @@ function updateSummary(grouped, summaryContainer) {
 
     keys.forEach((k) => {
         const group = grouped[k];
-        if (!group || group.length === 0) {
-            return;
-        }
+        if (!group || group.length === 0) return;
         const firstStatus = group[0].status;
-        if (statusCounts[firstStatus] !== undefined) {
-            statusCounts[firstStatus]++;
-        }
+        if (statusCounts[firstStatus] !== undefined) statusCounts[firstStatus]++;
     });
 
     summaryContainer.replaceChildren();
@@ -237,13 +235,7 @@ function createDropdown(labelText, options) {
 
 export function createActionButton(label, handler) {
     const btn = createElement("button", { class: "moderator-btn", style: "margin:0 0.5rem;" }, [label]);
-    btn.addEventListener("click", (e) => {
-        try {
-            handler(e);
-        } catch (err) {
-            console.error("Action handler error:", err);
-        }
-    });
+    btn.addEventListener("click", handler);
     return btn;
 }
 

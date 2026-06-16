@@ -154,6 +154,8 @@ func CreateOrEditPost(ctx context.Context, claims *models.Claims, payload PostPa
 		return post, err
 	}
 
+	log.Println("3*4-3*4-3*4-3*-4*3-4*3-4", payload)
+
 	switch action {
 	case ActionCreate:
 		return insertNewPost(ctx, claims, payload, app)

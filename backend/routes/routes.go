@@ -37,7 +37,6 @@ import (
 	"naevis/products"
 	"naevis/profile"
 	"naevis/recipes"
-	"naevis/reports"
 	"naevis/reviews"
 	"naevis/search"
 	"naevis/settings"
@@ -64,124 +63,6 @@ func AddActivityRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *
 
 	// Public analytics/telemetry ingestion
 	router.POST("/api/v1/scitylana/event", activity.HandleAnalyticsEvent(app))
-}
-
-func AddAdminRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-
-	router.PUT(
-		"/api/v1/report/:id",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.UpdateReport(app),
-			),
-		),
-	)
-
-	router.POST(
-		"/api/v1/report",
-		rateLimiter.Limit(
-			authmidware(
-				reports.ReportContent(app),
-			),
-		),
-	)
-	router.POST(
-		"/api/v1/moderator/appeals",
-		rateLimiter.Limit(
-			authmidware(
-				reports.CreateAppeal(app),
-			),
-		),
-	)
-
-	router.GET(
-		"/api/v1/moderator/appeals",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.GetAppeals(app),
-			),
-		),
-	)
-
-	router.PUT(
-		"/api/v1/moderator/appeals/:id",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.UpdateAppeal(app),
-			),
-		),
-	)
-
-	router.POST(
-		"/api/v1/moderator/apply",
-		authmidware(
-			reports.ApplyModerator(app),
-		),
-	)
-
-	router.GET(
-		"/api/v1/moderator/applications",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.ListModeratorApplications(app),
-			),
-		),
-	)
-
-	router.PUT(
-		"/api/v1/moderator/approve/:id",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.ApproveModerator(app),
-			),
-		),
-	)
-
-	router.PUT(
-		"/api/v1/moderator/reject/:id",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.RejectModerator(app),
-			),
-		),
-	)
-
-	router.GET(
-		"/api/v1/moderator/reports",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.GetReports(app),
-			),
-		),
-	)
-
-	router.PUT(
-		"/api/v1/moderator/reports/:id",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.UpdateReport(app),
-			),
-		),
-	)
-
-	router.PUT(
-		"/api/v1/moderator/delete/:type/:id",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.SoftDeleteEntity(app),
-			),
-		),
-	)
-
-	router.PUT(
-		"/api/v1/moderator/users/:id/role",
-		authmidware(
-			middleware.RequireRoles("admin")(
-				reports.SetUserRole(app),
-			),
-		),
-	)
 }
 
 func AddJobRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {

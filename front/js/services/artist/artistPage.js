@@ -8,7 +8,7 @@ import { apiFetch } from "../../api/api.js";
 import { deleteArtistForm } from "./createOrEditArtist.js";
 import { createOrEditArtist } from "./createOrEditArtist.js";
 import { createElement } from "../../components/createElement.js";
-import { reportPost } from "../reporting/reporting.js";
+import { reportEntity } from "../reporting/reporting.js";
 import Button from "../../components/base/Button.js";
 import { toggleAction } from "../beats/toggleFollows.js";
 import { getState } from "../../state/state.js";
@@ -126,7 +126,7 @@ photoBannerRow.appendChild(photoSection);
     // buttonRow.appendChild(subscribeButton);
 
     const reportButton = Button("Report", "report-btn", {
-      click: () => reportPost(artistID, "artist")
+      click: () => reportEntity(artistID, "artist")
     }, "buttonx");
     // buttonRow.appendChild(reportButton);
     const fundBtn = Button(

@@ -2,7 +2,7 @@ import { setLanguage } from "../i18n/i18n.js";
 import { navigate } from "../routes/index.js";
 import { webSiteName } from "../state/state.js";
 import Button from "./base/Button.js";
-import { userFeedbackGlobal } from "../services/reporting/feedback.js";
+import { userFeedbackGlobal } from "../services/reporting/feedback/feedback.js";
 import { createElement } from "../components/createElement.js";
 
 const handleNavigation = (event, href) => {

@@ -1,7 +1,7 @@
 import { getState } from "../../state/state.js";
 import { formatDate } from "./profileHelpers.js";
 import { logout } from "../auth/authService.js";
-import { reportPost } from "../reporting/reporting.js";
+import { reportEntity } from "../reporting/reporting.js";
 import Button from "../../components/base/Button.js";
 
 import { toggleAction } from "../beats/toggleFollows.js";
@@ -113,7 +113,7 @@ function createProfileActions(profile, isLoggedIn) {
             "report-btn",
             {
                 click: () => {
-                    reportPost(profile.userid, "user");
+                    reportEntity(profile.userid, "user");
                 }
             },
             "report-btn",

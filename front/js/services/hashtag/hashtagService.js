@@ -1,5 +1,5 @@
 import { createElement } from "../../components/createElement.js";
-import { reportPost } from "../reporting/reporting.js";
+import { reportEntity } from "../reporting/reporting.js";
 import { apiFetch } from "../../api/api.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import { createTabs } from "../../components/ui/createTabs.js";
@@ -186,7 +186,7 @@ export async function displayHashtag(contentContainer, hashtag, isLoggedIn) {
     if (isLoggedIn) {
         const reportBtn = createElement("button", { class: "report-btn" }, ["Report"]);
         reportBtn.addEventListener("click", () => {
-            reportPost(hashtag);
+            reportEntity(hashtag);
         });
         header.appendChild(reportBtn);
     }

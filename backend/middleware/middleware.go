@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -82,22 +83,32 @@ func RequireRoles(allowedRoles ...string) func(httprouter.Handle) httprouter.Han
 	return func(next httprouter.Handle) httprouter.Handle {
 		return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			raw := r.Context().Value(globals.RoleKey)
+
+			log.Printf("RoleKey value: %#v", raw)
+
 			roles, ok := raw.([]string)
 			if !ok || len(roles) == 0 {
+				log.Printf("roles assertion failed: %#v", raw)
 				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
 			}
 
+			log.Printf("user roles: %v", roles)
+			log.Printf("allowed roles: %v", allowedRoles)
+
 			for _, role := range roles {
 				role = strings.ToLower(role)
+
 				for _, allowed := range allowedRoles {
 					if role == allowed {
+						log.Printf("role match: %s", role)
 						next(w, r, ps)
 						return
 					}
 				}
 			}
 
+			log.Printf("no matching role found")
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		}
 	}

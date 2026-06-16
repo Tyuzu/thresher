@@ -7,7 +7,7 @@ import Imagex from "../../components/base/Imagex.js";
 import { navigate } from "../../routes/index.js";
 import { debounce } from "../../utils/deutils.js";
 import Datex from "../../components/base/Datex.js";
-import { reportPost } from "../reporting/reporting.js";
+import { reportEntity } from "../reporting/reporting.js";
 
 /* =========================
    CONFIG
@@ -117,7 +117,7 @@ function renderComment(comment, entityType, entityId) {
             click: () => console.warn("Reply:", comment.commentid)
         }, "comment-reply buttonx"),
         Button("Report", "", {
-            click: () => reportPost(comment.commentid, "comment", entityType, entityId)
+            click: () => reportEntity(comment.commentid, "comment", entityType, entityId)
         }, "comment-report buttonx")
     ]);
 

@@ -9,7 +9,6 @@ import (
 
 func RoutesWrapper(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	AddActivityRoutes(router, app, rateLimiter)
-	AddAdminRoutes(router, app, rateLimiter)
 	AddAdsRoutes(router, app, rateLimiter)
 	AddAnalyticsRoutes(router, app, rateLimiter)
 	AddArtistRoutes(router, app, rateLimiter)
@@ -43,6 +42,7 @@ func RoutesWrapper(router *httprouter.Router, app *infra.Deps, rateLimiter *midd
 	AddProductRoutes(router, app, rateLimiter)
 	AddProfileRoutes(router, app, rateLimiter)
 	AddRecipeRoutes(router, app, rateLimiter)
+	AddReportingRoutes(router, app, rateLimiter)
 	AddReviewsRoutes(router, app, rateLimiter)
 	AddSearchRoutes(router, app, rateLimiter)
 	AddSettingsRoutes(router, app, rateLimiter)

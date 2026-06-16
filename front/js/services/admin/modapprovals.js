@@ -1,16 +1,13 @@
 import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
-import { displayUserRoleManager } from "./modUserRoles.js";
-
-export { displayUserRoleManager };
 
 export async function loadModeratorApplications(container) {
-    container.replaceChildren();
+    container.replaceChildren(); // clear existing content
 
     const apps = await apiFetch("/moderator/applications?status=pending");
     if (!Array.isArray(apps) || apps.length === 0) {
-        container.appendChild(createElement("p", {}, ["No pending moderator applications."]));
+        container.appendChild(createElement("p", { }, ["No pending moderator applications."]));
         return;
     }
 
@@ -47,3 +44,14 @@ async function handleApproval(id, approve, container) {
         alert("Failed to update application.");
     }
 }
+
+
+/*
+
+import { loadModeratorApplications } from "./moderatorList.js";
+
+const container = document.getElementById("moderator-list");
+loadModeratorApplications(container);
+
+
+*/

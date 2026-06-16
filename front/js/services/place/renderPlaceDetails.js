@@ -2,7 +2,7 @@ import { createElement } from "../../components/createElement.js";
 import { editPlaceForm, deletePlace } from "./placeService.js";
 import { analyticsPlace } from "./placeAnanlytics.js";
 import Button from "../../components/base/Button.js";
-import { reportPost } from "../reporting/reporting.js";
+import { reportEntity } from "../reporting/reporting.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import Datex from "../../components/base/Datex.js";
 import Bannerx from "../../components/base/Bannerx.js";
@@ -76,9 +76,9 @@ console.log(place);
     detailsSection.appendChild(placeanacon);
   } else {
     // const reportBtn = createElement("button", { class: "report-comment", type: "button" }, ["Report"]);
-    // reportBtn.addEventListener("click", () => reportPost(place.placeid, "place", "", ""));
+    // reportBtn.addEventListener("click", () => reportEntity(place.placeid, "place", "", ""));
     const reportBtn = Button("Report", "button-dfsh4", { 
-      click: () => reportPost(place.placeid, "place", "", "")
+      click: () => reportEntity(place.placeid, "place", "", "")
      }, "report-comment buttonx");
     detailsSection.appendChild(reportBtn);
   }

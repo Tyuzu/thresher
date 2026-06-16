@@ -3,7 +3,7 @@ import Button from "../../components/base/Button.js";
 import Imagex from "../../components/base/Imagex.js";
 import Notify from "../../components/ui/Notify.mjs";
 import { getState } from "../../state/state.js";
-import { reportPost } from "../reporting/reporting.js";
+import { reportEntity } from "../reporting/reporting.js";
 import { deleteMedia } from "./api/mediaApi.js";
 import { apiFetch } from "../../api/api.js";
 
@@ -119,7 +119,7 @@ export function createMediaActions(media, entityType, entityId, isLoggedIn, dele
       "Report",
       "",
       {
-        click: () => reportPost(media.mediaid, "media"),
+        click: () => reportEntity(media.mediaid, "media"),
       },
       "report-btn"
     )

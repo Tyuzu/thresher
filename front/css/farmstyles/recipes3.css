@@ -32,9 +32,6 @@
 .recipes-main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  color: #222;
 }
 
 /* ────────── Header ────────── */
@@ -92,7 +89,6 @@
 
 /* ────────── Individual recipe card ────────── */
 .recipe-card {
-  background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   padding: 15px;
@@ -125,7 +121,6 @@
   font-size: 0.95rem;
   margin: 4px 0;
   text-align: center;
-  color: #555;
 }
 
 /* ────────── Tags ────────── */

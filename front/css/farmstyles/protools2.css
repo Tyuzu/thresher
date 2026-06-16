@@ -194,26 +194,7 @@
   margin-bottom: var(--space-xs);
 }
 
-.quantity-control {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-sm);
-}
 
-.quantity-control button {
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--font-size-base);
-  border-radius: var(--radius-sm);
-  /* background-color: var(--color-space); */
-  border: 1px solid var(--color-border);
-  cursor: pointer;
-}
-
-.quantity-value {
-  font-size: var(--font-size-base);
-  font-weight: bold;
-}
 
 .image-section {
   position: relative;

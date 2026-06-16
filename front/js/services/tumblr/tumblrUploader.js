@@ -4,15 +4,15 @@ import { createEl } from "./tumblrHelpers.js";
 export function appendIfValue(obj, key, el) {
   const val = el?.value.trim();
   if (val) {
-obj[key] = val;
-}
+    obj[key] = val;
+  }
 }
 
 export function appendTags(obj, el) {
   const tags = el?.value.split(",").map(t => t.trim()).filter(Boolean);
   if (tags.length) {
-obj.tags = tags;
-}
+    obj.tags = tags;
+  }
 }
 
 export function clearChildren(el) {
@@ -45,19 +45,14 @@ export async function uploadFilesInBatches(files, mediaEntity, previewContainer,
 export async function handleFileUpload(
   file,
   entityType,
+  key = "file",
   entityId = ""
 ) {
-
-  const uploadMeta = {
-
+  return uploadFile({
     id: crypto.randomUUID(),
-
     file,
-
+    key,
     entityType,
-
     entityId: String(entityId)
-  };
-
-  return uploadFile(uploadMeta);
+  });
 }

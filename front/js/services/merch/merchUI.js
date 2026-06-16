@@ -6,7 +6,7 @@ import Modal from "../../components/ui/Modal.mjs";
 import Notify from "../../components/ui/Notify.mjs";
 
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
-import { reportPost } from "../reporting/reporting.js";
+import { reportEntity } from "../reporting/reporting.js";
 import { createFormGroup } from "../../components/createFormGroup.js";
 import Imagex from "../../components/base/Imagex.js";
 import { addToCart } from "../cart/addToCart.js";
@@ -241,7 +241,7 @@ async function displayMerchandise(container, merchData, entityType, eventId, isC
 
         onEdit: () => editMerchForm(entityType, merch.merchid, eventId),
         onDelete: () => deleteMerch(entityType, merch.merchid, eventId),
-        onReport: () => reportPost(merch.merchid, "merch", entityType, eventId)
+        onReport: () => reportEntity(merch.merchid, "merch", entityType, eventId)
       });
 
       merchList.appendChild(card);

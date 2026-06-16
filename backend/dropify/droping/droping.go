@@ -150,6 +150,17 @@ var entityMeta = map[string]EntityMeta{
 	},
 }
 
+func normalizePictureKey(key string) string {
+	key = strings.ToLower(strings.TrimSpace(key))
+
+	switch key {
+	case "avatar", "gallery", "image":
+		return string(filemgr.PicPhoto)
+	default:
+		return key
+	}
+}
+
 // FiledropHandler handles file uploads via multipart/form-data
 func FiledropHandler(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -230,14 +241,29 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 		// -------------------------
 
 		if remoteURL != "" {
-			switch remoteKey {
-			case "banner", "photo", "avatar", "seating", "gallery", "video":
-			default:
-				utils.RespondWithError(w, http.StatusBadRequest, "invalid remoteKey")
+			remoteKey = normalizePictureKey(remoteKey)
+
+			if remoteKey == "" {
+				utils.RespondWithError(w, http.StatusBadRequest, "remoteKey is required")
 				return
 			}
 
-			attachments, err = fileService.ProcessRemoteFile(remoteURL, remoteKey, entityType, entityId, userid)
+			if _, ok := filemgr.AllowedExtensions[filemgr.PictureType(remoteKey)]; !ok {
+				utils.RespondWithError(
+					w,
+					http.StatusBadRequest,
+					"invalid remoteKey",
+				)
+				return
+			}
+
+			attachments, err = fileService.ProcessRemoteFile(
+				remoteURL,
+				remoteKey,
+				entityType,
+				entityId,
+				userid,
+			)
 		} else {
 			// Multipart upload
 			if r.MultipartForm == nil || len(r.MultipartForm.File) == 0 {
@@ -262,10 +288,7 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 		// -------------------------
 
 		if err != nil {
-			log.Printf(
-				"[Filedrop] processing error: %v",
-				err,
-			)
+			log.Printf("[Filedrop] processing error: %v", err)
 
 			utils.RespondWithError(
 				w,
@@ -286,11 +309,7 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 				entityId,
 				attachments,
 			); err != nil {
-
-				log.Printf(
-					"[Filedrop] failed updating entity media: %v",
-					err,
-				)
+				log.Printf("[Filedrop] failed updating entity media: %v", err)
 
 				utils.RespondWithError(
 					w,
@@ -371,33 +390,47 @@ func updateEntityMedia(app *infra.Deps, entityType string, entityId string, atta
 
 	setFields := bson.M{}
 	var photos []string
-	var gallery []string
 
 	for _, attachment := range attachments {
-		switch strings.ToLower(strings.TrimSpace(attachment.Key)) {
-		case "banner":
+		key := filemgr.PictureType(
+			strings.ToLower(
+				strings.TrimSpace(attachment.Key),
+			),
+		)
+
+		switch key {
+		case filemgr.PicBanner:
 			setFields["banner"] = attachment.Filename
 
-		case "avatar":
-			setFields["avatar"] = attachment.Filename
+		case filemgr.PicMember:
+			setFields["member"] = attachment.Filename
 
-		case "poster":
+		case filemgr.PicPoster:
 			setFields["poster"] = attachment.Filename
 
-		case "thumb":
+		case filemgr.PicThumb:
 			setFields["thumb"] = attachment.Filename
 
-		case "seating":
+		case filemgr.PicSeating:
 			setFields["seating"] = attachment.Filename
 
-		case "photo":
+		case filemgr.PicPhoto:
 			photos = append(photos, attachment.Filename)
 
-		case "gallery":
-			gallery = append(gallery, attachment.Filename)
-
-		case "video":
+		case filemgr.PicVideo:
 			setFields["video"] = attachment.Filename
+
+		case filemgr.PicAudio:
+			setFields["audio"] = attachment.Filename
+
+		case filemgr.PicSong:
+			setFields["song"] = attachment.Filename
+
+		case filemgr.PicDocument:
+			setFields["document"] = attachment.Filename
+
+		case filemgr.PicFile:
+			setFields["file"] = attachment.Filename
 		}
 	}
 
@@ -415,12 +448,6 @@ func updateEntityMedia(app *infra.Deps, entityType string, entityId string, atta
 		}
 	}
 
-	if len(gallery) > 0 {
-		update["$set"] = mergeSet(update["$set"], bson.M{
-			"gallery": gallery,
-		})
-	}
-
 	if len(update) == 0 {
 		return nil
 	}
@@ -431,22 +458,4 @@ func updateEntityMedia(app *infra.Deps, entityType string, entityId string, atta
 		filter,
 		update,
 	)
-}
-
-func mergeSet(existing any, next bson.M) bson.M {
-	out := bson.M{}
-
-	if existing != nil {
-		if m, ok := existing.(bson.M); ok {
-			for k, v := range m {
-				out[k] = v
-			}
-		}
-	}
-
-	for k, v := range next {
-		out[k] = v
-	}
-
-	return out
 }

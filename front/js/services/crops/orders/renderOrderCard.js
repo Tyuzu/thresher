@@ -116,19 +116,19 @@ export function renderOrderCard(order, onRefresh) {
       Button("Contact", `contact-${orderId}`, { click: handleContact }, "secondary-button"),
 
       canAccept(order.status)
-        ? Button("Accept", `accept-${orderId}`, { click: handleAccepted }, "success-button")
+        ? Button("Accept", `accept-${orderId}`, { click: handleAccepted }, "secondary-button")
         : null,
 
       canMarkPaid(order.status)
-        ? Button("Mark Paid", `markpaid-${orderId}`, { click: handleMarkedPaid }, "primary-button")
+        ? Button("Mark Paid", `markpaid-${orderId}`, { click: handleMarkedPaid }, "secondary-button")
         : null,
 
       canDeliver(order.status)
-        ? Button("Delivered", `deliver-${orderId}`, { click: handleDelivered }, "success-button")
+        ? Button("Delivered", `deliver-${orderId}`, { click: handleDelivered }, "secondary-button")
         : null,
 
       canReject(order.status)
-        ? Button("Reject", `reject-${orderId}`, { click: handleReject }, "danger-button")
+        ? Button("Reject", `reject-${orderId}`, { click: handleReject }, "secondary-button")
         : null,
     ].filter(Boolean)),
   ]);

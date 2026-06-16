@@ -24,15 +24,3 @@ type Report struct {
 	// New field to indicate whether the reporter has been notified
 	Notified bool `json:"notified" bson:"notified"`
 }
-
-// // MarshalJSON implements a custom JSON marshaller so that “id” is the hex string of ObjectID.
-// func (r *Report) MarshalJSON() ([]byte, error) {
-// 	type Alias Report
-// 	return json.Marshal(&struct {
-// 		ID string `json:"id"`
-// 		*Alias
-// 	}{
-// 		ID:    r.ID.Hex(),
-// 		Alias: (*Alias)(r),
-// 	})
-// }

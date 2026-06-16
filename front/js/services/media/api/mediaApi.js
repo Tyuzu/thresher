@@ -48,7 +48,9 @@ export function uploadFile(u) {
 
     const formData = new FormData();
 
-    formData.append("file", u.file);
+    const key = (u.key || "file").toLowerCase();
+
+    formData.append(key, u.file);
     formData.append("entityType", u.entityType);
     formData.append("entityId", u.entityId || "");
 
@@ -84,7 +86,6 @@ export function uploadFile(u) {
               ? data[0]
               : data
           );
-
         } catch {
           UploadStore.update(u.id, {
             status: "error"
