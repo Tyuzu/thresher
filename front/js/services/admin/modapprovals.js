@@ -1,6 +1,9 @@
 import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
+import { displayUserRoleManager } from "./modUserRoles.js";
+
+export { displayUserRoleManager };
 
 export async function loadModeratorApplications(container) {
     container.replaceChildren();
