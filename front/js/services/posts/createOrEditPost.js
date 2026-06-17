@@ -3,7 +3,7 @@ import { createElement } from "../../components/createElement";
 import { createFormGroup } from "../../components/createFormGroup.js";
 import Button from "../../components/base/Button.js";
 import { capitalize } from "../profile/profileHelpers.js";
-import { resolveImagePath } from "../../utils/imagePaths.js";
+import { resolveImagePath, PictureType, EntityType } from "../../utils/imagePaths.js";
 import { navigate } from "../../routes/index.js";
 import { uploadFile } from "../media/api/mediaApi.js";
 import Notify from "../../components/ui/Notify.mjs";
@@ -40,7 +40,7 @@ const BlockPlugins = {
       if (block.url) {
         preview.setAttribute(
           "src",
-          resolveImagePath("post", "photo", block.url)
+          resolveImagePath(EntityType.BLOGPOST, PictureType.PHOTO, block.url)
         );
       }
 
@@ -71,24 +71,38 @@ const BlockPlugins = {
             entityId: String(uploadCtx?.entityId || "post")
           });
 
+          // FileDrop may return different shapes: { savedname, filename, key, url, path }
           const imageKey =
+            uploadedImage?.savedname ||
             uploadedImage?.filename ||
             uploadedImage?.key ||
+            uploadedImage?.name ||
+            uploadedImage?.fileName ||
             "";
 
-          if (!imageKey) {
+          const returnedUrl = uploadedImage?.url || uploadedImage?.src || uploadedImage?.path || "";
+
+          if (!imageKey && !returnedUrl) {
             throw new Error("Image upload failed.");
           }
 
+          // Prefer an absolute URL from the service if available, otherwise store the key/filename
+          const finalUrlOrKey = returnedUrl || imageKey;
+
           update({
             ...block,
-            url: imageKey
+            url: finalUrlOrKey
           });
 
-          preview.setAttribute(
-            "src",
-            resolveImagePath("post", "photo", imageKey)
-          );
+          // If we got a full URL, use it directly; otherwise resolve the path on our CDN/storage
+          if (/^https?:\/\//i.test(finalUrlOrKey)) {
+            preview.setAttribute("src", finalUrlOrKey);
+          } else {
+            preview.setAttribute(
+              "src",
+              resolveImagePath(EntityType.BLOGPOST, PictureType.PHOTO, finalUrlOrKey)
+            );
+          }
         } catch (err) {
           console.error("Upload failed", err);
 
@@ -428,7 +442,7 @@ async function renderPostEditor({ isLoggedIn, postId, contentContainer, mode }) 
     (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
 
   const uploadCtx = {
-    entityType: "post",
+    entityType: "blogpost",
     entityId: assetEntityId
   };
 

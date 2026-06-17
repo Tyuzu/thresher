@@ -117,13 +117,13 @@ export function createAvatar(profile) {
     const thumbSrc = resolveImagePath(
         EntityType.USER,
         PictureType.THUMB,
-        `${profile.avatar}`
+        `${profile.userid}`
     );
 
     const fullSrc = resolveImagePath(
         EntityType.USER,
         PictureType.PHOTO,
-        profile.avatar
+        profile.userid
     );
 
     const img = new Image();
@@ -139,6 +139,8 @@ export function createAvatar(profile) {
     img.classList.add("imgful");
 
     thumb.appendChild(img);
+
+    profile.avatar = thumbSrc;
 
     if (profile.avatar) {
         thumb.addEventListener(

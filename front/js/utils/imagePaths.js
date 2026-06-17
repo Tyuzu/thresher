@@ -120,24 +120,16 @@ export function resolveImagePath(entityType, pictureType, filename, fallback = "
     let finalName = filename;
 
     if (pictureType === PictureType.THUMB) {
-        if (!finalName.toLowerCase().endsWith(".jpg")) {
-            const dotIndex = finalName.lastIndexOf(".");
+        const hasExt = /\.[a-zA-Z0-9]+$/.test(finalName);
 
-            if (dotIndex >= 0) {
-                finalName = finalName.substring(0, dotIndex);
+        if (pictureType === PictureType.THUMB) {
+            if (!hasExt) {
+                finalName += ".jpg";
             }
-
-            finalName += ".jpg";
-        }
-    } else if (isImageType(pictureType)) {
-        if (!finalName.toLowerCase().endsWith(".png")) {
-            const dotIndex = finalName.lastIndexOf(".");
-
-            if (dotIndex >= 0) {
-                finalName = finalName.substring(0, dotIndex);
+        } else if (isImageType(pictureType)) {
+            if (!hasExt) {
+                finalName += ".png";
             }
-
-            finalName += ".png";
         }
     }
 
