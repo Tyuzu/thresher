@@ -2,7 +2,6 @@ import VideoPlayer from '../../components/ui/VideoPlayer.mjs';
 
 async function RenderVideoPost(mediaContainer, media, media_url = "", resolutions, subtits, posterPath) {
     const players = [];
-
     media.forEach(videoSrc => {
         const player = VideoPlayer({
             src: videoSrc,

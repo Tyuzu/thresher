@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"log"
 	"mime/multipart"
 	"naevis/dropify/filedrop"
 	"naevis/dropify/filemgr"
@@ -46,7 +47,7 @@ func (fs *FileService) ProcessUploadedFiles(
 	entityId string,
 	userid string,
 ) ([]Attachment, error) {
-
+	log.Println("--|--|--|--|")
 	_ = entityId // reserved for future use
 
 	if r.MultipartForm == nil || len(r.MultipartForm.File) == 0 {
@@ -59,9 +60,8 @@ func (fs *FileService) ProcessUploadedFiles(
 
 	for fieldKey, files := range r.MultipartForm.File {
 		keyLower := strings.ToLower(strings.TrimSpace(fieldKey))
-
 		for _, fileHeader := range files {
-			atts, err := fs.processSingleFile(
+			atts, err := fs.processRegularFile(
 				r,
 				fileHeader,
 				keyLower,
@@ -83,24 +83,6 @@ func (fs *FileService) ProcessUploadedFiles(
 	return attachments, nil
 }
 
-// processSingleFile routes uploads by field key
-func (fs *FileService) processSingleFile(
-	r *http.Request,
-	fileHeader *multipart.FileHeader,
-	fieldKey string,
-	entity filemgr.EntityType,
-	userid string,
-) ([]Attachment, error) {
-
-	// Feed/feedpost media special handling
-	if entity == filemgr.EntityFeed || fieldKey == "feedpost" {
-		return fs.processFeedFile(r, fileHeader, fieldKey, entity, userid)
-	}
-
-	// Regular uploads
-	return fs.processRegularFile(fileHeader, fieldKey, entity, userid)
-}
-
 // processFeedFile handles feed media uploads
 func (fs *FileService) processFeedFile(
 	r *http.Request,
@@ -109,9 +91,10 @@ func (fs *FileService) processFeedFile(
 	entity filemgr.EntityType,
 	userid string,
 ) ([]Attachment, error) {
+	_ = fieldKey
 
 	postType := strings.ToLower(strings.TrimSpace(r.FormValue("postType")))
-
+	log.Println("processFeedFile : ", postType)
 	// Auto-detect from filename if postType not provided
 	if postType == "" {
 		if isVideoFile(fileHeader.Filename) {
@@ -182,6 +165,7 @@ func (fs *FileService) processFeedFile(
 
 	// Posters/images/documents/etc. route through regular save path
 	return fs.processRegularFile(
+		r,
 		fileHeader,
 		string(picType),
 		entity,
@@ -191,11 +175,16 @@ func (fs *FileService) processFeedFile(
 
 // processRegularFile handles standard uploads
 func (fs *FileService) processRegularFile(
+	r *http.Request,
 	fileHeader *multipart.FileHeader,
 	fieldKey string,
 	entity filemgr.EntityType,
 	userID string,
 ) ([]Attachment, error) {
+
+	if entity == filemgr.EntityFeed {
+		fs.processFeedFile(r, fileHeader, fieldKey, entity, userID)
+	}
 
 	file, err := fileHeader.Open()
 	if err != nil {
@@ -208,6 +197,8 @@ func (fs *FileService) processRegularFile(
 	if _, ok := filemgr.AllowedExtensions[picType]; !ok {
 		return nil, fmt.Errorf("invalid upload key: %s", fieldKey)
 	}
+
+	log.Println("processRegularFile : ", picType)
 
 	savedName, ext, err := filemgr.SaveFileForEntity(
 		file,
@@ -323,6 +314,12 @@ func mimeToExtension(contentType string) string {
 		return ".mp4"
 	case "video/webm":
 		return ".webm"
+	case "image/jpg":
+		return ".jpg"
+	case "audio/x-wav":
+		return ".wav"
+	case "audio/mp4":
+		return ".m4a"
 	default:
 		return ""
 	}
@@ -350,25 +347,20 @@ func postTypeToImageType(postType string) filemgr.PictureType {
 
 // isVideoFile checks if a file is a video based on extension
 func isVideoFile(filename string) bool {
-	videoExtensions := map[string]bool{
-		".mp4":  true,
-		".webm": true,
-		".avi":  true,
-		".mov":  true,
+	switch strings.ToLower(filepath.Ext(filename)) {
+	case ".mp4", ".webm", ".avi", ".mov", ".mkv":
+		return true
+	default:
+		return false
 	}
-
-	ext := strings.ToLower(filepath.Ext(filename))
-	return videoExtensions[ext]
 }
 
 // isAudioFile checks if a file is audio based on extension
 func isAudioFile(filename string) bool {
-	audioExtensions := map[string]bool{
-		".mp3": true,
-		".wav": true,
-		".aac": true,
+	switch strings.ToLower(filepath.Ext(filename)) {
+	case ".mp3", ".wav", ".aac", ".m4a", ".ogg":
+		return true
+	default:
+		return false
 	}
-
-	ext := strings.ToLower(filepath.Ext(filename))
-	return audioExtensions[ext]
 }

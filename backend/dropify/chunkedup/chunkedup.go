@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"naevis/config"
 	"naevis/dropify/filemgr"
-	"naevis/infra"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -25,7 +25,6 @@ var (
 	cleanupAge  = config.CleanupAge
 	chunkBuffer = config.ChunkBuffer
 	// Global app reference for event publishing
-	globalApp *infra.Deps
 )
 
 var allowedTypes = map[string]bool{
@@ -40,9 +39,6 @@ var lockMap = struct {
 }{locks: make(map[string]*sync.Mutex)}
 
 // SetApp sets the global app reference for event publishing
-func SetApp(app *infra.Deps) {
-	globalApp = app
-}
 
 type ChunkMeta struct {
 	FileName    string              `json:"fileName"`
@@ -231,6 +227,8 @@ func ChunkedUploads(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 			Filename: meta.FileName,
 			Size:     int64(meta.TotalChunks) * int64(chunkBuffer), // approximate size
 		}
+
+		log.Println("ChunkedUploads : ", meta.PictureType)
 
 		savedName, ext, err := filemgr.SaveFileForEntity(mergedFile, fakeHeader, meta.EntityType, meta.PictureType, "")
 		if err != nil {

@@ -20,8 +20,9 @@ const (
 
 func SaveFileForEntity(file multipart.File, header *multipart.FileHeader, entity EntityType, picType PictureType, userid string) (string, string, error) {
 	log.Println("->[SaveFileForEntity] : no error yet")
+	log.Println("[SaveFileForEntityf]->", picType)
 	filename, ext, err := saveFileAndProcess(file, header, entity, picType, defaultThumbWidth, userid)
-	log.Println("[SaveFileForEntity]->", picType)
+	log.Println("[SaveFileForEntityb]->", picType)
 	return filename, ext, err
 }
 

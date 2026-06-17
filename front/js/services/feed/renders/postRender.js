@@ -76,7 +76,7 @@ export async function renderPost(posts, postsContainer, metadataMap = {}) {
                         const posterPath = resolveImagePath(
                             EntityType.FEED,
                             PictureType.POSTER,
-                            `${post.thumbnail || media[0]}.png`
+                            `${post.thumbnail || media[0]}`
                         );
 
                         try {

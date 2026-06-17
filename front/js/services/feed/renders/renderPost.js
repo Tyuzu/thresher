@@ -48,7 +48,8 @@ posts = [posts];
             RenderImagePost(mediaContainer, mediaUrls);
         } else if (post.type === "video") {
             const media = post.media.map(m => resolveImagePath(EntityType.FEED, PictureType.VIDEO, m));
-            const posterPath = resolveImagePath(EntityType.FEED, PictureType.POSTER, `${post.thumbnail || mediaUrls[0]}.png`);
+            const posterPath = resolveImagePath(EntityType.FEED, PictureType.POSTER, `${post.thumbnail || mediaUrls[0]}`);
+            console.log(posterPath);
             const players = await RenderVideoPost(mediaContainer, media, mediaUrls, post.resolutions || [], [], posterPath);
             activeVideoPlayers.push(...players);
         } else if (post.text) {

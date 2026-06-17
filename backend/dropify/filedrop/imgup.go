@@ -4,6 +4,7 @@ package filedrop
 
 import (
 	"fmt"
+	"log"
 	"mime/multipart"
 	"naevis/dropify/filemgr"
 	"net/http"
@@ -38,6 +39,8 @@ func processSingleImageUpload(file *multipart.FileHeader, entity filemgr.EntityT
 		return "", fmt.Errorf("cannot open image: %w", err)
 	}
 	defer src.Close()
+
+	log.Println("processSingleImageUpload picType : ", picType)
 
 	origName, ext, err := filemgr.SaveFileForEntity(src, file, entity, picType, userid)
 	if err != nil {

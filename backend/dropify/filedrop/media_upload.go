@@ -4,6 +4,7 @@ package filedrop
 
 import (
 	"fmt"
+	"log"
 	"mime/multipart"
 	"naevis/dropify/filemgr"
 	"net/http"
@@ -56,6 +57,8 @@ func ProcessMediaUpload(r *http.Request, formKey string, mediaType MediaType, en
 		return nil, fmt.Errorf("unsupported media type: %s", mediaType)
 	}
 
+	log.Println("ProcessMediaUpload : ", picType)
+
 	savedPath, uniqueID, _, err := SaveUploadedFile(file, entity, picType, userid)
 	if err != nil {
 		return nil, err
@@ -98,7 +101,7 @@ func SaveUploadedFile(file *multipart.FileHeader, entity filemgr.EntityType, pic
 		return "", "", "", fmt.Errorf("cannot open uploaded file: %w", err)
 	}
 	defer src.Close()
-
+	log.Println("SaveUploadedFile : ", picType)
 	savedName, ext, err := filemgr.SaveFileForEntity(src, file, entity, picType, userid)
 	if err != nil {
 		return "", "", "", fmt.Errorf("file save failed: %w", err)
