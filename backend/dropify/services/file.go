@@ -101,8 +101,10 @@ func (fs *FileService) processFeedFile(
 			postType = "video"
 		} else if isAudioFile(fileHeader.Filename) {
 			postType = "audio"
+		} else if isImageFile(fileHeader.Filename) {
+			postType = "photo"
 		} else {
-			postType = "video" // default to video for feed
+			postType = "photo" // default to photo for unknown files
 		}
 	}
 
@@ -163,14 +165,31 @@ func (fs *FileService) processFeedFile(
 		}, nil
 	}
 
-	// Posters/images/documents/etc. route through regular save path
-	return fs.processRegularFile(
-		r,
+	// Image/photo processing
+	file, err := fileHeader.Open()
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	savedName, ext, err := filemgr.SaveFileForEntity(
+		file,
 		fileHeader,
-		string(picType),
 		entity,
+		picType,
 		userid,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save file: %w", err)
+	}
+
+	return []Attachment{
+		{
+			Filename:  savedName + ext,
+			Extension: ext,
+			Key:       string(picType),
+		},
+	}, nil
 }
 
 // processRegularFile handles standard uploads
@@ -183,7 +202,7 @@ func (fs *FileService) processRegularFile(
 ) ([]Attachment, error) {
 
 	if entity == filemgr.EntityFeed {
-		fs.processFeedFile(r, fileHeader, fieldKey, entity, userID)
+		return fs.processFeedFile(r, fileHeader, fieldKey, entity, userID)
 	}
 
 	file, err := fileHeader.Open()
@@ -359,6 +378,16 @@ func isVideoFile(filename string) bool {
 func isAudioFile(filename string) bool {
 	switch strings.ToLower(filepath.Ext(filename)) {
 	case ".mp3", ".wav", ".aac", ".m4a", ".ogg":
+		return true
+	default:
+		return false
+	}
+}
+
+// isImageFile checks if a file is an image based on extension
+func isImageFile(filename string) bool {
+	switch strings.ToLower(filepath.Ext(filename)) {
+	case ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp":
 		return true
 	default:
 		return false
