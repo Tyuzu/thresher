@@ -4,6 +4,7 @@ import { payViaStripe } from "../pay/pay.js";
 
 import { getState } from "../../state/state.js";
 import Imagex from "../../components/base/Imagex.js";
+import { EntityType } from "../../utils/imagePaths.js";
 // import { fetchUserMeta } from "../../utils/usersMeta.js";
 
 export async function userProfileCard(profile = {
@@ -12,7 +13,7 @@ export async function userProfileCard(profile = {
     avatarUrl: "default-avatar.png",
     postCount: 0,
     isFollowing: false,
-    entityType: "user",    // "user" | "post"
+    entityType: EntityType.USER,    // "user" | "post"
     entityId: null,        // userId or postId
     entityName: "Anonymous" // username or post title
 }) {
@@ -48,10 +49,10 @@ export async function userProfileCard(profile = {
               try {
                 // Map entity types to valid fundable types
                 let fundableType = profile.entityType;
-                if (fundableType === "post") {
+                if (fundableType === EntityType.BLOGPOST) {
                   fundableType = "creator";
-                } else if (!fundableType || fundableType === "user") {
-                  fundableType = "artist";
+                } else if (!fundableType || fundableType === EntityType.USER) {
+                  fundableType = EntityType.ARTIST;
                 }
 
                 const result = await payViaStripe({
@@ -79,7 +80,7 @@ export async function userProfileCard(profile = {
       
         elements.push(count, fundButton);
       
-        if (profile.entityType === "user") {
+        if (profile.entityType === EntityType.USER) {
           const followBtn = createElement(
             "button",
             {

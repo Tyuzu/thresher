@@ -15,110 +15,144 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// --- Allowed block types ---
-var allowedBlockTypes = map[string]bool{
-	"text":  true,
-	"image": true,
-	"code":  true,
-	"video": true,
+const (
+	BlockText  = "text"
+	BlockImage = "image"
+	BlockCode  = "code"
+	BlockVideo = "video"
+)
+
+const (
+	PostStandard = "standard"
+	PostGuide    = "guide"
+	PostTutorial = "tutorial"
+	PostRecipe   = "recipe"
+)
+
+const (
+	CategoryReview = "Review"
+
+	SubcategoryProduct = "Product"
+	SubcategoryPlace   = "Place"
+	SubcategoryEvent   = "Event"
+)
+
+type PostInput struct {
+	Type        string
+	Title       string
+	Category    string
+	Subcategory string
+	ReferenceID string
+	Blocks      []models.Block
+	Hashtags    []string
 }
 
-// --- Allowed post types ---
-var allowedPostTypes = map[string]bool{
-	"standard": true,
-	"guide":    true,
-	"tutorial": true,
-	"recipe":   true,
-}
-
-// --- Pick thumbnail ---
-func pickThumb(blocks []models.Block) string {
-	for _, b := range blocks {
-		if b.Type == "image" && b.URL != "" {
-			return b.URL
-		}
+func isValidPostType(t string) bool {
+	switch t {
+	case PostStandard,
+		PostGuide,
+		PostTutorial,
+		PostRecipe:
+		return true
+	default:
+		return false
 	}
-	for _, b := range blocks {
-		if b.Type == "video" && b.URL != "" {
-			return b.URL
-		}
-	}
-	return ""
 }
 
-// --- Sanitize blocks ---
+func requiresReference(category, subcategory string) bool {
+	if category != CategoryReview {
+		return false
+	}
+
+	switch subcategory {
+	case SubcategoryProduct,
+		SubcategoryPlace,
+		SubcategoryEvent:
+		return true
+	default:
+		return false
+	}
+}
+
+func sanitizeTextBlock(b models.Block) (models.Block, bool) {
+	b.Content = strings.TrimSpace(html.EscapeString(b.Content))
+	return b, b.Content != ""
+}
+
+func sanitizeImageBlock(b models.Block) (models.Block, bool) {
+	b.URL = strings.TrimSpace(b.URL)
+	b.Alt = strings.TrimSpace(html.EscapeString(b.Alt))
+	b.Caption = strings.TrimSpace(html.EscapeString(b.Caption))
+	return b, b.URL != ""
+}
+
+func sanitizeCodeBlock(b models.Block) (models.Block, bool) {
+	b.Language = strings.TrimSpace(html.EscapeString(b.Language))
+	b.Content = strings.TrimSpace(html.EscapeString(b.Content))
+	return b, b.Content != ""
+}
+
+func sanitizeVideoBlock(b models.Block) (models.Block, bool) {
+	b.URL = strings.TrimSpace(b.URL)
+	b.Caption = strings.TrimSpace(html.EscapeString(b.Caption))
+	return b, b.URL != ""
+}
+
 func sanitizeBlocks(raw []models.Block) []models.Block {
 	out := make([]models.Block, 0, len(raw))
 
 	for _, b := range raw {
-		if !allowedBlockTypes[b.Type] {
+		var ok bool
+
+		switch b.Type {
+		case BlockText:
+			b, ok = sanitizeTextBlock(b)
+
+		case BlockImage:
+			b, ok = sanitizeImageBlock(b)
+
+		case BlockCode:
+			b, ok = sanitizeCodeBlock(b)
+
+		case BlockVideo:
+			b, ok = sanitizeVideoBlock(b)
+
+		default:
 			continue
 		}
 
-		switch b.Type {
-		case "text":
-			b.Content = strings.TrimSpace(html.EscapeString(b.Content))
-			if b.Content != "" {
-				out = append(out, b)
-			}
-
-		case "image":
-			b.URL = strings.TrimSpace(b.URL)
-			b.Alt = strings.TrimSpace(html.EscapeString(b.Alt))
-			if b.URL != "" {
-				out = append(out, b)
-			}
-
-		case "code":
-			b.Language = strings.TrimSpace(html.EscapeString(b.Language))
-			b.Content = strings.TrimSpace(html.EscapeString(b.Content))
-			if b.Content != "" {
-				out = append(out, b)
-			}
-
-		case "video":
-			b.URL = strings.TrimSpace(b.URL)
-			b.Caption = strings.TrimSpace(html.EscapeString(b.Caption))
-			if b.URL != "" {
-				out = append(out, b)
-			}
+		if ok {
+			out = append(out, b)
 		}
 	}
 
 	return out
 }
 
-// --- Create / Update ---
-func CreateOrUpdatePost(w http.ResponseWriter, r *http.Request, ps httprouter.Params, isEdit bool, app *infra.Deps) {
-	ctx := r.Context()
-	userID, ok := ctx.Value(globals.UserIDKey).(string)
-	if !ok || userID == "" {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
-	var postID string
-	if isEdit {
-		postID = ps.ByName("id")
-		if postID == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Post ID required")
-			return
+func pickThumb(blocks []models.Block) string {
+	for _, b := range blocks {
+		if b.Type == BlockImage && b.URL != "" {
+			return b.URL
 		}
 	}
 
+	for _, b := range blocks {
+		if b.Type == BlockVideo && b.URL != "" {
+			return b.URL
+		}
+	}
+
+	return ""
+}
+
+func parsePostInput(r *http.Request) (*PostInput, error) {
 	if err := r.ParseMultipartForm(20 << 20); err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid form data")
-		return
+		return nil, err
 	}
 
 	postType := strings.TrimSpace(r.FormValue("type"))
 	if postType == "" {
-		postType = "standard"
-	}
-
-	if !allowedPostTypes[postType] {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid post type")
-		return
+		postType = PostStandard
 	}
 
 	title := strings.TrimSpace(html.EscapeString(r.FormValue("title")))
@@ -127,36 +161,86 @@ func CreateOrUpdatePost(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	referenceID := strings.TrimSpace(r.FormValue("referenceId"))
 	blocksRaw := r.FormValue("blocks")
 
+	var blocksIn []models.Block
+	if err := json.Unmarshal([]byte(blocksRaw), &blocksIn); err != nil {
+		return nil, err
+	}
+
 	rawTags := r.MultipartForm.Value["hashtags"]
 	hashtags := make([]string, 0, len(rawTags))
-	for _, t := range rawTags {
-		tt := strings.TrimSpace(html.EscapeString(t))
-		if tt != "" {
-			hashtags = append(hashtags, tt)
+
+	for _, tag := range rawTags {
+		tag = strings.TrimSpace(html.EscapeString(tag))
+		if tag != "" {
+			hashtags = append(hashtags, tag)
 		}
 	}
 
-	if title == "" || category == "" || subcategory == "" || blocksRaw == "" {
+	return &PostInput{
+		Type:        postType,
+		Title:       title,
+		Category:    category,
+		Subcategory: subcategory,
+		ReferenceID: referenceID,
+		Blocks:      sanitizeBlocks(blocksIn),
+		Hashtags:    hashtags,
+	}, nil
+}
+
+func CreateOrUpdatePost(
+	w http.ResponseWriter,
+	r *http.Request,
+	ps httprouter.Params,
+	isEdit bool,
+	app *infra.Deps,
+) {
+	ctx := r.Context()
+
+	userID, ok := ctx.Value(globals.UserIDKey).(string)
+	if !ok || userID == "" {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	var postID string
+
+	if isEdit {
+		postID = ps.ByName("id")
+
+		if postID == "" {
+			utils.RespondWithError(w, http.StatusBadRequest, "Post ID required")
+			return
+		}
+	}
+
+	input, err := parsePostInput(r)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid form data")
+		return
+	}
+
+	if !isValidPostType(input.Type) {
+		utils.RespondWithError(w, http.StatusBadRequest, "Invalid post type")
+		return
+	}
+
+	if input.Title == "" ||
+		input.Category == "" ||
+		input.Subcategory == "" ||
+		len(input.Blocks) == 0 {
 		utils.RespondWithError(w, http.StatusBadRequest, "Missing required fields")
 		return
 	}
 
-	var blocksIn []models.Block
-	if err := json.Unmarshal([]byte(blocksRaw), &blocksIn); err != nil {
-		utils.RespondWithError(w, http.StatusBadRequest, "Invalid blocks JSON")
-		return
-	}
-
-	blocks := sanitizeBlocks(blocksIn)
-
 	var refPtr *string
-	if category == "Review" &&
-		(subcategory == "Product" || subcategory == "Place" || subcategory == "Event") {
-		if referenceID == "" {
+
+	if requiresReference(input.Category, input.Subcategory) {
+		if input.ReferenceID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Reference ID required")
 			return
 		}
-		refPtr = &referenceID
+
+		refPtr = &input.ReferenceID
 	}
 
 	now := time.Now()
@@ -168,19 +252,28 @@ func CreateOrUpdatePost(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		}
 
 		update := map[string]any{
-			"type":        postType,
-			"title":       title,
-			"category":    category,
-			"subcategory": subcategory,
+			"type":        input.Type,
+			"title":       input.Title,
+			"category":    input.Category,
+			"subcategory": input.Subcategory,
 			"referenceId": refPtr,
-			"blocks":      blocks,
-			"hashtags":    hashtags,
-			"thumb":       pickThumb(blocks),
+			"blocks":      input.Blocks,
+			"hashtags":    input.Hashtags,
+			"thumb":       pickThumb(input.Blocks),
 			"updatedAt":   now,
 		}
 
-		if err := app.DB.UpdateOne(ctx, blogPostsCollection, filter, update); err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update post")
+		if err := app.DB.UpdateOne(
+			ctx,
+			blogPostsCollection,
+			filter,
+			update,
+		); err != nil {
+			utils.RespondWithError(
+				w,
+				http.StatusInternalServerError,
+				"Failed to update post",
+			)
 			return
 		}
 
@@ -190,53 +283,76 @@ func CreateOrUpdatePost(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 
-	newPost := models.BlogPost{
+	post := models.BlogPost{
 		PostID:      uuid.NewString(),
-		Type:        postType,
-		Title:       title,
-		Category:    category,
-		Subcategory: subcategory,
+		Type:        input.Type,
+		Title:       input.Title,
+		Category:    input.Category,
+		Subcategory: input.Subcategory,
 		ReferenceID: refPtr,
-		Blocks:      blocks,
-		Hashtags:    hashtags,
-		Thumb:       pickThumb(blocks),
+		Blocks:      input.Blocks,
+		Thumb:       pickThumb(input.Blocks),
 		CreatedBy:   userID,
 		CreatedAt:   now,
 		UpdatedAt:   now,
+		Hashtags:    input.Hashtags,
 	}
 
-	if err := app.DB.InsertOne(ctx, blogPostsCollection, newPost); err != nil {
-		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create post")
+	if err := app.DB.InsertOne(
+		ctx,
+		blogPostsCollection,
+		post,
+	); err != nil {
+		utils.RespondWithError(
+			w,
+			http.StatusInternalServerError,
+			"Failed to create post",
+		)
 		return
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]any{
-		"postid": newPost.PostID,
+		"postid": post.PostID,
 	})
 }
 
-// --- Wrappers ---
 func CreatePost(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	return func(
+		w http.ResponseWriter,
+		r *http.Request,
+		ps httprouter.Params,
+	) {
 		CreateOrUpdatePost(w, r, ps, false, app)
 	}
 }
 
 func UpdatePost(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	return func(
+		w http.ResponseWriter,
+		r *http.Request,
+		ps httprouter.Params,
+	) {
 		CreateOrUpdatePost(w, r, ps, true, app)
 	}
 }
 
-// --- Delete ---
 func DeletePost(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	return func(
+		w http.ResponseWriter,
+		r *http.Request,
+		ps httprouter.Params,
+	) {
 		ctx := r.Context()
+
 		userID := utils.GetUserIDFromRequest(r)
 		postID := ps.ByName("id")
 
 		if postID == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Post ID required")
+			utils.RespondWithError(
+				w,
+				http.StatusBadRequest,
+				"Post ID required",
+			)
 			return
 		}
 
@@ -245,9 +361,17 @@ func DeletePost(app *infra.Deps) httprouter.Handle {
 			"createdBy": userID,
 		}
 
-		_, err := app.DB.DeleteOne(ctx, blogPostsCollection, filter)
+		_, err := app.DB.DeleteOne(
+			ctx,
+			blogPostsCollection,
+			filter,
+		)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete post")
+			utils.RespondWithError(
+				w,
+				http.StatusInternalServerError,
+				"Failed to delete post",
+			)
 			return
 		}
 

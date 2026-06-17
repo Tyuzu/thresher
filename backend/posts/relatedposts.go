@@ -14,13 +14,13 @@ import (
 )
 
 type Post struct {
-	PostID      string   `bson:"postid" json:"postid"`
-	Title       string   `bson:"title" json:"title"`
-	Category    string   `bson:"category" json:"category"`
-	Subcategory string   `bson:"subcategory" json:"subcategory"`
-	Tags        []string `bson:"tags" json:"tags"`
-	CreatedAt   int64    `bson:"createdAt" json:"createdAt"`
-	CreatedBy   string   `bson:"createdBy" json:"createdBy"`
+	PostID      string    `bson:"postid" json:"postid"`
+	Title       string    `bson:"title" json:"title"`
+	Category    string    `bson:"category" json:"category"`
+	Subcategory string    `bson:"subcategory" json:"subcategory"`
+	Tags        []string  `bson:"tags" json:"tags"`
+	CreatedAt   time.Time `bson:"createdAt" json:"createdAt"`
+	CreatedBy   string    `bson:"createdBy" json:"createdBy"`
 }
 
 func GetRelatedPosts(app *infra.Deps) httprouter.Handle {

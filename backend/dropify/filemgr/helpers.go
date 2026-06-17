@@ -21,6 +21,39 @@ const (
 	maxAllowedSizeScan = 1 << 30 // 1 GiB
 )
 
+var mimeToExtension = map[string]string{
+	"image/jpeg":    ".jpg",
+	"image/png":     ".png",
+	"image/gif":     ".gif",
+	"image/webp":    ".webp",
+	"image/bmp":     ".bmp",
+	"image/svg+xml": ".svg",
+
+	"video/mp4":  ".mp4",
+	"video/webm": ".webm",
+	"video/ogg":  ".ogv",
+
+	"audio/mpeg": ".mp3",
+	"audio/wav":  ".wav",
+	"audio/ogg":  ".ogg",
+
+	"application/pdf": ".pdf",
+}
+
+func MIMEToExtension(mimeType string) (string, error) {
+	mimeType = strings.ToLower(strings.TrimSpace(mimeType))
+
+	ext, ok := mimeToExtension[mimeType]
+	if !ok {
+		return "", fmt.Errorf(
+			"unsupported mime type: %s",
+			mimeType,
+		)
+	}
+
+	return ext, nil
+}
+
 // ScanForViruses performs a lightweight heuristic scan.
 // This is NOT a replacement for ClamAV or a commercial AV engine.
 func ScanForViruses(filePath string) error {
@@ -38,15 +71,24 @@ func ScanForViruses(filePath string) error {
 	stat, err := f.Stat()
 	if err == nil {
 		if stat.Size() <= 0 || stat.Size() > maxAllowedSizeScan {
-			return fmt.Errorf("scan: suspicious file size: %d", stat.Size())
+			return fmt.Errorf(
+				"scan: suspicious file size: %d",
+				stat.Size(),
+			)
 		}
 	}
 
 	buf := make([]byte, virusScanReadLimit)
 
 	n, err := io.ReadFull(f, buf)
-	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		return fmt.Errorf("scan: read failed: %w", err)
+	if err != nil &&
+		err != io.EOF &&
+		err != io.ErrUnexpectedEOF {
+
+		return fmt.Errorf(
+			"scan: read failed: %w",
+			err,
+		)
 	}
 
 	if n == 0 {
@@ -55,51 +97,41 @@ func ScanForViruses(filePath string) error {
 
 	prefix := bytes.ToLower(buf[:n])
 
-	// -------------------------
-	// Executable detection
-	// -------------------------
+	if n >= 2 &&
+		buf[0] == 'M' &&
+		buf[1] == 'Z' {
 
-	if n >= 2 {
-		if buf[0] == 'M' && buf[1] == 'Z' {
-			return fmt.Errorf("scan: executable header detected")
-		}
+		return fmt.Errorf(
+			"scan: executable header detected",
+		)
 	}
 
-	// -------------------------
-	// ZIP detection
-	// Remove this block if your system
-	// intentionally supports ZIP/DOCX/PPTX uploads.
-	// -------------------------
+	if n >= 4 &&
+		buf[0] == 0x50 &&
+		buf[1] == 0x4B &&
+		buf[2] == 0x03 &&
+		buf[3] == 0x04 {
 
-	if n >= 4 {
-		if buf[0] == 0x50 &&
-			buf[1] == 0x4B &&
-			buf[2] == 0x03 &&
-			buf[3] == 0x04 {
-
-			return fmt.Errorf("scan: zip archive detected")
-		}
+		return fmt.Errorf(
+			"scan: zip archive detected",
+		)
 	}
-
-	// -------------------------
-	// HTML / JS detection
-	// -------------------------
 
 	if bytes.Contains(prefix, []byte("<script")) ||
 		bytes.Contains(prefix, []byte("<html")) ||
 		bytes.Contains(prefix, []byte("<!doctype html")) {
 
-		return fmt.Errorf("scan: html/javascript content detected")
+		return fmt.Errorf(
+			"scan: html/javascript content detected",
+		)
 	}
-
-	// -------------------------
-	// Suspicious JS
-	// -------------------------
 
 	if bytes.Contains(prefix, []byte("eval(")) &&
 		bytes.Contains(prefix, []byte("document")) {
 
-		return fmt.Errorf("scan: suspicious javascript-like content")
+		return fmt.Errorf(
+			"scan: suspicious javascript-like content",
+		)
 	}
 
 	return nil
@@ -128,14 +160,15 @@ func StripEXIF(img image.Image) (*bytes.Buffer, error) {
 	return buf, nil
 }
 
-// ExtractImageMetadata logs basic image metadata.
 func ExtractImageMetadata(
 	img image.Image,
 	uid string,
 ) error {
 
 	if img == nil {
-		return fmt.Errorf("extract metadata: nil image")
+		return fmt.Errorf(
+			"extract metadata: nil image",
+		)
 	}
 
 	bounds := img.Bounds()
@@ -178,7 +211,6 @@ func ExtractImageMetadata(
 	return nil
 }
 
-// ensureSafeFilename sanitizes a filename.
 func ensureSafeFilename(
 	name string,
 	ext string,
@@ -201,7 +233,6 @@ func ensureSafeFilename(
 	}
 
 	if ext != "" {
-
 		if !strings.HasPrefix(ext, ".") {
 			ext = "." + strings.TrimPrefix(ext, ".")
 		}
@@ -212,7 +243,6 @@ func ensureSafeFilename(
 	return name, ext
 }
 
-// getSafeFilename generates a safe filename.
 func getSafeFilename(
 	original string,
 	ext string,
@@ -230,7 +260,9 @@ func getSafeFilename(
 		)
 	}
 
-	if entity == EntityUser && picType == PicPhoto {
+	if entity == EntityUser &&
+		picType == PicPhoto {
+
 		return userid, ext
 	}
 
@@ -244,27 +276,6 @@ func getSafeFilename(
 	)
 }
 
-// isExtensionAllowed checks if extension is allowed.
-func isExtensionAllowed(
-	ext string,
-	picType PictureType,
-) bool {
-
-	ext = strings.ToLower(ext)
-
-	if ext == "" {
-		return false
-	}
-
-	allowed := AllowedExtensions[picType]
-
-	return slices.Contains(
-		allowed,
-		ext,
-	)
-}
-
-// isMIMEAllowed checks if MIME is allowed.
 func isMIMEAllowed(
 	mimeType string,
 	picType PictureType,
@@ -274,27 +285,12 @@ func isMIMEAllowed(
 
 	allowed := AllowedMIMEs[picType]
 
-	for _, a := range allowed {
-		if mimeType == a {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(
+		allowed,
+		mimeType,
+	)
 }
 
-// extMatchesMIME ensures extension and MIME match allowed types.
-func extMatchesMIME(
-	ext,
-	mimeType string,
-	picType PictureType,
-) bool {
-
-	return isExtensionAllowed(ext, picType) &&
-		isMIMEAllowed(mimeType, picType)
-}
-
-// ResolvePath returns upload path.
 func ResolvePath(
 	entity EntityType,
 	picType PictureType,
@@ -314,7 +310,6 @@ func ResolvePath(
 	)
 }
 
-// isImageType returns true for image picture types.
 func isImageType(
 	picType PictureType,
 ) bool {
@@ -327,7 +322,6 @@ func isImageType(
 		PicPoster,
 		PicSeating,
 		PicThumb:
-
 		return true
 
 	default:
@@ -335,7 +329,6 @@ func isImageType(
 	}
 }
 
-// ValidateImageDimensions checks image size limits.
 func ValidateImageDimensions(
 	img image.Image,
 	maxWidth,

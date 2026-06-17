@@ -109,6 +109,7 @@
   border-radius: 4px;
   padding: 6px;
   background-color: var(--color-bg);
+  color: var(--color-fg);
 }
 
 .block input[type="file"] {

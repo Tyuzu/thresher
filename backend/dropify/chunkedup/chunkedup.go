@@ -29,6 +29,8 @@ var (
 
 var allowedTypes = map[string]bool{
 	"image/jpeg": true,
+	"image/jpg":  true,
+	"image/jfif": true,
 	"image/png":  true,
 }
 

@@ -62,7 +62,12 @@ const VALID_ENTITY_TYPES = new Set(
     Object.values(EntityType)
 );
 
-export function resolveImagePath(entityType, pictureType, filename, fallback = "/assets/fallbacks.png") {
+export function resolveImagePath(
+    entityType,
+    pictureType,
+    filename,
+    fallback = "/assets/fallbacks.png"
+) {
     if (
         !entityType ||
         !pictureType ||
@@ -75,6 +80,7 @@ export function resolveImagePath(entityType, pictureType, filename, fallback = "
     if (!VALID_ENTITY_TYPES.has(entityType)) {
         return fallback;
     }
+
     if (
         /^(file:|data:|javascript:)/i.test(filename) ||
         filename.includes("..")
@@ -119,17 +125,13 @@ export function resolveImagePath(entityType, pictureType, filename, fallback = "
 
     let finalName = filename;
 
-    if (pictureType === PictureType.THUMB) {
-        const hasExt = /\.[a-zA-Z0-9]+$/.test(finalName);
+    const hasExt = /\.[a-zA-Z0-9]+$/.test(finalName);
 
+    if (!hasExt) {
         if (pictureType === PictureType.THUMB) {
-            if (!hasExt) {
-                finalName += ".jpg";
-            }
+            finalName += ".jpg";
         } else if (isImageType(pictureType)) {
-            if (!hasExt) {
-                finalName += ".png";
-            }
+            finalName += ".png";
         }
     }
 

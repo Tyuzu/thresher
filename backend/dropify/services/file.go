@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"mime/multipart"
 	"naevis/dropify/filedrop"
@@ -33,7 +34,7 @@ func normalizePictureKey(key string) filemgr.PictureType {
 	key = strings.ToLower(strings.TrimSpace(key))
 
 	switch key {
-	case "avatar", "gallery", "image":
+	case "avatar", "gallery", "image", "photo", "seating":
 		return filemgr.PicPhoto
 	default:
 		return filemgr.PictureType(key)
@@ -58,13 +59,11 @@ func (fs *FileService) ProcessUploadedFiles(
 
 	var attachments []Attachment
 
-	for fieldKey, files := range r.MultipartForm.File {
-		keyLower := strings.ToLower(strings.TrimSpace(fieldKey))
+	for _, files := range r.MultipartForm.File {
 		for _, fileHeader := range files {
 			atts, err := fs.processRegularFile(
 				r,
 				fileHeader,
-				keyLower,
 				entity,
 				userid,
 			)
@@ -87,11 +86,9 @@ func (fs *FileService) ProcessUploadedFiles(
 func (fs *FileService) processFeedFile(
 	r *http.Request,
 	fileHeader *multipart.FileHeader,
-	fieldKey string,
 	entity filemgr.EntityType,
 	userid string,
 ) ([]Attachment, error) {
-	_ = fieldKey
 
 	postType := strings.ToLower(strings.TrimSpace(r.FormValue("postType")))
 	log.Println("processFeedFile : ", postType)
@@ -191,18 +188,15 @@ func (fs *FileService) processFeedFile(
 		},
 	}, nil
 }
-
-// processRegularFile handles standard uploads
 func (fs *FileService) processRegularFile(
 	r *http.Request,
 	fileHeader *multipart.FileHeader,
-	fieldKey string,
 	entity filemgr.EntityType,
 	userID string,
 ) ([]Attachment, error) {
 
 	if entity == filemgr.EntityFeed {
-		return fs.processFeedFile(r, fileHeader, fieldKey, entity, userID)
+		return fs.processFeedFile(r, fileHeader, entity, userID)
 	}
 
 	file, err := fileHeader.Open()
@@ -211,13 +205,34 @@ func (fs *FileService) processRegularFile(
 	}
 	defer file.Close()
 
-	picType := normalizePictureKey(fieldKey)
-
-	if _, ok := filemgr.AllowedExtensions[picType]; !ok {
-		return nil, fmt.Errorf("invalid upload key: %s", fieldKey)
+	// Read first 512 bytes for MIME detection
+	buf := make([]byte, 512)
+	n, err := file.Read(buf)
+	if err != nil && err != io.EOF {
+		return nil, fmt.Errorf("failed to read file header: %w", err)
 	}
 
-	log.Println("processRegularFile : ", picType)
+	// Reset file pointer so SaveFileForEntity can read from start
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		return nil, fmt.Errorf("failed to reset file pointer: %w", err)
+	}
+
+	mimeType := http.DetectContentType(buf[:n])
+
+	var picType filemgr.PictureType
+
+	switch {
+	case strings.HasPrefix(mimeType, "image/"):
+		picType = filemgr.PicPhoto
+
+	case strings.HasPrefix(mimeType, "video/"):
+		picType = filemgr.PicVideo
+
+	default:
+		return nil, fmt.Errorf("unsupported file type: %s", mimeType)
+	}
+
+	log.Println("processRegularFile:", mimeType, picType)
 
 	savedName, ext, err := filemgr.SaveFileForEntity(
 		file,
@@ -232,7 +247,7 @@ func (fs *FileService) processRegularFile(
 
 	return []Attachment{
 		{
-			Filename:  savedName + ext,
+			Filename:  savedName,
 			Extension: ext,
 			Key:       string(picType),
 		},

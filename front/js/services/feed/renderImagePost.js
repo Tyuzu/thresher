@@ -21,6 +21,8 @@ async function RenderImagePost(mediaContainer, media) {
 
     const fullImagePaths = media.map(img => resolveImagePath(EntityType.FEED, PictureType.PHOTO, img));
 
+    console.log(fullImagePaths);
+
     media.forEach((img, index) => {
         const listItem = document.createElement('li');
         listItem.className = 'PostPreviewImageView_image_item__dzD2P';

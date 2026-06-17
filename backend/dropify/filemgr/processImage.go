@@ -268,16 +268,20 @@ func normalizeImageFormat(fullPath, ext string, img image.Image) (string, error)
 // -------------------------
 // File Validation & Writing
 // -------------------------
+func writeValidatedFile(
+	reader io.Reader,
+	header *multipart.FileHeader,
+	destDir string,
+	picType PictureType,
+	entitytype EntityType,
+	maxSize int64,
+	userid string,
+) (string, string, string, error) {
 
-func writeValidatedFile(reader io.Reader, header *multipart.FileHeader, destDir string, picType PictureType, entitytype EntityType, maxSize int64, userid string) (string, string, string, error) {
-	log.Println("->[writeValidatedFile] : no error yet")
-	ext := strings.ToLower(filepath.Ext(header.Filename))
-	if !isExtensionAllowed(ext, picType) {
-		log.Println("[writeValidatedFile]->")
-		return "", "", "", fmt.Errorf("%w: %s for %s", ErrInvalidExtension, ext, picType)
-	}
-	log.Println("->[writeValidatedFile] : no error yet")
+	log.Println("->[writeValidatedFile]")
+	log.Println(destDir, picType, entitytype, maxSize, userid)
 
+	// Read enough bytes for MIME detection
 	buf := make([]byte, 512)
 	n, err := io.ReadFull(io.LimitReader(reader, 512), buf)
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
@@ -285,39 +289,115 @@ func writeValidatedFile(reader io.Reader, header *multipart.FileHeader, destDir 
 	}
 
 	mimeType := strings.ToLower(http.DetectContentType(buf[:n]))
+
+	// Fallback to multipart MIME if detector is unsure
 	if mimeType == "application/octet-stream" {
 		formMime := strings.ToLower(header.Header.Get("Content-Type"))
-		if formMime != "" && isMIMEAllowed(formMime, picType) {
+		if formMime != "" {
 			mimeType = formMime
 		}
 	}
 
 	if !isMIMEAllowed(mimeType, picType) {
-		return "", "", "", fmt.Errorf("%w: %s for %s", ErrInvalidMIME, mimeType, picType)
+		return "", "", "", fmt.Errorf(
+			"%w: %s for %s",
+			ErrInvalidMIME,
+			mimeType,
+			picType,
+		)
 	}
-	if !extMatchesMIME(ext, mimeType, picType) {
-		return "", "", "", fmt.Errorf("extension %s does not match MIME type %s for %s", ext, mimeType, picType)
+
+	// Derive extension from validated MIME, never trust header.Filename
+	var safeExt string
+
+	switch mimeType {
+	case "image/jpeg":
+		safeExt = ".jpg"
+
+	case "image/png":
+		safeExt = ".png"
+
+	case "image/gif":
+		safeExt = ".gif"
+
+	case "image/webp":
+		safeExt = ".webp"
+
+	case "image/bmp":
+		safeExt = ".bmp"
+
+	case "image/svg+xml":
+		safeExt = ".svg"
+
+	case "video/mp4":
+		safeExt = ".mp4"
+
+	case "video/webm":
+		safeExt = ".webm"
+
+	case "video/ogg":
+		safeExt = ".ogv"
+
+	case "audio/mpeg":
+		safeExt = ".mp3"
+
+	case "audio/wav":
+		safeExt = ".wav"
+
+	case "audio/ogg":
+		safeExt = ".ogg"
+
+	case "application/pdf":
+		safeExt = ".pdf"
+
+	default:
+		return "", "", "", fmt.Errorf(
+			"unsupported mime type: %s",
+			mimeType,
+		)
 	}
 
 	if err := os.MkdirAll(destDir, 0o755); err != nil {
-		return "", "", "", fmt.Errorf("mkdir %s: %w", destDir, err)
+		return "", "", "", fmt.Errorf(
+			"mkdir %s: %w",
+			destDir,
+			err,
+		)
 	}
 
-	// --- updated part ---
-	filenameOnly, safeExt := getSafeFilename(header.Filename, ext, userid, entitytype, picType, nil)
+	// Generate safe server-side filename
+	filenameOnly, finalExt := getSafeFilename(
+		"",
+		safeExt,
+		userid,
+		entitytype,
+		picType,
+		nil,
+	)
 
-	fullPath := filepath.Join(destDir, filenameOnly+safeExt)
-	// --- end update ---
+	fullPath := filepath.Join(destDir, filenameOnly+finalExt)
 
-	out, err := os.OpenFile(fullPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	out, err := os.OpenFile(
+		fullPath,
+		os.O_CREATE|os.O_WRONLY|os.O_TRUNC,
+		0o644,
+	)
 	if err != nil {
-		return "", "", "", fmt.Errorf("create %s: %w", fullPath, err)
+		return "", "", "", fmt.Errorf(
+			"create %s: %w",
+			fullPath,
+			err,
+		)
 	}
 	defer out.Close()
 
 	if _, err := out.Write(buf[:n]); err != nil {
-		return "", "", "", fmt.Errorf("write header: %w", err)
+		return "", "", "", fmt.Errorf(
+			"write header: %w",
+			err,
+		)
 	}
+
 	limit := maxSize - int64(n) + 1
 
 	written, err := io.Copy(
@@ -328,9 +408,14 @@ func writeValidatedFile(reader io.Reader, header *multipart.FileHeader, destDir 
 		),
 	)
 	if err != nil {
-		return "", "", "", fmt.Errorf("write body: %w", err)
+		return "", "", "", fmt.Errorf(
+			"write body: %w",
+			err,
+		)
 	}
+
 	totalWritten := written + int64(n)
+
 	if maxSize > 0 && totalWritten > maxSize {
 		_ = os.Remove(fullPath)
 		return "", "", "", ErrFileTooLarge
@@ -338,18 +423,28 @@ func writeValidatedFile(reader io.Reader, header *multipart.FileHeader, destDir 
 
 	if err := ScanForViruses(fullPath); err != nil {
 		_ = os.Remove(fullPath)
-		return "", "", "", fmt.Errorf("virus scan failed: %w", err)
+		return "", "", "", fmt.Errorf(
+			"virus scan failed: %w",
+			err,
+		)
 	}
 
 	if LogFunc != nil {
-		LogFunc(filenameOnly+safeExt, totalWritten, mimeType)
+		LogFunc(
+			filenameOnly+finalExt,
+			totalWritten,
+			mimeType,
+		)
 	}
+
 	log.Printf(
-		"saved file: %s%s",
+		"saved file: %s%s (%s)",
 		filenameOnly,
-		safeExt,
+		finalExt,
+		mimeType,
 	)
-	return filenameOnly, safeExt, fullPath, nil
+
+	return filenameOnly, finalExt, fullPath, nil
 }
 
 // -------------------------

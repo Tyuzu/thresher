@@ -40,7 +40,7 @@ const BlockPlugins = {
       if (block.url) {
         preview.setAttribute(
           "src",
-          resolveImagePath(EntityType.BLOGPOST, PictureType.PHOTO, block.url)
+          resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, block.url)
         );
       }
 
@@ -67,8 +67,8 @@ const BlockPlugins = {
           const uploadedImage = await uploadFile({
             id: (typeof uid === "function" ? uid() : crypto.randomUUID()),
             file,
-            entityType: uploadCtx?.entityType || "post",
-            entityId: String(uploadCtx?.entityId || "post")
+            entityType: uploadCtx?.entityType || EntityType.BLOGPOST,
+            entityId: String(uploadCtx?.entityId || EntityType.BLOGPOST)
           });
 
           // FileDrop may return different shapes: { savedname, filename, key, url, path }
@@ -100,7 +100,7 @@ const BlockPlugins = {
           } else {
             preview.setAttribute(
               "src",
-              resolveImagePath(EntityType.BLOGPOST, PictureType.PHOTO, finalUrlOrKey)
+              resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, finalUrlOrKey)
             );
           }
         } catch (err) {
@@ -442,7 +442,7 @@ async function renderPostEditor({ isLoggedIn, postId, contentContainer, mode }) 
     (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
 
   const uploadCtx = {
-    entityType: "blogpost",
+    entityType: EntityType.BLOGPOST,
     entityId: assetEntityId
   };
 

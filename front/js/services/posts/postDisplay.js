@@ -23,32 +23,32 @@ const lazyObserver =
   "loading" in HTMLImageElement.prototype || typeof IntersectionObserver === "undefined"
     ? null
     : new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (!entry.isIntersecting) {
-              return;
-            }
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            return;
+          }
 
-            const img = entry.target;
-            const real = img.dataset.src;
+          const img = entry.target;
+          const real = img.dataset.src;
 
-            if (real) {
-              img.src = real;
-              img.removeAttribute("data-src");
-              img.addEventListener(
-                "load",
-                () => {
-                  img.style.opacity = "1";
-                },
-                { once: true }
-              );
-            }
+          if (real) {
+            img.src = real;
+            img.removeAttribute("data-src");
+            img.addEventListener(
+              "load",
+              () => {
+                img.style.opacity = "1";
+              },
+              { once: true }
+            );
+          }
 
-            lazyObserver.unobserve(img);
-          });
-        },
-        { rootMargin: "200px 0px" }
-      );
+          lazyObserver.unobserve(img);
+        });
+      },
+      { rootMargin: "200px 0px" }
+    );
 
 const avatarCache = new Map();
 
@@ -272,11 +272,11 @@ function renderImageGroup(images) {
   const group = createElement("div", { class: "image-group" });
 
   const mediaItems = images.map((img) =>
-    resolveImagePath(EntityType.POST, PictureType.PHOTO, img.url)
+    resolveImagePath(EntityType.BLOGPOST, PictureType.PHOTO, img.url)
   );
-
+  console.log(mediaItems);
   images.forEach((img, index) => {
-    const thumbSrc = resolveImagePath(EntityType.POST, PictureType.THUMB, img.url);
+    const thumbSrc = resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, img.url);
 
     const imgEl = Imagex({
       src: thumbSrc,
@@ -298,7 +298,7 @@ function renderImageGroup(images) {
     if (Number.isNaN(index)) {
       return;
     }
-    
+
     ZoomBox(mediaItems, index);
   });
 
@@ -325,7 +325,7 @@ async function renderProfile(post) {
     postCount: 0,
     isFollowing: false,
     entityId: post.postid,
-    entityType: "post",
+    entityType: EntityType.BLOGPOST,
     entityName: post.title
   });
 }
@@ -390,7 +390,7 @@ function renderComments(post) {
     if (!loaded) {
       try {
         commentsEl = await createCommentsSection(
-          "post",
+          EntityType.BLOGPOST,
           post.postid,
           getState("user")
         );
