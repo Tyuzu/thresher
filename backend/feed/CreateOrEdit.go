@@ -108,6 +108,7 @@ func insertNewPost(ctx context.Context, claims *models.Claims, payload PostPaylo
 			return post, errors.New("cannot attach more than 6 images")
 		}
 		for _, img := range payload.Images {
+			log.Println("img.Filename :", img.Filename)
 			post.MediaURL = append(post.MediaURL, img.Filename)
 			post.Media = append(post.Media, img.Filename+img.Extn)
 		}
@@ -148,6 +149,8 @@ func insertNewPost(ctx context.Context, claims *models.Claims, payload PostPaylo
 // CreateOrEditPost creates or edits a post depending on action
 func CreateOrEditPost(ctx context.Context, claims *models.Claims, payload PostPayload, action PostAction, app *infra.Deps) (models.FeedPost, error) {
 	var post models.FeedPost
+
+	log.Println("***************************", payload.Images)
 
 	payload, err := preparePostPayload(payload)
 	if err != nil {

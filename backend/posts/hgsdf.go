@@ -296,6 +296,7 @@ func CreateOrUpdatePost(
 		CreatedAt:   now,
 		UpdatedAt:   now,
 		Hashtags:    input.Hashtags,
+		Username:    utils.GetUsernameFromRequest(r),
 	}
 
 	if err := app.DB.InsertOne(

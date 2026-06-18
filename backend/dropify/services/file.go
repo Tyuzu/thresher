@@ -182,7 +182,7 @@ func (fs *FileService) processFeedFile(
 
 	return []Attachment{
 		{
-			Filename:  savedName + ext,
+			Filename:  savedName,
 			Extension: ext,
 			Key:       string(picType),
 		},
@@ -244,6 +244,7 @@ func (fs *FileService) processRegularFile(
 	if err != nil {
 		return nil, fmt.Errorf("failed to save file: %w", err)
 	}
+	log.Println("savedName, ext,", savedName, ext)
 
 	return []Attachment{
 		{

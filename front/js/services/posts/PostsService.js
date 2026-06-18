@@ -73,8 +73,10 @@ export async function displayPosts(container, isLoggedIn) {
 // ---------- CARD BUILDER ----------
 function createPostCard(post) {
   const thumb = post.thumb
-    ? resolveImagePath(EntityType.POST, PictureType.THUMB, post.thumb)
+    ? resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, post.thumb)
     : "/default-thumb.png";
+
+    console.log(post.thumb);
 
   const postThumb = Imagex({
     src: thumb,

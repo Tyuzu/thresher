@@ -21,6 +21,7 @@ func SaveFileForEntity(file multipart.File, header *multipart.FileHeader, entity
 	log.Println("[SaveFileForEntityf]->", picType)
 	filename, ext, err := saveFileAndProcess(file, header, entity, picType, defaultThumbWidth, userid)
 	log.Println("[SaveFileForEntityb]->", picType)
+	log.Println("[filename, ext, err]->->->->", filename, ext, err)
 	return filename, ext, err
 }
 
@@ -58,6 +59,6 @@ func saveFileAndProcess(file multipart.File, header *multipart.FileHeader, entit
 			}
 		}(fullPath, entity, filename+ext)
 	}
-
+	log.Println("filename, ext", filename, ext)
 	return filename, ext, nil
 }

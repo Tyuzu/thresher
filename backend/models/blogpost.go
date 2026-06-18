@@ -24,4 +24,5 @@ type BlogPost struct {
 	UpdatedAt   time.Time `bson:"updatedAt" json:"updatedAt"`
 	Hashtags    []string  `bson:"hashtags" json:"hashtags"`
 	Type        string    `json:"type" bson:"type"`
+	Username    string    `json:"username" bson:"username"`
 }

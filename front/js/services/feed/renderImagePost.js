@@ -28,7 +28,7 @@ async function RenderImagePost(mediaContainer, media) {
         listItem.className = 'PostPreviewImageView_image_item__dzD2P';
 
         const thumbPath = resolveImagePath(EntityType.FEED, PictureType.THUMB, img);
-
+console.log(fullImagePaths);
         const image = Imagex({
             src : thumbPath,
             loading : "lazy",
