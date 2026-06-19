@@ -1,6 +1,7 @@
 package baito
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -15,110 +16,198 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-/* -------------------- Helpers -------------------- */
-
-func parseBaitoForm(r *http.Request, isUpdate bool) (models.Baito, bson.M, error) {
-	b := models.Baito{}
-	update := bson.M{"$set": bson.M{}}
-
-	if err := r.ParseMultipartForm(20 << 20); err != nil {
-		return b, update, err
-	}
-	defer r.MultipartForm.RemoveAll()
-
-	title := strings.TrimSpace(r.FormValue("title"))
-	description := strings.TrimSpace(r.FormValue("description"))
-	category := strings.TrimSpace(r.FormValue("category"))
-	subcategory := strings.TrimSpace(r.FormValue("subcategory"))
-	location := strings.TrimSpace(r.FormValue("location"))
-	wage := strings.TrimSpace(r.FormValue("wage"))
-	phone := strings.TrimSpace(r.FormValue("phone"))
-	requirements := strings.TrimSpace(r.FormValue("requirements"))
-	workHours := strings.TrimSpace(r.FormValue("workHours"))
-	benefits := strings.TrimSpace(r.FormValue("benefits"))
-	email := strings.TrimSpace(r.FormValue("email"))
-	tagsStr := strings.TrimSpace(r.FormValue("tags"))
-
-	tags := []string{}
-	if tagsStr != "" {
-		for _, t := range strings.Split(tagsStr, ",") {
-			if trimmed := strings.TrimSpace(t); trimmed != "" {
-				tags = append(tags, trimmed)
-			}
-		}
-	}
-
-	if isUpdate {
-		set := update["$set"].(bson.M)
-		set["title"] = title
-		set["description"] = description
-		set["category"] = category
-		set["subcategory"] = subcategory
-		set["location"] = location
-		set["wage"] = wage
-		set["phone"] = phone
-		set["requirements"] = requirements
-		set["workHours"] = workHours
-		set["benefits"] = benefits
-		set["email"] = email
-		set["tags"] = tags
-		set["updatedAt"] = time.Now()
-	} else {
-		b = models.Baito{
-			BaitoId:      utils.GenerateRandomString(15),
-			Title:        title,
-			Description:  description,
-			Category:     category,
-			SubCategory:  subcategory,
-			Location:     location,
-			Wage:         wage,
-			Phone:        phone,
-			Requirements: requirements,
-			WorkHours:    workHours,
-			Benefits:     benefits,
-			Email:        email,
-			Tags:         tags,
-			OwnerID:      utils.GetUserIDFromRequest(r),
-			CreatedAt:    time.Now(),
-		}
-	}
-
-	return b, update, nil
+type BaitoRequest struct {
+	Title        string
+	Description  string
+	Category     string
+	SubCategory  string
+	Location     string
+	Wage         string
+	Phone        string
+	Requirements string
+	WorkHours    string
+	Benefits     string
+	Email        string
+	Tags         []string
 }
 
-/* -------------------- Handlers -------------------- */
+func parseTags(raw string) []string {
+	var tags []string
+
+	for _, t := range strings.Split(raw, ",") {
+		if tag := strings.TrimSpace(t); tag != "" {
+			tags = append(tags, tag)
+		}
+	}
+
+	return tags
+}
+
+func ParseBaitoRequest(r *http.Request) (BaitoRequest, error) {
+	if err := r.ParseMultipartForm(20 << 20); err != nil {
+		return BaitoRequest{}, err
+	}
+
+	if r.MultipartForm != nil {
+		defer r.MultipartForm.RemoveAll()
+	}
+
+	return BaitoRequest{
+		Title:        strings.TrimSpace(r.FormValue("title")),
+		Description:  strings.TrimSpace(r.FormValue("description")),
+		Category:     strings.TrimSpace(r.FormValue("category")),
+		SubCategory:  strings.TrimSpace(r.FormValue("subcategory")),
+		Location:     strings.TrimSpace(r.FormValue("location")),
+		Wage:         strings.TrimSpace(r.FormValue("wage")),
+		Phone:        strings.TrimSpace(r.FormValue("phone")),
+		Requirements: strings.TrimSpace(r.FormValue("requirements")),
+		WorkHours:    strings.TrimSpace(r.FormValue("workHours")),
+		Benefits:     strings.TrimSpace(r.FormValue("benefits")),
+		Email:        strings.TrimSpace(r.FormValue("email")),
+		Tags:         parseTags(r.FormValue("tags")),
+	}, nil
+}
+
+func (r BaitoRequest) Validate() error {
+	switch {
+	case r.Title == "":
+		return errors.New("title is required")
+	case r.Description == "":
+		return errors.New("description is required")
+	case r.Category == "":
+		return errors.New("category is required")
+	case r.SubCategory == "":
+		return errors.New("subcategory is required")
+	case r.Location == "":
+		return errors.New("location is required")
+	case r.Wage == "":
+		return errors.New("wage is required")
+	case r.Phone == "":
+		return errors.New("phone is required")
+	case r.Requirements == "":
+		return errors.New("requirements are required")
+	case r.WorkHours == "":
+		return errors.New("work hours are required")
+	}
+
+	return nil
+}
+
+func (r BaitoRequest) ToModel(userID string) models.Baito {
+	now := time.Now()
+
+	return models.Baito{
+		BaitoId:      utils.GenerateRandomString(15),
+		Title:        r.Title,
+		Description:  r.Description,
+		Category:     r.Category,
+		SubCategory:  r.SubCategory,
+		Location:     r.Location,
+		Wage:         r.Wage,
+		Phone:        r.Phone,
+		Requirements: r.Requirements,
+		WorkHours:    r.WorkHours,
+		Benefits:     r.Benefits,
+		Email:        r.Email,
+		Tags:         r.Tags,
+		OwnerID:      userID,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+}
+
+func (r BaitoRequest) BuildUpdate() bson.M {
+	set := bson.M{}
+
+	if r.Title != "" {
+		set["title"] = r.Title
+	}
+
+	if r.Description != "" {
+		set["description"] = r.Description
+	}
+
+	if r.Category != "" {
+		set["category"] = r.Category
+	}
+
+	if r.SubCategory != "" {
+		set["subcategory"] = r.SubCategory
+	}
+
+	if r.Location != "" {
+		set["location"] = r.Location
+	}
+
+	if r.Wage != "" {
+		set["wage"] = r.Wage
+	}
+
+	if r.Phone != "" {
+		set["phone"] = r.Phone
+	}
+
+	if r.Requirements != "" {
+		set["requirements"] = r.Requirements
+	}
+
+	if r.WorkHours != "" {
+		set["workHours"] = r.WorkHours
+	}
+
+	if r.Benefits != "" {
+		set["benefits"] = r.Benefits
+	}
+
+	if r.Email != "" {
+		set["email"] = r.Email
+	}
+
+	if len(r.Tags) > 0 {
+		set["tags"] = r.Tags
+	}
+
+	set["updatedAt"] = time.Now()
+
+	return bson.M{
+		"$set": set,
+	}
+}
 
 func CreateBaito(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		ctx := r.Context()
 
-		b, _, err := parseBaitoForm(r, false)
+		req, err := ParseBaitoRequest(r)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid form data")
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid form data")
 			return
 		}
 
-		if b.Title == "" ||
-			b.Description == "" ||
-			b.Category == "" ||
-			b.SubCategory == "" ||
-			b.Location == "" ||
-			b.Wage == "" ||
-			b.Phone == "" ||
-			b.Requirements == "" ||
-			b.WorkHours == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Missing required fields")
+		if err := req.Validate(); err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		if err := app.DB.Insert(ctx, BaitoCollection, b); err != nil {
+		baito := req.ToModel(
+			utils.GetUserIDFromRequest(r),
+		)
+
+		if err := app.DB.Insert(ctx, BaitoCollection, baito); err != nil {
 			log.Printf("Insert error: %v", err)
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to save baito")
+
+			utils.RespondWithError(
+				w,
+				http.StatusInternalServerError,
+				"failed to save baito",
+			)
 			return
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
-			"baitoid": b.BaitoId,
+		utils.RespondWithJSON(w, http.StatusOK, struct {
+			BaitoID string `json:"baitoid"`
+		}{
+			BaitoID: baito.BaitoId,
 		})
 	}
 }
@@ -127,31 +216,52 @@ func UpdateBaito(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		ctx := r.Context()
 
-		_, update, err := parseBaitoForm(r, true)
+		req, err := ParseBaitoRequest(r)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid form data")
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid form data")
 			return
 		}
+
+		update := req.BuildUpdate()
 
 		filter := bson.M{
 			"baitoid": ps.ByName("baitoid"),
 			"ownerid": utils.GetUserIDFromRequest(r),
 		}
 
-		err = app.DB.UpdateOne(ctx, BaitoCollection, filter, update)
+		err = app.DB.UpdateOne(
+			ctx,
+			BaitoCollection,
+			filter,
+			update,
+		)
+
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
-				utils.RespondWithError(w, http.StatusNotFound, "Baito not found or unauthorized")
+				utils.RespondWithError(
+					w,
+					http.StatusNotFound,
+					"baito not found or unauthorized",
+				)
 				return
 			}
+
 			log.Printf("Update error: %v", err)
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update baito")
+
+			utils.RespondWithError(
+				w,
+				http.StatusInternalServerError,
+				"failed to update baito",
+			)
 			return
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
-			"message": "Baito updated",
-			"baitoid": ps.ByName("baitoid"),
+		utils.RespondWithJSON(w, http.StatusOK, struct {
+			Message string `json:"message"`
+			BaitoID string `json:"baitoid"`
+		}{
+			Message: "Baito updated",
+			BaitoID: ps.ByName("baitoid"),
 		})
 	}
 }

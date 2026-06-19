@@ -8,6 +8,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
+	"naevis/config"
 	"naevis/dropify/filemgr"
 	"naevis/dropify/services"
 	"naevis/infra"
@@ -58,91 +59,91 @@ type EntityMeta struct {
 
 var entityMeta = map[string]EntityMeta{
 	"artist": {
-		Collection: "artists",
+		Collection: config.Collections.ArtistsCollection,
 		IDField:    "artistid",
 	},
 	"baito": {
-		Collection: "baitos",
+		Collection: config.Collections.BaitoCollection,
 		IDField:    "baitoid",
 	},
 	"blogpost": {
-		Collection: "blogposts",
+		Collection: config.Collections.BlogPostsCollection,
 		IDField:    "blogpostid",
 	},
 	"chat": {
-		Collection: "chats",
+		Collection: config.Collections.ChatsCollection,
 		IDField:    "chatid",
 	},
 	"crop": {
-		Collection: "crops",
+		Collection: config.Collections.CropsCollection,
 		IDField:    "cropid",
 	},
 	"event": {
-		Collection: "events",
+		Collection: config.Collections.EventsCollection,
 		IDField:    "eventid",
 	},
 	"farm": {
-		Collection: "farms",
+		Collection: config.Collections.FarmsCollection,
 		IDField:    "farmid",
 	},
 	"feedpost": {
-		Collection: "feedposts",
+		Collection: config.Collections.FeedPostsCollection,
 		IDField:    "feedpostid",
 	},
 	"live": {
-		Collection: "events",
+		Collection: "vlive",
 		IDField:    "eventid",
 	},
 	"media": {
-		Collection: "media",
+		Collection: config.Collections.MediaCollection,
 		IDField:    "mediaid",
 	},
 	"menu": {
-		Collection: "menu",
+		Collection: config.Collections.MenuCollection,
 		IDField:    "menuid",
 	},
 	"merch": {
-		Collection: "merch",
+		Collection: config.Collections.MerchCollection,
 		IDField:    "merchid",
 	},
 	"music": {
-		Collection: "albums",
+		Collection: config.Collections.AlbumsCollection,
 		IDField:    "albumid",
 	},
 	"place": {
-		Collection: "places",
+		Collection: config.Collections.PlacesCollection,
 		IDField:    "placeid",
 	},
 	"product": {
-		Collection: "products",
+		Collection: config.Collections.ProductCollection,
 		IDField:    "productid",
 	},
 	"recipe": {
-		Collection: "recipes",
+		Collection: config.Collections.RecipeCollection,
 		IDField:    "recipeid",
 	},
 	"report": {
-		Collection: "reports",
+		Collection: config.Collections.ReportsCollection,
 		IDField:    "reportid",
 	},
 	"review": {
-		Collection: "reviews",
+		Collection: config.Collections.ReviewsCollection,
 		IDField:    "reviewid",
 	},
 	"song": {
-		Collection: "songs",
+		Collection: config.Collections.SongsCollection,
 		IDField:    "songid",
 	},
 	"user": {
-		Collection: "users",
+		Collection: config.Collections.UserCollection,
 		IDField:    "userid",
 	},
 	"vendor": {
-		Collection: "vendors",
+		Collection: config.Collections.VendorCollection,
 		IDField:    "vendorid",
 	},
 	"worker": {
-		Collection: "baitoworkers",
+		Collection: config.Collections.BaitoWorkerCollection,
 		IDField:    "workerid",
 	},
 }

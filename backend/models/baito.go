@@ -16,7 +16,7 @@ type Baito struct {
 	Wage             string    `bson:"wage" json:"wage"`
 	Phone            string    `bson:"phone" json:"phone"`
 	Requirements     string    `bson:"requirements" json:"requirements"`
-	BannerURL        string    `bson:"banner,omitempty" json:"banner,omitempty"`
+	Banner           string    `bson:"banner,omitempty" json:"banner,omitempty"`
 	Images           []string  `bson:"images" json:"images"`
 	WorkHours        string    `bson:"workHours" json:"workHours"`
 	Benefits         string    `bson:"benefits,omitempty" json:"benefits,omitempty"`
@@ -30,7 +30,7 @@ type Baito struct {
 }
 
 type BaitoApplication struct {
-	BaitoAppId  string    `bson:"baitoapplid,omitempty" json:"baitoapplid"`
+	BaitoAppId  string    `bson:"baitoappid,omitempty" json:"baitoappid"`
 	BaitoID     string    `bson:"baitoid" json:"baitoid"`
 	UserID      string    `bson:"userid" json:"userid"`
 	Username    string    `bson:"username" json:"username"`
@@ -40,7 +40,7 @@ type BaitoApplication struct {
 
 type BaitoWorker struct {
 	UserID       string   `json:"userId" bson:"userId"`
-	BaitoUserID  string   `json:"baitoUserId" bson:"baitoUserId"`
+	BaitoUserID  string   `json:"baitoWorkerId" bson:"baitoWorkerId"`
 	Name         string   `json:"name" bson:"name"`
 	Age          int      `json:"age" bson:"age"`
 	Phone        string   `json:"phone" bson:"phone"`
