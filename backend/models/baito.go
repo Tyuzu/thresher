@@ -58,3 +58,18 @@ type BaitoWorker struct {
 	CreatedAt    int64    `json:"createdAt" bson:"createdAt"`
 	UpdatedAt    int64    `json:"updatedAt,omitempty" bson:"updatedAt,omitempty"`
 }
+
+type BaitoRequest struct {
+	Title        string
+	Description  string
+	Category     string
+	SubCategory  string
+	Location     string
+	Wage         string
+	Phone        string
+	Requirements string
+	WorkHours    string
+	Benefits     string
+	Email        string
+	Tags         []string
+}

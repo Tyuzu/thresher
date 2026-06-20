@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/infra"
+	"naevis/models"
 )
 
 func ListSlots(app *infra.Deps) httprouter.Handle {
@@ -28,7 +29,7 @@ func ListSlots(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var slots []Slot
+		var slots []models.Slot
 		if err := app.DB.FindMany(ctx, slotsCollection, filter, &slots); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -60,7 +61,7 @@ func ListBookings(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var bookings []Booking
+		var bookings []models.Booking
 		if err := app.DB.FindMany(ctx, bookingsCollection, filter, &bookings); err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return
@@ -86,7 +87,7 @@ func GetDateCapacity(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var dc DateCap
+		var dc models.DateCap
 		err := app.DB.FindOne(
 			ctx,
 			dateCapsCollection,
@@ -126,7 +127,7 @@ func ListTiers(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var tiers []Tier
+		var tiers []models.Tier
 		if err := app.DB.FindMany(ctx, tiersCollection, filter, &tiers); err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return

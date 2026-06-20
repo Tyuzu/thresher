@@ -14,12 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-type UserSuggestion struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Avatar   string `json:"avatar"`
-}
-
 func AutocompleteUsers(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -29,7 +23,7 @@ func AutocompleteUsers(app *infra.Deps) httprouter.Handle {
 
 		query := strings.TrimSpace(r.URL.Query().Get("query"))
 		if len(query) < 2 {
-			_ = json.NewEncoder(w).Encode([]UserSuggestion{})
+			_ = json.NewEncoder(w).Encode([]models.UserSuggestion{})
 			return
 		}
 
@@ -53,10 +47,10 @@ func AutocompleteUsers(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		suggestions := make([]UserSuggestion, 0, 10)
+		suggestions := make([]models.UserSuggestion, 0, 10)
 
 		for _, user := range users {
-			suggestions = append(suggestions, UserSuggestion{
+			suggestions = append(suggestions, models.UserSuggestion{
 				ID:       user.UserID,
 				Username: user.Username,
 				Avatar:   user.Avatar,

@@ -223,7 +223,7 @@ func (fs *FileService) processRegularFile(
 
 	switch {
 	case strings.HasPrefix(mimeType, "image/"):
-		picType = filemgr.PicPhoto
+		picType = filemgr.PicBanner
 
 	case strings.HasPrefix(mimeType, "video/"):
 		picType = filemgr.PicVideo

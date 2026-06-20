@@ -2,23 +2,14 @@ package ads
 
 import (
 	"encoding/json"
+	"naevis/models"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-// Ad represents the structure of an advertisement.
-type Ad struct {
-	ID          string `json:"id,omitempty"`
-	Title       string `json:"title,omitempty"`
-	Description string `json:"description,omitempty"`
-	Image       string `json:"image,omitempty"`
-	Link        string `json:"link,omitempty"`
-	Category    string `json:"category,omitempty"`
-}
-
 // Dummy ad data
-var ads = []Ad{
+var ads = []models.Ad{
 	{
 		ID:          "1",
 		Title:       "Tech Gadget Sale",
@@ -49,7 +40,7 @@ var ads = []Ad{
 func GetAds(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	category := r.URL.Query().Get("category")
 
-	var filteredAds []Ad
+	var filteredAds []models.Ad
 	if category == "" || category == "default" {
 		// no category specified → return all ads
 		filteredAds = ads

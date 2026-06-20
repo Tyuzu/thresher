@@ -18,7 +18,7 @@ import (
 
 func CreateBooking(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		var p Booking
+		var p models.Booking
 		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 			http.Error(w, "invalid payload", http.StatusBadRequest)
 			return
@@ -74,7 +74,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 
 		// SLOT-BASED booking
 		if p.SlotId != "" {
-			var slot Slot
+			var slot models.Slot
 			if err := app.DB.FindOne(ctx, slotsCollection, bson.M{"id": p.SlotId}, &slot); err != nil {
 				_ = json.NewEncoder(w).Encode(map[string]any{
 					"ok":     false,
@@ -84,7 +84,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 			}
 
 			// Sum seats for this slot (consider seats per booking), not just count documents
-			var slotBookings []Booking
+			var slotBookings []models.Booking
 			if err := app.DB.FindMany(ctx, bookingsCollection, bson.M{
 				"entityType": p.EntityType,
 				"entityId":   p.EntityId,
@@ -116,7 +116,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 
 		// TIER-BASED booking
 		if p.SlotId == "" && p.TierId != "" {
-			var tier Tier
+			var tier models.Tier
 			if err := app.DB.FindOne(ctx, tiersCollection, bson.M{"id": p.TierId}, &tier); err != nil {
 				_ = json.NewEncoder(w).Encode(map[string]any{
 					"ok":     false,
@@ -126,7 +126,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 			}
 
 			// Sum seats booked for this tier on the date
-			var tierBookings []Booking
+			var tierBookings []models.Booking
 			if err := app.DB.FindMany(ctx, bookingsCollection, bson.M{
 				"entityType": p.EntityType,
 				"entityId":   p.EntityId,
@@ -159,7 +159,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 
 		// DATE capacity (no slot, no tier)
 		if p.SlotId == "" && p.TierId == "" {
-			var dc DateCap
+			var dc models.DateCap
 			if err := app.DB.FindOne(ctx, dateCapsCollection, bson.M{
 				"entityType": p.EntityType,
 				"entityId":   p.EntityId,
@@ -167,7 +167,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 			}, &dc); err == nil {
 
 				// Sum seats booked for the date (consider seats per booking)
-				var dateBookings []Booking
+				var dateBookings []models.Booking
 				if err := app.DB.FindMany(ctx, bookingsCollection, bson.M{
 					"entityType": p.EntityType,
 					"entityId":   p.EntityId,
@@ -235,7 +235,7 @@ func UpdateBookingStatus(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var updated Booking
+		var updated models.Booking
 		err := app.DB.FindOneAndUpdate(
 			ctx,
 			bookingsCollection,
@@ -266,7 +266,7 @@ func CancelBooking(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var updated Booking
+		var updated models.Booking
 		err := app.DB.FindOneAndUpdate(
 			ctx,
 			bookingsCollection,
@@ -292,7 +292,7 @@ func CancelBooking(app *infra.Deps) httprouter.Handle {
 
 func SetDateCapacity(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		var p DateCap
+		var p models.DateCap
 		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 			http.Error(w, "invalid payload", http.StatusBadRequest)
 			return

@@ -2,28 +2,16 @@ package analytics
 
 import (
 	"encoding/json"
+	"naevis/models"
 	"net/http"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-// Analytics represents extended analytics data for any entity
-type Analytics struct {
-	ID           string                 `json:"id"`
-	Name         string                 `json:"name"`
-	Type         string                 `json:"type"` // "event", "place", "product", etc.
-	Metrics      map[string]int         `json:"metrics"`
-	Trend        []int                  `json:"trend"`        // last 7 days of activity
-	TopLocations []string               `json:"topLocations"` // relevant for places
-	Engagement   map[string]interface{} `json:"engagement"`   // e.g., avg time, bounce rate
-	Insights     map[string]string      `json:"insights"`     // textual summaries
-	LastUpdated  time.Time              `json:"lastUpdated"`
-}
-
 // --- Event Analytics ---
-func getEventAnalytics(entityID string) Analytics {
-	return Analytics{
+func getEventAnalytics(entityID string) models.Analytics {
+	return models.Analytics{
 		ID:   entityID,
 		Name: "Sample Event " + entityID,
 		Type: "event",
@@ -55,8 +43,8 @@ func getEventAnalytics(entityID string) Analytics {
 }
 
 // --- Place Analytics ---
-func getPlaceAnalytics(entityID string) Analytics {
-	return Analytics{
+func getPlaceAnalytics(entityID string) models.Analytics {
+	return models.Analytics{
 		ID:   entityID,
 		Name: "Sample Place " + entityID,
 		Type: "place",
@@ -86,8 +74,8 @@ func getPlaceAnalytics(entityID string) Analytics {
 }
 
 // --- Product Analytics ---
-func getProductAnalytics(entityID string) Analytics {
-	return Analytics{
+func getProductAnalytics(entityID string) models.Analytics {
+	return models.Analytics{
 		ID:   entityID,
 		Name: "Sample Product " + entityID,
 		Type: "product",
@@ -121,7 +109,7 @@ func GetEntityAnalytics(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	entityType := ps.ByName("entityType")
 	entityID := ps.ByName("entityId")
 
-	var analytics Analytics
+	var analytics models.Analytics
 
 	switch entityType {
 	case "events":

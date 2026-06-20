@@ -1,6 +1,6 @@
 package config
 
-type IDField struct {
+type IDFields struct {
 	AccountId                 string
 	ActivityId                string
 	AnalyticsId               string
@@ -74,7 +74,7 @@ type IDField struct {
 	SeatId                    string
 }
 
-var IDFields = IDField{
+var IDField = IDFields{
 	GlobalLedgerId:     "_id",
 	TransactionId:      "txn_id",
 	AccountId:          "_id",

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"naevis/infra"
+	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"time"
@@ -16,61 +17,10 @@ func genID() string {
 	return utils.GenerateRandomDigitString(22)
 }
 
-// ---------- Models ----------
-type Slot struct {
-	ID         string `json:"id" bson:"id"`
-	EntityType string `json:"entityType" bson:"entityType"`
-	EntityId   string `json:"entityId" bson:"entityId"`
-	Date       string `json:"date" bson:"date"`
-	Start      string `json:"start" bson:"start"`
-	End        string `json:"end,omitempty" bson:"end,omitempty"`
-	Capacity   int    `json:"capacity" bson:"capacity"`
-	TierId     string `json:"tierId,omitempty" bson:"tierId,omitempty"`
-	TierName   string `json:"tierName,omitempty" bson:"tierName,omitempty"`
-	CreatedAt  int64  `json:"createdAt" bson:"createdAt"`
-}
-
-type Booking struct {
-	ID         string  `json:"id" bson:"id"`
-	SlotId     string  `json:"slotId,omitempty" bson:"slotId,omitempty"`
-	TierId     string  `json:"tierId,omitempty" bson:"tierId,omitempty"`
-	TierName   string  `json:"tierName,omitempty" bson:"tierName,omitempty"`
-	PricePaid  float64 `json:"pricePaid,omitempty" bson:"pricePaid,omitempty"`
-	EntityType string  `json:"entityType" bson:"entityType"`
-	EntityId   string  `json:"entityId" bson:"entityId"`
-	UserId     string  `json:"userId" bson:"userId"`
-	Date       string  `json:"date" bson:"date"`
-	Start      string  `json:"start" bson:"start"`
-	End        string  `json:"end,omitempty" bson:"end,omitempty"`
-	Status     string  `json:"status" bson:"status"` // pending, confirmed, cancelled
-	Seats      int     `json:"seats,omitempty" bson:"seats,omitempty"`
-	CreatedAt  int64   `json:"createdAt" bson:"createdAt"`
-}
-
-type DateCap struct {
-	EntityType string `json:"entityType" bson:"entityType"`
-	EntityId   string `json:"entityId" bson:"entityId"`
-	Date       string `json:"date" bson:"date"`
-	Capacity   int    `json:"capacity" bson:"capacity"`
-}
-
-type Tier struct {
-	ID         string   `json:"id" bson:"id"`
-	EntityType string   `json:"entityType" bson:"entityType"`
-	EntityId   string   `json:"entityId" bson:"entityId"`
-	Name       string   `json:"name" bson:"name"`
-	Price      float64  `json:"price" bson:"price"`
-	Capacity   int      `json:"capacity" bson:"capacity"`
-	TimeRange  []string `json:"timeRange,omitempty" bson:"timeRange,omitempty"`   // ["09:00", "17:00"]
-	DaysOfWeek []int    `json:"daysOfWeek,omitempty" bson:"daysOfWeek,omitempty"` // 0=Sun..6=Sat
-	Features   []string `json:"features,omitempty" bson:"features,omitempty"`
-	CreatedAt  int64    `json:"createdAt" bson:"createdAt"`
-}
-
 // ---------- Tier handlers ----------
 func CreateTier(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		var tier Tier
+		var tier models.Tier
 		if err := json.NewDecoder(r.Body).Decode(&tier); err != nil {
 			http.Error(w, "invalid JSON", http.StatusBadRequest)
 			return
@@ -115,7 +65,7 @@ func DeleteTier(app *infra.Deps) httprouter.Handle {
 // ---------- Slots ----------
 func CreateSlot(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		var s Slot
+		var s models.Slot
 		if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
 			http.Error(w, "invalid payload", http.StatusBadRequest)
 			return
@@ -128,7 +78,7 @@ func CreateSlot(app *infra.Deps) httprouter.Handle {
 		if s.TierId != "" {
 			ctxTmp, cancelTmp := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancelTmp()
-			var t Tier
+			var t models.Tier
 			if err := app.DB.FindOne(ctxTmp, tiersCollection, map[string]any{"id": s.TierId}, &t); err == nil {
 				s.TierName = t.Name
 			}
@@ -192,7 +142,7 @@ func GenerateSlotsFromTier(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		var tier Tier
+		var tier models.Tier
 		if err := app.DB.FindOne(ctx, tiersCollection, map[string]any{"id": tierId}, &tier); err != nil {
 			http.Error(w, "tier not found", http.StatusNotFound)
 			return
@@ -205,7 +155,7 @@ func GenerateSlotsFromTier(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		var slots []Slot
+		var slots []models.Slot
 		for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
 			dow := int(d.Weekday())
 			if len(tier.DaysOfWeek) > 0 {
@@ -226,7 +176,7 @@ func GenerateSlotsFromTier(app *infra.Deps) httprouter.Handle {
 				start, end = tier.TimeRange[0], tier.TimeRange[1]
 			}
 
-			slots = append(slots, Slot{
+			slots = append(slots, models.Slot{
 				ID:         genID(),
 				EntityType: tier.EntityType,
 				EntityId:   tier.EntityId,

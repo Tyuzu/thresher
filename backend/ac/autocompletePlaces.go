@@ -14,13 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-type PlaceSuggestion struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Banner   string `json:"banner"`
-	Category string `json:"category"`
-}
-
 func AutocompletePlaces(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -30,7 +23,7 @@ func AutocompletePlaces(app *infra.Deps) httprouter.Handle {
 
 		query := strings.TrimSpace(r.URL.Query().Get("query"))
 		if len(query) < 2 {
-			json.NewEncoder(w).Encode([]PlaceSuggestion{})
+			json.NewEncoder(w).Encode([]models.PlaceSuggestion{})
 			return
 		}
 
@@ -54,10 +47,10 @@ func AutocompletePlaces(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		suggestions := make([]PlaceSuggestion, 0, 10)
+		suggestions := make([]models.PlaceSuggestion, 0, 10)
 
 		for _, place := range places {
-			suggestions = append(suggestions, PlaceSuggestion{
+			suggestions = append(suggestions, models.PlaceSuggestion{
 				ID:       place.PlaceID,
 				Name:     place.Name,
 				Banner:   place.Banner,
