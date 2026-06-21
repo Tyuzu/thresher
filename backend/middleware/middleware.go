@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/utils"
 
@@ -41,8 +41,8 @@ func Authenticate(app *infra.Deps) func(httprouter.Handle) httprouter.Handle {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), globals.UserIDKey, claims.UserID)
-			ctx = context.WithValue(ctx, globals.RoleKey, claims.Role)
+			ctx := context.WithValue(r.Context(), config.UserIDKey, claims.UserID)
+			ctx = context.WithValue(ctx, config.RoleKey, claims.Role)
 
 			next(w, r.WithContext(ctx), ps)
 		}
@@ -60,8 +60,8 @@ func OptionalAuth(next httprouter.Handle) httprouter.Handle {
 		tokenString := utils.ExtractBearerToken(r.Header.Get("Authorization"))
 		if tokenString != "" {
 			if claims, err := utils.ParseToken(tokenString); err == nil {
-				ctx := context.WithValue(r.Context(), globals.UserIDKey, claims.UserID)
-				ctx = context.WithValue(ctx, globals.RoleKey, claims.Role)
+				ctx := context.WithValue(r.Context(), config.UserIDKey, claims.UserID)
+				ctx = context.WithValue(ctx, config.RoleKey, claims.Role)
 				r = r.WithContext(ctx)
 			}
 		}
@@ -82,7 +82,7 @@ func RequireRoles(allowedRoles ...string) func(httprouter.Handle) httprouter.Han
 
 	return func(next httprouter.Handle) httprouter.Handle {
 		return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-			raw := r.Context().Value(globals.RoleKey)
+			raw := r.Context().Value(config.RoleKey)
 
 			log.Printf("RoleKey value: %#v", raw)
 
@@ -128,8 +128,8 @@ func RequireRoles(allowedRoles ...string) func(httprouter.Handle) httprouter.Han
 // 			return
 // 		}
 
-// 		ctx := context.WithValue(r.Context(), globals.UserIDKey, claims.UserID)
-// 		ctx = context.WithValue(ctx, globals.RoleKey, claims.Role)
+// 		ctx := context.WithValue(r.Context(), config.UserIDKey, claims.UserID)
+// 		ctx = context.WithValue(ctx, config.RoleKey, claims.Role)
 
 // 		r = r.WithContext(ctx)
 

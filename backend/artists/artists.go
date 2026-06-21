@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"naevis/dels"
+	"naevis/beats/dels"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"

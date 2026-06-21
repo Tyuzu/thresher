@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/auditlog"
 	"naevis/infra"
+	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
 

@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"naevis/dels"
-	"naevis/globals"
+	"naevis/beats/dels"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
@@ -26,7 +26,7 @@ func CreateTicket(app *infra.Deps) httprouter.Handle {
 		}
 
 		// SECURITY: Verify user is authenticated
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -181,7 +181,7 @@ func BuyTicket(app *infra.Deps) httprouter.Handle {
 		eventID := ps.ByName("eventid")
 		ticketID := ps.ByName("ticketid")
 
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok {
 			http.Error(w, "Invalid user", http.StatusBadRequest)
 			return

@@ -1,6 +1,6 @@
 // dropify/filedrop/subtitle.go
 
-package filedrop
+package filemgr
 
 import (
 	"bufio"

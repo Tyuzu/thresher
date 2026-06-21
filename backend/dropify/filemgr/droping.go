@@ -1,4 +1,4 @@
-package droping
+package filemgr
 
 import (
 	"context"
@@ -10,8 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/config"
-	"naevis/dropify/filemgr"
-	"naevis/dropify/services"
 	"naevis/infra"
 )
 
@@ -26,31 +24,31 @@ type Attachment struct {
 }
 
 // valid entity types
-var validEntities = map[string]filemgr.EntityType{
-	"artist":       filemgr.EntityArtist,
-	"baito":        filemgr.EntityBaito,
-	"baito_worker": filemgr.EntityWorker,
-	"blogpost":     filemgr.EntityBlogPost,
-	"chat":         filemgr.EntityChat,
-	"crop":         filemgr.EntityCrop,
-	"event":        filemgr.EntityEvent,
-	"farm":         filemgr.EntityFarm,
-	"feedpost":     filemgr.EntityFeed,
-	"live":         filemgr.EntityLive,
-	"media":        filemgr.EntityMedia,
-	"menu":         filemgr.EntityMenu,
-	"merch":        filemgr.EntityMerch,
-	"music":        filemgr.EntityMusic,
-	"place":        filemgr.EntityPlace,
-	"product":      filemgr.EntityProduct,
-	"recipe":       filemgr.EntityRecipe,
-	"report":       filemgr.EntityReport,
-	"review":       filemgr.EntityReview,
-	"song":         filemgr.EntitySong,
-	"tool":         filemgr.EntityProduct,
-	"user":         filemgr.EntityUser,
-	"vendor":       filemgr.EntityVendor,
-	"worker":       filemgr.EntityWorker,
+var validEntities = map[string]EntityType{
+	"artist":       EntityArtist,
+	"baito":        EntityBaito,
+	"baito_worker": EntityWorker,
+	"blogpost":     EntityBlogPost,
+	"chat":         EntityChat,
+	"crop":         EntityCrop,
+	"event":        EntityEvent,
+	"farm":         EntityFarm,
+	"feedpost":     EntityFeed,
+	"live":         EntityLive,
+	"media":        EntityMedia,
+	"menu":         EntityMenu,
+	"merch":        EntityMerch,
+	"music":        EntityMusic,
+	"place":        EntityPlace,
+	"product":      EntityProduct,
+	"recipe":       EntityRecipe,
+	"report":       EntityReport,
+	"review":       EntityReview,
+	"song":         EntitySong,
+	"tool":         EntityProduct,
+	"user":         EntityUser,
+	"vendor":       EntityVendor,
+	"worker":       EntityWorker,
 }
 
 type EntityMeta struct {
@@ -149,17 +147,6 @@ var entityMeta = map[string]EntityMeta{
 	},
 }
 
-func normalizePictureKey(key string) string {
-	key = strings.ToLower(strings.TrimSpace(key))
-
-	switch key {
-	case "avatar", "gallery", "image":
-		return string(filemgr.PicPhoto)
-	default:
-		return key
-	}
-}
-
 // validateUploadRequest validates upload request basics
 func validateUploadRequest(w http.ResponseWriter, r *http.Request) error {
 	// limit body size
@@ -189,7 +176,7 @@ func validateUploadRequest(w http.ResponseWriter, r *http.Request) error {
 
 // convertToAttachments converts service attachments to response format
 func convertToAttachments(
-	serviceAttachments []services.Attachment,
+	serviceAttachments []Attachment,
 ) []Attachment {
 	attachments := make(
 		[]Attachment,
@@ -209,7 +196,7 @@ func convertToAttachments(
 }
 
 // updateEntityMedia updates the mongo document for the entity
-func updateEntityMedia(app *infra.Deps, entityType string, entityId string, attachments []services.Attachment) error {
+func updateEntityMedia(app *infra.Deps, entityType string, entityId string, attachments []Attachment) error {
 	log.Println("----- | || | | || | | || |updateEntityMedia: ", entityType, entityId, attachments)
 	meta, ok := entityMeta[entityType]
 	if !ok {
@@ -224,44 +211,44 @@ func updateEntityMedia(app *infra.Deps, entityType string, entityId string, atta
 	var photos []string
 
 	for _, attachment := range attachments {
-		key := filemgr.PictureType(
+		key := PictureType(
 			strings.ToLower(
 				strings.TrimSpace(attachment.Key),
 			),
 		)
 
 		switch key {
-		case filemgr.PicBanner:
+		case PicBanner:
 			setFields["banner"] = attachment.Filename
 
-		case filemgr.PicMember:
+		case PicMember:
 			setFields["member"] = attachment.Filename
 
-		case filemgr.PicPoster:
+		case PicPoster:
 			setFields["poster"] = attachment.Filename
 
-		case filemgr.PicThumb:
+		case PicThumb:
 			setFields["thumb"] = attachment.Filename
 
-		case filemgr.PicSeating:
+		case PicSeating:
 			setFields["seating"] = attachment.Filename
 
-		case filemgr.PicPhoto:
+		case PicPhoto:
 			photos = append(photos, attachment.Filename)
 
-		case filemgr.PicVideo:
+		case PicVideo:
 			setFields["video"] = attachment.Filename
 
-		case filemgr.PicAudio:
+		case PicAudio:
 			setFields["audio"] = attachment.Filename
 
-		case filemgr.PicSong:
+		case PicSong:
 			setFields["song"] = attachment.Filename
 
-		case filemgr.PicDocument:
+		case PicDocument:
 			setFields["document"] = attachment.Filename
 
-		case filemgr.PicFile:
+		case PicFile:
 			setFields["file"] = attachment.Filename
 		}
 	}

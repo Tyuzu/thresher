@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/stripe"
@@ -242,7 +242,7 @@ func StorePurchasedTickets(eventID, ticketID, userID string, codes []string, app
 }
 
 func buyTicket(w http.ResponseWriter, r *http.Request, req TicketPurchaseRequest, app *infra.Deps) {
-	userID, ok := r.Context().Value(globals.UserIDKey).(string)
+	userID, ok := r.Context().Value(config.UserIDKey).(string)
 	if !ok || userID == "" {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return

@@ -1,12 +1,11 @@
 // dropify/filedrop/media_upload.go
 
-package filedrop
+package filemgr
 
 import (
 	"fmt"
 	"log"
 	"mime/multipart"
-	"naevis/dropify/filemgr"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -29,16 +28,16 @@ type MediaResult struct {
 
 // -------------------- Processors --------------------
 
-type mediaProcessor func(r *http.Request, savedPath, uploadDir, uniqueID string, entity filemgr.EntityType) ([]int, []string, error)
+type mediaProcessor func(r *http.Request, savedPath, uploadDir, uniqueID string, entity EntityType) ([]int, []string, error)
 
-var mediaPicTypes = map[MediaType]filemgr.PictureType{
-	Video: filemgr.PicVideo,
-	Audio: filemgr.PicAudio,
+var mediaPicTypes = map[MediaType]PictureType{
+	Video: PicVideo,
+	Audio: PicAudio,
 }
 
 var mediaProcessors = map[MediaType]mediaProcessor{
 	Video: ProcessVideo,
-	Audio: func(r *http.Request, savedPath, uploadDir, uniqueID string, entity filemgr.EntityType) ([]int, []string, error) {
+	Audio: func(r *http.Request, savedPath, uploadDir, uniqueID string, entity EntityType) ([]int, []string, error) {
 		res, paths := processAudio(savedPath, uploadDir, uniqueID, entity)
 		return res, paths, nil
 	},
@@ -46,7 +45,7 @@ var mediaProcessors = map[MediaType]mediaProcessor{
 
 // -------------------- Media Upload --------------------
 
-func ProcessMediaUpload(r *http.Request, formKey string, mediaType MediaType, entity filemgr.EntityType, userid string) (*MediaResult, error) {
+func ProcessMediaUpload(r *http.Request, formKey string, mediaType MediaType, entity EntityType, userid string) (*MediaResult, error) {
 	file, err := getUploadedFile(r, formKey)
 	if err != nil || file == nil {
 		return nil, fmt.Errorf("no file uploaded: %w", err)
@@ -69,7 +68,7 @@ func ProcessMediaUpload(r *http.Request, formKey string, mediaType MediaType, en
 		return nil, fmt.Errorf("no processor for media type: %s", mediaType)
 	}
 
-	res, paths, err := processor(r, savedPath, filemgr.ResolvePath(entity, picType), uniqueID, entity)
+	res, paths, err := processor(r, savedPath, ResolvePath(entity, picType), uniqueID, entity)
 	if err != nil {
 		return nil, err
 	}
@@ -95,19 +94,19 @@ func getUploadedFile(r *http.Request, formKey string) (*multipart.FileHeader, er
 	return files[0], nil
 }
 
-func SaveUploadedFile(file *multipart.FileHeader, entity filemgr.EntityType, picType filemgr.PictureType, userid string) (string, string, string, error) {
+func SaveUploadedFile(file *multipart.FileHeader, entity EntityType, picType PictureType, userid string) (string, string, string, error) {
 	src, err := file.Open()
 	if err != nil {
 		return "", "", "", fmt.Errorf("cannot open uploaded file: %w", err)
 	}
 	defer src.Close()
 	log.Println("SaveUploadedFile : ", picType)
-	savedName, ext, err := filemgr.SaveFileForEntity(src, file, entity, picType, userid)
+	savedName, ext, err := SaveFileForEntity(src, file, entity, picType, userid)
 	if err != nil {
 		return "", "", "", fmt.Errorf("file save failed: %w", err)
 	}
 
-	savedPath := filepath.Join(filemgr.ResolvePath(entity, picType), savedName+ext)
+	savedPath := filepath.Join(ResolvePath(entity, picType), savedName+ext)
 	uniqueID := strings.TrimSuffix(savedName, ext)
 	return savedPath, uniqueID, ext, nil
 }

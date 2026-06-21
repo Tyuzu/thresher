@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/auditlog"
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
+	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
@@ -40,7 +40,7 @@ func CreateMerch(app *infra.Deps) httprouter.Handle {
 		}
 
 		// SECURITY: Verify user is authenticated
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			respond(w, 401, map[string]any{"success": false, "error": "unauthorized"})
 			return
@@ -151,7 +151,7 @@ func EditMerch(app *infra.Deps) httprouter.Handle {
 		merchID := ps.ByName("merchid")
 
 		// SECURITY: Verify user is authenticated
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			respond(w, 401, map[string]any{"success": false, "error": "unauthorized"})
 			return
@@ -257,7 +257,7 @@ func DeleteMerch(app *infra.Deps) httprouter.Handle {
 		merchID := ps.ByName("merchid")
 
 		// SECURITY: Verify user is authenticated
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			respond(w, 401, map[string]any{"success": false, "error": "unauthorized"})
 			return
@@ -339,7 +339,7 @@ func DeleteMerch(app *infra.Deps) httprouter.Handle {
 // ---------------------- Buy Merch ----------------------
 func BuyMerch(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			respond(w, 401, map[string]any{"success": false, "error": "unauthorized"})
 			return

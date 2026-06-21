@@ -1,13 +1,12 @@
 // dropify/filedrop/handlemediaup.go
 
-package filedrop
+package filemgr
 
 import (
-	"naevis/dropify/filemgr"
 	"net/http"
 )
 
-func HandleMediaUpload(r *http.Request, postType string, entitytype filemgr.EntityType, userid string) (paths, names []string, resolutions []int, err error) {
+func HandleMediaUpload(r *http.Request, postType string, entitytype EntityType, userid string) (paths, names []string, resolutions []int, err error) {
 	switch postType {
 	case "image":
 		names, err = saveUploadedFiles(r, "images", "photo", entitytype, userid)
@@ -27,10 +26,10 @@ func HandleMediaUpload(r *http.Request, postType string, entitytype filemgr.Enti
 	return
 }
 
-func saveUploadedVideoFile(r *http.Request, formKey string, entitytype filemgr.EntityType, userid string) (*MediaResult, error) {
+func saveUploadedVideoFile(r *http.Request, formKey string, entitytype EntityType, userid string) (*MediaResult, error) {
 	return ProcessMediaUpload(r, formKey, Video, entitytype, userid)
 }
 
-func saveUploadedAudioFile(r *http.Request, formKey string, entitytype filemgr.EntityType, userid string) (*MediaResult, error) {
+func saveUploadedAudioFile(r *http.Request, formKey string, entitytype EntityType, userid string) (*MediaResult, error) {
 	return ProcessMediaUpload(r, formKey, Audio, entitytype, userid)
 }

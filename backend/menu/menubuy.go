@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/stripe"
@@ -37,7 +37,7 @@ func ConfirmMenuPurchase(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		requestingUserID, ok := r.Context().Value(globals.UserIDKey).(string)
+		requestingUserID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || requestingUserID == "" {
 			http.Error(w, "Invalid user", http.StatusUnauthorized)
 			return

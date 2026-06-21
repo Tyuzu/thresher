@@ -3,7 +3,7 @@ package posts
 import (
 	"encoding/json"
 	"html"
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -196,7 +196,7 @@ func CreateOrUpdatePost(
 ) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value(globals.UserIDKey).(string)
+	userID, ok := ctx.Value(config.UserIDKey).(string)
 	if !ok || userID == "" {
 		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return

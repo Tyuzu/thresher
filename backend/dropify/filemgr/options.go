@@ -1,4 +1,4 @@
-package droping
+package filemgr
 
 import (
 	"net/http"

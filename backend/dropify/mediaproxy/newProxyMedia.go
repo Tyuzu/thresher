@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	CacheDir          = "./mediacache/media"
+	CacheDir          = "./static/mediacache/media"
 	CacheMaxAge       = 72 * time.Hour
 	ClientTimeout     = 12 * time.Second
 	MaxPixelsAllowed  = 4096 * 4096       // 16M pixels

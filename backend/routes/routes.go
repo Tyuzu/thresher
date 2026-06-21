@@ -1,14 +1,12 @@
 package routes
 
 import (
-	"naevis/ac"
-	"naevis/activity"
-	"naevis/ads"
-	"naevis/analytics"
 	"naevis/artists"
 	"naevis/auth"
+	"naevis/autocomplete"
 	"naevis/baito"
 	"naevis/beats"
+	"naevis/beats/notifications"
 	"naevis/booking"
 	"naevis/cart"
 	"naevis/comments"
@@ -27,11 +25,13 @@ import (
 	"naevis/menu"
 	"naevis/merch"
 	"naevis/metadata"
+	"naevis/metrics/activity"
+	"naevis/metrics/ads"
+	"naevis/metrics/analytics"
 	"naevis/middleware"
 	"naevis/musicon"
 	"naevis/newchat"
 	"naevis/notices"
-	"naevis/notifications"
 	"naevis/places"
 	"naevis/posts"
 	"naevis/products"
@@ -444,12 +444,12 @@ func AddAutocompleteRoutes(
 ) {
 	router.GET(
 		"/api/v1/ac/places",
-		rateLimiter.Limit(ac.AutocompletePlaces(app)),
+		rateLimiter.Limit(autocomplete.AutocompletePlaces(app)),
 	)
 
 	router.GET(
 		"/api/v1/ac/users",
-		rateLimiter.Limit(ac.AutocompleteUsers(app)),
+		rateLimiter.Limit(autocomplete.AutocompleteUsers(app)),
 	)
 }
 

@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"naevis/dropify/droping"
+	"naevis/dropify/filemgr"
 	"naevis/dropify/mediaproxy"
 	"naevis/infra"
 	"naevis/middleware"
@@ -27,11 +27,11 @@ func AddFiledropRoutes(
 	authmidware := middleware.Authenticate(app)
 	router.POST(
 		"/api/v1/filedrop",
-		rateLimiter.Limit(authmidware(droping.FiledropHandler(app))),
+		rateLimiter.Limit(authmidware(filemgr.FiledropHandler(app))),
 	)
 
 	router.OPTIONS(
 		"/api/v1/filedrop",
-		droping.OptionsHandler,
+		filemgr.OptionsHandler,
 	)
 }

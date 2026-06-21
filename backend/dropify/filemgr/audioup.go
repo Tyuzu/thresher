@@ -1,17 +1,15 @@
 // dropify/filedrop/audioup.go
 
-package filedrop
-
-import "naevis/dropify/filemgr"
+package filemgr
 
 // -------------------- Audio Processing --------------------
 
 // ProcessAudio handles audio file processing (exported for use by services)
-func ProcessAudio(savedPath, uploadDir, uniqueID string, entitytype filemgr.EntityType) ([]int, []string) {
+func ProcessAudio(savedPath, uploadDir, uniqueID string, entitytype EntityType) ([]int, []string) {
 	return processAudio(savedPath, uploadDir, uniqueID, entitytype)
 }
 
-func processAudio(savedPath, uploadDir, uniqueID string, entitytype filemgr.EntityType) ([]int, []string) {
+func processAudio(savedPath, uploadDir, uniqueID string, entitytype EntityType) ([]int, []string) {
 	_ = entitytype
 	resolutions, outputPath := processAudioResolutions(savedPath, uploadDir, uniqueID)
 	var paths []string

@@ -3,7 +3,7 @@ package events
 import (
 	"context"
 	"log"
-	"naevis/dels"
+	"naevis/beats/dels"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"

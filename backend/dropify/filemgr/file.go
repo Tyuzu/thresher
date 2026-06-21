@@ -1,12 +1,10 @@
-package services
+package filemgr
 
 import (
 	"fmt"
 	"io"
 	"log"
 	"mime/multipart"
-	"naevis/dropify/filedrop"
-	"naevis/dropify/filemgr"
 	"net"
 	"net/http"
 	"net/url"
@@ -22,22 +20,14 @@ func NewFileService() *FileService {
 	return &FileService{}
 }
 
-// Attachment represents a processed file attachment
-type Attachment struct {
-	Filename    string `json:"filename"`
-	Extension   string `json:"extension"`
-	Key         string `json:"key"`
-	Resolutions []int  `json:"resolutions,omitempty"`
-}
-
-func normalizePictureKey(key string) filemgr.PictureType {
+func normalizePictureKey(key string) PictureType {
 	key = strings.ToLower(strings.TrimSpace(key))
 
 	switch key {
 	case "avatar", "gallery", "image", "photo", "seating":
-		return filemgr.PicPhoto
+		return PicPhoto
 	default:
-		return filemgr.PictureType(key)
+		return PictureType(key)
 	}
 }
 
@@ -49,23 +39,31 @@ func (fs *FileService) ProcessUploadedFiles(
 	userid string,
 ) ([]Attachment, error) {
 	log.Println("--|--|--|--|")
+
 	_ = entityId // reserved for future use
 
 	if r.MultipartForm == nil || len(r.MultipartForm.File) == 0 {
 		return nil, fmt.Errorf("no files provided")
 	}
 
-	entity := filemgr.EntityType(strings.ToLower(entityType))
+	entity := EntityType(strings.ToLower(entityType))
 
 	var attachments []Attachment
 
-	for _, files := range r.MultipartForm.File {
+	for fieldName, files := range r.MultipartForm.File {
+		picType := PictureType(strings.ToLower(fieldName))
+
+		if _, ok := AllowedExtensions[picType]; !ok {
+			return nil, fmt.Errorf("unsupported picture type: %s", fieldName)
+		}
+
 		for _, fileHeader := range files {
 			atts, err := fs.processRegularFile(
 				r,
 				fileHeader,
 				entity,
 				userid,
+				picType,
 			)
 			if err != nil {
 				return nil, fmt.Errorf(
@@ -82,120 +80,15 @@ func (fs *FileService) ProcessUploadedFiles(
 	return attachments, nil
 }
 
-// processFeedFile handles feed media uploads
-func (fs *FileService) processFeedFile(
-	r *http.Request,
-	fileHeader *multipart.FileHeader,
-	entity filemgr.EntityType,
-	userid string,
-) ([]Attachment, error) {
-
-	postType := strings.ToLower(strings.TrimSpace(r.FormValue("postType")))
-	log.Println("processFeedFile : ", postType)
-	// Auto-detect from filename if postType not provided
-	if postType == "" {
-		if isVideoFile(fileHeader.Filename) {
-			postType = "video"
-		} else if isAudioFile(fileHeader.Filename) {
-			postType = "audio"
-		} else if isImageFile(fileHeader.Filename) {
-			postType = "photo"
-		} else {
-			postType = "photo" // default to photo for unknown files
-		}
-	}
-
-	picType := postTypeToImageType(postType)
-
-	// Video / audio processing
-	if postType == "video" || postType == "audio" {
-		savedPath, uniqueID, ext, err := filedrop.SaveUploadedFile(
-			fileHeader,
-			entity,
-			picType,
-			userid,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to save file: %w", err)
-		}
-
-		uploadDir := filemgr.ResolvePath(entity, picType)
-
-		// Video
-		if postType == "video" {
-			resolutions, _, err := filedrop.ProcessVideo(
-				r,
-				savedPath,
-				uploadDir,
-				uniqueID,
-				entity,
-			)
-			if err != nil {
-				return nil, fmt.Errorf("video processing failed: %w", err)
-			}
-
-			return []Attachment{
-				{
-					Filename:    uniqueID,
-					Extension:   ext,
-					Key:         string(picType),
-					Resolutions: resolutions,
-				},
-			}, nil
-		}
-
-		// Audio
-		resolutions, _ := filedrop.ProcessAudio(
-			savedPath,
-			uploadDir,
-			uniqueID,
-			entity,
-		)
-
-		return []Attachment{
-			{
-				Filename:    uniqueID,
-				Extension:   ext,
-				Key:         string(picType),
-				Resolutions: resolutions,
-			},
-		}, nil
-	}
-
-	// Image/photo processing
-	file, err := fileHeader.Open()
-	if err != nil {
-		return nil, fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	savedName, ext, err := filemgr.SaveFileForEntity(
-		file,
-		fileHeader,
-		entity,
-		picType,
-		userid,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to save file: %w", err)
-	}
-
-	return []Attachment{
-		{
-			Filename:  savedName,
-			Extension: ext,
-			Key:       string(picType),
-		},
-	}, nil
-}
 func (fs *FileService) processRegularFile(
 	r *http.Request,
 	fileHeader *multipart.FileHeader,
-	entity filemgr.EntityType,
+	entity EntityType,
 	userID string,
+	picType PictureType,
 ) ([]Attachment, error) {
 
-	if entity == filemgr.EntityFeed {
+	if entity == EntityFeed {
 		return fs.processFeedFile(r, fileHeader, entity, userID)
 	}
 
@@ -219,22 +112,42 @@ func (fs *FileService) processRegularFile(
 
 	mimeType := http.DetectContentType(buf[:n])
 
-	var picType filemgr.PictureType
+	switch picType {
+	case PicBanner,
+		PicMember,
+		PicPhoto,
+		PicPoster,
+		PicSeating,
+		PicThumb:
 
-	switch {
-	case strings.HasPrefix(mimeType, "image/"):
-		picType = filemgr.PicBanner
+		if !strings.HasPrefix(mimeType, "image/") {
+			return nil, fmt.Errorf("%s requires an image file", picType)
+		}
 
-	case strings.HasPrefix(mimeType, "video/"):
-		picType = filemgr.PicVideo
+	case PicVideo:
+		if !strings.HasPrefix(mimeType, "video/") {
+			return nil, fmt.Errorf("%s requires a video file", picType)
+		}
+
+	case PicAudio,
+		PicSong:
+		if !strings.HasPrefix(mimeType, "audio/") {
+			return nil, fmt.Errorf("%s requires an audio file", picType)
+		}
+
+	case PicDocument:
+		// allow documents
+
+	case PicFile:
+		// allow arbitrary files
 
 	default:
-		return nil, fmt.Errorf("unsupported file type: %s", mimeType)
+		return nil, fmt.Errorf("unsupported picture type: %s", picType)
 	}
 
 	log.Println("processRegularFile:", mimeType, picType)
 
-	savedName, ext, err := filemgr.SaveFileForEntity(
+	savedName, ext, err := SaveFileForEntity(
 		file,
 		fileHeader,
 		entity,
@@ -244,7 +157,115 @@ func (fs *FileService) processRegularFile(
 	if err != nil {
 		return nil, fmt.Errorf("failed to save file: %w", err)
 	}
+
 	log.Println("savedName, ext,", savedName, ext)
+
+	return []Attachment{
+		{
+			Filename:  savedName,
+			Extension: ext,
+			Key:       string(picType),
+		},
+	}, nil
+}
+
+// processFeedFile handles feed media uploads
+func (fs *FileService) processFeedFile(
+	r *http.Request,
+	fileHeader *multipart.FileHeader,
+	entity EntityType,
+	userid string,
+) ([]Attachment, error) {
+
+	postType := strings.ToLower(strings.TrimSpace(r.FormValue("postType")))
+	log.Println("processFeedFile : ", postType)
+	// Auto-detect from filename if postType not provided
+	if postType == "" {
+		if isVideoFile(fileHeader.Filename) {
+			postType = "video"
+		} else if isAudioFile(fileHeader.Filename) {
+			postType = "audio"
+		} else if isImageFile(fileHeader.Filename) {
+			postType = "photo"
+		} else {
+			postType = "photo" // default to photo for unknown files
+		}
+	}
+
+	picType := postTypeToImageType(postType)
+
+	// Video / audio processing
+	if postType == "video" || postType == "audio" {
+		savedPath, uniqueID, ext, err := SaveUploadedFile(
+			fileHeader,
+			entity,
+			picType,
+			userid,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to save file: %w", err)
+		}
+
+		uploadDir := ResolvePath(entity, picType)
+
+		// Video
+		if postType == "video" {
+			resolutions, _, err := ProcessVideo(
+				r,
+				savedPath,
+				uploadDir,
+				uniqueID,
+				entity,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("video processing failed: %w", err)
+			}
+
+			return []Attachment{
+				{
+					Filename:    uniqueID,
+					Extension:   ext,
+					Key:         string(picType),
+					Resolutions: resolutions,
+				},
+			}, nil
+		}
+
+		// Audio
+		resolutions, _ := ProcessAudio(
+			savedPath,
+			uploadDir,
+			uniqueID,
+			entity,
+		)
+
+		return []Attachment{
+			{
+				Filename:    uniqueID,
+				Extension:   ext,
+				Key:         string(picType),
+				Resolutions: resolutions,
+			},
+		}, nil
+	}
+
+	// Image/photo processing
+	file, err := fileHeader.Open()
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	savedName, ext, err := SaveFileForEntity(
+		file,
+		fileHeader,
+		entity,
+		picType,
+		userid,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save file: %w", err)
+	}
 
 	return []Attachment{
 		{
@@ -361,22 +382,22 @@ func mimeToExtension(contentType string) string {
 }
 
 // postTypeToImageType maps feed media types
-func postTypeToImageType(postType string) filemgr.PictureType {
+func postTypeToImageType(postType string) PictureType {
 	switch strings.ToLower(postType) {
 	case "audio":
-		return filemgr.PicAudio
+		return PicAudio
 	case "video":
-		return filemgr.PicVideo
+		return PicVideo
 	case "poster":
-		return filemgr.PicPoster
+		return PicPoster
 	case "banner":
-		return filemgr.PicBanner
+		return PicBanner
 	case "document":
-		return filemgr.PicDocument
+		return PicDocument
 	case "song":
-		return filemgr.PicSong
+		return PicSong
 	default:
-		return filemgr.PicPhoto
+		return PicPhoto
 	}
 }
 
@@ -409,3 +430,32 @@ func isImageFile(filename string) bool {
 		return false
 	}
 }
+
+// func getPictureType(fieldName string) (PictureType, error) {
+// 	switch strings.ToLower(fieldName) {
+// 	case "audio":
+// 		return PicAudio, nil
+// 	case "banner":
+// 		return PicBanner, nil
+// 	case "document":
+// 		return PicDocument, nil
+// 	case "file":
+// 		return PicFile, nil
+// 	case "member":
+// 		return PicMember, nil
+// 	case "photo":
+// 		return PicPhoto, nil
+// 	case "poster":
+// 		return PicPoster, nil
+// 	case "seating":
+// 		return PicSeating, nil
+// 	case "song":
+// 		return PicSong, nil
+// 	case "thumb":
+// 		return PicThumb, nil
+// 	case "video":
+// 		return PicVideo, nil
+// 	default:
+// 		return "", fmt.Errorf("unsupported picture type: %s", fieldName)
+// 	}
+// }

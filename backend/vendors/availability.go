@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"naevis/config"
-	"naevis/globals"
 	"naevis/infra"
 	"naevis/models"
 
@@ -40,7 +39,7 @@ func ListAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 // Create availability slot (vendor sets unavailable dates or recurring availability)
 func CreateAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		userID, _ := r.Context().Value(globals.UserIDKey).(string)
+		userID, _ := r.Context().Value(config.UserIDKey).(string)
 
 		vendorID := ps.ByName("vendorID")
 		if vendorID == "" {
@@ -100,7 +99,7 @@ func CreateAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 // Delete availability slot
 func DeleteAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		userID, _ := r.Context().Value(globals.UserIDKey).(string)
+		userID, _ := r.Context().Value(config.UserIDKey).(string)
 
 		vendorID := ps.ByName("vendorID")
 		slotID := ps.ByName("slotID")

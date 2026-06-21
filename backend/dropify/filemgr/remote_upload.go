@@ -1,10 +1,9 @@
-package services
+package filemgr
 
 import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"naevis/dropify/filemgr"
 	"net/http"
 	"net/textproto"
 	"net/url"
@@ -52,7 +51,7 @@ func (s *FileService) ProcessRemoteFile(
 	// Resolve entity
 	// -------------------------
 
-	entity := filemgr.EntityType(strings.ToLower(entityType))
+	entity := EntityType(strings.ToLower(entityType))
 
 	// -------------------------
 	// Resolve picture type
@@ -60,7 +59,7 @@ func (s *FileService) ProcessRemoteFile(
 
 	picType := normalizePictureKey(key)
 
-	if _, ok := filemgr.AllowedExtensions[picType]; !ok {
+	if _, ok := AllowedExtensions[picType]; !ok {
 		return nil, fmt.Errorf("invalid picture key")
 	}
 
@@ -103,7 +102,7 @@ func (s *FileService) ProcessRemoteFile(
 	// Validate MIME type
 	// -------------------------
 
-	allowedMIMEs, ok := filemgr.AllowedMIMEs[picType]
+	allowedMIMEs, ok := AllowedMIMEs[picType]
 	if !ok {
 		return nil, fmt.Errorf("unsupported picture type")
 	}
@@ -145,7 +144,7 @@ func (s *FileService) ProcessRemoteFile(
 
 	if resp.ContentLength > maxRemoteUploadBytes {
 		tmpFile.Close()
-		return nil, filemgr.ErrFileTooLarge
+		return nil, ErrFileTooLarge
 	}
 
 	limitedReader := io.LimitReader(resp.Body, maxRemoteUploadBytes+1)
@@ -158,7 +157,7 @@ func (s *FileService) ProcessRemoteFile(
 
 	if written > maxRemoteUploadBytes {
 		tmpFile.Close()
-		return nil, filemgr.ErrFileTooLarge
+		return nil, ErrFileTooLarge
 	}
 
 	if err := tmpFile.Close(); err != nil {
@@ -191,7 +190,7 @@ func (s *FileService) ProcessRemoteFile(
 	// Save through existing pipeline
 	// -------------------------
 
-	savedName, ext, err := filemgr.SaveFileForEntity(
+	savedName, ext, err := SaveFileForEntity(
 		file,
 		header,
 		entity,

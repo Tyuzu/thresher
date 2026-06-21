@@ -3,7 +3,7 @@ package places
 import (
 	"context"
 	"fmt"
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
@@ -143,7 +143,7 @@ func CreatePlace(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		requestingUserID, ok := r.Context().Value(globals.UserIDKey).(string)
+		requestingUserID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok {
 			http.Error(w, "Invalid user", http.StatusBadRequest)
 			return

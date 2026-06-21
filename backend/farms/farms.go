@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"naevis/auditlog"
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
+	"naevis/metrics/auditlog"
 	"naevis/middleware"
 	"naevis/models"
 	"naevis/utils"
@@ -128,7 +128,7 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		userID, ok := ctx.Value(globals.UserIDKey).(string)
+		userID, ok := ctx.Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			utils.RespondWithJSON(w, http.StatusUnauthorized, utils.M{
 				"success": false,
@@ -261,7 +261,7 @@ func DeleteFarm(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		if _, ok := ctx.Value(globals.UserIDKey).(string); !ok {
+		if _, ok := ctx.Value(config.UserIDKey).(string); !ok {
 			http.Error(w, "Invalid user", http.StatusBadRequest)
 			return
 		}

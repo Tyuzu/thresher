@@ -1,4 +1,4 @@
-package ac
+package autocomplete
 
 import "naevis/config"
 

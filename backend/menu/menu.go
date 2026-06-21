@@ -3,7 +3,7 @@ package menu
 import (
 	"encoding/json"
 	"fmt"
-	"naevis/dels"
+	"naevis/beats/dels"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"

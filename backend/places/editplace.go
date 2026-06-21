@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"naevis/dels"
-	"naevis/globals"
+	"naevis/beats/dels"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/utils"
 
@@ -25,7 +25,7 @@ func EditPlace(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		requestingUserID, ok := ctx.Value(globals.UserIDKey).(string)
+		requestingUserID, ok := ctx.Value(config.UserIDKey).(string)
 		if !ok {
 			http.Error(w, "Invalid user", http.StatusUnauthorized)
 			return

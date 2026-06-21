@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"naevis/dels"
+	"naevis/beats/dels"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"

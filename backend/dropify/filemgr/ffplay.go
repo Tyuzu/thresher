@@ -1,6 +1,6 @@
 // dropify/filedrop/ffplay.go
 
-package filedrop
+package filemgr
 
 import (
 	"bytes"

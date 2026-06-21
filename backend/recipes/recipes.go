@@ -3,7 +3,7 @@ package recipes
 import (
 	"context"
 	"encoding/json"
-	"naevis/dels"
+	"naevis/beats/dels"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"

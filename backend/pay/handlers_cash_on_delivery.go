@@ -2,7 +2,7 @@ package pay
 
 import (
 	"encoding/json"
-	"naevis/auditlog"
+	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"

@@ -1,18 +1,17 @@
 // dropify/filedrop/imgup.go
 
-package filedrop
+package filemgr
 
 import (
 	"fmt"
 	"log"
 	"mime/multipart"
-	"naevis/dropify/filemgr"
 	"net/http"
 )
 
 // -------------------- Multi-image Upload --------------------
 
-func saveUploadedFiles(r *http.Request, formKey, fileType string, entitytype filemgr.EntityType, userid string) ([]string, error) {
+func saveUploadedFiles(r *http.Request, formKey, fileType string, entitytype EntityType, userid string) ([]string, error) {
 	files := r.MultipartForm.File[formKey]
 	if len(files) == 0 {
 		return nil, fmt.Errorf("no %s files uploaded", fileType)
@@ -20,7 +19,7 @@ func saveUploadedFiles(r *http.Request, formKey, fileType string, entitytype fil
 
 	var ids []string
 	entity := entitytype
-	picType := filemgr.PictureType(fileType)
+	picType := PictureType(fileType)
 
 	for _, file := range files {
 		origName, err := processSingleImageUpload(file, entity, picType, userid)
@@ -33,7 +32,7 @@ func saveUploadedFiles(r *http.Request, formKey, fileType string, entitytype fil
 	return ids, nil
 }
 
-func processSingleImageUpload(file *multipart.FileHeader, entity filemgr.EntityType, picType filemgr.PictureType, userid string) (string, error) {
+func processSingleImageUpload(file *multipart.FileHeader, entity EntityType, picType PictureType, userid string) (string, error) {
 	src, err := file.Open()
 	if err != nil {
 		return "", fmt.Errorf("cannot open image: %w", err)
@@ -42,7 +41,7 @@ func processSingleImageUpload(file *multipart.FileHeader, entity filemgr.EntityT
 
 	log.Println("processSingleImageUpload picType : ", picType)
 
-	origName, ext, err := filemgr.SaveFileForEntity(src, file, entity, picType, userid)
+	origName, ext, err := SaveFileForEntity(src, file, entity, picType, userid)
 	if err != nil {
 		return "", fmt.Errorf("saving image failed: %w", err)
 	}

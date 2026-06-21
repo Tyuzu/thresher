@@ -1,9 +1,7 @@
-package droping
+package filemgr
 
 import (
 	"log"
-	"naevis/dropify/filemgr"
-	"naevis/dropify/services"
 	"naevis/infra"
 	"naevis/utils"
 	"net/http"
@@ -78,10 +76,10 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 		// Service
 		// -------------------------
 
-		fileService := services.NewFileService()
+		fileService := NewFileService()
 
 		var (
-			attachments []services.Attachment
+			attachments []Attachment
 			err         error
 		)
 
@@ -92,14 +90,14 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 		// -------------------------
 
 		if remoteURL != "" {
-			remoteKey = normalizePictureKey(remoteKey)
+			remoteKey = string(normalizePictureKey(remoteKey))
 
 			if remoteKey == "" {
 				utils.RespondWithError(w, http.StatusBadRequest, "remoteKey is required")
 				return
 			}
 
-			if _, ok := filemgr.AllowedExtensions[filemgr.PictureType(remoteKey)]; !ok {
+			if _, ok := AllowedExtensions[PictureType(remoteKey)]; !ok {
 				utils.RespondWithError(
 					w,
 					http.StatusBadRequest,
@@ -152,7 +150,6 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 		// -------------------------
 		// Update entity document
 		// -------------------------
-
 		if entityId != "" {
 			if err := updateEntityMedia(
 				app,

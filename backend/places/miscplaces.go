@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/utils"
 
@@ -24,7 +24,7 @@ func UpdatePlaceInfo(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		userID, ok := ctx.Value(globals.UserIDKey).(string)
+		userID, ok := ctx.Value(config.UserIDKey).(string)
 		if !ok {
 			http.Error(w, "Invalid user", http.StatusUnauthorized)
 			return

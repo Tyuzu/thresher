@@ -11,7 +11,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
@@ -26,7 +26,7 @@ func HandleFollowAction(
 ) {
 	ctx := r.Context()
 
-	currentUserID, ok := r.Context().Value(globals.UserIDKey).(string)
+	currentUserID, ok := r.Context().Value(config.UserIDKey).(string)
 	if !ok || currentUserID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

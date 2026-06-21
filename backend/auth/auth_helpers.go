@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"naevis/globals"
+	"naevis/config"
 	"naevis/models"
 	"net"
 	"net/http"
@@ -61,7 +61,7 @@ func uaHash(r *http.Request) string {
 }
 
 func hashRefreshToken(token string) string {
-	mac := hmac.New(sha256.New, globals.RefreshTokenSecret)
+	mac := hmac.New(sha256.New, config.RefreshTokenSecret)
 	mac.Write([]byte(token))
 	return hex.EncodeToString(mac.Sum(nil))
 }
@@ -77,7 +77,7 @@ func generateRefreshToken() (string, error) {
 
 func createAccessToken(claims *models.Claims) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return t.SignedString(globals.JwtSecret)
+	return t.SignedString(config.JwtSecret)
 }
 
 func setRefreshCookie(w http.ResponseWriter, token string) {

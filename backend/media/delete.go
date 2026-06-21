@@ -1,7 +1,7 @@
 package media
 
 import (
-	"naevis/dels"
+	"naevis/beats/dels"
 	"naevis/infra"
 	"net/http"
 

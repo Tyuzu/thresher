@@ -1,11 +1,10 @@
 // dropify/filedrop/vidup.go
 
-package filedrop
+package filemgr
 
 import (
 	"fmt"
 	"io"
-	"naevis/dropify/filemgr"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,7 +14,7 @@ import (
 )
 
 // -------------------- Video Processing --------------------
-func ProcessVideo(r *http.Request, savedPath, uploadDir, uniqueID string, entitytype filemgr.EntityType) ([]int, []string, error) {
+func ProcessVideo(r *http.Request, savedPath, uploadDir, uniqueID string, entitytype EntityType) ([]int, []string, error) {
 	width, height, err := getVideoDimensions(savedPath)
 	if err != nil {
 		_ = os.Remove(savedPath)
@@ -29,7 +28,7 @@ func ProcessVideo(r *http.Request, savedPath, uploadDir, uniqueID string, entity
 	}
 
 	// posterDir now points directly to poster root, no subfolder per uniqueID
-	posterDir := filemgr.ResolvePath(entitytype, filemgr.PicPoster)
+	posterDir := ResolvePath(entitytype, PicPoster)
 	if err := os.MkdirAll(posterDir, 0700); err != nil {
 		for _, out := range outputPaths {
 			_ = os.Remove(strings.TrimPrefix(filepath.FromSlash(out), string(filepath.Separator)))

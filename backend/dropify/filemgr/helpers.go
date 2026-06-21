@@ -21,39 +21,6 @@ const (
 	maxAllowedSizeScan = 1 << 30 // 1 GiB
 )
 
-var mimeToExtension = map[string]string{
-	"image/jpeg":    ".jpg",
-	"image/png":     ".png",
-	"image/gif":     ".gif",
-	"image/webp":    ".webp",
-	"image/bmp":     ".bmp",
-	"image/svg+xml": ".svg",
-
-	"video/mp4":  ".mp4",
-	"video/webm": ".webm",
-	"video/ogg":  ".ogv",
-
-	"audio/mpeg": ".mp3",
-	"audio/wav":  ".wav",
-	"audio/ogg":  ".ogg",
-
-	"application/pdf": ".pdf",
-}
-
-func MIMEToExtension(mimeType string) (string, error) {
-	mimeType = strings.ToLower(strings.TrimSpace(mimeType))
-
-	ext, ok := mimeToExtension[mimeType]
-	if !ok {
-		return "", fmt.Errorf(
-			"unsupported mime type: %s",
-			mimeType,
-		)
-	}
-
-	return ext, nil
-}
-
 // ScanForViruses performs a lightweight heuristic scan.
 // This is NOT a replacement for ClamAV or a commercial AV engine.
 func ScanForViruses(filePath string) error {

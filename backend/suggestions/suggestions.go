@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -25,7 +25,7 @@ func SuggestFollowers(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return

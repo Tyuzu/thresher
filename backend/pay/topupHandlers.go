@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/auditlog"
+	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
 

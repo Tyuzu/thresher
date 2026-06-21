@@ -2,7 +2,7 @@ package fanmade
 
 import (
 	"encoding/json"
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
@@ -19,7 +19,7 @@ func DeleteMedia(app *infra.Deps) httprouter.Handle {
 		entityID := ps.ByName("entityid")
 		mediaID := ps.ByName("id")
 
-		requestingUserID, ok := ctx.Value(globals.UserIDKey).(string)
+		requestingUserID, ok := ctx.Value(config.UserIDKey).(string)
 		if !ok || requestingUserID == "" {
 			http.Error(w, "Invalid user", http.StatusUnauthorized)
 			return

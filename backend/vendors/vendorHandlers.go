@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 
@@ -36,7 +36,7 @@ func RegisterVendorHandler(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
 			return
@@ -155,7 +155,7 @@ func GetMyVendorHandler(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
 			return
@@ -180,7 +180,7 @@ func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
 			return
@@ -284,7 +284,7 @@ func DeleteVendorHandler(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
 			return
@@ -325,7 +325,7 @@ func HireVendorHandler(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
 			return
@@ -421,7 +421,7 @@ func RemoveVendorHandler(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
 			return
@@ -468,7 +468,7 @@ func GetMyVendorRequestsHandler(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
 			return
@@ -503,7 +503,7 @@ func UpdateVendorStatusHandler(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		userID, ok := r.Context().Value(globals.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
 			return

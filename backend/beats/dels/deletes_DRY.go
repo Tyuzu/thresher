@@ -8,7 +8,7 @@ import (
 	"slices"
 	"time"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/infra/cache"
 	"naevis/models"
@@ -47,7 +47,7 @@ func deleteByField(
 		return
 	}
 
-	userID, _ := ctx.Value(globals.UserIDKey).(string)
+	userID, _ := ctx.Value(config.UserIDKey).(string)
 
 	if perm != nil {
 		if err := perm(ctx, r, entityID); err != nil {
@@ -89,7 +89,7 @@ func softDeleteByField(
 		return
 	}
 
-	userID, _ := ctx.Value(globals.UserIDKey).(string)
+	userID, _ := ctx.Value(config.UserIDKey).(string)
 
 	if perm != nil {
 		if err := perm(ctx, r, entityID); err != nil {
@@ -289,7 +289,7 @@ func DeleteEvent(app *infra.Deps) httprouter.Handle {
 			"eventid",
 			"eventid",
 			func(ctx context.Context, r *http.Request, entityID string) error {
-				userID, _ := ctx.Value(globals.UserIDKey).(string)
+				userID, _ := ctx.Value(config.UserIDKey).(string)
 
 				var ev models.Event
 				if err := app.DB.FindOne(ctx, eventsCollection, bson.M{"eventid": entityID}, &ev); err != nil {
@@ -353,7 +353,7 @@ func DeleteReview(app *infra.Deps) httprouter.Handle {
 			"reviewId",
 			"reviewid",
 			func(ctx context.Context, r *http.Request, entityID string) error {
-				userID, _ := ctx.Value(globals.UserIDKey).(string)
+				userID, _ := ctx.Value(config.UserIDKey).(string)
 
 				var rev models.Review
 				if err := app.DB.FindOne(ctx, reviewsCollection, bson.M{"reviewid": entityID}, &rev); err != nil {
@@ -394,7 +394,7 @@ func DeletePlace(app *infra.Deps) httprouter.Handle {
 			"placeid",
 			"placeid",
 			func(ctx context.Context, r *http.Request, entityID string) error {
-				userID, _ := ctx.Value(globals.UserIDKey).(string)
+				userID, _ := ctx.Value(config.UserIDKey).(string)
 
 				var place models.Place
 				if err := app.DB.FindOne(ctx, placesCollection, bson.M{"placeid": entityID}, &place); err != nil {

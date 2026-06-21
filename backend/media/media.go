@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
@@ -33,7 +33,7 @@ func AddMedia(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		requestingUserID, ok := ctx.Value(globals.UserIDKey).(string)
+		requestingUserID, ok := ctx.Value(config.UserIDKey).(string)
 		if !ok || requestingUserID == "" {
 			http.Error(w, "Invalid or missing user ID", http.StatusUnauthorized)
 			return

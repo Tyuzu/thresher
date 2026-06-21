@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -26,7 +26,7 @@ func respond(w http.ResponseWriter, status int, payload any) {
 }
 
 func getUserID(ctx context.Context) (string, bool) {
-	id, ok := ctx.Value(globals.UserIDKey).(string)
+	id, ok := ctx.Value(config.UserIDKey).(string)
 	return id, ok && id != ""
 }
 

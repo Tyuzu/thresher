@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/stripe"
@@ -68,7 +68,7 @@ func ConfirmMerchPurchase(app *infra.Deps) httprouter.Handle {
 		eventID := ps.ByName("eventid")
 		merchID := ps.ByName("merchid")
 
-		userID, ok := ctx.Value(globals.UserIDKey).(string)
+		userID, ok := ctx.Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
 			http.Error(w, "Invalid user", http.StatusUnauthorized)
 			return

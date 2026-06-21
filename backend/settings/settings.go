@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/infra"
 	"naevis/utils"
 
@@ -174,7 +174,7 @@ var settingsSchema = []SettingSchema{
 ------------------------- */
 
 func getUserID(r *http.Request) (string, bool) {
-	v := r.Context().Value(globals.UserIDKey)
+	v := r.Context().Value(config.UserIDKey)
 	userID, ok := v.(string)
 	if !ok || strings.TrimSpace(userID) == "" {
 		return "", false

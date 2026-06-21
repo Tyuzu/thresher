@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/globals"
+	"naevis/config"
 	"naevis/models"
 )
 
@@ -191,7 +191,7 @@ func ExtractBearerToken(header string) string {
 func ParseToken(tokenString string) (*models.Claims, error) {
 	claims := &models.Claims{}
 	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
-		return globals.JwtSecret, nil
+		return config.JwtSecret, nil
 	})
 	if err != nil || claims.UserID == "" {
 		return nil, fmt.Errorf("unauthorized: %w", err)
@@ -213,7 +213,7 @@ func ValidateJWT(tokenString string) (*models.Claims, error) {
 
 func GetUserIDFromRequest(r *http.Request) string {
 	ctx := r.Context()
-	userID, ok := ctx.Value(globals.UserIDKey).(string)
+	userID, ok := ctx.Value(config.UserIDKey).(string)
 	if !ok || userID == "" {
 		return ""
 	}
