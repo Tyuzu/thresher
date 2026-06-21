@@ -1,8 +1,7 @@
 package routes
 
 import (
-	"naevis/dropify/filemgr"
-	"naevis/dropify/mediaproxy"
+	"naevis/filemgr"
 	"naevis/infra"
 	"naevis/middleware"
 	"net/http"
@@ -15,8 +14,8 @@ func AddStaticRoutes(router *httprouter.Router) {
 	router.ServeFiles("/static/uploads/*filepath", http.Dir("static/uploads"))
 
 	// Proxy handler for external media
-	router.GET("/static/proxy/*url", mediaproxy.ProxyHandler)
-	router.GET("/static/proxy", mediaproxy.ProxyHandler)
+	router.GET("/static/proxy/*url", filemgr.ProxyHandler)
+	router.GET("/static/proxy", filemgr.ProxyHandler)
 }
 
 func AddFiledropRoutes(

@@ -1,4 +1,4 @@
-// dropify/filedrop/audioup.go
+// filedrop/audioup.go
 
 package filemgr
 

@@ -1,4 +1,4 @@
-package mediaproxy
+package filemgr
 
 import (
 	"bytes"
@@ -421,29 +421,6 @@ func normalizeTarget(
 	}
 
 	return raw, nil
-}
-
-func isPrivateIP(
-	ip net.IP,
-) bool {
-	if ip == nil {
-		return true
-	}
-
-	if ip.IsLoopback() ||
-		ip.IsPrivate() ||
-		ip.IsLinkLocalUnicast() ||
-		ip.IsLinkLocalMulticast() ||
-		ip.IsMulticast() ||
-		ip.IsUnspecified() {
-		return true
-	}
-
-	if ip.String() == "::1" {
-		return true
-	}
-
-	return false
 }
 
 func isAllowedHost(
