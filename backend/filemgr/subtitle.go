@@ -1,10 +1,7 @@
-// dropify/filedrop/subtitle.go
-
 package filemgr
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,34 +15,24 @@ import (
 
 type Subtitle struct {
 	Index   int
-	Start   string // Format: "hh:mm:ss.mmm"
-	End     string // Format: "hh:mm:ss.mmm"
+	Start   string
+	End     string
 	Content string
 }
 
 func createSubtitleFile(uniqueID string) {
-	subtitles := []Subtitle{
-		{1, "00:00:00.000", "00:00:01.000", "Welcome to the video!"},
-		{2, "00:00:01.001", "00:00:02.000", "In this video, we'll learn how to create subtitles in Go."},
-		{3, "00:00:02.001", "00:00:03.000", "Let's get started!"},
-	}
-
-	if err := writeVTT(uniqueID, "en", subtitles); err != nil {
+	if err := writeVTT(uniqueID, "en", nil); err != nil {
 		fmt.Printf("subtitle creation failed: %v\n", err)
-		return
 	}
-
-	fmt.Printf("Subtitle file for %s created.\n", uniqueID)
 }
 
-// writeVTT writes a validated subtitle list to a WebVTT file
 func writeVTT(uniqueID, lang string, subtitles []Subtitle) error {
-	if err := validateSubtitles(subtitles); err != nil {
+	if err := validateSubtitles(subtitles); err != nil && len(subtitles) > 0 {
 		return fmt.Errorf("invalid subtitles: %w", err)
 	}
 
 	dir := filepath.Join("static", "uploads", "subtitles", uniqueID)
-	if err := os.MkdirAll(dir, 0700); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return fmt.Errorf("mkdir %s: %w", dir, err)
 	}
 
@@ -72,12 +59,10 @@ func writeVTT(uniqueID, lang string, subtitles []Subtitle) error {
 	return nil
 }
 
-// validateSubtitles ensures subtitles are well-formed
 func validateSubtitles(subs []Subtitle) error {
 	if len(subs) == 0 {
-		return errors.New("empty subtitle list")
+		return nil
 	}
-
 	for i, s := range subs {
 		if s.Index != i+1 {
 			return fmt.Errorf("subtitle index out of order at %d (expected %d)", s.Index, i+1)
@@ -100,7 +85,6 @@ func validateSubtitles(subs []Subtitle) error {
 	return nil
 }
 
-// parseTimestamp converts "hh:mm:ss.mmm" to milliseconds
 func parseTimestamp(ts string) (int, error) {
 	parts := strings.Split(ts, ":")
 	if len(parts) != 3 {
@@ -126,18 +110,14 @@ func parseTimestamp(ts string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-
 	if m < 0 || m >= 60 || s < 0 || s >= 60 || ms < 0 || ms >= 1000 {
 		return 0, fmt.Errorf("invalid ranges")
 	}
-
 	total := (((h*60)+m)*60+s)*1000 + ms
 	return total, nil
 }
 
-// SaveUploadedVTT handles .vtt file upload, parses and normalizes before saving
 func SaveUploadedVTT(w http.ResponseWriter, r *http.Request, uniqueID, lang string) (string, error) {
-	// Parse multipart form (limit to ~5MB for subtitle files)
 	if err := r.ParseMultipartForm(5 << 20); err != nil {
 		http.Error(w, "could not parse multipart form", http.StatusBadRequest)
 		return "", err
@@ -155,35 +135,36 @@ func SaveUploadedVTT(w http.ResponseWriter, r *http.Request, uniqueID, lang stri
 		return "", fmt.Errorf("invalid file type: %s", header.Filename)
 	}
 
-	// Save temporary file
-	tempPath := filepath.Join(os.TempDir(), header.Filename)
-	tempFile, err := os.Create(tempPath)
+	tempFile, err := os.CreateTemp("", "*.vtt")
 	if err != nil {
 		return "", fmt.Errorf("create temp file: %w", err)
 	}
-	defer tempFile.Close()
+	tempPath := tempFile.Name()
+	defer func() {
+		_ = tempFile.Close()
+		_ = os.Remove(tempPath)
+	}()
 
 	if _, err := io.Copy(tempFile, file); err != nil {
 		return "", fmt.Errorf("save temp vtt: %w", err)
 	}
+	if err := tempFile.Close(); err != nil {
+		return "", fmt.Errorf("close temp vtt: %w", err)
+	}
 
-	// Parse & validate
 	subs, err := parseVTT(tempPath)
 	if err != nil {
 		return "", fmt.Errorf("parse vtt failed: %w", err)
 	}
 
-	// Normalize by rewriting using writeVTT
 	if err := writeVTT(uniqueID, lang, subs); err != nil {
 		return "", fmt.Errorf("normalize vtt failed: %w", err)
 	}
 
-	// Final file path
 	finalPath := filepath.Join("static", "uploads", "subtitles", uniqueID, fmt.Sprintf("%s-%s.vtt", uniqueID, lang))
 	return finalPath, nil
 }
 
-// parseVTT parses a .vtt file into a slice of Subtitle
 func parseVTT(filePath string) ([]Subtitle, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -193,27 +174,31 @@ func parseVTT(filePath string) ([]Subtitle, error) {
 	lines := strings.Split(string(data), "\n")
 	var subs []Subtitle
 	var current Subtitle
-	state := 0 // 0=expect index, 1=expect timing, 2=expect content
+	state := 0
+
+	flush := func() {
+		if current.Index != 0 {
+			subs = append(subs, current)
+			current = Subtitle{}
+		}
+	}
 
 	for _, raw := range lines {
 		line := strings.TrimSpace(raw)
 		if line == "" {
-			if current.Index != 0 {
-				subs = append(subs, current)
-				current = Subtitle{}
-			}
+			flush()
 			state = 0
 			continue
 		}
 
 		switch state {
 		case 0:
-			if line == "WEBVTT" {
+			if line == "WEBVTT" || strings.HasPrefix(line, "NOTE") {
 				continue
 			}
 			idx, err := strconv.Atoi(line)
 			if err != nil {
-				return nil, fmt.Errorf("invalid index: %s", line)
+				continue
 			}
 			current.Index = idx
 			state = 1
@@ -234,16 +219,43 @@ func parseVTT(filePath string) ([]Subtitle, error) {
 		}
 	}
 
-	if current.Index != 0 {
-		subs = append(subs, current)
-	}
+	flush()
 	if err := validateSubtitles(subs); err != nil {
 		return nil, err
 	}
 	return subs, nil
 }
 
-// UploadSubtitle lets post authors upload a VTT file for their video posts
 func UploadSubtitle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	http.Error(w, "Subtitle uploading is not implemented in the filedrop service", http.StatusNotImplemented)
+	uniqueID := strings.TrimSpace(ps.ByName("id"))
+	if uniqueID == "" {
+		uniqueID = strings.TrimSpace(ps.ByName("uniqueID"))
+	}
+	if uniqueID == "" {
+		uniqueID = strings.TrimSpace(r.FormValue("id"))
+	}
+	if uniqueID == "" {
+		uniqueID = strings.TrimSpace(r.FormValue("uniqueID"))
+	}
+	if uniqueID == "" {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
+
+	lang := strings.TrimSpace(ps.ByName("lang"))
+	if lang == "" {
+		lang = strings.TrimSpace(r.FormValue("lang"))
+	}
+	if lang == "" {
+		lang = "en"
+	}
+
+	path, err := SaveUploadedVTT(w, r, uniqueID, lang)
+	if err != nil {
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusCreated)
+	_, _ = w.Write([]byte(path))
 }

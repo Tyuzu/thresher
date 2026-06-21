@@ -1,10 +1,5 @@
-// filedrop/audioup.go
-
 package filemgr
 
-// -------------------- Audio Processing --------------------
-
-// ProcessAudio handles audio file processing (exported for use by services)
 func ProcessAudio(savedPath, uploadDir, uniqueID string, entitytype EntityType) ([]int, []string) {
 	return processAudio(savedPath, uploadDir, uniqueID, entitytype)
 }
@@ -16,8 +11,6 @@ func processAudio(savedPath, uploadDir, uniqueID string, entitytype EntityType) 
 	if outputPath != "" {
 		paths = []string{normalizePath(outputPath)}
 	}
-
 	go createSubtitleFile(uniqueID)
-
 	return resolutions, paths
 }

@@ -1,5 +1,3 @@
-// dropify/filedrop/media_upload.go
-
 package filemgr
 
 import (
@@ -18,15 +16,11 @@ const (
 	Audio MediaType = "audio"
 )
 
-// -------------------- Unified Media Result --------------------
-
 type MediaResult struct {
 	Resolutions []int
 	Paths       []string
 	IDs         []string
 }
-
-// -------------------- Processors --------------------
 
 type mediaProcessor func(r *http.Request, savedPath, uploadDir, uniqueID string, entity EntityType) ([]int, []string, error)
 
@@ -43,8 +37,6 @@ var mediaProcessors = map[MediaType]mediaProcessor{
 	},
 }
 
-// -------------------- Media Upload --------------------
-
 func ProcessMediaUpload(r *http.Request, formKey string, mediaType MediaType, entity EntityType, userid string) (*MediaResult, error) {
 	file, err := getUploadedFile(r, formKey)
 	if err != nil || file == nil {
@@ -56,7 +48,7 @@ func ProcessMediaUpload(r *http.Request, formKey string, mediaType MediaType, en
 		return nil, fmt.Errorf("unsupported media type: %s", mediaType)
 	}
 
-	log.Println("ProcessMediaUpload : ", picType)
+	log.Println("ProcessMediaUpload :", picType)
 
 	savedPath, uniqueID, _, err := SaveUploadedFile(file, entity, picType, userid)
 	if err != nil {
@@ -72,14 +64,13 @@ func ProcessMediaUpload(r *http.Request, formKey string, mediaType MediaType, en
 	if err != nil {
 		return nil, err
 	}
+
 	return &MediaResult{
 		Resolutions: res,
 		Paths:       paths,
 		IDs:         []string{uniqueID},
 	}, nil
 }
-
-// -------------------- File Helpers --------------------
 
 func getUploadedFile(r *http.Request, formKey string) (*multipart.FileHeader, error) {
 	if r.MultipartForm == nil {
@@ -100,7 +91,8 @@ func SaveUploadedFile(file *multipart.FileHeader, entity EntityType, picType Pic
 		return "", "", "", fmt.Errorf("cannot open uploaded file: %w", err)
 	}
 	defer src.Close()
-	log.Println("SaveUploadedFile : ", picType)
+
+	log.Println("SaveUploadedFile :", picType)
 	savedName, ext, err := SaveFileForEntity(src, file, entity, picType, userid)
 	if err != nil {
 		return "", "", "", fmt.Errorf("file save failed: %w", err)
@@ -109,15 +101,4 @@ func SaveUploadedFile(file *multipart.FileHeader, entity EntityType, picType Pic
 	savedPath := filepath.Join(ResolvePath(entity, picType), savedName+ext)
 	uniqueID := strings.TrimSuffix(savedName, ext)
 	return savedPath, uniqueID, ext, nil
-}
-
-func normalizePath(p string) string {
-	if !strings.HasPrefix(p, "/") {
-		p = "/" + filepath.ToSlash(p)
-	}
-	return p
-}
-
-func generateFilePath(baseDir, uniqueID, extension string) string {
-	return filepath.Join(baseDir, fmt.Sprintf("%s.%s", uniqueID, extension))
 }

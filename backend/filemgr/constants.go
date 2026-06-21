@@ -28,7 +28,9 @@ const (
 	EntityUser     EntityType = "user"
 	EntityVendor   EntityType = "vendor"
 	EntityWorker   EntityType = "worker"
+)
 
+const (
 	PicAudio    PictureType = "audio"
 	PicBanner   PictureType = "banner"
 	PicDocument PictureType = "document"
@@ -44,39 +46,39 @@ const (
 
 var (
 	AllowedExtensions = map[PictureType][]string{
-		PicAudio:    {".mp3", ".wav", ".aac"},
+		PicAudio:    {".mp3", ".wav", ".aac", ".m4a"},
 		PicBanner:   {".jpg", ".jpeg", ".png", ".webp"},
 		PicDocument: {".pdf"},
 		PicFile: {
 			".pdf",
 			".jpg", ".jpeg", ".png", ".gif", ".webp",
-			".mp3", ".wav", ".aac",
+			".mp3", ".wav", ".aac", ".m4a",
 			".mp4", ".webm",
 		},
 		PicMember:  {".jpg", ".jpeg", ".png", ".webp"},
 		PicPhoto:   {".jpg", ".jpeg", ".png", ".gif", ".webp"},
-		PicPoster:  {".jpg", ".jpeg", ".png", ".webp"}, // thumbnail/poster support
+		PicPoster:  {".jpg", ".jpeg", ".png", ".webp"},
 		PicSeating: {".jpg", ".jpeg", ".png", ".webp"},
-		PicSong:    {".mp3", ".wav", ".aac"},
+		PicSong:    {".mp3", ".wav", ".aac", ".m4a"},
 		PicThumb:   {".jpg", ".jpeg", ".png"},
 		PicVideo:   {".mp4", ".webm"},
 	}
 
 	AllowedMIMEs = map[PictureType][]string{
-		PicAudio:    {"audio/mpeg", "audio/wav", "audio/aac", "video/mp4"},
+		PicAudio:    {"audio/mpeg", "audio/wav", "audio/aac", "audio/mp4", "video/mp4"},
 		PicBanner:   {"image/jpeg", "image/png", "image/webp"},
 		PicDocument: {"application/pdf"},
 		PicFile: {
 			"application/pdf",
 			"image/jpeg", "image/png", "image/gif", "image/webp",
-			"audio/mpeg", "audio/wav", "audio/aac",
+			"audio/mpeg", "audio/wav", "audio/aac", "audio/mp4",
 			"video/mp4", "video/webm",
 		},
 		PicMember:  {"image/jpeg", "image/png", "image/webp"},
 		PicPhoto:   {"image/jpeg", "image/png", "image/gif", "image/webp"},
-		PicPoster:  {"image/jpeg", "image/png", "image/webp"}, // matches PNG/JPEG thumbnail uploads
+		PicPoster:  {"image/jpeg", "image/png", "image/webp"},
 		PicSeating: {"image/jpeg", "image/png", "image/webp"},
-		PicSong:    {"audio/mpeg", "audio/wav", "audio/aac", "video/mp4"},
+		PicSong:    {"audio/mpeg", "audio/wav", "audio/aac", "audio/mp4", "video/mp4"},
 		PicThumb:   {"image/jpeg", "image/png"},
 		PicVideo:   {"video/mp4", "video/webm"},
 	}

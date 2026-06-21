@@ -1,5 +1,3 @@
-// dropify/filedrop/ffplay.go
-
 package filemgr
 
 import (
@@ -7,14 +5,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math"
-	"math/rand"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -25,7 +26,6 @@ const (
 	audioTimeout     = 3 * time.Minute
 )
 
-// Runner abstracts external command execution for easier testing/mocking.
 type Runner interface {
 	Run(timeout time.Duration, name string, args ...string) (stdout string, stderr string, err error)
 }
@@ -48,11 +48,8 @@ func (realRunner) Run(timeout time.Duration, name string, args ...string) (strin
 	return out.String(), errb.String(), err
 }
 
-// cmdRunner is the global command runner used by this package.
-// Replace in tests to mock ffmpeg/ffprobe results.
 var cmdRunner Runner = realRunner{}
 
-// getVideoDimensions returns width and height of a video using ffprobe
 func getVideoDimensions(videoPath string) (int, int, error) {
 	args := []string{
 		"-v", "error",
@@ -75,24 +72,19 @@ func getVideoDimensions(videoPath string) (int, int, error) {
 	if err != nil {
 		return 0, 0, fmt.Errorf("ffprobe parse width for %s: %w", videoPath, err)
 	}
-
 	height, err := strconv.Atoi(strings.TrimSpace(parts[1]))
 	if err != nil {
 		return 0, 0, fmt.Errorf("ffprobe parse height for %s: %w", videoPath, err)
 	}
-
 	return width, height, nil
 }
 
 func processVideoResolution(inputPath, outputPath string, targetHeight int) error {
-	// Ensure output directory exists
 	if err := os.MkdirAll(filepath.Dir(outputPath), 0o755); err != nil {
 		return fmt.Errorf("create output dir for %s: %w", outputPath, err)
 	}
 
-	// scale=-2:HEIGHT preserves aspect ratio, width auto-adjusted to even number
 	scaleFilter := fmt.Sprintf("scale=-2:%d", targetHeight)
-
 	args := []string{
 		"-y",
 		"-i", inputPath,
@@ -111,32 +103,22 @@ func processVideoResolution(inputPath, outputPath string, targetHeight int) erro
 
 	stdout, stderr, err := cmdRunner.Run(transcodeTimeout, "ffmpeg", args...)
 	if err != nil {
-		return fmt.Errorf("ffmpeg transcode %s -> %s (%s) failed: %w (stdout=%s, stderr=%s)",
-			inputPath, outputPath, scaleFilter, err, stdout, stderr)
+		return fmt.Errorf("ffmpeg transcode %s -> %s (%s) failed: %w (stdout=%s, stderr=%s)", inputPath, outputPath, scaleFilter, err, stdout, stderr)
 	}
 	return nil
 }
 
-// CreatePoster extracts a poster JPG for the video.
-// Picks a frame at 25% of duration and ensures 16:9 aspect ratio (1280x720) with black padding.
 func CreatePoster(videoPath, posterPath string) error {
 	if err := os.MkdirAll(filepath.Dir(posterPath), 0o755); err != nil {
 		return fmt.Errorf("failed to create poster directory for %s: %w", posterPath, err)
 	}
 
-	// Ensure .png exactly once
-	base := strings.TrimSuffix(posterPath, filepath.Ext(posterPath))
-	posterJPG := filepath.ToSlash(base + ".png")
-	log.Println("CreatePoster:", videoPath, "->", posterJPG)
-
 	duration, err := getVideoDuration(videoPath)
 	if err != nil || duration <= 0 {
-		// Fallback to a default duration baseline if not available
 		log.Printf("CreatePoster duration unavailable for %s: %v", videoPath, err)
 		duration = 3.0
 	}
-	// Pick a stable timestamp at 25% into the video.
-	// Clamp to at least 1.0s and at most duration-0.5s
+
 	t := duration * 0.25
 	if t < 1.0 {
 		t = 1.0
@@ -144,11 +126,8 @@ func CreatePoster(videoPath, posterPath string) error {
 	if t > duration-0.5 {
 		t = math.Max(0.0, duration-0.5)
 	}
-	// Add a tiny random nudge to avoid exact same frame across retries
-	t += math.Mod(rand.Float64()*0.2, 0.2) // up to +200ms
 	timestamp := formatTimestamp(t)
 
-	// Extract a frame and enforce 16:9 with scaling + black padding
 	args := []string{
 		"-y",
 		"-ss", timestamp,
@@ -156,7 +135,7 @@ func CreatePoster(videoPath, posterPath string) error {
 		"-vframes", "1",
 		"-q:v", "2",
 		"-vf", "scale=w=iw*min(1280/iw\\,720/ih):h=ih*min(1280/iw\\,720/ih),pad=1280:720:(1280-iw*min(1280/iw\\,720/ih))/2:(720-ih*min(1280/iw\\,720/ih))/2:black",
-		posterJPG,
+		posterPath,
 	}
 
 	stdout, stderr, err := cmdRunner.Run(posterTimeout, "ffmpeg", args...)
@@ -166,7 +145,6 @@ func CreatePoster(videoPath, posterPath string) error {
 	return nil
 }
 
-// getVideoDuration returns the video duration in seconds using ffprobe.
 func getVideoDuration(path string) (float64, error) {
 	args := []string{
 		"-v", "error",
@@ -174,7 +152,6 @@ func getVideoDuration(path string) (float64, error) {
 		"-of", "json",
 		path,
 	}
-
 	stdout, stderr, err := cmdRunner.Run(ffprobeTimeout, "ffprobe", args...)
 	if err != nil {
 		return 0, fmt.Errorf("ffprobe getVideoDuration(%s) failed: %w (stderr=%s)", path, err, stderr)
@@ -199,7 +176,6 @@ func getVideoDuration(path string) (float64, error) {
 	return dur, nil
 }
 
-// formatTimestamp converts seconds (e.g. 12.345) to "hh:mm:ss.SSS"
 func formatTimestamp(seconds float64) string {
 	if seconds < 0 {
 		seconds = 0
@@ -215,14 +191,11 @@ func formatTimestamp(seconds float64) string {
 func ExtractVideoDuration(videoPath string) float64 {
 	res, err := getVideoDuration(videoPath)
 	if err != nil {
-		return 0.0
+		return 0
 	}
 	return res
 }
 
-// processAudioResolutions converts the input to normalized MP3 and returns the chosen bitrate (kbps)
-// and the output path. It probes source bitrate to avoid upscaling if the input is lower.
-// It also applies EBU R128 loudness normalization (loudnorm).
 func processAudioResolutions(originalFilePath, uploadDir, uniqueID string) ([]int, string) {
 	if err := os.MkdirAll(uploadDir, 0o755); err != nil {
 		fmt.Printf("audio: failed to create output dir %s: %v\n", uploadDir, err)
@@ -230,10 +203,8 @@ func processAudioResolutions(originalFilePath, uploadDir, uniqueID string) ([]in
 	}
 	outputPath := filepath.Join(uploadDir, uniqueID+".mp3")
 
-	// Probe input audio bitrate (in bits/s)
 	inputBitrate := probeAudioBitrate(originalFilePath)
 
-	// Choose target bitrate: cap at 128 kbps, but don't upscale if input is lower and known
 	targetKbps := 128
 	if inputBitrate > 0 {
 		inKbps := inputBitrate / 1000
@@ -241,17 +212,17 @@ func processAudioResolutions(originalFilePath, uploadDir, uniqueID string) ([]in
 			targetKbps = inKbps
 		}
 		if targetKbps <= 0 {
-			targetKbps = 128 // fallback
+			targetKbps = 128
 		}
 	}
 
 	args := []string{
 		"-y",
 		"-i", originalFilePath,
-		"-vn",                // no video
-		"-c:a", "libmp3lame", // convert to mp3
+		"-vn",
+		"-c:a", "libmp3lame",
 		"-b:a", fmt.Sprintf("%dk", targetKbps),
-		"-filter:a", "loudnorm", // loudness normalization
+		"-filter:a", "loudnorm",
 		outputPath,
 	}
 
@@ -264,7 +235,6 @@ func processAudioResolutions(originalFilePath, uploadDir, uniqueID string) ([]in
 	return []int{targetKbps}, outputPath
 }
 
-// probeAudioBitrate returns the audio stream bitrate in bits/s via ffprobe; 0 if unknown.
 func probeAudioBitrate(path string) int {
 	args := []string{
 		"-v", "error",
@@ -287,8 +257,7 @@ func probeAudioBitrate(path string) int {
 		return 0
 	}
 
-	brStr := string(result.Streams[0].BitRate)
-	brStr = strings.TrimSpace(brStr)
+	brStr := strings.TrimSpace(string(result.Streams[0].BitRate))
 	if brStr == "" {
 		return 0
 	}
@@ -297,4 +266,190 @@ func probeAudioBitrate(path string) int {
 		return 0
 	}
 	return br
+}
+
+func ProcessVideo(r *http.Request, savedPath, uploadDir, uniqueID string, entitytype EntityType) ([]int, []string, error) {
+	width, height, err := getVideoDimensions(savedPath)
+	if err != nil {
+		_ = os.Remove(savedPath)
+		return nil, nil, fmt.Errorf("failed to get video dimensions: %w", err)
+	}
+
+	resolutions, outputPaths := processVideoResolutionsParallel(savedPath, uploadDir, uniqueID, width, height, 3)
+	if len(outputPaths) == 0 {
+		_ = os.Remove(savedPath)
+		return nil, nil, fmt.Errorf("video transcoding failed")
+	}
+
+	posterDir := ResolvePath(entitytype, PicPoster)
+	if err := os.MkdirAll(posterDir, 0o755); err != nil {
+		cleanupPaths(outputPaths)
+		_ = os.Remove(savedPath)
+		return nil, nil, fmt.Errorf("failed to create poster directory: %w", err)
+	}
+	thumbPath := filepath.Join(posterDir, uniqueID+".jpg")
+
+	thumbnailFile, _, thumbErr := r.FormFile("thumbnail")
+	if thumbErr == nil {
+		defer thumbnailFile.Close()
+
+		tmpThumb, err := os.CreateTemp("", uniqueID+"_thumb-*")
+		if err != nil {
+			cleanupPaths(outputPaths)
+			_ = os.Remove(savedPath)
+			return nil, nil, fmt.Errorf("failed to create temp thumbnail: %w", err)
+		}
+		tmpThumbPath := tmpThumb.Name()
+		if _, err := io.Copy(tmpThumb, thumbnailFile); err != nil {
+			tmpThumb.Close()
+			_ = os.Remove(tmpThumbPath)
+			cleanupPaths(outputPaths)
+			_ = os.Remove(savedPath)
+			return nil, nil, fmt.Errorf("failed to write temp thumbnail: %w", err)
+		}
+		_ = tmpThumb.Close()
+
+		args := []string{
+			"-y",
+			"-i", tmpThumbPath,
+			"-vf", "scale=w=iw*min(1280/iw\\,720/ih):h=ih*min(1280/iw\\,720/ih),pad=1280:720:(1280-iw*min(1280/iw\\,720/ih))/2:(720-ih*min(1280/iw\\,720/ih))/2:black",
+			thumbPath,
+		}
+		stdout, stderr, err := cmdRunner.Run(time.Minute, "ffmpeg", args...)
+		_ = os.Remove(tmpThumbPath)
+		if err != nil {
+			cleanupPaths(outputPaths)
+			_ = os.Remove(savedPath)
+			return nil, nil, fmt.Errorf("failed to process thumbnail: %w (stdout=%s, stderr=%s)", err, stdout, stderr)
+		}
+	} else {
+		if err := CreatePoster(savedPath, thumbPath); err != nil {
+			cleanupPaths(outputPaths)
+			_ = os.Remove(savedPath)
+			return nil, nil, fmt.Errorf("poster creation failed: %w", err)
+		}
+	}
+
+	go createSubtitleFile(uniqueID)
+	return resolutions, outputPaths, nil
+}
+
+type videoTask struct {
+	Height     int
+	OutputPath string
+}
+
+func processVideoResolutionsParallel(originalFilePath, uploadDir, uniqueID string, origWidth, origHeight int, maxParallel int) ([]int, []string) {
+	_ = origWidth
+	if maxParallel <= 0 {
+		maxParallel = 2
+	}
+
+	ladder := []struct {
+		Height int
+	}{
+		{4320}, {2160}, {1440}, {1080}, {720}, {480}, {360}, {240}, {144},
+	}
+
+	var tasks []videoTask
+	for _, r := range ladder {
+		if r.Height > origHeight {
+			continue
+		}
+		tasks = append(tasks, videoTask{
+			Height:     r.Height,
+			OutputPath: generateFilePath(uploadDir, uniqueID+"-"+strconv.Itoa(r.Height), "mp4"),
+		})
+	}
+	if len(tasks) == 0 {
+		return nil, nil
+	}
+
+	workers := maxParallel
+	if workers > len(tasks) {
+		workers = len(tasks)
+	}
+
+	results := make(chan struct {
+		height int
+		path   string
+		ok     bool
+	}, len(tasks))
+
+	jobs := make(chan videoTask)
+	var wg sync.WaitGroup
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for t := range jobs {
+				if err := processVideoResolution(originalFilePath, t.OutputPath, t.Height); err != nil {
+					fmt.Printf("Skipping %d due to error: %v\n", t.Height, err)
+					results <- struct {
+						height int
+						path   string
+						ok     bool
+					}{ok: false}
+					continue
+				}
+				results <- struct {
+					height int
+					path   string
+					ok     bool
+				}{height: t.Height, path: "/" + filepath.ToSlash(t.OutputPath), ok: true}
+			}
+		}()
+	}
+
+	go func() {
+		for _, t := range tasks {
+			jobs <- t
+		}
+		close(jobs)
+		wg.Wait()
+		close(results)
+	}()
+
+	type pair struct {
+		h int
+		p string
+	}
+	var pairs []pair
+	for res := range results {
+		if res.ok {
+			pairs = append(pairs, pair{h: res.height, p: res.path})
+		}
+	}
+
+	if len(pairs) == 0 {
+		return nil, nil
+	}
+
+	sort.Slice(pairs, func(i, j int) bool { return pairs[i].h > pairs[j].h })
+
+	heights := make([]int, 0, len(pairs))
+	outputs := make([]string, 0, len(pairs))
+	for _, pr := range pairs {
+		heights = append(heights, pr.h)
+		outputs = append(outputs, pr.p)
+	}
+	return heights, outputs
+}
+
+func cleanupPaths(paths []string) {
+	for _, p := range paths {
+		if p == "" {
+			continue
+		}
+		_ = os.Remove(strings.TrimPrefix(filepath.FromSlash(p), string(filepath.Separator)))
+	}
+}
+
+func isVideoExt(ext string) bool {
+	switch strings.ToLower(ext) {
+	case ".mp4", ".mov", ".mkv", ".webm", ".avi", ".flv", ".m4v":
+		return true
+	default:
+		return false
+	}
 }

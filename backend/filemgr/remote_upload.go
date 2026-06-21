@@ -13,59 +13,26 @@ import (
 	"time"
 )
 
-// ProcessRemoteFile downloads and stores a remote file
-func (s *FileService) ProcessRemoteFile(
-	remoteURL string,
-	key string,
-	entityType string,
-	entityID string,
-	userID string,
-) ([]Attachment, error) {
-
-	_ = entityID // reserved for future use
-
-	const maxRemoteUploadBytes = 200 << 20 // 200 MB
-
-	// -------------------------
-	// Validate URL
-	// -------------------------
+func (s *FileService) ProcessRemoteFile(remoteURL string, key string, entityType string, entityID string, userID string) ([]Attachment, error) {
+	_ = entityID
+	const maxRemoteUploadBytes = 200 << 20
 
 	parsed, err := url.Parse(remoteURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid remote URL")
 	}
-
 	if parsed.Scheme != "http" && parsed.Scheme != "https" {
 		return nil, fmt.Errorf("unsupported URL scheme")
 	}
-
-	// -------------------------
-	// SSRF Protection
-	// -------------------------
-
 	if err := validateRemoteHost(remoteURL); err != nil {
 		return nil, err
 	}
 
-	// -------------------------
-	// Resolve entity
-	// -------------------------
-
-	entity := EntityType(strings.ToLower(entityType))
-
-	// -------------------------
-	// Resolve picture type
-	// -------------------------
-
+	entity := EntityType(strings.ToLower(strings.TrimSpace(entityType)))
 	picType := normalizePictureKey(key)
-
 	if _, ok := AllowedExtensions[picType]; !ok {
 		return nil, fmt.Errorf("invalid picture key")
 	}
-
-	// -------------------------
-	// Download file
-	// -------------------------
 
 	client := &http.Client{
 		Timeout: 30 * time.Second,
@@ -73,12 +40,7 @@ func (s *FileService) ProcessRemoteFile(
 			if len(via) > 10 {
 				return fmt.Errorf("too many redirects")
 			}
-
-			if err := validateRemoteHost(req.URL.String()); err != nil {
-				return err
-			}
-
-			return nil
+			return validateRemoteHost(req.URL.String())
 		},
 	}
 
@@ -92,21 +54,11 @@ func (s *FileService) ProcessRemoteFile(
 		return nil, fmt.Errorf("remote server returned %d", resp.StatusCode)
 	}
 
-	contentType := strings.ToLower(
-		strings.TrimSpace(
-			strings.Split(resp.Header.Get("Content-Type"), ";")[0],
-		),
-	)
-
-	// -------------------------
-	// Validate MIME type
-	// -------------------------
-
+	contentType := strings.ToLower(strings.TrimSpace(strings.Split(resp.Header.Get("Content-Type"), ";")[0]))
 	allowedMIMEs, ok := AllowedMIMEs[picType]
 	if !ok {
 		return nil, fmt.Errorf("unsupported picture type")
 	}
-
 	validMIME := false
 	for _, mime := range allowedMIMEs {
 		if strings.EqualFold(mime, contentType) {
@@ -114,27 +66,17 @@ func (s *FileService) ProcessRemoteFile(
 			break
 		}
 	}
-
 	if !validMIME {
 		return nil, fmt.Errorf("invalid MIME type %q for %q", contentType, picType)
 	}
-
-	// -------------------------
-	// Filename
-	// -------------------------
 
 	filename := filepath.Base(parsed.Path)
 	if filename == "." || filename == "/" || filename == "" {
 		filename = "remote-file"
 	}
-
 	if filepath.Ext(filename) == "" {
 		filename += mimeToExtension(contentType)
 	}
-
-	// -------------------------
-	// Temp file
-	// -------------------------
 
 	tmpFile, err := os.CreateTemp("", "remote-upload-*")
 	if err != nil {
@@ -142,41 +84,25 @@ func (s *FileService) ProcessRemoteFile(
 	}
 	defer os.Remove(tmpFile.Name())
 
-	if resp.ContentLength > maxRemoteUploadBytes {
-		tmpFile.Close()
-		return nil, ErrFileTooLarge
-	}
-
 	limitedReader := io.LimitReader(resp.Body, maxRemoteUploadBytes+1)
-
 	written, err := io.Copy(tmpFile, limitedReader)
 	if err != nil {
-		tmpFile.Close()
+		_ = tmpFile.Close()
 		return nil, fmt.Errorf("failed to save remote file")
 	}
-
 	if written > maxRemoteUploadBytes {
-		tmpFile.Close()
+		_ = tmpFile.Close()
 		return nil, ErrFileTooLarge
 	}
-
 	if err := tmpFile.Close(); err != nil {
 		return nil, err
 	}
-
-	// -------------------------
-	// Reopen temp file
-	// -------------------------
 
 	file, err := os.Open(tmpFile.Name())
 	if err != nil {
 		return nil, fmt.Errorf("failed to reopen temp file")
 	}
 	defer file.Close()
-
-	// -------------------------
-	// Create multipart header
-	// -------------------------
 
 	header := &multipart.FileHeader{
 		Filename: filename,
@@ -186,26 +112,10 @@ func (s *FileService) ProcessRemoteFile(
 		Size: written,
 	}
 
-	// -------------------------
-	// Save through existing pipeline
-	// -------------------------
-
-	savedName, ext, err := SaveFileForEntity(
-		file,
-		header,
-		entity,
-		picType,
-		userID,
-	)
+	savedName, ext, err := SaveFileForEntity(file, header, entity, picType, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return []Attachment{
-		{
-			Filename:  savedName,
-			Extension: ext,
-			Key:       string(picType),
-		},
-	}, nil
+	return []Attachment{{Filename: savedName, Extension: ext, Key: string(picType)}}, nil
 }
