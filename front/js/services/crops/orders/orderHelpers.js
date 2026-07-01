@@ -1,5 +1,15 @@
 export function normalizeOrderId(order) {
-  return order?.id ?? order?.orderid ?? order?.orderId ?? "";
+  return order?.id ?? order?.orderid ?? order?.orderId ?? order?.OrderID ?? "";
+}
+
+export function getOrderValue(order, ...keys) {
+  for (const key of keys) {
+    const value = order?.[key];
+    if (value !== undefined && value !== null && value !== "") {
+      return value;
+    }
+  }
+  return "";
 }
 
 export function capitalize(str) {

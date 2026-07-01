@@ -194,14 +194,22 @@ export async function displayCrop(content, cropID, isLoggedIn) {
 
     // Cached inputs
     const inputs = {
-      location: document.getElementById("filter-location"),
-      breed: document.getElementById("filter-breed"),
-      minPrice: document.getElementById("filter-min-price"),
-      maxPrice: document.getElementById("filter-max-price"),
-      minQty: document.getElementById("filter-min-qty"),
-      maxQty: document.getElementById("filter-max-qty"),
-      harvestDate: document.getElementById("filter-harvest"),
+      location: filterForm.querySelector("#filter-location"),
+      breed: filterForm.querySelector("#filter-breed"),
+      minPrice: filterForm.querySelector("#filter-min-price"),
+      maxPrice: filterForm.querySelector("#filter-max-price"),
+      minQty: filterForm.querySelector("#filter-min-qty"),
+      maxQty: filterForm.querySelector("#filter-max-qty"),
+      harvestDate: filterForm.querySelector("#filter-harvest"),
     };
+
+    const applyButton = filterForm.querySelector("#apply-filters");
+    const resetButton = filterForm.querySelector("#reset-filters");
+
+    if (!inputs.location || !inputs.breed || !inputs.minPrice || !inputs.maxPrice || !inputs.minQty || !inputs.maxQty || !inputs.harvestDate || !applyButton || !resetButton) {
+      Notify("Unable to initialize crop filters.", { type: "error", dismissible: true });
+      return;
+    }
 
     const applyFilters = () => {
       const filters = {
@@ -251,8 +259,8 @@ export async function displayCrop(content, cropID, isLoggedIn) {
     };
 
     toggleFiltersBtn.addEventListener("click", () => filterForm.classList.toggle("open"));
-    filterForm.querySelector("#apply-filters").addEventListener("click", applyFilters);
-    filterForm.querySelector("#reset-filters").addEventListener("click", resetFilters);
+    applyButton.addEventListener("click", applyFilters);
+    resetButton.addEventListener("click", resetFilters);
     filterForm.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();

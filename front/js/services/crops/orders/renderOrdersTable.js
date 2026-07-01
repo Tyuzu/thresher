@@ -6,6 +6,7 @@ import {
   formatOrderDate,
   getOrderStatusClass,
   getPaymentStatusClass,
+  getOrderValue,
   normalizeOrderId,
 } from "./orderHelpers.js";
 import {
@@ -71,6 +72,7 @@ export function renderOrdersTable(orderList, onRefresh) {
       "Order ID",
       "Buyer",
       "Contact",
+      "Farm",
       "Crop",
       "Qty",
       "Order Date",
@@ -86,7 +88,7 @@ export function renderOrdersTable(orderList, onRefresh) {
     orderList.length === 0
       ? [
           createElement("tr", {}, [
-            createElement("td", { colspan: 12 }, ["No orders found."]),
+            createElement("td", { colspan: 13 }, ["No orders found."]),
           ]),
         ]
       : orderList.map((order) =>
@@ -103,30 +105,36 @@ function buildOrderTableRow(order, onContact, onAccepted, onMarkedPaid, onDelive
   const orderId = normalizeOrderId(order);
   const statusClass = getOrderStatusClass(order.status);
   const paymentClass = getPaymentStatusClass(order.payment);
+  const buyerName = getOrderValue(order, "buyer", "name", "customerName") || "-";
+  const contact = getOrderValue(order, "contact", "phone", "email") || "-";
+  const farmName = getOrderValue(order, "farm", "farmName", "farmid") || "-";
+  const cropName = getOrderValue(order, "crop", "cropName", "itemName", "productName") || "-";
+  const quantity = getOrderValue(order, "qty", "quantity", "requestedQty") ?? "-";
+  const unit = getOrderValue(order, "unit", "itemUnit") || "";
+  const address = getOrderValue(order, "address", "deliveryAddress", "shippingAddress") || "-";
+  const payment = capitalize(getOrderValue(order, "payment", "paymentMethod") || "pending");
+  const status = capitalize(getOrderValue(order, "status") || "pending");
 
   return createElement("tr", {}, [
     createElement("td", {}, [
       createElement("input", { type: "checkbox", class: "select-order", value: orderId }),
     ]),
     createElement("td", {}, [orderId]),
-    createElement("td", {}, [order.buyer || "-"]),
-    createElement("td", {}, [order.contact || "-"]),
-    createElement("td", {}, [order.crop || "-"]),
-    createElement("td", {}, [`${order.qty ?? "-"} ${order.unit || ""}`.trim()]),
-    createElement("td", {}, [formatOrderDate(order.orderDate)]),
-    createElement("td", {}, [formatOrderDate(order.deliveryDate)]),
-    createElement("td", {}, [order.address || "-"]),
-    createElement("td", { class: `payment-status ${paymentClass}` }, [
-      capitalize(order.payment),
-    ]),
-    createElement("td", { class: `order-status ${statusClass}` }, [
-      capitalize(order.status),
-    ]),
+    createElement("td", {}, [buyerName]),
+    createElement("td", {}, [contact]),
+    createElement("td", {}, [farmName]),
+    createElement("td", {}, [cropName]),
+    createElement("td", {}, [`${quantity}${unit ? ` ${unit}` : ""}`.trim()]),
+    createElement("td", {}, [formatOrderDate(getOrderValue(order, "orderDate", "createdAt", "created_at"))]),
+    createElement("td", {}, [formatOrderDate(getOrderValue(order, "deliveryDate", "expectedDelivery", "deliveredAt"))]),
+    createElement("td", {}, [address]),
+    createElement("td", { class: `payment-status ${paymentClass}` }, [payment]),
+    createElement("td", { class: `order-status ${statusClass}` }, [status]),
     createElement("td", { class: "action-buttons" }, [
       Button("Contact", `contact-${orderId}`, {
         click: (e) => {
           e.stopPropagation();
-          onContact(order.contact);
+          onContact(contact === "-" ? "" : contact);
         },
       }, "small-button buttonx"),
 

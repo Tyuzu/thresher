@@ -6,6 +6,7 @@ import {
   formatOrderDate,
   getOrderStatusClass,
   getPaymentStatusClass,
+  getOrderValue,
   normalizeOrderId,
 } from "./orderHelpers.js";
 import {
@@ -36,9 +37,19 @@ export function renderOrderCard(order, onRefresh) {
   const orderId = normalizeOrderId(order);
   const statusClass = getOrderStatusClass(order.status);
   const paymentClass = getPaymentStatusClass(order.payment);
+  const buyerName = getOrderValue(order, "buyer", "name", "customerName") || "-";
+  const contact = getOrderValue(order, "contact", "phone", "email") || "-";
+  const cropName = getOrderValue(order, "crop", "cropName", "itemName", "productName") || "-";
+  const quantity = getOrderValue(order, "qty", "quantity", "requestedQty") ?? "-";
+  const unit = getOrderValue(order, "unit", "itemUnit") || "";
+  const orderDate = formatOrderDate(getOrderValue(order, "orderDate", "createdAt", "created_at"));
+  const deliveryDate = formatOrderDate(getOrderValue(order, "deliveryDate", "expectedDelivery", "deliveredAt"));
+  const address = getOrderValue(order, "address", "deliveryAddress", "shippingAddress") || "-";
+  const payment = capitalize(getOrderValue(order, "payment", "paymentMethod") || "pending");
+  const farmName = getOrderValue(order, "farm", "farmName", "farmid") || "-";
 
   const handleContact = () => {
-    contactBuyer(order.contact);
+    contactBuyer(contact === "-" ? "" : contact);
   };
 
   const handleAccepted = async () => {
@@ -80,35 +91,39 @@ export function renderOrderCard(order, onRefresh) {
     createElement("div", { class: "order-info" }, [
       createElement("p", {}, [
         createElement("strong", {}, ["Buyer:"]),
-        ` ${order.buyer || "-"}`,
+        ` ${buyerName}`,
       ]),
       createElement("p", {}, [
         createElement("strong", {}, ["Contact:"]),
-        ` ${order.contact || "-"}`,
+        ` ${contact}`,
+      ]),
+      createElement("p", {}, [
+        createElement("strong", {}, ["Farm:"]),
+        ` ${farmName}`,
       ]),
       createElement("p", {}, [
         createElement("strong", {}, ["Crop:"]),
-        ` ${order.crop || "-"}`,
+        ` ${cropName}`,
       ]),
       createElement("p", {}, [
         createElement("strong", {}, ["Quantity:"]),
-        ` ${order.qty ?? "-"} ${order.unit || ""}`.trim(),
+        ` ${quantity}${unit ? ` ${unit}` : ""}`.trim(),
       ]),
       createElement("p", {}, [
         createElement("strong", {}, ["Order Date:"]),
-        ` ${formatOrderDate(order.orderDate)}`,
+        ` ${orderDate}`,
       ]),
       createElement("p", {}, [
         createElement("strong", {}, ["Delivery Date:"]),
-        ` ${formatOrderDate(order.deliveryDate)}`,
+        ` ${deliveryDate}`,
       ]),
       createElement("p", {}, [
         createElement("strong", {}, ["Address:"]),
-        ` ${order.address || "-"}`,
+        ` ${address}`,
       ]),
       createElement("p", { class: `payment-status ${paymentClass}` }, [
         createElement("strong", {}, ["Payment:"]),
-        ` ${capitalize(order.payment)}`,
+        ` ${payment}`,
       ]),
     ]),
 

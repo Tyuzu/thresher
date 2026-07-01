@@ -2,27 +2,42 @@ import { createElement } from "../../../components/createElement.js";
 
 /* ───────────────── Filtering / Sorting ───────────────── */
 
+function normalizeMoney(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export function normalizeOrders(orders) {
-  return [...orders].sort((a, b) => {
-    // Handle both createdAt and created_at field names
-    const aTime = new Date(a.createdAt || a.created_at || 0).getTime();
-    const bTime = new Date(b.createdAt || b.created_at || 0).getTime();
-    return bTime - aTime;
-  }).map(order => ({
-    ...order,
-    // Normalize field names: use orderId, createdAt internally
-    orderId: order.orderId || order.orderid,
-    createdAt: order.createdAt || order.created_at,
-    // Ensure total is in rupees (backend stores in paise for some types)
-    total: typeof order.total === 'string' ? parseInt(order.total) : (order.total || 0)
-  }));
+  return [...orders]
+    .sort((a, b) => {
+      const aTime = new Date(a.createdAt || a.created_at || 0).getTime();
+      const bTime = new Date(b.createdAt || b.created_at || 0).getTime();
+      return bTime - aTime;
+    })
+    .map((order) => ({
+      ...order,
+      orderId: order.orderId || order.orderid || order.id || order.OrderID || "",
+      orderType: order.orderType || (order.farmId ? "farm" : "regular"),
+      createdAt: order.createdAt || order.created_at || order.createdAt || "",
+      status: order.status || order.orderStatus || "pending",
+      paymentMethod: order.paymentMethod || order.payment || order.paymentStatus || "pending",
+      address: order.address || order.deliveryAddress || order.shippingAddress || "",
+      total: normalizeMoney(order.total),
+      subtotal: normalizeMoney(order.subtotal),
+      discount: normalizeMoney(order.discount),
+      tax: normalizeMoney(order.tax),
+      delivery: normalizeMoney(order.delivery),
+      approvedBy: Array.isArray(order.approvedBy) ? order.approvedBy.filter(Boolean) : [],
+      farmId: order.farmId || order.farmid || "",
+      items: order.items || {},
+    }));
 }
 
 export function getFilteredOrders(orders, filters) {
   const status = (filters.status || "").trim().toLowerCase();
   const date = (filters.date || "").trim();
 
-  return orders.filter(order => {
+  return orders.filter((order) => {
     const orderStatus = (order.status || "").trim().toLowerCase();
     const orderDate = toLocalDateKey(order.createdAt || order.created_at);
 
@@ -61,13 +76,11 @@ export function toggleExpanded(state, orderId) {
 }
 
 export function getOrderProducts(order) {
-  // Handle both structures: items.products array or items as a map of categories
   if (Array.isArray(order?.items?.products)) {
     return order.items.products;
   }
-  
-  // If items is a map (like from backend with crops, products, etc categories)
-  if (order?.items && typeof order.items === 'object' && !Array.isArray(order.items)) {
+
+  if (order?.items && typeof order.items === "object" && !Array.isArray(order.items)) {
     const allItems = [];
     for (const category in order.items) {
       const categoryItems = order.items[category];
@@ -77,10 +90,21 @@ export function getOrderProducts(order) {
     }
     return allItems;
   }
-  
+
   return [];
 }
 
+export function getOrderSummaryMeta(order) {
+  return {
+    orderId: order.orderId || order.orderid || order.id || order.OrderID || "N/A",
+    orderType: order.orderType || (order.farmId ? "farm" : "regular"),
+    status: order.status || order.orderStatus || "pending",
+    payment: order.paymentMethod || order.payment || order.paymentStatus || "pending",
+    address: order.address || order.deliveryAddress || order.shippingAddress || "N/A",
+    approvedBy: Array.isArray(order.approvedBy) ? order.approvedBy.filter(Boolean) : [],
+    farmId: order.farmId || order.farmid || "N/A",
+  };
+}
 
 export function capitalize(text = "") {
   return text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
@@ -95,14 +119,13 @@ export function formatDate(dateStr) {
   return Number.isNaN(d.getTime())
     ? "N/A"
     : d.toLocaleDateString("en-IN", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
 }
 
 export function formatINR(val = 0, isPaise = false) {
-  // If value is in paise (backend storage format), convert to rupees
   const rupees = isPaise ? val / 100 : val;
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -119,7 +142,7 @@ export function downloadReceipt(order) {
 
   const link = createElement("a", {
     href: URL.createObjectURL(blob),
-    download: `receipt_${order.orderId || "order"}.json`,
+    download: `receipt_${order.orderId || order.id || "order"}.json`,
   });
 
   document.body.append(link);
