@@ -24,14 +24,12 @@
 .cartpage {
   max-width: 1200px;
   margin: auto;
-  background: var(--bg);
   min-height: 100vh;
 }
 
 .cartpage h2 {
   text-align: center;
   margin-bottom: 2rem;
-  color: var(--text);
   font-size: clamp(1.8rem, 3vw, 2.5rem);
 }
 
@@ -39,7 +37,6 @@
 
 .back-button {
   border: none;
-  background: white;
   padding: 0.75rem 1rem;
   border-radius: 12px;
   cursor: pointer;
@@ -56,7 +53,6 @@
 /* ===== Category Section ===== */
 
 .cart-category {
-  background: var(--card);
   border-radius: var(--radius);
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -71,7 +67,6 @@
 
 .cart-category-header h3 {
   margin: 0;
-  color: var(--text);
 }
 
 /* ===== Product Card ===== */
@@ -90,7 +85,6 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 1.25rem;
-  background: #fff;
   transition: var(--transition);
 }
 
@@ -105,7 +99,6 @@
 
 .cart-card-details p {
   margin: 0.35rem 0;
-  color: var(--text);
 }
 
 .cart-card-pricing {
@@ -114,7 +107,6 @@
 
 .cart-card-pricing p {
   margin: 0.35rem 0;
-  color: var(--muted);
 }
 
 /* ===== Quantity Controls ===== */
@@ -151,7 +143,6 @@
   width: 36px;
   height: 36px;
   font-size: 1rem;
-  background: #eef2f7;
 }
 
 .primary {
@@ -201,7 +192,6 @@
   margin-top: 1rem;
   text-align: right;
   font-size: 1.1rem;
-  color: var(--text);
 }
 
 /* ===== Checkout Button ===== */
@@ -215,8 +205,6 @@
 /* ===== Grand Total Box ===== */
 
 .grand-box {
-  background: linear-gradient(135deg, #2d7a4b, #46a06a);
-  color: white;
   border-radius: 20px;
   padding: 2rem;
   text-align: center;
@@ -230,8 +218,6 @@
 
 #checkout-all-btn {
   min-width: 220px;
-  background: white;
-  color: var(--primary);
   font-weight: 700;
 }
 

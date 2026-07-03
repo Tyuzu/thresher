@@ -160,7 +160,7 @@ function buildExpandableOrderRows(order, state, rerender) {
         createElement("td", {}, [meta.orderId]),
         createElement("td", {}, [formatDate(order.createdAt)]),
         createElement("td", {}, [capitalize(meta.orderType)]),
-        createElement("td", {}, [formatINR(order.total || 0)]),
+        createElement("td", {}, [formatINR(order.total || 0, true)]),
         createElement("td", {}, [capitalize(meta.status)]),
         createElement("td", {}, [capitalize(meta.payment)]),
         createElement("td", {}, [
@@ -205,10 +205,10 @@ function buildOrderItemsTable(products) {
             products.length
                 ? products.map((item) =>
                     createElement("tr", {}, [
-                        createElement("td", {}, [item.entityName || "Unknown"]),
+                        createElement("td", {}, [item.entityName || "Unknown Entity"]),
                         createElement("td", {}, [item.itemName || "N/A"]),
                         createElement("td", {}, [String(item.quantity || 0)]),
-                        createElement("td", {}, [formatINR(item.price || 0)]),
+                        createElement("td", {}, [formatINR(item.price || 0, true)]),
                     ])
                 )
                 : [
@@ -257,7 +257,7 @@ function buildExpandableOrderCard(order, state, rerender) {
         createElement("p", {}, [`Status: ${capitalize(meta.status)}`]),
         createElement("p", {}, [`Payment: ${capitalize(meta.payment)}`]),
         createElement("p", {}, [`Address: ${meta.address}`]),
-        createElement("p", {}, [`Total: ${formatINR(order.total || 0)}`]),
+        createElement("p", {}, [`Total: ${formatINR(order.total || 0, true)}`]),
         expanded
             ? createElement(
                 "div",
@@ -271,7 +271,7 @@ function buildExpandableOrderCard(order, state, rerender) {
                                 createElement("p", {}, [`Farm: ${item.entityName || "Unknown"}`]),
                                 createElement("p", {}, [`Item: ${item.itemName || "N/A"}`]),
                                 createElement("p", {}, [`Qty: ${item.quantity || 0}`]),
-                                createElement("p", {}, [`Item Price: ${formatINR(item.price || 0)}`]),
+                                createElement("p", {}, [`Item Price: ${formatINR(item.price || 0, true)}`]),
                             ])
                         ),
                     ]

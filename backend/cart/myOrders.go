@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -103,17 +104,45 @@ func GetMyOrders(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Add farm orders (convert priceAtPurchase to paise)
+		// Pre-fetch transactions for farm orders to derive accurate payment method/status
+		orderIDs := make([]string, 0, len(farmOrders))
+		for _, o := range farmOrders {
+			orderIDs = append(orderIDs, o.OrderID)
+		}
+
+		txnByOrder := map[string]models.Transaction{}
+		if len(orderIDs) > 0 {
+			var txns []models.Transaction
+			_ = app.DB.FindMany(ctx, "transactions", bson.M{
+				"entity_type": "order",
+				"entity_id":   bson.M{"$in": orderIDs},
+			}, &txns)
+
+			for _, t := range txns {
+				if t.EntityID != "" {
+					txnByOrder[t.EntityID] = t
+				}
+			}
+		}
+
 		for _, order := range farmOrders {
+			pm := mapPaymentStatus(order.Status)
+			if txn, ok := txnByOrder[order.OrderID]; ok {
+				pm = mapPaymentStatusFromTxn(&txn, order.Status)
+			}
+
 			allOrders = append(allOrders, CombinedOrder{
-				OrderID:    order.OrderID,
-				OrderType:  "farm",
-				UserID:     order.UserID,
-				FarmID:     order.FarmID,
-				Items:      order.Items,
-				Total:      int64(order.PriceAtPurchase * 100), // Convert rupees to paise
-				Status:     string(order.Status),
-				CreatedAt:  order.CreatedAt,
-				ApprovedBy: order.ApprovedBy,
+				OrderID:       order.OrderID,
+				OrderType:     "farm",
+				UserID:        order.UserID,
+				FarmID:        order.FarmID,
+				Items:         order.Items,
+				Address:       order.Address,
+				PaymentMethod: pm,
+				Total:         int64(order.PriceAtPurchase * 100), // Convert rupees to paise
+				Status:        string(order.Status),
+				CreatedAt:     order.CreatedAt,
+				ApprovedBy:    order.ApprovedBy,
 			})
 		}
 
@@ -142,4 +171,31 @@ func GetMyOrders(app *infra.Deps) httprouter.Handle {
 			"limit":  limit,
 		})
 	}
+}
+
+func mapPaymentStatus(status models.OrderStatus) string {
+	switch string(status) {
+	case "paid", "delivered":
+		return "paid"
+	case "rejected":
+		return "unpaid"
+	default:
+		return "pending"
+	}
+}
+
+func mapPaymentStatusFromTxn(txn *models.Transaction, status models.OrderStatus) string {
+	if txn == nil {
+		return mapPaymentStatus(status)
+	}
+
+	if strings.ToLower(txn.Status) == "success" {
+		return "paid"
+	}
+
+	if strings.ToLower(txn.Method) == "cod" {
+		return "pending"
+	}
+
+	return mapPaymentStatus(status)
 }

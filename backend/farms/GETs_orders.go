@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"naevis/infra"
@@ -166,6 +167,26 @@ func GetIncomingFarmOrders(app *infra.Deps) httprouter.Handle {
 		cropFilter := r.URL.Query().Get("crop")
 		paymentFilter := r.URL.Query().Get("payment")
 
+		// Pre-fetch transactions for these orders to derive accurate payment status
+		orderIDs := make([]string, 0, len(orders))
+		for _, o := range orders {
+			orderIDs = append(orderIDs, o.OrderID)
+		}
+
+		txnByOrder := map[string]models.Transaction{}
+		if len(orderIDs) > 0 {
+			var txns []models.Transaction
+			_ = app.DB.FindMany(ctx, "transactions", bson.M{
+				"entity_type": "order",
+				"entity_id":   bson.M{"$in": orderIDs},
+			}, &txns)
+
+			for _, t := range txns {
+				if t.EntityID != "" {
+					txnByOrder[t.EntityID] = t
+				}
+			}
+		}
 		for _, o := range orders {
 			user := fetchUserByID(ctx, o.UserID, app)
 			crop := fetchCropByID(ctx, o.CropID, app)
@@ -175,10 +196,13 @@ func GetIncomingFarmOrders(app *infra.Deps) httprouter.Handle {
 				continue
 			}
 
-			// Client-side filtering for payment status
-			// Note: payment status is always "pending" in current implementation
-			// This is extensible for future payment tracking
-			paymentStatus := "pending"
+			// Client-side filtering for payment status (prefer transaction-derived status)
+			var paymentStatus string
+			if txn, ok := txnByOrder[o.OrderID]; ok {
+				paymentStatus = derivePaymentStatusFromTxn(&txn, o.Status)
+			} else {
+				paymentStatus = derivePaymentStatus(o.Status)
+			}
 			if paymentFilter != "" && paymentStatus != paymentFilter {
 				continue
 			}
@@ -223,6 +247,39 @@ func fetchUserByID(ctx context.Context, id string, app *infra.Deps) models.User 
 	}
 
 	return user
+}
+
+func derivePaymentStatus(status models.OrderStatus) string {
+	normalized := string(status)
+
+	switch normalized {
+	case "paid", "delivered":
+		return "paid"
+	case "rejected":
+		return "unpaid"
+	default:
+		return "pending"
+	}
+}
+
+// derivePaymentStatusFromTxn returns a payment label using transaction information
+func derivePaymentStatusFromTxn(txn *models.Transaction, status models.OrderStatus) string {
+	if txn == nil {
+		return derivePaymentStatus(status)
+	}
+
+	// If transaction succeeded, consider it paid
+	if strings.ToLower(txn.Status) == "success" {
+		return "paid"
+	}
+
+	// If method is cod and txn exists but not success, treat as pending
+	if strings.ToLower(txn.Method) == "cod" {
+		return "pending"
+	}
+
+	// Fallback to order-based derivation
+	return derivePaymentStatus(status)
 }
 
 func fetchCropByID(ctx context.Context, id string, app *infra.Deps) models.Crop {

@@ -34,6 +34,7 @@
 
 .payoptions label:has(input:checked) {
   border-color: #222;
+  color: #222;
   background: #f2f2f2;
 }
 
