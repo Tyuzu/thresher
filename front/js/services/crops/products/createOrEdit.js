@@ -251,9 +251,9 @@ export function renderItemForm(container, mode, itemData, type, onDone) {
 
       const res = await apiFetch(url, method, payload);
       
-      if (!res || !res.productid || !res.status) {
+      if (!res || !res.productid) {
         throw new Error("Request failed");
-      } 
+      }
       onDone();
     } catch (err) {
       if (err.status === 403) {

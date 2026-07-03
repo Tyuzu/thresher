@@ -197,9 +197,11 @@ func processFarmOrders(
 	for farmID, items := range grouped {
 
 		var farmSubtotal int64
+		var totalQty int
 
 		for _, item := range items {
 			farmSubtotal += item.Price * int64(item.Quantity)
+			totalQty += item.Quantity
 		}
 
 		// Allocate checkout-level charges proportionally
@@ -225,7 +227,7 @@ func processFarmOrders(
 			ApprovedBy:      []string{},
 			Items:           map[string][]models.CartItem{"crops": items},
 			CreatedAt:       time.Now(),
-			Quantity:        len(items),
+			Quantity:        totalQty,
 			PriceAtPurchase: float64(farmSubtotal) / 100,
 			Address:         checkout.Address,
 
@@ -235,6 +237,23 @@ func processFarmOrders(
 			Tax:      tax,
 			Delivery: delivery,
 			Total:    farmTotal,
+		}
+
+		// Populate crop id (first item's item id) if available
+		if len(items) > 0 {
+			order.CropID = items[0].ItemID
+		}
+
+		// Populate buyer name and phone from user record when available
+		var user models.User
+		if err := app.DB.FindOne(ctx, "users", bson.M{"userid": checkout.UserID}, &user); err == nil {
+			if user.Name != "" {
+				order.Name = user.Name
+			}
+			// prefer phone_number field if present
+			if user.PhoneNumber != "" {
+				order.Phone = user.PhoneNumber
+			}
 		}
 
 		if err := app.DB.Insert(ctx, farmOrdersCollection, order); err != nil {

@@ -105,13 +105,13 @@ function buildOrderTableRow(order, onContact, onAccepted, onMarkedPaid, onDelive
   const orderId = normalizeOrderId(order);
   const statusClass = getOrderStatusClass(order.status);
   const paymentClass = getPaymentStatusClass(order.payment);
-  const buyerName = getOrderValue(order, "buyer", "name", "customerName") || "-";
-  const contact = getOrderValue(order, "contact", "phone", "email") || "-";
-  const farmName = getOrderValue(order, "farm", "farmName", "farmid") || "-";
-  const cropName = getOrderValue(order, "crop", "cropName", "itemName", "productName") || "-";
-  const quantity = getOrderValue(order, "qty", "quantity", "requestedQty") ?? "-";
+  const buyerName = getOrderValue(order, "buyer", "name", "customerName") || "—";
+  const contact = getOrderValue(order, "contact", "phone", "email") || "";
+  const farmName = getOrderValue(order, "farm", "farmName", "farmid") || "—";
+  const cropName = getOrderValue(order, "crop", "cropName", "itemName", "productName") || "—";
+  const quantity = getOrderValue(order, "qty", "quantity", "requestedQty");
   const unit = getOrderValue(order, "unit", "itemUnit") || "";
-  const address = getOrderValue(order, "address", "deliveryAddress", "shippingAddress") || "-";
+  const address = getOrderValue(order, "address", "deliveryAddress", "shippingAddress") || "—";
   const payment = capitalize(getOrderValue(order, "payment", "paymentMethod") || "pending");
   const status = capitalize(getOrderValue(order, "status") || "pending");
 
@@ -124,7 +124,7 @@ function buildOrderTableRow(order, onContact, onAccepted, onMarkedPaid, onDelive
     createElement("td", {}, [contact]),
     createElement("td", {}, [farmName]),
     createElement("td", {}, [cropName]),
-    createElement("td", {}, [`${quantity}${unit ? ` ${unit}` : ""}`.trim()]),
+    createElement("td", {}, [quantity ? `${quantity}${unit ? ` ${unit}` : ""}` : "—"]),
     createElement("td", {}, [formatOrderDate(getOrderValue(order, "orderDate", "createdAt", "created_at"))]),
     createElement("td", {}, [formatOrderDate(getOrderValue(order, "deliveryDate", "expectedDelivery", "deliveredAt"))]),
     createElement("td", {}, [address]),
@@ -134,7 +134,7 @@ function buildOrderTableRow(order, onContact, onAccepted, onMarkedPaid, onDelive
       Button("Contact", `contact-${orderId}`, {
         click: (e) => {
           e.stopPropagation();
-          onContact(contact === "-" ? "" : contact);
+          onContact(contact);
         },
       }, "small-button buttonx"),
 

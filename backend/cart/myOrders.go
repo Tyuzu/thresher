@@ -131,6 +131,23 @@ func GetMyOrders(app *infra.Deps) httprouter.Handle {
 				pm = mapPaymentStatusFromTxn(&txn, order.Status)
 			}
 
+			// Resolve ApprovedBy IDs to user display names where possible
+			resolvedApprovedBy := make([]string, 0, len(order.ApprovedBy))
+			for _, approverID := range order.ApprovedBy {
+				if approverID == "" {
+					continue
+				}
+				var u models.User
+				if err := app.DB.FindOne(ctx, "users", bson.M{"userid": approverID}, &u); err == nil {
+					if u.Name != "" {
+						resolvedApprovedBy = append(resolvedApprovedBy, u.Name)
+						continue
+					}
+				}
+				// Fallback to the ID if name not found
+				resolvedApprovedBy = append(resolvedApprovedBy, approverID)
+			}
+
 			allOrders = append(allOrders, CombinedOrder{
 				OrderID:       order.OrderID,
 				OrderType:     "farm",
@@ -142,7 +159,7 @@ func GetMyOrders(app *infra.Deps) httprouter.Handle {
 				Total:         int64(order.PriceAtPurchase * 100), // Convert rupees to paise
 				Status:        string(order.Status),
 				CreatedAt:     order.CreatedAt,
-				ApprovedBy:    order.ApprovedBy,
+				ApprovedBy:    resolvedApprovedBy,
 			})
 		}
 

@@ -190,6 +190,7 @@ func GetIncomingFarmOrders(app *infra.Deps) httprouter.Handle {
 		for _, o := range orders {
 			user := fetchUserByID(ctx, o.UserID, app)
 			crop := fetchCropByID(ctx, o.CropID, app)
+			farm := fetchFarmByID(ctx, o.FarmID, app)
 
 			// Client-side filtering for crop (since we filter by crop name)
 			if cropFilter != "" && crop.Name != cropFilter {
@@ -209,24 +210,55 @@ func GetIncomingFarmOrders(app *infra.Deps) httprouter.Handle {
 
 			displayOrders = append(displayOrders, OrderDisplay{
 				ID:           o.OrderID,
-				Buyer:        user.Name,
+				Buyer:        user.UserID,
+				Farm:         firstNonEmpty(farm.FarmID, farm.Name),
 				Contact:      user.Email,
-				Crop:         crop.Name,
+				Crop:         firstNonEmpty(crop.Name, crop.CropId),
+				CropID:       crop.CropId,
 				Qty:          o.Quantity,
 				Unit:         crop.Unit,
 				OrderDate:    o.CreatedAt.Format("2006-01-02"),
 				DeliveryDate: estimateDeliveryDate(o.CreatedAt),
-				Address:      user.Address,
+				Address:      firstNonEmpty(o.Address, user.Address),
 				Payment:      paymentStatus,
 				Status:       string(o.Status),
 			})
 		}
-
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
 			"orders":  displayOrders,
 		})
 	}
+}
+
+// helper: return first non-empty string from args
+func firstNonEmpty(vals ...string) string {
+	for _, v := range vals {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+func fetchFarmByID(ctx context.Context, id string, app *infra.Deps) models.Farm {
+	var farm models.Farm
+
+	if id == "" {
+		return farm
+	}
+
+	err := app.DB.FindOne(
+		ctx,
+		farmsCollection,
+		bson.M{"farmid": id},
+		&farm,
+	)
+	if err != nil {
+		return models.Farm{}
+	}
+
+	return farm
 }
 
 func fetchUserByID(ctx context.Context, id string, app *infra.Deps) models.User {

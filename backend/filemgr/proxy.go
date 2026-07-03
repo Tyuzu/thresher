@@ -155,6 +155,8 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 
 func normalizeTarget(raw string) (string, error) {
 	raw = strings.TrimSpace(raw)
+	raw = strings.TrimPrefix(raw, "/")
+
 	if raw == "" {
 		return "", fmt.Errorf("empty url")
 	}
@@ -162,6 +164,7 @@ func normalizeTarget(raw string) (string, error) {
 	if u, err := url.PathUnescape(raw); err == nil {
 		raw = u
 	}
+
 	if !strings.Contains(raw, "://") {
 		raw = "https://" + raw
 	}
@@ -170,9 +173,15 @@ func normalizeTarget(raw string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if u.Scheme == "" {
-		u.Scheme = "https"
+
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return "", fmt.Errorf("unsupported scheme")
 	}
+
+	if u.Host == "" {
+		return "", fmt.Errorf("missing host")
+	}
+
 	return u.String(), nil
 }
 

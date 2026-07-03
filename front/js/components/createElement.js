@@ -33,10 +33,26 @@ function createElement(tag, attributes = {}, children = []) {
         }
     }
 
-    for (const child of [].concat(children)) {
+    const normalizeChildren = (items) => {
+        if (items === null || items === undefined || items === false) {
+            return [];
+        }
+        if (typeof items === "string" || typeof items === "number" || items instanceof Node) {
+            return [items];
+        }
+        if (Array.isArray(items)) {
+            return items.flatMap(normalizeChildren);
+        }
+        if (items instanceof NodeList || items instanceof HTMLCollection) {
+            return Array.from(items).flatMap(normalizeChildren);
+        }
+        return [items];
+    };
+
+    for (const child of normalizeChildren(children)) {
         if (child === null || child === undefined || child === false) {
-continue;
-}
+            continue;
+        }
 
         if (typeof child === "string" || typeof child === "number") {
             element.appendChild(document.createTextNode(String(child)));

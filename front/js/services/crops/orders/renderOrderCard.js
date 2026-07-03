@@ -37,19 +37,19 @@ export function renderOrderCard(order, onRefresh) {
   const orderId = normalizeOrderId(order);
   const statusClass = getOrderStatusClass(order.status);
   const paymentClass = getPaymentStatusClass(order.payment);
-  const buyerName = getOrderValue(order, "buyer", "name", "customerName") || "-";
-  const contact = getOrderValue(order, "contact", "phone", "email") || "-";
-  const cropName = getOrderValue(order, "crop", "cropName", "itemName", "productName") || "-";
-  const quantity = getOrderValue(order, "qty", "quantity", "requestedQty") ?? "-";
+  const buyerName = getOrderValue(order, "buyer", "name", "customerName") || "—";
+  const contact = getOrderValue(order, "contact", "phone", "email") || "";
+  const cropName = getOrderValue(order, "crop", "cropName", "itemName", "productName") || "—";
+  const quantity = getOrderValue(order, "qty", "quantity", "requestedQty");
   const unit = getOrderValue(order, "unit", "itemUnit") || "";
   const orderDate = formatOrderDate(getOrderValue(order, "orderDate", "createdAt", "created_at"));
   const deliveryDate = formatOrderDate(getOrderValue(order, "deliveryDate", "expectedDelivery", "deliveredAt"));
-  const address = getOrderValue(order, "address", "deliveryAddress", "shippingAddress") || "-";
+  const address = getOrderValue(order, "address", "deliveryAddress", "shippingAddress") || "—";
   const payment = capitalize(getOrderValue(order, "payment", "paymentMethod") || "pending");
-  const farmName = getOrderValue(order, "farm", "farmName", "farmid") || "-";
+  const farmName = getOrderValue(order, "farm", "farmName", "farmid") || "—";
 
   const handleContact = () => {
-    contactBuyer(contact === "-" ? "" : contact);
+    contactBuyer(contact);
   };
 
   const handleAccepted = async () => {
@@ -107,7 +107,7 @@ export function renderOrderCard(order, onRefresh) {
       ]),
       createElement("p", {}, [
         createElement("strong", {}, ["Quantity:"]),
-        ` ${quantity}${unit ? ` ${unit}` : ""}`.trim(),
+        ` ${quantity ? `${quantity}${unit ? ` ${unit}` : ""}` : "—"}`,
       ]),
       createElement("p", {}, [
         createElement("strong", {}, ["Order Date:"]),

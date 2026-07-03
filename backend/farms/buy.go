@@ -23,8 +23,10 @@ import (
 type OrderDisplay struct {
 	ID           string `json:"id"`
 	Buyer        string `json:"buyer"`
+	Farm         string `json:"farm"`
 	Contact      string `json:"contact"`
 	Crop         string `json:"crop"`
+	CropID       string `json:"cropId"`
 	Qty          int    `json:"qty"`
 	Unit         string `json:"unit"`
 	OrderDate    string `json:"orderDate"`

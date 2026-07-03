@@ -2,9 +2,21 @@ export function normalizeOrderId(order) {
   return order?.id ?? order?.orderid ?? order?.orderId ?? order?.OrderID ?? "";
 }
 
+const PLACEHOLDER_SET = new Set(["", "-", "none", "null", "n/a", "na", "unknown", "unknown entity"]);
+
+function isPlaceholder(value) {
+  if (value === undefined || value === null) return true;
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    return PLACEHOLDER_SET.has(v);
+  }
+  return false;
+}
+
 export function getOrderValue(order, ...keys) {
   for (const key of keys) {
     const value = order?.[key];
+    if (isPlaceholder(value)) continue;
     if (value !== undefined && value !== null && value !== "") {
       return value;
     }
@@ -17,11 +29,13 @@ export function capitalize(str) {
     return "";
   }
 
+  if (isPlaceholder(str)) return "";
+
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 export function contactBuyer(contact) {
-  if (!contact) {
+  if (!contact || isPlaceholder(contact)) {
     return;
   }
 
@@ -29,13 +43,13 @@ export function contactBuyer(contact) {
 }
 
 export function formatOrderDate(value) {
-  if (!value) {
+  if (!value || isPlaceholder(value)) {
     return "";
   }
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return String(value);
+    return "";
   }
 
   return date.toLocaleDateString();
