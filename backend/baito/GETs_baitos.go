@@ -1,6 +1,7 @@
 package baito
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -15,6 +16,16 @@ import (
 )
 
 /* -------------------- Helpers -------------------- */
+
+func enrichBaitoApplicationCount(ctx *context.Context, app *infra.Deps, baito *models.Baito) error {
+	count, err := app.DB.CountDocuments(*ctx, BaitoAppCollection, bson.M{"baitoid": baito.BaitoId})
+	if err != nil {
+		return err
+	}
+
+	baito.ApplicationCount = int(count)
+	return nil
+}
 
 func respondBaitos(w http.ResponseWriter, baitos []models.BaitosResponse) {
 	if baitos == nil {
@@ -120,6 +131,10 @@ func GetBaitoByID(app *infra.Deps) httprouter.Handle {
 				utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
 			}
 			return
+		}
+
+		if err := enrichBaitoApplicationCount(&ctx, app, &b); err != nil {
+			log.Printf("Failed to count applications for baito %s: %v", id, err)
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, b)

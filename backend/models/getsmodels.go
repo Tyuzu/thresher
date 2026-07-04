@@ -19,18 +19,20 @@ type PlacesResponse struct {
 /* ---------- MODELS ---------- */
 
 type BaitosResponse struct {
-	BaitoId      string    `bson:"baitoid,omitempty" json:"baitoid"`
-	Title        string    `bson:"title" json:"title"`
-	Description  string    `bson:"description" json:"description"`
-	Category     string    `bson:"category" json:"category"`
-	SubCategory  string    `bson:"subcategory" json:"subcategory"`
-	Location     string    `bson:"location" json:"location"`
-	Wage         string    `bson:"wage" json:"wage"`
-	Requirements string    `bson:"requirements" json:"requirements"`
-	BannerURL    string    `bson:"banner,omitempty" json:"banner,omitempty"`
-	WorkHours    string    `bson:"workHours" json:"workHours"`
-	CreatedAt    time.Time `bson:"createdAt" json:"createdAt"`
-	OwnerID      string    `bson:"ownerId" json:"ownerId"`
+	BaitoId         string     `bson:"baitoid,omitempty" json:"baitoid"`
+	Title           string     `bson:"title" json:"title"`
+	Description     string     `bson:"description" json:"description"`
+	Category        string     `bson:"category" json:"category"`
+	SubCategory     string     `bson:"subcategory" json:"subcategory"`
+	Location        string     `bson:"location" json:"location"`
+	Wage            string     `bson:"wage" json:"wage"`
+	Requirements    string     `bson:"requirements" json:"requirements"`
+	BannerURL       string     `bson:"banner,omitempty" json:"banner,omitempty"`
+	WorkHours       string     `bson:"workHours" json:"workHours"`
+	Duration        string     `bson:"duration,omitempty" json:"duration,omitempty"`
+	LastDateToApply *time.Time `bson:"lastdate,omitempty" json:"lastdate,omitempty"`
+	CreatedAt       time.Time  `bson:"createdAt" json:"createdAt"`
+	OwnerID         string     `bson:"ownerId" json:"ownerId"`
 }
 
 type BaitoWorkersResponse struct {

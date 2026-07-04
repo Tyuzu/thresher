@@ -75,6 +75,10 @@ func ApplyToBaito(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		if err := app.DB.Inc(ctx, BaitoCollection, bson.M{"baitoid": ps.ByName("baitoid")}, "applicationcount", 1); err != nil {
+			log.Printf("Failed to update application count for baito %s: %v", ps.ByName("baitoid"), err)
+		}
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "Application submitted",

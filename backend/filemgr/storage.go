@@ -25,6 +25,7 @@ func SaveFileForEntity(file multipart.File, header *multipart.FileHeader, entity
 
 func saveFileAndProcess(file multipart.File, header *multipart.FileHeader, entity EntityType, picType PictureType, thumbWidth int, userid string) (string, string, error) {
 	destDir := ResolvePath(entity, picType)
+	log.Println("destDir, picType, entity, maxUploadSize, userid", destDir, picType, entity, maxUploadSize, userid)
 	filename, ext, fullPath, err := writeValidatedFile(file, header, destDir, picType, entity, maxUploadSize, userid)
 	if err != nil {
 		return "", "", err

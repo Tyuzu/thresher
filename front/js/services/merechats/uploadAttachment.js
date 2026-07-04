@@ -32,6 +32,22 @@ function isValidFile(file) {
   }
 }
 
+function getUploadKey(file) {
+  if (file.type.startsWith("image/")) {
+    return "photo";
+  }
+
+  if (file.type.startsWith("video/")) {
+    return "video";
+  }
+
+  if (file.type.startsWith("audio/")) {
+    return "audio";
+  }
+
+  return "file";
+}
+
 function createOptimisticMessage(file, mediaId, clientId) {
   const previewUrl = URL.createObjectURL(file);
 
@@ -156,6 +172,7 @@ async function uploadSingleFile(
       uploadFile({
         id: mediaId,
         file,
+        key: getUploadKey(file),
         entityType: "chat",
         entityId: String(chatid),
 

@@ -78,15 +78,37 @@ function renderOwnerControls(baito, container, isLoggedIn) {
     Button("Chats", "chats-btn-baito", { click: () => navigate("/merechats") }, "buttonx btn-secondary"),
     Button("Close job", "close-btn-baito", {
       click: () => {
-        alert("TODO close job");
+        Notify("Closing jobs is not available yet. Please edit the listing instead.", { type: "info", duration: 3000, dismissible: true });
       }
     }, "buttonx btn-secondary"),
   ]);
 }
 
+function hasValidDeadline(value) {
+  if (!value) {
+    return false;
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  return date.getUTCFullYear() > 1;
+}
+
+function isBaitoExpired(baito) {
+  if (!hasValidDeadline(baito?.lastdate)) {
+    return false;
+  }
+
+  const deadline = baito.lastdate instanceof Date ? baito.lastdate : new Date(baito.lastdate);
+  return deadline < new Date();
+}
+
 /** Applicant controls */
 function renderApplicantControls(baito, baitoid, isOwner, container, isLoggedIn) {
-  const expired = baito.lastdate && new Date(baito.lastdate) < new Date();
+  const expired = isBaitoExpired(baito);
   return createElement("div", { class: "baito-user-controls" }, [
     Button(expired ? "⏳ Job Expired" : "📩 Apply / Contact", "apply-btn", {
       click: async (e) => {
@@ -180,15 +202,16 @@ function createEmployerSection(employer, baito) {
 /** Job meta info */
 function createMetaSection(baito) {
   const wageText = isNaN(Number(baito.wage)) ? baito.wage : `¥${Number(baito.wage).toLocaleString()}/hour`;
+  const hasDeadline = hasValidDeadline(baito.lastdate);
 
   const metaLines = [
     baito.category && baito.subcategory ? `📂 ${baito.category} › ${baito.subcategory}` : baito.category ? `📂 ${baito.category}` : null,
     baito.wage ? `💴 Wage: ${wageText}` : null,
     baito.workHours ? `⏰ Hours: ${baito.workHours}` : null,
+    baito.duration ? `🗓️ Duration: ${baito.duration}` : null,
     baito.location ? `📍 Location: ${baito.location}` : null,
     baito.phone ? `📞 Contact: ${baito.phone}` : null,
-    // baito.lastdate ? `⏳ Apply by: ${new Date(baito.lastdate).toLocaleDateString()}` : null,
-    baito.lastdate ? `⏳ Apply by: ${Datex(baito.lastdate, true)}` : null,
+    hasDeadline ? `⏳ Apply by: ${Datex(baito.lastdate, true)}` : null,
     // baito.createdAt ? `📅 Posted: ${new Date(baito.createdAt).toLocaleDateString()}` : null,
     baito.createdAt ? `📅 Posted: ${Datex(baito.createdAt, true)}` : null,
     typeof baito.applicationcount === "number" ? `👥 Applications: ${baito.applicationcount}` : null,

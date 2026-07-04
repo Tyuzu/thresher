@@ -17,18 +17,20 @@ import (
 )
 
 type BaitoRequest struct {
-	Title        string
-	Description  string
-	Category     string
-	SubCategory  string
-	Location     string
-	Wage         string
-	Phone        string
-	Requirements string
-	WorkHours    string
-	Benefits     string
-	Email        string
-	Tags         []string
+	Title           string
+	Description     string
+	Category        string
+	SubCategory     string
+	Location        string
+	Wage            string
+	Phone           string
+	Requirements    string
+	WorkHours       string
+	Benefits        string
+	Email           string
+	Tags            []string
+	Duration        string
+	LastDateToApply string
 }
 
 func parseTags(raw string) []string {
@@ -53,19 +55,35 @@ func ParseBaitoRequest(r *http.Request) (BaitoRequest, error) {
 	}
 
 	return BaitoRequest{
-		Title:        strings.TrimSpace(r.FormValue("title")),
-		Description:  strings.TrimSpace(r.FormValue("description")),
-		Category:     strings.TrimSpace(r.FormValue("category")),
-		SubCategory:  strings.TrimSpace(r.FormValue("subcategory")),
-		Location:     strings.TrimSpace(r.FormValue("location")),
-		Wage:         strings.TrimSpace(r.FormValue("wage")),
-		Phone:        strings.TrimSpace(r.FormValue("phone")),
-		Requirements: strings.TrimSpace(r.FormValue("requirements")),
-		WorkHours:    strings.TrimSpace(r.FormValue("workHours")),
-		Benefits:     strings.TrimSpace(r.FormValue("benefits")),
-		Email:        strings.TrimSpace(r.FormValue("email")),
-		Tags:         parseTags(r.FormValue("tags")),
+		Title:           strings.TrimSpace(r.FormValue("title")),
+		Description:     strings.TrimSpace(r.FormValue("description")),
+		Category:        strings.TrimSpace(r.FormValue("category")),
+		SubCategory:     strings.TrimSpace(r.FormValue("subcategory")),
+		Location:        strings.TrimSpace(r.FormValue("location")),
+		Wage:            strings.TrimSpace(r.FormValue("wage")),
+		Phone:           strings.TrimSpace(r.FormValue("phone")),
+		Requirements:    strings.TrimSpace(r.FormValue("requirements")),
+		WorkHours:       strings.TrimSpace(r.FormValue("workHours")),
+		Benefits:        strings.TrimSpace(r.FormValue("benefits")),
+		Email:           strings.TrimSpace(r.FormValue("email")),
+		Tags:            parseTags(r.FormValue("tags")),
+		Duration:        strings.TrimSpace(r.FormValue("duration")),
+		LastDateToApply: strings.TrimSpace(r.FormValue("lastDateToApply")),
 	}, nil
+}
+
+func parseOptionalDate(value string) (time.Time, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return time.Time{}, false
+	}
+
+	parsed, err := time.Parse("2006-01-02", value)
+	if err != nil {
+		return time.Time{}, false
+	}
+
+	return parsed.UTC(), true
 }
 
 func (r BaitoRequest) Validate() error {
@@ -88,6 +106,12 @@ func (r BaitoRequest) Validate() error {
 		return errors.New("requirements are required")
 	case r.WorkHours == "":
 		return errors.New("work hours are required")
+	case r.Duration == "" && r.LastDateToApply == "":
+		return errors.New("please provide either a job duration or an application deadline")
+	case r.LastDateToApply != "":
+		if _, ok := parseOptionalDate(r.LastDateToApply); !ok {
+			return errors.New("application deadline must be a valid YYYY-MM-DD date")
+		}
 	}
 
 	return nil
@@ -95,24 +119,30 @@ func (r BaitoRequest) Validate() error {
 
 func (r BaitoRequest) ToModel(userID string) models.Baito {
 	now := time.Now()
+	var deadline *time.Time
+	if parsed, ok := parseOptionalDate(r.LastDateToApply); ok {
+		deadline = &parsed
+	}
 
 	return models.Baito{
-		BaitoId:      utils.GenerateRandomString(15),
-		Title:        r.Title,
-		Description:  r.Description,
-		Category:     r.Category,
-		SubCategory:  r.SubCategory,
-		Location:     r.Location,
-		Wage:         r.Wage,
-		Phone:        r.Phone,
-		Requirements: r.Requirements,
-		WorkHours:    r.WorkHours,
-		Benefits:     r.Benefits,
-		Email:        r.Email,
-		Tags:         r.Tags,
-		OwnerID:      userID,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		BaitoId:         utils.GenerateRandomString(15),
+		Title:           r.Title,
+		Description:     r.Description,
+		Category:        r.Category,
+		SubCategory:     r.SubCategory,
+		Location:        r.Location,
+		Wage:            r.Wage,
+		Phone:           r.Phone,
+		Requirements:    r.Requirements,
+		WorkHours:       r.WorkHours,
+		Benefits:        r.Benefits,
+		Email:           r.Email,
+		Tags:            r.Tags,
+		Duration:        r.Duration,
+		LastDateToApply: deadline,
+		OwnerID:         userID,
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 }
 
@@ -161,6 +191,14 @@ func (r BaitoRequest) BuildUpdate() bson.M {
 
 	if r.Email != "" {
 		set["email"] = r.Email
+	}
+
+	if r.Duration != "" {
+		set["duration"] = r.Duration
+	}
+
+	if deadline, ok := parseOptionalDate(r.LastDateToApply); ok {
+		set["lastdate"] = deadline
 	}
 
 	if len(r.Tags) > 0 {

@@ -232,7 +232,8 @@ export async function uploadFiles(
     entityType = "media",
     entityId = "",
     concurrency = 3,
-    retry = 0
+    retry = 0,
+    key
   } = options;
 
   const items = Array.from(files).map(
@@ -249,7 +250,11 @@ export async function uploadFiles(
         id,
         file,
         entityType,
-        entityId
+        entityId,
+        key:
+          typeof key === "function"
+            ? key(file)
+            : key || "file"
       };
     }
   );

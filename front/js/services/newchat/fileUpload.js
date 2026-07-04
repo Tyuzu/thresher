@@ -27,6 +27,22 @@ export function setupFileUpload(
     );
   }
 
+  function getUploadKey(file) {
+    if (file.type.startsWith("image/")) {
+      return "photo";
+    }
+
+    if (file.type.startsWith("video/")) {
+      return "video";
+    }
+
+    if (file.type.startsWith("audio/")) {
+      return "audio";
+    }
+
+    return "file";
+  }
+
   function setUploading(state) {
     uploading = state;
 
@@ -81,7 +97,8 @@ export function setupFileUpload(
               chatid
             ),
             concurrency: 3,
-            retry: 1
+            retry: 1,
+            key: getUploadKey
           }
         );
 

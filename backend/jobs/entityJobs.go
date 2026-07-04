@@ -49,13 +49,14 @@ func CreateBaitoForEntity(app *infra.Deps) httprouter.Handle {
 
 		// Assign controlled/system values
 		now := time.Now()
+		dueDate := now.AddDate(0, 1, 0)
 		baito.BaitoId = utils.GenerateRandomString(15)
 		baito.EntityType = entityType
 		baito.EntityID = entityID
 		baito.OwnerID = userID
 		baito.CreatedAt = now
 		baito.UpdatedAt = now
-		baito.LastDateToApply = now.AddDate(0, 1, 0)
+		baito.LastDateToApply = &dueDate
 		baito.ApplicationCount = 0
 
 		// Insert using Database interface

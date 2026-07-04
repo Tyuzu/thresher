@@ -34,6 +34,19 @@ function populateSelect(select, options, selectedValue = "") {
   select.value = selectedValue || "";
 }
 
+function formatDateInputValue(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toISOString().split("T")[0];
+}
+
 // --- Create all form groups ---
 function buildForm(baito) {
   const form = createElement("form", { enctype: "multipart/form-data" });
@@ -67,6 +80,8 @@ function buildForm(baito) {
   const fields = [
     { label: "Job Title", type: "text", id: "baito-title", required: true, value: baito.title || "", placeholder: "Enter job title" },
     { label: "Working Hours", type: "text", id: "baito-workinghours", required: true, value: baito.workHours || "", placeholder: "e.g. 9:00-17:00" },
+    { label: "Application Deadline", type: "date", id: "baito-lastdate", value: formatDateInputValue(baito.lastdate), placeholder: "Select deadline" },
+    { label: "Job Duration", type: "text", id: "baito-duration", value: baito.duration || "", placeholder: "e.g. 2 weeks or 1 month" },
     { label: "Description", type: "textarea", id: "baito-description", required: true, value: baito.description || "", placeholder: "Job description", additionalNodes: [descriptionCounter] },
     { label: "Requirements", type: "textarea", id: "baito-requirements", required: true, value: baito.requirements || "", placeholder: "Requirements", additionalNodes: [reqCounter] },
     { label: "Tags (comma separated)", type: "text", id: "baito-tags", value: (baito.tags || []).join(", "), placeholder: "e.g. part-time, weekend" },
@@ -100,6 +115,13 @@ function validateForm(form) {
     Notify("Please fill in all required fields.", { type: "warning", duration: 3000, dismissible: true });
     return null;
   }
+
+  const deadline = fd.get("baito-lastdate")?.toString().trim();
+  const duration = fd.get("baito-duration")?.toString().trim();
+  if (!deadline && !duration) {
+    Notify("Please enter either an application deadline or a job duration.", { type: "warning", duration: 3000, dismissible: true });
+    return null;
+  }
   if (Number(requiredFields.wage) <= 0) {
     Notify("Wage must be greater than 0.", { type: "warning", duration: 3000, dismissible: true });
     return null;
@@ -114,16 +136,24 @@ function buildPayload(fd, requiredFields, form) {
 
   const tags = fd.get("baito-tags")?.trim();
   if (tags) {
-payload.append("tags", tags);
-}
+    payload.append("tags", tags);
+  }
   const benefits = fd.get("baito-benefits")?.trim();
   if (benefits) {
-payload.append("benefits", benefits);
-}
+    payload.append("benefits", benefits);
+  }
   const email = fd.get("baito-email")?.trim();
   if (email) {
-payload.append("email", email);
-}
+    payload.append("email", email);
+  }
+  const deadline = fd.get("baito-lastdate")?.toString().trim();
+  if (deadline) {
+    payload.append("lastDateToApply", deadline);
+  }
+  const duration = fd.get("baito-duration")?.toString().trim();
+  if (duration) {
+    payload.append("duration", duration);
+  }
 
   return payload;
 }

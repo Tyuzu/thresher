@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
+	"log"
 	"net"
 	"net/url"
 	"os"
@@ -150,6 +151,7 @@ func isMIMEAllowed(mimeType string, picType PictureType) bool {
 }
 
 func ResolvePath(entity EntityType, picType PictureType) string {
+	log.Println("entity", "picType", entity, picType)
 	subfolder := PictureSubfolders[picType]
 	if subfolder == "" {
 		subfolder = "misc"

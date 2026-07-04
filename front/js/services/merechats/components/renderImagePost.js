@@ -18,7 +18,7 @@ async function RenderImagePost(mediaContainer, media) {
       PictureType.THUMB,
       `${id}.jpg`
     );
-
+    
     const img = Imagex({
       src: thumb,
       loading: "lazy",
