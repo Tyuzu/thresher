@@ -1,10 +1,10 @@
 
-import { displayNewChat } from "../../services/newchat/displayNewchat";
-import { getState } from "../../state/state";
+import { displayNewChat } from "../../services/newchat/displayNewchat.js";
+import { getState } from "../../state/state.js";
 
 async function NewChatPage(isLoggedIn, chatid, contentContainer) {
     contentContainer.innerHTML = '';
-    let user = getState("user");
+    const user = getState("user");
     displayNewChat(contentContainer, chatid, isLoggedIn, user);
 }
 

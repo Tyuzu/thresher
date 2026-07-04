@@ -1,6 +1,22 @@
 import { apiFetch } from "../../api/api.js";
 import { uploadFiles } from "../media/api/mediaApi.js";
 
+function getUploadKey(file) {
+  if (file.type.startsWith("image/")) {
+    return "photo";
+  }
+
+  if (file.type.startsWith("video/")) {
+    return "video";
+  }
+
+  if (file.type.startsWith("audio/")) {
+    return "audio";
+  }
+
+  return "file";
+}
+
 export function setupFileUpload(
   fileInput,
   uploadButton,
@@ -25,22 +41,6 @@ export function setupFileUpload(
       isImage &&
       file.size <= MAX_FILE_SIZE
     );
-  }
-
-  function getUploadKey(file) {
-    if (file.type.startsWith("image/")) {
-      return "photo";
-    }
-
-    if (file.type.startsWith("video/")) {
-      return "video";
-    }
-
-    if (file.type.startsWith("audio/")) {
-      return "audio";
-    }
-
-    return "file";
   }
 
   function setUploading(state) {
