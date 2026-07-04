@@ -24,4 +24,11 @@ func AddPayRoutes(r *httprouter.Router, app *infra.Deps, rl *middleware.RateLimi
 
 	// Cash-on-delivery payment endpoint
 	r.POST("/api/v1/payments/cash-on-delivery", middleware.Chain(rl.Limit, auth, middleware.WithTxn)(paySvc.CashOnDelivery))
+
+	// Refund request endpoints
+	r.POST("/api/v1/refunds/request", middleware.Chain(rl.Limit, auth)(pay.CreateRefundRequest(app)))
+	r.GET("/api/v1/refunds/my-requests", middleware.Chain(rl.Limit, auth)(pay.GetMyRefundRequests(app)))
+	r.GET("/api/v1/refunds/all", middleware.Chain(rl.Limit, auth)(pay.GetAllRefundRequests(app)))
+	r.POST("/api/v1/refunds/approve/:id", middleware.Chain(rl.Limit, auth, middleware.WithTxn)(pay.ApproveRefundRequest(app)))
+	r.POST("/api/v1/refunds/reject/:id", middleware.Chain(rl.Limit, auth)(pay.RejectRefundRequest(app)))
 }

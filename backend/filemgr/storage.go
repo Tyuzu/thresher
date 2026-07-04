@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"mime/multipart"
+	"naevis/utils"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -24,7 +25,6 @@ func SaveFileForEntity(file multipart.File, header *multipart.FileHeader, entity
 
 func saveFileAndProcess(file multipart.File, header *multipart.FileHeader, entity EntityType, picType PictureType, thumbWidth int, userid string) (string, string, error) {
 	destDir := ResolvePath(entity, picType)
-
 	filename, ext, fullPath, err := writeValidatedFile(file, header, destDir, picType, entity, maxUploadSize, userid)
 	if err != nil {
 		return "", "", err
@@ -88,10 +88,12 @@ func writeValidatedFile(reader io.Reader, header *multipart.FileHeader, destDir 
 		return "", "", "", fmt.Errorf("mkdir %s: %w", destDir, err)
 	}
 
-	originalName := ""
-	if header != nil {
-		originalName = header.Filename
-	}
+	originalName := utils.GetUUID()
+
+	//	originalName := ""
+	//	if header != nil {
+	//		originalName = header.Filename
+	//	}
 	filenameOnly, finalExt := getSafeFilename(originalName, safeExt, userid, entityType, picType, func(s string) string { return s })
 
 	fullPath := filepath.Join(destDir, filenameOnly+finalExt)

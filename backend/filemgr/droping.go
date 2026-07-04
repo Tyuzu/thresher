@@ -97,7 +97,8 @@ func convertToAttachments(serviceAttachments []Attachment) []Attachment {
 }
 
 func updateEntityMedia(app *infra.Deps, entityType string, entityId string, attachments []Attachment) error {
-	log.Println("updateEntityMedia:", entityType, entityId, attachments)
+	log.Println("updateEntityMedia:", entityType, entityId)
+	log.Println("updateEntityMedia:", attachments)
 	meta, ok := entityMeta[entityType]
 	if !ok {
 		return fmt.Errorf("unsupported entity type: %s", entityType)
@@ -105,7 +106,7 @@ func updateEntityMedia(app *infra.Deps, entityType string, entityId string, atta
 
 	filter := bson.M{meta.IDField: entityId}
 	setFields := bson.M{}
-	var photos []string
+	var images []string
 
 	for _, attachment := range attachments {
 		key := PictureType(strings.ToLower(strings.TrimSpace(attachment.Key)))
@@ -121,7 +122,9 @@ func updateEntityMedia(app *infra.Deps, entityType string, entityId string, atta
 		case PicSeating:
 			setFields["seating"] = attachment.Filename
 		case PicPhoto:
-			photos = append(photos, attachment.Filename)
+			setFields["photo"] = attachment.Filename
+		case PicImage:
+			images = append(images, attachment.Filename)
 		case PicVideo:
 			setFields["video"] = attachment.Filename
 		case PicAudio:
@@ -139,8 +142,8 @@ func updateEntityMedia(app *infra.Deps, entityType string, entityId string, atta
 	if len(setFields) > 0 {
 		update["$set"] = setFields
 	}
-	if len(photos) > 0 {
-		update["$push"] = bson.M{"photos": bson.M{"$each": photos}}
+	if len(images) > 0 {
+		update["$push"] = bson.M{"images": bson.M{"$each": images}}
 	}
 	if len(update) == 0 {
 		return nil

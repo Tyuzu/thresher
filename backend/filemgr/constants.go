@@ -37,6 +37,7 @@ const (
 	PicFile     PictureType = "file"
 	PicMember   PictureType = "member"
 	PicPhoto    PictureType = "photo"
+	PicImage    PictureType = "images"
 	PicPoster   PictureType = "poster"
 	PicSeating  PictureType = "seating"
 	PicSong     PictureType = "song"
