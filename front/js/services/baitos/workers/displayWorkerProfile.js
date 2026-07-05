@@ -31,7 +31,7 @@ export async function displayWorkerProfile(contentContainer, isLoggedIn, workerI
   const aside = createElement("aside", { class: "worker-profile-aside" });
 
   const bookingContainer = createElement("div", { class: "booking-container" });
-  const slots = await getSlots(worker.baitoUserId);
+  const slots = await getSlots(worker.baitoWorkerId);
 
   // ===== HEADER =====
   const header = createElement("section", { class: "worker-profile-header card" }, [
@@ -84,7 +84,7 @@ export async function displayWorkerProfile(contentContainer, isLoggedIn, workerI
   container.replaceChildren(layout);
 
   // Load booking widget
-  displayBooking({ entityType: "worker", entityId: worker.baitoUserId, userId: getState("user") || "guest" }, bookingContainer);
+  displayBooking({ entityType: "worker", entityId: worker.baitoWorkerId, userId: getState("user") || "guest" }, bookingContainer);
 }
 
 // ===== HELPERS =====
@@ -180,7 +180,7 @@ function createSidebarActions(worker, isLoggedIn) {
           Notify("Login required", { type: "warning" });
           return;
         }
-        meChat(worker.userId, "worker", worker.baitoUserId);
+        meChat(worker.userId, "worker", worker.baitoWorkerId);
       }
     }, "secondary")
   );
@@ -189,8 +189,8 @@ function createSidebarActions(worker, isLoggedIn) {
     Button("⭐ Save", "", {
       click: () => {
         const fav = JSON.parse(localStorage.getItem("favoriteWorkers") || "[]");
-        if (!fav.includes(worker.baitoUserId)) {
-          fav.push(worker.baitoUserId);
+        if (!fav.includes(worker.baitoWorkerId)) {
+          fav.push(worker.baitoWorkerId);
           localStorage.setItem("favoriteWorkers", JSON.stringify(fav));
         }
         Notify("Added to favorites!", { type: "success" });

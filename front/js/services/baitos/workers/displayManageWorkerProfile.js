@@ -32,7 +32,7 @@ export async function displayManageWorkerProfile(contentContainer, isLoggedIn, w
         createEditableWorkerPhoto(worker),
         createElement("div", { class: "header-content" }, [
             createElement("h2", {}, [worker.name || "Your Worker Profile"]),
-            createElement("p", { class: "profile-id" }, [`Worker ID: ${worker.baitoUserId}`]),
+            createElement("p", { class: "profile-id" }, [`Worker ID: ${worker.baitoWorkerId}`]),
             createElement("p", { class: "joined-date" }, [`Joined: ${formatDate(worker.createdAt)}`])
         ])
     ]);
@@ -110,7 +110,7 @@ export async function displayManageWorkerProfile(contentContainer, isLoggedIn, w
         {
             id: "bookings",
             title: "Bookings",
-            render: (container) => loadWorkerBookings(worker.baitoUserId, container)
+            render: (container) => loadWorkerBookings(worker.baitoWorkerId, container)
         },
         {
             id: "settings",
@@ -132,7 +132,7 @@ export async function displayManageWorkerProfile(contentContainer, isLoggedIn, w
                                 }
                                 try {
                                     Notify("Deleting profile...", { type: "info" });
-                                    await apiFetch(`/baitos/worker/${worker.baitoUserId}`, "DELETE");
+                                    await apiFetch(`/baitos/worker/${worker.baitoWorkerId}`, "DELETE");
                                     Notify("Profile deleted.", { type: "success" });
                                     navigate("/baitos/hire");
                                 } catch (err) {
@@ -149,7 +149,7 @@ export async function displayManageWorkerProfile(contentContainer, isLoggedIn, w
     // ===== ACTION HANDLERS =====
     function editProfile() {
         contentContainer.replaceChildren();
-        displayCreateOrEditBaitoProfile(isLoggedIn, contentContainer, "edit", worker.baitoUserId);
+        displayCreateOrEditBaitoProfile(isLoggedIn, contentContainer, "edit", worker.baitoWorkerId);
     }
 
     function updatePhoto() {
@@ -160,7 +160,7 @@ export async function displayManageWorkerProfile(contentContainer, isLoggedIn, w
             stateEntityKey: "worker",
             previewElementId: "worker-avatar-img",
             pictureType: PictureType.PHOTO,
-            entityId: worker.baitoUserId
+            entityId: worker.baitoWorkerId
         });
     }
 
@@ -172,7 +172,7 @@ export async function displayManageWorkerProfile(contentContainer, isLoggedIn, w
             stateEntityKey: "worker",
             previewElementId: null,
             pictureType: PictureType.GALLERY,
-            entityId: worker.baitoUserId
+            entityId: worker.baitoWorkerId
         });
     }
 
@@ -184,11 +184,11 @@ export async function displayManageWorkerProfile(contentContainer, isLoggedIn, w
             stateEntityKey: "worker",
             previewElementId: null,
             pictureType: PictureType.DOCUMENT,
-            entityId: worker.baitoUserId
+            entityId: worker.baitoWorkerId
         });
     }
 
-    const tabsContainer = createTabs(tabsConfig, `worker-profile-${worker.baitoUserId}`, "overview");
+    const tabsContainer = createTabs(tabsConfig, `worker-profile-${worker.baitoWorkerId}`, "overview");
 
     main.replaceChildren(header, tabsContainer);
     layout.appendChild(main);

@@ -1,7 +1,7 @@
 import Modal from "../components/ui/Modal.mjs";
 import { createElement } from "../components/createElement.js";
 import Notify from "../components/ui/Notify.mjs";
-import { openCropper } from "./cropper";
+import { openCropper } from "./cropper/index.js";
 import { bannerFetch } from "../api/api.js";
 import { resolveImagePath } from "./imagePaths.js";
 import {

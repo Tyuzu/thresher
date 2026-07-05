@@ -44,11 +44,11 @@ return null;
     !isSelf && isLoggedIn
       ? Button(
         "View Profile",
-        `hire-${worker.baitoUserId}`,
+        `hire-${worker.baitoWorkerId}`,
         {
           click: (e) => {
             e.stopPropagation();
-            navigate(`/baitos/worker/${worker.baitoUserId}`);
+            navigate(`/baitos/worker/${worker.baitoWorkerId}`);
           }
         },
         "btn btn-primary",
@@ -64,7 +64,7 @@ return null;
   card.appendChild(details);
 
   // Click anywhere on card to view profile
-  card.addEventListener("click", () => navigate(`/baitos/worker/${worker.baitoUserId}`));
+  card.addEventListener("click", () => navigate(`/baitos/worker/${worker.baitoWorkerId}`));
 
   return card;
   // return createElement("a", {

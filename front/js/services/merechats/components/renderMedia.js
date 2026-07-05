@@ -3,12 +3,13 @@ import { resolveImagePath, EntityType, PictureType } from "../../../utils/imageP
 import { RenderImagePost } from "./renderImagePost.js";
 import { RenderAudioPost } from "./renderAudioPost.js";
 import { RenderVideoPost } from "./renderVideoPost.js";
+import Imagex from "../../../components/base/Imagex.js";
 
 export function renderMedia(msg) {
   const media = msg?.media;
   if (!media) {
-return null;
-}
+    return null;
+  }
 
   const container = createElement("div", { class: "mediacon" }, []);
   const items = Array.isArray(media) ? media : [media];
@@ -18,8 +19,8 @@ return null;
     for (const m of items) {
       const raw = String(m.url || "").trim();
       if (!raw) {
-continue;
-}
+        continue;
+      }
 
       const type = String(m.mimeType || m.type || "").toLowerCase();
 
@@ -38,13 +39,17 @@ continue;
         continue;
       }
 
-      const href = raw.startsWith("http")
-        ? raw
-        : resolveImagePath(EntityType.CHAT, PictureType.PHOTO, raw);
+      //      const href = raw.startsWith("http")
+      //        ? raw
+      //        : resolveImagePath(EntityType.CHAT, PictureType.PHOTO, raw);
 
-      container.appendChild(
-        createElement("a", { href, download: "", class: "msg-file" }, [raw])
-      );
+      //      container.appendChild(
+      //        createElement("a", { href, download: "", class: "msg-file" }, [raw])
+      //      );
+
+      const chatImage = createElement("div", {}, []);
+      RenderImagePost(chatImage, [raw]);
+      container.appendChild(chatImage);
     }
 
     if (imageIds.length) {

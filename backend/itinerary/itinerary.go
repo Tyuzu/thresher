@@ -119,7 +119,7 @@ func UpdateItinerary(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"message": "Itinerary updated successfully"})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"status": "200", "message": "Itinerary updated successfully"})
 	}
 }
 

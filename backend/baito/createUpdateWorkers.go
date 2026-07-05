@@ -58,21 +58,21 @@ func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M
 		set["updatedAt"] = time.Now().Unix()
 	} else {
 		worker = models.BaitoWorker{
-			UserID:       utils.GetUserIDFromRequest(r),
-			BaitoUserID:  utils.GenerateRandomString(12),
-			Name:         r.FormValue("name"),
-			Age:          age,
-			Phone:        r.FormValue("phone"),
-			Location:     r.FormValue("location"),
-			Preferred:    roles,
-			Bio:          r.FormValue("bio"),
-			Email:        r.FormValue("email"),
-			Experience:   r.FormValue("experience"),
-			Skills:       r.FormValue("skills"),
-			Availability: r.FormValue("availability"),
-			ExpectedWage: r.FormValue("expected_wage"),
-			Languages:    r.FormValue("languages"),
-			CreatedAt:    time.Now().Unix(),
+			UserID:        utils.GetUserIDFromRequest(r),
+			BaitoWorkerId: utils.GenerateRandomString(12),
+			Name:          r.FormValue("name"),
+			Age:           age,
+			Phone:         r.FormValue("phone"),
+			Location:      r.FormValue("location"),
+			Preferred:     roles,
+			Bio:           r.FormValue("bio"),
+			Email:         r.FormValue("email"),
+			Experience:    r.FormValue("experience"),
+			Skills:        r.FormValue("skills"),
+			Availability:  r.FormValue("availability"),
+			ExpectedWage:  r.FormValue("expected_wage"),
+			Languages:     r.FormValue("languages"),
+			CreatedAt:     time.Now().Unix(),
 		}
 	}
 
@@ -122,7 +122,7 @@ func CreateWorkerProfile(app *infra.Deps) httprouter.Handle {
 		}
 
 		worker.UserID = userID
-		worker.BaitoUserID = userID
+		worker.BaitoWorkerId = userID
 
 		if err = app.DB.Insert(ctx, BaitoWorkersCollection, worker); err != nil {
 			log.Printf("Insert error: %v", err)
@@ -166,8 +166,8 @@ func UpdateWorkerProfile(app *infra.Deps) httprouter.Handle {
 		}
 
 		filter := bson.M{
-			"baitoUserId": workerID,
-			"userId":      userID,
+			"baitoWorkerId": workerID,
+			"userId":        userID,
 		}
 
 		err = app.DB.UpdateOne(ctx, BaitoWorkersCollection, filter, update)

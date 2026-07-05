@@ -28,7 +28,7 @@ func GetWorkerById(app *infra.Deps) httprouter.Handle {
 		err := app.DB.FindOne(
 			ctx,
 			BaitoWorkersCollection,
-			bson.M{"baitoUserId": ps.ByName("workerId")},
+			bson.M{"baitoWorkerId": ps.ByName("workerId")},
 			&worker,
 		)
 		if err != nil {

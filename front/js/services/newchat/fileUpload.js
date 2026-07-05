@@ -1,7 +1,7 @@
 import { apiFetch } from "../../api/api.js";
 import { uploadFiles } from "../media/api/mediaApi.js";
 
-function getUploadKey(file) {
+export function getUploadKey(file) {
   if (file.type.startsWith("image/")) {
     return "photo";
   }

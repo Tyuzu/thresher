@@ -1,6 +1,7 @@
 import { apiFetch } from "../../api/api.js";
 import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
+import Notify from "../../components/ui/Notify.mjs";
 import { navigate } from "../../routes/index.js";
 
 let dayCount = 0;
@@ -9,8 +10,8 @@ let dayCount = 0;
 
 function clearNode(node) {
   while (node.firstChild) {
-node.removeChild(node.firstChild);
-}
+    node.removeChild(node.firstChild);
+  }
 }
 
 function showFormError(form, message) {
@@ -27,8 +28,8 @@ function showFormError(form, message) {
 function clearFormError(form) {
   const box = form.querySelector(".form-error");
   if (box) {
-box.textContent = "";
-}
+    box.textContent = "";
+  }
 }
 
 function createInputField({ name, type, placeholder, required, id, label, value, classes }) {
@@ -46,17 +47,17 @@ function createInputField({ name, type, placeholder, required, id, label, value,
       : createElement("input", { type, name, id }, []);
 
   if (placeholder) {
-input.setAttribute("placeholder", placeholder);
-}
+    input.setAttribute("placeholder", placeholder);
+  }
   if (required) {
-input.required = true;
-}
+    input.required = true;
+  }
   if (value !== undefined) {
-input.value = value;
-}
+    input.value = value;
+  }
   if (classes) {
-input.setAttribute("class", classes);
-}
+    input.setAttribute("class", classes);
+  }
 
   group.append(input);
   return group;
@@ -72,8 +73,8 @@ function createTransportDropdown(selected) {
   ["airplane", "car", "train", "walking", "other"].forEach(v => {
     const opt = createElement("option", { value: v }, [v]);
     if (selected === v) {
-opt.selected = true;
-}
+      opt.selected = true;
+    }
     select.append(opt);
   });
 
@@ -190,8 +191,8 @@ function createStatusDropdown(selected) {
   ["draft", "confirmed"].forEach(v => {
     const opt = createElement("option", { value: v }, [v]);
     if (selected === v) {
-opt.selected = true;
-}
+      opt.selected = true;
+    }
     select.append(opt);
   });
 
@@ -207,8 +208,8 @@ function buildPayload(form, daysContainer, itineraryId) {
   daysContainer.querySelectorAll(".day-section").forEach(dayDiv => {
     const date = dayDiv.querySelector(".day-date").value;
     if (!date) {
-return;
-}
+      return;
+    }
 
     const visits = [];
     dayDiv.querySelectorAll(".visit-entry").forEach(v => {
@@ -217,24 +218,24 @@ return;
       const end = v.querySelector(".end-time").value;
 
       if (!location || !start || !end) {
-return;
-}
+        return;
+      }
       if (start >= end) {
-return;
-}
+        return;
+      }
 
       const t = v.querySelector(".transport-mode");
       const visit = { location, start_time: start, end_time: end };
       if (t) {
-visit.transport = t.value;
-}
+        visit.transport = t.value;
+      }
 
       visits.push(visit);
     });
 
     if (visits.length) {
-days.push({ date, visits });
-}
+      days.push({ date, visits });
+    }
   });
 
   return {
@@ -313,11 +314,13 @@ export async function renderItineraryForm(container, isLoggedIn, mode = "create"
 
       const method = mode === "edit" ? "PUT" : "POST";
 
-      const response = await apiFetch(url, method, JSON.stringify(payload));
+      const response = await apiFetch(url, method, payload);
 
       if (!response) {
         throw new Error("Server returned an empty response.");
       }
+
+      Notify("Successfully updated ", { type: "success" });
 
       navigate("/itinerary");
       // window.dispatchEvent(
