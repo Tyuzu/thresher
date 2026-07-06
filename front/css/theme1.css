@@ -97,7 +97,7 @@
 }
 
 /* === Dark Theme === */
-
+/*
 @media (prefers-color-scheme: dark) {
 
   :root {
@@ -124,7 +124,7 @@
     --stroke-svg: #ffffff;
   }
 }
-
+*/
 [data-theme="dark"] {
   --color-bg: #0f172a;
   --color-fg: #f1f5f9;

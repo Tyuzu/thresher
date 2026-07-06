@@ -47,7 +47,7 @@ const createVideoElement = (src, resolutions, poster) => {
     : src;
 
   video.src = defaultSrc;
-  video.poster = poster || `${baseSrc}.png`;
+  video.poster = poster || `${baseSrc}`;
 
 
   return video;

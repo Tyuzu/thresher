@@ -65,11 +65,11 @@
   transition: background 0.2s ease;
   font-size: 0.9rem;
 }
-
+/* 
 .navigation__link:hover {
   background: var(--nav-link-hover-bg, #ccc);
   color: var(--nav-link-color, #111);
-}
+} */
 
 .navigation__link.active {
   font-weight: bold;

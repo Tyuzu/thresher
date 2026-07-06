@@ -139,7 +139,7 @@
 
 .postpage .image-group img,
 .postpage .image-group .post-image {
-  width: 100%;
+  /*width: 100%;*/
   max-height: 60ch;
   height: auto;
   border-radius: var(--radius);

@@ -32,13 +32,32 @@ func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request, _ http
 
 	senderAcc, err := p.getOrCreateAccount(ctx, senderID)
 	if err != nil {
+		if err.Error() == "user_not_found" {
+			utils.RespondWithError(w, http.StatusBadRequest, "sender not found")
+			return
+		}
 		utils.RespondWithError(w, http.StatusInternalServerError, "account error")
 		return
 	}
 
 	recipientAcc, err := p.getOrCreateAccount(ctx, req.Recipient)
 	if err != nil {
+		if err.Error() == "user_not_found" {
+			utils.RespondWithError(w, http.StatusBadRequest, "recipient not found")
+			return
+		}
 		utils.RespondWithError(w, http.StatusInternalServerError, "recipient error")
+		return
+	}
+
+	recipientAccount, err := p.getAccountByID(ctx, recipientAcc)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "recipient account error")
+		return
+	}
+
+	if err := p.ensureAccountActive(recipientAccount); err != nil {
+		utils.RespondWithError(w, http.StatusForbidden, "recipient account is not active")
 		return
 	}
 

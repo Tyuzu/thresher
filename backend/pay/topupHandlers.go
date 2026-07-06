@@ -21,8 +21,20 @@ func (p *PaymentService) TopUp(w http.ResponseWriter, r *http.Request, _ httprou
 		Method string `json:"method"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Amount <= 0 {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Amount <= 0 || req.Method == "" {
 		utils.RespondWithError(w, http.StatusBadRequest, "invalid request")
+		return
+	}
+
+	allowedMethods := map[string]bool{"card": true, "upi": true, "bank": true}
+	if !allowedMethods[req.Method] {
+		utils.RespondWithError(w, http.StatusBadRequest, "unsupported topup method")
+		return
+	}
+
+	const maxTopUpAmount = 10000000 // ₹100,000 in paise
+	if req.Amount > maxTopUpAmount {
+		utils.RespondWithError(w, http.StatusBadRequest, "topup amount exceeds maximum allowed")
 		return
 	}
 

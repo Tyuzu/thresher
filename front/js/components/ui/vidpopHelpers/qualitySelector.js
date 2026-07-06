@@ -1,11 +1,26 @@
 import { createElement } from "../../createElement";
 
 export function createQualitySelector(video, qualities) {
-  const select = createElement("select", { class: "quality-selector" }, []);
+  const container = createElement("div", {}, []);
+
+  const label = createElement(
+    "label",
+    { for: "quality-selector" },
+    ["Quality:"]
+  );
+
+  const select = createElement(
+    "select",
+    {
+      id: "quality-selector",
+      class: "quality-selector",
+    },
+    []
+  );
 
   // Infer current quality from video src
   const currentSrc = video.currentSrc || video.src;
-  const inferred = qualities.find(q => currentSrc.includes(q.src))?.label;
+  const inferred = qualities.find((q) => currentSrc.includes(q.src))?.label;
 
   // Fallback: stored preference or first available quality
   const stored = localStorage.getItem("videoQuality");
@@ -18,10 +33,11 @@ export function createQualitySelector(video, qualities) {
   });
 
   select.addEventListener("change", (e) => {
-    const selected = qualities.find(q => q.label === e.target.value);
+    const selected = qualities.find((q) => q.label === e.target.value);
+
     if (!selected) {
-return;
-}
+      return;
+    }
 
     // Only reload if actual src differs
     if (video.src !== selected.src) {
@@ -35,9 +51,10 @@ return;
         "loadedmetadata",
         () => {
           video.currentTime = currentTime;
+
           if (!paused) {
-video.play();
-}
+            video.play();
+          }
         },
         { once: true }
       );
@@ -48,5 +65,8 @@ video.play();
     }
   });
 
-  return select;
+  container.appendChild(label);
+  container.appendChild(select);
+
+  return container;
 }

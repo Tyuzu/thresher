@@ -23,10 +23,10 @@ export async function renderRelatedPosts(post) {
     data.related.forEach(rp => {
       const item = createElement("div", { class: "related-item" }, [
         createElement("a", {
-          href: `/posts/${rp.postid}`,
+          href: `/post/${rp.postid}`,
           click: e => {
             e.preventDefault();
-            navigate(`/posts/${rp.postid}`);
+            navigate(`/post/${rp.postid}`);
           }
         }, [rp.title || "Untitled"]),
         createElement("p", { class: "related-meta" }, [

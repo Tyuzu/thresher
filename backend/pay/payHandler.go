@@ -141,7 +141,21 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request, _ httproute
 	// ────────── ACCOUNT RESOLUTION ──────────
 	userAcc, err := p.getOrCreateAccount(ctx, userID)
 	if err != nil {
+		if err.Error() == "user_not_found" {
+			utils.RespondWithError(w, http.StatusInternalServerError, "user account not found")
+			return
+		}
 		utils.RespondWithError(w, http.StatusInternalServerError, "account error")
+		return
+	}
+
+	userAccount, err := p.getAccountByID(ctx, userAcc)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusInternalServerError, "account error")
+		return
+	}
+	if err := p.ensureAccountActive(userAccount); err != nil {
+		utils.RespondWithError(w, http.StatusForbidden, "user account is not active")
 		return
 	}
 
@@ -154,11 +168,29 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request, _ httproute
 	var destinationAcc string
 	if req.PaymentType == "funding" {
 		destinationAcc, err = p.getOrCreateAccount(ctx, req.EntityID)
+		if err != nil {
+			if err.Error() == "user_not_found" {
+				utils.RespondWithError(w, http.StatusBadRequest, "destination user not found")
+				return
+			}
+			utils.RespondWithError(w, http.StatusInternalServerError, "destination account error")
+			return
+		}
 	} else {
 		destinationAcc, err = p.getOrCreateAccount(ctx, "merchant")
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "destination account error")
+			return
+		}
 	}
+
+	destinationAccount, err := p.getAccountByID(ctx, destinationAcc)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "destination account error")
+		return
+	}
+	if err := p.ensureAccountActive(destinationAccount); err != nil {
+		utils.RespondWithError(w, http.StatusForbidden, "destination account is not active")
 		return
 	}
 

@@ -36,8 +36,13 @@ func (p *PaymentService) Refund(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	// Verify user owns the transaction
-	if orig.UserID != "" && orig.UserID != userID {
+	if orig.UserID == "" || orig.UserID != userID {
 		utils.RespondWithError(w, http.StatusForbidden, "unauthorized")
+		return
+	}
+
+	if orig.Type != "payment" {
+		utils.RespondWithError(w, http.StatusBadRequest, "only payment transactions are refundable")
 		return
 	}
 

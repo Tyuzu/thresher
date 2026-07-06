@@ -128,10 +128,17 @@ export function resolveImagePath(
     const hasExt = /\.[a-zA-Z0-9]+$/.test(finalName);
 
     if (!hasExt) {
-        if (pictureType === PictureType.THUMB) {
-            finalName += ".jpg";
-        } else if (isImageType(pictureType)) {
-            finalName += ".png";
+        switch (pictureType) {
+            case PictureType.THUMB:
+            case PictureType.POSTER:
+                finalName += ".jpg";
+                break;
+
+            default:
+                if (isImageType(pictureType)) {
+                    finalName += ".png";
+                }
+                break;
         }
     }
 

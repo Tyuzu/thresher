@@ -15,3 +15,4 @@ var bookingsCollection = config.Collections.BookingsCollection
 var merchCollection = config.Collections.MerchCollection
 var cropsCollection = config.Collections.CropsCollection
 var ordersCollection = config.Collections.OrderCollection
+var usersCollection = config.Collections.UserCollection

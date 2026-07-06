@@ -44,6 +44,11 @@ func (p *PaymentService) CashOnDelivery(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
+	if req.EntityType != "order" && req.EntityType != "cart" {
+		utils.RespondWithError(w, http.StatusBadRequest, "cash on delivery is only supported for orders and carts")
+		return
+	}
+
 	if !rule.AllowedMethods["cod"] {
 		utils.RespondWithError(w, http.StatusBadRequest, "cash on delivery not allowed for this payment type")
 		return

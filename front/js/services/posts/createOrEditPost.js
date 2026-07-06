@@ -7,7 +7,7 @@ import { resolveImagePath, PictureType, EntityType } from "../../utils/imagePath
 import { navigate } from "../../routes/index.js";
 import { uploadFile } from "../media/api/mediaApi.js";
 import Notify from "../../components/ui/Notify.mjs";
-import {getUploadKey} from "../newchat/fileUpload.js";
+import { getUploadKey } from "../newchat/fileUpload.js";
 
 /* ---------------------- BLOCK PLUGINS ---------------------- */
 const BlockPlugins = {
@@ -66,9 +66,9 @@ const BlockPlugins = {
           });
 
           const uploadedImage = await uploadFile({
-            id: (typeof uid === "function" ? uid() : crypto.randomUUID()),
+            id: crypto.randomUUID(),
             file,
-            "key":getUploadKey,
+            key: getUploadKey(file),
             entityType: uploadCtx?.entityType || EntityType.BLOGPOST,
             entityId: String(uploadCtx?.entityId || EntityType.BLOGPOST)
           });

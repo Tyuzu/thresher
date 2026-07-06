@@ -35,24 +35,33 @@ const filters = {
   "Vibrant": "saturate(350%) hue-rotate(15deg)",
   "Night Vision": "brightness(120%) contrast(140%) hue-rotate(90deg)",
 };
-  
-  function createFilterSelector(video) {
-    const filterSelect = document.createElement("select");
-    filterSelect.className = "filter-selector";
-  
-    Object.entries(filters).forEach(([name, value]) => {
-      const option = document.createElement("option");
-      option.value = value;
-      option.textContent = name;
-      filterSelect.appendChild(option);
-    });
-  
-    filterSelect.addEventListener("change", (e) => {
-      video.style.filter = e.target.value;
-    });
-  
-    return filterSelect;
-  }
-  
-  export { createFilterSelector };
-  
+
+function createFilterSelector(video) {
+  const container = document.createElement("div");
+
+  const label = document.createElement("label");
+  label.htmlFor = "filter-selector";
+  label.textContent = "Filter:";
+
+  const filterSelect = document.createElement("select");
+  filterSelect.id = "filter-selector";
+  filterSelect.className = "filter-selector";
+
+  Object.entries(filters).forEach(([name, value]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = name;
+    filterSelect.appendChild(option);
+  });
+
+  filterSelect.addEventListener("change", (e) => {
+    video.style.filter = e.target.value;
+  });
+
+  container.appendChild(label);
+  container.appendChild(filterSelect);
+
+  return container;
+}
+
+export { createFilterSelector };

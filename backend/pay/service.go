@@ -158,6 +158,12 @@ func (p *PaymentService) getOrCreateAccount(ctx context.Context, userID string) 
 		return acc.ID, nil
 	}
 
+	if userID != "merchant" && userID != "external" {
+		if !p.userExists(ctx, userID) {
+			return "", errors.New("user_not_found")
+		}
+	}
+
 	newAcc := models.Account{
 		ID:            utils.GetUUID(),
 		UserID:        userID,
@@ -176,6 +182,28 @@ func (p *PaymentService) getOrCreateAccount(ctx context.Context, userID string) 
 	}
 
 	return newAcc.ID, nil
+}
+
+func (p *PaymentService) userExists(ctx context.Context, userID string) bool {
+	if userID == "" {
+		return false
+	}
+
+	var user models.User
+	return p.app.DB.FindOne(ctx, usersCollection, map[string]any{"userid": userID}, &user) == nil
+}
+
+func (p *PaymentService) getAccountByID(ctx context.Context, accountID string) (models.Account, error) {
+	var acc models.Account
+	err := p.app.DB.FindOne(ctx, accountsCollection, map[string]any{"_id": accountID}, &acc)
+	return acc, err
+}
+
+func (p *PaymentService) ensureAccountActive(acc models.Account) error {
+	if acc.Status != "active" {
+		return errors.New("account_not_active")
+	}
+	return nil
 }
 
 // HELPERS
