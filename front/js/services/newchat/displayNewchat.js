@@ -1,7 +1,8 @@
 import { createElement } from "../../components/createElement.js";
-import { CHAT_WS, state } from "../../state/state.js";
+import { CHAT_WS, getState, setState, state } from "../../state/state.js";
 import { renderMessage } from "./renderMessage.js";
 import { setupFileUpload } from "./fileUpload.js";
+import { playSoundAlert, setChatSoundPreference, resolveSoundPreference } from "../../utils/soundAlerts.js";
 
 let activeSocket = null;
 
@@ -31,11 +32,16 @@ export function displayNewChat(
     activeSocket = socket;
   }
 
+  const messageSoundPreference = resolveSoundPreference({ type: "message", chatId: chatid });
+  const notificationSoundPreference = resolveSoundPreference({ type: "notification", chatId: chatid });
+
   const {
     inputRow,
     inputField,
     sendButton
   } = createInputRow(socket);
+
+  const soundControls = createChatSoundControls(chatid, messageSoundPreference, notificationSoundPreference);
 
   const {
     fileInput,
@@ -48,6 +54,7 @@ export function displayNewChat(
     "div",
     { class: "upcon" },
     [
+      soundControls,
       inputRow,
       fileInput,
       uploadButton,
@@ -84,7 +91,8 @@ export function displayNewChat(
     socket,
     messagesContainer,
     currentUserId,
-    sendButton
+    sendButton,
+    chatid
   );
 
   setupFileUpload(
@@ -176,6 +184,68 @@ function createInputRow(socket) {
   };
 }
 
+function createChatSoundControls(chatid, messagePreference, notificationPreference) {
+  const container = createElement("div", {
+    class: "chat-sound-controls",
+    style: {
+      display: "flex",
+      gap: "0.5rem",
+      flexWrap: "wrap",
+      alignItems: "center",
+      marginBottom: "0.5rem"
+    }
+  });
+
+  const messageTone = createElement("label", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.25rem",
+      fontSize: "0.8rem"
+    }
+  }, [
+    "Message tone",
+    createElement("select", {
+      value: messagePreference.tone,
+      onchange: e => {
+        setChatSoundPreference(chatid, {
+          messageTone: e.target.value
+        });
+      }
+    }, [
+      createElement("option", { value: "default" }, ["Default"]),
+      createElement("option", { value: "chime" }, ["Chime"]),
+      createElement("option", { value: "sharp" }, ["Sharp"])
+    ])
+  ]);
+
+  const notificationTone = createElement("label", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.25rem",
+      fontSize: "0.8rem"
+    }
+  }, [
+    "Notification tone",
+    createElement("select", {
+      value: notificationPreference.tone,
+      onchange: e => {
+        setChatSoundPreference(chatid, {
+          notificationTone: e.target.value
+        });
+      }
+    }, [
+      createElement("option", { value: "default" }, ["Default"]),
+      createElement("option", { value: "chime" }, ["Chime"]),
+      createElement("option", { value: "sharp" }, ["Sharp"])
+    ])
+  ]);
+
+  container.append(messageTone, notificationTone);
+  return container;
+}
+
 function createUploadElements() {
   const fileInput = createElement("input", {
     type: "file",
@@ -262,7 +332,8 @@ function setupSocketListeners(
   socket,
   messagesContainer,
   currentUserId,
-  sendButton
+  sendButton,
+  chatid
 ) {
   if (!socket) {
     return;
@@ -298,8 +369,19 @@ function setupSocketListeners(
       return;
     }
 
+    const unread = getState("unreadMessages") || 0;
+
+    setState("unreadMessages", unread + 1);
+
     try {
       const msg = JSON.parse(event.data);
+      const isOwn =
+        msg?.senderid === currentUserId ||
+        msg?.userId === currentUserId;
+
+      if (!isOwn) {
+        playSoundAlert({ type: "message", chatId: chatid });
+      }
 
       await renderMessage(
         msg,

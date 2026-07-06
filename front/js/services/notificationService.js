@@ -1,5 +1,5 @@
 // services/notificationService.js
-import { apiFetch } from "../utils/apiFetch.js";
+import { apiFetch } from "../api/apiClient.js";
 
 /**
  * Notification Service - handles all notification-related API calls

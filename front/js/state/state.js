@@ -27,10 +27,10 @@ export const {
 // --- Allowed and persisted keys ---
 const allowedKeys = new Set([
   "token", "user", "username", "userProfile", "socket", "role", "environment",
-  "lang", "lastPath", "currentRoute", "routeCache", "routeState", "currentChatId", "isLoading", "userId"
+  "lang", "lastPath", "currentRoute", "routeCache", "routeState", "currentChatId", "isLoading", "userId", "unreadMessages", "unreadNotifications"
 ]);
 
-const PERSISTED_KEYS = ["token", "userProfile", "user", "username", "role"];
+const PERSISTED_KEYS = ["token", "userProfile", "user", "username", "role", "unreadMessages",  "unreadNotifications"];
 
 // --- Event system ---
 const globalEvents = {};
@@ -164,7 +164,9 @@ const rawState = {
   currentRoute: null,
   routeCache: new Map(),
   routeState: new Map(),
-  isLoading: false
+  isLoading: false,
+  unreadMessages: 0,
+  unreadNotifications: 0,
 };
 const state = reactive(rawState);
 

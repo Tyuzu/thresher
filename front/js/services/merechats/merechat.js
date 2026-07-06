@@ -4,6 +4,8 @@ import { t } from "./i18n.js";
 import { safemereFetch, displayOneChat } from "./onechat.js";
 import { renderSharedChatList } from "../chat/sharedChatList.js";
 
+const chatBodies = new Map();
+
 export async function displayChats(contentContainer, isLoggedIn) {
   await renderSharedChatList({
     container: contentContainer,
@@ -15,8 +17,13 @@ export async function displayChats(contentContainer, isLoggedIn) {
       return chats;
     },
     renderChat: async (chatView, chat) => {
-      closeExistingSocket("chat-switch");
-      chatView.replaceChildren();
+      const chatId = chat?.chatid;
+      let chatBody = chatBodies.get(chatId);
+
+      if (!chatBody) {
+        chatBody = createElement("div", { class: "chat-body" });
+        chatBodies.set(chatId, chatBody);
+      }
 
       const backBtn = createElement(
         "button",
@@ -27,15 +34,13 @@ export async function displayChats(contentContainer, isLoggedIn) {
         ["← ", t("chat.back")]
       );
 
-      const chatBody = createElement("div", { class: "chat-body" });
-
       backBtn.addEventListener("click", () => {
         closeExistingSocket("back");
         chatView.replaceChildren();
       });
 
       chatView.replaceChildren(backBtn, chatBody);
-      await displayOneChat(chatBody, chat?.chatid);
+      await displayOneChat(chatBody, chatId);
     },
     getChatId: chat => chat?.chatid,
     getOtherUser: (chat, currentUser) => {

@@ -1,5 +1,6 @@
-import { getState, MERE_WS } from "../../state/state.js";
+import { getState, setState, MERE_WS } from "../../state/state.js";
 import { renderMessage } from "./components/index.js";
+import { playSoundAlert } from "../../utils/soundAlerts.js";
 
 /* -------------------------
    Module state
@@ -88,13 +89,14 @@ function normalizeId(msg) {
 --------------------------*/
 export function mountMessage(
   msg,
-  { pending = false } = {}
+  { pending = false, container = getMessageContainer() } = {}
 ) {
-  const container =
+  const targetContainer =
+    container ||
     getMessageContainer() ||
     document.querySelector(".chat-messages");
 
-  if (!container) {
+  if (!targetContainer) {
     return null;
   }
 
@@ -117,12 +119,12 @@ export function mountMessage(
     node.setAttribute("data-pending", "1");
   }
 
-  container.appendChild(node);
+  targetContainer.appendChild(node);
 
   try {
-    container.scrollTop =
-      container.scrollHeight;
-  } catch {}
+    targetContainer.scrollTop =
+      targetContainer.scrollHeight;
+  } catch { }
 
   return node;
 }
@@ -166,14 +168,15 @@ export function reconcilePending(
       oldEl
     );
   } else {
-    const container =
+    const targetContainer =
+      pending.container ||
       getMessageContainer() ||
       document.querySelector(
         ".chat-messages"
       );
 
-    if (container) {
-      container.appendChild(newEl);
+    if (targetContainer) {
+      targetContainer.appendChild(newEl);
     }
   }
 
@@ -209,6 +212,20 @@ function wsUrl() {
   return url;
 }
 
+function joinChatRoom(socket, chatid) {
+  if (!socket || !chatid) {
+    return;
+  }
+
+  if (socket.readyState === WebSocket.OPEN) {
+    try {
+      socket.send(JSON.stringify({ type: "join", chatid }));
+    } catch {
+      // ignore join failures and rely on a reconnect if needed
+    }
+  }
+}
+
 export function closeExistingSocket(
   reason = ""
 ) {
@@ -217,11 +234,13 @@ export function closeExistingSocket(
   if (ws) {
     try {
       ws.close();
-    } catch {}
+    } catch { }
 
     ChatState.setSocket(null);
   }
 
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
   ChatState.resetReconnectAttempts();
 
   if (reason) {
@@ -242,11 +261,15 @@ export function connectWebSocket() {
     existing &&
     (
       existing.readyState ===
-        WebSocket.OPEN ||
+      WebSocket.OPEN ||
       existing.readyState ===
-        WebSocket.CONNECTING
+      WebSocket.CONNECTING
     )
   ) {
+    const chatid = ChatState.getChatId();
+    if (existing.readyState === WebSocket.OPEN) {
+      joinChatRoom(existing, chatid);
+    }
     return;
   }
 
@@ -281,14 +304,7 @@ export function connectWebSocket() {
     const chatid =
       ChatState.getChatId();
 
-    if (chatid) {
-      socket.send(
-        JSON.stringify({
-          type: "join",
-          chatid
-        })
-      );
-    }
+    joinChatRoom(socket, chatid);
   };
 
   socket.onmessage = ev => {
@@ -313,6 +329,18 @@ export function connectWebSocket() {
   };
 }
 
+// socket.on("message", msg => {
+//     setState(
+//         "unreadMessages",
+//         getState("unreadMessages") + 1
+//     );
+
+//     showToast({
+//         title: msg.senderName,
+//         body: msg.text
+//     });
+// });
+
 function scheduleReconnect() {
   const attempts =
     ChatState.getReconnectAttempts();
@@ -335,6 +363,9 @@ function scheduleReconnect() {
 /* -------------------------
    Handle WS messages
 --------------------------*/
+/* -------------------------
+   Handle WS messages
+--------------------------*/
 function handleWSMessage(data) {
   if (!data?.type) {
     return;
@@ -348,20 +379,44 @@ function handleWSMessage(data) {
         return;
       }
 
-      if (
-        chatid !==
-        ChatState.getChatId()
-      ) {
+      playSoundAlert({ type: "message", chatId: chatid });
+
+      // Message belongs to another chat
+      if (chatid !== ChatState.getChatId()) {
+        const unread = getState("unreadMessages") || 0;
+
+        setState("unreadMessages", unread + 1);
+
+        // Browser notification (if supported and permitted)
+        if (
+          typeof Notification !== "undefined" &&
+          document.visibilityState === "hidden" &&
+          Notification.permission === "granted"
+        ) {
+          try {
+            new Notification(
+              data.senderName ||
+              data.username ||
+              "New message",
+              {
+                body:
+                  data.text ||
+                  data.message ||
+                  "",
+                icon: "/favicon.ico"
+              }
+            );
+          } catch {}
+        }
+
         return;
       }
 
-      const serverId = String(
-        data.messageid
-      );
+      const serverId = String(data.messageid);
 
-      const rendered =
-        ensureRenderedSet(chatid);
+      const rendered = ensureRenderedSet(chatid);
 
+      // Replace optimistic message
       if (
         data.clientId &&
         pendingMap.has(data.clientId)
@@ -373,10 +428,10 @@ function handleWSMessage(data) {
         );
 
         rendered.add(serverId);
-
         return;
       }
 
+      // Prevent duplicate rendering
       if (rendered.has(serverId)) {
         return;
       }
@@ -392,6 +447,9 @@ function handleWSMessage(data) {
       break;
 
     case "presence":
+      break;
+
+    default:
       break;
   }
 }

@@ -1,7 +1,8 @@
 // components/notifications/modal.js
 import Modal from "../../components/ui/Modal.mjs";
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
+import { apiFetch } from "../../api/apiClient.js";
+import notificationService from "../notificationService.js";
 
 export async function openNotificationsModal() {
     let notifications = [];
@@ -28,7 +29,7 @@ export async function openNotificationsModal() {
     // Fetch notifications from backend
     if (userId) {
         try {
-            const response = await apiFetch(`/notifs/user/${userId}`);
+            const response = await notificationService.getNotifications(userId);
             if (response && Array.isArray(response)) {
                 notifications = response.sort((a, b) => {
                     return new Date(b.createdAt) - new Date(a.createdAt);
@@ -148,9 +149,7 @@ export async function openNotificationsModal() {
                 markReadBtn.addEventListener("click", async (e) => {
                     e.stopPropagation();
                     try {
-                        await apiFetch(`/notifs/notif/${n.id}/read`, {
-                            method: "PUT"
-                        });
+                        await notificationService.markAsRead(n.id || n._id);
                         notifItem.style.backgroundColor = "#f7f7f7";
                         notifItem.style.borderColor = "#ddd";
                         markReadBtn.style.display = "none";
@@ -193,9 +192,7 @@ export async function openNotificationsModal() {
             `,
             onclick: async () => {
                 try {
-                    await apiFetch(`/notifs/user/${userId}/read-all`, {
-                        method: "PUT"
-                    });
+                    await notificationService.markAllAsRead(userId);
                     location.reload(); // Reload to refresh
                 } catch (error) {
                     console.error("Failed to mark all as read", error);
@@ -228,9 +225,7 @@ export async function openNotificationsModal() {
             onclick: async () => {
                 if (confirm("Clear all notifications?")) {
                     try {
-                        await apiFetch(`/notifs/user/${userId}`, {
-                            method: "DELETE"
-                        });
+                        await notificationService.clearAllNotifications(userId);
                         location.reload(); // Reload to refresh
                     } catch (error) {
                         console.error("Failed to clear notifications", error);

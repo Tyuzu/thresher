@@ -46,7 +46,7 @@ function ensureRenderedSet(chatid) {
 /* -------------------------
    Send message (WS first)
 --------------------------*/
-export function sendMessage(chatid, content) {
+export function sendMessage(chatid, content, targetContainer = getMessageContainer()) {
   if (!content || !content.trim()) {
     return;
   }
@@ -60,8 +60,8 @@ export function sendMessage(chatid, content) {
     createdAt: new Date().toISOString()
   };
 
-  const el = mountMessage(optimistic);
-  pendingMap.set(clientId, { el, chatid });
+  const el = mountMessage(optimistic, { container: targetContainer });
+  pendingMap.set(clientId, { el, chatid, container: targetContainer });
 
   const ws = ChatState.getSocket();
   const payload = { type: "message", chatid, content, clientId };
@@ -138,14 +138,14 @@ function reconcilePending(chatid, clientId, serverMsg) {
 /* -------------------------
    Load history
 --------------------------*/
-async function loadHistory(chatid) {
-  const container = getMessageContainer();
-  if (!container) {
+async function loadHistory(chatid, targetContainer = getMessageContainer()) {
+  if (!targetContainer) {
     return;
   }
 
-  container.replaceChildren();
   const rendered = ensureRenderedSet(chatid);
+  targetContainer.replaceChildren();
+  targetContainer.dataset.chatid = chatid;
 
   try {
     const msgs =
@@ -156,7 +156,7 @@ async function loadHistory(chatid) {
     for (const m of msgs) {
       const id = String(m.messageid);
       if (!rendered.has(id)) {
-        mountMessage(m);
+        mountMessage(m, { container: targetContainer });
         rendered.add(id);
       }
     }
@@ -176,20 +176,27 @@ async function loadHistory(chatid) {
    UI
 --------------------------*/
 export async function displayOneChat(containerx, chatid) {
-  closeExistingSocket("chat-switch");
+  let container = containerx.querySelector(".onechatcon");
 
-  const container = createElement("div", { class: "onechatcon" });
-  containerx.replaceChildren(container);
+  if (!container) {
+    container = createElement("div", { class: "onechatcon" });
+    containerx.replaceChildren(container);
+  }
 
   const header = createElement("div", { class: "chat-header" }, [
     `${t("chat.with")} ${chatid}`
   ]);
 
-  const messages = createElement("div", {
-    class: "chat-messages",
-    role: "log",
-    "aria-live": "polite"
-  });
+  let messages = container.querySelector(".chat-messages");
+
+  if (!messages) {
+    messages = createElement("div", {
+      class: "chat-messages",
+      role: "log",
+      "aria-live": "polite",
+      dataset: { chatid }
+    });
+  }
 
   const input = createElement("input", {
     type: "text",
@@ -237,21 +244,23 @@ export async function displayOneChat(containerx, chatid) {
     }, 800)
   );
 
-  container.append(
-    header,
-    messages,
-    createElement("div", { class: "chat-footer" }, [
-      uploadBtn,
-      fileInput,
-      input,
-      sendBtn
-    ])
-  );
+  if (!container.querySelector(".chat-header")) {
+    container.append(
+      header,
+      messages,
+      createElement("div", { class: "chat-footer" }, [
+        uploadBtn,
+        fileInput,
+        input,
+        sendBtn
+      ])
+    );
+  }
 
   ChatState.setChatId(chatid);
   setMessageContainer(messages);
 
-  await loadHistory(chatid);
+  await loadHistory(chatid, messages);
   connectWebSocket();
 }
 

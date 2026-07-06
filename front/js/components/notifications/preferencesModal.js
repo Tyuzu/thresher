@@ -2,6 +2,7 @@
 import Modal from "../../components/ui/Modal.mjs";
 import { createElement } from "../../components/createElement.js";
 import notificationService from "../../services/notificationService.js";
+import { getSoundSettings, setSoundSettings } from "../../utils/soundAlerts.js";
 
 export async function openNotificationPreferencesModal() {
     let userId = null;
@@ -13,6 +14,7 @@ export async function openNotificationPreferencesModal() {
         messagesEnabled: true,
         allEnabled: true
     };
+    const soundSettings = getSoundSettings();
 
     // Get current user ID
     try {
@@ -203,6 +205,89 @@ export async function openNotificationPreferencesModal() {
 
     content.appendChild(settingsContainer);
 
+    const soundSection = createElement("div", {
+        style: `
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: #fff8e6;
+            border: 1px solid #f0d78c;
+            border-radius: 8px;
+        `
+    });
+
+    soundSection.appendChild(
+        createElement("strong", {
+            style: "font-size: 0.95rem;"
+        }, ["🔊 Sound alerts"])
+    );
+
+    const soundToggle = createElement("label", {
+        style: `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            cursor: pointer;
+        `
+    }, [
+        createElement("span", {}, ["Enable incoming sounds"]),
+        createElement("input", {
+            type: "checkbox",
+            checked: soundSettings.enabled,
+            onchange: (e) => {
+                setSoundSettings({ enabled: e.target.checked });
+            }
+        })
+    ]);
+
+    const soundRow = createElement("div", {
+        style: `
+            display: grid;
+            gap: 0.75rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        `
+    });
+
+    const messageTone = createElement("label", {
+        style: "display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.9rem;"
+    }, [
+        "Message tone",
+        createElement("select", {
+            value: soundSettings.messageTone,
+            onchange: (e) => {
+                setSoundSettings({ messageTone: e.target.value });
+            }
+        }, [
+            createElement("option", { value: "default" }, ["Default"]),
+            createElement("option", { value: "chime" }, ["Chime"]),
+            createElement("option", { value: "sharp" }, ["Sharp"])
+        ])
+    ]);
+
+    const notificationTone = createElement("label", {
+        style: "display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.9rem;"
+    }, [
+        "Notification tone",
+        createElement("select", {
+            value: soundSettings.notificationTone,
+            onchange: (e) => {
+                setSoundSettings({ notificationTone: e.target.value });
+            }
+        }, [
+            createElement("option", { value: "default" }, ["Default"]),
+            createElement("option", { value: "chime" }, ["Chime"]),
+            createElement("option", { value: "sharp" }, ["Sharp"])
+        ])
+    ]);
+
+    soundRow.appendChild(messageTone);
+    soundRow.appendChild(notificationTone);
+    soundSection.appendChild(soundToggle);
+    soundSection.appendChild(soundRow);
+    content.appendChild(soundSection);
+
     // Info section
     const infoBox = createElement("div", {
         style: `
@@ -238,3 +323,16 @@ export async function openNotificationPreferencesModal() {
 
     modal.open();
 }
+
+
+// socket.on("notification", notif => {
+//     setState(
+//         "unreadNotifications",
+//         getState("unreadNotifications") + 1
+//     );
+
+//     showToast({
+//         title: "New notification",
+//         body: notif.text
+//     });
+// });
