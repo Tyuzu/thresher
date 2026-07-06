@@ -19,8 +19,8 @@ async function measureEnvironment() {
   const measurePerformance = async () => {
     const t0 = performance.now();
     for (let i = 0; i < 100000; i++) {
-Math.sqrt(i);
-}
+      Math.sqrt(i);
+    }
     const t1 = performance.now();
     return Math.max(100 - (t1 - t0), 0);
   };
@@ -32,10 +32,10 @@ Math.sqrt(i);
     browser: isSafari
       ? "safari"
       : navigator.userAgent.includes("Firefox")
-      ? "firefox"
-      : navigator.userAgent.includes("Chrome")
-      ? "chrome"
-      : "unknown",
+        ? "firefox"
+        : navigator.userAgent.includes("Chrome")
+          ? "chrome"
+          : "unknown",
     networkSpeed: navigator.connection?.effectiveType || "unknown",
     theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
     online: navigator.onLine,
@@ -46,7 +46,7 @@ Math.sqrt(i);
 async function profileEnvironment() {
   const ENV_CACHE_KEY = "env-profile-v1";
   const ENV_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-  
+
   const cachedEnv = localStorage.getItem(ENV_CACHE_KEY);
   if (cachedEnv) {
     try {
@@ -90,8 +90,8 @@ let offlineTimer = null;
 
 function showOfflineBanner() {
   if (document.getElementById("offline-banner")) {
-return;
-}
+    return;
+  }
   const banner = document.createElement("div");
   banner.id = "offline-banner";
   Object.assign(banner.style, {
@@ -113,8 +113,8 @@ return;
 function removeOfflineBanner() {
   const banner = document.getElementById("offline-banner");
   if (banner) {
-banner.remove();
-}
+    banner.remove();
+  }
 }
 
 window.addEventListener("offline", () => {
@@ -154,28 +154,60 @@ window.addEventListener("unhandledrejection", (event) => {
 
 async function setupPerformanceMonitoring() {
   if (!window.PerformanceObserver) {
-return;
-}
+    return;
+  }
 
   try {
     const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         // Flag slow operations (> 3 seconds)
         if (entry.duration > 3000) {
-          console.warn(`⚠️ Slow operation: ${entry.name} (${entry.duration.toFixed(0)}ms)`);
+          // Build a compact details object to avoid circular refs
+          const details = {
+            name: entry.name,
+            entryType: entry.entryType,
+            duration: Math.round(entry.duration),
+            startTime: Math.round(entry.startTime),
+          };
+
+          // Add resource-specific fields when available
+          if (entry.entryType === "resource") {
+            details.initiatorType = entry.initiatorType || "unknown";
+            details.encodedBodySize = entry.encodedBodySize || 0;
+            details.transferSize = entry.transferSize || 0;
+            details.fetchStart = Math.round(entry.fetchStart || 0);
+            details.responseEnd = Math.round(entry.responseEnd || 0);
+          }
+
+          // Add navigation/paint-specific helpful markers
+          if (entry.entryType === "navigation") {
+            details.loadEventEnd = Math.round(entry.loadEventEnd || 0);
+            details.domContentLoadedEventEnd = Math.round(entry.domContentLoadedEventEnd || 0);
+          }
+
+          console.warn(`⚠️ Slow operation: ${details.name} (${details.duration}ms)`, details);
+
+          // Send to tracker with more context
           if (window.__errorTracker) {
-            window.__errorTracker.track(new Error("Performance degradation"), {
+            window.__errorTracker.track(new Error("Performance degradation"), Object.assign({
               type: "slow_operation",
-              name: entry.name,
-              duration: entry.duration,
-              startTime: entry.startTime
-            });
+            }, details));
+          }
+
+          // For quick local debugging also expose the full entry in dev builds
+          if (window.location.hostname === "localhost") {
+            try {
+              // Some entry fields are not enumerable; log the object separately for inspection
+              console.debug("Performance entry details:", entry);
+            } catch (_e) {
+              // Ignore logging errors
+            }
           }
         }
       }
     });
 
-    observer.observe({ 
+    observer.observe({
       entryTypes: ["navigation", "resource", "paint", "largest-contentful-paint"]
     });
   } catch (e) {
@@ -194,8 +226,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     window.addEventListener("popstate", async () => {
       if (!document.hidden) {
-await loadContent(window.location.pathname);
-}
+        await loadContent(window.location.pathname);
+      }
     });
 
     window.addEventListener("pageshow", async (event) => {

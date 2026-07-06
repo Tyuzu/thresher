@@ -6,7 +6,7 @@ import Imagex from "../../../components/base/Imagex.js";
 import { debounce } from "../../../utils/deutils.js";
 import Button from "../../../components/base/Button.js";
 
-function filterAndSortCrops(crops, { term, tags, sortBy }) {
+function filterAndSortCrops(crops = [], { term, tags, sortBy }) {
   return crops
     .filter(crop =>
       crop.name.toLowerCase().includes(term) &&
@@ -126,7 +126,7 @@ export function renderCropInterface(container, cropData) {
   const tabs = {};
   const activeTags = new Set();
   const categories = Object.keys(cropData);
-  const currentTab = categories[0];
+  const currentTab = categories.length ? categories[0] : null;
 
   const state = {
     cropData,
@@ -172,10 +172,44 @@ export function renderCropInterface(container, cropData) {
   aside.append(cropAside(cropData));
 }
 
+function updateAllTabs(state) {
+  const { categories, currentTab, tabButtons, tabs } = state;
+  if (!currentTab) {
+    console.warn("No crop categories available to render.");
+    return;
+  }
+
+  // Only render the active tab to avoid heavy synchronous DOM work on slow devices/networks.
+  updateTab(currentTab, state);
+  categories.forEach(cat => {
+    const pane = tabs[cat];
+    if (pane && pane.style) {
+      pane.style.display = cat === currentTab ? "flex" : "none";
+    }
+  });
+
+  Array.from(tabButtons.children).forEach(btn => {
+    const btnCategory = btn.textContent.split(" (")[0].toLowerCase();
+    btn.classList.toggle("active", btnCategory === currentTab.toLowerCase());
+  });
+}
+
 // --- Internal Update Functions ---
 function updateTab(category, state) {
   const { cropData, tabs, searchBox, sortSelect, activeTags } = state;
-  const container = tabs[category];
+  let container = tabs[category];
+  if (!container) {
+    // Fallback: create the pane if it wasn't initialized for some reason
+    container = createElement("div", { class: "tab-content", id: category });
+    tabs[category] = container;
+    const wrapper = document.getElementById("catalogue-container");
+    if (wrapper) wrapper.appendChild(container);
+  }
+  // Defensive: if container is still falsy, bail out
+  if (!container || typeof container.replaceChildren !== "function") {
+    console.warn("Skipping updateTab; container missing for category:", category);
+    return;
+  }
   container.replaceChildren();
 
   const filtered = filterAndSortCrops(cropData[category], {
@@ -191,18 +225,4 @@ function updateTab(category, state) {
   } else {
     filtered.forEach(c => container.appendChild(renderCropCard(c)));
   }
-}
-
-function updateAllTabs(state) {
-  const { categories, currentTab, tabButtons, tabs } = state;
-
-  categories.forEach(cat => {
-    updateTab(cat, state);
-    tabs[cat].style.display = cat === currentTab ? "flex" : "none";
-  });
-
-  Array.from(tabButtons.children).forEach(btn => {
-    const btnCategory = btn.textContent.split(" (")[0].toLowerCase();
-    btn.classList.toggle("active", btnCategory === currentTab.toLowerCase());
-  });
 }
