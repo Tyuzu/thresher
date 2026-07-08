@@ -91,10 +91,11 @@ func CreateMerch(app *infra.Deps) httprouter.Handle {
 		}
 
 		var body struct {
-			Name  string  `json:"name"`
-			Price float64 `json:"price"`
-			Stock int     `json:"stock"`
-			Photo string  `json:"merch_pic"`
+			Name     string  `json:"name"`
+			Price    float64 `json:"price"`
+			Discount float64 `json:"discount"`
+			Stock    int     `json:"stock"`
+			Photo    string  `json:"merch_pic"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -114,6 +115,7 @@ func CreateMerch(app *infra.Deps) httprouter.Handle {
 			EntityID:   eventID,
 			Name:       body.Name,
 			Price:      body.Price,
+			Discount:   body.Discount,
 			Stock:      body.Stock,
 			MerchPhoto: body.Photo,
 			CreatedAt:  now,
@@ -196,9 +198,10 @@ func EditMerch(app *infra.Deps) httprouter.Handle {
 		}
 
 		var body struct {
-			Name  *string  `json:"name"`
-			Price *float64 `json:"price"`
-			Stock *int     `json:"stock"`
+			Name     *string  `json:"name"`
+			Price    *float64 `json:"price"`
+			Discount *float64 `json:"discount"`
+			Stock    *int     `json:"stock"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -215,6 +218,9 @@ func EditMerch(app *infra.Deps) httprouter.Handle {
 		}
 		if body.Price != nil && *body.Price > 0 {
 			update["price"] = *body.Price
+		}
+		if body.Discount != nil {
+			update["discount"] = *body.Discount
 		}
 		if body.Stock != nil && *body.Stock >= 0 {
 			update["stock"] = *body.Stock

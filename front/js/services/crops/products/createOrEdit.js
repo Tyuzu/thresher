@@ -78,6 +78,19 @@ export function renderItemForm(container, mode, itemData, type, onDone) {
                                      }
   });
 
+  const discountGroup = createFormGroup({
+    type: "number",
+    id: "discount",
+    label: "Discount (%)",
+    value: itemData?.discount ?? "",
+    placeholder: "e.g. 10",
+    additionalProps: {
+      min: "0",
+      max: "100",
+      step: "0.01"
+    }
+  });
+
   const quantityGroup = createFormGroup({
     type: "number",
     id: "quantity",
@@ -148,6 +161,7 @@ export function renderItemForm(container, mode, itemData, type, onDone) {
     categoryGroup,
     nameGroup,
     priceGroup,
+    discountGroup,
     quantityGroup,
     unitGroup,
     skuGroup,
@@ -233,6 +247,7 @@ export function renderItemForm(container, mode, itemData, type, onDone) {
         name: form.name.value.trim(),
         category: form.category.value.trim(),
         price: parseFloat(form.price.value),
+        discount: parseFloat(form.discount.value || 0),
         quantity: parseInt(form.quantity.value, 10),
         unit: form.unit.value,
         sku: form.sku.value.trim(),

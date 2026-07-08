@@ -60,6 +60,7 @@ func PlaceOrder(app *infra.Deps) httprouter.Handle {
 
 		// Validate all items before processing order
 		var subtotal int64
+		var itemDiscountTotal int64
 
 		validatedGroupedItems := make(map[string][]models.CartItem)
 
@@ -72,6 +73,7 @@ func PlaceOrder(app *infra.Deps) httprouter.Handle {
 
 			// Price in paise
 			price := int64(details.Price * 100)
+			itemDiscount := int64(details.Discount * 100)
 
 			if item.Quantity > details.Available {
 				http.Error(
@@ -83,6 +85,7 @@ func PlaceOrder(app *infra.Deps) httprouter.Handle {
 			}
 
 			subtotal += price * int64(item.Quantity)
+			itemDiscountTotal += itemDiscount * int64(item.Quantity)
 
 			category := details.Category
 
@@ -100,8 +103,8 @@ func PlaceOrder(app *infra.Deps) httprouter.Handle {
 			)
 		}
 
-		// Coupon validation
-		var discount int64
+		// Item-level discounts and coupon validation
+		discount := itemDiscountTotal
 
 		if payload.Coupon != "" {
 			couponRes, err := validateCouponServer(
@@ -114,7 +117,7 @@ func PlaceOrder(app *infra.Deps) httprouter.Handle {
 			if err != nil {
 				log.Println("Coupon validation error:", err)
 			} else if couponRes != nil {
-				discount = couponRes.DiscountAmount
+				discount += couponRes.DiscountAmount
 			}
 		}
 

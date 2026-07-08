@@ -43,6 +43,7 @@ type Crop struct {
 	Name         string       `json:"name"`
 	CropId       string       `json:"cropid"`
 	Price        float64      `json:"price"`
+	Discount     float64      `json:"discount,omitempty" bson:"discount,omitempty"`
 	Quantity     int          `json:"quantity"`
 	Unit         string       `json:"unit"`
 	Banner       string       `bson:"banner" json:"banner"`
@@ -157,6 +158,7 @@ type Product struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Price       float64  `json:"price"`
+	Discount    float64  `json:"discount,omitempty" bson:"discount,omitempty"`
 	Unit        string   `json:"unit"`
 	Images      []string `json:"images"`
 	Category    string   `bson:"category" json:"category"`
@@ -213,6 +215,7 @@ type Tool struct {
 	ToolID        string    `bson:"toolid,omitempty" json:"toolid"`
 	Name          string    `bson:"name" json:"name"`
 	Price         float64   `bson:"price" json:"price"`
+	Discount      float64   `bson:"discount,omitempty" json:"discount,omitempty"`
 	Description   string    `bson:"description" json:"description"`
 	Banner        string    `bson:"banner" json:"banner"`
 	Category      string    `bson:"category" json:"category"`

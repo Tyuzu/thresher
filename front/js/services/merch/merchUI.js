@@ -21,6 +21,7 @@ function addMerchForm(entityType, eventId, merchList) {
     const fields = [
         { label: "Merchandise Name", type: "text", id: "merch-name", placeholder: "Merchandise Name", required: true },
         { label: "Price", type: "number", id: "merch-price", placeholder: "Price", required: true },
+        { label: "Discount (%)", type: "number", id: "merch-discount", placeholder: "e.g. 10", additionalProps: { min: 0, max: 100, step: "0.01" } },
         { label: "Stock Available", type: "number", id: "merch-stock", placeholder: "Stock Available", required: true },
         { label: "Merch Image", type: "file", id: "merch-image", additionalProps: { accept: "image/*" } }
     ];
@@ -66,6 +67,7 @@ async function displayMerchandise(container, merchData, entityType, eventId, isC
       const card = MerchCard({
         name: merch.name,
         price: merch.price,
+        discount: merch.discount || 0,
         image: resolveImagePath(
           EntityType.MERCH,
           PictureType.THUMB,

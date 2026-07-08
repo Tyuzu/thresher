@@ -54,6 +54,7 @@ func AddToCart(app *infra.Deps) httprouter.Handle {
 		item.ItemType = itemDetails.Type
 		item.Unit = itemDetails.Unit
 		item.Price = int64(itemDetails.Price * 100)
+		item.Discount = int64(itemDetails.Discount * 100)
 		item.Category = itemDetails.Category
 		if item.EntityID == "" {
 			item.EntityID = itemDetails.EntityID

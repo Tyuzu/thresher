@@ -11,6 +11,7 @@ type CartItem struct {
 	ItemName   string    `json:"itemName" bson:"itemName"`
 	ItemType   string    `json:"itemType,omitempty" bson:"itemType,omitempty"`
 	Unit       string    `json:"unit,omitempty" bson:"unit,omitempty"`
+	Discount   int64     `json:"discount,omitempty" bson:"discount,omitempty"`
 	EntityID   string    `json:"entityId,omitempty" bson:"entityId,omitempty"`
 	EntityName string    `json:"entityName,omitempty" bson:"entityName,omitempty"`
 	EntityType string    `json:"entityType,omitempty" bson:"entityType,omitempty"`

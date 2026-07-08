@@ -1,7 +1,7 @@
 import "../../../css/ui/MenuCard.css";
 
 // Updated MenuCard component
-const MenuCard = ({ name, price, image, stock, onBuy, onEdit, onDelete, isCreator, isLoggedIn }) => {
+const MenuCard = ({ name, price, discount = 0, image, stock, onBuy, onEdit, onDelete, isCreator, isLoggedIn }) => {
     const card = document.createElement('div');
     card.className = 'menu-card';
 
@@ -13,7 +13,16 @@ const MenuCard = ({ name, price, image, stock, onBuy, onEdit, onDelete, isCreato
     nameElement.textContent = name;
 
     const priceElement = document.createElement('p');
-    priceElement.textContent = `Price: $${(price / 100).toFixed(2)}`;
+    const hasDiscount = Number(discount || 0) > 0;
+    const discountedPrice = hasDiscount ? (price * (1 - Number(discount || 0) / 100)) / 100 : price / 100;
+    priceElement.textContent = hasDiscount ? `Price: ₹${discountedPrice.toFixed(2)}` : `Price: ₹${(price / 100).toFixed(2)}`;
+
+    const discountElement = hasDiscount ? document.createElement('p') : null;
+    if (discountElement) {
+        discountElement.textContent = `${discount}% OFF`;
+        discountElement.style.color = '#e53935';
+        discountElement.style.fontWeight = 'bold';
+    }
 
     const stockElement = document.createElement('p');
     stockElement.textContent = `Available: ${stock}`;
@@ -52,6 +61,7 @@ const MenuCard = ({ name, price, image, stock, onBuy, onEdit, onDelete, isCreato
     card.appendChild(img);
     card.appendChild(nameElement);
     card.appendChild(priceElement);
+    if (discountElement) card.appendChild(discountElement);
     card.appendChild(stockElement);
     card.appendChild(actions);
 

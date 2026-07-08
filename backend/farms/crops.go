@@ -111,6 +111,9 @@ func EditCrop(app *infra.Deps) httprouter.Handle {
 		if v := r.FormValue("price"); v != "" {
 			update["price"] = utils.ParseFloat(v)
 		}
+		if v := r.FormValue("discount"); v != "" {
+			update["discount"] = utils.ParseFloat(v)
+		}
 		if v := r.FormValue("quantity"); v != "" {
 			update["quantity"] = utils.ParseInt(v)
 		}
@@ -169,6 +172,7 @@ func parseCropForm(r *http.Request) models.Crop {
 		CropId:      utils.GenerateRandomString(13),
 		Name:        name,
 		Price:       utils.ParseFloat(r.FormValue("price")),
+		Discount:    utils.ParseFloat(r.FormValue("discount")),
 		Quantity:    utils.ParseInt(r.FormValue("quantity")),
 		Unit:        r.FormValue("unit"),
 		Notes:       r.FormValue("notes"),

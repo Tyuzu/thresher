@@ -26,6 +26,10 @@ async function addMenu(form, placeId, menuList) {
         10
     );
 
+    const discount = parseFloat(
+        form.querySelector("#menu-discount").value || 0
+    );
+
     const imageFile = form
         .querySelector("#menu-image")
         .files?.[0];
@@ -115,6 +119,8 @@ async function addMenu(form, placeId, menuList) {
 
             price,
 
+            discount,
+
             stock,
 
             menu_pic:
@@ -190,6 +196,7 @@ function addMenuForm(placeId, menuList) {
     const fields = [
         { label: "Menu Name", type: "text", id: "menu-name", name: "name", placeholder: "Menu Name", required: true },
         { label: "Price", type: "number", id: "menu-price", name: "price", placeholder: "Price", required: true, additionalProps: { min: 0, step: "0.01" } },
+        { label: "Discount (%)", type: "number", id: "menu-discount", name: "discount", placeholder: "e.g. 10", additionalProps: { min: 0, max: 100, step: "0.01" } },
         { label: "Stock Available", type: "number", id: "menu-stock", name: "stock", placeholder: "Stock Available", required: true, additionalProps: { min: 0 } },
         { label: "Menu Image", type: "file", id: "menu-image", name: "image", additionalProps: { accept: "image/*" } }
     ];
@@ -237,6 +244,7 @@ function createMenuCard(menu, isCreator, isLoggedIn, placeId) {
     return MenuCard({
         name: menu.name,
         price: menu.price,
+        discount: menu.discount || 0,
         image: resolveImagePath(EntityType.MENU, PictureType.THUMB, menu.menu_pic),
         stock: menu.stock,
         isCreator,
@@ -255,6 +263,7 @@ async function editMenuForm(menuId, placeId) {
         const fields = [
             { label: "Menu Name", type: "text", id: "menu-name", name: "name", value: menu.name, required: true },
             { label: "Price", type: "number", id: "menu-price", name: "price", value: menu.price, required: true, additionalProps: { min: 0, step: "0.01" } },
+            { label: "Discount (%)", type: "number", id: "menu-discount", name: "discount", value: menu.discount || 0, additionalProps: { min: 0, max: 100, step: "0.01" } },
             { label: "Stock Available", type: "number", id: "menu-stock", name: "stock", value: menu.stock, required: true, additionalProps: { min: 0 } }
         ];
         fields.forEach(f => form.appendChild(createFormGroup(f)));
@@ -271,6 +280,7 @@ async function editMenuForm(menuId, placeId) {
             const updatedMenu = {
                 name: form.querySelector("#menu-name").value,
                 price: parseFloat(form.querySelector("#menu-price").value),
+                discount: parseFloat(form.querySelector("#menu-discount").value || 0),
                 stock: parseInt(form.querySelector("#menu-stock").value, 10)
             };
             try {

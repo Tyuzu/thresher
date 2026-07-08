@@ -30,6 +30,10 @@ async function addMerchandise(
         10
     );
 
+    const discount = parseFloat(
+        document.getElementById("merch-discount").value || 0
+    );
+
     const imageFile = document
         .getElementById("merch-image")
         .files?.[0];
@@ -114,6 +118,8 @@ async function addMerchandise(
             name,
 
             price,
+
+            discount,
 
             stock,
 
@@ -220,6 +226,7 @@ async function editMerchForm(entityType, merchId, eventId) {
         const fields = [
             { label: "Name:", type: "text", id: "merchName", value: data.name, required: true },
             { label: "Price:", type: "number", id: "merchPrice", value: data.price, required: true, step: "0.01" },
+            { label: "Discount (%)", type: "number", id: "merch-discount", value: data.discount || 0, step: "0.01", min: "0", max: "100" },
             { label: "Stock:", type: "number", id: "merchStock", value: data.stock, required: true }
         ];
         fields.forEach(f => form.appendChild(createFormGroup(f)));
@@ -234,6 +241,7 @@ async function editMerchForm(entityType, merchId, eventId) {
             const merchData = {
                 name: form.querySelector("#merchName").value,
                 price: parseFloat(form.querySelector("#merchPrice").value),
+                discount: parseFloat(form.querySelector("#merch-discount").value || 0),
                 stock: parseInt(form.querySelector("#merchStock").value, 10)
             };
             try {

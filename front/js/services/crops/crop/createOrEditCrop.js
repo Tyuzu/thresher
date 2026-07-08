@@ -51,6 +51,16 @@ export function createCommonCropForm({ crop = {}, currentFarmName = "", isEdit =
         additionalProps: { step: "0.01" }
     });
 
+    const discountGroup = createFormGroup({
+        label: "Discount (%)",
+        type: "number",
+        id: "crop-discount",
+        name: "discount",
+        placeholder: "e.g. 10",
+        value: crop.discount || "",
+        additionalProps: { step: "0.01", min: "0", max: "100" }
+    });
+
     const quantityGroup = createFormGroup({
         label: "Quantity",
         type: "number",
@@ -121,7 +131,7 @@ export function createCommonCropForm({ crop = {}, currentFarmName = "", isEdit =
     // });
 
     const fields = [
-        categoryGroup, cropGroup, priceGroup, quantityGroup, unitGroup,
+        categoryGroup, cropGroup, priceGroup, discountGroup, quantityGroup, unitGroup,
         notesGroup, harvestGroup, expiryGroup, featuredGroup, outOfStockGroup,
         //imageGroup
     ];

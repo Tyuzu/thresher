@@ -5,6 +5,7 @@ import Sightbox from "./Sightbox_zoom.mjs";
 const MerchCard = ({
     name,
     price,
+    discount = 0,
     image,
     stock,
     onBuy,
@@ -20,6 +21,11 @@ const MerchCard = ({
         alt: name || "Merch",
         loading: "lazy",
     });
+
+    const hasDiscount = Number(discount || 0) > 0;
+    const discountedPrice = hasDiscount ? price * (1 - Number(discount || 0) / 100) : price;
+
+    const priceText = hasDiscount ? `Price: ₹${(discountedPrice / 100).toFixed(2)}` : `Price: ₹${(price / 100).toFixed(2)}`;
 
     const actions = createElement("div", {
         class: "merch-actions",
@@ -82,8 +88,12 @@ const MerchCard = ({
             imageElement,
             createElement("h3", { textContent: name }),
             createElement("p", {
-                textContent: `Price: $${(price / 100).toFixed(2)}`,
+                textContent: priceText,
             }),
+            hasDiscount ? createElement("p", {
+                textContent: `${discount}% OFF`,
+                style: { color: "#e53935", fontWeight: "bold" },
+            }) : null,
             createElement("p", {
                 textContent: `Available: ${stock}`,
             }),

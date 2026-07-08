@@ -33,6 +33,7 @@ export const staticRoutes = {
 
   "/cart": { moduleImport: () => import("../pages/cart/cart.js"), functionName: "Cart", protected: true },
   "/my-orders": { moduleImport: () => import("../pages/cart/myorders.js"), functionName: "MyOrders", protected: true },
+  "/deliveries": { moduleImport: () => import("../pages/cart/delivery.js"), functionName: "DeliveryPage" },
 
   "/itinerary": { moduleImport: () => import("../pages/itinerary/itinerary.js"), functionName: "Itinerary" },
   "/create-itinerary": { moduleImport: () => import("../pages/itinerary/createItinerary.js"), functionName: "CreateItinerary", protected: true },
@@ -49,6 +50,7 @@ export const staticRoutes = {
   "/tools": { moduleImport: () => import("../pages/farm/tools.js"), functionName: "Tools" },
   "/products": { moduleImport: () => import("../pages/farm/products.js"), functionName: "Products" },
   "/crops": { moduleImport: () => import("../pages/crop/crops.js"), functionName: "Crops" },
+  "/bazarbhav": { moduleImport: () => import("../pages/crop/bazaar.js"), functionName: "BazaarBhav" },
   "/grocery": { moduleImport: () => import("../pages/crop/crops.js"), functionName: "Crops" },
 
   "/recipes": { moduleImport: () => import("../pages/recipe/recipes.js"), functionName: "Recipes" },
@@ -215,6 +217,13 @@ export const dynamicRoutes = [
     pattern: /^\/farm\/([\w-]+)$/,
     moduleImport: () => import("../pages/crop/displayFarm.js"),
     functionName: "Farm",
+    protected: false,
+    argBuilder: safeArgBuilder
+  },
+  {
+    pattern: /^\/delivery\/([\w-]+)$/,
+    moduleImport: () => import("../pages/cart/displayDelivery.js"),
+    functionName: "Delivery",
     protected: false,
     argBuilder: safeArgBuilder
   },

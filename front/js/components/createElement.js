@@ -1,7 +1,10 @@
 function createElement(tag, attributes = {}, children = []) {
     const element = document.createElement(tag);
 
-    for (const [key, value] of Object.entries(attributes)) {
+    // FIX: Prevents Object.entries crashing if null/undefined is passed explicitly
+    const safeAttributes = attributes || {};
+
+    for (const [key, value] of Object.entries(safeAttributes)) {
         if (key === "events" && value && typeof value === "object") {
             for (const [eventName, handler] of Object.entries(value)) {
                 if (typeof handler === "function") {
@@ -13,7 +16,6 @@ function createElement(tag, attributes = {}, children = []) {
                 element.style[prop] = val;
             }
         } else if (key === "class" && typeof value === "string") {
-            // Filter out empty strings after splitting
             const classes = value.trim().split(/\s+/).filter(c => c.length > 0);
             if (classes.length) {
                 element.classList.add(...classes);
@@ -23,12 +25,10 @@ function createElement(tag, attributes = {}, children = []) {
                 element.dataset[dataKey] = dataValue;
             }
         } else if (key in element) {
-            // Directly assign known DOM properties like `value`, `type`, etc.
             if (value !== undefined && value !== null) {
                 element[key] = value;
             }
         } else if (value !== undefined && value !== null) {
-            // Fallback to setAttribute (skip undefined/null values)
             element.setAttribute(key, value);
         }
     }

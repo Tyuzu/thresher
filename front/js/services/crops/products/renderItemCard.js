@@ -124,10 +124,14 @@ export function renderItemCard(
     );
   }
 
+  const hasDiscount = Number(item.discount || 0) > 0;
+  const discountedPrice = hasDiscount ? item.price * (1 - Number(item.discount || 0) / 100) : item.price;
+
   const cardChildren = [
     imageSection,
     createElement("h3", {}, [item.name]),
-    createElement("p", {}, [`₹${item.price.toFixed(2)}`]),
+    createElement("p", {}, [hasDiscount ? `₹${discountedPrice.toFixed(2)} ` : `₹${item.price.toFixed(2)}`]),
+    hasDiscount ? createElement("p", { style: "color:#e53935;font-weight:bold;" }, [`${item.discount}% OFF`]) : null,
     createElement("p", {}, [item.description]),
     createElement("label", {}, ["Quantity:"]),
     quantityControl,

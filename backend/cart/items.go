@@ -16,6 +16,7 @@ type ItemDetails struct {
 	Type       string
 	Category   string
 	Price      float64
+	Discount   float64
 	Unit       string
 	EntityID   string
 	EntityName string
@@ -59,6 +60,7 @@ func lookupProduct(ctx context.Context, productID string, app *infra.Deps) (*Ite
 		Name     string  `bson:"name"`
 		Type     string  `bson:"type"`
 		Price    float64 `bson:"price"`
+		Discount float64 `bson:"discount"`
 		Unit     string  `bson:"unit"`
 		Quantity int     `bson:"quantity"`
 	}
@@ -77,6 +79,7 @@ func lookupProduct(ctx context.Context, productID string, app *infra.Deps) (*Ite
 		Type:       product.Type,
 		Category:   "products",
 		Price:      product.Price,
+		Discount:   product.Discount,
 		Unit:       product.Unit,
 		EntityID:   "",
 		EntityName: "",
@@ -92,6 +95,7 @@ func lookupCrop(ctx context.Context, cropID string, app *infra.Deps) (*ItemDetai
 		Name         string  `bson:"name"`
 		Breed        string  `bson:"breed"`
 		Price        float64 `bson:"price"`
+		Discount     float64 `bson:"discount"`
 		AvailableQty int     `bson:"quantity"`
 		FarmID       string  `bson:"farmid"`
 		FarmName     string  `bson:"farmName"`
@@ -122,6 +126,7 @@ func lookupCrop(ctx context.Context, cropID string, app *infra.Deps) (*ItemDetai
 		Type:       crop.Breed,
 		Category:   "crops",
 		Price:      crop.Price,
+		Discount:   crop.Discount,
 		Unit:       "kg",
 		EntityID:   crop.FarmID,
 		EntityName: farmName,
@@ -133,12 +138,13 @@ func lookupCrop(ctx context.Context, cropID string, app *infra.Deps) (*ItemDetai
 // lookupMenu queries the menu collection (from places)
 func lookupMenu(ctx context.Context, menuID string, app *infra.Deps) (*ItemDetails, error) {
 	var menu struct {
-		MenuID  string  `bson:"menuid"`
-		Name    string  `bson:"name"`
-		Price   float64 `bson:"price"`
-		Stock   int     `bson:"stock"`
-		PlaceID string  `bson:"placeid"`
-		Place   string  `bson:"place"`
+		MenuID   string  `bson:"menuid"`
+		Name     string  `bson:"name"`
+		Price    float64 `bson:"price"`
+		Discount float64 `bson:"discount"`
+		Stock    int     `bson:"stock"`
+		PlaceID  string  `bson:"placeid"`
+		Place    string  `bson:"place"`
 	}
 
 	err := app.DB.FindOne(ctx, "menu", bson.M{"menuid": menuID}, &menu)
@@ -155,6 +161,7 @@ func lookupMenu(ctx context.Context, menuID string, app *infra.Deps) (*ItemDetai
 		Type:       "menu",
 		Category:   "menu",
 		Price:      menu.Price,
+		Discount:   menu.Discount,
 		Unit:       "unit",
 		EntityID:   menu.PlaceID,
 		EntityName: menu.Place,
@@ -166,10 +173,11 @@ func lookupMenu(ctx context.Context, menuID string, app *infra.Deps) (*ItemDetai
 // lookupMerchandise queries the merchandise collection (from events)
 func lookupMerchandise(ctx context.Context, merchID string, app *infra.Deps) (*ItemDetails, error) {
 	var merch struct {
-		MerchID string  `bson:"merchid"`
-		Name    string  `bson:"name"`
-		Price   float64 `bson:"price"`
-		Stock   int     `bson:"stock"`
+		MerchID  string  `bson:"merchid"`
+		Name     string  `bson:"name"`
+		Price    float64 `bson:"price"`
+		Discount float64 `bson:"discount"`
+		Stock    int     `bson:"stock"`
 	}
 
 	err := app.DB.FindOne(ctx, "merchandise", bson.M{"merchid": merchID}, &merch)
@@ -186,6 +194,7 @@ func lookupMerchandise(ctx context.Context, merchID string, app *infra.Deps) (*I
 		Type:       "merchandise",
 		Category:   "merchandise",
 		Price:      merch.Price,
+		Discount:   merch.Discount,
 		Unit:       "unit",
 		EntityID:   "",
 		EntityName: "",

@@ -24,10 +24,11 @@ func CreateMenu(app *infra.Deps) httprouter.Handle {
 		}
 
 		var body struct {
-			Name    string  `json:"name"`
-			Price   float64 `json:"price"`
-			Stock   int     `json:"stock"`
-			MenuPic string  `json:"menu_pic"`
+			Name     string  `json:"name"`
+			Price    float64 `json:"price"`
+			Discount float64 `json:"discount"`
+			Stock    int     `json:"stock"`
+			MenuPic  string  `json:"menu_pic"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
@@ -52,6 +53,7 @@ func CreateMenu(app *infra.Deps) httprouter.Handle {
 			PlaceID:   placeID,
 			Name:      body.Name,
 			Price:     body.Price,
+			Discount:  body.Discount,
 			Stock:     body.Stock,
 			MenuID:    menuID,
 			MenuPhoto: body.MenuPic,
@@ -97,6 +99,9 @@ func EditMenu(app *infra.Deps) httprouter.Handle {
 		}
 		if menu.Price >= 0 {
 			updateFields["price"] = menu.Price
+		}
+		if menu.Discount >= 0 {
+			updateFields["discount"] = menu.Discount
 		}
 		if menu.Stock >= 0 {
 			updateFields["stock"] = menu.Stock

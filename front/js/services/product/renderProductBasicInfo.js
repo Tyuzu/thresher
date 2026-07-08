@@ -11,9 +11,16 @@ export function renderProductBasicInfo(product) {
   
   const title = createElement("h1", { class: "product-title" }, [name]);
 
+  const hasDiscount = Number(product?.discount || 0) > 0;
+  const discountedPrice = hasDiscount ? price * (1 - Number(product.discount || 0) / 100) : price;
+
   const priceTag = createElement("div", { class: "product-price" }, [
-    `₹${price.toFixed(2)} / ${unit}`,
+    hasDiscount ? `₹${discountedPrice.toFixed(2)} / ${unit}` : `₹${price.toFixed(2)} / ${unit}`,
   ]);
+
+  const discountTag = hasDiscount
+    ? createElement("p", { class: "product-discount", style: "color:#e53935;font-weight:bold;" }, [`${product.discount}% OFF`])
+    : null;
 
   const description = product?.description
     ? createElement("p", { class: "product-description" }, [product.description])
@@ -45,6 +52,7 @@ export function renderProductBasicInfo(product) {
   return createElement("div", { class: "product-info" }, [
     title,
     priceTag,
+    discountTag,
     availabilityStatus,
     description,
     category,

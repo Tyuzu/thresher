@@ -167,6 +167,12 @@ function renderAddressForm(container, { items, onSubmit }) {
 
 function renderSummary(container, { items, address, couponCode }) {
   const subtotal = calculateSubtotal(items);
+  const itemDiscountTotal = items.reduce((sum, i) => {
+    const price = toRupees(i.price);
+    const discountPercent = Number(i.discount || 0);
+    const lineDiscount = discountPercent > 0 ? price * (discountPercent / 100) * (i.quantity || 0) : 0;
+    return sum + lineDiscount;
+  }, 0);
 
   const summary = createElement("section", { class: "checkout-summary" });
 
@@ -186,12 +192,18 @@ function renderSummary(container, { items, address, couponCode }) {
 
   const totals = createElement("div", {}, [
     createElement("div", {}, [`Subtotal: ${formatPrice(subtotal)}`]),
+    itemDiscountTotal > 0
+      ? createElement("div", { style: "color:#e53935;font-weight:bold" }, [`Item discount: −${formatPrice(itemDiscountTotal)}`])
+      : null,
+    couponCode
+      ? createElement("div", { style: "color:#e53935;font-weight:bold" }, [`Coupon: ${couponCode}`])
+      : null,
     createElement(
       "div",
       { style: "font-weight:bold" },
       ["Final total will be calculated at payment"]
     )
-  ]);
+  ].filter(Boolean));
 
   const btn = createElement(
     "button",

@@ -201,6 +201,7 @@ func parseProductJSON(r *http.Request, itemType string) (models.Product, error) 
 		Unit          string  `json:"unit"`
 		Featured      bool    `json:"featured"`
 		Price         float64 `json:"price"`
+		Discount      float64 `json:"discount"`
 		Quantity      float64 `json:"quantity"`
 		AvailableFrom string  `json:"availableFrom"`
 		AvailableTo   string  `json:"availableTo"`
@@ -219,6 +220,7 @@ func parseProductJSON(r *http.Request, itemType string) (models.Product, error) 
 		Type:        itemType,
 		Featured:    payload.Featured,
 		Price:       payload.Price,
+		Discount:    payload.Discount,
 		Quantity:    payload.Quantity,
 	}
 

@@ -88,6 +88,7 @@ func CreateCheckoutSession(app *infra.Deps) httprouter.Handle {
 		}
 
 		var subtotal int64 = 0
+		var itemDiscountTotal int64 = 0
 		var validatedItems []models.CartItem
 
 		// 🔒 SECURITY: Get prices from database, never trust frontend
@@ -111,7 +112,11 @@ func CreateCheckoutSession(app *infra.Deps) httprouter.Handle {
 
 			// 🔒 SECURITY: Use price from database, ignore frontend price
 			price := int64(details.Price * 100)
-			subtotal += price * int64(item.Quantity)
+			itemDiscount := int64(details.Discount * 100)
+			lineSubtotal := price * int64(item.Quantity)
+			lineDiscount := itemDiscount * int64(item.Quantity)
+			subtotal += lineSubtotal
+			itemDiscountTotal += lineDiscount
 
 			// Include validated items in response with server-calculated prices
 			// 🔒 Use entity info from database, not frontend
@@ -126,15 +131,15 @@ func CreateCheckoutSession(app *infra.Deps) httprouter.Handle {
 			})
 		}
 
-		// 🔒 Apply coupon (server-side only)
-		discount := int64(0)
+		// 🔒 Apply item-level discounts and coupon (server-side only)
+		discount := itemDiscountTotal
 		if payload.Coupon != "" {
 			couponRes, err := validateCouponServer(ctx, payload.Coupon, subtotal, app)
 			if err != nil {
 				// Don't fail checkout if coupon is invalid - just skip it
 				log.Println("Coupon validation error:", err)
 			} else if couponRes != nil {
-				discount = couponRes.DiscountAmount
+				discount += couponRes.DiscountAmount
 			}
 		}
 

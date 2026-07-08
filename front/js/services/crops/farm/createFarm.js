@@ -15,7 +15,7 @@ export function createFarm(isLoggedIn, container) {
         onSubmit: async (formData) => {
             const res = await apiFetch("/farms", "POST", formData, true);
             if (res.success) {
-                navigate(`/farms`);
+                navigate(`/farm/${res.id}`);
             } else {
                 container.textContent = "❌ Failed to create farm. Please try again.";
             }
