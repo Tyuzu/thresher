@@ -71,6 +71,13 @@ export const dynamicRoutes = [
     argBuilder: safeArgBuilder
   },
   {
+    pattern: /^\/deliveries\/([\w-]+)$/,
+    moduleImport: () => import("../pages/cart/displayDelivery.js"),
+    functionName: "Delivery",
+    protected: false,
+    argBuilder: safeArgBuilder
+  },
+  {
     pattern: /^\/event\/([\w-]+)\/tickets$/,
     moduleImport: () => import("../pages/events/eventTicketsPage.js"),
     functionName: "EventTickets",

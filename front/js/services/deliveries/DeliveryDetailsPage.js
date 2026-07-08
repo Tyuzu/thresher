@@ -1,8 +1,8 @@
 import { createElement } from "../../components/createElement.js";
-import { TrackingHeader } from "../components/TrackingHeader.js";
-import { RewardCard } from "../components/RewardCard.js";
-import { DriverInfoCard } from "../components/DriverInfoCard.js";
-import { DeliveryMap } from "../components/DeliveryMap.js";
+import { TrackingHeader } from "./components/TrackingHeader.js";
+import { RewardCard } from "./components/RewardCard.js";
+import { DriverInfoCard } from "./components/DriverInfoCard.js";
+import { DeliveryMap } from "./components/DeliveryMap.js";
 
 function DeliveryDetailsPage({
     delivery = {},

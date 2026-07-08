@@ -20,6 +20,7 @@ func RoutesWrapper(router *httprouter.Router, app *infra.Deps, rateLimiter *midd
 	AddCartRoutes(router, app, rateLimiter)
 	AddCommentsRoutes(router, app, rateLimiter)
 	// AddDiscordRoutes(router, app, rateLimiter)
+	AddDeliveryRoutes(router, app, rateLimiter)
 	AddEventsRoutes(router, app, rateLimiter)
 	AddFanmadeRoutes(router, app, rateLimiter)
 	AddFiledropRoutes(router, app, rateLimiter)

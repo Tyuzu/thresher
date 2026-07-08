@@ -1,12 +1,12 @@
 import { createElement } from "../../components/createElement.js";
 
-import { TrackingHeader } from "../components/TrackingHeader.js";
-import { DeliveryTimeline } from "../components/DeliveryTimeline.js";
-import { DeliveryActions } from "../components/DeliveryActions.js";
-import { DriverInfoCard } from "../components/DriverInfoCard.js";
-import { ETAWidget } from "../components/ETAWidget.js";
-import { RewardCard } from "../components/RewardCard.js";
-import { DeliveryMap } from "../components/DeliveryMap.js";
+import { TrackingHeader } from "./components/TrackingHeader.js";
+import { DeliveryTimeline } from "./components/DeliveryTimeline.js";
+import { DeliveryActions } from "./components/DeliveryActions.js";
+import { DriverInfoCard } from "./components/DriverInfoCard.js";
+import { ETAWidget } from "./components/ETAWidget.js";
+import { RewardCard } from "./components/RewardCard.js";
+import { DeliveryMap } from "./components/DeliveryMap.js";
 
 function DeliveryProgressPage({
     delivery = {},

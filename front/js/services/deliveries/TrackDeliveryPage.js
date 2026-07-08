@@ -1,10 +1,10 @@
 import { createElement } from "../../components/createElement.js";
 
-import { TrackingHeader } from "../components/TrackingHeader.js";
-import { DeliveryTimeline } from "../components/DeliveryTimeline.js";
-import { DriverInfoCard } from "../components/DriverInfoCard.js";
-import { ETAWidget } from "../components/ETAWidget.js";
-import { DeliveryMap } from "../components/DeliveryMap.js";
+import { TrackingHeader } from "./components/TrackingHeader.js";
+import { DeliveryTimeline } from "./components/DeliveryTimeline.js";
+import { DriverInfoCard } from "./components/DriverInfoCard.js";
+import { ETAWidget } from "./components/ETAWidget.js";
+import { DeliveryMap } from "./components/DeliveryMap.js";
 
 function TrackDeliveryPage({
     delivery = {}

@@ -1,5 +1,5 @@
 import { createElement } from "../../components/createElement.js";
-import { DeliveryStatusBadge } from "../components/DeliveryStatusBadge.js";
+import { DeliveryStatusBadge } from "./components/DeliveryStatusBadge.js";
 
 function MerchantDashboard({
     merchant = {},
