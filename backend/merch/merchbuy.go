@@ -6,10 +6,12 @@ import (
 	"net/http"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/stripe"
 	"naevis/userdata"
+	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,6 +20,7 @@ import (
 // POST /merch/event/:eventId/:merchId/payment-session
 func CreateMerchPaymentSession(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx := r.Context()
 		merchID := ps.ByName("merchid")
 		eventID := ps.ByName("eventid")
 
@@ -46,8 +49,10 @@ func CreateMerchPaymentSession(app *infra.Deps) httprouter.Handle {
 			},
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(response)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
 }
 
@@ -146,7 +151,9 @@ func ConfirmMerchPurchase(app *infra.Deps) httprouter.Handle {
 			},
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(resp)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}
 }

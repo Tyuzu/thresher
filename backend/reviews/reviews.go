@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -18,12 +19,6 @@ import (
 /* -------------------------
    Helpers
 ------------------------- */
-
-func respond(w http.ResponseWriter, status int, payload any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(payload)
-}
 
 func getUserID(ctx context.Context) (string, bool) {
 	id, ok := ctx.Value(config.UserIDKey).(string)
@@ -55,9 +50,10 @@ type UpdateReviewPayload struct {
 
 func AddReview(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx := r.Context()
 		userId, ok := getUserID(r.Context())
 		if !ok {
-			respond(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+			utils.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
 			return
 		}
 
@@ -72,18 +68,18 @@ func AddReview(app *infra.Deps) httprouter.Handle {
 
 		var existing models.Review
 		if err := app.DB.FindOne(r.Context(), reviewsCollection, dupFilter, &existing); err == nil {
-			respond(w, http.StatusConflict, map[string]string{"error": "Already reviewed"})
+			utils.RespondWithJSON(w, http.StatusConflict, map[string]string{"error": "Already reviewed"})
 			return
 		}
 
 		var payload CreateReviewPayload
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respond(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON"})
+			utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON"})
 			return
 		}
 
 		if payload.Rating < 1 || payload.Rating > 5 || payload.Comment == "" {
-			respond(w, http.StatusBadRequest, map[string]string{"error": "Invalid review data"})
+			utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid review data"})
 			return
 		}
 
@@ -100,11 +96,14 @@ func AddReview(app *infra.Deps) httprouter.Handle {
 		}
 
 		if err := app.DB.Insert(r.Context(), reviewsCollection, review); err != nil {
-			respond(w, http.StatusInternalServerError, map[string]string{"error": "Failed to create review"})
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to create review"})
 			return
 		}
 
-		respond(w, http.StatusCreated, review)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusCreated, review)
 	}
 }
 
@@ -114,9 +113,10 @@ func AddReview(app *infra.Deps) httprouter.Handle {
 
 func EditReview(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx := r.Context()
 		userId, ok := getUserID(r.Context())
 		if !ok {
-			respond(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+			utils.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
 			return
 		}
 
@@ -129,18 +129,18 @@ func EditReview(app *infra.Deps) httprouter.Handle {
 			bson.M{"reviewid": reviewId},
 			&existing,
 		); err != nil {
-			respond(w, http.StatusNotFound, map[string]string{"error": "Review not found"})
+			utils.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "Review not found"})
 			return
 		}
 
 		if existing.UserID != userId && !isAdmin(r.Context()) {
-			respond(w, http.StatusForbidden, map[string]string{"error": "Forbidden"})
+			utils.RespondWithJSON(w, http.StatusForbidden, map[string]string{"error": "Forbidden"})
 			return
 		}
 
 		var payload UpdateReviewPayload
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respond(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON"})
+			utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON"})
 			return
 		}
 
@@ -150,7 +150,7 @@ func EditReview(app *infra.Deps) httprouter.Handle {
 
 		if payload.Rating != nil {
 			if *payload.Rating < 1 || *payload.Rating > 5 {
-				respond(w, http.StatusBadRequest, map[string]string{"error": "Invalid rating"})
+				utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid rating"})
 				return
 			}
 			update["rating"] = *payload.Rating
@@ -161,7 +161,7 @@ func EditReview(app *infra.Deps) httprouter.Handle {
 		}
 
 		if len(update) == 1 {
-			respond(w, http.StatusBadRequest, map[string]string{"error": "Nothing to update"})
+			utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Nothing to update"})
 			return
 		}
 
@@ -171,11 +171,14 @@ func EditReview(app *infra.Deps) httprouter.Handle {
 			bson.M{"reviewid": reviewId},
 			update,
 		); err != nil {
-			respond(w, http.StatusInternalServerError, map[string]string{"error": "Failed to update review"})
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to update review"})
 			return
 		}
 
-		respond(w, http.StatusOK, map[string]string{"message": "Review updated"})
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Review updated"})
 	}
 }
 
@@ -185,9 +188,10 @@ func EditReview(app *infra.Deps) httprouter.Handle {
 
 func DeleteReview(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx := r.Context()
 		userId, ok := getUserID(r.Context())
 		if !ok {
-			respond(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+			utils.RespondWithJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
 			return
 		}
 
@@ -200,12 +204,12 @@ func DeleteReview(app *infra.Deps) httprouter.Handle {
 			bson.M{"reviewid": reviewId},
 			&review,
 		); err != nil {
-			respond(w, http.StatusNotFound, map[string]string{"error": "Review not found"})
+			utils.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "Review not found"})
 			return
 		}
 
 		if review.UserID != userId && !isAdmin(r.Context()) {
-			respond(w, http.StatusForbidden, map[string]string{"error": "Forbidden"})
+			utils.RespondWithJSON(w, http.StatusForbidden, map[string]string{"error": "Forbidden"})
 			return
 		}
 
@@ -214,10 +218,13 @@ func DeleteReview(app *infra.Deps) httprouter.Handle {
 			reviewsCollection,
 			bson.M{"reviewid": reviewId},
 		); err != nil {
-			respond(w, http.StatusInternalServerError, map[string]string{"error": "Failed to delete review"})
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to delete review"})
 			return
 		}
 
-		respond(w, http.StatusOK, map[string]string{"message": "Review deleted"})
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Review deleted"})
 	}
 }

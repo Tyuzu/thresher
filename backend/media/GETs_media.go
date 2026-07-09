@@ -2,7 +2,6 @@ package media
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -33,8 +32,7 @@ func GetMedia(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(media)
+		utils.RespondWithJSON(w, http.StatusOK, media)
 	}
 }
 

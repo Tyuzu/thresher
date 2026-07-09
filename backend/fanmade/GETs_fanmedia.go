@@ -2,7 +2,6 @@ package fanmade
 
 import (
 	"context"
-	"encoding/json"
 	"naevis/infra"
 	"naevis/infra/db"
 	"naevis/models"
@@ -31,8 +30,7 @@ func GetMedia(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(media)
+		utils.RespondWithJSON(w, http.StatusOK, media)
 	}
 }
 

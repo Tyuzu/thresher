@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -36,8 +38,7 @@ func ListModeratorApplications(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(applications)
+		utils.RespondWithJSON(w, http.StatusOK, applications)
 	}
 }
 
@@ -68,8 +69,10 @@ func ApproveModerator(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]string{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Application approved",
 		})
 	}
@@ -102,8 +105,10 @@ func RejectModerator(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]string{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Application rejected",
 		})
 	}

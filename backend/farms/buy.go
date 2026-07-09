@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/metrics/auditlog"
 	"naevis/models"
@@ -154,6 +155,8 @@ func BuyCrop(app *infra.Deps) httprouter.Handle {
 				bson.M{"$set": bson.M{"outOfStock": true, "updatedAt": time.Now()}},
 			)
 		}
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 	}
@@ -257,6 +260,9 @@ func updateOrderStatus(
 			},
 		)
 	}
+
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 	utils.RespondWithJSON(
 		w,
@@ -429,6 +435,9 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 		response.Success = false
 		response.Message = "No orders were updated"
 	}
+
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, response)
 }

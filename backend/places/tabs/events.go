@@ -2,10 +2,10 @@ package places
 
 import (
 	"context"
-	"encoding/json"
 	"naevis/infra"
 	"naevis/infra/db"
 	"naevis/models"
+	"naevis/utils"
 	"net/http"
 	"strconv"
 	"time"
@@ -53,7 +53,6 @@ func PostViewEventDetails(app *infra.Deps) httprouter.Handle {
 
 func GetEvents(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		w.Header().Set("Content-Type", "application/json")
 
 		placeID := ps.ByName("placeid")
 		if placeID == "" {
@@ -125,6 +124,6 @@ func GetEvents(app *infra.Deps) httprouter.Handle {
 			"limit":  limit,
 		}
 
-		_ = json.NewEncoder(w).Encode(response)
+		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
 }

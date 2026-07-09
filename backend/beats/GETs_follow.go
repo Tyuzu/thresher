@@ -1,7 +1,6 @@
 package beats
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -47,8 +46,7 @@ func DoesFollow(app *infra.Deps) httprouter.Handle {
 			"isFollowing": count > 0,
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(response)
+		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
 }
 
@@ -69,8 +67,7 @@ func GetFollowers(app *infra.Deps) httprouter.Handle {
 			&userFollow,
 		)
 		if err != nil || len(userFollow.Followers) == 0 {
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode([]models.User{})
+			utils.RespondWithJSON(w, http.StatusOK, []models.User{})
 			return
 		}
 
@@ -90,8 +87,7 @@ func GetFollowers(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(followers)
+		utils.RespondWithJSON(w, http.StatusOK, followers)
 	}
 }
 
@@ -112,8 +108,7 @@ func GetFollowing(app *infra.Deps) httprouter.Handle {
 			&userFollow,
 		)
 		if err != nil || len(userFollow.Follows) == 0 {
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode([]models.User{})
+			utils.RespondWithJSON(w, http.StatusOK, []models.User{})
 			return
 		}
 
@@ -133,7 +128,6 @@ func GetFollowing(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(following)
+		utils.RespondWithJSON(w, http.StatusOK, following)
 	}
 }

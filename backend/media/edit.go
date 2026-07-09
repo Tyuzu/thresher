@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -96,7 +98,9 @@ func EditMedia(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(updatedMedias)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, updatedMedias)
 	}
 }

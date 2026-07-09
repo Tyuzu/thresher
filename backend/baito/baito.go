@@ -1,11 +1,13 @@
 package baito
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -38,6 +40,9 @@ func DeleteBaito(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete baito")
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusNoContent, map[string]string{})
 	}
@@ -78,6 +83,9 @@ func ApplyToBaito(app *infra.Deps) httprouter.Handle {
 		if err := app.DB.Inc(ctx, BaitoCollection, bson.M{"baitoid": ps.ByName("baitoid")}, "applicationcount", 1); err != nil {
 			log.Printf("Failed to update application count for baito %s: %v", ps.ByName("baitoid"), err)
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

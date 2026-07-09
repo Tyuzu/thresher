@@ -39,7 +39,7 @@ func GetAppeals(app *infra.Deps) httprouter.Handle {
 
 		var appeals []bson.M
 		if err := app.DB.FindMany(ctx, appealsCollection, filter, &appeals); err != nil {
-			writeError(w, "Failed to fetch appeals", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch appeals")
 			return
 		}
 
@@ -54,6 +54,6 @@ func GetAppeals(app *infra.Deps) httprouter.Handle {
 			appeals = []bson.M{}
 		}
 
-		writeJSON(w, appeals, http.StatusOK)
+		utils.RespondWithJSON(w, http.StatusOK, appeals)
 	}
 }

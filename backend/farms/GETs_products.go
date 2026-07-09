@@ -113,9 +113,8 @@ func GetItemCategories(app *infra.Deps) httprouter.Handle {
 			}
 		}
 
-		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(categories); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to encode response")
 		}
 	}
 }

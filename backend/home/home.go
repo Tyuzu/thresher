@@ -2,7 +2,6 @@ package home
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"math/rand"
 	"net/http"
@@ -131,8 +130,7 @@ func HomeCardsHandler(app *infra.Deps) httprouter.Handle {
 		category := r.URL.Query().Get("category")
 		collection, projector := categoryProjection(category)
 		if collection == "" || projector == nil {
-			_ = json.NewEncoder(w).Encode([]HomeCard{})
-			return
+			utils.RespondWithJSON(w, http.StatusOK, []HomeCard{})
 		}
 
 		skip, limit := utils.ParsePagination(r, 0, 20)

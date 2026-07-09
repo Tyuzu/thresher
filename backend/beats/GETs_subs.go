@@ -1,7 +1,6 @@
 package beats
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -56,8 +55,7 @@ func DoesSubscribeEntity(app *infra.Deps) httprouter.Handle {
 			"hasSubscribed": count > 0,
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(resp)
+		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}
 }
 
@@ -78,8 +76,7 @@ func GetSubscribers(app *infra.Deps) httprouter.Handle {
 			&sub,
 		)
 		if err != nil || len(sub.Subscribers) == 0 {
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode([]models.User{})
+			utils.RespondWithJSON(w, http.StatusOK, []models.User{})
 			return
 		}
 
@@ -99,7 +96,6 @@ func GetSubscribers(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(subscribers)
+		utils.RespondWithJSON(w, http.StatusOK, subscribers)
 	}
 }

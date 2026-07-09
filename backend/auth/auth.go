@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -87,6 +88,10 @@ func Register(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* ---------------- Event Payload ---------------- */
+
+		mqpayload, _ := json.Marshal(mqevent.UserRegisteredPayload{})
+
+		app.MQ.Publish(ctx, mqevent.UserRegistered, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"message": "User registered successfully",
@@ -232,6 +237,9 @@ func Login(app *infra.Deps) httprouter.Handle {
 
 		/* ---------------- Publish Login Event ---------------- */
 
+		mqpayload, _ := json.Marshal(mqevent.UserLoggedInPayload{})
+		app.MQ.Publish(ctx, mqevent.UserLoggedIn, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"message": "Login successful",
 			"data": map[string]string{
@@ -286,6 +294,8 @@ func LogoutUser(app *infra.Deps) httprouter.Handle {
 			)
 
 			/* -------- Publish Logout Event -------- */
+			mqpayload, _ := json.Marshal(mqevent.UserLoggedOutPayload{})
+			app.MQ.Publish(ctx, mqevent.UserLoggedOut, mqpayload)
 
 		}
 
@@ -346,6 +356,9 @@ func LogoutAllSessions(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* -------- Publish Logout Event -------- */
+
+		mqpayload, _ := json.Marshal(mqevent.UserLoggedOutPayload{})
+		app.MQ.Publish(ctx, mqevent.UserLoggedOutAllSessions, mqpayload)
 
 		clearRefreshCookie(w)
 

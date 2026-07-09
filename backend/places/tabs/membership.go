@@ -3,6 +3,7 @@ package places
 import (
 	"context"
 	"encoding/json"
+	"naevis/utils"
 	"net/http"
 	"time"
 
@@ -42,7 +43,7 @@ func GetMembership(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		return
 	}
 
-	json.NewEncoder(w).Encode(membership)
+	utils.RespondWithJSON(w, http.StatusOK, membership)
 }
 
 // POST /place/:placeId/membership
@@ -68,7 +69,7 @@ func PostMembership(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	}
 
 	membership.ID = res.InsertedID.(primitive.ObjectID)
-	json.NewEncoder(w).Encode(membership)
+	utils.RespondWithJSON(w, http.StatusOK, membership)
 }
 
 // PUT /place/:placeId/membership/:id
@@ -146,5 +147,5 @@ func GetMemberships(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
-	json.NewEncoder(w).Encode(memberships)
+	utils.RespondWithJSON(w, http.StatusOK, memberships)
 }

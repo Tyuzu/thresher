@@ -110,7 +110,7 @@ function AvailableDeliveriesPage({
         const filtered = deliveries.filter(delivery => {
 
             return (
-                String(delivery.id).toLowerCase().includes(keyword) ||
+                String(delivery.deliveryid).toLowerCase().includes(keyword) ||
                 String(delivery.pickup).toLowerCase().includes(keyword) ||
                 String(delivery.dropoff).toLowerCase().includes(keyword) ||
                 String(delivery.status).toLowerCase().includes(keyword)

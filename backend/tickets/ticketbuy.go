@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/stripe"
@@ -73,6 +74,7 @@ func CloseUpdatesChannel(eventId string) {
 
 func CreateTicketPaymentSession(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx := r.Context()
 		ticketId := ps.ByName("ticketid")
 		eventId := ps.ByName("eventid")
 
@@ -89,6 +91,9 @@ func CreateTicketPaymentSession(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Failed to create payment session", http.StatusInternalServerError)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -242,6 +247,7 @@ func StorePurchasedTickets(eventID, ticketID, userID string, codes []string, app
 }
 
 func buyTicket(w http.ResponseWriter, r *http.Request, req TicketPurchaseRequest, app *infra.Deps) {
+	ctx := r.Context()
 	userID, ok := r.Context().Value(config.UserIDKey).(string)
 	if !ok || userID == "" {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -258,6 +264,9 @@ func buyTicket(w http.ResponseWriter, r *http.Request, req TicketPurchaseRequest
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 		"success":     true,

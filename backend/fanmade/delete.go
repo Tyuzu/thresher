@@ -3,9 +3,11 @@ package fanmade
 import (
 	"encoding/json"
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
+	"naevis/utils"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -50,9 +52,10 @@ func DeleteMedia(app *infra.Deps) httprouter.Handle {
 
 		userdata.DelUserData("media", mediaID, requestingUserID, app)
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "Media deleted successfully",
 		})

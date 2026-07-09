@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -56,8 +57,10 @@ func createItem(w http.ResponseWriter, r *http.Request, itemType string, app *in
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(item)
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+	utils.RespondWithJSON(w, http.StatusOK, item)
 }
 
 // --------------------------------------------------
@@ -128,6 +131,10 @@ func updateItem(
 	}
 
 	/* -------- Publish ProductUpdated Event -------- */
+
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"status":    "success",
 		"message":   "Product updated successfully",
@@ -182,8 +189,10 @@ func deleteItem(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(utils.M{"status": "deleted"})
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, utils.M{"status": "deleted"})
 	}
 }
 

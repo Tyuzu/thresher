@@ -8,10 +8,12 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"golang.org/x/crypto/bcrypt"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/cache"
 	"naevis/infra/db"
 	"naevis/models"
+	"naevis/utils"
 )
 
 /* -------------------------------------------------------
@@ -53,9 +55,10 @@ func EditProfile(app *infra.Deps) httprouter.Handle {
 		}
 
 		// 6. Respond with updated profile
-		if err := RespondWithUserProfile(w, claims.UserID, app.DB); err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-		}
+		RespondWithUserProfile(w, claims.UserID, app.DB)
+		// if err := RespondWithUserProfile(w, claims.UserID, app.DB); err != nil {
+		// 	http.Error(w, "Internal server error", http.StatusInternalServerError)
+		// }
 	}
 }
 
@@ -84,9 +87,11 @@ func DeleteProfile(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Success response
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]string{
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Profile deleted successfully",
 		})
 	}

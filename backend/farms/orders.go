@@ -2,10 +2,10 @@ package farms
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 	"net/http"
 	"time"
 
@@ -49,8 +49,7 @@ func GetIncomingOrders(app *infra.Deps) httprouter.Handle {
 			})
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(
+		utils.RespondWithJSON(w, http.StatusOK,
 			map[string]interface{}{
 				"success": true,
 				"orders":  incoming,

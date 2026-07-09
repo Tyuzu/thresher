@@ -2,7 +2,9 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -51,6 +53,9 @@ func RefreshToken(app *infra.Deps) httprouter.Handle {
 		if result.NewRefresh != "" {
 			setRefreshCookie(w, result.NewRefresh)
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.TokenRefreshPayload{})
+		app.MQ.Publish(ctx, mqevent.TokenRefreshed, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"message": "Token refreshed successfully",

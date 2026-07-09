@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"naevis/beats/dels"
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
@@ -19,6 +20,7 @@ import (
 // CreateTicket handles creation of a new ticket
 func CreateTicket(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx := r.Context()
 		eventID := ps.ByName("eventid")
 		if eventID == "" {
 			http.Error(w, "Invalid event ID", http.StatusBadRequest)
@@ -95,6 +97,9 @@ func CreateTicket(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusCreated, tick)
 	}
 }
@@ -160,6 +165,9 @@ func EditTicket(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "Ticket updated successfully",
@@ -220,6 +228,9 @@ func BuyTicket(app *infra.Deps) httprouter.Handle {
 
 		m := models.Index{}
 		userdata.SetUserData("ticket", ticketID, userID, m.EntityType, m.EntityId, app)
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

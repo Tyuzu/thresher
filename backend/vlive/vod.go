@@ -1,7 +1,9 @@
 package vlive
 
 import (
+	"encoding/json"
 	"log"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -19,15 +21,16 @@ import (
 
 func StartIngest(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		ctx := r.Context()
 		streamKey := r.URL.Query().Get("key")
 		if streamKey == "" {
-			writeError(w, "missing key", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "missing key")
 			return
 		}
 
 		stream, err := getStreamByKey(r.Context(), app, streamKey)
 		if err != nil {
-			writeError(w, "invalid stream key", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "invalid stream key")
 			return
 		}
 
@@ -36,7 +39,7 @@ func StartIngest(app *infra.Deps) httprouter.Handle {
 			models.LiveCreated: true,
 		}
 		if !allowedFrom[stream.State] {
-			writeError(w, "stream not ready for ingest", http.StatusConflict)
+			utils.RespondWithError(w, http.StatusConflict, "stream not ready for ingest")
 			return
 		}
 
@@ -56,26 +59,29 @@ func StartIngest(app *infra.Deps) httprouter.Handle {
 		)
 		if err != nil || !ok {
 			log.Printf("StartIngest: transition error: %v ok=%v", err, ok)
-			writeError(w, "failed to start ingest", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "failed to start ingest")
 			return
 		}
 
-		writeJSON(w, bson.M{"status": "ok", "playbackUrl": playback})
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		utils.RespondWithJSON(w, http.StatusOK, bson.M{"status": "ok", "playbackUrl": playback})
 	}
 }
 
 func RecordingComplete(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		ctx := r.Context()
 		streamKey := r.URL.Query().Get("key")
 		file := r.URL.Query().Get("path")
 		if streamKey == "" || file == "" {
-			writeError(w, "missing key or path", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "missing key or path")
 			return
 		}
 
 		stream, err := getStreamByKey(r.Context(), app, streamKey)
 		if err != nil {
-			writeError(w, "invalid stream key", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "invalid stream key")
 			return
 		}
 
@@ -97,11 +103,14 @@ func RecordingComplete(app *infra.Deps) httprouter.Handle {
 		)
 		if err != nil {
 			log.Printf("RecordingComplete: update error: %v", err)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 
-		writeJSON(w, bson.M{"vodUrl": vodURL})
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, bson.M{"vodUrl": vodURL})
 	}
 }
 
@@ -109,29 +118,29 @@ func PublishVOD(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		id, err := primitive.ObjectIDFromHex(ps.ByName("liveid"))
 		if err != nil {
-			writeError(w, "invalid liveid", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid liveid")
 			return
 		}
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			writeError(w, "unauthenticated", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
 		stream, err := getStreamByID(r.Context(), app, id)
 		if err != nil {
-			writeError(w, "stream not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "stream not found")
 			return
 		}
 
 		if !isOwner(userID, stream) {
-			writeError(w, "forbidden", http.StatusForbidden)
+			utils.RespondWithError(w, http.StatusForbidden, "forbidden")
 			return
 		}
 
 		if stream.VODURL == "" {
-			writeError(w, "no vod available", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "no vod available")
 			return
 		}
 
@@ -143,7 +152,7 @@ func PublishVOD(app *infra.Deps) httprouter.Handle {
 		)
 		if err != nil {
 			log.Printf("PublishVOD: update error: %v", err)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 
@@ -155,24 +164,24 @@ func DeleteVOD(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		id, err := primitive.ObjectIDFromHex(ps.ByName("liveid"))
 		if err != nil {
-			writeError(w, "invalid liveid", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid liveid")
 			return
 		}
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			writeError(w, "unauthenticated", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
 		stream, err := getStreamByID(r.Context(), app, id)
 		if err != nil {
-			writeError(w, "stream not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "stream not found")
 			return
 		}
 
 		if !isOwner(userID, stream) {
-			writeError(w, "forbidden", http.StatusForbidden)
+			utils.RespondWithError(w, http.StatusForbidden, "forbidden")
 			return
 		}
 
@@ -192,7 +201,7 @@ func DeleteVOD(app *infra.Deps) httprouter.Handle {
 		)
 		if err != nil {
 			log.Printf("DeleteVOD: update error: %v", err)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 
@@ -204,7 +213,7 @@ func GetVOD(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		id, err := primitive.ObjectIDFromHex(ps.ByName("liveid"))
 		if err != nil {
-			writeError(w, "invalid id", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid id")
 			return
 		}
 
@@ -212,7 +221,7 @@ func GetVOD(app *infra.Deps) httprouter.Handle {
 
 		stream, err := getStreamByID(r.Context(), app, id)
 		if err != nil || stream.VODURL == "" {
-			writeError(w, "not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "not found")
 			return
 		}
 
@@ -224,16 +233,16 @@ func GetVOD(app *infra.Deps) httprouter.Handle {
 				stream.EntityType,
 				stream.EntityID,
 			) {
-				writeError(w, "forbidden", http.StatusForbidden)
+				utils.RespondWithError(w, http.StatusForbidden, "forbidden")
 				return
 			}
 		}
 
 		if !stream.VODPublished && stream.CreatorID != userID {
-			writeError(w, "vod not published", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "vod not published")
 			return
 		}
 
-		writeJSON(w, bson.M{"vodUrl": stream.VODURL})
+		utils.RespondWithJSON(w, http.StatusOK, bson.M{"vodUrl": stream.VODURL})
 	}
 }

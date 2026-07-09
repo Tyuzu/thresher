@@ -2,9 +2,9 @@ package tickets
 
 import (
 	"context"
-	"encoding/json"
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 	"net/http"
 	"time"
 
@@ -44,8 +44,7 @@ func GetAvailableSeats(app *infra.Deps) httprouter.Handle {
 			availableSeats = []string{}
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{"seats": availableSeats})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"seats": availableSeats})
 	}
 }
 
@@ -73,8 +72,7 @@ func GetTicketSeats(app *infra.Deps) httprouter.Handle {
 			ticket.Seats = []models.Seat{}
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"seats":   ticket.Seats,
 		})

@@ -2,10 +2,10 @@ package tickets
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 	"net/http"
 	"time"
 
@@ -42,8 +42,7 @@ func VerifyTicket(app *infra.Deps) httprouter.Handle {
 
 		// SECURITY: Check if ticket has been canceled
 		if ticket.Canceled {
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]any{
+			utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 				"isValid":      false,
 				"reason":       "Ticket has been canceled",
 				"canceledAt":   ticket.CanceledAt,
@@ -54,8 +53,7 @@ func VerifyTicket(app *infra.Deps) httprouter.Handle {
 
 		// SECURITY: Check if ticket has been transferred
 		if ticket.Transferred {
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]any{
+			utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 				"isValid":       false,
 				"reason":        "Ticket has been transferred",
 				"transferredTo": ticket.TransferredTo,
@@ -63,8 +61,7 @@ func VerifyTicket(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]bool{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]bool{
 			"isValid": true,
 		})
 	}

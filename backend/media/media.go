@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
@@ -125,8 +126,10 @@ func AddMedia(app *infra.Deps) httprouter.Handle {
 			insertedMedia = append(insertedMedia, media)
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(insertedMedia)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, insertedMedia)
 	}
 }
 

@@ -3,6 +3,7 @@ package booking
 import (
 	"context"
 	"encoding/json"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -20,6 +21,7 @@ func genID() string {
 // ---------- Tier handlers ----------
 func CreateTier(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		ctx := r.Context()
 		var tier models.Tier
 		if err := json.NewDecoder(r.Body).Decode(&tier); err != nil {
 			http.Error(w, "invalid JSON", http.StatusBadRequest)
@@ -39,7 +41,10 @@ func CreateTier(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		json.NewEncoder(w).Encode(map[string]any{"tier": tier})
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"tier": tier})
 	}
 }
 
@@ -93,7 +98,11 @@ func CreateSlot(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return
 		}
-		json.NewEncoder(w).Encode(map[string]interface{}{"slot": s})
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{"slot": s})
 	}
 }
 
@@ -201,6 +210,6 @@ func GenerateSlotsFromTier(app *infra.Deps) httprouter.Handle {
 			}
 		}
 
-		json.NewEncoder(w).Encode(map[string]interface{}{"ok": true, "slots": slots})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{"ok": true, "slots": slots})
 	}
 }

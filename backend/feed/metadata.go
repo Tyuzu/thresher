@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"naevis/infra"
+	"naevis/utils"
 	"net/http"
 	"time"
 
@@ -103,7 +104,6 @@ func GetPostsMetadata(app *infra.Deps) httprouter.Handle {
 			})
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
+		utils.RespondWithJSON(w, http.StatusOK, result)
 	}
 }

@@ -1,12 +1,14 @@
 package baito
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -146,6 +148,9 @@ func CreateWorkerProfile(app *infra.Deps) httprouter.Handle {
 			bson.M{"updated_at": time.Now()},
 		)
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Worker profile created successfully",
 		})
@@ -176,6 +181,9 @@ func UpdateWorkerProfile(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update worker profile")
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message":  "Worker profile updated successfully",

@@ -2,8 +2,10 @@ package menu
 
 import (
 	"encoding/json"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 	"net/http"
 	"time"
 
@@ -44,12 +46,14 @@ func BuyMenu(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		// Respond with remaining stock
 		resp := map[string]any{
 			"success":        true,
 			"remainingStock": updatedMenu.Stock,
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}
 }

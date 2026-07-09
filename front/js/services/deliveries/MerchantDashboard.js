@@ -84,7 +84,7 @@ function MerchantDashboard({
             createElement("div", {}, [
 
                 createElement("strong", {
-                    textContent: delivery.id
+                    textContent: delivery.deliveryid
                 }),
 
                 createElement("p", {

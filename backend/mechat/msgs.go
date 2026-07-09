@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/db"
 	"naevis/models"
@@ -27,12 +28,6 @@ func getUser(r *http.Request) string {
 
 func writeErr(w http.ResponseWriter, code int, msg string) {
 	http.Error(w, msg, code)
-}
-
-func writeJSON(w http.ResponseWriter, code int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(v)
 }
 
 func ensureChatAccess(ctx context.Context, app *infra.Deps, chatID, user string) error {
@@ -121,7 +116,10 @@ func SendMessageREST(app *infra.Deps) httprouter.Handle {
 			ClientID string `json:"clientId,omitempty"`
 		}{msg, body.ClientID}
 
-		writeJSON(w, 200, resp)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}
 }
 
@@ -278,7 +276,7 @@ func GetUnreadCount(app *infra.Deps) httprouter.Handle {
 			})
 		}
 
-		writeJSON(w, 200, out)
+		utils.RespondWithJSON(w, http.StatusOK, out)
 	}
 }
 
@@ -333,7 +331,7 @@ func SearchMessages(app *infra.Deps) httprouter.Handle {
 			msgs = make([]models.Message, 0)
 		}
 
-		writeJSON(w, 200, msgs)
+		utils.RespondWithJSON(w, http.StatusOK, msgs)
 	}
 }
 

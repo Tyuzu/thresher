@@ -127,8 +127,8 @@ export async function render(rawPath, contentContainer) {
   for (const route of dynamicRoutes) {
     const match = cleanPath.match(route.pattern);
     if (!match) {
-continue;
-}
+      continue;
+    }
 
     if (route.protected && !isLoggedIn) {
       localStorage.setItem("redirectAfterLogin", cleanPath);
@@ -164,13 +164,13 @@ continue;
 --------------------------------------------------------- */
 subscribe("token", (token) => {
   if (!token) {
-return;
-}
+    return;
+  }
 
   const redirect = localStorage.getItem("redirectAfterLogin");
   if (!redirect) {
-return;
-}
+    return;
+  }
 
   localStorage.removeItem("redirectAfterLogin");
 

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -83,6 +84,9 @@ func CreateNotice(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusCreated, notice)
 	}
 }
@@ -151,6 +155,9 @@ func UpdateNotice(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Fetch failed")
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, existing)
 	}

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/metrics/auditlog"
 	"naevis/models"
@@ -136,8 +137,10 @@ func BuysTicket(app *infra.Deps) httprouter.Handle {
 			},
 		)
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "Ticket booked successfully",
 		})

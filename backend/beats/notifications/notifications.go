@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -66,6 +67,9 @@ func CreateNotification(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusCreated, notification)
 	}
 }
@@ -119,6 +123,9 @@ func BulkCreateNotifications(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create notifications")
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
 			"inserted": len(notifications),
@@ -213,6 +220,9 @@ func MarkAsRead(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"updated": true,
 		})
@@ -245,6 +255,9 @@ func MarkAllAsRead(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"updated": true,
 		})
@@ -268,6 +281,9 @@ func DeleteNotification(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete notification")
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"deleted": true,
@@ -293,6 +309,9 @@ func ClearAllNotifications(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete notifications")
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"deleted": true,

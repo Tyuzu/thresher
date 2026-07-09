@@ -10,8 +10,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 )
 
 // ---------- Bookings ----------
@@ -44,11 +46,10 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 			}
 
 			if len(unavailable) > 0 {
-				_ = json.NewEncoder(w).Encode(map[string]any{
+				utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 					"ok":     false,
 					"reason": "vendor-unavailable",
 				})
-				return
 			}
 		}
 
@@ -65,22 +66,20 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 			return
 		}
 		if count > 0 {
-			_ = json.NewEncoder(w).Encode(map[string]any{
+			utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 				"ok":     false,
 				"reason": "one-per-day",
 			})
-			return
 		}
 
 		// SLOT-BASED booking
 		if p.SlotId != "" {
 			var slot models.Slot
 			if err := app.DB.FindOne(ctx, slotsCollection, bson.M{"id": p.SlotId}, &slot); err != nil {
-				_ = json.NewEncoder(w).Encode(map[string]any{
+				utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 					"ok":     false,
 					"reason": "slot-missing",
 				})
-				return
 			}
 
 			// Sum seats for this slot (consider seats per booking), not just count documents
@@ -101,11 +100,10 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 			}
 
 			if bookedSeats >= slot.Capacity {
-				_ = json.NewEncoder(w).Encode(map[string]any{
+				utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 					"ok":     false,
 					"reason": "slot-full",
 				})
-				return
 			}
 
 			if slot.TierId != "" {
@@ -118,11 +116,10 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 		if p.SlotId == "" && p.TierId != "" {
 			var tier models.Tier
 			if err := app.DB.FindOne(ctx, tiersCollection, bson.M{"id": p.TierId}, &tier); err != nil {
-				_ = json.NewEncoder(w).Encode(map[string]any{
+				utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 					"ok":     false,
 					"reason": "tier-missing",
 				})
-				return
 			}
 
 			// Sum seats booked for this tier on the date
@@ -144,11 +141,10 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 			}
 
 			if tierBookedSeats >= tier.Capacity {
-				_ = json.NewEncoder(w).Encode(map[string]any{
+				utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 					"ok":     false,
 					"reason": "tier-full",
 				})
-				return
 			}
 
 			p.TierName = tier.Name
@@ -184,11 +180,10 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 				}
 
 				if dateTotalSeats >= dc.Capacity {
-					_ = json.NewEncoder(w).Encode(map[string]any{
+					utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 						"ok":     false,
 						"reason": "date-full",
 					})
-					return
 				}
 			}
 		}
@@ -202,7 +197,10 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = json.NewEncoder(w).Encode(map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":      true,
 			"booking": p,
 		})
@@ -248,7 +246,10 @@ func UpdateBookingStatus(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = json.NewEncoder(w).Encode(map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":      true,
 			"booking": updated,
 		})
@@ -279,7 +280,10 @@ func CancelBooking(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = json.NewEncoder(w).Encode(map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":      true,
 			"booking": updated,
 		})
@@ -321,7 +325,10 @@ func SetDateCapacity(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = json.NewEncoder(w).Encode(map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok": true,
 		})
 	}

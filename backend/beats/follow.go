@@ -12,9 +12,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
+	"naevis/utils"
 )
 
 func HandleFollowAction(
@@ -51,8 +53,10 @@ func HandleFollowAction(
 		"ok":          true,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(response)
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+	utils.RespondWithJSON(w, http.StatusOK, response)
 }
 
 func ToggleFollow(app *infra.Deps) httprouter.Handle {

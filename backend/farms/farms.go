@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/metrics/auditlog"
 	"naevis/middleware"
@@ -104,6 +105,9 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 			})
 
 		/* -------- Publish FarmCreated Event -------- */
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
@@ -236,6 +240,8 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 			})
 			return
 		}
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
@@ -272,6 +278,9 @@ func DeleteFarm(app *infra.Deps) httprouter.Handle {
 			})
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,

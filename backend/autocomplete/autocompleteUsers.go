@@ -2,13 +2,13 @@ package autocomplete
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
 
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,8 +23,7 @@ func AutocompleteUsers(app *infra.Deps) httprouter.Handle {
 
 		query := strings.TrimSpace(r.URL.Query().Get("query"))
 		if len(query) < 2 {
-			_ = json.NewEncoder(w).Encode([]models.UserSuggestion{})
-			return
+			utils.RespondWithJSON(w, http.StatusOK, []models.UserSuggestion{})
 		}
 
 		filter := bson.M{
@@ -61,6 +60,6 @@ func AutocompleteUsers(app *infra.Deps) httprouter.Handle {
 			}
 		}
 
-		_ = json.NewEncoder(w).Encode(suggestions)
+		utils.RespondWithJSON(w, http.StatusOK, suggestions)
 	}
 }

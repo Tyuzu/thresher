@@ -2,7 +2,6 @@ package recipes
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"regexp"
 	"strings"
@@ -32,8 +31,7 @@ func GetRecipe(app *infra.Deps) httprouter.Handle {
 
 		normalizeRecipeSlices(&recipe)
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(recipe)
+		utils.RespondWithJSON(w, http.StatusOK, recipe)
 	}
 }
 
@@ -137,7 +135,6 @@ func GetRecipeTags(app *infra.Deps) httprouter.Handle {
 			tags = result[0].Tags
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(tags)
+		utils.RespondWithJSON(w, http.StatusOK, tags)
 	}
 }

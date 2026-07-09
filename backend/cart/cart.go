@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -91,6 +92,8 @@ func UpdateCart(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Failed to fetch updated cart", http.StatusInternalServerError)
 			return
 		}
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, updated)
 	}
@@ -205,6 +208,8 @@ func UpdateItemQuantity(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Failed to fetch updated cart", http.StatusInternalServerError)
 			return
 		}
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, groupedCart)
 	}

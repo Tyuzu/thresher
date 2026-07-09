@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/utils"
 
@@ -464,6 +465,9 @@ func UpdateSettings(app *infra.Deps) httprouter.Handle {
 			_ = app.DB.Insert(ctx, settingsCollection, doc)
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"status":  "success",
 			"message": "settings updated",
@@ -491,6 +495,9 @@ func ResetSettings(app *infra.Deps) httprouter.Handle {
 		if err := app.DB.Update(ctx, settingsCollection, filter, update); err != nil {
 			_ = app.DB.Insert(ctx, settingsCollection, update)
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"status":  "success",
@@ -531,6 +538,9 @@ func InitUserSettings(app *infra.Deps) httprouter.Handle {
 			})
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, true)
 	}

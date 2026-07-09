@@ -10,6 +10,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/utils"
 )
@@ -72,6 +73,9 @@ func RemoveFromCart(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, groupedCart)
 	}
 }
@@ -95,6 +99,9 @@ func ClearCart(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Failed to clear cart", http.StatusInternalServerError)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Cart cleared successfully",

@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 	"net/http"
 	"time"
 
@@ -44,8 +46,10 @@ func AddFAQs(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "FAQ added successfully",
 		})

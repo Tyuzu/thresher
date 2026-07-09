@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
@@ -55,10 +56,12 @@ func CreateEvent(app *infra.Deps) httprouter.Handle {
 
 		userdata.SetUserData("event", event.EventID, requestingUserID, "", "", app)
 
-		w.WriteHeader(http.StatusCreated)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		if err := json.NewEncoder(w).Encode(event); err != nil {
 			log.Printf("Encoding response error: %v", err)
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to encode response")
 		}
 	}
 }

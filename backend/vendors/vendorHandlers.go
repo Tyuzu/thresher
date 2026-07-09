@@ -9,21 +9,17 @@ import (
 	"time"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func writeJSON(w http.ResponseWriter, status int, payload any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(payload)
-}
-
 func writeJSONError(w http.ResponseWriter, status int, code string, message string) {
-	writeJSON(w, status, map[string]any{
+	utils.RespondWithJSON(w, status, map[string]any{
 		"success": false,
 		"error":   code,
 		"message": message,
@@ -90,8 +86,11 @@ func RegisterVendorHandler(app *infra.Deps) httprouter.Handle {
 			writeJSONError(w, http.StatusInternalServerError, "REGISTER_FAILED", "Failed to register vendor")
 			return
 		}
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		
 
-		writeJSON(w, http.StatusCreated, map[string]any{
+		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
 			"vendor":  vendor,
 		})
@@ -117,7 +116,7 @@ func GetVendorsHandler(app *infra.Deps) httprouter.Handle {
 			vendors = []models.Vendor{}
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"vendors": vendors,
 		})
@@ -142,7 +141,7 @@ func GetVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"vendor":  vendor,
 		})
@@ -167,7 +166,7 @@ func GetMyVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"vendor":  vendor,
 		})
@@ -271,7 +270,10 @@ func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"vendor":  updatedVendor,
 		})
@@ -312,7 +314,9 @@ func DeleteVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "Vendor deleted",
 		})
@@ -379,7 +383,9 @@ func HireVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		writeJSON(w, http.StatusCreated, map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
 			"hiring":  hiring,
 		})
@@ -408,7 +414,7 @@ func GetEventVendorsHandler(app *infra.Deps) httprouter.Handle {
 			vendorResponses = []models.VendorResponse{}
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"vendors": vendorResponses,
 		})
@@ -455,7 +461,9 @@ func RemoveVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "Vendor removed successfully",
 		})
@@ -490,7 +498,7 @@ func GetMyVendorRequestsHandler(app *infra.Deps) httprouter.Handle {
 			hirings = []models.VendorHiring{}
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success":  true,
 			"requests": hirings,
 		})
@@ -566,7 +574,9 @@ func UpdateVendorStatusHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"status":  status,
 		})

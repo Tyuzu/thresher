@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"naevis/beats/dels"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
@@ -42,6 +43,9 @@ func CreateArtistEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
 			"message": "ArtistEvent created successfully",
 			"id":      artistevent.EventID,
@@ -67,6 +71,9 @@ func UpdateArtistEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "ArtistEvent updated successfully"})
 	}
 }
@@ -82,6 +89,9 @@ func DeleteArtistEvent(app *infra.Deps) httprouter.Handle {
 		// 	utils.RespondWithError(w, http.StatusNotFound, "ArtistEvent not found or deletion failed")
 		// 	return
 		// }
+
+		// mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		// app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		// utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "ArtistEvent deleted successfully"})
 	}
@@ -185,6 +195,9 @@ func AddArtistToEvent(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update event with artist")
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Artist successfully added to event"})
 	}

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -114,9 +115,10 @@ func EnforceTransition(from, to string) error {
 
 func CreateStream(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			writeError(w, "unauthenticated", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
@@ -132,20 +134,20 @@ func CreateStream(app *infra.Deps) httprouter.Handle {
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			writeError(w, "invalid body", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 
 		if strings.TrimSpace(payload.Title) == "" {
-			writeError(w, "title is required", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "title is required")
 			return
 		}
 		if !validateEntityType(payload.EntityType) {
-			writeError(w, "invalid entityType", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid entityType")
 			return
 		}
 		if payload.EntityID == "" {
-			writeError(w, "entityId required", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "entityId required")
 			return
 		}
 
@@ -157,7 +159,7 @@ func CreateStream(app *infra.Deps) httprouter.Handle {
 			payload.EntityType,
 			payload.EntityID,
 		) {
-			writeError(w, "forbidden", http.StatusForbidden)
+			utils.RespondWithError(w, http.StatusForbidden, "forbidden")
 			return
 		}
 
@@ -175,11 +177,11 @@ func CreateStream(app *infra.Deps) httprouter.Handle {
 		count, err := app.DB.CountDocuments(r.Context(), vlivesCollection, activeFilter)
 		if err != nil {
 			log.Printf("CreateStream: count error: %v", err)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 		if count > 0 {
-			writeError(w, "creator already has an active livestream", http.StatusConflict)
+			utils.RespondWithError(w, http.StatusConflict, "creator already has an active livestream")
 			return
 		}
 
@@ -223,7 +225,7 @@ func CreateStream(app *infra.Deps) httprouter.Handle {
 
 		if err := app.DB.Insert(r.Context(), vlivesCollection, stream); err != nil {
 			log.Printf("CreateStream: insert failed: %v", err)
-			writeError(w, "insert failed", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "insert failed")
 			return
 		}
 
@@ -244,8 +246,11 @@ func CreateStream(app *infra.Deps) httprouter.Handle {
 		}
 
 		log.Printf("CreateStream: user=%s created liveID=%s", userID, stream.LiveID)
-		w.WriteHeader(http.StatusCreated)
-		writeJSON(w, resp)
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusCreated, resp)
 	}
 }
 
@@ -255,18 +260,18 @@ func MarkReady(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			writeError(w, "unauthenticated", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
 		stream, err := fetchStream(r.Context(), app, ps.ByName("liveid"), userID, true)
 		if err != nil {
-			writeError(w, err.Error(), http.StatusForbidden)
+			utils.RespondWithError(w, http.StatusForbidden, err.Error())
 			return
 		}
 
 		if err := EnforceTransition(stream.State, models.LiveReady); err != nil {
-			writeError(w, err.Error(), http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -274,11 +279,11 @@ func MarkReady(app *infra.Deps) httprouter.Handle {
 			bson.M{"state": models.LiveReady, "ready_at": time.Now()})
 		if err != nil {
 			log.Printf("MarkReady: update error: %v", err)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 		if !ok {
-			writeError(w, "state transition failed", http.StatusConflict)
+			utils.RespondWithError(w, http.StatusConflict, "state transition failed")
 			return
 		}
 
@@ -293,13 +298,13 @@ func SetPrivacy(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			writeError(w, "unauthenticated", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
 		stream, err := fetchStream(r.Context(), app, ps.ByName("liveid"), userID, true)
 		if err != nil {
-			writeError(w, err.Error(), http.StatusForbidden)
+			utils.RespondWithError(w, http.StatusForbidden, err.Error())
 			return
 		}
 
@@ -307,7 +312,7 @@ func SetPrivacy(app *infra.Deps) httprouter.Handle {
 			Mode string `json:"mode"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			writeError(w, "invalid body", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 
@@ -323,7 +328,7 @@ func SetPrivacy(app *infra.Deps) httprouter.Handle {
 			update["is_public"] = false
 			update["unlisted"] = false
 		default:
-			writeError(w, "invalid mode", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid mode")
 			return
 		}
 
@@ -337,7 +342,7 @@ func SetPrivacy(app *infra.Deps) httprouter.Handle {
 		)
 		if err != nil {
 			log.Printf("SetPrivacy: update failed: %v", err)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 
@@ -357,11 +362,11 @@ func GetViewerCount(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		liveID := ps.ByName("liveid")
 		if liveID == "" {
-			writeError(w, "invalid liveid", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid liveid")
 			return
 		}
 		count := getViewerCountCache(r.Context(), app, liveID)
-		writeJSON(w, bson.M{"count": count})
+		utils.RespondWithJSON(w, http.StatusOK, bson.M{"count": count})
 	}
 }
 
@@ -369,6 +374,6 @@ func GetViewerCount(app *infra.Deps) httprouter.Handle {
 
 func GetTURNServers(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		writeJSON(w, app.Config.TURNServers)
+		utils.RespondWithJSON(w, http.StatusOK, app.Config.TURNServers)
 	}
 }

@@ -2,7 +2,9 @@ package farms
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -46,6 +48,9 @@ func CreateCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
@@ -146,6 +151,8 @@ func UpdateCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			)
 			return
 		}
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -172,6 +179,9 @@ func DeleteCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

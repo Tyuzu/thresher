@@ -34,19 +34,19 @@ func ChatWebSocket(app *infra.Deps) httprouter.Handle {
 		liveID := ps.ByName("liveid")
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			writeError(w, "unauthenticated", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
 		objID, err := primitive.ObjectIDFromHex(liveID)
 		if err != nil {
-			writeError(w, "invalid id", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid id")
 			return
 		}
 
 		stream, err := getStreamByID(r.Context(), app, objID)
 		if err != nil {
-			writeError(w, "not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "not found")
 			return
 		}
 
@@ -59,13 +59,13 @@ func ChatWebSocket(app *infra.Deps) httprouter.Handle {
 				stream.EntityID,
 			)
 			if !allowed {
-				writeError(w, "forbidden", http.StatusForbidden)
+				utils.RespondWithError(w, http.StatusForbidden, "forbidden")
 				return
 			}
 		}
 
 		if !stream.ChatEnabled {
-			writeError(w, "chat disabled for this stream", http.StatusForbidden)
+			utils.RespondWithError(w, http.StatusForbidden, "chat disabled for this stream")
 			return
 		}
 
@@ -160,23 +160,23 @@ func ChatEnable(app *infra.Deps, enable bool) httprouter.Handle {
 		idHex := ps.ByName("liveid")
 		id, err := primitive.ObjectIDFromHex(idHex)
 		if err != nil {
-			writeError(w, "invalid liveid", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid liveid")
 			return
 		}
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			writeError(w, "unauthenticated", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
 		stream, err := getStreamByID(r.Context(), app, id)
 		if err != nil {
-			writeError(w, "stream not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "stream not found")
 			return
 		}
 		if !isOwner(userID, stream) {
-			writeError(w, "forbidden", http.StatusForbidden)
+			utils.RespondWithError(w, http.StatusForbidden, "forbidden")
 			return
 		}
 
@@ -188,7 +188,7 @@ func ChatEnable(app *infra.Deps, enable bool) httprouter.Handle {
 		)
 		if err != nil {
 			log.Printf("ChatEnable update error: %v", err)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 
@@ -201,23 +201,23 @@ func ChatSlowMode(app *infra.Deps) httprouter.Handle {
 		idHex := ps.ByName("liveid")
 		id, err := primitive.ObjectIDFromHex(idHex)
 		if err != nil {
-			writeError(w, "invalid liveid", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid liveid")
 			return
 		}
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			writeError(w, "unauthenticated", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
 		stream, err := getStreamByID(r.Context(), app, id)
 		if err != nil {
-			writeError(w, "stream not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "stream not found")
 			return
 		}
 		if !isOwner(userID, stream) {
-			writeError(w, "forbidden", http.StatusForbidden)
+			utils.RespondWithError(w, http.StatusForbidden, "forbidden")
 			return
 		}
 
@@ -225,11 +225,11 @@ func ChatSlowMode(app *infra.Deps) httprouter.Handle {
 			Seconds int `json:"seconds"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			writeError(w, "invalid body", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 		if payload.Seconds < 0 || payload.Seconds > 3600 {
-			writeError(w, "invalid seconds", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid seconds")
 			return
 		}
 
@@ -241,7 +241,7 @@ func ChatSlowMode(app *infra.Deps) httprouter.Handle {
 		)
 		if err != nil {
 			log.Printf("ChatSlowMode update error: %v", err)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 

@@ -2,13 +2,13 @@ package tickets
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -36,8 +36,7 @@ func GetTickets(app *infra.Deps) httprouter.Handle {
 			tickets = []models.Ticket{}
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(tickets)
+		utils.RespondWithJSON(w, http.StatusOK, tickets)
 	}
 }
 
@@ -64,7 +63,6 @@ func GetTicket(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(ticket)
+		utils.RespondWithJSON(w, http.StatusOK, ticket)
 	}
 }

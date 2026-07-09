@@ -11,7 +11,9 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/utils"
 )
 
 /* ───────────────────────── Coupon Models ───────────────────────── */
@@ -107,7 +109,7 @@ func ValidateCouponHandler(app *infra.Deps) httprouter.Handle {
 
 		code := strings.TrimSpace(strings.ToLower(req.Code))
 		if code == "" {
-			writeJSON(w, http.StatusBadRequest, CouponResponse{
+			utils.RespondWithJSON(w, http.StatusBadRequest, CouponResponse{
 				Valid:   false,
 				Message: "Coupon code missing",
 			})
@@ -115,7 +117,7 @@ func ValidateCouponHandler(app *infra.Deps) httprouter.Handle {
 		}
 
 		if req.EntityID == "" || req.EntityType == "" {
-			writeJSON(w, http.StatusBadRequest, CouponResponse{
+			utils.RespondWithJSON(w, http.StatusBadRequest, CouponResponse{
 				Valid:   false,
 				Message: "Entity details required",
 			})
@@ -131,7 +133,7 @@ func ValidateCouponHandler(app *infra.Deps) httprouter.Handle {
 
 		var coupon Coupon
 		if err := app.DB.FindOne(ctx, couponCollection, filter, &coupon); err != nil {
-			writeJSON(w, http.StatusNotFound, CouponResponse{
+			utils.RespondWithJSON(w, http.StatusNotFound, CouponResponse{
 				Valid:   false,
 				Message: "Coupon not valid for this entity",
 			})
@@ -139,7 +141,7 @@ func ValidateCouponHandler(app *infra.Deps) httprouter.Handle {
 		}
 
 		if time.Now().After(coupon.ExpiresAt) {
-			writeJSON(w, http.StatusGone, CouponResponse{
+			utils.RespondWithJSON(w, http.StatusGone, CouponResponse{
 				Valid:   false,
 				Message: "Coupon expired",
 			})
@@ -151,18 +153,13 @@ func ValidateCouponHandler(app *infra.Deps) httprouter.Handle {
 			discount = (req.Cart * coupon.Discount) / 100
 		}
 
-		writeJSON(w, http.StatusOK, CouponResponse{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, CouponResponse{
 			Valid:    true,
 			Discount: discount,
 			Message:  "Coupon applied",
 		})
 	}
-}
-
-/* ───────────────────────── Helpers ───────────────────────── */
-
-func writeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
 }

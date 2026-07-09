@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -27,17 +28,17 @@ func getActorID(r *http.Request) string {
 	return utils.GetUserIDFromRequest(r)
 }
 
-func writeJSON(w http.ResponseWriter, v interface{}, status int) {
-	w.Header().Set("Content-Type", "application/json")
-	if status > 0 {
-		w.WriteHeader(status)
-	}
-	_ = json.NewEncoder(w).Encode(v)
-}
+// func utils.RespondWithJSON(w http.ResponseWriter, v interface{}, status int) {
+// 	w.Header().Set("Content-Type", "application/json")
+// 	if status > 0 {
+// 		w.WriteHeader(status)
+// 	}
+// 	_ = json.NewEncoder(w).Encode(v)
+// }
 
-func writeError(w http.ResponseWriter, msg string, status int) {
-	writeJSON(w, map[string]string{"error": msg}, status)
-}
+// func utils.RespondWithError(w http.ResponseWriter, msg string, status int) {
+// 	utils.RespondWithJSON(w, map[string]string{"error": msg}, status)
+// }
 
 func splitAndTrim(s string) []string {
 	parts := strings.Split(s, ",")
@@ -81,7 +82,7 @@ func ReportContent(app *infra.Deps) httprouter.Handle {
 
 		var payload models.Report
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			writeError(w, "Invalid JSON payload", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid JSON payload")
 			return
 		}
 
@@ -94,7 +95,7 @@ func ReportContent(app *infra.Deps) httprouter.Handle {
 		payload.ParentID = stringTrim(payload.ParentID)
 
 		if payload.ReportedBy == "" || payload.TargetID == "" || payload.TargetType == "" || payload.Reason == "" {
-			writeError(w, "Missing required field", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Missing required field")
 			return
 		}
 
@@ -106,7 +107,7 @@ func ReportContent(app *infra.Deps) httprouter.Handle {
 
 		var existing models.Report
 		if err := app.DB.FindOne(ctx, reportsCollection, filter, &existing); err == nil {
-			writeError(w, "You have already reported this item", http.StatusConflict)
+			utils.RespondWithError(w, http.StatusConflict, "You have already reported this item")
 			return
 		}
 
@@ -118,14 +119,17 @@ func ReportContent(app *infra.Deps) httprouter.Handle {
 		payload.Notified = false
 
 		if err := app.DB.Insert(ctx, reportsCollection, payload); err != nil {
-			writeError(w, "Failed to save report", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to save report")
 			return
 		}
 
-		writeJSON(w, map[string]string{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusCreated, map[string]string{
 			"message":  "Report submitted",
 			"reportId": payload.ReportID,
-		}, http.StatusCreated)
+		})
 	}
 }
 
@@ -178,7 +182,7 @@ func GetReports(app *infra.Deps) httprouter.Handle {
 
 		var reports []models.Report
 		if err := app.DB.FindMany(ctx, reportsCollection, filter, &reports); err != nil {
-			writeError(w, "Failed to fetch reports", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch reports")
 			return
 		}
 
@@ -189,7 +193,7 @@ func GetReports(app *infra.Deps) httprouter.Handle {
 			limit,
 		)
 
-		writeJSON(w, reports, http.StatusOK)
+		utils.RespondWithJSON(w, http.StatusOK, reports)
 	}
 }
 
@@ -202,13 +206,13 @@ func UpdateReport(app *infra.Deps) httprouter.Handle {
 		ctx := r.Context()
 		reportID := stringTrim(ps.ByName("id"))
 		if reportID == "" {
-			writeError(w, "Missing report ID", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Missing report ID")
 			return
 		}
 
 		var payload UpdateReportPayload
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			writeError(w, "Invalid JSON payload", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid JSON payload")
 			return
 		}
 
@@ -216,7 +220,7 @@ func UpdateReport(app *infra.Deps) httprouter.Handle {
 		payload.ReviewNotes = stringTrim(payload.ReviewNotes)
 
 		if payload.Status == "" {
-			writeError(w, "Missing required field: status", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Missing required field: status")
 			return
 		}
 
@@ -233,11 +237,14 @@ func UpdateReport(app *infra.Deps) httprouter.Handle {
 			},
 		)
 		if err != nil {
-			writeError(w, "Failed to update report", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update report")
 			return
 		}
 
-		writeJSON(w, map[string]string{"message": "Report updated"}, http.StatusOK)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Report updated"})
 	}
 }
 
@@ -251,7 +258,7 @@ func CreateAppeal(app *infra.Deps) httprouter.Handle {
 
 		var payload CreateAppealPayload
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			writeError(w, "Invalid JSON payload", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid JSON payload")
 			return
 		}
 
@@ -261,7 +268,7 @@ func CreateAppeal(app *infra.Deps) httprouter.Handle {
 		payload.Reason = stringTrim(payload.Reason)
 
 		if payload.UserID == "" || payload.TargetType == "" || payload.TargetID == "" || payload.Reason == "" {
-			writeError(w, "Missing required field", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Missing required field")
 			return
 		}
 
@@ -274,7 +281,7 @@ func CreateAppeal(app *infra.Deps) httprouter.Handle {
 
 		var existing bson.M
 		if err := app.DB.FindOne(ctx, appealsCollection, filter, &existing); err == nil {
-			writeError(w, "You already have a pending appeal for this content", http.StatusConflict)
+			utils.RespondWithError(w, http.StatusConflict, "You already have a pending appeal for this content")
 			return
 		}
 
@@ -295,14 +302,17 @@ func CreateAppeal(app *infra.Deps) httprouter.Handle {
 		}
 
 		if err := app.DB.Insert(ctx, appealsCollection, appeal); err != nil {
-			writeError(w, "Failed to create appeal", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create appeal")
 			return
 		}
 
-		writeJSON(w, map[string]string{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusCreated, map[string]string{
 			"message":  "Appeal submitted",
 			"appealId": appealID,
-		}, http.StatusCreated)
+		})
 	}
 }
 
@@ -311,13 +321,13 @@ func UpdateAppeal(app *infra.Deps) httprouter.Handle {
 		ctx := r.Context()
 		appealID := stringTrim(ps.ByName("id"))
 		if appealID == "" {
-			writeError(w, "Missing appeal ID", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Missing appeal ID")
 			return
 		}
 
 		var payload UpdateAppealPayload
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			writeError(w, "Invalid JSON payload", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid JSON payload")
 			return
 		}
 
@@ -325,13 +335,13 @@ func UpdateAppeal(app *infra.Deps) httprouter.Handle {
 		payload.ReviewNotes = stringTrim(payload.ReviewNotes)
 
 		if payload.Status != "approved" && payload.Status != "denied" {
-			writeError(w, "Invalid status", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid status")
 			return
 		}
 
 		var appeal bson.M
 		if err := app.DB.FindOne(ctx, appealsCollection, bson.M{"appealid": appealID}, &appeal); err != nil {
-			writeError(w, "Appeal not found", http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "Appeal not found")
 			return
 		}
 
@@ -346,7 +356,7 @@ func UpdateAppeal(app *infra.Deps) httprouter.Handle {
 				"updatedAt":   time.Now().UTC(),
 			},
 		); err != nil {
-			writeError(w, "Failed to update appeal", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update appeal")
 			return
 		}
 
@@ -361,7 +371,10 @@ func UpdateAppeal(app *infra.Deps) httprouter.Handle {
 			)
 		}
 
-		writeJSON(w, map[string]string{"message": "Appeal updated"}, http.StatusOK)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Appeal updated"})
 	}
 }
 
@@ -446,25 +459,28 @@ func SoftDeleteEntity(app *infra.Deps) httprouter.Handle {
 		idParam := stringTrim(ps.ByName("id"))
 
 		if entityType == "" || idParam == "" {
-			writeError(w, "Missing type or id", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Missing type or id")
 			return
 		}
 
 		moderatorID := getActorID(r)
 		if moderatorID == "" {
-			writeError(w, "Missing moderator id in context", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "Missing moderator id in context")
 			return
 		}
 
 		if err := setEntityDeletedFlag(ctx, entityType, idParam, true, moderatorID, app); err != nil {
 			if errors.Is(err, errEntityNotFound) {
-				writeError(w, "Entity not found", http.StatusNotFound)
+				utils.RespondWithError(w, http.StatusNotFound, "Entity not found")
 				return
 			}
-			writeError(w, "Failed to soft-delete entity", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to soft-delete entity")
 			return
 		}
 
-		writeJSON(w, map[string]string{"message": "Entity soft-deleted"}, http.StatusOK)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Entity soft-deleted"})
 	}
 }

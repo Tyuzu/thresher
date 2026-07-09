@@ -1,7 +1,9 @@
 package filemgr
 
 import (
+	"encoding/json"
 	"log"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/utils"
 	"net/http"
@@ -12,6 +14,7 @@ import (
 
 func FiledropHandler(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		ctx := r.Context()
 		if err := validateUploadRequest(w, r); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
@@ -81,6 +84,9 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 				return
 			}
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, convertToAttachments(attachments))
 	}

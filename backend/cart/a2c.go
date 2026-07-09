@@ -9,6 +9,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -99,6 +100,9 @@ func AddToCart(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* -------- Publish CartItemAdded Event -------- */
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]string{"status": "ok"})
 	}

@@ -2,10 +2,12 @@ package deliveries
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -15,8 +17,8 @@ import (
 )
 
 type Delivery struct {
-	ID            string    `json:"id" bson:"id"`
-	OrderID       string    `json:"orderId,omitempty" bson:"orderId,omitempty"`
+	DeliveryID    string    `json:"deliveryid" bson:"deliveryid"`
+	OrderID       string    `json:"orderid,omitempty" bson:"orderid,omitempty"`
 	Status        string    `json:"status" bson:"status"`
 	Pickup        string    `json:"pickup" bson:"pickup"`
 	Dropoff       string    `json:"dropoff" bson:"dropoff"`
@@ -54,6 +56,9 @@ func GetMyDeliveries(app *infra.Deps) httprouter.Handle {
 			deliveries = append(deliveries, buildDeliveryFromOrder(order))
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"deliveries": deliveries})
 	}
 }
@@ -81,6 +86,9 @@ func GetDeliveryByID(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, buildDeliveryFromOrder(order))
 	}
 }
@@ -89,7 +97,7 @@ func buildDeliveryFromOrder(order models.Order) Delivery {
 	pickup, dropoff := parseAddress(order.Address)
 	status := normalizeStatus(order.Status)
 	return Delivery{
-		ID:           order.OrderID,
+		DeliveryID:   order.OrderID,
 		OrderID:      order.OrderID,
 		Status:       status,
 		Pickup:       pickup,

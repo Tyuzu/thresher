@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/utils"
 
@@ -101,6 +102,9 @@ func UpdatePlaceInfo(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Failed to update place info", http.StatusInternalServerError)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, update)
 	}

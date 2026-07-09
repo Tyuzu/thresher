@@ -2,8 +2,10 @@ package events
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"naevis/beats/dels"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -63,6 +65,9 @@ func EditEvent(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Error retrieving updated event", http.StatusInternalServerError)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, updatedEvent)
 	}

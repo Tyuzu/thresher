@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"naevis/infra"
+	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -110,8 +111,7 @@ func GetProducts(app *infra.Deps) httprouter.Handle {
 			products = make([]Product, 0)
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(products)
+		utils.RespondWithJSON(w, http.StatusOK, products)
 	}
 }
 
@@ -140,9 +140,7 @@ func PostProduct(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(w).Encode(product)
+		utils.RespondWithJSON(w, http.StatusOK, product)
 	}
 }
 
@@ -219,9 +217,7 @@ func PostPlaceProductPurchase(app *infra.Deps) httprouter.Handle {
 		// - Inventory mutation event to message queue
 		// - Ensure transaction integrity before accepting payment
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
+		utils.RespondWithJSON(w, http.StatusOK, []byte(`{"status":"ok"}`))
 	}
 }
 

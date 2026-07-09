@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -41,6 +42,9 @@ func InitiateCheckout(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Cart is empty", http.StatusBadRequest)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"status": "ok",
@@ -163,6 +167,9 @@ func CreateCheckoutSession(app *infra.Deps) httprouter.Handle {
 			"address":   payload.Address,
 			"createdAt": time.Now(),
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, session)
 	}

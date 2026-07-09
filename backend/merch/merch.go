@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/metrics/auditlog"
 	"naevis/models"
@@ -18,12 +19,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func respond(w http.ResponseWriter, code int, payload any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(payload)
-}
-
 func validateEntityType(t string) bool {
 	return t == "event" || t == "farm" || t == "artist"
 }
@@ -31,18 +26,19 @@ func validateEntityType(t string) bool {
 // ---------------------- Create Merch ----------------------
 func CreateMerch(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx := r.Context()
 		entityType := ps.ByName("entityType")
 		eventID := ps.ByName("eventid")
 
 		if !validateEntityType(entityType) {
-			respond(w, 400, map[string]any{"success": false, "error": "invalid entity type"})
+			utils.RespondWithJSON(w, 400, map[string]any{"success": false, "error": "invalid entity type"})
 			return
 		}
 
 		// SECURITY: Verify user is authenticated
 		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
-			respond(w, 401, map[string]any{"success": false, "error": "unauthorized"})
+			utils.RespondWithJSON(w, 401, map[string]any{"success": false, "error": "unauthorized"})
 			return
 		}
 
@@ -73,19 +69,19 @@ func CreateMerch(app *infra.Deps) httprouter.Handle {
 			}, &ownerEntity)
 
 			if err != nil {
-				respond(w, 404, map[string]any{"success": false, "error": "entity not found"})
+				utils.RespondWithJSON(w, 404, map[string]any{"success": false, "error": "entity not found"})
 				return
 			}
 
 			// Check ownership based on entity type
 			owner, ok := ownerEntity[ownerField].(string)
 			if !ok {
-				respond(w, 403, map[string]any{"success": false, "error": "cannot verify ownership"})
+				utils.RespondWithJSON(w, 403, map[string]any{"success": false, "error": "cannot verify ownership"})
 				return
 			}
 
 			if owner != userID {
-				respond(w, 403, map[string]any{"success": false, "error": "forbidden: only entity owner can create merch"})
+				utils.RespondWithJSON(w, 403, map[string]any{"success": false, "error": "forbidden: only entity owner can create merch"})
 				return
 			}
 		}
@@ -99,12 +95,12 @@ func CreateMerch(app *infra.Deps) httprouter.Handle {
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			respond(w, 400, map[string]any{"success": false, "error": "invalid json"})
+			utils.RespondWithJSON(w, 400, map[string]any{"success": false, "error": "invalid json"})
 			return
 		}
 
 		if body.Name == "" || body.Price <= 0 || body.Stock < 0 {
-			respond(w, 400, map[string]any{"success": false, "error": "invalid merch data"})
+			utils.RespondWithJSON(w, 400, map[string]any{"success": false, "error": "invalid merch data"})
 			return
 		}
 
@@ -123,7 +119,7 @@ func CreateMerch(app *infra.Deps) httprouter.Handle {
 		}
 
 		if err := app.DB.Insert(r.Context(), merchCollection, merch); err != nil {
-			respond(w, 500, map[string]any{"success": false, "error": "insert failed"})
+			utils.RespondWithJSON(w, 500, map[string]any{"success": false, "error": "insert failed"})
 			return
 		}
 
@@ -141,13 +137,17 @@ func CreateMerch(app *infra.Deps) httprouter.Handle {
 			},
 		)
 
-		respond(w, 201, map[string]any{"success": true, "data": merch})
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, 201, map[string]any{"success": true, "data": merch})
 	}
 }
 
 // ---------------------- Edit Merch ----------------------
 func EditMerch(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx := r.Context()
 		entityType := ps.ByName("entityType")
 		eventID := ps.ByName("eventid")
 		merchID := ps.ByName("merchid")
@@ -155,7 +155,7 @@ func EditMerch(app *infra.Deps) httprouter.Handle {
 		// SECURITY: Verify user is authenticated
 		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
-			respond(w, 401, map[string]any{"success": false, "error": "unauthorized"})
+			utils.RespondWithJSON(w, 401, map[string]any{"success": false, "error": "unauthorized"})
 			return
 		}
 
@@ -186,13 +186,13 @@ func EditMerch(app *infra.Deps) httprouter.Handle {
 			}, &ownerEntity)
 
 			if err != nil {
-				respond(w, 404, map[string]any{"success": false, "error": "entity not found"})
+				utils.RespondWithJSON(w, 404, map[string]any{"success": false, "error": "entity not found"})
 				return
 			}
 
 			owner, ok := ownerEntity[ownerField].(string)
 			if !ok || owner != userID {
-				respond(w, 403, map[string]any{"success": false, "error": "forbidden: only entity owner can edit merch"})
+				utils.RespondWithJSON(w, 403, map[string]any{"success": false, "error": "forbidden: only entity owner can edit merch"})
 				return
 			}
 		}
@@ -205,7 +205,7 @@ func EditMerch(app *infra.Deps) httprouter.Handle {
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			respond(w, 400, map[string]any{"success": false, "error": "invalid json"})
+			utils.RespondWithJSON(w, 400, map[string]any{"success": false, "error": "invalid json"})
 			return
 		}
 
@@ -237,7 +237,7 @@ func EditMerch(app *infra.Deps) httprouter.Handle {
 			bson.M{"$set": update},
 		)
 		if err != nil {
-			respond(w, 404, map[string]any{"success": false, "error": "merch not found"})
+			utils.RespondWithJSON(w, 404, map[string]any{"success": false, "error": "merch not found"})
 			return
 		}
 
@@ -251,13 +251,17 @@ func EditMerch(app *infra.Deps) httprouter.Handle {
 			},
 		)
 
-		respond(w, 200, map[string]any{"success": true})
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, 200, map[string]any{"success": true})
 	}
 }
 
 // ---------------------- Delete Merch ----------------------
 func DeleteMerch(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx := r.Context()
 		entityType := ps.ByName("entityType")
 		eventID := ps.ByName("eventid")
 		merchID := ps.ByName("merchid")
@@ -265,7 +269,7 @@ func DeleteMerch(app *infra.Deps) httprouter.Handle {
 		// SECURITY: Verify user is authenticated
 		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
-			respond(w, 401, map[string]any{"success": false, "error": "unauthorized"})
+			utils.RespondWithJSON(w, 401, map[string]any{"success": false, "error": "unauthorized"})
 			return
 		}
 
@@ -296,13 +300,13 @@ func DeleteMerch(app *infra.Deps) httprouter.Handle {
 			}, &ownerEntity)
 
 			if err != nil {
-				respond(w, 404, map[string]any{"success": false, "error": "entity not found"})
+				utils.RespondWithJSON(w, 404, map[string]any{"success": false, "error": "entity not found"})
 				return
 			}
 
 			owner, ok := ownerEntity[ownerField].(string)
 			if !ok || owner != userID {
-				respond(w, 403, map[string]any{"success": false, "error": "forbidden: only entity owner can delete merch"})
+				utils.RespondWithJSON(w, 403, map[string]any{"success": false, "error": "forbidden: only entity owner can delete merch"})
 				return
 			}
 		}
@@ -324,7 +328,7 @@ func DeleteMerch(app *infra.Deps) httprouter.Handle {
 			}},
 		)
 		if err != nil {
-			respond(w, 404, map[string]any{"success": false, "error": "merch not found"})
+			utils.RespondWithJSON(w, 404, map[string]any{"success": false, "error": "merch not found"})
 			return
 		}
 
@@ -338,16 +342,20 @@ func DeleteMerch(app *infra.Deps) httprouter.Handle {
 			},
 		)
 
-		respond(w, 200, map[string]any{"success": true})
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, 200, map[string]any{"success": true})
 	}
 }
 
 // ---------------------- Buy Merch ----------------------
 func BuyMerch(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx := r.Context()
 		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
-			respond(w, 401, map[string]any{"success": false, "error": "unauthorized"})
+			utils.RespondWithJSON(w, 401, map[string]any{"success": false, "error": "unauthorized"})
 			return
 		}
 
@@ -355,7 +363,7 @@ func BuyMerch(app *infra.Deps) httprouter.Handle {
 			Quantity int `json:"quantity"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Quantity < 1 {
-			respond(w, 400, map[string]any{"success": false, "error": "invalid quantity"})
+			utils.RespondWithJSON(w, 400, map[string]any{"success": false, "error": "invalid quantity"})
 			return
 		}
 
@@ -397,11 +405,14 @@ func BuyMerch(app *infra.Deps) httprouter.Handle {
 		})
 
 		if err != nil {
-			respond(w, 400, map[string]any{"success": false, "error": err.Error()})
+			utils.RespondWithJSON(w, 400, map[string]any{"success": false, "error": err.Error()})
 			return
 		}
 
-		respond(w, 200, map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, 200, map[string]any{
 			"success": true,
 			"message": "purchase successful",
 		})

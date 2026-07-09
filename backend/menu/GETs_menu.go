@@ -42,8 +42,7 @@ func GetMenu(app *infra.Deps) httprouter.Handle {
 		menuJSON, _ := json.Marshal(menu)
 		app.Cache.Set(ctx, cacheKey, menuJSON, 1*time.Hour)
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(menu)
+		utils.RespondWithJSON(w, http.StatusOK, menu)
 	}
 }
 
@@ -63,8 +62,7 @@ func GetStock(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(menu)
+		utils.RespondWithJSON(w, http.StatusOK, menu)
 	}
 }
 

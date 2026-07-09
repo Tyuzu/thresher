@@ -16,7 +16,7 @@ function TrackingHeader(delivery = {}) {
         createElement("div", {}, [
 
             createElement("h2", {
-                textContent: `Delivery #${delivery.id || "-"}`
+                textContent: `Delivery #${delivery.deliveryid || "-"}`
             }),
 
             createElement("div", {

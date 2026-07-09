@@ -2,6 +2,7 @@ package feed
 
 import (
 	"encoding/json"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/utils"
 	"net/http"
@@ -32,8 +33,10 @@ func CreateFeedPost(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":   true,
 			"data": post,
 		})
@@ -64,8 +67,10 @@ func EditPost(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":   true,
 			"data": post,
 		})

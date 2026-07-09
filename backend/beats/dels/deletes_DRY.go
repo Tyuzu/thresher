@@ -2,6 +2,7 @@ package dels
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/cache"
 	"naevis/models"
@@ -65,6 +67,9 @@ func deleteByField(
 		after(ctx, entityID, userID)
 	}
 
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 	utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 }
 
@@ -106,6 +111,9 @@ func softDeleteByField(
 	if after != nil {
 		after(ctx, entityID, userID)
 	}
+
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 }

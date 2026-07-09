@@ -1,7 +1,7 @@
 package maps
 
 import (
-	"encoding/json"
+	"naevis/utils"
 	"net/http"
 	"strconv"
 	"strings"
@@ -141,7 +141,7 @@ func GetMapConfig(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		PlayerProgress: progressCopy,
 	}
 
-	writeJSON(w, resp)
+	utils.RespondWithJSON(w, http.StatusOK, resp)
 }
 
 // GetMapMarkers returns markers for the entity (native pixel coords)
@@ -152,7 +152,7 @@ func GetMapMarkers(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		http.Error(w, "entity not found", http.StatusNotFound)
 		return
 	}
-	writeJSON(w, markers)
+	utils.RespondWithJSON(w, http.StatusOK, markers)
 }
 
 // UpdatePlayerProgress increments the missions completed for an entity
@@ -180,7 +180,7 @@ func UpdatePlayerProgress(w http.ResponseWriter, r *http.Request, _ httprouter.P
 	newVal := playerMissionsCompleted[entity]
 	playerMissionsMu.Unlock()
 
-	writeJSON(w, map[string]interface{}{"entity": entity, "missionsCompleted": newVal})
+	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{"entity": entity, "missionsCompleted": newVal})
 }
 
 // GetPlayerProgress returns player progress. If ?entity= is provided, return that entity's count,
@@ -196,7 +196,7 @@ func GetPlayerProgress(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 			http.Error(w, "entity not found", http.StatusBadRequest)
 			return
 		}
-		writeJSON(w, map[string]interface{}{"entity": entity, "missionsCompleted": playerMissionsCompleted[entity]})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{"entity": entity, "missionsCompleted": playerMissionsCompleted[entity]})
 		return
 	}
 
@@ -205,7 +205,7 @@ func GetPlayerProgress(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 	for k, v := range playerMissionsCompleted {
 		copyMap[k] = v
 	}
-	writeJSON(w, copyMap)
+	utils.RespondWithJSON(w, http.StatusOK, copyMap)
 }
 
 // --- Helpers ---
@@ -237,9 +237,4 @@ func isUnlockedForEntity(area LockedArea, progress map[string]int, currentEntity
 
 	// no condition implies unlocked as long as dependency satisfied
 	return true
-}
-
-func writeJSON(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(data)
 }

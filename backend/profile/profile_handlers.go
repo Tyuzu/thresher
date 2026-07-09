@@ -2,7 +2,6 @@ package profile
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -52,7 +51,7 @@ func isOnline(ctx context.Context, userid string, cache cache.Cache) (bool, erro
 ------------------------------------------------------- */
 
 // RespondWithUserProfile writes user profile as JSON to the response
-func RespondWithUserProfile(w http.ResponseWriter, userid string, database db.Database) error {
+func RespondWithUserProfile(w http.ResponseWriter, userid string, database db.Database) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -60,12 +59,11 @@ func RespondWithUserProfile(w http.ResponseWriter, userid string, database db.Da
 	_ = database.FindOne(ctx, usersCollection, map[string]any{"userid": userid}, &userProfile)
 
 	if userProfile.UserID == "" {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return nil
+		utils.RespondWithError(w, http.StatusNotFound, "User not found")
+
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(w).Encode(userProfile)
+	utils.RespondWithJSON(w, http.StatusOK, userProfile)
 }
 
 /* -------------------------------------------------------

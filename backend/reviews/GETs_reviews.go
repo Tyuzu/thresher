@@ -33,7 +33,7 @@ func GetReviews(app *infra.Deps) httprouter.Handle {
 
 		var reviews []models.Review
 		if err := app.DB.FindMany(ctx, reviewsCollection, filter, &reviews); err != nil {
-			respond(w, http.StatusInternalServerError, map[string]string{"error": "Failed to fetch reviews"})
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to fetch reviews"})
 			return
 		}
 
@@ -48,7 +48,7 @@ func GetReviews(app *infra.Deps) httprouter.Handle {
 			reviews = []models.Review{}
 		}
 
-		respond(w, http.StatusOK, reviews)
+		utils.RespondWithJSON(w, http.StatusOK, reviews)
 	}
 }
 
@@ -67,10 +67,10 @@ func GetReview(app *infra.Deps) httprouter.Handle {
 			bson.M{"reviewid": reviewId},
 			&review,
 		); err != nil {
-			respond(w, http.StatusNotFound, map[string]string{"error": "Review not found"})
+			utils.RespondWithJSON(w, http.StatusNotFound, map[string]string{"error": "Review not found"})
 			return
 		}
 
-		respond(w, http.StatusOK, review)
+		utils.RespondWithJSON(w, http.StatusOK, review)
 	}
 }

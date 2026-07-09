@@ -69,8 +69,8 @@ function buildDemoData() {
 
 function buildDeliveryShape(raw = {}, fallback = {}) {
     return {
-        id: raw.id || raw.orderId || fallback.id || "",
-        orderId: raw.orderId || raw.id || fallback.orderId || "",
+        id: raw.deliveryid || raw.orderid || fallback.deliveryid || "",
+        orderid: raw.orderid || raw.deliveryid || fallback.orderid || "",
         status: raw.status || fallback.status || "Pending",
         updatedAt: raw.updatedAt || fallback.updatedAt || "",
         packageName: raw.packageName || fallback.packageName || "Order shipment",
@@ -266,14 +266,14 @@ export async function displayDeliveries(contentContainer, isLoggedIn) {
             }),
             AvailableDeliveriesPage({
                 deliveries: available,
-                onView: (item) => navigate(`/deliveries/${item.id}`),
+                onView: (item) => navigate(`/deliveries/${item.deliveryid}`),
                 onAccept: () => {
                     notice.replaceChildren("Delivery accepted. You can review the route and progress from the tracking view.");
                 }
             }),
             DeliveryHistoryPage({
                 deliveries: history,
-                onView: (item) => navigate(`/deliveries/${item.id}`),
+                onView: (item) => navigate(`/deliveries/${item.deliveryid}`),
                 onBack: () => navigate("/deliveries")
             })
         ]);
@@ -360,7 +360,7 @@ export async function displayDelivery(contentContainer, deliveryid, isLoggedIn) 
         ]);
 
         contentContainer.replaceChildren(createPageShell(
-            `Delivery ${selectedDelivery.id}`,
+            `Delivery ${selectedDelivery.deliveryid}`,
             "Review shipment details, follow progress, and keep the handoff moving.",
             detailContent
         ));

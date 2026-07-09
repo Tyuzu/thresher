@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
@@ -83,6 +84,9 @@ func TransferTicket(app *infra.Deps) httprouter.Handle {
 		// Update user data indexes
 		userdata.DelUserData("ticket", payload.UniqueCode, requestingUserId, app)
 		userdata.SetUserData("ticket", payload.UniqueCode, payload.Recipient, "event", eventID, app)
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

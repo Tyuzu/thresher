@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 	"net/http"
 	"strconv"
 	"time"
@@ -50,9 +51,8 @@ func GetPost(app *infra.Deps) httprouter.Handle {
 		_ = app.DB.UpdateOne(ctx, feedpostsCollection, map[string]any{"postid": id}, map[string]any{"likes": likeCount})
 
 		// Step 4: Return enriched post
-		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(post); err != nil {
-			http.Error(w, "Failed to encode post data", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to encode post data")
 		}
 	}
 }
@@ -103,8 +103,7 @@ func GetPosts(app *infra.Deps) httprouter.Handle {
 			}
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":   true,
 			"data": posts,
 		})

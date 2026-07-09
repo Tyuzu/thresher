@@ -1,9 +1,9 @@
 package products
 
 import (
-	"encoding/json"
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -18,8 +18,8 @@ func GetProductDetails(app *infra.Deps) httprouter.Handle {
 		var product models.Product
 
 		switch entityType {
-			case "product", "tool":
-				product = getProductEntity(ctx, entityId, app)
+		case "product", "tool":
+			product = getProductEntity(ctx, entityId, app)
 		// case "tool":
 		// 	product = getToolEntity(entityId)
 		// case "subscription":
@@ -35,8 +35,6 @@ func GetProductDetails(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(product)
+		utils.RespondWithJSON(w, http.StatusOK, product)
 	}
 }

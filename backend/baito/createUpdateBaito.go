@@ -1,12 +1,14 @@
 package baito
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -242,6 +244,9 @@ func CreateBaito(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, struct {
 			BaitoID string `json:"baitoid"`
 		}{
@@ -293,6 +298,9 @@ func UpdateBaito(app *infra.Deps) httprouter.Handle {
 			)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, struct {
 			Message string `json:"message"`

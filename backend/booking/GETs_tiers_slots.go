@@ -2,7 +2,6 @@ package booking
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 )
 
 func ListSlots(app *infra.Deps) httprouter.Handle {
@@ -35,7 +35,7 @@ func ListSlots(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = json.NewEncoder(w).Encode(map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"slots": slots,
 		})
 	}
@@ -67,7 +67,7 @@ func ListBookings(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = json.NewEncoder(w).Encode(map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"bookings": bookings,
 		})
 	}
@@ -99,13 +99,12 @@ func GetDateCapacity(app *infra.Deps) httprouter.Handle {
 			&dc,
 		)
 		if err != nil {
-			_ = json.NewEncoder(w).Encode(map[string]any{
+			utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 				"capacity": nil,
 			})
-			return
 		}
 
-		_ = json.NewEncoder(w).Encode(map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"capacity": dc.Capacity,
 		})
 	}
@@ -133,7 +132,7 @@ func ListTiers(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = json.NewEncoder(w).Encode(map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"tiers": tiers,
 		})
 	}

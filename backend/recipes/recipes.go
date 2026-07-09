@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"naevis/beats/dels"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -171,8 +172,10 @@ func CreateRecipe(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(recipe)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, recipe)
 	}
 }
 
@@ -271,8 +274,10 @@ func UpdateRecipe(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"updated"}`))
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, []byte(`{"status":"updated"}`))
 	}
 }
 

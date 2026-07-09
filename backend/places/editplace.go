@@ -1,12 +1,14 @@
 package places
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
 
 	"naevis/beats/dels"
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/utils"
 
@@ -75,6 +77,9 @@ func EditPlace(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Failed to update place", http.StatusInternalServerError)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, updateFields)
 	}

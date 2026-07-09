@@ -2,7 +2,6 @@ package suggestions
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -89,8 +88,7 @@ func SuggestFollowers(app *infra.Deps) httprouter.Handle {
 			users = []models.UserSuggest{}
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(users)
+		utils.RespondWithJSON(w, http.StatusOK, users)
 	}
 }
 
@@ -98,8 +96,6 @@ func GetNearbyPlaces(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
-
-		w.Header().Set("Content-Type", "application/json")
 
 		curplace := r.URL.Query().Get("place")
 		if len(curplace) != 14 {
@@ -136,6 +132,6 @@ func GetNearbyPlaces(app *infra.Deps) httprouter.Handle {
 			})
 		}
 
-		_ = json.NewEncoder(w).Encode(sanitized)
+		utils.RespondWithJSON(w, http.StatusOK, sanitized)
 	}
 }

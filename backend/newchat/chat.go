@@ -3,6 +3,7 @@ package newchat
 import (
 	"context"
 	"encoding/json"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/db"
 	"naevis/models"
@@ -49,8 +50,7 @@ func GetChat(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"chatid":   chatID,
 			"messages": messages,
 		})
@@ -151,8 +151,10 @@ func CreateMessage(app *infra.Deps) httprouter.Handle {
 		}
 		_ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": chatID}, update)
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(msg)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, msg)
 	}
 }
 
@@ -320,7 +322,6 @@ func GetUserChats(app *infra.Deps) httprouter.Handle {
 			chats = []models.Chat{}
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(chats)
+		utils.RespondWithJSON(w, http.StatusOK, chats)
 	}
 }

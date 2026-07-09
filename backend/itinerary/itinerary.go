@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -63,6 +64,9 @@ func CreateItinerary(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusCreated, it)
 	}
 }
@@ -119,6 +123,9 @@ func UpdateItinerary(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"status": "200", "message": "Itinerary updated successfully"})
 	}
 }
@@ -141,6 +148,9 @@ func DeleteItinerary(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Itinerary not found or forbidden", http.StatusNotFound)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"message": "Itinerary deleted"})
 	}
@@ -188,6 +198,9 @@ func ForkItinerary(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusCreated, newItinerary)
 	}
 }
@@ -210,6 +223,9 @@ func PublishItinerary(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Itinerary not found or forbidden", http.StatusNotFound)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"published": true})
 	}

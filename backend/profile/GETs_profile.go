@@ -45,8 +45,7 @@ func GetProfile(app *infra.Deps) httprouter.Handle {
 		// Best-effort cache write (5 min TTL)
 		_ = CacheProfile(ctx, app.Cache, user.Username, string(profileJSON), 5*time.Minute)
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(profileJSON)
+		utils.RespondWithJSON(w, http.StatusOK, profileJSON)
 	}
 }
 
@@ -96,7 +95,6 @@ func GetUserProfile(app *infra.Deps) httprouter.Handle {
 			LastLogin:      user.LastLogin,
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(response)
+		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
 }

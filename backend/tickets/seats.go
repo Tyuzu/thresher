@@ -3,6 +3,7 @@ package tickets
 import (
 	"context"
 	"encoding/json"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -51,6 +52,9 @@ func LockSeats(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Seats locked successfully"})
 	}
 }
@@ -94,6 +98,9 @@ func UnlockSeats(app *infra.Deps) httprouter.Handle {
 			http.Error(w, `{"error":"Failed to unlock seats"}`, http.StatusInternalServerError)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Seats unlocked successfully"})
 	}
@@ -144,6 +151,9 @@ func ConfirmSeatPurchase(app *infra.Deps) httprouter.Handle {
 			http.Error(w, `{"error":"Failed to confirm purchase"}`, http.StatusInternalServerError)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Ticket purchased successfully"})
 	}

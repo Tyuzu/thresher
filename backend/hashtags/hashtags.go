@@ -115,7 +115,6 @@ func GetHashtagPosts(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 	results := paginate(posts, page, limit)
 
-	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(results); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to encode response")
 	}
@@ -151,7 +150,6 @@ func GetHashtagPeople(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 	results := paginate(people, page, limit)
 
-	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(results); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to encode response")
 	}
@@ -178,7 +176,6 @@ func GetTrendingHashtags(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		all = all[:limit]
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(all); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to encode response")
 	}

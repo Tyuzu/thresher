@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -62,6 +63,9 @@ func PostNewSong(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* -------- Publish SongCreated Event -------- */
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, newSong)
 	}
@@ -136,6 +140,8 @@ func EditSong(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* -------- Publish SongUpdated Event -------- */
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Song updated successfully"})
 	}
@@ -158,6 +164,9 @@ func DeleteSong(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete song")
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Song deleted successfully"})
 	}

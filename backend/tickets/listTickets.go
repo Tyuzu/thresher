@@ -2,7 +2,6 @@ package tickets
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"sort"
@@ -114,7 +113,6 @@ func ListMyTickets(app *infra.Deps) httprouter.Handle {
 				order[response[j]["status"].(string)]
 		})
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
 }

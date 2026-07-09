@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/metrics/auditlog"
 	"naevis/models"
@@ -198,6 +199,8 @@ func CancelTicket(app *infra.Deps) httprouter.Handle {
 				"reason":       "user_requested",
 			},
 		)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

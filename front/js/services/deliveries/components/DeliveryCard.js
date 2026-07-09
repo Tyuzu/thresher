@@ -29,7 +29,7 @@ function DeliveryCard(delivery, options = {}) {
         }, [
 
             createElement("strong", {
-                textContent: `Delivery #${delivery.id}`
+                textContent: `Delivery #${delivery.deliveryid}`
             }),
 
             createElement("span", {

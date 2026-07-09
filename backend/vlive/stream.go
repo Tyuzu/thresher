@@ -29,7 +29,7 @@ func GetStream(app *infra.Deps) httprouter.Handle {
 			false,
 		)
 		if err != nil {
-			writeError(w, err.Error(), http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, err.Error())
 			return
 		}
 
@@ -41,13 +41,13 @@ func GetStream(app *infra.Deps) httprouter.Handle {
 				stream.EntityType,
 				stream.EntityID,
 			) {
-				writeError(w, "forbidden", http.StatusForbidden)
+				utils.RespondWithError(w, http.StatusForbidden, "forbidden")
 				return
 			}
 		}
 
 		if stream.State == models.LiveCancelled {
-			writeError(w, "stream cancelled", http.StatusGone)
+			utils.RespondWithError(w, http.StatusGone, "stream cancelled")
 			return
 		}
 
@@ -94,7 +94,7 @@ func GetStream(app *infra.Deps) httprouter.Handle {
 			"viewerCount":     stream.ViewerCount,
 		}
 
-		writeJSON(w, resp)
+		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}
 }
 
@@ -107,7 +107,7 @@ func ListStreams(app *infra.Deps) httprouter.Handle {
 		userID := utils.GetUserIDFromRequest(r)
 
 		if entityType == "" || entityID == "" {
-			writeError(w, "entityType and entityId required", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "entityType and entityId required")
 			return
 		}
 
@@ -171,7 +171,7 @@ func ListStreams(app *infra.Deps) httprouter.Handle {
 		)
 		if err != nil {
 			log.Printf("ListStreams: find error: %v", err)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 
@@ -183,7 +183,7 @@ func ListStreams(app *infra.Deps) httprouter.Handle {
 				getViewerCountCache(r.Context(), app, streams[i].LiveID)
 		}
 
-		writeJSON(w, streams)
+		utils.RespondWithJSON(w, http.StatusOK, streams)
 	}
 }
 
@@ -193,18 +193,18 @@ func StartStream(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			writeError(w, "unauthenticated", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
 		stream, err := fetchStream(r.Context(), app, ps.ByName("liveid"), userID, true)
 		if err != nil {
-			writeError(w, err.Error(), http.StatusForbidden)
+			utils.RespondWithError(w, http.StatusForbidden, err.Error())
 			return
 		}
 
 		if err := EnforceTransition(stream.State, models.LiveLive); err != nil {
-			writeError(w, err.Error(), http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -213,11 +213,11 @@ func StartStream(app *infra.Deps) httprouter.Handle {
 			bson.M{"state": models.LiveLive, "started_at": time.Now(), "playback_url": playbackURL})
 		if err != nil {
 			log.Printf("StartStream: update error: %v", err)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 		if !ok {
-			writeError(w, "state transition failed", http.StatusConflict)
+			utils.RespondWithError(w, http.StatusConflict, "state transition failed")
 			return
 		}
 
@@ -232,18 +232,18 @@ func StopStream(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			writeError(w, "unauthenticated", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
 		stream, err := fetchStream(r.Context(), app, ps.ByName("liveid"), userID, true)
 		if err != nil {
-			writeError(w, err.Error(), http.StatusForbidden)
+			utils.RespondWithError(w, http.StatusForbidden, err.Error())
 			return
 		}
 
 		if err := EnforceTransition(stream.State, models.LiveEnded); err != nil {
-			writeError(w, err.Error(), http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -251,11 +251,11 @@ func StopStream(app *infra.Deps) httprouter.Handle {
 			bson.M{"state": models.LiveEnded, "ended_at": time.Now()})
 		if err != nil {
 			log.Printf("StopStream: update error: %v", err)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 		if !ok {
-			writeError(w, "cannot stop stream in current state", http.StatusConflict)
+			utils.RespondWithError(w, http.StatusConflict, "cannot stop stream in current state")
 			return
 		}
 
@@ -270,7 +270,7 @@ func UpdateStreamMetadata(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			writeError(w, "unauthenticated", http.StatusUnauthorized)
+			utils.RespondWithError(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
@@ -282,29 +282,29 @@ func UpdateStreamMetadata(app *infra.Deps) httprouter.Handle {
 			true,
 		)
 		if err != nil {
-			writeError(w, err.Error(), http.StatusForbidden)
+			utils.RespondWithError(w, http.StatusForbidden, err.Error())
 			return
 		}
 
 		if err := disallowWhileLive(stream); err != nil {
-			writeError(w, err.Error(), http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		var payload map[string]any
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			writeError(w, "invalid body", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid body")
 			return
 		}
 
 		update, err := validateMetadata(payload)
 		if err != nil {
-			writeError(w, err.Error(), http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if len(update) == 0 {
-			writeError(w, "nothing to update", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "nothing to update")
 			return
 		}
 
@@ -322,7 +322,7 @@ func UpdateStreamMetadata(app *infra.Deps) httprouter.Handle {
 				stream.LiveID,
 				err,
 			)
-			writeError(w, "db error", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
 			return
 		}
 

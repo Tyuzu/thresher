@@ -2,8 +2,10 @@ package places
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
@@ -161,6 +163,9 @@ func CreatePlace(app *infra.Deps) httprouter.Handle {
 
 		// Set user data
 		userdata.SetUserData("place", place.PlaceID, requestingUserID, "", "", app)
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, place)
 	}

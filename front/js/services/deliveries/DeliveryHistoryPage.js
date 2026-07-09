@@ -27,7 +27,7 @@ function DeliveryHistoryPage({
             }, [
 
                 createElement("strong", {
-                    textContent: `#${delivery.id}`
+                    textContent: `#${delivery.deliveryid}`
                 }),
 
                 DeliveryStatusBadge(delivery.status)

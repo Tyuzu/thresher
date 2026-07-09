@@ -46,7 +46,7 @@ function TrackDeliveryPage({
             textContent: "Delivery Information"
         }),
 
-        infoRow("Tracking ID", delivery.id),
+        infoRow("Tracking ID", delivery.deliveryid),
         infoRow("Package", delivery.packageName),
         infoRow("Pickup", delivery.pickup),
         infoRow("Destination", delivery.dropoff),

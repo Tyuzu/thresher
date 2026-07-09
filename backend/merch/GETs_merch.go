@@ -7,6 +7,7 @@ import (
 
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,7 +20,7 @@ func GetMerch(app *infra.Deps) httprouter.Handle {
 		merchID := ps.ByName("merchid")
 
 		if !validateEntityType(entityType) {
-			respond(w, http.StatusBadRequest, map[string]any{
+			utils.RespondWithJSON(w, http.StatusBadRequest, map[string]any{
 				"success": false,
 				"error":   "invalid entity type",
 			})
@@ -39,14 +40,14 @@ func GetMerch(app *infra.Deps) httprouter.Handle {
 			&merch,
 		)
 		if err != nil {
-			respond(w, http.StatusNotFound, map[string]any{
+			utils.RespondWithJSON(w, http.StatusNotFound, map[string]any{
 				"success": false,
 				"error":   "merch not found",
 			})
 			return
 		}
 
-		respond(w, http.StatusOK, map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    merch,
 		})
@@ -59,7 +60,7 @@ func GetMerchs(app *infra.Deps) httprouter.Handle {
 		eventID := ps.ByName("eventid")
 
 		if !validateEntityType(entityType) {
-			respond(w, http.StatusBadRequest, map[string]any{
+			utils.RespondWithJSON(w, http.StatusBadRequest, map[string]any{
 				"success": false,
 				"error":   "invalid entity type",
 			})
@@ -81,7 +82,7 @@ func GetMerchs(app *infra.Deps) httprouter.Handle {
 			&list,
 		)
 		if err != nil {
-			respond(w, http.StatusInternalServerError, map[string]any{
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]any{
 				"success": false,
 				"error":   "failed to fetch merch",
 			})
@@ -92,7 +93,7 @@ func GetMerchs(app *infra.Deps) httprouter.Handle {
 			list = []models.Merch{}
 		}
 
-		respond(w, http.StatusOK, map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    list,
 		})
@@ -114,14 +115,14 @@ func GetMerchPage(app *infra.Deps) httprouter.Handle {
 			&merch,
 		)
 		if err != nil {
-			respond(w, http.StatusNotFound, map[string]any{
+			utils.RespondWithJSON(w, http.StatusNotFound, map[string]any{
 				"success": false,
 				"error":   "merch not found",
 			})
 			return
 		}
 
-		respond(w, http.StatusOK, map[string]any{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    merch,
 		})

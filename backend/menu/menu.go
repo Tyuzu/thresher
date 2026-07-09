@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"naevis/beats/dels"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -66,8 +67,10 @@ func CreateMenu(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"ok":      true,
 			"message": "Menu created successfully.",
 			"data":    menu,
@@ -116,9 +119,10 @@ func EditMenu(app *infra.Deps) httprouter.Handle {
 		// Invalidate cache
 		app.Cache.Del(ctx, fmt.Sprintf("menu:%s:%s", placeID, menuID))
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]any{
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "Menu updated successfully",
 		})
@@ -132,23 +136,24 @@ func DeleteMenu(app *infra.Deps) httprouter.Handle {
 
 		// Optionally, fully interface-driven version:
 		/*
-			ctx := r.Context()
-			placeID := ps.ByName("placeid")
-			menuID := ps.ByName("menuid")
+				ctx := r.Context()
+				placeID := ps.ByName("placeid")
+				menuID := ps.ByName("menuid")
 
-			if err := app.DB.DeleteOne(ctx, "menu", map[string]string{"placeid": placeID, "menuid": menuID}); err != nil {
-				http.Error(w, fmt.Sprintf("Failed to delete menu: %v", err), http.StatusInternalServerError)
-				return
-			}
+				if err := app.DB.DeleteOne(ctx, "menu", map[string]string{"placeid": placeID, "menuid": menuID}); err != nil {
+					http.Error(w, fmt.Sprintf("Failed to delete menu: %v", err), http.StatusInternalServerError)
+					return
+				}
 
-			app.cache.Del(ctx, fmt.Sprintf("menu:%s:%s", placeID, menuID))
+				app.cache.Del(ctx, fmt.Sprintf("menu:%s:%s", placeID, menuID))
 
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(map[string]any{
-				"success": true,
-				"message": "Menu deleted successfully",
-			})
+			mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+			app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+				utils.RespondWithJSON(w, http.StatusOK, map[string]any{
+					"success": true,
+					"message": "Menu deleted successfully",
+				})
 		*/
 	}
 }

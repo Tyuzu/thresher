@@ -2,7 +2,6 @@ package beats
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -52,8 +51,7 @@ func HandleEntitySubscription(
 		"ok":            true,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(resp)
+	utils.RespondWithJSON(w, http.StatusOK, resp)
 }
 
 // PUT /api/v1/subscribes/:id

@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -32,7 +34,7 @@ func ListAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = json.NewEncoder(w).Encode(map[string]any{"slots": slots})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"slots": slots})
 	}
 }
 
@@ -92,7 +94,10 @@ func CreateAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "slot": slot})
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"ok": true, "slot": slot})
 	}
 }
 
@@ -133,7 +138,10 @@ func DeleteAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"ok": true})
 	}
 }
 

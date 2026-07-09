@@ -19,8 +19,8 @@ func TestBuildDeliveryFromOrder(t *testing.T) {
 
 	delivery := buildDeliveryFromOrder(order)
 
-	if delivery.ID != "ord-001" {
-		t.Fatalf("expected delivery id to be ord-001, got %s", delivery.ID)
+	if delivery.DeliveryID != "ord-001" {
+		t.Fatalf("expected delivery id to be ord-001, got %s", delivery.DeliveryID)
 	}
 
 	if delivery.Pickup != "Warehouse A" {

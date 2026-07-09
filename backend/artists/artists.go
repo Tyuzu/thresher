@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"naevis/beats/dels"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -36,6 +37,9 @@ func CreateArtist(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create artist")
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, artist)
 	}
@@ -81,6 +85,8 @@ func UpdateArtist(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* -------- Publish ArtistUpdated Event -------- */
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Artist updated"})
 	}
@@ -179,6 +185,8 @@ func DeleteArtistByID(app *infra.Deps) httprouter.Handle {
 		// go mq.Emit(ctx, "artist-deleted", models.Index{
 		// 	EntityType: "artist", EntityId: artistID, Method: "DELETE",
 		// })
+		// mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		// app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		// utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Artist deleted successfully"})
 	}

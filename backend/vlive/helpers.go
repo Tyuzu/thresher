@@ -2,28 +2,15 @@ package vlive
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"naevis/infra"
 	"naevis/models"
-	"net/http"
 	"strconv"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
-
-// ----------------------- Helpers -----------------------
-
-func writeJSON(w http.ResponseWriter, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(v)
-}
-
-func writeError(w http.ResponseWriter, msg string, code int) {
-	http.Error(w, msg, code)
-}
 
 // ----------------------- DB helpers -----------------------
 

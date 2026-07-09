@@ -3,7 +3,6 @@ package userdata
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"naevis/infra"
 	"naevis/models"
@@ -135,7 +134,6 @@ func GetOtherUserProfileData(app *infra.Deps) httprouter.Handle {
 		}
 	  ]
 	  `
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, "%s", res)
+		utils.RespondWithJSON(w, http.StatusOK, res)
 	}
 }

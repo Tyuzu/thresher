@@ -1,11 +1,11 @@
 package reports
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"naevis/infra"
 	"naevis/models"
+	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -28,7 +28,6 @@ func GetReportsForMod(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(reports)
+		utils.RespondWithJSON(w, http.StatusOK, reports)
 	}
 }

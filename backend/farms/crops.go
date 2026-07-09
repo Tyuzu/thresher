@@ -2,11 +2,13 @@ package farms
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
 
 	"naevis/beats/dels"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -60,6 +62,9 @@ func AddCrop(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* -------- Publish CropCreated Event -------- */
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
@@ -159,6 +164,9 @@ func EditCrop(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* -------- Publish CropUpdated Event -------- */
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 	}

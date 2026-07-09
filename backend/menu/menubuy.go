@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"log"
 	"naevis/config"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/stripe"
 	"naevis/userdata"
+	"naevis/utils"
 	"net/http"
 	"time"
 
@@ -86,19 +88,21 @@ func buyMenu(w http.ResponseWriter, request MenuPurchaseRequest, requestingUserI
 	// Save user purchase data
 	userdata.SetUserData("menu", menuID, requestingUserID, "place", placeId, app)
 
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 	// Respond with success
 	response := MenuPurchaseResponse{
 		Message: "Payment successfully processed. Menu purchased.",
 		Success: true,
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	utils.RespondWithJSON(w, http.StatusOK, response)
 }
 
 // POST /menu/event/:placeId/:menuId/payment-session
 func CreateMenuPaymentSession(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx := r.Context()
 		menuId := ps.ByName("menuid")
 		placeId := ps.ByName("placeid")
 
@@ -127,12 +131,14 @@ func CreateMenuPaymentSession(app *infra.Deps) httprouter.Handle {
 			"stock":      session.Stock,
 		}
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		// Respond with the session URL
 		response := map[string]any{
 			"success": true,
 			"data":    dataResponse,
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -231,7 +232,9 @@ func UploadHandler(hub *Hub, app *infra.Deps) httprouter.Handle {
 		data, _ := json.Marshal(out)
 		hub.broadcast <- broadcastMsg{Room: msg.Room, Data: data}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(data)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, data)
 	}
 }

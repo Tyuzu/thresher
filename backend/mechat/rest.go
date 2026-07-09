@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/db"
 	"naevis/models"
@@ -57,7 +58,7 @@ func StartNewChat(app *infra.Deps) httprouter.Handle {
 
 		var existing models.Chat
 		if err := app.DB.FindOne(ctx, MereChatCollection, filter, &existing); err == nil {
-			writeJSON(w, 200, existing)
+			utils.RespondWithJSON(w, http.StatusOK, existing)
 			return
 		}
 
@@ -76,7 +77,10 @@ func StartNewChat(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		writeJSON(w, 200, chat)
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, chat)
 	}
 }
 
@@ -135,7 +139,7 @@ func GetChatMessages(app *infra.Deps) httprouter.Handle {
 			msgs = make([]models.Message, 0)
 		}
 
-		writeJSON(w, 200, msgs)
+		utils.RespondWithJSON(w, http.StatusOK, msgs)
 	}
 }
 
@@ -155,7 +159,7 @@ func GetChatByID(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		writeJSON(w, 200, chat)
+		utils.RespondWithJSON(w, http.StatusOK, chat)
 	}
 }
 
@@ -200,7 +204,7 @@ func GetUserChats(app *infra.Deps) httprouter.Handle {
 			chats = make([]models.Chat, 0)
 		}
 
-		writeJSON(w, 200, chats)
+		utils.RespondWithJSON(w, http.StatusOK, chats)
 	}
 }
 
@@ -285,6 +289,6 @@ func UploadAttachment(app *infra.Deps) httprouter.Handle {
 			},
 		)
 
-		writeJSON(w, 200, msg)
+		utils.RespondWithJSON(w, http.StatusOK, msg)
 	}
 }

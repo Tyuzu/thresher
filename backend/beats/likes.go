@@ -10,6 +10,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -79,6 +80,9 @@ func ToggleLike(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Failed to like", http.StatusInternalServerError)
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		count := incrementRedisOrMongo(ctx, redisKey, entityType, entityID, app)
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -217,6 +221,9 @@ func BatchUserLikes(app *infra.Deps) httprouter.Handle {
 			_, liked := likedSet[eid]
 			result[eid] = liked
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"data": result,

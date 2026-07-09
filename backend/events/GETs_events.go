@@ -2,7 +2,6 @@ package events
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"naevis/infra"
 	"naevis/infra/db"
@@ -81,8 +80,7 @@ func GetEvent(app *infra.Deps) httprouter.Handle {
 		}
 
 		safe := toSafeEvent(events[0])
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(safe)
+		utils.RespondWithJSON(w, http.StatusOK, safe)
 	}
 }
 

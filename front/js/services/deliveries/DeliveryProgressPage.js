@@ -80,7 +80,7 @@ function DeliveryProgressPage({
             textContent: "Delivery Information"
         }),
 
-        infoRow("Delivery ID", delivery.id),
+        infoRow("Delivery ID", delivery.deliveryid),
         infoRow("Pickup", delivery.pickup),
         infoRow("Destination", delivery.dropoff),
         infoRow("Weight", delivery.weight),

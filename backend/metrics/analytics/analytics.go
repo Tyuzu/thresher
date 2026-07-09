@@ -1,8 +1,8 @@
 package analytics
 
 import (
-	"encoding/json"
 	"naevis/models"
+	"naevis/utils"
 	"net/http"
 	"time"
 
@@ -123,7 +123,5 @@ func GetEntityAnalytics(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(analytics)
+	utils.RespondWithJSON(w, http.StatusOK, analytics)
 }
