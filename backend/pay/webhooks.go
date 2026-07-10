@@ -13,6 +13,7 @@ import (
 	"os"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -145,6 +146,9 @@ func (p *PaymentService) HandlePaymentWebhook(w http.ResponseWriter, r *http.Req
 	}
 
 	logWebhookAttempt(ctx, p.app, &payload, "processed", "")
+
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	p.app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 		"status": "processed",

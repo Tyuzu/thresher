@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/config/mqevent"
 	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
@@ -283,6 +284,9 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request, _ httproute
 			"payment_type": req.PaymentType,
 		},
 	)
+
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	p.app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"success":        true,

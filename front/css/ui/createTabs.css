@@ -12,7 +12,7 @@
   border: 1px solid var(--tab-border, #ddd);
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* --- Tab Buttons Row --- */
@@ -25,7 +25,10 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-.tab-buttons::-webkit-scrollbar { display: none; }
+
+.tab-buttons::-webkit-scrollbar {
+  display: none;
+}
 
 /* --- Individual Tab Button --- */
 .tab-button {
@@ -36,10 +39,12 @@
   border-bottom: 2px solid transparent;
   user-select: none;
 }
+
 .tab-button:hover {
   background: var(--tab-hover-bg, #f0f0f0);
   color: var(--tab-hover-text, #000);
 }
+
 .tab-button.active {
   border-bottom: 2px solid var(--tab-accent, var(--color-btn-bg));
 }
@@ -50,19 +55,29 @@
   padding: 8px;
   position: relative;
   min-height: 120px;
+  overflow-x: auto;
 }
+
 .tab-content {
   display: none;
   animation: fadeIn 0.25s ease;
 }
+
 .tab-content.active {
   display: block;
 }
 
 /* --- Fade Animation --- */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(2px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* --- Nested Tabs (for cases like “Artist → Fanmade/Posts”) --- */
@@ -71,10 +86,12 @@
   box-shadow: none;
   margin-top: 12px;
 }
+
 .tab-content .tab-buttons {
   border: 1px solid var(--nested-tab-border, #eee);
   border-radius: 4px;
 }
+
 .tab-content .tab-button.active {
   border-bottom-color: var(--nested-tab-accent, var(--color-btn-bg));
 }
@@ -85,6 +102,7 @@
     padding: 8px 12px;
     font-size: 14px;
   }
+
   .tab-contents {
     padding: 6px;
   }

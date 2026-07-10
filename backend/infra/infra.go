@@ -61,12 +61,15 @@ func New(cfg *config.Config) (*Deps, error) {
 	// if err != nil {
 	// 	return nil, err
 	// }
+
+	mqLayer := mq.NewStreamMQ()
+
 	log.Println("infra initialized")
 
 	return &Deps{
-		DB:    dbLayer,
-		Cache: cacheLayer,
-		// MQ:     mqLayer,
+		DB:     dbLayer,
+		Cache:  cacheLayer,
+		MQ:     mqLayer,
 		Config: *cfg,
 	}, nil
 }

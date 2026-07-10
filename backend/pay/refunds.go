@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -140,6 +141,9 @@ func CreateRefundRequest(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create refund request")
 			return
 		}
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"id":      refundReq.ID,
@@ -406,6 +410,9 @@ func ApproveRefundRequest(app *infra.Deps) httprouter.Handle {
 		payload, _ := json.Marshal(event)
 		_ = app.MQ.Publish(ctx, "order.refunded", payload)
 
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"id":             refund.ID,
 			"status":         "approved",
@@ -488,6 +495,9 @@ func RejectRefundRequest(app *infra.Deps) httprouter.Handle {
 
 		payload, _ := json.Marshal(event)
 		_ = app.MQ.Publish(ctx, "refund.rejected", payload)
+
+		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"id":      refund.ID,

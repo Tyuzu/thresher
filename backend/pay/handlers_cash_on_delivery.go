@@ -2,6 +2,7 @@ package pay
 
 import (
 	"encoding/json"
+	"naevis/config/mqevent"
 	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
@@ -128,6 +129,9 @@ func (p *PaymentService) CashOnDelivery(w http.ResponseWriter, r *http.Request, 
 			"transaction":  txnID,
 		},
 	)
+
+	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
+	p.app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"success": true,
