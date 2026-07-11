@@ -168,8 +168,8 @@ func CreateCheckoutSession(app *infra.Deps) httprouter.Handle {
 			"createdAt": time.Now(),
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.CheckoutSeccionCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.CheckoutSeccionCreatedEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CheckoutSessionCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CheckoutSessionCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, session)
 	}

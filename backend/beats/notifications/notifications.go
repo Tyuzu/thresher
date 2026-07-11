@@ -67,8 +67,8 @@ func CreateNotification(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.OneNotificatioCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.OneNotificatioCreatedEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.OneNotificationCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.OneNotificationCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, notification)
 	}

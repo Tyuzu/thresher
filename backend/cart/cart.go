@@ -93,7 +93,7 @@ func UpdateCart(app *infra.Deps) httprouter.Handle {
 			return
 		}
 		mqpayload, _ := json.Marshal(mqevent.CartItemUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.CartItemUpdated, mqpayload)
+		app.MQ.Publish(ctx, mqevent.CartItemUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, updated)
 	}

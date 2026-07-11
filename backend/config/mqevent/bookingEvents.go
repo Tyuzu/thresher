@@ -10,43 +10,60 @@ const (
 	BookingCreatedEvent   = "booking.created"
 	BookingUpdatedEvent   = "booking.updated"
 	BookingRemovedEvent   = "booking.removed"
-	BookingCancelledEvent = "booking.removed"
-	DateCapacitySetEvent  = "booking.removed"
-	TierCreatedEvent      = "booking.removed"
-	SlotCreatedEvent      = "booking.removed"
+	BookingCancelledEvent = "booking.cancelled"
+	DateCapacitySetEvent  = "booking.capacity.updated"
+	TierCreatedEvent      = "booking.tier.created"
+	SlotCreatedEvent      = "booking.slot.created"
 )
 
 type BookingCreatedPayload struct {
 	BookingID  string    `json:"bookingid"`
+	UserID     string    `json:"userid,omitempty"`
+	EntityID   string    `json:"entityid,omitempty"`
+	EntityType string    `json:"entitytype,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type BookingUpdatedPayload struct {
 	BookingID  string    `json:"bookingid"`
+	UserID     string    `json:"userid,omitempty"`
+	Status     string    `json:"status,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type BookingDeletedPayload struct {
+type BookingRemovedPayload struct {
 	BookingID  string    `json:"bookingid"`
+	UserID     string    `json:"userid,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type BookingCancelledPayload struct {
 	BookingID  string    `json:"bookingid"`
+	UserID     string    `json:"userid,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type DateCapacitySetPayload struct {
-	BookingID  string    `json:"bookingid"`
+	EntityID   string    `json:"entityid"`
+	EntityType string    `json:"entitytype"`
+	Date       string    `json:"date"`
+	Capacity   int       `json:"capacity"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type TierCreatedPayload struct {
-	BookingID  string    `json:"bookingid"`
+	TierID     string    `json:"tierid"`
+	EntityID   string    `json:"entityid"`
+	EntityType string    `json:"entitytype"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type SlotCreatedPayload struct {
-	BookingID  string    `json:"bookingid"`
+	SlotID     string    `json:"slotid"`
+	TierID     string    `json:"tierid,omitempty"`
+	EntityID   string    `json:"entityid"`
+	EntityType string    `json:"entitytype"`
+	Date       string    `json:"date"`
+	Start      string    `json:"start"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

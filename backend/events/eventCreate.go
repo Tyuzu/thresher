@@ -57,7 +57,7 @@ func CreateEvent(app *infra.Deps) httprouter.Handle {
 		userdata.SetUserData("event", event.EventID, requestingUserID, "", "", app)
 
 		mqpayload, _ := json.Marshal(mqevent.EventCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.EventCreated, mqpayload)
+		app.MQ.Publish(ctx, mqevent.EventCreatedEvent, mqpayload)
 
 		if err := json.NewEncoder(w).Encode(event); err != nil {
 			log.Printf("Encoding response error: %v", err)
