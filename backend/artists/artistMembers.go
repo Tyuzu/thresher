@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -72,8 +73,7 @@ func AddArtistMember(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.BandMemberAddedPayload{})
-		app.MQ.Publish(ctx, mqevent.BandMemberAddedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.BandMemberAddedEvent, mqevent.BandMemberAddedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, m)
 	}
@@ -129,8 +129,7 @@ func UpdateArtistMember(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.BandMemberUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.BandMemberUpdatedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.BandMemberUpdatedEvent, mqevent.BandMemberUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{
 			"message": "Member updated",
@@ -161,8 +160,7 @@ func DeleteArtistMember(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.BandMemberDeletedPayload{})
-		app.MQ.Publish(ctx, mqevent.BandMemberDeletedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.BandMemberDeletedEvent, mqevent.BandMemberDeletedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{
 			"message": "Member deleted",

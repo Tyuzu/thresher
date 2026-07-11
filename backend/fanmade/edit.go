@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -85,8 +86,7 @@ func EditMedia(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.FanMediaUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.FanMediaUpdatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FanMediaUpdatedEvent, mqevent.FanMediaUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, updatedMedias)
 	}

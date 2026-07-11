@@ -6,6 +6,7 @@ import (
 	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -43,8 +44,7 @@ func InitiateCheckout(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.CheckoutInitiatedPayload{})
-		app.MQ.Publish(ctx, mqevent.CheckoutInitiatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CheckoutInitiatedEvent, mqevent.CheckoutInitiatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"status": "ok",
@@ -168,8 +168,7 @@ func CreateCheckoutSession(app *infra.Deps) httprouter.Handle {
 			"createdAt": time.Now(),
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.CheckoutSessionCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.CheckoutSessionCreatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CheckoutSessionCreatedEvent, mqevent.CheckoutSessionCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, session)
 	}

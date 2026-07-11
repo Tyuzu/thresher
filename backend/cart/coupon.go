@@ -13,6 +13,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 )
 
@@ -153,8 +154,7 @@ func ValidateCouponHandler(app *infra.Deps) httprouter.Handle {
 			discount = (req.Cart * coupon.Discount) / 100
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.CouponValidatedPayload{})
-		app.MQ.Publish(ctx, mqevent.CouponValidatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CouponValidatedEvent, mqevent.CouponValidatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, CouponResponse{
 			Valid:    true,

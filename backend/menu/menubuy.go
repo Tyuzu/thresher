@@ -7,6 +7,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/stripe"
 	"naevis/userdata"
@@ -88,10 +89,7 @@ func buyMenu(w http.ResponseWriter, request MenuPurchaseRequest, requestingUserI
 	// Save user purchase data
 	userdata.SetUserData("menu", menuID, requestingUserID, "place", placeId, app)
 
-	mqpayload, _ := json.Marshal(mqevent.MenuBoughtPayload{})
-	app.MQ.Publish(ctx, mqevent.MenuBoughtEvent, mqpayload)
-
-	// Respond with success
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuBoughtEvent, mqevent.MenuBoughtPayload{})
 	response := MenuPurchaseResponse{
 		Message: "Payment successfully processed. Menu purchased.",
 		Success: true,
@@ -131,8 +129,7 @@ func CreateMenuPaymentSession(app *infra.Deps) httprouter.Handle {
 			"stock":      session.Stock,
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.MenuPaymentSessionInitiatedPayload{})
-		app.MQ.Publish(ctx, mqevent.MenuPaymentSessionInitiatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuPaymentSessionInitiatedEvent, mqevent.MenuPaymentSessionInitiatedPayload{})
 
 		// Respond with the session URL
 		response := map[string]any{

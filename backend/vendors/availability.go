@@ -9,6 +9,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 
@@ -94,8 +95,7 @@ func CreateAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.SlotCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.SlotCreatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SlotCreatedEvent, mqevent.SlotCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"ok": true, "slot": slot})
 	}
@@ -138,8 +138,7 @@ func DeleteAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.SlotDeletedPayload{})
-		app.MQ.Publish(ctx, mqevent.SlotDeletedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SlotDeletedEvent, mqevent.SlotDeletedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"ok": true})
 	}

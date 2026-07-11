@@ -10,6 +10,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/metrics/auditlog"
 	"naevis/middleware"
 	"naevis/models"
@@ -106,8 +107,7 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 
 		/* -------- Publish FarmCreated Event -------- */
 
-		mqpayload, _ := json.Marshal(mqevent.FarmCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.FarmCreatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmCreatedEvent, mqevent.FarmCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
@@ -240,8 +240,7 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 			})
 			return
 		}
-		mqpayload, _ := json.Marshal(mqevent.FarmUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.FarmUpdatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmUpdatedEvent, mqevent.FarmUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
@@ -279,8 +278,7 @@ func DeleteFarm(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.FarmDeletedPayload{})
-		app.MQ.Publish(ctx, mqevent.FarmDeletedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmDeletedEvent, mqevent.FarmDeletedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,

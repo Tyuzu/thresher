@@ -6,6 +6,7 @@ import (
 	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -46,8 +47,7 @@ func AddFAQs(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.FAQAddedPayload{})
-		app.MQ.Publish(ctx, mqevent.FAQAddedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FAQAddedEvent, mqevent.FAQAddedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

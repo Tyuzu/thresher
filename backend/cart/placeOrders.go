@@ -6,6 +6,7 @@ import (
 	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -173,8 +174,7 @@ func PlaceOrder(app *infra.Deps) httprouter.Handle {
 			resp["order"] = genOrder
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.OrderPlacedPayload{})
-		app.MQ.Publish(ctx, mqevent.OrderPlacedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.OrderPlacedEvent, mqevent.OrderPlacedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, resp)
 	}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -46,8 +47,7 @@ func BuyMenu(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.MenuBoughtPayload{})
-		app.MQ.Publish(ctx, mqevent.MenuBoughtEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuBoughtEvent, mqevent.MenuBoughtPayload{})
 
 		// Respond with remaining stock
 		resp := map[string]any{

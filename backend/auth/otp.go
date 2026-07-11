@@ -11,6 +11,7 @@ import (
 	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	inmq "naevis/infra/mq"
 	"naevis/utils"
 	"net/http"
 	"net/smtp"
@@ -113,8 +114,7 @@ func RequestOTPHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.UserOTPPayload{})
-		app.MQ.Publish(ctx, mqevent.OTPRequested, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.OTPRequested, mqevent.UserOTPPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "OTP sent if the email exists",
@@ -163,8 +163,7 @@ func VerifyOTPHandler(app *infra.Deps) httprouter.Handle {
 
 		_ = app.Cache.Del(ctx, key)
 
-		mqpayload, _ := json.Marshal(mqevent.UserOTPPayload{})
-		app.MQ.Publish(ctx, mqevent.OTPVerified, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.OTPVerified, mqevent.UserOTPPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "User verified successfully",

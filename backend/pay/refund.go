@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"naevis/config/mqevent"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 
@@ -191,8 +192,7 @@ func (p *PaymentService) Refund(w http.ResponseWriter, r *http.Request, _ httpro
 		},
 	)
 
-	mqpayload, _ := json.Marshal(mqevent.RefundCompletedPayload{})
-	p.app.MQ.Publish(ctx, mqevent.RefundCompleted, mqpayload)
+	_ = mq.PublishWithMeta(ctx, p.app.MQ, mqevent.RefundCompleted, mqevent.RefundCompletedPayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"success":        true,

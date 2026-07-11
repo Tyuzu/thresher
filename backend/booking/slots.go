@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -41,8 +42,7 @@ func CreateTier(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.TierCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.TierCreatedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.TierCreatedEvent, mqevent.TierCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"tier": tier})
 	}
@@ -99,8 +99,7 @@ func CreateSlot(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.SlotCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.SlotCreatedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.SlotCreatedEvent, mqevent.SlotCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{"slot": s})
 	}

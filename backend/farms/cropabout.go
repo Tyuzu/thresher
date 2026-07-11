@@ -2,10 +2,10 @@ package farms
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -49,8 +49,7 @@ func CreateCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.CropAboutCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.CropAboutCreatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CropAboutCreatedEvent, mqevent.CropAboutCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
@@ -151,8 +150,7 @@ func UpdateCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			)
 			return
 		}
-		mqpayload, _ := json.Marshal(mqevent.CropAboutUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.CropAboutUpdatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CropAboutUpdatedEvent, mqevent.CropAboutUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -180,8 +178,7 @@ func DeleteCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.CropAboutDeletedPayload{})
-		app.MQ.Publish(ctx, mqevent.CropAboutDeletedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CropAboutDeletedEvent, mqevent.CropAboutDeletedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

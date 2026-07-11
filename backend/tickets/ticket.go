@@ -8,6 +8,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
@@ -97,8 +98,7 @@ func CreateTicket(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.TicketCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.TicketCreatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketCreatedEvent, mqevent.TicketCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, tick)
 	}
@@ -165,8 +165,7 @@ func EditTicket(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.TicketUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.TicketUpdatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketUpdatedEvent, mqevent.TicketUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -229,8 +228,7 @@ func BuyTicket(app *infra.Deps) httprouter.Handle {
 		m := models.Index{}
 		userdata.SetUserData("ticket", ticketID, userID, m.EntityType, m.EntityId, app)
 
-		mqpayload, _ := json.Marshal(mqevent.TicketBoughtPayload{})
-		app.MQ.Publish(ctx, mqevent.TicketBoughtEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketBoughtEvent, mqevent.TicketBoughtPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

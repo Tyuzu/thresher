@@ -2,7 +2,6 @@ package beats
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
@@ -53,8 +53,7 @@ func HandleFollowAction(
 		"ok":          true,
 	}
 
-	mqpayload, _ := json.Marshal(mqevent.UserFollowedPayload{})
-	app.MQ.Publish(ctx, mqevent.UserFollowedEvent, mqpayload)
+	_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.UserFollowedEvent, mqevent.UserFollowedPayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, response)
 }

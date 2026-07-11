@@ -6,6 +6,7 @@ import (
 	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -142,8 +143,7 @@ func CreateRefundRequest(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.RefundRequestedPayload{})
-		app.MQ.Publish(ctx, mqevent.RefundRequested, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundRequested, mqevent.RefundRequestedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"id":      refundReq.ID,
@@ -408,10 +408,9 @@ func ApproveRefundRequest(app *infra.Deps) httprouter.Handle {
 		}
 
 		payload, _ := json.Marshal(event)
-		_ = app.MQ.Publish(ctx, "order.refunded", payload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, "order.refunded", payload)
 
-		mqpayload, _ := json.Marshal(mqevent.RefundAcceptedPayload{})
-		app.MQ.Publish(ctx, mqevent.RefundAccepted, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundAccepted, mqevent.RefundAcceptedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"id":             refund.ID,
@@ -494,10 +493,9 @@ func RejectRefundRequest(app *infra.Deps) httprouter.Handle {
 		}
 
 		payload, _ := json.Marshal(event)
-		_ = app.MQ.Publish(ctx, "refund.rejected", payload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, "refund.rejected", payload)
 
-		mqpayload, _ := json.Marshal(mqevent.RefundRejectedPayload{})
-		app.MQ.Publish(ctx, mqevent.RefundRejected, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundRejected, mqevent.RefundRejectedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"id":      refund.ID,

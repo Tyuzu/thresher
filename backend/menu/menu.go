@@ -6,6 +6,7 @@ import (
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -67,8 +68,7 @@ func CreateMenu(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.MenuCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.MenuCreatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuCreatedEvent, mqevent.MenuCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"ok":      true,
@@ -119,8 +119,7 @@ func EditMenu(app *infra.Deps) httprouter.Handle {
 		// Invalidate cache
 		app.Cache.Del(ctx, fmt.Sprintf("menu:%s:%s", placeID, menuID))
 
-		mqpayload, _ := json.Marshal(mqevent.MenuUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.MenuUpdatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuUpdatedEvent, mqevent.MenuUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

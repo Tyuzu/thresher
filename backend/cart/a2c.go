@@ -11,6 +11,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 )
@@ -101,8 +102,7 @@ func AddToCart(app *infra.Deps) httprouter.Handle {
 
 		/* -------- Publish CartItemAdded Event -------- */
 
-		mqpayload, _ := json.Marshal(mqevent.CartItemCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.CartItemCreatedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.CartItemCreatedEvent, mqevent.CartItemCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]string{"status": "ok"})
 	}

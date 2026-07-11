@@ -9,6 +9,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
@@ -155,8 +156,7 @@ func BuyCrop(app *infra.Deps) httprouter.Handle {
 				bson.M{"$set": bson.M{"outOfStock": true, "updatedAt": time.Now()}},
 			)
 		}
-		mqpayload, _ := json.Marshal(mqevent.CropBoughtPayload{})
-		app.MQ.Publish(ctx, mqevent.CropBoughtEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CropBoughtEvent, mqevent.CropBoughtPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 	}
@@ -261,8 +261,7 @@ func updateOrderStatus(
 		)
 	}
 
-	mqpayload, _ := json.Marshal(mqevent.OrderStatusUpdatedPayload{})
-	app.MQ.Publish(ctx, mqevent.OrderStatusUpdatedEvent, mqpayload)
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.OrderStatusUpdatedEvent, mqevent.OrderStatusUpdatedPayload{})
 
 	utils.RespondWithJSON(
 		w,
@@ -436,8 +435,7 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 		response.Message = "No orders were updated"
 	}
 
-	mqpayload, _ := json.Marshal(mqevent.OrdersBulkUpdatedPayload{})
-	app.MQ.Publish(ctx, mqevent.OrdersBulkUpdatedEvent, mqpayload)
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.OrdersBulkUpdatedEvent, mqevent.OrdersBulkUpdatedPayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, response)
 }

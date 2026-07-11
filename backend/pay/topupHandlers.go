@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"naevis/config/mqevent"
+	"naevis/infra/mq"
 	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
@@ -161,8 +162,7 @@ func (p *PaymentService) TopUp(w http.ResponseWriter, r *http.Request, _ httprou
 		},
 	)
 
-	mqpayload, _ := json.Marshal(mqevent.TopupDonePayload{})
-	p.app.MQ.Publish(ctx, mqevent.TopupDoneEvent, mqpayload)
+	_ = mq.PublishWithMeta(ctx, p.app.MQ, mqevent.TopupDoneEvent, mqevent.TopupDonePayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"success":        true,

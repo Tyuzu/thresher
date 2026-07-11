@@ -9,6 +9,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 
@@ -67,8 +68,7 @@ func CreateNotification(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.OneNotificationCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.OneNotificationCreatedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.OneNotificationCreatedEvent, mqevent.OneNotificationCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, notification)
 	}
@@ -124,8 +124,7 @@ func BulkCreateNotifications(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.BulkNotificationsCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.BulkNotificationsCreatedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.BulkNotificationsCreatedEvent, mqevent.BulkNotificationsCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
 			"inserted": len(notifications),
@@ -220,8 +219,7 @@ func MarkAsRead(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.OneNotificationReadPayload{})
-		app.MQ.Publish(ctx, mqevent.OneNotificationReadEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.OneNotificationReadEvent, mqevent.OneNotificationReadPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"updated": true,
@@ -255,8 +253,7 @@ func MarkAllAsRead(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.AllNotificationsReadPayload{})
-		app.MQ.Publish(ctx, mqevent.AllNotificationsReadEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.AllNotificationsReadEvent, mqevent.AllNotificationsReadPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"updated": true,
@@ -282,8 +279,7 @@ func DeleteNotification(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.NotificationDeletedPayload{})
-		app.MQ.Publish(ctx, mqevent.NotificationDeletedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.NotificationDeletedEvent, mqevent.NotificationDeletedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"deleted": true,
@@ -310,8 +306,7 @@ func ClearAllNotifications(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.AllNotificationsClearedPayload{})
-		app.MQ.Publish(ctx, mqevent.AllNotificationsClearedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.AllNotificationsClearedEvent, mqevent.AllNotificationsClearedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"deleted": true,

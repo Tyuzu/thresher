@@ -12,6 +12,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 )
 
@@ -73,8 +74,7 @@ func RemoveFromCart(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.ItemRemovedFromCartPayload{})
-		app.MQ.Publish(ctx, mqevent.ItemRemovedFromCartEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ItemRemovedFromCartEvent, mqevent.ItemRemovedFromCartPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, groupedCart)
 	}
@@ -100,8 +100,7 @@ func ClearCart(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.CartClearedPayload{})
-		app.MQ.Publish(ctx, mqevent.CartClearedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CartClearedEvent, mqevent.CartClearedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Cart cleared successfully",

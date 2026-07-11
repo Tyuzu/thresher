@@ -7,6 +7,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
@@ -56,8 +57,7 @@ func CreateEvent(app *infra.Deps) httprouter.Handle {
 
 		userdata.SetUserData("event", event.EventID, requestingUserID, "", "", app)
 
-		mqpayload, _ := json.Marshal(mqevent.EventCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.EventCreatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.EventCreatedEvent, mqevent.EventCreatedPayload{})
 
 		if err := json.NewEncoder(w).Encode(event); err != nil {
 			log.Printf("Encoding response error: %v", err)

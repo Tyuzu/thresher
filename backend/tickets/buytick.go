@@ -9,6 +9,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
@@ -137,8 +138,7 @@ func BuysTicket(app *infra.Deps) httprouter.Handle {
 			},
 		)
 
-		mqpayload, _ := json.Marshal(mqevent.TicketBoughtPayload{})
-		app.MQ.Publish(ctx, mqevent.TicketBoughtEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketBoughtEvent, mqevent.TicketBoughtPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -52,8 +53,7 @@ func LockSeats(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.SeatsLockedPayload{})
-		app.MQ.Publish(ctx, mqevent.SeatsLockedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SeatsLockedEvent, mqevent.SeatsLockedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Seats locked successfully"})
 	}
@@ -99,8 +99,7 @@ func UnlockSeats(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.SeatsUnlockedPayload{})
-		app.MQ.Publish(ctx, mqevent.SeatsUnlockedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SeatsUnlockedEvent, mqevent.SeatsUnlockedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Seats unlocked successfully"})
 	}
@@ -152,8 +151,7 @@ func ConfirmSeatPurchase(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.SeatPurchaseConfirmedPayload{})
-		app.MQ.Publish(ctx, mqevent.SeatPurchaseConfirmedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SeatPurchaseConfirmedEvent, mqevent.SeatPurchaseConfirmedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Ticket purchased successfully"})
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -57,8 +58,7 @@ func createItem(w http.ResponseWriter, r *http.Request, itemType string, app *in
 		return
 	}
 
-	mqpayload, _ := json.Marshal(mqevent.FarmProductCreatedPayload{})
-	app.MQ.Publish(ctx, mqevent.FarmProductCreatedEvent, mqpayload)
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmProductCreatedEvent, mqevent.FarmProductCreatedPayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, item)
 }
@@ -132,8 +132,7 @@ func updateItem(
 
 	/* -------- Publish ProductUpdated Event -------- */
 
-	mqpayload, _ := json.Marshal(mqevent.FarmProductUpdatedPayload{})
-	app.MQ.Publish(ctx, mqevent.FarmProductUpdatedEvent, mqpayload)
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmProductUpdatedEvent, mqevent.FarmProductUpdatedPayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"status":    "success",
@@ -189,8 +188,7 @@ func deleteItem(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.FarmProductDeletedPayload{})
-		app.MQ.Publish(ctx, mqevent.FarmProductDeletedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmProductDeletedEvent, mqevent.FarmProductDeletedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{"status": "deleted"})
 	}

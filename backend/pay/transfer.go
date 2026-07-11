@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"naevis/config/mqevent"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 
@@ -226,8 +227,7 @@ func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request, _ http
 
 	p.successTxn(ctx, txnID)
 
-	mqpayload, _ := json.Marshal(mqevent.MoneyTransferredPayload{})
-	p.app.MQ.Publish(ctx, mqevent.MoneyTransferredEvent, mqpayload)
+	_ = mq.PublishWithMeta(ctx, p.app.MQ, mqevent.MoneyTransferredEvent, mqevent.MoneyTransferredPayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"success":        true,

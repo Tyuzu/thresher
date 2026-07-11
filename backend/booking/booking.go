@@ -12,6 +12,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 )
@@ -197,8 +198,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.BookingCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.BookingCreatedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.BookingCreatedEvent, mqevent.BookingCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":      true,
@@ -246,8 +246,7 @@ func UpdateBookingStatus(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.BookingUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.BookingUpdatedEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.BookingUpdatedEvent, mqevent.BookingUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":      true,
@@ -280,8 +279,7 @@ func CancelBooking(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.BookingCancelledPayload{})
-		app.MQ.Publish(ctx, mqevent.BookingCancelledEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.BookingCancelledEvent, mqevent.BookingCancelledPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":      true,
@@ -325,8 +323,7 @@ func SetDateCapacity(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DateCapacitySetPayload{})
-		app.MQ.Publish(ctx, mqevent.DateCapacitySetEvent, mqpayload)
+		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.DateCapacitySetEvent, mqevent.DateCapacitySetPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok": true,

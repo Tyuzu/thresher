@@ -2,11 +2,11 @@ package events
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -66,8 +66,7 @@ func EditEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.EventUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.EventUpdatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.EventUpdatedEvent, mqevent.EventUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, updatedEvent)
 	}

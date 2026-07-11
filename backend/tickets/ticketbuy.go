@@ -12,6 +12,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/stripe"
 	"naevis/userdata"
@@ -92,8 +93,7 @@ func CreateTicketPaymentSession(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.TicketPaymentSessionCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.TicketPaymentSessionCreatedEvent, mqpayload)
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketPaymentSessionCreatedEvent, mqevent.TicketPaymentSessionCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -265,8 +265,7 @@ func buyTicket(w http.ResponseWriter, r *http.Request, req TicketPurchaseRequest
 		return
 	}
 
-	mqpayload, _ := json.Marshal(mqevent.TicketBoughtPayload{})
-	app.MQ.Publish(ctx, mqevent.TicketBoughtEvent, mqpayload)
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketBoughtEvent, mqevent.TicketBoughtPayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 		"success":     true,

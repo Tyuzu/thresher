@@ -15,6 +15,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 
@@ -147,8 +148,7 @@ func (p *PaymentService) HandlePaymentWebhook(w http.ResponseWriter, r *http.Req
 
 	logWebhookAttempt(ctx, p.app, &payload, "processed", "")
 
-	mqpayload, _ := json.Marshal(mqevent.PaymentProcessedPayload{})
-	p.app.MQ.Publish(ctx, mqevent.PaymentProcessedEvent, mqpayload)
+	_ = mq.PublishWithMeta(ctx, p.app.MQ, mqevent.PaymentProcessedEvent, mqevent.PaymentProcessedPayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 		"status": "processed",
