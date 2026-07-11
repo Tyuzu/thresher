@@ -41,8 +41,8 @@ func DeleteBaito(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.BaitoRemovedPayload{})
+		app.MQ.Publish(ctx, mqevent.BaitoRemovedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusNoContent, map[string]string{})
 	}
@@ -84,8 +84,8 @@ func ApplyToBaito(app *infra.Deps) httprouter.Handle {
 			log.Printf("Failed to update application count for baito %s: %v", ps.ByName("baitoid"), err)
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.AppliedToBaitoPayload{})
+		app.MQ.Publish(ctx, mqevent.AppliedToBaitoEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

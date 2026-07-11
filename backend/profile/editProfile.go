@@ -88,8 +88,8 @@ func DeleteProfile(app *infra.Deps) httprouter.Handle {
 
 		// Success response
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ProfileDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.ProfileDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Profile deleted successfully",

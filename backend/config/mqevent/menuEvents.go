@@ -7,9 +7,11 @@ import "time"
 ============================================================ */
 
 const (
-	MenuCreated = "menu.created"
-	MenuUpdated = "menu.updated"
-	MenuRemoved = "menu.removed"
+	MenuCreatedEvent                 = "menu.created"
+	MenuUpdatedEvent                 = "menu.updated"
+	MenuRemovedEvent                 = "menu.removed"
+	MenuBoughtEvent                  = "menu.removed"
+	MenuPaymentSessionInitiatedEvent = "menu.removed"
 )
 
 type MenuCreatedPayload struct {
@@ -23,6 +25,16 @@ type MenuUpdatedPayload struct {
 }
 
 type MenuDeletedPayload struct {
+	MenuID     string    `json:"menuid"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type MenuBoughtPayload struct {
+	MenuID     string    `json:"menuid"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type MenuPaymentSessionInitiatedPayload struct {
 	MenuID     string    `json:"menuid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

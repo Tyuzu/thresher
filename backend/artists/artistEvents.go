@@ -43,8 +43,8 @@ func CreateArtistEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ArtistEventCreatePayload{})
+		app.MQ.Publish(ctx, mqevent.ArtistEventCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
 			"message": "ArtistEvent created successfully",
@@ -71,8 +71,8 @@ func UpdateArtistEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ArtistEventUpdatePayload{})
+		app.MQ.Publish(ctx, mqevent.ArtistEventUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "ArtistEvent updated successfully"})
 	}
@@ -196,8 +196,8 @@ func AddArtistToEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ArtistAddedToEventPayload{})
+		app.MQ.Publish(ctx, mqevent.ArtistAddedToEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Artist successfully added to event"})
 	}

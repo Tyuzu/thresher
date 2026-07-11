@@ -98,8 +98,8 @@ func EditMedia(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MediaUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.MediaUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, updatedMedias)
 	}

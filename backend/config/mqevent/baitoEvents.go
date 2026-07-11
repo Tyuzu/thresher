@@ -7,9 +7,14 @@ import "time"
 ============================================================ */
 
 const (
-	BaitoCreated = "baito.created"
-	BaitoUpdated = "baito.updated"
-	BaitoRemoved = "baito.removed"
+	BaitoCreatedEvent   = "baito.created"
+	BaitoUpdatedEvent   = "baito.updated"
+	BaitoRemovedEvent   = "baito.removed"
+	AppliedToBaitoEvent = "baito.applied"
+
+	WorkerProfileCreatedEvent = "worker.created"
+	WorkerProfileUpdatedEvent = "worker.updated"
+	WorkerProfileRemovedEvent = "worker.removed"
 )
 
 type BaitoCreatedPayload struct {
@@ -22,7 +27,22 @@ type BaitoUpdatedPayload struct {
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type BaitoDeletedPayload struct {
+type BaitoRemovedPayload struct {
+	BaitoID    string    `json:"baitoid"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type AppliedToBaitoPayload struct {
+	BaitoID    string    `json:"baitoid"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type WorkerProfileCreatedPayload struct {
+	BaitoID    string    `json:"baitoid"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type WorkerProfileUpdatedPayload struct {
 	BaitoID    string    `json:"baitoid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

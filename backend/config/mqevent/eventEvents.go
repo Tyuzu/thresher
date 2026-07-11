@@ -7,9 +7,10 @@ import "time"
 ============================================================ */
 
 const (
-	EventCreated = "event.created"
-	EventUpdated = "event.updated"
-	EventRemoved = "event.removed"
+	EventCreated  = "event.created"
+	EventUpdated  = "event.updated"
+	EventRemoved  = "event.removed"
+	FAQAddedEvent = "event.removed"
 )
 
 type EventCreatedPayload struct {
@@ -23,6 +24,11 @@ type EventUpdatedPayload struct {
 }
 
 type EventDeletedPayload struct {
+	EventID    string    `json:"eventid"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type FAQAddedPayload struct {
 	EventID    string    `json:"eventid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

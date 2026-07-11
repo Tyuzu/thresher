@@ -72,8 +72,8 @@ func AddArtistMember(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.BandMemberAddedPayload{})
+		app.MQ.Publish(ctx, mqevent.BandMemberAddedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, m)
 	}
@@ -129,8 +129,8 @@ func UpdateArtistMember(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.BandMemberUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.BandMemberUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{
 			"message": "Member updated",
@@ -161,8 +161,8 @@ func DeleteArtistMember(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.BandMemberDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.BandMemberDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{
 			"message": "Member deleted",

@@ -7,9 +7,10 @@ import "time"
 ============================================================ */
 
 const (
-	MechatCreated = "mechat.created"
-	MechatUpdated = "mechat.updated"
-	MechatRemoved = "mechat.removed"
+	MechatCreated        = "mechat.created"
+	MechatUpdated        = "mechat.updated"
+	MechatRemoved        = "mechat.removed"
+	ChatMessageSentEvent = "mechat.removed"
 )
 
 type MechatCreatedPayload struct {
@@ -23,6 +24,11 @@ type MechatUpdatedPayload struct {
 }
 
 type MechatDeletedPayload struct {
+	MechatID   string    `json:"mechatid"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type ChatMessageSentPayload struct {
 	MechatID   string    `json:"mechatid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

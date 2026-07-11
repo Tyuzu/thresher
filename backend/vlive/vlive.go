@@ -247,8 +247,8 @@ func CreateStream(app *infra.Deps) httprouter.Handle {
 
 		log.Printf("CreateStream: user=%s created liveID=%s", userID, stream.LiveID)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.StreamCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.StreamCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, resp)
 	}

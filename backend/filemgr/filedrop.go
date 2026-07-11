@@ -85,8 +85,8 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 			}
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.FileCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.FileCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, convertToAttachments(attachments))
 	}

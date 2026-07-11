@@ -7,22 +7,22 @@ import "time"
 ============================================================ */
 
 const (
-	VliveCreated = "vlive.created"
-	VliveUpdated = "vlive.updated"
-	VliveRemoved = "vlive.removed"
+	StreamCreatedEvent     = "vlive.created"
+	IngestStartedEvent     = "vlive.updated"
+	RecordingCompleteEvent = "vlive.removed"
 )
 
-type VliveCreatedPayload struct {
+type StreamCreatedPayload struct {
 	VliveID    string    `json:"vliveid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type VliveUpdatedPayload struct {
+type IngestStartedPayload struct {
 	VliveID    string    `json:"vliveid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type VliveDeletedPayload struct {
+type RecordingCompletePayload struct {
 	VliveID    string    `json:"vliveid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

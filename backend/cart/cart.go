@@ -92,8 +92,8 @@ func UpdateCart(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Failed to fetch updated cart", http.StatusInternalServerError)
 			return
 		}
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CartItemUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CartItemUpdated, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, updated)
 	}
@@ -208,8 +208,8 @@ func UpdateItemQuantity(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Failed to fetch updated cart", http.StatusInternalServerError)
 			return
 		}
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ItemQuantityUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.ItemQuantityUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, groupedCart)
 	}

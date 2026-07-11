@@ -46,8 +46,8 @@ func BuyMenu(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MenuBoughtPayload{})
+		app.MQ.Publish(ctx, mqevent.MenuBoughtEvent, mqpayload)
 
 		// Respond with remaining stock
 		resp := map[string]any{

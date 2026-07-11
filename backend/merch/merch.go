@@ -137,8 +137,8 @@ func CreateMerch(app *infra.Deps) httprouter.Handle {
 			},
 		)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MerchCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.MerchCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, 201, map[string]any{"success": true, "data": merch})
 	}
@@ -251,8 +251,8 @@ func EditMerch(app *infra.Deps) httprouter.Handle {
 			},
 		)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MerchUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.MerchUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, 200, map[string]any{"success": true})
 	}
@@ -342,8 +342,8 @@ func DeleteMerch(app *infra.Deps) httprouter.Handle {
 			},
 		)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MerchDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.MerchDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, 200, map[string]any{"success": true})
 	}
@@ -409,8 +409,8 @@ func BuyMerch(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MerchBoughtPayload{})
+		app.MQ.Publish(ctx, mqevent.MerchBoughtEvent, mqpayload)
 
 		utils.RespondWithJSON(w, 200, map[string]any{
 			"success": true,

@@ -313,8 +313,8 @@ func CreateOrUpdatePost(
 		return
 	}
 
-	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+	mqpayload, _ := json.Marshal(mqevent.BlogPostUpdatedPayload{})
+	app.MQ.Publish(ctx, mqevent.BlogPostUpdatedEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 		"postid": post.PostID,
@@ -380,8 +380,8 @@ func DeletePost(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.BlogPostDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.BlogPostDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"postid":  postID,

@@ -97,8 +97,8 @@ func CreateTicket(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.TicketCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.TicketCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, tick)
 	}
@@ -165,8 +165,8 @@ func EditTicket(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.TicketUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.TicketUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -229,8 +229,8 @@ func BuyTicket(app *infra.Deps) httprouter.Handle {
 		m := models.Index{}
 		userdata.SetUserData("ticket", ticketID, userID, m.EntityType, m.EntityId, app)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.TicketBoughtPayload{})
+		app.MQ.Publish(ctx, mqevent.TicketBoughtEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

@@ -7,9 +7,9 @@ import "time"
 ============================================================ */
 
 const (
-	FileCreated = "file.created"
-	FileUpdated = "file.updated"
-	FileRemoved = "file.removed"
+	FileCreatedEvent = "file.created"
+	FileUpdatedEvent = "file.updated"
+	FileRemovedEvent = "file.removed"
 )
 
 type FileCreatedPayload struct {

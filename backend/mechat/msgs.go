@@ -116,8 +116,8 @@ func SendMessageREST(app *infra.Deps) httprouter.Handle {
 			ClientID string `json:"clientId,omitempty"`
 		}{msg, body.ClientID}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ChatMessageSentPayload{})
+		app.MQ.Publish(ctx, mqevent.ChatMessageSentEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}

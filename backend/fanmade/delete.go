@@ -52,8 +52,8 @@ func DeleteMedia(app *infra.Deps) httprouter.Handle {
 
 		userdata.DelUserData("media", mediaID, requestingUserID, app)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.FanMediaRemovedPayload{})
+		app.MQ.Publish(ctx, mqevent.FanMediaRemovedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

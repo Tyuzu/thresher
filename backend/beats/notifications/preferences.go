@@ -123,8 +123,8 @@ func UpdatePreferences(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.NotificationPreferencesUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.NotificationPreferencesUpdatedEvent, mqpayload)
 
 		// Fetch and return updated preferences
 		var updated models.NotificationPreference

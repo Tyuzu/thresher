@@ -78,8 +78,8 @@ func EditPlace(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.PlaceUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.PlaceUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, updateFields)
 	}

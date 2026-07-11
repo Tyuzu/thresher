@@ -94,8 +94,8 @@ func CreateAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.SlotCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.SlotCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"ok": true, "slot": slot})
 	}
@@ -138,8 +138,8 @@ func DeleteAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.SlotDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.SlotDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"ok": true})
 	}

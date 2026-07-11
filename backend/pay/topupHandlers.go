@@ -161,8 +161,8 @@ func (p *PaymentService) TopUp(w http.ResponseWriter, r *http.Request, _ httprou
 		},
 	)
 
-	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-	p.app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+	mqpayload, _ := json.Marshal(mqevent.TopupDonePayload{})
+	p.app.MQ.Publish(ctx, mqevent.TopupDoneEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"success":        true,

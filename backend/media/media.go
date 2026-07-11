@@ -126,8 +126,8 @@ func AddMedia(app *infra.Deps) httprouter.Handle {
 			insertedMedia = append(insertedMedia, media)
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MediaUploadedPayload{})
+		app.MQ.Publish(ctx, mqevent.MediaUploadedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, insertedMedia)
 	}

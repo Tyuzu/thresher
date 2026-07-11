@@ -57,8 +57,8 @@ func createItem(w http.ResponseWriter, r *http.Request, itemType string, app *in
 		return
 	}
 
-	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+	mqpayload, _ := json.Marshal(mqevent.FarmProductCreatedPayload{})
+	app.MQ.Publish(ctx, mqevent.FarmProductCreatedEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, item)
 }
@@ -132,8 +132,8 @@ func updateItem(
 
 	/* -------- Publish ProductUpdated Event -------- */
 
-	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+	mqpayload, _ := json.Marshal(mqevent.FarmProductUpdatedPayload{})
+	app.MQ.Publish(ctx, mqevent.FarmProductUpdatedEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"status":    "success",
@@ -189,8 +189,8 @@ func deleteItem(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.FarmProductDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.FarmProductDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{"status": "deleted"})
 	}

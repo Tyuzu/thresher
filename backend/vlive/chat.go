@@ -114,10 +114,10 @@ func ChatWebSocket(app *infra.Deps) httprouter.Handle {
 				if exists {
 					_ = conn.WriteMessage(
 						websocket.TextMessage,
-						[]byte(fmt.Sprintf(
+						fmt.Appendf(nil,
 							`{"error":"slow_mode_active","retryAfter":%d}`,
 							stream.SlowModeSeconds,
-						)),
+						),
 					)
 					continue
 				}

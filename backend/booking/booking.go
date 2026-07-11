@@ -197,8 +197,8 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.BookingCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.BookingCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":      true,
@@ -246,8 +246,8 @@ func UpdateBookingStatus(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.BookingUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.BookingUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":      true,
@@ -280,8 +280,8 @@ func CancelBooking(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.BookingCancelledPayload{})
+		app.MQ.Publish(ctx, mqevent.BookingCancelledEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":      true,
@@ -325,8 +325,8 @@ func SetDateCapacity(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.DateCapacitySetPayload{})
+		app.MQ.Publish(ctx, mqevent.DateCapacitySetEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok": true,

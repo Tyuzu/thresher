@@ -38,8 +38,8 @@ func CreateArtist(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ArtistCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.ArtistCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, artist)
 	}
@@ -85,8 +85,8 @@ func UpdateArtist(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* -------- Publish ArtistUpdated Event -------- */
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ArtistUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.ArtistUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Artist updated"})
 	}
@@ -185,8 +185,8 @@ func DeleteArtistByID(app *infra.Deps) httprouter.Handle {
 		// go mq.Emit(ctx, "artist-deleted", models.Index{
 		// 	EntityType: "artist", EntityId: artistID, Method: "DELETE",
 		// })
-		// mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		// app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		// mqpayload, _ := json.Marshal(mqevent.ArtistDeletedPayload{})
+		// app.MQ.Publish(ctx, mqevent.ArtistDeletedEvent, mqpayload)
 
 		// utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Artist deleted successfully"})
 	}

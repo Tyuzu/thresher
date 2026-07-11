@@ -137,8 +137,8 @@ func BuysTicket(app *infra.Deps) httprouter.Handle {
 			},
 		)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.TicketBoughtPayload{})
+		app.MQ.Publish(ctx, mqevent.TicketBoughtEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

@@ -244,8 +244,8 @@ func CreateBaito(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.BaitoCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.BaitoCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, struct {
 			BaitoID string `json:"baitoid"`
@@ -299,8 +299,8 @@ func UpdateBaito(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.BaitoUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.BaitoUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, struct {
 			Message string `json:"message"`

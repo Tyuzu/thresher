@@ -66,8 +66,8 @@ func EditEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.EventUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.EventUpdated, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, updatedEvent)
 	}

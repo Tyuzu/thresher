@@ -199,8 +199,8 @@ func CancelTicket(app *infra.Deps) httprouter.Handle {
 				"reason":       "user_requested",
 			},
 		)
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.TicketCancelledPayload{})
+		app.MQ.Publish(ctx, mqevent.TicketCancelledEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

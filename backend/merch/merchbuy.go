@@ -49,8 +49,8 @@ func CreateMerchPaymentSession(app *infra.Deps) httprouter.Handle {
 			},
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MerchPaymentSessionCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.MerchPaymentSessionCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
@@ -151,8 +151,8 @@ func ConfirmMerchPurchase(app *infra.Deps) httprouter.Handle {
 			},
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MerchPurchaseConfirmedPayload{})
+		app.MQ.Publish(ctx, mqevent.MerchPurchaseConfirmedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}

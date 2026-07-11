@@ -151,8 +151,8 @@ func CreateMessage(app *infra.Deps) httprouter.Handle {
 		}
 		_ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": chatID}, update)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ChatMessageCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.ChatMessageCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, msg)
 	}

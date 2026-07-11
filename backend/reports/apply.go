@@ -70,8 +70,8 @@ func ApplyModerator(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.AppliedForModeratorRolePayload{})
+		app.MQ.Publish(ctx, mqevent.AppliedForModeratorRoleEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Moderator application submitted",

@@ -33,8 +33,8 @@ func CreateFeedPost(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.FeedPostCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.FeedPostCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":   true,
@@ -67,8 +67,8 @@ func EditPost(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.FeedPostUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.FeedPostUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":   true,

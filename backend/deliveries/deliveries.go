@@ -2,12 +2,10 @@ package deliveries
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
 
-	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -56,9 +54,6 @@ func GetMyDeliveries(app *infra.Deps) httprouter.Handle {
 			deliveries = append(deliveries, buildDeliveryFromOrder(order))
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
-
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"deliveries": deliveries})
 	}
 }
@@ -85,9 +80,6 @@ func GetDeliveryByID(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusNotFound, "Delivery not found")
 			return
 		}
-
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, buildDeliveryFromOrder(order))
 	}

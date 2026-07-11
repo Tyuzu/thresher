@@ -101,8 +101,8 @@ func AddToCart(app *infra.Deps) httprouter.Handle {
 
 		/* -------- Publish CartItemAdded Event -------- */
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CartItemCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CartItemCreated, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]string{"status": "ok"})
 	}

@@ -7,9 +7,9 @@ import "time"
 ============================================================ */
 
 const (
-	CommentCreated = "comment.created"
-	CommentUpdated = "comment.updated"
-	CommentRemoved = "comment.removed"
+	CommentCreatedEvent = "comment.created"
+	CommentUpdatedEvent = "comment.updated"
+	CommentRemovedEvent = "comment.removed"
 )
 
 type CommentCreatedPayload struct {

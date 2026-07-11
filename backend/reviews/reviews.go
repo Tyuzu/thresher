@@ -100,8 +100,8 @@ func AddReview(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ReviewCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.ReviewCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, review)
 	}
@@ -175,8 +175,8 @@ func EditReview(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ReviewUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.ReviewUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Review updated"})
 	}
@@ -222,8 +222,8 @@ func DeleteReview(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ReviewDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.ReviewDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Review deleted"})
 	}

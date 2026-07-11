@@ -53,8 +53,8 @@ func HandleFollowAction(
 		"ok":          true,
 	}
 
-	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+	mqpayload, _ := json.Marshal(mqevent.UserFollowedPayload{})
+	app.MQ.Publish(ctx, mqevent.UserFollowedEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, response)
 }

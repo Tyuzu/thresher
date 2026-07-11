@@ -7,9 +7,9 @@ import "time"
 ============================================================ */
 
 const (
-	NoticesCreated = "notices.created"
-	NoticesUpdated = "notices.updated"
-	NoticesRemoved = "notices.removed"
+	NoticesCreatedEvent = "notices.created"
+	NoticesUpdatedEvent = "notices.updated"
+	NoticesRemovedEvent = "notices.removed"
 )
 
 type NoticesCreatedPayload struct {

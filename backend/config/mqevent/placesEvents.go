@@ -7,22 +7,22 @@ import "time"
 ============================================================ */
 
 const (
-	PlacesCreated = "places.created"
-	PlacesUpdated = "places.updated"
-	PlacesRemoved = "places.removed"
+	PlaceCreatedEvent = "places.created"
+	PlaceUpdatedEvent = "places.updated"
+	PlaceRemovedEvent = "places.removed"
 )
 
-type PlacesCreatedPayload struct {
+type PlaceCreatedPayload struct {
 	PlacesID   string    `json:"placeid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type PlacesUpdatedPayload struct {
+type PlaceUpdatedPayload struct {
 	PlacesID   string    `json:"placeid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type PlacesDeletedPayload struct {
+type PlaceDeletedPayload struct {
 	PlacesID   string    `json:"placeid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

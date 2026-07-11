@@ -285,8 +285,8 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request, _ httproute
 		},
 	)
 
-	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-	p.app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+	mqpayload, _ := json.Marshal(mqevent.PaymentDonePayload{})
+	p.app.MQ.Publish(ctx, mqevent.PaymentDoneEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"success":        true,

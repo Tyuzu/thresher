@@ -43,8 +43,8 @@ func InitiateCheckout(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CheckoutInitiatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CheckoutInitiatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"status": "ok",
@@ -168,8 +168,8 @@ func CreateCheckoutSession(app *infra.Deps) httprouter.Handle {
 			"createdAt": time.Now(),
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CheckoutSeccionCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CheckoutSeccionCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, session)
 	}

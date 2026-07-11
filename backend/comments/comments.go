@@ -77,8 +77,8 @@ func CreateComment(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CommentCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CommentCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, comment)
 	}
@@ -162,8 +162,8 @@ func UpdateComment(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CommentUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CommentUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, existing)
 	}

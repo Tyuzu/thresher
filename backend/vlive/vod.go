@@ -63,8 +63,8 @@ func StartIngest(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.IngestStartedPayload{})
+		app.MQ.Publish(ctx, mqevent.IngestStartedEvent, mqpayload)
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"status": "ok", "playbackUrl": playback})
 	}
 }
@@ -107,8 +107,8 @@ func RecordingComplete(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.RecordingCompletePayload{})
+		app.MQ.Publish(ctx, mqevent.RecordingCompleteEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"vodUrl": vodURL})
 	}

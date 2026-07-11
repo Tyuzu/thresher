@@ -67,8 +67,8 @@ func CreateMenu(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MenuCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.MenuCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"ok":      true,
@@ -119,8 +119,8 @@ func EditMenu(app *infra.Deps) httprouter.Handle {
 		// Invalidate cache
 		app.Cache.Del(ctx, fmt.Sprintf("menu:%s:%s", placeID, menuID))
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MenuUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.MenuUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -147,8 +147,8 @@ func DeleteMenu(app *infra.Deps) httprouter.Handle {
 
 				app.cache.Del(ctx, fmt.Sprintf("menu:%s:%s", placeID, menuID))
 
-			mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-			app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+			mqpayload, _ := json.Marshal(mqevent.MenuDeletedPayload{})
+			app.MQ.Publish(ctx, mqevent.MenuDeletedEvent, mqpayload)
 
 				utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 					"success": true,

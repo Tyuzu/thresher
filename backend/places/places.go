@@ -164,8 +164,8 @@ func CreatePlace(app *infra.Deps) httprouter.Handle {
 		// Set user data
 		userdata.SetUserData("place", place.PlaceID, requestingUserID, "", "", app)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.PlaceCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.PlaceCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, place)
 	}

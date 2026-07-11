@@ -73,8 +73,8 @@ func RemoveFromCart(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ItemRemovedFromCartPayload{})
+		app.MQ.Publish(ctx, mqevent.ItemRemovedFromCartEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, groupedCart)
 	}
@@ -100,8 +100,8 @@ func ClearCart(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CartClearedPayload{})
+		app.MQ.Publish(ctx, mqevent.CartClearedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Cart cleared successfully",

@@ -7,22 +7,22 @@ import "time"
 ============================================================ */
 
 const (
-	ReviewCreatedEvent = "review.created"
-	ReviewUpdatedEvent = "review.updated"
-	ReviewDeletedEvent = "review.removed"
+	UserSettingsUpdatedEvent   = "review.created"
+	UserSettingsResetEvent     = "review.updated"
+	UserSettingsInitiatedEvent = "review.removed"
 )
 
-type ReviewCreatedPayload struct {
+type UserSettingsUpdatedPayload struct {
 	ReviewID   string    `json:"reviewid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type ReviewUpdatedPayload struct {
+type UserSettingsResetPayload struct {
 	ReviewID   string    `json:"reviewid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type ReviewDeletedPayload struct {
+type UserSettingsInitiatedPayload struct {
 	ReviewID   string    `json:"reviewid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

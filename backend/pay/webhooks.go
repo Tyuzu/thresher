@@ -147,8 +147,8 @@ func (p *PaymentService) HandlePaymentWebhook(w http.ResponseWriter, r *http.Req
 
 	logWebhookAttempt(ctx, p.app, &payload, "processed", "")
 
-	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-	p.app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+	mqpayload, _ := json.Marshal(mqevent.PaymentProcessedPayload{})
+	p.app.MQ.Publish(ctx, mqevent.PaymentProcessedEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 		"status": "processed",

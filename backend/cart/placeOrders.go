@@ -173,8 +173,8 @@ func PlaceOrder(app *infra.Deps) httprouter.Handle {
 			resp["order"] = genOrder
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.OrderPlacedPayload{})
+		app.MQ.Publish(ctx, mqevent.OrderPlacedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, resp)
 	}

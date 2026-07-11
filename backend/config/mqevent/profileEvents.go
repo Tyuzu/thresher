@@ -7,9 +7,9 @@ import "time"
 ============================================================ */
 
 const (
-	ProfileCreated = "profile.created"
-	ProfileUpdated = "profile.updated"
-	ProfileRemoved = "profile.removed"
+	ProfileCreatedEvent = "profile.created"
+	ProfileUpdatedEvent = "profile.updated"
+	ProfileDeletedEvent = "profile.removed"
 )
 
 type ProfileCreatedPayload struct {

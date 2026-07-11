@@ -67,8 +67,8 @@ func deleteByField(
 		after(ctx, entityID, userID)
 	}
 
-	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+	mqpayload, _ := json.Marshal(mqevent.HardDeletedPayload{})
+	app.MQ.Publish(ctx, mqevent.HardDeletedEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 }
@@ -112,8 +112,8 @@ func softDeleteByField(
 		after(ctx, entityID, userID)
 	}
 
-	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+	mqpayload, _ := json.Marshal(mqevent.SoftDeletedPayload{})
+	app.MQ.Publish(ctx, mqevent.SoftDeletedEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 }

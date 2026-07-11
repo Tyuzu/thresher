@@ -7,9 +7,12 @@ import "time"
 ============================================================ */
 
 const (
-	MerchCreated = "merch.created"
-	MerchUpdated = "merch.updated"
-	MerchRemoved = "merch.removed"
+	MerchCreatedEvent               = "merch.created"
+	MerchUpdatedEvent               = "merch.updated"
+	MerchDeletedEvent               = "merch.removed"
+	MerchBoughtEvent                = "merch.removed"
+	MerchPaymentSessionCreatedEvent = "merch.removed"
+	MerchPurchaseConfirmedEvent     = "merch.removed"
 )
 
 type MerchCreatedPayload struct {
@@ -23,6 +26,21 @@ type MerchUpdatedPayload struct {
 }
 
 type MerchDeletedPayload struct {
+	MerchID    string    `json:"merchid"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type MerchBoughtPayload struct {
+	MerchID    string    `json:"merchid"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type MerchPaymentSessionCreatedPayload struct {
+	MerchID    string    `json:"merchid"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type MerchPurchaseConfirmedPayload struct {
 	MerchID    string    `json:"merchid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

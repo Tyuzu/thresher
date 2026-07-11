@@ -67,8 +67,8 @@ func CreateNotification(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.OneNotificatioCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.OneNotificatioCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, notification)
 	}
@@ -124,8 +124,8 @@ func BulkCreateNotifications(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.BulkNotificationsCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.BulkNotificationsCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
 			"inserted": len(notifications),
@@ -220,8 +220,8 @@ func MarkAsRead(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.OneNotificationReadPayload{})
+		app.MQ.Publish(ctx, mqevent.OneNotificationReadEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"updated": true,
@@ -255,8 +255,8 @@ func MarkAllAsRead(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.AllNotificationsReadPayload{})
+		app.MQ.Publish(ctx, mqevent.AllNotificationsReadEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"updated": true,
@@ -282,8 +282,8 @@ func DeleteNotification(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.NotificationDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.NotificationDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"deleted": true,
@@ -310,8 +310,8 @@ func ClearAllNotifications(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.AllNotificationsClearedPayload{})
+		app.MQ.Publish(ctx, mqevent.AllNotificationsClearedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 			"deleted": true,

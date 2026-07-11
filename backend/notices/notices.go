@@ -84,8 +84,8 @@ func CreateNotice(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.NoticesCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.NoticesCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, notice)
 	}
@@ -156,8 +156,8 @@ func UpdateNotice(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.NoticesUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.NoticesUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, existing)
 	}

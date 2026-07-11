@@ -77,8 +77,8 @@ func StartNewChat(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MechatCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.MechatCreated, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, chat)
 	}

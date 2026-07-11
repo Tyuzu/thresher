@@ -172,8 +172,8 @@ func CreateRecipe(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.RecipeCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.RecipeCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, recipe)
 	}
@@ -274,8 +274,8 @@ func UpdateRecipe(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.RecipeUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.RecipeUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, []byte(`{"status":"updated"}`))
 	}

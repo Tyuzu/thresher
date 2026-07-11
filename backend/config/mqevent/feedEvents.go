@@ -7,9 +7,9 @@ import "time"
 ============================================================ */
 
 const (
-	FeedPostCreated = "feedpost.created"
-	FeedPostUpdated = "feedpost.updated"
-	FeedPostRemoved = "feedpost.removed"
+	FeedPostCreatedEvent = "feedpost.created"
+	FeedPostUpdatedEvent = "feedpost.updated"
+	FeedPostRemovedEvent = "feedpost.removed"
 )
 
 type FeedPostCreatedPayload struct {

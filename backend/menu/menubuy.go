@@ -88,8 +88,8 @@ func buyMenu(w http.ResponseWriter, request MenuPurchaseRequest, requestingUserI
 	// Save user purchase data
 	userdata.SetUserData("menu", menuID, requestingUserID, "place", placeId, app)
 
-	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+	mqpayload, _ := json.Marshal(mqevent.MenuBoughtPayload{})
+	app.MQ.Publish(ctx, mqevent.MenuBoughtEvent, mqpayload)
 
 	// Respond with success
 	response := MenuPurchaseResponse{
@@ -131,8 +131,8 @@ func CreateMenuPaymentSession(app *infra.Deps) httprouter.Handle {
 			"stock":      session.Stock,
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MenuPaymentSessionInitiatedPayload{})
+		app.MQ.Publish(ctx, mqevent.MenuPaymentSessionInitiatedEvent, mqpayload)
 
 		// Respond with the session URL
 		response := map[string]any{

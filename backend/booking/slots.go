@@ -41,8 +41,8 @@ func CreateTier(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.TierCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.TierCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"tier": tier})
 	}
@@ -99,8 +99,8 @@ func CreateSlot(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.SlotCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.SlotCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{"slot": s})
 	}

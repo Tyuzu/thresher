@@ -92,8 +92,8 @@ func CreateTicketPaymentSession(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.TicketPaymentSessionCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.TicketPaymentSessionCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -265,8 +265,8 @@ func buyTicket(w http.ResponseWriter, r *http.Request, req TicketPurchaseRequest
 		return
 	}
 
-	mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-	app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+	mqpayload, _ := json.Marshal(mqevent.TicketBoughtPayload{})
+	app.MQ.Publish(ctx, mqevent.TicketBoughtEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 		"success":     true,

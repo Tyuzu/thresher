@@ -69,8 +69,8 @@ func ApproveModerator(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ApprovedModeratorRoleRequestPayload{})
+		app.MQ.Publish(ctx, mqevent.ApprovedModeratorRoleRequestEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Application approved",
@@ -105,8 +105,8 @@ func RejectModerator(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.RejectedModeratorRoleRequestPayload{})
+		app.MQ.Publish(ctx, mqevent.RejectedModeratorRoleRequestEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Application rejected",

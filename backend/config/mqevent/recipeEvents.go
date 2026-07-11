@@ -7,9 +7,9 @@ import "time"
 ============================================================ */
 
 const (
-	RecipeCreated = "recipe.created"
-	RecipeUpdated = "recipe.updated"
-	RecipeRemoved = "recipe.removed"
+	RecipeCreatedEvent = "recipe.created"
+	RecipeUpdatedEvent = "recipe.updated"
+	RecipeRemovedEvent = "recipe.removed"
 )
 
 type RecipeCreatedPayload struct {

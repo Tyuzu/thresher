@@ -142,8 +142,8 @@ func CreateRefundRequest(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.RefundRequestedPayload{})
+		app.MQ.Publish(ctx, mqevent.RefundRequested, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"id":      refundReq.ID,
@@ -410,8 +410,8 @@ func ApproveRefundRequest(app *infra.Deps) httprouter.Handle {
 		payload, _ := json.Marshal(event)
 		_ = app.MQ.Publish(ctx, "order.refunded", payload)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.RefundAcceptedPayload{})
+		app.MQ.Publish(ctx, mqevent.RefundAccepted, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"id":             refund.ID,
@@ -496,8 +496,8 @@ func RejectRefundRequest(app *infra.Deps) httprouter.Handle {
 		payload, _ := json.Marshal(event)
 		_ = app.MQ.Publish(ctx, "refund.rejected", payload)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.RefundRejectedPayload{})
+		app.MQ.Publish(ctx, mqevent.RefundRejected, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"id":      refund.ID,

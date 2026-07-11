@@ -85,8 +85,8 @@ func TransferTicket(app *infra.Deps) httprouter.Handle {
 		userdata.DelUserData("ticket", payload.UniqueCode, requestingUserId, app)
 		userdata.SetUserData("ticket", payload.UniqueCode, payload.Recipient, "event", eventID, app)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.TicketTransferredPayload{})
+		app.MQ.Publish(ctx, mqevent.TicketTransferredEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

@@ -148,8 +148,8 @@ func CreateWorkerProfile(app *infra.Deps) httprouter.Handle {
 			bson.M{"updated_at": time.Now()},
 		)
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.WorkerProfileCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.WorkerProfileCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Worker profile created successfully",
@@ -182,8 +182,8 @@ func UpdateWorkerProfile(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.WorkerProfileUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.WorkerProfileUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message":  "Worker profile updated successfully",

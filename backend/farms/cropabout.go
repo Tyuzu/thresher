@@ -49,8 +49,8 @@ func CreateCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CropAboutCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CropAboutCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
@@ -151,8 +151,8 @@ func UpdateCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			)
 			return
 		}
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CropAboutUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CropAboutUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -180,8 +180,8 @@ func DeleteCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CropAboutDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.CropAboutDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

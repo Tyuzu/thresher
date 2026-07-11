@@ -64,8 +64,8 @@ func CreateItinerary(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ItineraryCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.ItineraryCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, it)
 	}
@@ -123,8 +123,8 @@ func UpdateItinerary(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ItineraryUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.ItineraryUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"status": "200", "message": "Itinerary updated successfully"})
 	}
@@ -149,8 +149,8 @@ func DeleteItinerary(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ItineraryRemovedPayload{})
+		app.MQ.Publish(ctx, mqevent.ItineraryRemovedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"message": "Itinerary deleted"})
 	}
@@ -198,8 +198,8 @@ func ForkItinerary(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ItineraryForkedPayload{})
+		app.MQ.Publish(ctx, mqevent.ItineraryForkedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, newItinerary)
 	}
@@ -224,8 +224,8 @@ func PublishItinerary(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ItineraryPublishedPayload{})
+		app.MQ.Publish(ctx, mqevent.ItineraryPublishedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"published": true})
 	}

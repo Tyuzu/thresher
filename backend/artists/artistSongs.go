@@ -64,8 +64,8 @@ func PostNewSong(app *infra.Deps) httprouter.Handle {
 
 		/* -------- Publish SongCreated Event -------- */
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.SongCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.SongCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, newSong)
 	}
@@ -140,8 +140,8 @@ func EditSong(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* -------- Publish SongUpdated Event -------- */
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.SongUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.SongUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Song updated successfully"})
 	}
@@ -165,8 +165,8 @@ func DeleteSong(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.SongDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.SongDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Song deleted successfully"})
 	}

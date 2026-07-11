@@ -63,8 +63,8 @@ func AddCrop(app *infra.Deps) httprouter.Handle {
 
 		/* -------- Publish CropCreated Event -------- */
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CropCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CropCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
@@ -165,8 +165,8 @@ func EditCrop(app *infra.Deps) httprouter.Handle {
 
 		/* -------- Publish CropUpdated Event -------- */
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CropUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CropUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 	}

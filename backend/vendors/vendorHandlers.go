@@ -86,9 +86,8 @@ func RegisterVendorHandler(app *infra.Deps) httprouter.Handle {
 			writeJSONError(w, http.StatusInternalServerError, "REGISTER_FAILED", "Failed to register vendor")
 			return
 		}
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
-		
+		mqpayload, _ := json.Marshal(mqevent.VendorRegisteredPayload{})
+		app.MQ.Publish(ctx, mqevent.VendorRegisteredEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
@@ -270,8 +269,8 @@ func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.VendorUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.VendorUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -314,8 +313,8 @@ func DeleteVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.VendorDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.VendorDeletedEvent, mqpayload)
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "Vendor deleted",
@@ -383,8 +382,8 @@ func HireVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.VendorHiredPayload{})
+		app.MQ.Publish(ctx, mqevent.VendorHiredEvent, mqpayload)
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
 			"hiring":  hiring,
@@ -461,8 +460,8 @@ func RemoveVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.VendorDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.VendorDeletedEvent, mqpayload)
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "Vendor removed successfully",
@@ -574,8 +573,8 @@ func UpdateVendorStatusHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.VendorStatusUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.VendorStatusUpdatedEvent, mqpayload)
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"status":  status,

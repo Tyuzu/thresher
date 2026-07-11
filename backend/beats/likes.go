@@ -81,8 +81,8 @@ func ToggleLike(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.UserLikedPayload{})
+		app.MQ.Publish(ctx, mqevent.UserLikedEvent, mqpayload)
 
 		count := incrementRedisOrMongo(ctx, redisKey, entityType, entityID, app)
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -222,8 +222,8 @@ func BatchUserLikes(app *infra.Deps) httprouter.Handle {
 			result[eid] = liked
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.UserLikesBatchFlushedPayload{})
+		app.MQ.Publish(ctx, mqevent.UserLikesBatchFlushedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"data": result,

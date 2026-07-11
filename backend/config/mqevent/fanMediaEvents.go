@@ -7,9 +7,9 @@ import "time"
 ============================================================ */
 
 const (
-	FanMediaCreated = "fanmedia.created"
-	FanMediaUpdated = "fanmedia.updated"
-	FanMediaRemoved = "fanmedia.removed"
+	FanMediaCreatedEvent = "fanmedia.created"
+	FanMediaUpdatedEvent = "fanmedia.updated"
+	FanMediaRemovedEvent = "event.removed"
 )
 
 type FanMediaCreatedPayload struct {
@@ -22,7 +22,7 @@ type FanMediaUpdatedPayload struct {
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type FanMediaDeletedPayload struct {
-	FanMediaID string    `json:"fanmediaid"`
+type FanMediaRemovedPayload struct {
+	EventID    string    `json:"eventid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

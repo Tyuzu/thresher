@@ -153,8 +153,8 @@ func ValidateCouponHandler(app *infra.Deps) httprouter.Handle {
 			discount = (req.Cart * coupon.Discount) / 100
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.CouponValidatedPayload{})
+		app.MQ.Publish(ctx, mqevent.CouponValidatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, CouponResponse{
 			Valid:    true,

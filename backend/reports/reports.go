@@ -123,8 +123,8 @@ func ReportContent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ReportCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.ReportCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]string{
 			"message":  "Report submitted",
@@ -241,8 +241,8 @@ func UpdateReport(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ReportUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.ReportUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Report updated"})
 	}
@@ -306,8 +306,8 @@ func CreateAppeal(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.AppealCreatedPayload{})
+		app.MQ.Publish(ctx, mqevent.AppealCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]string{
 			"message":  "Appeal submitted",
@@ -371,8 +371,8 @@ func UpdateAppeal(app *infra.Deps) httprouter.Handle {
 			)
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.AppealUpdatedPayload{})
+		app.MQ.Publish(ctx, mqevent.AppealUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Appeal updated"})
 	}
@@ -478,8 +478,8 @@ func SoftDeleteEntity(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ReportSoftDeletedPayload{})
+		app.MQ.Publish(ctx, mqevent.ReportSoftDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Entity soft-deleted"})
 	}
