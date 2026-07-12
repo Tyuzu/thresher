@@ -57,10 +57,10 @@ export function createCropper({
         });
 
         this.crop();
-      } catch (err) {
+      } catch {
         try {
           this.crop();
-        } catch (_) {}
+        } catch {}
       }
 
       if (typeof onReady === "function") {

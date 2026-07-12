@@ -3,7 +3,6 @@ import { editPlaceForm, deletePlace } from "./placeService.js";
 import { analyticsPlace } from "./placeAnanlytics.js";
 import Button from "../../components/base/Button.js";
 import { reportEntity } from "../reporting/reporting.js";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import Datex from "../../components/base/Datex.js";
 import Bannerx from "../../components/base/Bannerx.js";
 

@@ -56,7 +56,7 @@ return;
     mapContainer.style.cursor = "grab";
     try {
  mapContainer.releasePointerCapture?.(e.pointerId); 
-} catch (er) { /* ignore */ }
+} catch { /* ignore */ }
   
     if (mapOptions.enableInertia && (Math.abs(state.velocityX) > (mapOptions.inertiaStartThreshold || 0.5) || Math.abs(state.velocityY) > (mapOptions.inertiaStartThreshold || 0.5))) {
       startInertia(state, mapOptions, mapWrapper, minimap, minimapViewport);

@@ -14,7 +14,7 @@ async function displayUserProfileData(isLoggedIn, content, username) {
   const subcontentTabs = ["media", "ticket", "merch", "review"];
 
   // Initialize the main tab structure.
-  const { mainTabContainer, mainTabButtons, mainTabContents } = initializeMainTabs(content);
+  const { mainTabButtons, mainTabContents } = initializeMainTabs(content);
 
   // Create tab structures for “Content” and “Subcontent.”
   const contentStructure = createTabStructure("Content", contentTabs, username);
@@ -25,7 +25,6 @@ async function displayUserProfileData(isLoggedIn, content, username) {
   mainTabContents.append(contentStructure.tabSection, subcontentStructure.tabSection);
 
   // Set up event listeners for main tab buttons.
-  const mainTabs = [contentStructure.tabSection, subcontentStructure.tabSection];
   const mainButtons = [contentStructure.mainTabButton, subcontentStructure.mainTabButton];
   mainButtons.forEach((btn, index) => {
     btn.addEventListener("click", () => {

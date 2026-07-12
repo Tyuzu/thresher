@@ -3,7 +3,7 @@ import { apiFetch } from "../../api/api.js";
 import { fetchProfile } from './fetchProfile.js';
 import Notify from "../../components/ui/Notify.mjs";
 
-async function toggleAction({ entityId, entityType, button, apiPath, property, labels, actionName }) {
+async function toggleAction({ entityId, entityType, button, apiPath, labels, actionName }) {
     if (!getState("token")) {
         Notify("Please log in first.", { type: "warning", duration: 3000, dismissible: true });
         return;

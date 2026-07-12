@@ -33,7 +33,7 @@ export function openCropperWithCropperJSBoundedFixedBox({
 
     const {
       overlay,
-      wrapper,
+      _wrapper,
       stage,
       image,
       cropTargetW,

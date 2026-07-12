@@ -86,17 +86,17 @@ async function displayPlaceMenu(container, placeId, isCreator, isLoggedIn) {
 }
 
 // 🍽️ Saloon
-async function displaySaloonSlots(container, placeId, isCreator, isLoggedIn) {
+async function displaySaloonSlots(container, _placeId, _isCreator, _isLoggedIn) {
   container.replaceChildren();
   // try {
   //   container.appendChild();
-  // } catch (err) {
+  // } catch (_err) {
   //   container.appendChild(
   //     createElement("div", { class: "tab-section error" }, [
   //       createElement("p", {}, ["Slot unavailable."]),
   //     ])
   //   );
-  //   console.warn("Menu tab failed:", err);
+  //   console.warn("Menu tab failed:", _err);
   // }
 }
 
@@ -140,7 +140,7 @@ async function displayPlaceRooms(container, placeId, isCreator) {
                   body: JSON.stringify({ date: bookingDate })
                 });
                 alert(`Booked ${room.name} on ${bookingDate}`);
-              } catch (e) {
+              } catch (_e) {
                 alert(`Booking failed: ${e.message}`);
               }
             }
@@ -161,18 +161,18 @@ async function displayPlaceRooms(container, placeId, isCreator) {
             ];
             const editForm = createInlineForm(
               formFields,
-              async (data, formEl) => {
+              async (data, _formEl) => {
                 try {
                   await apiFetch(`/place/${placeId}/rooms/${room._id}`, {
                     method: "PUT",
                     body: JSON.stringify(data)
                   });
                   displayPlaceRooms(container, placeId, isCreator);
-                } catch (e) {
+                } catch (_e) {
                   alert(`Update failed: ${e.message}`);
                 }
               },
-              (formEl) => roomDiv.replaceChild(roomDivClone, formEl)
+              (_formEl) => roomDiv.replaceChild(roomDivClone, _formEl)
             );
             const roomDivClone = roomDiv.cloneNode(true);
             roomDiv.replaceChildren(editForm);
@@ -188,7 +188,7 @@ return;
                 method: "DELETE"
               });
               displayPlaceRooms(container, placeId, isCreator);
-            } catch (e) {
+            } catch (_e) {
               alert(`Delete failed: ${e.message}`);
             }
           }
@@ -212,18 +212,18 @@ return;
           ];
           const addForm = createInlineForm(
             formFields,
-            async (data, formEl) => {
+            async (data, _formEl) => {
               try {
                 await apiFetch(`/place/${placeId}/rooms`, {
                   method: "POST",
                   body: JSON.stringify(data)
                 });
                 displayPlaceRooms(container, placeId, isCreator);
-              } catch (e) {
+              } catch (_e) {
                 alert(`Creation failed: ${e.message}`);
               }
             },
-            (formEl) => container.removeChild(formEl)
+            (_formEl) => container.removeChild(formEl)
           );
           container.appendChild(addForm);
           addBtn.disabled = true;
@@ -231,7 +231,7 @@ return;
       });
       container.appendChild(addBtn);
     }
-  } catch (err) {
+  } catch (_err) {
     container.replaceChildren();
     showError(container, "Rooms unavailable.");
   }
@@ -269,7 +269,7 @@ return;
                 method: "DELETE"
               });
               displayPlaceFacilities(container, placeId, isCreator);
-            } catch (e) {
+            } catch (_e) {
               alert(`Delete failed: ${e.message}`);
             }
           }
@@ -290,18 +290,18 @@ return;
           ];
           const addForm = createInlineForm(
             formFields,
-            async (data, formEl) => {
+            async (data, _formEl) => {
               try {
                 await apiFetch(`/place/${placeId}/facilities`, {
                   method: "POST",
                   body: JSON.stringify(data)
                 });
                 displayPlaceFacilities(container, placeId, isCreator);
-              } catch (e) {
+              } catch (_e) {
                 alert(`Creation failed: ${e.message}`);
               }
             },
-            (formEl) => container.removeChild(formEl)
+            (_formEl) => container.removeChild(formEl)
           );
           container.appendChild(addForm);
           addBtn.disabled = true;
@@ -309,7 +309,7 @@ return;
       });
       container.appendChild(addBtn);
     }
-  } catch (err) {
+  } catch (_err) {
     container.replaceChildren();
     showError(container, "Facilities unavailable.");
   }
@@ -340,18 +340,18 @@ async function displayPlaceServices(container, placeId, isCreator) {
             const formFields = [{ name: "name", placeholder: "Name", value: name }];
             const editForm = createInlineForm(
               formFields,
-              async (data, formEl) => {
+              async (data, _formEl) => {
                 try {
                   await apiFetch(`/place/${placeId}/services/${id}`, {
                     method: "PUT",
                     body: JSON.stringify(data)
                   });
                   displayPlaceServices(container, placeId, isCreator);
-                } catch (e) {
+                } catch (_e) {
                   alert(`Update failed: ${e.message}`);
                 }
               },
-              (formEl) => li.replaceChild(liClone, formEl)
+              (_formEl) => li.replaceChild(liClone, formEl)
             );
             const liClone = li.cloneNode(true);
             li.replaceChildren(editForm);
@@ -367,7 +367,7 @@ return;
                 method: "DELETE"
               });
               displayPlaceServices(container, placeId, isCreator);
-            } catch (e) {
+            } catch (_e) {
               alert(`Delete failed: ${e.message}`);
             }
           }
@@ -387,18 +387,18 @@ return;
           const formFields = [{ name: "name", placeholder: "Service Name" }];
           const addForm = createInlineForm(
             formFields,
-            async (data, formEl) => {
+            async (data, _formEl) => {
               try {
                 await apiFetch(`/place/${placeId}/services`, {
                   method: "POST",
                   body: JSON.stringify(data)
                 });
                 displayPlaceServices(container, placeId, isCreator);
-              } catch (e) {
+              } catch (_e) {
                 alert(`Creation failed: ${e.message}`);
               }
             },
-            (formEl) => container.removeChild(formEl)
+            (_formEl) => container.removeChild(formEl)
           );
           container.appendChild(addForm);
           addBtn.disabled = true;
@@ -406,7 +406,7 @@ return;
       });
       container.appendChild(addBtn);
     }
-  } catch (err) {
+  } catch (_err) {
     container.replaceChildren();
     showError(container, "Services unavailable.");
   }
@@ -439,18 +439,18 @@ async function displayPlaceExhibits(container, placeId, isCreator) {
             ];
             const editForm = createInlineForm(
               formFields,
-              async (data, formEl) => {
+              async (data, _formEl) => {
                 try {
                   await apiFetch(`/place/${placeId}/exhibits/${ex._id}`, {
                     method: "PUT",
                     body: JSON.stringify(data)
                   });
                   displayPlaceExhibits(container, placeId, isCreator);
-                } catch (e) {
+                } catch (_e) {
                   alert(`Update failed: ${e.message}`);
                 }
               },
-              (formEl) => exDiv.replaceChild(exDivClone, formEl)
+              (_formEl) => exDiv.replaceChild(exDivClone, formEl)
             );
             const exDivClone = exDiv.cloneNode(true);
             exDiv.replaceChildren(editForm);
@@ -466,7 +466,7 @@ return;
                 method: "DELETE"
               });
               displayPlaceExhibits(container, placeId, isCreator);
-            } catch (e) {
+            } catch (_e) {
               alert(`Delete failed: ${e.message}`);
             }
           }
@@ -489,18 +489,18 @@ return;
           ];
           const addForm = createInlineForm(
             formFields,
-            async (data, formEl) => {
+            async (data, _formEl) => {
               try {
                 await apiFetch(`/place/${placeId}/exhibits`, {
                   method: "POST",
                   body: JSON.stringify(data)
                 });
                 displayPlaceExhibits(container, placeId, isCreator);
-              } catch (e) {
+              } catch (_e) {
                 alert(`Creation failed: ${e.message}`);
               }
             },
-            (formEl) => container.removeChild(formEl)
+            (_formEl) => container.removeChild(formEl)
           );
           container.appendChild(addForm);
           addBtn.disabled = true;
@@ -508,7 +508,7 @@ return;
       });
       container.appendChild(addBtn);
     }
-  } catch (err) {
+  } catch (_err) {
     container.replaceChildren();
     showError(container, "Exhibits unavailable.");
   }
@@ -555,18 +555,18 @@ async function displayPlaceMembership(container, placeId, isCreator, isLoggedIn)
             ];
             const editForm = createInlineForm(
               formFields,
-              async (data, formEl) => {
+              async (data, _formEl) => {
                 try {
                   await apiFetch(`/place/${placeId}/membership/${plan._id}`, {
                     method: "PUT",
                     body: JSON.stringify(data)
                   });
                   displayPlaceMembership(container, placeId, isCreator, isLoggedIn);
-                } catch (e) {
+                } catch (_e) {
                   alert(`Update failed: ${e.message}`);
                 }
               },
-              (formEl) => planDiv.replaceChild(planDivClone, formEl)
+              (_formEl) => planDiv.replaceChild(planDivClone, formEl)
             );
             const planDivClone = planDiv.cloneNode(true);
             planDiv.replaceChildren(editForm);
@@ -582,7 +582,7 @@ return;
                 method: "DELETE"
               });
               displayPlaceMembership(container, placeId, isCreator, isLoggedIn);
-            } catch (e) {
+            } catch (_e) {
               alert(`Delete failed: ${e.message}`);
             }
           }
@@ -605,18 +605,18 @@ return;
           ];
           const addForm = createInlineForm(
             formFields,
-            async (data, formEl) => {
+            async (data, _formEl) => {
               try {
                 await apiFetch(`/place/${placeId}/membership`, {
                   method: "POST",
                   body: JSON.stringify(data)
                 });
                 displayPlaceMembership(container, placeId, isCreator, isLoggedIn);
-              } catch (e) {
+              } catch (_e) {
                 alert(`Creation failed: ${e.message}`);
               }
             },
-            (formEl) => container.removeChild(formEl)
+            (_formEl) => container.removeChild(formEl)
           );
           container.appendChild(addForm);
           addBtn.disabled = true;
@@ -624,7 +624,7 @@ return;
       });
       container.appendChild(addBtn);
     }
-  } catch (err) {
+  } catch (_err) {
     container.replaceChildren();
     showError(container, "Membership data unavailable.");
   }
@@ -673,18 +673,18 @@ async function displayPlaceShows(container, placeId, isCreator, isLoggedIn) {
             ];
             const editForm = createInlineForm(
               formFields,
-              async (data, formEl) => {
+              async (data, _formEl) => {
                 try {
                   await apiFetch(`/place/${placeId}/shows/${show._id}`, {
                     method: "PUT",
                     body: JSON.stringify(data)
                   });
                   displayPlaceShows(container, placeId, isCreator, isLoggedIn);
-                } catch (e) {
+                } catch (_e) {
                   alert(`Update failed: ${e.message}`);
                 }
               },
-              (formEl) => showDiv.replaceChild(showDivClone, formEl)
+              (_formEl) => showDiv.replaceChild(showDivClone, formEl)
             );
             const showDivClone = showDiv.cloneNode(true);
             showDiv.replaceChildren(editForm);
@@ -700,7 +700,7 @@ return;
                 method: "DELETE"
               });
               displayPlaceShows(container, placeId, isCreator, isLoggedIn);
-            } catch (e) {
+            } catch (_e) {
               alert(`Delete failed: ${e.message}`);
             }
           }
@@ -724,18 +724,18 @@ return;
           ];
           const addForm = createInlineForm(
             formFields,
-            async (data, formEl) => {
+            async (data, _formEl) => {
               try {
                 await apiFetch(`/place/${placeId}/shows`, {
                   method: "POST",
                   body: JSON.stringify(data)
                 });
                 displayPlaceShows(container, placeId, isCreator, isLoggedIn);
-              } catch (e) {
+              } catch (_e) {
                 alert(`Creation failed: ${e.message}`);
               }
             },
-            (formEl) => container.removeChild(formEl)
+            (_formEl) => container.removeChild(formEl)
           );
           container.appendChild(addForm);
           addBtn.disabled = true;
@@ -743,7 +743,7 @@ return;
       });
       container.appendChild(addBtn);
     }
-  } catch (err) {
+  } catch (_err) {
     container.replaceChildren();
     showError(container, "Shows unavailable.");
   }
@@ -751,7 +751,7 @@ return;
 
 // ─── Fallback (Unknown Category) ───────────────────────────────────────────────
 
-async function displayPlaceDetailsFallback(container, categoryRaw, placeId) {
+async function displayPlaceDetailsFallback(container, categoryRaw, _placeId) {
   container.replaceChildren();
 
   container.appendChild(

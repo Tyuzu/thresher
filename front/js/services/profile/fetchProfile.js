@@ -1,4 +1,4 @@
-import { API_URL, getState, setState } from "../../state/state.js";
+import { getState, setState } from "../../state/state.js";
 import { apiFetch } from "../../api/api.js";
 import Notify from "../../components/ui/Notify.mjs";
 

@@ -60,7 +60,7 @@ async function displayReviews(reviewsContainer, isCreator, isLoggedIn, entityTyp
     let reviews;
     try {
         reviews = await apiFetch(`/reviews/${entityType}/${entityId}`);
-    } catch (err) {
+    } catch {
         reviewsContainer.append(
             createElement("p", { class: "error-message" }, ["Failed to load reviews."])
         );

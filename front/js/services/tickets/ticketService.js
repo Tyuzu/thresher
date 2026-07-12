@@ -115,7 +115,10 @@ function addTicketForm(eventId, ticketList) {
         ])
     );
 
-    let modal;
+    const modal = Modal({
+        title: "Add Ticket",
+        content: form
+    });
 
     const submitBtn = Button("Add Ticket", "", {}, "buttonx primary");
     submitBtn.type = "submit";

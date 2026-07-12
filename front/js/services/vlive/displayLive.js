@@ -49,9 +49,7 @@ return;
 ====================================== */
 
 function confirmAction({ title, message, confirmLabel = "Confirm", onConfirm }) {
-    let modalApi;
-
-    modalApi = Modal({
+    const modalApi = Modal({
         title,
         content: () => createElement("p", {}, [message]),
         actions: () => {
@@ -290,9 +288,8 @@ return `Ended: ${new Date(stream.endedAt).toLocaleString()}`;
 function openGoLiveModal(entityType, entityId) {
     let titleInput;
     let errorEl;
-    let modalApi;
 
-    modalApi = Modal({
+    const modalApi = Modal({
         title: "Go Live",
         content: () => {
             titleInput = createElement("input", { placeholder: "Stream title" });
@@ -344,9 +341,7 @@ function openScheduleModal(entityType, entityId, container) {
     let titleInput;
     let timeInput;
     let errorEl;
-    let modalApi;
-
-    modalApi = Modal({
+    const modalApi = Modal({
         title: "Schedule Live",
         content: () => {
             titleInput = createElement("input", { placeholder: "Stream title" });

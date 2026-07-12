@@ -23,7 +23,7 @@ export async function displayPlaceProducts(container, placeId, isCreator, isLogg
                         { name: "name", placeholder: "Name", type : "text" },
                         { name: "price", placeholder: "Price", type: "number" }
                     ],
-                    async (data, formEl) => {
+                    async (data, _formEl) => {
                         await apiFetch(`/place/${placeId}/products`, "POST", JSON.stringify(data), {
                             headers: { "Content-Type": "application/json" }
                         });
@@ -40,7 +40,7 @@ export async function displayPlaceProducts(container, placeId, isCreator, isLogg
             container.appendChild(addBtn);
         }
 
-    } catch (err) {
+    } catch (_err) {
         container.textContent = "";
         showError(container, "Products unavailable.");
     }
@@ -72,7 +72,7 @@ function renderProduct(item, placeId, isCreator, isLoggedIn, container) {
                     { name: "name", placeholder: "Name", value: item.name },
                     { name: "price", placeholder: "Price", value: item.price }
                 ],
-                async (data, formEl) => {
+                async (data, _formEl) => {
                     await apiFetch(`/place/${placeId}/products/${item.productid}`, "PUT", JSON.stringify(data), {
                         headers: { "Content-Type": "application/json" }
                     });

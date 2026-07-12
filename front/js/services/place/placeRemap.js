@@ -70,7 +70,7 @@ export function displayPlacesMap(options = {}) {
   };
 
   // Initialize map with default location
-  const mapAPI = initMap(mapOptions.defaultLocation.lat, mapOptions.defaultLocation.lon);
+  initMap(mapOptions.defaultLocation.lat, mapOptions.defaultLocation.lon);
 
   // Optional: Uncomment to use actual geolocation
   /*

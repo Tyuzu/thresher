@@ -8,7 +8,7 @@ import { validators } from "./validators.js";
 export const validationSchemas = {
   // Text fields
   text: {
-    required: (label) => validators.compose(
+    required: () => validators.compose(
       validators.required,
       validators.minLength(1)
     ),

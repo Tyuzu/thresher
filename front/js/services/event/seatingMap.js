@@ -20,14 +20,14 @@ async function displaySeatingMap(venueList, place, _eventid, _isLoggedIn) {
     venueList.appendChild(container);
 
     // Get seating data from API or mock data (if no backend yet)
-    const seatData = await fetchSeatData(eventid);
+    const seatData = await fetchSeatData(_eventid);
 
     // Render the seating chart
     renderSeatingChart(canvas, seatData, isLoggedIn);
 }
 
 // Function to fetch seat availability from the backend (replace with actual API call)
-async function fetchSeatData(eventid) {
+async function fetchSeatData(_eventid) {
     // Simulated data structure
     return [
         { row: 1, col: 1, status: "available" },

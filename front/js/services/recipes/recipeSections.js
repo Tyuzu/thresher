@@ -1,7 +1,6 @@
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
 import { addToCart } from "../cart/addToCart.js";
-import { apiFetch } from "../../api/api.js";
 import { getState } from "../../state/state.js";
 import { createCommentsSection } from "../comments/comments.js";
 import { editRecipe } from "./createOrEditRecipe.js";
@@ -20,7 +19,7 @@ export function renderIngredients(ingredients, isLoggedIn, recipe) {
     ]);
   }
 
-  function makeAddBtn(item, qty, unit) {
+  function makeAddBtn(item, qty, _unit) {
     const btn = Button("Add to Cart", "", {}, "small-button");
     btn.addEventListener("click", async () =>
       await addToCart({

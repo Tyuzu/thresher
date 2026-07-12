@@ -11,13 +11,13 @@ import Imagex from "../../../components/base/Imagex.js";
 
 // ---------- Farm Cards ----------
 
-function renderFarmCards(farms, grid, _isLoggedIn, _onToggleFavorite) {
+function renderFarmCards(farms, grid) {
   for (const farm of farms) {
-    grid.appendChild(FarmCard(farm, _isLoggedIn, _onToggleFavorite));
+    grid.appendChild(FarmCard(farm));
   }
 }
 
-function FarmCard(farm, isLoggedIn, onToggleFavorite) {
+function FarmCard(farm) {
   const farmId = String(farm.id || farm.farmid || "");
 
   const card = createElement("div", { class: "farm__card" });

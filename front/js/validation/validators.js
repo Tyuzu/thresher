@@ -174,7 +174,7 @@ return "Invalid date";
   custom: (fn, message = "Invalid value") => (value) => {
     try {
       return fn(value) ? null : message;
-    } catch (err) {
+    } catch {
       return message;
     }
   },

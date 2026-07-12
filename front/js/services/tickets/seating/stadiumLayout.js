@@ -10,9 +10,6 @@ const defaultPriceRanges = [
   { min: 301, max: 400, color: "#e67e22" }
 ];
 
-// --- Utility: Degrees → Radians ---
-const degToRad = Math.PI / 180;
-
 function polarToCartesian(cx, cy, radius, angleDeg) {
   const rad = (angleDeg - 90) * Math.PI / 180; // shift rotation
   return {

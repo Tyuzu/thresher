@@ -610,14 +610,14 @@ export function openCropperWithCropperJSBoundedFixedBox({ file, type = "avatar" 
           createdCropper.destroy();
           createdCropper = null;
         }
-      } catch (err) {
+      } catch (_err) {
         // ignore
       }
 
       if (objectUrl) {
         try {
           URL.revokeObjectURL(objectUrl);
-        } catch (err) {
+        } catch (_err) {
           // ignore
         }
         objectUrl = null;
@@ -636,7 +636,7 @@ export function openCropperWithCropperJSBoundedFixedBox({ file, type = "avatar" 
           addedLink.parentNode.removeChild(addedLink);
           addedLink = null;
         }
-      } catch (err) {
+      } catch (_err) {
         // ignore
       }
     }
@@ -703,10 +703,10 @@ export function openCropperWithCropperJSBoundedFixedBox({ file, type = "avatar" 
                 });
 
                 this.crop();
-              } catch (err) {
+              } catch (_err) {
                 try {
                   this.crop();
-                } catch (e) {
+                } catch (_e) {
                   // ignore
                 }
               }
@@ -786,13 +786,13 @@ export function openCropperWithCropperJSBoundedFixedBox({ file, type = "avatar" 
 
               cleanup();
               resolve(blob);
-            } catch (err) {
+            } catch (_err) {
               console.error("Crop export failed:", err);
               cleanup();
               resolve(null);
             }
           });
-        } catch (err) {
+        } catch (_err) {
           console.error("Failed to init Cropper:", err);
           cleanup();
           resolve(null);

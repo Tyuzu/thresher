@@ -135,11 +135,9 @@ function removeFloatingClone(wrapper, floatingEl) {
 
         if (cloneVideo && originalVideo) {
             try {
- originalVideo.currentTime = cloneVideo.currentTime; 
-} catch (e) { /* ignore */ }
-
-            if (floatingEl._wasPlaying) {
-                originalVideo.play().catch(() => {});
+                originalVideo.currentTime = cloneVideo.currentTime;
+            } catch (_e) {
+                /* ignore */
             }
         }
 

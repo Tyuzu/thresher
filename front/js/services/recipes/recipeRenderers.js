@@ -1,11 +1,6 @@
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
-import { addToCart } from "../cart/addToCart.js";
-import { apiFetch } from "../../api/api.js";
-import { getState } from "../../state/state.js";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import Bannerx from "../../components/base/Bannerx.js";
-import { createCommentsSection } from "../comments/comments.js";
 import { fetchUserMeta } from "../../utils/usersMeta.js";
 
 // --- LocalStorage Helpers ---

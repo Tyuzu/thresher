@@ -196,16 +196,16 @@ return;
         }
 
         autocompleteCache.set(query, suggestions);
-        renderSuggestions(suggestions, list, query);
+        renderSuggestions(suggestions, list);
 
-    } catch (err) {
-        if (err.name !== "AbortError") {
-            console.error("Autocomplete error:", err);
+    } catch (error) {
+        if (error.name !== "AbortError") {
+            console.error("Autocomplete error:", error);
         }
     }
 }
 
-function renderSuggestions(suggestions, list, query) {
+function renderSuggestions(suggestions, list) {
     list.textContent = "";
 
     if (!suggestions.length) {

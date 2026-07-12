@@ -1,5 +1,4 @@
 
-import Button from "../components/base/Button.js";
 import { createElement } from "../components/createElement.js";
 
 // --- sort options by type ---

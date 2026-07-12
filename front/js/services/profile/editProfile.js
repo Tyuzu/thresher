@@ -1,7 +1,7 @@
 import { getState, setState } from '../../state/state.js';
 import { apiFetch } from "../../api/api.js";
 import { handleError } from "../../utils/utils.js";
-import { renderPage, navigate } from "../../routes/index.js";
+import { navigate } from "../../routes/index.js";
 import { showLoadingMessage, removeLoadingMessage } from "./profileHelpers.js";
 import { generateFormField } from "./generators.js";
 import { deleteProfile } from "./userProfileService.js";

@@ -14,13 +14,6 @@ import { AD_URL } from "../state/state";
     function renderAd(container, ads, index) {
         const ad = ads[index % ads.length];
 
-        // Sanitize ad data and use safe DOM methods
-        function sanitizeText(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
         // Create ad elements using safe methods instead of innerHTML
         container.classList.add("fade-out");
         setTimeout(() => {

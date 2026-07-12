@@ -393,7 +393,7 @@ sg.classList.add("seat-obstructed");
           sg.appendChild(t);
 
           // events
-          sg.addEventListener("mouseenter", (ev) => {
+          sg.addEventListener("mouseenter", (_ev) => {
             tooltip.style.display = "block";
             updateTooltip(tooltip, section, row, seat);
           });
@@ -542,7 +542,7 @@ export function showSeatingMap() {
     selectable: true,
     maxSelection: 5,
     seatRadius: 9,
-    onSelect: selected => {}
+    onSelect: _selected => {}
   };
 
   const seatMap = createElement("div", { class: "seatmap-container" }, []);

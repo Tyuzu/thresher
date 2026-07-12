@@ -8,7 +8,7 @@ import { resolveImagePath, EntityType, PictureType } from "../../../utils/imageP
 let allEvents = [];
 let activeEventCategory = "All";
 
-export async function displayPlaceEvents(container, placeId, isCreator, isLoggedIn) {
+export async function displayPlaceEvents(container, placeId, _isCreator, _isLoggedIn) {
     fetchAndDisplayEvents(container, placeId, 1, 10);
 }
 

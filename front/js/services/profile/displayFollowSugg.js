@@ -1,4 +1,4 @@
-import { SRC_URL, apiFetch } from "../../api/api.js";
+import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/index.js";
 // import { toggleFollow } from "./toggleFollow.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
