@@ -2,6 +2,7 @@ package mq
 
 import (
 	"context"
+	"errors"
 	"log"
 )
 
@@ -26,7 +27,7 @@ func (j *StreamMQ) Subscribe(
 	subject string,
 	handler MessageHandler,
 ) (Subscription, error) {
-	return &jetStreamSubscription{}, nil
+	return nil, errors.New("stream MQ does not support subscribe")
 }
 
 func (j *StreamMQ) QueueSubscribe(
@@ -35,6 +36,5 @@ func (j *StreamMQ) QueueSubscribe(
 	queue string,
 	handler MessageHandler,
 ) (Subscription, error) {
-
-	return &jetStreamSubscription{}, nil
+	return nil, errors.New("stream MQ does not support queue subscribe")
 }

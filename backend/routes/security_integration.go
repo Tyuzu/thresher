@@ -144,11 +144,11 @@ In your startup code:
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := app.DB.InitializeIndexes(ctx); err != nil {
+	if err := app.InitializeIndexes(ctx); err != nil {
 		log.Fatalf("Failed to create indexes: %v", err)
 	}
 
-	if err := app.DB.VerifyIndexes(ctx); err != nil {
+	if err := app.VerifyIndexes(ctx); err != nil {
 		log.Fatalf("Failed to verify indexes: %v", err)
 	}
 
