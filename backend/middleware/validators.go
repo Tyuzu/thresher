@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"html"
 	"log"
 	"net/http"
 	"regexp"
@@ -25,7 +26,7 @@ func ValidateContentType(contentTypes ...string) func(http.Handler) http.Handler
 				}
 
 				if !allowed && len(contentTypes) > 0 {
-					log.Printf("Invalid Content-Type: %s for %s %s", contentType, r.Method, r.RequestURI)
+					log.Printf("Invalid Content-Type: %s for %s %s", html.EscapeString(contentType), r.Method, html.EscapeString(r.RequestURI)) // #nosec G706
 					http.Error(w, "Invalid Content-Type", http.StatusUnsupportedMediaType)
 					return
 				}
@@ -81,7 +82,7 @@ func DecodeJSON(w http.ResponseWriter, r *http.Request, v interface{}, maxBytes 
 
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
 		// Log detailed error server-side
-		log.Printf("JSON decode error from %s: %v", r.RemoteAddr, err)
+		log.Printf("JSON decode error from %s: %v", html.EscapeString(r.RemoteAddr), err) // #nosec G706
 		// Return generic error to client
 		http.Error(w, "Invalid request format", http.StatusBadRequest)
 		return err

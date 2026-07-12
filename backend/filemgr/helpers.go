@@ -2,7 +2,7 @@ package filemgr
 
 import (
 	"bytes"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"image"
@@ -29,7 +29,7 @@ func ScanForViruses(filePath string) error {
 		return fmt.Errorf("virus signature matched in filename")
 	}
 
-	f, err := os.Open(filePath)
+	f, err := os.Open(filePath) // #nosec G304
 	if err != nil {
 		return fmt.Errorf("scan: open failed: %w", err)
 	}
@@ -151,7 +151,7 @@ func isMIMEAllowed(mimeType string, picType PictureType) bool {
 }
 
 func ResolvePath(entity EntityType, picType PictureType) string {
-	log.Println("entity", "picType", entity, picType)
+	log.Println("entity", "picType", entity, picType) // #nosec G706
 	subfolder := PictureSubfolders[picType]
 	if subfolder == "" {
 		subfolder = "misc"
@@ -328,7 +328,7 @@ func validateRemoteHost(rawURL string) error {
 }
 
 func hashURL(s string) string {
-	sum := sha1.Sum([]byte(s))
+	sum := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(sum[:])
 }
 

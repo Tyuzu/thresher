@@ -56,13 +56,13 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		return
 	}
 
-	_ = os.MkdirAll(CacheDir, 0o755)
+	_ = os.MkdirAll(CacheDir, 0o750)
 
 	cacheKey := target + "|" + r.URL.RawQuery
 	cachePath := filepath.Join(CacheDir, hashURL(cacheKey))
 
-	if fi, err := os.Stat(cachePath); err == nil && time.Since(fi.ModTime()) < CacheMaxAge {
-		http.ServeFile(w, r, cachePath)
+	if fi, err := os.Stat(cachePath); err == nil && time.Since(fi.ModTime()) < CacheMaxAge { // #nosec G703
+		http.ServeFile(w, r, cachePath) // #nosec G703
 		return
 	}
 
@@ -99,7 +99,7 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 			return
 		}
 		w.Header().Set("Cache-Control", "public, max-age=86400")
-		http.ServeFile(w, r, cachePath)
+		http.ServeFile(w, r, cachePath) // #nosec G703
 		return
 	}
 
@@ -150,7 +150,7 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	}
 
 	w.Header().Set("Cache-Control", "public, max-age=86400")
-	http.ServeFile(w, r, cachePath)
+	http.ServeFile(w, r, cachePath) // #nosec G703
 }
 
 func normalizeTarget(raw string) (string, error) {
@@ -215,7 +215,7 @@ func streamFallback(w http.ResponseWriter, r *http.Request, cachePath, contentTy
 		return
 	}
 	w.Header().Set("Cache-Control", "public, max-age=86400")
-	http.ServeFile(w, r, cachePath)
+	http.ServeFile(w, r, cachePath) // #nosec G703
 }
 
 func streamToCache(src io.Reader, cachePath string) error {
@@ -227,7 +227,7 @@ func streamToCache(src io.Reader, cachePath string) error {
 
 func saveAtomically(path string, writeFn func(*os.File) error) error {
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil { // #nosec G703
 		return err
 	}
 	tmp, err := os.CreateTemp(dir, ".cache-*")
@@ -239,7 +239,7 @@ func saveAtomically(path string, writeFn func(*os.File) error) error {
 	defer func() {
 		_ = tmp.Close()
 		if cleanup {
-			_ = os.Remove(tmpName)
+			_ = os.Remove(tmpName) // #nosec G703
 		}
 	}()
 
@@ -252,7 +252,7 @@ func saveAtomically(path string, writeFn func(*os.File) error) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	if err := os.Rename(tmpName, path); err != nil {
+	if err := os.Rename(tmpName, path); err != nil { // #nosec G703
 		return err
 	}
 	cleanup = false

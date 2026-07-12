@@ -3,6 +3,7 @@ package mechat
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -117,7 +118,9 @@ func SendMessageREST(app *infra.Deps) httprouter.Handle {
 		}{msg, body.ClientID}
 
 		mqpayload, _ := json.Marshal(mqevent.ChatMessageSentPayload{})
-		app.MQ.Publish(ctx, mqevent.ChatMessageSentEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.ChatMessageSentEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish chat message sent event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}

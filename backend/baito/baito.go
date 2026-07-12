@@ -53,7 +53,7 @@ func ApplyToBaito(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		ctx := r.Context()
 
-		if err := r.ParseMultipartForm(5 << 20); err != nil {
+		if err := parseMultipartFormWithLimit(r); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid form data")
 			return
 		}

@@ -233,7 +233,9 @@ func UploadHandler(hub *Hub, app *infra.Deps) httprouter.Handle {
 		hub.broadcast <- broadcastMsg{Room: msg.Room, Data: data}
 
 		mqpayload, _ := json.Marshal(mqevent.FileAddedToChatPayload{})
-		app.MQ.Publish(ctx, mqevent.FileAddedToChatEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.FileAddedToChatEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish file added to chat event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, data)
 	}

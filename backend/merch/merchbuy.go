@@ -50,7 +50,9 @@ func CreateMerchPaymentSession(app *infra.Deps) httprouter.Handle {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.MerchPaymentSessionCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.MerchPaymentSessionCreatedEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.MerchPaymentSessionCreatedEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish merch payment session created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
@@ -152,7 +154,9 @@ func ConfirmMerchPurchase(app *infra.Deps) httprouter.Handle {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.MerchPurchaseConfirmedPayload{})
-		app.MQ.Publish(ctx, mqevent.MerchPurchaseConfirmedEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.MerchPurchaseConfirmedEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish merch purchase confirmed event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}

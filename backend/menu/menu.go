@@ -3,6 +3,7 @@ package menu
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
 	"naevis/infra"
@@ -117,7 +118,9 @@ func EditMenu(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Invalidate cache
-		app.Cache.Del(ctx, fmt.Sprintf("menu:%s:%s", placeID, menuID))
+		if err := app.Cache.Del(ctx, fmt.Sprintf("menu:%s:%s", placeID, menuID)); err != nil { // #nosec G104
+			log.Printf("failed to invalidate menu cache: %v", err)
+		}
 
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuUpdatedEvent, mqevent.MenuUpdatedPayload{})
 

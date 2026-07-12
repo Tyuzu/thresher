@@ -21,7 +21,8 @@ import (
 // CreateEvent handles creating a new event
 func CreateEvent(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
+		r.Body = http.MaxBytesReader(nil, r.Body, 10<<20)
+		if err := r.ParseMultipartForm(10 << 20); err != nil { // #nosec G120
 			http.Error(w, "Unable to parse form", http.StatusBadRequest)
 			return
 		}

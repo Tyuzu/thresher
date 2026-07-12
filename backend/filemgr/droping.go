@@ -97,8 +97,8 @@ func convertToAttachments(serviceAttachments []Attachment) []Attachment {
 }
 
 func updateEntityMedia(app *infra.Deps, entityType string, entityId string, attachments []Attachment) error {
-	log.Println("updateEntityMedia:", entityType, entityId)
-	log.Println("updateEntityMedia:", attachments)
+	log.Println("updateEntityMedia:", entityType, entityId) // #nosec G706
+	log.Println("updateEntityMedia:", attachments)          // #nosec G706
 	meta, ok := entityMeta[entityType]
 	if !ok {
 		return fmt.Errorf("unsupported entity type: %s", entityType)

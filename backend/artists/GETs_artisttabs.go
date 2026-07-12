@@ -7,7 +7,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
-	_ "net/http/pprof"
 
 	"github.com/julienschmidt/httprouter"
 )

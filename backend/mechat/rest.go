@@ -2,6 +2,7 @@ package mechat
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -78,7 +79,9 @@ func StartNewChat(app *infra.Deps) httprouter.Handle {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.MechatCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.MechatCreated, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.MechatCreated, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish mechat created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, chat)
 	}

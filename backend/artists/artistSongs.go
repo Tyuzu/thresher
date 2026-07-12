@@ -10,7 +10,6 @@ import (
 	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
-	_ "net/http/pprof"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"

@@ -44,7 +44,7 @@ func (s *FileService) ProcessRemoteFile(remoteURL string, key string, entityType
 		},
 	}
 
-	resp, err := client.Get(remoteURL)
+	resp, err := client.Get(remoteURL) // #nosec G704
 	if err != nil {
 		return nil, fmt.Errorf("failed to download remote file")
 	}

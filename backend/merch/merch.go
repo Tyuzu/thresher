@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"time"
 
@@ -138,7 +139,9 @@ func CreateMerch(app *infra.Deps) httprouter.Handle {
 		)
 
 		mqpayload, _ := json.Marshal(mqevent.MerchCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.MerchCreatedEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.MerchCreatedEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish merch created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, 201, map[string]any{"success": true, "data": merch})
 	}
@@ -252,7 +255,9 @@ func EditMerch(app *infra.Deps) httprouter.Handle {
 		)
 
 		mqpayload, _ := json.Marshal(mqevent.MerchUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.MerchUpdatedEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.MerchUpdatedEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish merch updated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, 200, map[string]any{"success": true})
 	}
@@ -343,7 +348,9 @@ func DeleteMerch(app *infra.Deps) httprouter.Handle {
 		)
 
 		mqpayload, _ := json.Marshal(mqevent.MerchDeletedPayload{})
-		app.MQ.Publish(ctx, mqevent.MerchDeletedEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.MerchDeletedEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish merch deleted event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, 200, map[string]any{"success": true})
 	}
@@ -410,7 +417,9 @@ func BuyMerch(app *infra.Deps) httprouter.Handle {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.MerchBoughtPayload{})
-		app.MQ.Publish(ctx, mqevent.MerchBoughtEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.MerchBoughtEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish merch bought event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, 200, map[string]any{
 			"success": true,

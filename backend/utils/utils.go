@@ -1,7 +1,7 @@
 package utils
 
 import (
-	rndm "math/rand"
+	"crypto/rand"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -24,18 +24,26 @@ var digitRunes = []rune("0123456789")
 
 // GenerateRandomString creates a random alphanumeric string of length n.
 func GenerateRandomString(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rndm.Intn(len(letterRunes))]
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err != nil {
+		panic(err) // Should never happen in normal operation
 	}
-	return string(b)
+	result := make([]rune, n)
+	for i := range b {
+		result[i] = letterRunes[int(b[i])%len(letterRunes)]
+	}
+	return string(result)
 }
 
 // GenerateRandomDigitString creates a random numeric string of length n.
 func GenerateRandomDigitString(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = digitRunes[rndm.Intn(len(digitRunes))]
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err != nil {
+		panic(err) // Should never happen in normal operation
 	}
-	return string(b)
+	result := make([]rune, n)
+	for i := range b {
+		result[i] = digitRunes[int(b[i])%len(digitRunes)]
+	}
+	return string(result)
 }

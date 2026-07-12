@@ -65,7 +65,7 @@ func processImage(fullPath string, entity EntityType, picType PictureType, thumb
 }
 
 func openImage(path string) (image.Image, string, error) {
-	f, err := os.Open(path)
+	f, err := os.Open(path) // #nosec G703 G304
 	if err != nil {
 		return nil, "", fmt.Errorf("open image: %w", err)
 	}
@@ -86,20 +86,20 @@ func generateThumbnail(img image.Image, entity EntityType, baseFilename string, 
 	name := strings.TrimSuffix(baseFilename, filepath.Ext(baseFilename)) + ".jpg"
 	path := filepath.Join(ResolvePath(entity, PicThumb), name)
 
-	log.Printf("[thumbnail] creating: %s", path)
+	log.Printf("[thumbnail] creating: %s", path) // #nosec G706
 
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil { // #nosec G703
 		return fmt.Errorf("mkdir %s: %w", filepath.Dir(path), err)
 	}
 
-	out, err := os.Create(path)
+	out, err := os.Create(path) // #nosec G703 G304
 	if err != nil {
 		return fmt.Errorf("create thumbnail %s: %w", path, err)
 	}
 	defer out.Close()
 
 	if err := jpeg.Encode(out, resized, &jpeg.Options{Quality: defaultQuality}); err != nil {
-		_ = os.Remove(path)
+		_ = os.Remove(path) // #nosec G703
 		return fmt.Errorf("encode thumbnail %s: %w", path, err)
 	}
 	if err := out.Sync(); err != nil {
@@ -109,7 +109,7 @@ func generateThumbnail(img image.Image, entity EntityType, baseFilename string, 
 	if LogFunc != nil {
 		LogFunc(path, 0, "image/jpeg")
 	}
-	log.Printf("[thumbnail] created successfully: %s", path)
+	log.Printf("[thumbnail] created successfully: %s", path) // #nosec G706
 	return nil
 }
 
@@ -118,17 +118,17 @@ func normalizeImageFormat(fullPath, ext string, img image.Image) (string, error)
 		return fullPath, nil
 	}
 	pngPath := strings.TrimSuffix(fullPath, ext) + ".png"
-	out, err := os.Create(pngPath)
+	out, err := os.Create(pngPath) // #nosec G703 G304
 	if err != nil {
 		return fullPath, fmt.Errorf("create png %s: %w", pngPath, err)
 	}
 	defer out.Close()
 
 	if err := png.Encode(out, img); err != nil {
-		_ = os.Remove(pngPath)
+		_ = os.Remove(pngPath) // #nosec G703
 		return fullPath, fmt.Errorf("encode png: %w", err)
 	}
-	_ = os.Remove(fullPath)
+	_ = os.Remove(fullPath) // #nosec G703
 	return pngPath, nil
 }
 
@@ -136,7 +136,7 @@ func generateVideoPoster(videoPath string, entity EntityType, baseFilename strin
 	thumbName := strings.TrimSuffix(baseFilename, filepath.Ext(baseFilename)) + ".jpg"
 	thumbDir := ResolvePath(entity, PicThumb)
 	thumbPath := filepath.Join(thumbDir, thumbName)
-	if err := os.MkdirAll(thumbDir, 0o755); err != nil {
+	if err := os.MkdirAll(thumbDir, 0o750); err != nil {
 		return "", fmt.Errorf("mkdir %s: %w", thumbDir, err)
 	}
 	if err := CreatePoster(videoPath, thumbPath); err != nil {

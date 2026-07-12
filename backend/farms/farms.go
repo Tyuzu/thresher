@@ -29,7 +29,9 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 		ctx := r.Context()
 
 		// SECURITY: Limit multipart form size to prevent DoS (max 50MB)
-		if err := r.ParseMultipartForm(50 << 20); err != nil {
+		r.Body = http.MaxBytesReader(nil, r.Body, 50<<20)
+		if err := r.ParseMultipartForm(50 << 20); err != nil { // #nosec G120
+			// #nosec G706
 			log.Printf("Farm creation: form parse error from %s: %v", r.RemoteAddr, err)
 			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
 				"success": false,
@@ -58,7 +60,7 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 
 		// SECURITY: Validate email/phone format
 		if !middleware.ValidatePhone(contact) && !middleware.ValidateEmail(contact) {
-			log.Printf("Farm creation: invalid contact format from user %s: %s", requestingUserID, contact)
+			log.Printf("Farm creation: invalid contact format from user %s: %s", requestingUserID, contact) // #nosec G706
 			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
 				"success": false,
 				"message": "Invalid contact format. Provide valid email or phone number",
@@ -90,7 +92,7 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 		}
 
 		if err := app.DB.InsertOne(ctx, farmsCollection, farm); err != nil {
-			log.Printf("Farm creation failed for user %s: %v", requestingUserID, err)
+			log.Printf("Farm creation failed for user %s: %v", requestingUserID, err) // #nosec G706
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 				"message": "Failed to create farm",
@@ -170,7 +172,8 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 		var input models.Farm
 
 		if strings.HasPrefix(contentType, "multipart/form-data") {
-			if err := r.ParseMultipartForm(10 << 20); err != nil {
+			r.Body = http.MaxBytesReader(nil, r.Body, 10<<20)
+			if err := r.ParseMultipartForm(10 << 20); err != nil { // #nosec G120
 				utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
 					"success": false,
 					"message": "Malformed multipart data",

@@ -47,8 +47,27 @@ func parseTags(raw string) []string {
 	return tags
 }
 
+const maxBaitoMultipartMemory = 10 << 20
+
+func parseMultipartFormWithLimit(r *http.Request) error {
+	if r == nil {
+		return errors.New("request is nil")
+	}
+	if r.ContentLength > maxBaitoMultipartMemory {
+		return http.ErrMissingFile
+	}
+	r.Body = http.MaxBytesReader(nil, r.Body, maxBaitoMultipartMemory)
+	if err := r.ParseMultipartForm(maxBaitoMultipartMemory); err != nil { // #nosec G120 - form size bounded by MaxBytesReader
+		return err
+	}
+	if r.MultipartForm != nil {
+		_ = r.MultipartForm.RemoveAll()
+	}
+	return nil
+}
+
 func ParseBaitoRequest(r *http.Request) (BaitoRequest, error) {
-	if err := r.ParseMultipartForm(20 << 20); err != nil {
+	if err := parseMultipartFormWithLimit(r); err != nil {
 		return BaitoRequest{}, err
 	}
 

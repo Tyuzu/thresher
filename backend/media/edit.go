@@ -2,6 +2,7 @@ package media
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -99,7 +100,9 @@ func EditMedia(app *infra.Deps) httprouter.Handle {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.MediaUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.MediaUpdatedEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.MediaUpdatedEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish media updated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, updatedMedias)
 	}

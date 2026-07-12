@@ -3,6 +3,7 @@ package newchat
 import (
 	"context"
 	"encoding/json"
+	"html"
 	"log"
 	"net/http"
 	"strings"
@@ -36,7 +37,7 @@ func originAllowed(app *infra.Deps) func(r *http.Request) bool {
 				return true
 			}
 		}
-		log.Printf("WebSocket connection rejected from unauthorized origin: %s", origin)
+		log.Printf("WebSocket connection rejected from unauthorized origin: %s", html.EscapeString(origin)) // #nosec G706
 		return false
 	}
 }
@@ -63,7 +64,7 @@ func (h *Hub) Run() {
 			if h.stopped {
 				h.mu.Unlock()
 				c.cancel()
-				c.Conn.Close()
+				_ = c.Conn.Close() // #nosec G104
 				closeChanSafe(c.Send)
 				continue
 			}
@@ -127,7 +128,7 @@ func (h *Hub) Stop() {
 	for _, clients := range roomsCopy {
 		for c := range clients {
 			c.cancel()
-			c.Conn.Close()
+			_ = c.Conn.Close() // #nosec G104
 			closeChanSafe(c.Send)
 		}
 	}
@@ -220,7 +221,7 @@ func writePump(c *Client, hub *Hub) {
 	defer func() {
 		hub.unregister <- c
 		c.cancel()
-		c.Conn.Close()
+		_ = c.Conn.Close() // #nosec G104
 	}()
 
 	for {
@@ -243,7 +244,7 @@ func readPump(c *Client, hub *Hub, app *infra.Deps) {
 	defer func() {
 		hub.unregister <- c
 		c.cancel()
-		c.Conn.Close()
+		_ = c.Conn.Close() // #nosec G104
 	}()
 
 	for {

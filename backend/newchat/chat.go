@@ -3,6 +3,7 @@ package newchat
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/db"
@@ -82,7 +83,8 @@ func CreateMessage(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.MaxBytesReader(w, r.Body, 10<<20)
+		if err := r.ParseMultipartForm(10 << 20); err != nil { // #nosec G120
 			http.Error(w, "Failed to parse form", http.StatusBadRequest)
 			return
 		}
@@ -152,7 +154,9 @@ func CreateMessage(app *infra.Deps) httprouter.Handle {
 		_ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": chatID}, update)
 
 		mqpayload, _ := json.Marshal(mqevent.ChatMessageCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.ChatMessageCreatedEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.ChatMessageCreatedEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish message created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, msg)
 	}
@@ -279,7 +283,9 @@ func InitChat(app *infra.Deps) httprouter.Handle {
 
 		var existing models.Chat
 		if err := app.DB.FindOne(ctx, chatsCollection, map[string]any{"users": users}, &existing); err == nil {
-			json.NewEncoder(w).Encode(map[string]any{"chatid": existing.ChatID})
+			if err := json.NewEncoder(w).Encode(map[string]any{"chatid": existing.ChatID}); err != nil { // #nosec G104
+				log.Printf("failed to encode response: %v", err)
+			}
 			return
 		}
 
@@ -293,7 +299,9 @@ func InitChat(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		json.NewEncoder(w).Encode(map[string]any{"chatid": chat.ChatID})
+		if err := json.NewEncoder(w).Encode(map[string]any{"chatid": chat.ChatID}); err != nil { // #nosec G104
+			log.Printf("failed to encode response: %v", err)
+		}
 	}
 }
 

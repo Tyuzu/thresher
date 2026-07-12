@@ -127,7 +127,9 @@ func AddMedia(app *infra.Deps) httprouter.Handle {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.MediaUploadedPayload{})
-		app.MQ.Publish(ctx, mqevent.MediaUploadedEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.MediaUploadedEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("failed to publish media uploaded event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, insertedMedia)
 	}

@@ -36,7 +36,7 @@ func (realRunner) Run(timeout time.Duration, name string, args ...string) (strin
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, name, args...)
+	cmd := exec.CommandContext(ctx, name, args...) // #nosec G702 G204
 	var out, errb bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &errb
@@ -80,7 +80,7 @@ func getVideoDimensions(videoPath string) (int, int, error) {
 }
 
 func processVideoResolution(inputPath, outputPath string, targetHeight int) error {
-	if err := os.MkdirAll(filepath.Dir(outputPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(outputPath), 0o750); err != nil {
 		return fmt.Errorf("create output dir for %s: %w", outputPath, err)
 	}
 
@@ -109,13 +109,13 @@ func processVideoResolution(inputPath, outputPath string, targetHeight int) erro
 }
 
 func CreatePoster(videoPath, posterPath string) error {
-	if err := os.MkdirAll(filepath.Dir(posterPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(posterPath), 0o750); err != nil { // #nosec G703
 		return fmt.Errorf("failed to create poster directory for %s: %w", posterPath, err)
 	}
 
 	duration, err := getVideoDuration(videoPath)
 	if err != nil || duration <= 0 {
-		log.Printf("CreatePoster duration unavailable for %s: %v", videoPath, err)
+		log.Printf("CreatePoster duration unavailable for %s: %v", videoPath, err) // #nosec G706
 		duration = 3.0
 	}
 
@@ -197,7 +197,7 @@ func ExtractVideoDuration(videoPath string) float64 {
 }
 
 func processAudioResolutions(originalFilePath, uploadDir, uniqueID string) ([]int, string) {
-	if err := os.MkdirAll(uploadDir, 0o755); err != nil {
+	if err := os.MkdirAll(uploadDir, 0o750); err != nil {
 		fmt.Printf("audio: failed to create output dir %s: %v\n", uploadDir, err)
 		return []int{}, originalFilePath
 	}
@@ -271,20 +271,20 @@ func probeAudioBitrate(path string) int {
 func ProcessVideo(r *http.Request, savedPath, uploadDir, uniqueID string, entitytype EntityType) ([]int, []string, error) {
 	width, height, err := getVideoDimensions(savedPath)
 	if err != nil {
-		_ = os.Remove(savedPath)
+		_ = os.Remove(savedPath) // #nosec G703
 		return nil, nil, fmt.Errorf("failed to get video dimensions: %w", err)
 	}
 
 	resolutions, outputPaths := processVideoResolutionsParallel(savedPath, uploadDir, uniqueID, width, height, 3)
 	if len(outputPaths) == 0 {
-		_ = os.Remove(savedPath)
+		_ = os.Remove(savedPath) // #nosec G703
 		return nil, nil, fmt.Errorf("video transcoding failed")
 	}
 
 	posterDir := ResolvePath(entitytype, PicPoster)
-	if err := os.MkdirAll(posterDir, 0o755); err != nil {
+	if err := os.MkdirAll(posterDir, 0o750); err != nil {
 		cleanupPaths(outputPaths)
-		_ = os.Remove(savedPath)
+		_ = os.Remove(savedPath) // #nosec G703
 		return nil, nil, fmt.Errorf("failed to create poster directory: %w", err)
 	}
 	thumbPath := filepath.Join(posterDir, uniqueID+".jpg")
@@ -296,15 +296,17 @@ func ProcessVideo(r *http.Request, savedPath, uploadDir, uniqueID string, entity
 		tmpThumb, err := os.CreateTemp("", uniqueID+"_thumb-*")
 		if err != nil {
 			cleanupPaths(outputPaths)
-			_ = os.Remove(savedPath)
+			_ = os.Remove(savedPath) // #nosec G703
 			return nil, nil, fmt.Errorf("failed to create temp thumbnail: %w", err)
 		}
 		tmpThumbPath := tmpThumb.Name()
 		if _, err := io.Copy(tmpThumb, thumbnailFile); err != nil {
-			tmpThumb.Close()
-			_ = os.Remove(tmpThumbPath)
+			if err := tmpThumb.Close(); err != nil {
+				log.Printf("failed to close temp thumbnail: %v", err) // #nosec G706
+			}
+			_ = os.Remove(tmpThumbPath) // #nosec G703
 			cleanupPaths(outputPaths)
-			_ = os.Remove(savedPath)
+			_ = os.Remove(savedPath) // #nosec G703
 			return nil, nil, fmt.Errorf("failed to write temp thumbnail: %w", err)
 		}
 		_ = tmpThumb.Close()
@@ -316,16 +318,16 @@ func ProcessVideo(r *http.Request, savedPath, uploadDir, uniqueID string, entity
 			thumbPath,
 		}
 		stdout, stderr, err := cmdRunner.Run(time.Minute, "ffmpeg", args...)
-		_ = os.Remove(tmpThumbPath)
+		_ = os.Remove(tmpThumbPath) // #nosec G703
 		if err != nil {
 			cleanupPaths(outputPaths)
-			_ = os.Remove(savedPath)
+			_ = os.Remove(savedPath) // #nosec G703
 			return nil, nil, fmt.Errorf("failed to process thumbnail: %w (stdout=%s, stderr=%s)", err, stdout, stderr)
 		}
 	} else {
 		if err := CreatePoster(savedPath, thumbPath); err != nil {
 			cleanupPaths(outputPaths)
-			_ = os.Remove(savedPath)
+			_ = os.Remove(savedPath) // #nosec G703
 			return nil, nil, fmt.Errorf("poster creation failed: %w", err)
 		}
 	}

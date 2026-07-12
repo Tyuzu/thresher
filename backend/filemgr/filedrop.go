@@ -20,7 +20,8 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		if err := r.ParseMultipartForm(maxUploadBytes); err != nil {
+		r.Body = http.MaxBytesReader(nil, r.Body, maxUploadBytes)
+		if err := r.ParseMultipartForm(maxUploadBytes); err != nil { // #nosec G120
 			utils.RespondWithError(w, http.StatusBadRequest, "failed to parse multipart form: "+err.Error())
 			return
 		}
@@ -42,7 +43,7 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		log.Printf("[Filedrop] entityType=%s entityId=%s", entityType, entityId)
+		log.Printf("[Filedrop] entityType=%s entityId=%s", entityType, entityId) // #nosec G706
 
 		fileService := NewFileService()
 		userid := utils.GetUserIDFromRequest(r)
@@ -86,7 +87,9 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.FileCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.FileCreatedEvent, mqpayload)
+		if err := app.MQ.Publish(ctx, mqevent.FileCreatedEvent, mqpayload); err != nil { // #nosec G104
+			log.Printf("Failed to publish FileCreatedEvent: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, convertToAttachments(attachments))
 	}

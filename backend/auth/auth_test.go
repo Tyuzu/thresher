@@ -4,6 +4,38 @@ import (
 	"testing"
 )
 
+func TestSanitizeEmailAddress(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		wantErr bool
+	}{
+		{name: "valid simple", input: "User@Example.com", want: "user@example.com"},
+		{name: "valid display name", input: "User Name <user@example.com>", want: "user@example.com"},
+		{name: "invalid address", input: "not-an-email", wantErr: true},
+		{name: "empty value", input: "   ", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := sanitizeEmailAddress(tt.input)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("sanitizeEmailAddress(%q) error = nil, want error", tt.input)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("sanitizeEmailAddress(%q) unexpected error: %v", tt.input, err)
+			}
+			if got != tt.want {
+				t.Fatalf("sanitizeEmailAddress(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
 // Test validateUsername function
 func TestValidateUsername(t *testing.T) {
 	tests := []struct {

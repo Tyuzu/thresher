@@ -33,7 +33,8 @@ func AddCrop(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
+		r.Body = http.MaxBytesReader(nil, r.Body, 10<<20)
+		if err := r.ParseMultipartForm(10 << 20); err != nil { // #nosec G120
 			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
 				"success": false,
 				"message": "Invalid form data",
@@ -94,7 +95,8 @@ func EditCrop(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
+		r.Body = http.MaxBytesReader(nil, r.Body, 10<<20)
+		if err := r.ParseMultipartForm(10 << 20); err != nil { // #nosec G120
 			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
 				"success": false,
 				"message": "Invalid form data",

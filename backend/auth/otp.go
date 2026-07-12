@@ -8,14 +8,18 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	inmq "naevis/infra/mq"
 	"naevis/utils"
+	"net"
 	"net/http"
+	"net/mail"
 	"net/smtp"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,22 +54,98 @@ func GenerateOTP(length int) (string, error) {
 	return string(b), nil
 }
 
+func sanitizeEmailAddress(raw string) (string, error) {
+	address := strings.TrimSpace(raw)
+	if address == "" || strings.ContainsAny(address, "\r\n") {
+		return "", errors.New("invalid email")
+	}
+
+	parsed, err := mail.ParseAddress(address)
+	if err != nil || parsed.Address == "" {
+		return "", errors.New("invalid email")
+	}
+
+	email := strings.ToLower(strings.TrimSpace(parsed.Address))
+	if !validateEmail(email) {
+		return "", errors.New("invalid email")
+	}
+
+	return email, nil
+}
+
 func SendEmailOTP(toEmail, otp string) error {
-	go func() {
-		from := os.Getenv("SMTP_USER")
+	recipient, err := sanitizeEmailAddress(toEmail)
+	if err != nil {
+		return err
+	}
+
+	go func(recipient string) {
+		from := strings.TrimSpace(os.Getenv("SMTP_USER"))
 		pass := os.Getenv("SMTP_PASS")
-		host := os.Getenv("SMTP_HOST")
-		port := os.Getenv("SMTP_PORT")
+		host := strings.TrimSpace(os.Getenv("SMTP_HOST"))
+		port := strings.TrimSpace(os.Getenv("SMTP_PORT"))
 		if from == "" || pass == "" || host == "" || port == "" {
 			log.Printf("warn: SMTP not configured")
 			return
 		}
-		msg := []byte("Subject: Email Verification\n\nYour OTP is: " + otp + "\nIt expires in 10 minutes.\n")
-		auth := smtp.PlainAuth("", from, pass, host)
-		if err := smtp.SendMail(host+":"+port, auth, from, []string{toEmail}, msg); err != nil {
-			log.Printf("warn: failed to send OTP email: %v", err)
+		parsedFrom, err := mail.ParseAddress(from)
+		if err != nil || parsedFrom == nil || parsedFrom.Address == "" {
+			log.Printf("warn: invalid SMTP sender address")
+			return
 		}
-	}()
+		fromAddr := parsedFrom.Address
+		portNum, err := strconv.Atoi(port)
+		if err != nil || portNum < 1 || portNum > 65535 {
+			log.Printf("warn: invalid SMTP port")
+			return
+		}
+		if strings.ContainsAny(host, "\r\n\t ") || strings.Contains(host, "/") {
+			log.Printf("warn: invalid SMTP host")
+			return
+		}
+		msg := fmt.Appendf(nil, "Subject: Email Verification\r\n\r\nYour OTP is: %s\r\nIt expires in 10 minutes.\r\n", otp)
+		auth := smtp.PlainAuth("", fromAddr, pass, host)
+		serverAddr := net.JoinHostPort(host, port)
+		client, err := smtp.Dial(serverAddr)
+		if err != nil {
+			log.Printf("warn: failed to connect to SMTP server: %v", err)
+			return
+		}
+		defer func() { _ = client.Close() }()
+		if err := client.Hello("localhost"); err != nil {
+			log.Printf("warn: failed to start SMTP conversation: %v", err)
+			return
+		}
+		if err := client.Auth(auth); err != nil {
+			log.Printf("warn: failed to authenticate SMTP client: %v", err)
+			return
+		}
+		if err := client.Mail(fromAddr); err != nil {
+			log.Printf("warn: failed to set SMTP sender: %v", err)
+			return
+		}
+		if err := client.Rcpt(recipient); err != nil {
+			log.Printf("warn: failed to set SMTP recipient: %v", err)
+			return
+		}
+		wc, err := client.Data()
+		if err != nil {
+			log.Printf("warn: failed to open SMTP data writer: %v", err)
+			return
+		}
+		if _, err := wc.Write(msg); err != nil {
+			log.Printf("warn: failed to write SMTP message: %v", err)
+			_ = wc.Close()
+			return
+		}
+		if err := wc.Close(); err != nil {
+			log.Printf("warn: failed to close SMTP data writer: %v", err)
+			return
+		}
+		if err := client.Quit(); err != nil {
+			log.Printf("warn: failed to quit SMTP session: %v", err)
+		}
+	}(recipient)
 	return nil
 }
 
@@ -92,7 +172,11 @@ func RequestOTPHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		email := strings.ToLower(strings.TrimSpace(input.Email))
+		email, err := sanitizeEmailAddress(input.Email)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
+			return
+		}
 
 		otp, err := GenerateOTP(6)
 		if err != nil {
@@ -136,7 +220,11 @@ func VerifyOTPHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		email := strings.ToLower(strings.TrimSpace(input.Email))
+		email, err := sanitizeEmailAddress(input.Email)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
+			return
+		}
 		key := "otp:" + email
 
 		stored, err := app.Cache.Get(ctx, key)

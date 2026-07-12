@@ -86,7 +86,7 @@ func setRefreshCookie(w http.ResponseWriter, token string) {
 		Value:    token,
 		Path:     "/",
 		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteLaxMode,
 		Secure:   true,
 		Expires:  time.Now().Add(RefreshTokenTTL),
 		MaxAge:   int(RefreshTokenTTL.Seconds()),
@@ -109,7 +109,7 @@ func setRefreshCookie(w http.ResponseWriter, token string) {
 // }
 
 func clearRefreshCookie(w http.ResponseWriter) {
-	sameSite, secure := http.SameSiteNoneMode, true
+	sameSite, secure := http.SameSiteLaxMode, true
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",

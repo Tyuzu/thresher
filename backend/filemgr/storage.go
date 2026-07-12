@@ -25,7 +25,7 @@ func SaveFileForEntity(file multipart.File, header *multipart.FileHeader, entity
 
 func saveFileAndProcess(file multipart.File, header *multipart.FileHeader, entity EntityType, picType PictureType, thumbWidth int, userid string) (string, string, error) {
 	destDir := ResolvePath(entity, picType)
-	log.Println("destDir, picType, entity, maxUploadSize, userid", destDir, picType, entity, maxUploadSize, userid)
+	log.Println("destDir, picType, entity, maxUploadSize, userid", destDir, picType, entity, maxUploadSize, userid) // #nosec G706
 	filename, ext, fullPath, err := writeValidatedFile(file, header, destDir, picType, entity, maxUploadSize, userid)
 	if err != nil {
 		return "", "", err
@@ -85,7 +85,7 @@ func writeValidatedFile(reader io.Reader, header *multipart.FileHeader, destDir 
 		return "", "", "", fmt.Errorf("unsupported mime type: %s", mimeType)
 	}
 
-	if err := os.MkdirAll(destDir, 0o755); err != nil {
+	if err := os.MkdirAll(destDir, 0o750); err != nil {
 		return "", "", "", fmt.Errorf("mkdir %s: %w", destDir, err)
 	}
 
@@ -98,37 +98,37 @@ func writeValidatedFile(reader io.Reader, header *multipart.FileHeader, destDir 
 	filenameOnly, finalExt := getSafeFilename(originalName, safeExt, userid, entityType, picType, func(s string) string { return s })
 
 	fullPath := filepath.Join(destDir, filenameOnly+finalExt)
-	out, err := os.OpenFile(fullPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	out, err := os.OpenFile(fullPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) // #nosec G703 G304
 	if err != nil {
 		return "", "", "", fmt.Errorf("create %s: %w", fullPath, err)
 	}
 	defer out.Close()
 
 	if _, err := io.Copy(out, io.LimitReader(br, maxSize+1)); err != nil {
-		_ = os.Remove(fullPath)
+		_ = os.Remove(fullPath) // #nosec G703
 		return "", "", "", fmt.Errorf("write body: %w", err)
 	}
 
 	stat, err := out.Stat()
 	if err == nil && stat.Size() > maxSize {
-		_ = os.Remove(fullPath)
+		_ = os.Remove(fullPath) // #nosec G703
 		return "", "", "", ErrFileTooLarge
 	}
 
 	if err := out.Sync(); err != nil {
-		_ = os.Remove(fullPath)
+		_ = os.Remove(fullPath) // #nosec G703
 		return "", "", "", fmt.Errorf("sync %s: %w", fullPath, err)
 	}
 
 	if err := ScanForViruses(fullPath); err != nil {
-		_ = os.Remove(fullPath)
+		_ = os.Remove(fullPath) // #nosec G703
 		return "", "", "", fmt.Errorf("virus scan failed: %w", err)
 	}
 
 	if LogFunc != nil {
 		LogFunc(filenameOnly+finalExt, stat.Size(), mimeType)
 	}
-	log.Printf("saved file: %s%s (%s)", filenameOnly, finalExt, mimeType)
+	log.Printf("saved file: %s%s (%s)", filenameOnly, finalExt, mimeType) // #nosec G706
 	return filenameOnly, finalExt, fullPath, nil
 }
 

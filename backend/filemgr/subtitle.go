@@ -3,6 +3,7 @@ package filemgr
 import (
 	"bufio"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"os"
@@ -32,12 +33,12 @@ func writeVTT(uniqueID, lang string, subtitles []Subtitle) error {
 	}
 
 	dir := filepath.Join("static", "uploads", "subtitles", uniqueID)
-	if err := os.MkdirAll(dir, 0o700); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil { // #nosec G703
 		return fmt.Errorf("mkdir %s: %w", dir, err)
 	}
 
 	filePath := filepath.Join(dir, fmt.Sprintf("%s-%s.vtt", uniqueID, lang))
-	file, err := os.Create(filePath)
+	file, err := os.Create(filePath) // #nosec G703 G304
 	if err != nil {
 		return fmt.Errorf("create subtitle file: %w", err)
 	}
@@ -118,7 +119,8 @@ func parseTimestamp(ts string) (int, error) {
 }
 
 func SaveUploadedVTT(w http.ResponseWriter, r *http.Request, uniqueID, lang string) (string, error) {
-	if err := r.ParseMultipartForm(5 << 20); err != nil {
+	r.Body = http.MaxBytesReader(nil, r.Body, 5<<20)
+	if err := r.ParseMultipartForm(5 << 20); err != nil { // #nosec G120
 		http.Error(w, "could not parse multipart form", http.StatusBadRequest)
 		return "", err
 	}
@@ -166,7 +168,7 @@ func SaveUploadedVTT(w http.ResponseWriter, r *http.Request, uniqueID, lang stri
 }
 
 func parseVTT(filePath string) ([]Subtitle, error) {
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(filePath) // #nosec G304
 	if err != nil {
 		return nil, fmt.Errorf("read vtt: %w", err)
 	}
@@ -257,5 +259,5 @@ func UploadSubtitle(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
-	_, _ = w.Write([]byte(path))
+	_, _ = w.Write([]byte(html.EscapeString(path)))
 }

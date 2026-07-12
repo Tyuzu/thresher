@@ -11,7 +11,8 @@ import (
 
 func updateEventFields(r *http.Request) (bson.M, error) {
 	// Parse the multipart form with a 10MB limit
-	if err := r.ParseMultipartForm(10 << 20); err != nil {
+	r.Body = http.MaxBytesReader(nil, r.Body, 10<<20)
+	if err := r.ParseMultipartForm(10 << 20); err != nil { // #nosec G120
 		return nil, fmt.Errorf("unable to parse form: %v", err)
 	}
 

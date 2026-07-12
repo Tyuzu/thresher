@@ -74,7 +74,8 @@ func ProcessMediaUpload(r *http.Request, formKey string, mediaType MediaType, en
 
 func getUploadedFile(r *http.Request, formKey string) (*multipart.FileHeader, error) {
 	if r.MultipartForm == nil {
-		if err := r.ParseMultipartForm(32 << 20); err != nil {
+		r.Body = http.MaxBytesReader(nil, r.Body, 32<<20)
+		if err := r.ParseMultipartForm(32 << 20); err != nil { // #nosec G120
 			return nil, fmt.Errorf("failed to parse form: %w", err)
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -128,7 +129,11 @@ func Login(app *infra.Deps) httprouter.Handle {
 		var cnt int64
 
 		if err == nil && len(val) > 0 {
-			cnt, _ = strconv.ParseInt(string(val), 10, 64)
+			cnt, err = strconv.ParseInt(string(val), 10, 64)
+			if err != nil {
+				log.Printf("warn: failed to parse auth fail count: %v", err)
+				cnt = 0
+			}
 		}
 
 		if cnt >= maxFailedAttempts {
@@ -145,14 +150,20 @@ func Login(app *infra.Deps) httprouter.Handle {
 			&user,
 		); err != nil {
 
-			cnt, _ = app.Cache.Incr(ctx, failKey)
+			cnt, err = app.Cache.Incr(ctx, failKey)
+			if err != nil {
+				log.Printf("warn: failed to increment auth fail count: %v", err)
+				cnt = 0
+			}
 
-			app.Cache.Set(
+			if err = app.Cache.Set(
 				ctx,
 				failKey,
 				[]byte(strconv.FormatInt(cnt, 10)),
 				lockoutDuration,
-			)
+			); err != nil {
+				log.Printf("warn: failed to persist auth fail count: %v", err)
+			}
 
 			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid credentials")
 			return
@@ -163,14 +174,20 @@ func Login(app *infra.Deps) httprouter.Handle {
 			[]byte(creds.Password),
 		) != nil {
 
-			cnt, _ = app.Cache.Incr(ctx, failKey)
+			cnt, err = app.Cache.Incr(ctx, failKey)
+			if err != nil {
+				log.Printf("warn: failed to increment auth fail count: %v", err)
+				cnt = 0
+			}
 
-			app.Cache.Set(
+			if err = app.Cache.Set(
 				ctx,
 				failKey,
 				[]byte(strconv.FormatInt(cnt, 10)),
 				lockoutDuration,
-			)
+			); err != nil {
+				log.Printf("warn: failed to persist auth fail count: %v", err)
+			}
 
 			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid credentials")
 			return
@@ -178,7 +195,9 @@ func Login(app *infra.Deps) httprouter.Handle {
 
 		/* ---------------- Clear Fail Counter ---------------- */
 
-		app.Cache.Del(ctx, failKey)
+		if err := app.Cache.Del(ctx, failKey); err != nil {
+			log.Printf("warn: failed to clear auth fail count: %v", err)
+		}
 
 		/* ---------------- JWT Claims ---------------- */
 

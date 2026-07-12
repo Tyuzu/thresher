@@ -25,7 +25,7 @@ func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M
 	var worker models.BaitoWorker
 	update := bson.M{"$set": bson.M{}}
 
-	if err := r.ParseMultipartForm(20 << 20); err != nil {
+	if err := parseMultipartFormWithLimit(r); err != nil {
 		return worker, update, err
 	}
 	defer r.MultipartForm.RemoveAll()
