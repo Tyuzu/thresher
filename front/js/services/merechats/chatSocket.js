@@ -244,7 +244,6 @@ export function closeExistingSocket(
   ChatState.resetReconnectAttempts();
 
   if (reason) {
-    console.log("WS closed:", reason);
   }
 }
 

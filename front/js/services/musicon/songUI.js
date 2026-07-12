@@ -32,7 +32,6 @@ return Notify("Invalid selection", { type: "error" });
             // const playlistID = playlists[index].playlistID;
             const playlistID = playlists[index].playlistID || playlists[index].playlistid;
 
-            console.log(playlistID);
             const res = await MusicAPI.addSongToPlaylist(playlistID, { songid: song.songid });
             if (res?.success) {
                 Notify(`Added "${song.title}" to playlist "${playlists[index].name}"`);
@@ -115,7 +114,6 @@ return;
 
 // ------------------------ Song Row + render optimizations ------------------------
 export function createSongRow(song, idx, player = null, batchSelection = null, container = null, isLoggedIn = false) {
-    console.log(isLoggedIn);
     // Resolve images/urls
     song.poster = song.poster ? resolveImagePath(EntityType.SONG, PictureType.THUMB, song.poster) : "/placeholder.png";
     song.audioUrl = song.audioUrl ? resolveImagePath(EntityType.SONG, PictureType.AUDIO, song.audioUrl) : null;

@@ -1,5 +1,4 @@
 import { apiFetch } from "../../../api/api.js";
-import { createElement } from "../../../components/createElement.js";
 import { displayCropCard } from "../crop/displayCropCard.js";
 
 export async function renderCategoryItems(container, category, filters = {}) {

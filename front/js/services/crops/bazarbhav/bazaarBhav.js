@@ -23,7 +23,7 @@ const categories = ["All", ...new Set(PRICE_DATA.map(x => x.category))];
 const trendingCrops = ["Onion", "Wheat", "Tomato"];
 
 function getProcessedData() {
-    let result = PRICE_DATA.filter(item => {
+    const result = PRICE_DATA.filter(item => {
         const matchesSearch = item.crop.toLowerCase().includes(state.search) || 
                               item.market.toLowerCase().includes(state.search) ||
                               item.district.toLowerCase().includes(state.search);
@@ -31,9 +31,15 @@ function getProcessedData() {
         return matchesSearch && matchesCategory;
     });
 
-    if (state.sortBy === "high-low") result.sort((a, b) => b.modal - a.modal);
-    if (state.sortBy === "low-high") result.sort((a, b) => a.modal - b.modal);
-    if (state.sortBy === "trend") result.sort((a, b) => Math.abs(b.trend) - Math.abs(a.trend));
+    if (state.sortBy === "high-low") {
+result.sort((a, b) => b.modal - a.modal);
+}
+    if (state.sortBy === "low-high") {
+result.sort((a, b) => a.modal - b.modal);
+}
+    if (state.sortBy === "trend") {
+result.sort((a, b) => Math.abs(b.trend) - Math.abs(a.trend));
+}
 
     return result;
 }
@@ -176,8 +182,12 @@ function createEmptyState() {
                 const filterBtns = document.querySelectorAll(".mp-filter-btn");
                 filterBtns.forEach(b => b.classList.remove("active"));
                 const initialTab = document.querySelector(".mp-filter-btn");
-                if (initialTab) initialTab.classList.add("active");
-                if (searchInputRef) searchInputRef.value = "";
+                if (initialTab) {
+initialTab.classList.add("active");
+}
+                if (searchInputRef) {
+searchInputRef.value = "";
+}
                 renderGrid();
             }
         }
@@ -185,7 +195,9 @@ function createEmptyState() {
 }
 
 function renderGrid() {
-    if (!gridContainer) return;
+    if (!gridContainer) {
+return;
+}
     
     gridContainer.className = `mp-grid-container layout-${state.view}`;
     gridContainer.innerHTML = "";
@@ -203,7 +215,9 @@ function renderGrid() {
 }
 
 export function displayBazarBhav(rootContainer) {
-    if (!rootContainer) return;
+    if (!rootContainer) {
+return;
+}
     appContainer = rootContainer;
     appContainer.innerHTML = ""; 
     

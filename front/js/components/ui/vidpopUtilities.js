@@ -239,8 +239,6 @@ function faster(video) {
  */
 
 function saveVideoProgress(video, postIdArray) {
-    // const postIds = Array.isArray(postIdArray) ? postIdArray : [];
-    console.log("frhj", postIdArray);
     const postId = postIdArray;
 
     if (!postId) {

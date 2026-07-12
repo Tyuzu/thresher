@@ -1,4 +1,4 @@
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { resolveImagePath } from "../../utils/imagePaths.js";
 import { createElement } from "../createElement.js";
 import Imagex from "./Imagex.js";
 import { updateImageWithCrop } from "../../utils/bannerEditor.js";

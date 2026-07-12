@@ -73,7 +73,9 @@ export function createCropper({
 }
 
 export function destroyCropper(cropper) {
-  if (!cropper) return;
+  if (!cropper) {
+return;
+}
 
   try {
     cropper.destroy();
@@ -105,7 +107,9 @@ export function zoomOut(cropper, amount = 0.1) {
 }
 
 export function resizeCropper(cropper) {
-  if (!cropper) return;
+  if (!cropper) {
+return;
+}
 
   try {
     cropper.resize();
@@ -117,7 +121,9 @@ export function getCroppedCanvas(
   width,
   height
 ) {
-  if (!cropper) return null;
+  if (!cropper) {
+return null;
+}
 
   return cropper.getCroppedCanvas({
     width,

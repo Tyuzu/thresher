@@ -65,7 +65,7 @@ export const createZoomableMedia = (src, type = "image") => {
     mediaEl.addEventListener("loadedmetadata", () => applyTransform(true));
   }
 
-  mediaEl.addEventListener("touchend", (e) => {
+  mediaEl.addEventListener("touchend", () => {
     const now = Date.now();
     if (now - lastTap < 300) {
       state.zoomIndex = (state.zoomIndex + 1) % state.zoomLevels.length;

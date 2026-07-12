@@ -1,7 +1,6 @@
 import { createElement } from "../../../components/createElement.js";
 import { fetchMedia } from "../api/mediaApi.js";
 import { showMediaUploadForm } from "./mediaUploadForm.js";
-import Notify from "../../../components/ui/Notify.mjs";
 import {
   lazyMediaObserver,
   clear,

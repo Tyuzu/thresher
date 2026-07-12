@@ -61,7 +61,9 @@ const MenuCard = ({ name, price, discount = 0, image, stock, onBuy, onEdit, onDe
     card.appendChild(img);
     card.appendChild(nameElement);
     card.appendChild(priceElement);
-    if (discountElement) card.appendChild(discountElement);
+    if (discountElement) {
+card.appendChild(discountElement);
+}
     card.appendChild(stockElement);
     card.appendChild(actions);
 

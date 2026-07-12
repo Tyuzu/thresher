@@ -1,1 +1,1 @@
-export function displayDiscord(contentContainer, isLoggedIn){}
+export function displayDiscord(_contentContainer, _isLoggedIn){}

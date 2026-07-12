@@ -83,7 +83,6 @@ function activateChildTab(tabButton, contentContainer, username, entityType) {
 
   // Load content if not already loaded.
   if (!contentContainer.dataset.loaded) {
-    console.log(`🔍 Fetching data for: ${username} | Entity: ${entityType}`);
     renderTabContent(contentContainer, username, entityType);
     contentContainer.dataset.loaded = "true";
   }

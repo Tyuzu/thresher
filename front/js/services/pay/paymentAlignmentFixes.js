@@ -9,14 +9,14 @@
  * and converted for display using formatCurrency utility
  */
 
-import { formatCurrency, toRupees } from "../../types/api.types.ts";
+import { formatCurrency } from "../../types/api.types.ts";
 
 /**
  * FIX 1: Wallet Transactions Display
  * Before: amount.toLocaleString() displayed raw paise/rupees incorrectly
  * After: Divide by 100 and format as currency
  */
-export function formatTransactionAmount(amount, currency = "INR") {
+export function formatTransactionAmount(amount, _currency = "INR") {
   return formatCurrency(amount); // Uses api.types utility
 }
 
@@ -144,7 +144,9 @@ export async function requestWalletTopup(amount, paymentMethod) {
     })
   });
 
-  if (!response.ok) throw new Error('Topup failed');
+  if (!response.ok) {
+throw new Error('Topup failed');
+}
   
   const data = await response.json();
   

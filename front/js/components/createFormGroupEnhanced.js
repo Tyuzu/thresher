@@ -30,10 +30,14 @@ export function createFormGroupWithValidation({
   // Create label
   if (label) {
     const labelAttrs = {};
-    if (id) labelAttrs.for = id;
+    if (id) {
+labelAttrs.for = id;
+}
     const requiredSpan = required ? createElement("span", { class: "form-required" }, ["*"]) : null;
     const labelElement = createElement("label", labelAttrs, [label]);
-    if (requiredSpan) labelElement.appendChild(requiredSpan);
+    if (requiredSpan) {
+labelElement.appendChild(requiredSpan);
+}
     group.appendChild(labelElement);
   }
 
@@ -101,7 +105,7 @@ export function createFormGroupWithValidation({
         id: id || "",
         name: inputName || "",
         placeholder: placeholder || "",
-        value: (value != null && value !== "") ? Number(value) : ""
+        value: (value !== null && value !== undefined && value !== "") ? Number(value) : ""
       });
       break;
 
@@ -123,7 +127,7 @@ export function createFormGroupWithValidation({
         id: id || undefined,
         name: inputName || undefined,
         placeholder: placeholder || "",
-        value: (value != null) ? String(value) : ""
+        value: (value !== null && value !== undefined) ? String(value) : ""
       });
       if (accept) {
         inputElement.accept = accept;
@@ -166,7 +170,9 @@ export function createFormGroupWithValidation({
 
   // Validation function
   const validateInput = () => {
-    if (!validator) return true;
+    if (!validator) {
+return true;
+}
 
     const fieldValue = type === "file" ? inputElement : inputElement.value;
     const error = validateField(fieldValue, validator);

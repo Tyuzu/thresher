@@ -19,7 +19,7 @@ function fetchAndDisplayEvents(container, placeid, page = 1, limit = 10) {
 
     apiFetch(endpoint)
         .then(data => {
-            if (data.events != null) {
+            if (data.events !== null && data.events !== undefined) {
                 allEvents = data.events;
                 const total = data.total;
 

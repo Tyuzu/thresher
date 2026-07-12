@@ -76,8 +76,6 @@ function createPostCard(post) {
     ? resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, post.thumb)
     : "/default-thumb.png";
 
-    console.log(post.thumb);
-
   const postThumb = Imagex({
     src: thumb,
     alt: post.title || "Post image",

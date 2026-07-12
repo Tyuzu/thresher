@@ -134,7 +134,9 @@ export class FormHandler {
     this.inputElements.forEach((input) => {
       if (input.validate) {
         const fieldValid = input.validate();
-        if (!fieldValid) isValid = false;
+        if (!fieldValid) {
+isValid = false;
+}
       }
     });
 
@@ -231,7 +233,9 @@ export class FormHandler {
   async _handleSubmit(e) {
     e.preventDefault();
 
-    if (this.isSubmitting) return;
+    if (this.isSubmitting) {
+return;
+}
 
     // Validate
     if (!this.validate()) {

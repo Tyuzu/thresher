@@ -10,22 +10,22 @@ import EventTimeline from "../../components/ui/EventTimeline.mjs";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
 
 
-async function displayEventReviews(reviewsContainer, eventId, isCreator, isLoggedIn) {
+async function displayEventReviews(reviewsContainer, eventId, _isCreator, _isLoggedIn) {
     displayReviews(reviewsContainer, isCreator, isLoggedIn, "event", eventId);
 }
 
-async function displayEventVenue(venueList, isLoggedIn, eventID, seatingplan) {
+async function displayEventVenue(venueList, _isLoggedIn, _eventID, seatingplan) {
     // displaySeatingMap(venueList, place, eventid, isLoggedIn);
     // loadMap(venueList, isLoggedIn, { type: "event", id: eventID });
     const imgx = resolveImagePath(EntityType.EVENT, PictureType.SEATING, seatingplan);
     venueList.appendChild(Imagex({ src: imgx }));
 }
 
-async function displayEventFAQ(faqContainer, isCreator, eventId, faqs) {
+async function displayEventFAQ(faqContainer, _isCreator, eventId, faqs) {
     displayEventFAQs(isCreator, faqContainer, eventId, faqs);
 }
 
-async function displayLostAndFound(lnfContainer, isCreator, eventId) {
+async function displayLostAndFound(lnfContainer, _isCreator, eventId) {
     lnfContainer.appendChild(createElement("h2", {}, ["Lost And Found"]));
     lnfContainer.appendChild(createElement("p", {}, ["Did anyone lose or find something?"]));
 
@@ -57,7 +57,7 @@ return alert("Name is required");
                     await apiFetch(`/events/${eventId}/lostfound`, "POST", newItem);
                     lnfContainer.innerHTML = "";
                     await displayLostAndFound(lnfContainer, isCreator, eventId);
-                } catch (err) {
+                } catch (_err) {
                     alert("Failed to add item.");
                 }
             }
@@ -84,7 +84,7 @@ return alert("Name is required");
     let items = [];
     try {
         items = await apiFetch(`/events/${eventId}/lostfound`);
-    } catch (err) {
+    } catch (_err) {
         lnfContainer.appendChild(createElement("p", {}, ["Failed to load items."]));
         return;
     }
@@ -108,12 +108,12 @@ return alert("Name is required");
 
 
 
-async function displayContactDetails(container, isCreator, contacts) {
+async function displayContactDetails(container, _isCreator, _contacts) {
     container.appendChild(createElement('h2', "", ["ContactDetails"]));
     container.appendChild(createElement('p', "", ["Does anybody need anything?"]));
 }
 
-async function displayEventSchedule(schContainer, isCreator, eventId, faqs) {
+async function displayEventSchedule(schContainer, _isCreator, _eventId, _faqs) {
     const events = [
         { time: '09:00 AM', description: 'Doors Open & Registration' },
         { time: '10:00 AM', description: 'Opening Ceremony' },
@@ -131,7 +131,7 @@ async function displayEventSchedule(schContainer, isCreator, eventId, faqs) {
 }
 
 
-async function displayLivestream(divcontainer, eventId, isLoggedIn) {
+async function displayLivestream(divcontainer, eventId, _isLoggedIn) {
     displayEventLiveStream(divcontainer, eventId, isLoggedIn);
 }
 

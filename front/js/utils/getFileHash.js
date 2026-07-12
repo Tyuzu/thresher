@@ -20,7 +20,6 @@ export async function CheckFile(file) {
     let data = { exists: false, url: "" };
     try {
         const fileHash = await GetFileHash(file);
-        console.log("File Hash:", fileHash);
 
         // Check with the server if the file already exists
         const response = await apiFetch(`/check-file/${fileHash}`);

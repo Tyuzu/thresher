@@ -1,10 +1,11 @@
 import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { createGroupedCard } from "./modPage.js";
-import { loadModeratorApplications } from "./modapprovals.js";
 
 export async function fetchAndRenderReports(listContainer, entityPreview, summaryContainer, filters, state, undoBtn, prevBtn, pageIndicator, nextBtn) {
-    if (state.isLoading) return;
+    if (state.isLoading) {
+return;
+}
     state.isLoading = true;
 
     resetUI(listContainer, entityPreview, summaryContainer, pageIndicator, state);
@@ -77,7 +78,9 @@ function handleReportsResponse(reports, listContainer, entityPreview, summaryCon
 function groupReports(reports) {
     return reports.reduce((acc, r) => {
         const key = `${r.targetType}:${r.targetId}`;
-        if (!acc[key]) acc[key] = [];
+        if (!acc[key]) {
+acc[key] = [];
+}
         acc[key].push(r);
         return acc;
     }, {});
@@ -157,7 +160,9 @@ export function createUndoButton(state, refreshFn) {
             await apiFetch(`/report/${state.lastAction.reportId}`, "PUT", state.lastAction.prevPayload);
             state.lastAction = null;
             btn.disabled = true;
-            if (typeof refreshFn === "function") refreshFn();
+            if (typeof refreshFn === "function") {
+refreshFn();
+}
         } catch (e) {
             console.error("Undo failed:", e);
             showTemporaryError("Failed to undo last action.");
@@ -198,9 +203,13 @@ function updateSummary(grouped, summaryContainer) {
 
     keys.forEach((k) => {
         const group = grouped[k];
-        if (!group || group.length === 0) return;
+        if (!group || group.length === 0) {
+return;
+}
         const firstStatus = group[0].status;
-        if (statusCounts[firstStatus] !== undefined) statusCounts[firstStatus]++;
+        if (statusCounts[firstStatus] !== undefined) {
+statusCounts[firstStatus]++;
+}
     });
 
     summaryContainer.replaceChildren();

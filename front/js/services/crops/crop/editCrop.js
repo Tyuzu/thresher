@@ -9,7 +9,7 @@ export async function editCrop(farmId, crop, container) {
         onSubmit: async (formData, submitBtn) => {
             submitBtn.disabled = true;
             try {
-                const res = await apiFetch(`/farms/farm/${farmId}/crops/${crop.cropid}`, "PUT", formData);
+                await apiFetch(`/farms/farm/${farmId}/crops/${crop.cropid}`, "PUT", formData);
                 container.textContent = "✅ Crop updated successfully.";
             } catch (err) {
                 container.textContent = `❌ ${err.message}`;

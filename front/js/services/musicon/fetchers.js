@@ -1,6 +1,5 @@
 // fetchers.js
 
-import Notify from "../../components/ui/Notify.mjs";
 import { musicFetch } from "../../api/api.js";
 
 async function apiRequest(endpoint, method = "GET", body = null) {

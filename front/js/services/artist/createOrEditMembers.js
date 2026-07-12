@@ -49,7 +49,6 @@ async function saveBandMembers(artistID, container) {
     for (const row of rows) {
         const status = row.dataset.status;
         const memberID = row.dataset.id;
-    console.log("[saveBandMembers] : memberID: ",memberID);
 
         const name = row.querySelector("input[id^='member-name-']")?.value.trim() || "";
         const role = row.querySelector("input[id^='member-role-']")?.value.trim() || "";
@@ -94,11 +93,12 @@ async function saveBandMembers(artistID, container) {
 
 // ADD / EDIT MEMBER ROW
 function addBandMember(existing, container) {
-    if (!container) { return; }
+    if (!container) {
+ return; 
+}
 
     const data = existing || {};
     const memberID = data.memberid || `new-${crypto.randomUUID()}`;
-    console.log("[addBandMember] : memberID: ",memberID);
 
     const memberDiv = createElement("div", {
         class: "band-member",

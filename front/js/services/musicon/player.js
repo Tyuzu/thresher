@@ -72,7 +72,6 @@ return;
         // if same song playing -> toggle pause
         if (this.state.currentSong === song && !audio.paused) {
             audio.pause();
-            console.log(`[player] Paused: ${song.title}`);
             return;
         }
 
@@ -85,7 +84,6 @@ return;
             if (typeof idx === "number") {
 this.state.currentIndex = idx;
 }
-            console.log(`[player] Playing: ${song.title}`);
         };
 
         if (audio.src && !audio.paused && this.state.crossfadeDuration > 0 && this.state.currentSong) {
@@ -130,7 +128,6 @@ return;
     setQueue(songs) {
         this.state.queue = Array.isArray(songs) ? songs.slice() : [];
         this.state.currentIndex = -1;
-        console.log(`[player] Queue set with ${this.state.queue.length} songs`);
     }
 }
 
@@ -186,14 +183,12 @@ audio.pause();
         this.repeatBtn.addEventListener("click", () => {
             const currentIndex = REPEAT_MODES.indexOf(this.state.repeat);
             this.state.repeat = REPEAT_MODES[(currentIndex + 1) % REPEAT_MODES.length];
-            console.log(`[player] Repeat mode: ${this.state.repeat}`);
             Notify(`Repeat mode: ${this.state.repeat}`);
         });
 
         this.shuffleBtn.addEventListener("click", () => {
             this.state.shuffle = !this.state.shuffle;
             this.shuffleBtn.classList.toggle("active", this.state.shuffle);
-            console.log(`[player] Shuffle: ${this.state.shuffle}`);
             Notify(`Shuffle: ${this.state.shuffle ? "ON" : "OFF"}`);
         });
 
@@ -313,7 +308,6 @@ class Player {
         if (this.state.audio) {
 this.state.audio.pause();
 }
-        console.log("[player] Reset");
     }
 
     getState() {

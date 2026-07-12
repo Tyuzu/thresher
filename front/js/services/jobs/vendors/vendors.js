@@ -3,7 +3,6 @@ import { loadVendors } from "./loadVendors.js";
 import { vendorForm } from "./vendorForm.js";
 
 export async function hireVendors(anacon, isLoggedIn, eventId, options = {}) {
-    console.debug("hireVendors called", { eventId, isLoggedIn, anacon });
     if (!anacon) {
         console.error("Vendor container element is required.");
         return null;
@@ -90,7 +89,9 @@ export async function hireVendors(anacon, isLoggedIn, eventId, options = {}) {
                 toggleBtn.textContent = "Hide Registration";
                 // focus first input for quicker entry
                 const firstField = form.querySelector("input, select, textarea");
-                if (firstField && typeof firstField.focus === "function") firstField.focus();
+                if (firstField && typeof firstField.focus === "function") {
+firstField.focus();
+}
             } else {
                 registrationSection.removeChild(form);
                 toggleBtn.textContent = "List Yourself as Vendor";

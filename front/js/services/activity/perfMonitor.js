@@ -17,7 +17,7 @@ function monitorFPS() {
 }
 
 function monitorInputLatency() {
-  document.addEventListener("click", e => {
+  document.addEventListener("click", _e => {
     const start = performance.now();
     requestAnimationFrame(() => {
       const latency = performance.now() - start;

@@ -76,7 +76,7 @@ export async function baitoApplicantDash(container) {
 
       const withdrawBtn = Button("❌ Withdraw", "", {
         click: async () => {
-          const confirmModal = Modal({
+          Modal({
             title: "Confirm Withdrawal",
             content: createElement("p", {}, [`Are you sure you want to withdraw your application for "${app.title}"?`]),
             buttons: [

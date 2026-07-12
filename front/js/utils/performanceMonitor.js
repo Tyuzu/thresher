@@ -36,7 +36,6 @@ return;
       if (measure) {
         this.metrics.set(name, measure.duration);
         if (this.verbose) {
-          console.log(`[PerfMonitor] ${name}: ${measure.duration.toFixed(2)}ms`);
         }
       }
     } catch (error) {
@@ -53,7 +52,6 @@ return;
 }
     this.metrics.set(name, value);
     if (this.verbose) {
-      console.log(`[PerfMonitor] ${name}: ${value}`);
     }
   }
 

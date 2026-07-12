@@ -1,4 +1,4 @@
-async function displaySeatingMap(venueList, place, eventid, isLoggedIn) {
+async function displaySeatingMap(venueList, place, _eventid, _isLoggedIn) {
     venueList.innerHTML = ''; // Clear existing content
 
     // Create a container for the venue
@@ -45,8 +45,6 @@ function renderSeatingChart(canvas, seatData, isLoggedIn) {
     const ctx = canvas.getContext("2d");
     const seatSize = 40; // Size of each seat
     const padding = 10; // Space between seats
-    const rows = 5; // Number of rows (adjust as needed)
-    const cols = 10; // Number of columns (adjust as needed)
 
     // Draw seats
     seatData.forEach(({ row, col, status }) => {

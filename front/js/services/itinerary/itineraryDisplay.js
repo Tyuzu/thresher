@@ -52,7 +52,7 @@ function displayItinerary(isLoggedIn, root) {
     setListMessage("Loading…");
     try {
       renderList(await apiFetch("/itineraries"));
-    } catch (err) {
+    } catch (_err) {
       setListMessage("Error loading itineraries.");
     }
   }
@@ -61,7 +61,7 @@ function displayItinerary(isLoggedIn, root) {
     setListMessage("Searching…");
     try {
       renderList(await apiFetch(`/itineraries/search?${qs}`));
-    } catch (err) {
+    } catch (_err) {
       setListMessage("Error searching itineraries.");
     }
   }
@@ -260,7 +260,7 @@ return;
 
   /* ---------- Search ---------- */
 
-  function createSearchForm(listDiv) {
+  function createSearchForm(_listDiv) {
     const form = createElement("form", { class: "itinerary-search-form" }, [
       createElement("input", { name: "start_date", placeholder: "Start Date (YYYY-MM-DD)" }),
       createElement("input", { name: "location", placeholder: "Location" }),

@@ -1,5 +1,4 @@
 import { createTabs } from "../../../components/ui/createTabs.js";
-import { createFilterPanel } from "./createFilterPanel.js";
 import { renderCategoryItems } from "./renderCategoryItems.js";
 import {debounce} from "../../../utils/deutils.js";
 
@@ -15,7 +14,7 @@ export function showCategoryBrowser(container) {
         lng: null
     };
 
-    const onFilterChange = debounce(() => {
+    debounce(() => {
         const activeTab = document.querySelector(".tab-content.active");
         if (activeTab) {
             const category = activeTab.id.replace("-tab", "");

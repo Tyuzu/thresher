@@ -4,7 +4,7 @@ const Owl = (eventsArray) => {
     const owlContainer = document.createElement('div');
     owlContainer.className = 'owl';
 
-    eventsArray.forEach((event, index) => {
+    eventsArray.forEach((event) => {
         const eventCard = document.createElement('div');
         eventCard.className = 'event-card';
 

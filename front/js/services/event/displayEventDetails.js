@@ -4,7 +4,7 @@ import { editEvent } from "./creadit.js";
 import { deleteEvent } from "./eventService.js";
 import { viewEventAnalytics } from "./eventAnalytics.js";
 import { reportEntity } from "../reporting/reporting.js";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { EntityType } from "../../utils/imagePaths.js";
 // import { updateImageWithCrop } from "../../utils/bannerEditor.js";
 import { starEmptySVG, starFilledSVG } from "../../components/svgs.js";
 import { createIconButton } from "../../utils/svgIconButton.js";
@@ -179,7 +179,7 @@ function createInfoSection(eventData, isCreator, isLoggedIn) {
     const statusBadge = createStatusBadge(eventData.date);
     const countdown = createCountdown(eventData.date);
     const saveBtn = createSaveButton(eventData.eventid);
-    const shareBtn = createShareButton(eventData.eventid);
+    createShareButton(eventData.eventid);
 
     topRow.append(detailBlock, statusBadge, saveBtn);
 

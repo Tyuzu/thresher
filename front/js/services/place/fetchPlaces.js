@@ -21,7 +21,6 @@ async function fetchPlaces(page = 1, limit = 20, queryParams = {}) {
         return Array.isArray(places) ? places : [];
     } catch (error) {
         if (error.name === "AbortError") {
-            console.log("Fetch aborted");
             return null;
         }
         console.error("Error fetching places:", error);

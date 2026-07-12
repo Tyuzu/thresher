@@ -4,7 +4,6 @@ import { createElement } from "../../../components/createElement.js";
 async function fetchWeather() {
     const res = await apiFetch("/weather");
 
-    console.log(res);
     return res;
 }
 

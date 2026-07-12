@@ -2,7 +2,7 @@
 import Imagex from "../../../components/base/Imagex.js";
 import { createElement } from "../../../components/createElement.js";
 
-export async function displayAboutCrop(contentContainer, cropID, isLoggedIn) {
+export async function displayAboutCrop(contentContainer, _cropID, _isLoggedIn) {
     contentContainer.textContent = "";
 
     const wrapper = createElement("div", { class: "crop-about-wrapper" }, [

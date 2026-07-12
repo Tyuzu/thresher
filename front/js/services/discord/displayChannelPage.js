@@ -1,1 +1,1 @@
-export function displayChannelPage(contentContainer, serverid, channelid, isLoggedIn){}
+export function displayChannelPage(_contentContainer, _serverid, _channelid, _isLoggedIn){}

@@ -12,9 +12,7 @@ import {
 } from "./chatSocket.js";
 import { mereFetch } from "../../api/api.js";
 import { debounce } from "../../utils/deutils.js";
-import { MERE_URL, getState } from "../../state/state.js";
-import { uploadFile } from "../media/api/mediaApi.js";
-import { uid } from "../media/ui/mediaUploadForm.js";
+import { getState } from "../../state/state.js";
 import { t } from "./i18n.js";
 import { uploadAttachment } from "./uploadAttachment.js";
 // import { getFileType } from "../media/mediaCommon.js";

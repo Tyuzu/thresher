@@ -43,7 +43,7 @@ async function RenderImagePost(mediaContainer, media) {
     mediaContainer.appendChild(imageList);
 }
 
-async function startZoombox(img, index) {
+async function startZoombox(img, _index) {
     // ZoomBox(img, index);
     Sightbox(img, "image");
 }

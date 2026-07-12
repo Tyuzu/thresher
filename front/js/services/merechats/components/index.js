@@ -103,7 +103,6 @@ function renderBody(data, msg) {
 
     nodes.push(text);
   }
-console.log(msg);
   const mediaNode = renderMedia(msg);
   if (mediaNode) {
     nodes.push(mediaNode);

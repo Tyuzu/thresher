@@ -13,14 +13,18 @@ export const validators = {
 
   // Email validation
   email: (value) => {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(value) ? null : "Invalid email address";
   },
 
   // URL validation
   url: (value) => {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
     try {
       new URL(value);
       return null;
@@ -31,7 +35,9 @@ export const validators = {
 
   // Phone validation (basic)
   phone: (value) => {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
     const phoneRegex = /^[\d\s\-\+\(\)]+$/;
     return phoneRegex.test(value) && value.replace(/\D/g, "").length >= 10
       ? null
@@ -40,35 +46,47 @@ export const validators = {
 
   // Number validation
   number: (value) => {
-    if (value === "" || value === null || value === undefined) return null;
+    if (value === "" || value === null || value === undefined) {
+return null;
+}
     return isNaN(value) ? "Must be a valid number" : null;
   },
 
   // Integer only
   integer: (value) => {
-    if (value === "" || value === null || value === undefined) return null;
+    if (value === "" || value === null || value === undefined) {
+return null;
+}
     return !Number.isInteger(Number(value)) ? "Must be a whole number" : null;
   },
 
   // Min value
   min: (min) => (value) => {
-    if (value === "" || value === null || value === undefined) return null;
+    if (value === "" || value === null || value === undefined) {
+return null;
+}
     const num = Number(value);
     return num < min ? `Must be at least ${min}` : null;
   },
 
   // Max value
   max: (max) => (value) => {
-    if (value === "" || value === null || value === undefined) return null;
+    if (value === "" || value === null || value === undefined) {
+return null;
+}
     const num = Number(value);
     return num > max ? `Must not exceed ${max}` : null;
   },
 
   // Range validation
   range: (min, max) => (value) => {
-    if (value === "" || value === null || value === undefined) return null;
+    if (value === "" || value === null || value === undefined) {
+return null;
+}
     const num = Number(value);
-    if (num < min || num > max) return `Must be between ${min} and ${max}`;
+    if (num < min || num > max) {
+return `Must be between ${min} and ${max}`;
+}
     return null;
   },
 
@@ -86,13 +104,17 @@ export const validators = {
 
   // Pattern/Regex
   pattern: (regex, message = "Invalid format") => (value) => {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
     return regex.test(value) ? null : message;
   },
 
   // File validators
   fileType: (allowedTypes) => (files) => {
-    if (!files || files.length === 0) return null;
+    if (!files || files.length === 0) {
+return null;
+}
     const file = files[0];
     const isValid = allowedTypes.some(type => {
       if (type.startsWith(".")) {
@@ -105,7 +127,9 @@ export const validators = {
 
   // File size (in bytes)
   fileSize: (maxSizeBytes) => (files) => {
-    if (!files || files.length === 0) return null;
+    if (!files || files.length === 0) {
+return null;
+}
     const file = files[0];
     const maxSizeMB = (maxSizeBytes / (1024 * 1024)).toFixed(2);
     return file.size > maxSizeBytes ? `File size must not exceed ${maxSizeMB}MB` : null;
@@ -113,25 +137,35 @@ export const validators = {
 
   // Date validators
   date: (value) => {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
     const date = new Date(value);
     return isNaN(date.getTime()) ? "Invalid date" : null;
   },
 
   // Min date (no earlier than)
   minDate: (minDate) => (value) => {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
     const date = new Date(value);
-    if (isNaN(date.getTime())) return "Invalid date";
+    if (isNaN(date.getTime())) {
+return "Invalid date";
+}
     const min = new Date(minDate);
     return date < min ? `Date must be on or after ${minDate}` : null;
   },
 
   // Max date (no later than)
   maxDate: (maxDate) => (value) => {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
     const date = new Date(value);
-    if (isNaN(date.getTime())) return "Invalid date";
+    if (isNaN(date.getTime())) {
+return "Invalid date";
+}
     const max = new Date(maxDate);
     return date > max ? `Date must be on or before ${maxDate}` : null;
   },
@@ -149,7 +183,9 @@ export const validators = {
   compose: (...fns) => (value) => {
     for (const fn of fns) {
       const result = fn(value);
-      if (result) return result;
+      if (result) {
+return result;
+}
     }
     return null;
   },
@@ -159,7 +195,9 @@ export const validators = {
     const errors = [];
     for (const fn of fns) {
       const result = fn(value);
-      if (!result) return null;
+      if (!result) {
+return null;
+}
       errors.push(result);
     }
     return errors[0];
@@ -173,12 +211,16 @@ export const validators = {
  * @returns {string|null} - Error message or null if valid
  */
 export function validateField(value, validator) {
-  if (!validator) return null;
+  if (!validator) {
+return null;
+}
 
   const validators_arr = Array.isArray(validator) ? validator : [validator];
   for (const v of validators_arr) {
     const error = v(value);
-    if (error) return error;
+    if (error) {
+return error;
+}
   }
   return null;
 }
@@ -194,7 +236,9 @@ export function validateForm(data, schema) {
   
   for (const [fieldName, validator] of Object.entries(schema)) {
     const error = validateField(data[fieldName], validator);
-    if (error) errors[fieldName] = error;
+    if (error) {
+errors[fieldName] = error;
+}
   }
   
   return errors;

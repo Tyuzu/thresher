@@ -5,13 +5,12 @@ import { userNewChatInit } from "../newchat/newchats.js";
 
 
 export async function meChat(otherUserId, entityType, entityId) {
-    console.log(otherUserId, entityType, entityId);
     const userId = getState("user");
     if (!userId || !otherUserId) {
         return;
     }
     let chat;
-    if (entityType == "user") {
+    if (entityType === "user") {
         userNewChatInit(otherUserId);
         // navigate(`/merechats/${chat.chatid}`);
     } else {

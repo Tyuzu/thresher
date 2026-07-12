@@ -1,4 +1,4 @@
-import { SRC_URL, apiFetch } from "../../api/api.js";
+import { apiFetch } from "../../api/api.js";
 import { displayMerchandise } from "../merch/merchService.js";
 import { createElement } from "../../components/createElement.js";
 import Modal from "../../components/ui/Modal.mjs";

@@ -1,7 +1,6 @@
 // components/notifications/modal.js
 import Modal from "../../components/ui/Modal.mjs";
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/apiClient.js";
 import notificationService from "../notificationService.js";
 
 export async function openNotificationsModal() {

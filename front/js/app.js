@@ -197,8 +197,8 @@ async function setupPerformanceMonitoring() {
           // For quick local debugging also expose the full entry in dev builds
           if (window.location.hostname === "localhost") {
             try {
-              // Some entry fields are not enumerable; log the object separately for inspection
-              console.debug("Performance entry details:", entry);
+              // Some entry fields are not enumerable; keep this behind the existing warning path
+              window.__perfDebug = entry;
             } catch (_e) {
               // Ignore logging errors
             }

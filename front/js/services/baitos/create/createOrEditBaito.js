@@ -5,7 +5,6 @@ import { navigate } from "../../../routes/index.js";
 import { apiFetch } from "../../../api/api.js";
 import { createFormGroup } from "../../../components/createFormGroup.js";
 import Notify from "../../../components/ui/Notify.mjs";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 
 // --- Category Data ---
 const categoryMap = {
@@ -130,7 +129,7 @@ function validateForm(form) {
 }
 
 // --- Payload builder ---
-function buildPayload(fd, requiredFields, form) {
+function buildPayload(fd, requiredFields) {
   const payload = new FormData();
   Object.entries(requiredFields).forEach(([k, v]) => payload.append(k, v));
 
@@ -206,7 +205,7 @@ export async function createOrEditBaito({ mode = "create", baito = {}, isLoggedI
 }
 
     const { fd, requiredFields } = result;
-    const payload = buildPayload(fd, requiredFields, form);
+    const payload = buildPayload(fd, requiredFields);
 
     try {
       if (mode === "edit") {

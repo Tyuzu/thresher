@@ -19,7 +19,7 @@ export function createTabs(tabs, routeKey = null, initialTabId = null, onTabChan
   const buttonMap = new Map();     // id → button element
 
   // --- Create buttons and content containers ---
-  tabs.forEach(({ id, title }, index) => {
+  tabs.forEach(({ id, title }) => {
     const contentContainer = createElement("article", {
       id,
       class: ["tab-content"]

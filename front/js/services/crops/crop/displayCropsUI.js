@@ -203,7 +203,9 @@ function updateTab(category, state) {
     container = createElement("div", { class: "tab-content", id: category });
     tabs[category] = container;
     const wrapper = document.getElementById("catalogue-container");
-    if (wrapper) wrapper.appendChild(container);
+    if (wrapper) {
+wrapper.appendChild(container);
+}
   }
   // Defensive: if container is still falsy, bail out
   if (!container || typeof container.replaceChildren !== "function") {

@@ -9,11 +9,9 @@ async function displayUserProfile(isLoggedIn, content, username) {
     // const content = document.getElementById("content");
     // content.textContent = ""; // Clear existing content
 
-    console.log("profile");
     try {
         const userProfile = await fetchUserProfile(username);
 
-        console.log(userProfile);
 
         if (userProfile) {
             const profileElement = profilGen(userProfile, isLoggedIn);
@@ -25,7 +23,7 @@ async function displayUserProfile(isLoggedIn, content, username) {
             notFoundMessage.textContent = "User not found.";
             content.appendChild(notFoundMessage);
         }
-    } catch (error) {
+    } catch (_error) {
         const errorMessage = document.createElement("p");
         errorMessage.textContent = "Failed to load user profile. Please try again later.";
         content.appendChild(errorMessage);

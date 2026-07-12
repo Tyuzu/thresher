@@ -14,8 +14,8 @@ export function bookingApi(entityType, entityId, storage, userId) {
                 `/bookings/slots?entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`
             );
             return res.slots || [];
-        } catch (err) {
-            console.warn("Slots API failed, falling back to local", err);
+        } catch (_err) {
+            console.warn("Slots API failed, falling back to local", _err);
             return storage.localGetSlots();
         }
     }
@@ -80,7 +80,7 @@ async function apiGenerateSlotsFromTier(tierId, startDate, endDate) {
             { startDate, endDate }   // ✅ correct keys for backend
         );
         return res.slots || [];
-    } catch (err) {
+    } catch (_err) {
         const tier = storage.localGetTiers().find(t => t.id === tierId);
         if (!tier) {
 return [];
@@ -109,8 +109,8 @@ return [];
                 `/bookings/bookings?entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`
             );
             return res.bookings || [];
-        } catch (err) {
-            console.warn("Bookings API failed, falling back to local", err);
+        } catch (_err) {
+            console.warn("Bookings API failed, falling back to local", _err);
             return storage.localGetBookings();
         }
     }

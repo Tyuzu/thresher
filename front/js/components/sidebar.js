@@ -136,7 +136,6 @@ function attachEventDelegation() {
 
 function handleLogout() {
   // Replace with real logout logic
-  console.log("Logging out...");
 }
 
 /* ---------------------------------- */

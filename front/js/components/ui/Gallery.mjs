@@ -5,7 +5,7 @@ const Gallery = (imagesArray) => {
     const galleryContainer = document.createElement('div');
     galleryContainer.className = 'gallery';
 
-    imagesArray.forEach((image, index) => {
+    imagesArray.forEach((image) => {
         const img = document.createElement('img');
         img.src = image.src;
         img.alt = image.alt || 'Gallery Image';

@@ -253,7 +253,7 @@ state.velocityY *= 0.8;
 
 /* ======= Touch support (pinch + drag + double tap) ======= */
 
-export const handleTouchStart = (e, state, img, container) => {
+export const handleTouchStart = (e, state, img, _container) => {
     if (e.touches.length === 2) {
         state.initialPinchDistance = Math.hypot(
             e.touches[0].clientX - e.touches[1].clientX,
@@ -282,7 +282,7 @@ autoCenterImage(img, state);
     }
 };
 
-export const handleTouchMove = (e, state, img, container) => {
+export const handleTouchMove = (e, state, img, _container) => {
     if (e.touches.length === 2 && state.initialPinchDistance) {
         const newDistance = Math.hypot(
             e.touches[0].clientX - e.touches[1].clientX,
@@ -303,12 +303,12 @@ export const handleTouchMove = (e, state, img, container) => {
         state.panY -= (midY - state.panY) * (zoomFactor - 1);
 
         updateTransform(img, state);
-        showZoomIndicator(container, state.zoomLevel);
+        showZoomIndicator(_container, state.zoomLevel);
         dispatchZoomBoxEvent("zoom", { level: state.zoomLevel });
     }
 };
 
-export const handleTouchEnd = (e, state, img) => {
+export const handleTouchEnd = (e, state, _img) => {
     if (e.touches.length < 2) {
 state.initialPinchDistance = null;
 }
@@ -321,7 +321,7 @@ state.isDragging = false;
    Navigation & Control Buttons
    ========================= */
 
-export const createNavigationButtons = (images, img, state, preload, update) => {
+export const createNavigationButtons = (images, img, state, _preload, _update) => {
     const prev = document.createElement("button");
     prev.className = "zoombox-prev-btn";
     prev.textContent = "⮘";

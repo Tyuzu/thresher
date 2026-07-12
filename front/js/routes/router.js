@@ -1,8 +1,6 @@
 import { createElement } from "../components/createElement.js";
 import {
   trackPageView,
-  trackButtonClick,
-  flush,
 } from "../services/activity/metrics.js";
 import {
   getState,

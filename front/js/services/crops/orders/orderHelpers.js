@@ -5,7 +5,9 @@ export function normalizeOrderId(order) {
 const PLACEHOLDER_SET = new Set(["", "-", "none", "null", "n/a", "na", "unknown", "unknown entity"]);
 
 function isPlaceholder(value) {
-  if (value === undefined || value === null) return true;
+  if (value === undefined || value === null) {
+return true;
+}
   if (typeof value === "string") {
     const v = value.trim().toLowerCase();
     return PLACEHOLDER_SET.has(v);
@@ -16,7 +18,9 @@ function isPlaceholder(value) {
 export function getOrderValue(order, ...keys) {
   for (const key of keys) {
     const value = order?.[key];
-    if (isPlaceholder(value)) continue;
+    if (isPlaceholder(value)) {
+continue;
+}
     if (value !== undefined && value !== null && value !== "") {
       return value;
     }
@@ -29,7 +33,9 @@ export function capitalize(str) {
     return "";
   }
 
-  if (isPlaceholder(str)) return "";
+  if (isPlaceholder(str)) {
+return "";
+}
 
   return str.charAt(0).toUpperCase() + str.slice(1);
 }

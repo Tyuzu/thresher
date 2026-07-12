@@ -14,7 +14,7 @@ return;
     events: { click: () => closeSightbox() } 
   });
 
-  const { container, mediaEl, resetZoomBtn } = createZoomableMedia(mediaSrc, mediaType);
+  const { container, resetZoomBtn } = createZoomableMedia(mediaSrc, mediaType);
 
   
   // --- close Buttons ---

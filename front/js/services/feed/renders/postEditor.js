@@ -118,7 +118,7 @@ editorChildren.push(subtitleInput, langSelect);
           .filter(Boolean);
       }
 
-      const updated = await apiFetch(`/feed/post/${post.postid}`, "PATCH", body);
+      await apiFetch(`/feed/post/${post.postid}`, "PATCH", body);
 
       // Handle subtitles if applicable
       if (post.type === "video" && subtitleInput) {

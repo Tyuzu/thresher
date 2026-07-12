@@ -11,9 +11,9 @@ import Imagex from "../../../components/base/Imagex.js";
 
 // ---------- Farm Cards ----------
 
-function renderFarmCards(farms, grid, isLoggedIn, onToggleFavorite) {
+function renderFarmCards(farms, grid, _isLoggedIn, _onToggleFavorite) {
   for (const farm of farms) {
-    grid.appendChild(FarmCard(farm, isLoggedIn, onToggleFavorite));
+    grid.appendChild(FarmCard(farm, _isLoggedIn, _onToggleFavorite));
   }
 }
 

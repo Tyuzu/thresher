@@ -83,7 +83,9 @@ export function initializeAnalytics() {
   // Defer analytics initialization to improve FCP
   deferNonCritical([
     () => {
-      console.log("[Analytics] Deferred initialization complete");
+      if (window.location.hostname.includes("localhost")) {
+        console.warn("[Analytics] Deferred initialization complete");
+      }
       // Load your analytics library here
     }
   ]);
@@ -127,7 +129,9 @@ export async function initializeApp() {
     // 4. Setup health checks (deferred)
     deferNonCritical([setupHealthChecks]);
 
-    console.log("[App] Initialization complete");
+    if (window.location.hostname.includes("localhost")) {
+      console.warn("[App] Initialization complete");
+    }
 
     // Expose for debugging
     if (window.location.hostname.includes("localhost")) {
@@ -139,7 +143,7 @@ export async function initializeApp() {
         getNavigationTiming: () => perfMonitor.getNavigationTiming(),
         getMemoryInfo: () => perfMonitor.getMemoryInfo()
       };
-      console.log("[App] Debug tools available at window.__APP_DEBUG");
+      console.warn("[App] Debug tools available at window.__APP_DEBUG");
     }
   } catch (error) {
     console.error("[App] Initialization failed:", error);

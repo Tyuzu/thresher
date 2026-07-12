@@ -39,7 +39,7 @@ return;
             playlists,
             albums,
             recommended,
-            recommendedAlbums,
+            _recommendedAlbums,
             artistSongs,
             personalized
         ] = await Promise.all([

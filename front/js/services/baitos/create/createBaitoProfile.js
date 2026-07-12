@@ -70,7 +70,7 @@ export async function displayCreateOrEditBaitoProfile(isLoggedIn, contentContain
             form.querySelector("#profile-languages").value = worker.languages || "";
             form.querySelector("#profile-bio").value = worker.bio || "";
             bioCounter.textContent = `${worker.bio?.length || 0} / 500 characters`;
-        } catch (err) {
+        } catch (_err) {
             Notify("Failed to load worker data for editing.", { type: "error", duration: 3000, dismissible: true });
         }
     } else {

@@ -117,10 +117,12 @@ export function renderOrderRefundSection(order, onRefundClick) {
  */
 async function handleApproveRefund(refundId) {
   const notes = prompt("Enter approval notes (optional):");
-  if (notes === null) return;
+  if (notes === null) {
+return;
+}
 
   try {
-    const res = await apiFetch(`/refunds/${refundId}/approve`, "POST", {
+    await apiFetch(`/refunds/${refundId}/approve`, "POST", {
       notes: notes || "",
     });
     alert("Refund approved successfully");
@@ -142,7 +144,7 @@ async function handleRejectRefund(refundId) {
   }
 
   try {
-    const res = await apiFetch(`/refunds/${refundId}/reject`, "POST", {
+    await apiFetch(`/refunds/${refundId}/reject`, "POST", {
       notes: notes.trim(),
     });
     alert("Refund rejected successfully");
@@ -182,8 +184,12 @@ function getRefundStatusLabel(status) {
 export async function fetchAdminRefunds(status = "", orderType = "", skip = 0, limit = 20) {
   try {
     let url = `/refunds/all?skip=${skip}&limit=${limit}`;
-    if (status) url += `&status=${status}`;
-    if (orderType) url += `&order_type=${orderType}`;
+    if (status) {
+url += `&status=${status}`;
+}
+    if (orderType) {
+url += `&order_type=${orderType}`;
+}
     
     const res = await apiFetch(url, "GET");
     return res;

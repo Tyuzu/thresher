@@ -20,7 +20,9 @@ const MultiView = (images) => {
     content.className = 'multiview-content';
   
     // --- Create image(s) ---
-    let bottomImg, topImg, slider; // used in multi-view mode
+    const bottomImg = document.createElement('img');
+    const topImg = document.createElement('img');
+    const slider = document.createElement('div');
   
 
       // Multi-view mode (Before/After)
@@ -30,7 +32,6 @@ const MultiView = (images) => {
       multiContainer.style.overflow = 'hidden';
   
       // Bottom (base) image
-      bottomImg = document.createElement('img');
       bottomImg.src = `${SRC_URL}/${images[0]}`;
       bottomImg.alt = 'Multiview Base Image';
       bottomImg.style.width = '100%';
@@ -40,7 +41,6 @@ const MultiView = (images) => {
       multiContainer.appendChild(bottomImg);
   
       // Top (compare) image
-      topImg = document.createElement('img');
       topImg.src = `${SRC_URL}/${images[1]}`;
       topImg.alt = 'Multiview Compare Image';
       topImg.style.position = 'absolute';
@@ -55,7 +55,6 @@ const MultiView = (images) => {
       multiContainer.appendChild(topImg);
   
       // Slider to control the comparison
-      slider = document.createElement('div');
       slider.className = 'multiview-slider';
       slider.style.position = 'absolute';
       slider.style.top = '0';

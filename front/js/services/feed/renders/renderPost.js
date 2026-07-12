@@ -49,7 +49,6 @@ posts = [posts];
         } else if (post.type === "video") {
             const media = post.media.map(m => resolveImagePath(EntityType.FEED, PictureType.VIDEO, m));
             const posterPath = resolveImagePath(EntityType.FEED, PictureType.POSTER, `${post.thumbnail || mediaUrls[0]}`);
-            console.log(posterPath);
             const players = await RenderVideoPost(mediaContainer, media, mediaUrls, post.resolutions || [], [], posterPath);
             activeVideoPlayers.push(...players);
         } else if (post.text) {
@@ -87,7 +86,7 @@ posts = [posts];
         const actionsContainer = await createActions(meta, isCreator, postElement);
         postElement.appendChild(actionsContainer);
 
-        if (isNew == 1) {
+        if (isNew === 1) {
             postsContainer.prepend(postElement);
         } else {
             postsContainer.appendChild(postElement);

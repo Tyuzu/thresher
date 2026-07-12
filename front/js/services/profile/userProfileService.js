@@ -22,7 +22,7 @@ async function displayProfile(isLoggedIn, content) {
                 loginMessage.textContent = "Please log in to see your profile.";
                 profileSection.appendChild(loginMessage);
             }
-        } catch (error) {
+        } catch (_error) {
             const errorMessage = document.createElement("p");
             errorMessage.textContent = "Failed to load profile. Please try again later.";
             content.appendChild(errorMessage);

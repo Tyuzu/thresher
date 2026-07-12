@@ -8,12 +8,11 @@ import Notify from "../../components/ui/Notify.mjs";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
 import { reportEntity } from "../reporting/reporting.js";
 import { createFormGroup } from "../../components/createFormGroup.js";
-import Imagex from "../../components/base/Imagex.js";
 import { addToCart } from "../cart/addToCart.js";
 import { getState } from "../../state/state.js";
 import { showPaymentModal } from "../pay/pay.js";
 
-import { addMerchandise, displayNewMerchandise, clearMerchForm, deleteMerch, editMerchForm } from "./merchAPI.js";
+import { addMerchandise } from "./merchAPI.js";
 
 // --- Add Merchandise Form ---
 function addMerchForm(entityType, eventId, merchList) {

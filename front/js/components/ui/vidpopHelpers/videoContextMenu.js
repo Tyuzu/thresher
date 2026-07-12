@@ -3,7 +3,7 @@ import { togglePictureInPicture } from "./vutils.js";
 
 const CONTEXT_HANDLER = Symbol("videoContextHandler");
 
-export function setupVideoContextMenu(video, videoId = "") {
+export function setupVideoContextMenu(video, _videoId = "") {
   if (video[CONTEXT_HANDLER]) {
     video.removeEventListener("contextmenu", video[CONTEXT_HANDLER]);
   }
@@ -12,7 +12,6 @@ export function setupVideoContextMenu(video, videoId = "") {
 
   const toggleStats = () => {
     statsVisible = !statsVisible;
-    console.log(`Video stats ${statsVisible ? "shown" : "hidden"}`);
   };
 
   const safeClipboardWrite = async text => {

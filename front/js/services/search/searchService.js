@@ -165,11 +165,15 @@ async function handleAutocomplete(event) {
     const query = event.target.value.trim();
     const list = document.getElementById("autocomplete-list");
 
-    if (!list) return;
+    if (!list) {
+return;
+}
 
     list.textContent = "";
 
-    if (!query) return;
+    if (!query) {
+return;
+}
 
     if (autocompleteCache.has(query)) {
         renderSuggestions(autocompleteCache.get(query), list, query);
@@ -204,7 +208,9 @@ async function handleAutocomplete(event) {
 function renderSuggestions(suggestions, list, query) {
     list.textContent = "";
 
-    if (!suggestions.length) return;
+    if (!suggestions.length) {
+return;
+}
 
     suggestions.forEach(s => {
         const li = createElement("li", {
@@ -227,10 +233,14 @@ function renderSuggestions(suggestions, list, query) {
 ------------------------------*/
 function handleKeyboardNavigation(event) {
     const list = document.getElementById("autocomplete-list");
-    if (!list) return;
+    if (!list) {
+return;
+}
 
     const items = list.querySelectorAll(".autocomplete-item");
-    if (!items.length) return;
+    if (!items.length) {
+return;
+}
 
     let index = Array.from(items)
         .findIndex(i => i.classList.contains("selected"));
@@ -240,7 +250,9 @@ function handleKeyboardNavigation(event) {
     } else if (event.key === "ArrowUp") {
         index = (index - 1 + items.length) % items.length;
     } else if (event.key === "Enter") {
-        if (index >= 0) items[index].click();
+        if (index >= 0) {
+items[index].click();
+}
         event.preventDefault();
         return;
     } else {
@@ -248,7 +260,9 @@ function handleKeyboardNavigation(event) {
     }
 
     items.forEach(i => i.classList.remove("selected"));
-    if (index >= 0) items[index].classList.add("selected");
+    if (index >= 0) {
+items[index].classList.add("selected");
+}
 }
 
 /* -----------------------------
@@ -315,12 +329,16 @@ function displaySearchResults(entityType, data, container) {
             }
         }
 
-        if (!has) renderEmpty(container);
+        if (!has) {
+renderEmpty(container);
+}
         return;
     }
 
     if (Array.isArray(data)) {
-        if (!data.length) return renderEmpty(container);
+        if (!data.length) {
+return renderEmpty(container);
+}
 
         data.forEach(item =>
             container.appendChild(createCard(entityType, item))

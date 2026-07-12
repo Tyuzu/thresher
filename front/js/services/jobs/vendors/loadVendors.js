@@ -45,7 +45,6 @@ function formatRequestStatus(status) {
 }
 
 export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
-    console.debug("loadVendors called", { eventId, isLoggedIn });
     const { onHireSuccess } = options;
 
     let vendors = [];
@@ -233,7 +232,9 @@ export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
 
                     // trigger the action button inside bookingContainer to open modal
                     const action = bookingContainer.querySelector(".btn-primary");
-                    if (action) action.click();
+                    if (action) {
+action.click();
+}
                 } catch (err) {
                     console.error("Failed to open booking modal:", err);
                     Notify("Failed to open booking interface.", { type: "error", duration: 3000 });

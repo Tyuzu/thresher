@@ -44,7 +44,7 @@ return;
     videoWrappers.forEach(w => {
         try {
  window.__videoFloatObserver.observe(w); 
-} catch (e) { /* ignore */ }
+} catch { /* ignore */ }
     });
 }
 
@@ -70,12 +70,12 @@ function createFloatingClone(wrapper, originalVideo) {
         const wasPlaying = !originalVideo.paused && !originalVideo.ended;
         try {
  cloneVideo.currentTime = originalVideo.currentTime; 
-} catch (e) { /* ignore */ }
+} catch { /* ignore */ }
 
         // Pause original to avoid double audio
         try {
  originalVideo.pause(); 
-} catch (e) { /* ignore */ }
+} catch { /* ignore */ }
 
         // Append clone and a close button
         floatingWrapper.appendChild(cloneVideo);
@@ -110,13 +110,13 @@ function createFloatingClone(wrapper, originalVideo) {
             if (floatingWrapper._originalVideo && !floatingWrapper._originalVideo.paused) {
                 try {
                     floatingWrapper._cloneVideo.currentTime = floatingWrapper._originalVideo.currentTime;
-                } catch (e) { /* ignore */ }
+                } catch { /* ignore */ }
             }
         }, 250);
         floatingWrapper._syncInterval = syncInterval;
 
-    } catch (err) {
-        console.error("createFloatingClone error", err);
+    } catch (_err) {
+        console.error("createFloatingClone error", _err);
         if (wrapper && wrapper.dataset.floatingId) {
 delete wrapper.dataset.floatingId;
 }
@@ -151,25 +151,11 @@ function removeFloatingClone(wrapper, floatingEl) {
             delete wrapper.dataset.floatingId;
         }
 
-    } catch (err) {
-        console.error("removeFloatingClone error", err);
+    } catch (_err) {
+        console.error("removeFloatingClone error", _err);
         if (wrapper && wrapper.dataset.floatingId) {
             delete wrapper.dataset.floatingId;
         }
-    }
-}
-
-function wrapperMarkClosed(wrapper, videoEl) {
-    wrapper.dataset.closed = "1";
-    try {
- videoEl.pause(); 
-} catch (_) {}
-    const floatId = wrapper.dataset.floatingId;
-    if (floatId) {
-        const floatingEl = document.getElementById(floatId);
-        if (floatingEl) {
-removeFloatingClone(wrapper, floatingEl);
-}
     }
 }
 

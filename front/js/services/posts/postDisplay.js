@@ -274,7 +274,6 @@ function renderImageGroup(images) {
   const mediaItems = images.map((img) =>
     resolveImagePath(EntityType.BLOGPOST, PictureType.PHOTO, img.url)
   );
-  console.log(mediaItems);
   images.forEach((img, index) => {
     const thumbSrc = resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, img.url);
 

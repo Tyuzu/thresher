@@ -64,7 +64,6 @@ export async function userProfileCard(profile = {
                 if (result && result.success === true) {
                   alert("Funding successful.");
                 } else {
-                  console.log("Funding cancelled or failed");
                 }
               } catch (err) {
                 console.error("Funding failed:", err);

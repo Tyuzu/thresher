@@ -1,9 +1,8 @@
-import { createPromoLink } from "./displayCropshelpers";
 import { createElement } from "../../../components/createElement";
 import Button from "../../../components/base/Button";
 import { navigate } from "../../../routes";
 
-export function cropAside(cropData) {
+export function cropAside(_cropData) {
     return createElement("div", "", [
         createElement("h3", {}, ["Actions"]),
         createElement("div", { class: "cta-list" }, [

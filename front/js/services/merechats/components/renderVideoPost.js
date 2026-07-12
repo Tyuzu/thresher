@@ -1,7 +1,7 @@
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 import VideoPlayer from "../../../components/ui/VideoPlayer.mjs";
 
-function RenderVideoPost(container, videos, id = "", ext = "") {
+function RenderVideoPost(container, videos, _id = "", ext = "") {
   videos.forEach(v => {
     const src = resolveImagePath(
       EntityType.CHAT,

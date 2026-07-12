@@ -31,7 +31,7 @@ function getFileExtension(file) {
 }
 
 // --- Main function ---
-export function showMediaUploadForm(isLoggedIn, entityType, entityId, mediaList) {
+export function showMediaUploadForm(isLoggedIn, entityType, entityId, _mediaList) {
   const uploadsDiv = createElement("div", { class: "upload-list" });
   const caption = createElement("textarea", {
     placeholder: "Write a caption...",

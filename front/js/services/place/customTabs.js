@@ -75,13 +75,13 @@ async function displayPlaceMenu(container, placeId, isCreator, isLoggedIn) {
     const menuContainer = createElement('div', {}, []);
     container.appendChild(menuContainer);
     displayMenu(menuContainer, placeId, isCreator, isLoggedIn);
-  } catch (err) {
+  } catch (_err) {
     container.appendChild(
       createElement("div", { class: "tab-section error" }, [
         createElement("p", {}, ["Menu unavailable."]),
       ])
     );
-    console.warn("Menu tab failed:", err);
+    console.warn("Menu tab failed:", _err);
   }
 }
 

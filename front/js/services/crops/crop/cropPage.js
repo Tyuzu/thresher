@@ -275,22 +275,34 @@ export async function displayCrop(content, cropID, isLoggedIn) {
 }
 
 function formatRelativeDate(dateString) {
-  if (!dateString) return "N/A";
+  if (!dateString) {
+return "N/A";
+}
 
   const date = new Date(dateString);
   const diffDays = Math.floor(
     (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  if (diffDays <= 0) return "Today";
-  if (diffDays === 1) return "1 day ago";
+  if (diffDays <= 0) {
+return "Today";
+}
+  if (diffDays === 1) {
+return "1 day ago";
+}
 
   return `${diffDays} days ago`;
 }
 
 function getStockStatus(qty) {
-  if (qty <= 0) return "Out of Stock";
-  if (qty <= 5) return "Low Stock";
-  if (qty <= 20) return "Limited Stock";
+  if (qty <= 0) {
+return "Out of Stock";
+}
+  if (qty <= 5) {
+return "Low Stock";
+}
+  if (qty <= 20) {
+return "Limited Stock";
+}
   return "In Stock";
 }

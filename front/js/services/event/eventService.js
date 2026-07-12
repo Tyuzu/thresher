@@ -32,12 +32,6 @@ const confirmAndExecute = async (message, action, successMessage, errorMessage) 
 
 const getEventStatus = (eventDate) => new Date(eventDate) <= new Date() ? "ongoing" : "active";
 
-const createSection = (parent) => {
-    const section = createElement("section", { class: "event-section" });
-    parent.appendChild(section);
-    return section;
-};
-
 const createVenue = async (container, eventId, seating, isLoggedIn) => {
     const venueContainer = createElement('div', { id: 'event-venue', class: 'venue-container' });
     await displayEventVenue(venueContainer, isLoggedIn, eventId, seating);
@@ -85,22 +79,22 @@ async function fetchEventData(eventId) {
 }
 
 // Setup Event Tabs
-const setupTabs = (eventData, eventId, isCreator, isLoggedIn) => {
+const setupTabs = (eventData, eventId, _isCreator, isLoggedIn) => {
     const tabs = [];
     const status = getEventStatus(eventData.date);
 
     if (status === "active") {
         tabs.push(
-            { title: "Tickets", id: "tickets-tab", render: (c) => displayTickets(c, eventData.tickets, eventId, isCreator, isLoggedIn) },
-            { title: "FAQ", id: "faq-tab", render: (c) => displayEventFAQ(c, isCreator, eventId, eventData.faqs) },
-            { title: "Merchandise", id: "merch-tab", render: (c) => displayMerchandise(c, eventData.merch, "event", eventId, isCreator, isLoggedIn) },
+            { title: "Tickets", id: "tickets-tab", render: (c) => displayTickets(c, eventData.tickets, eventId, _isCreator, isLoggedIn) },
+            { title: "FAQ", id: "faq-tab", render: (c) => displayEventFAQ(c, _isCreator, eventId, eventData.faqs) },
+            { title: "Merchandise", id: "merch-tab", render: (c) => displayMerchandise(c, eventData.merch, "event", eventId, _isCreator, isLoggedIn) },
             { title: "News", id: "news-tab", render: (c) => displayEventNews(c, eventId, isLoggedIn) },
         );
     } else {
         tabs.push(
-            { title: "Reviews", id: "reviews-tab", render: (c) => displayEventReviews(c, eventId, isCreator, isLoggedIn) },
+            { title: "Reviews", id: "reviews-tab", render: (c) => displayEventReviews(c, eventId, _isCreator, isLoggedIn) },
             { title: "Media", id: "media-tab", render: (c) => displayMedia(c, "event", eventId, isLoggedIn) },
-            { title: "Lost & Found", id: "lnf-tab", render: (c) => displayLostAndFound(c, isCreator, eventId) },
+            { title: "Lost & Found", id: "lnf-tab", render: (c) => displayLostAndFound(c, _isCreator, eventId) },
             { title: "Contact", id: "contact-tab", render: (c) => displayContactDetails(c, eventData.contactInfo) }
         );
     }
@@ -130,7 +124,7 @@ async function displayEvent(isLoggedIn, eventId, content) {
             tabs,
             `event-tabs:${eventId}`, // routeKey for saving tab state
             null,                     // initialTabId (optional)
-            (newTabId) => { /* optional callback */ }
+            (_newTabId) => { /* optional callback */ }
         );
         container.appendChild(tabUI);
 

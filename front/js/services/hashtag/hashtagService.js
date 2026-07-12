@@ -32,7 +32,7 @@ async function renderTopTab(container, hashtag, page = 0, limit = DEFAULT_LIMIT)
             ]);
             container.appendChild(item);
         });
-    } catch (err) {
+    } catch (_err) {
         container.textContent = "";
         container.appendChild(
             createElement("div", { class: "error-state" }, [
@@ -66,7 +66,7 @@ async function renderLatestTab(container, hashtag, page = 0, limit = DEFAULT_LIM
             ]);
             container.appendChild(item);
         });
-    } catch (err) {
+    } catch (_err) {
         container.textContent = "";
         container.appendChild(
             createElement("div", { class: "error-state" }, [
@@ -100,7 +100,7 @@ async function renderPeopleTab(container, hashtag, page = 0, limit = DEFAULT_LIM
             ]);
             container.appendChild(item);
         });
-    } catch (err) {
+    } catch (_err) {
         container.textContent = "";
         container.appendChild(
             createElement("div", { class: "error-state" }, [
@@ -158,7 +158,7 @@ return;
             grid.appendChild(card);
         });
         container.appendChild(grid);
-    } catch (err) {
+    } catch (_err) {
         container.textContent = "";
         container.appendChild(
             createElement("div", { class: "error-state" }, [

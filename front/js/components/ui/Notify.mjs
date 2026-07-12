@@ -35,7 +35,7 @@ const Notify = (message, {
   container.appendChild(notify);
 
   const timeout = duration || Math.max(3000, message.length * 50);
-  const autoRemove = setTimeout(() => {
+  setTimeout(() => {
     notify.classList.add("hide");
     setTimeout(() => notify.remove(), 500);
   }, timeout);

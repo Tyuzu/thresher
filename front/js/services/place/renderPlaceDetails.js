@@ -21,7 +21,6 @@ function createEventBannerSection(place, isCreator) {
 
 function renderPlaceDetails(isLoggedIn, content, place, isCreator) {
   content.replaceChildren();
-console.log(place);
   // const createdDate = new Date(place.created_at).toLocaleString();
   const createdDate = Datex(place.created_at);
   // const updatedDate = new Date(place.updated_at).toLocaleString();

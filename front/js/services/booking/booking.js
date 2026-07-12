@@ -279,7 +279,7 @@ function renderAdminUi(api, storage, modalContent, refreshBookings, entityType, 
 }
 
 // ---------- User UI ----------
-function renderUserUi(api, storage, modalContent, userId, refreshBookings, entityType, entityId, modalOverlay) {
+function renderUserUi(api, storage, modalContent, userId, refreshBookings, entityType, entityId, _modalOverlay) {
     const slotsContainer = createElement("div", { "data-slots-container": "true", class: "slots-container" }, []);
     modalContent.appendChild(slotsContainer);
 

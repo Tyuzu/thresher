@@ -90,7 +90,7 @@ function MinAudio(audioSrc) {
 
   volumeSlider.addEventListener("input", () => {
     audio.volume = volumeSlider.value;
-    muteBtn.innerHTML = audio.volume == 0 ? "🔇" : "🔊";
+    muteBtn.innerHTML = audio.volume === 0 ? "🔇" : "🔊";
   });
 
   const speedControl = document.createElement("select");
