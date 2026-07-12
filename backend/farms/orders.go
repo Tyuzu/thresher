@@ -2,10 +2,10 @@ package farms
 
 import (
 	"context"
-	"log"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 

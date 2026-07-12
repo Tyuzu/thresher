@@ -2,10 +2,10 @@ package filemgr
 
 import (
 	"encoding/json"
-	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"strings"
 

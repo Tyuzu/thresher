@@ -2,11 +2,11 @@ package events
 
 import (
 	"context"
-	"log"
 	"naevis/infra"
 	"naevis/infra/db"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 

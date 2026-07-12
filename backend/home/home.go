@@ -2,8 +2,8 @@ package home
 
 import (
 	"context"
-	"log"
 	"math/rand"
+	log "naevis/utils/logger"
 	"net/http"
 	"strconv"
 	"time"

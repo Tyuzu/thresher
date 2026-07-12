@@ -2,7 +2,6 @@ package baito
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +11,7 @@ import (
 	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	"naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -253,7 +253,7 @@ func CreateBaito(app *infra.Deps) httprouter.Handle {
 		)
 
 		if err := app.DB.Insert(ctx, BaitoCollection, baito); err != nil {
-			log.Printf("Insert error: %v", err)
+			logger.Printf("Insert error: %v", err)
 
 			utils.RespondWithError(
 				w,
@@ -307,7 +307,7 @@ func UpdateBaito(app *infra.Deps) httprouter.Handle {
 				return
 			}
 
-			log.Printf("Update error: %v", err)
+			logger.Printf("Update error: %v", err)
 
 			utils.RespondWithError(
 				w,

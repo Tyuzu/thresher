@@ -3,7 +3,7 @@ package mechat
 import (
 	"context"
 	"encoding/json"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"strconv"
 	"strings"

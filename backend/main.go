@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -25,7 +25,8 @@ import (
 
 func main() {
 	if err := logger.Init(); err != nil {
-		log.Fatalf("failed to init logger: %v", err)
+		fmt.Fprintf(os.Stderr, "failed to init logger: %v\n", err)
+		os.Exit(1)
 	}
 	defer func() { _ = logger.Sync() }()
 

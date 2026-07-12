@@ -2,7 +2,7 @@ package suggestions
 
 import (
 	"context"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"strconv"
 	"time"

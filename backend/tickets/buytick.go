@@ -3,7 +3,7 @@ package tickets
 import (
 	"context"
 	"encoding/json"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"os"
 	"time"

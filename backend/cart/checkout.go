@@ -3,12 +3,12 @@ package cart
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 

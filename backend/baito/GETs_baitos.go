@@ -2,13 +2,14 @@ package baito
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"naevis/infra"
 	"naevis/infra/db"
 	"naevis/models"
 	"naevis/utils"
+	"naevis/utils/logger"
+	log "naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -52,7 +53,7 @@ func GetLatestBaitos(app *infra.Deps) httprouter.Handle {
 			&baitos,
 		)
 		if err != nil {
-			log.Printf("DB error: %v", err)
+			logger.Printf("DB error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
@@ -88,7 +89,7 @@ func GetRelatedBaitos(app *infra.Deps) httprouter.Handle {
 			&baitos,
 		)
 		if err != nil {
-			log.Printf("DB error: %v", err)
+			logger.Printf("DB error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
@@ -127,14 +128,14 @@ func GetBaitoByID(app *infra.Deps) httprouter.Handle {
 			if err == mongo.ErrNoDocuments {
 				utils.RespondWithError(w, http.StatusNotFound, "Not found")
 			} else {
-				log.Printf("DB error: %v", err)
+				logger.Printf("DB error: %v", err)
 				utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
 			}
 			return
 		}
 
 		if err := enrichBaitoApplicationCount(&ctx, app, &b); err != nil {
-			log.Printf("Failed to count applications for baito %s: %v", id, err)
+			logger.Printf("Failed to count applications for baito %s: %v", id, err)
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, b)
@@ -221,7 +222,7 @@ func GetMyApplications(app *infra.Deps) httprouter.Handle {
 			&results,
 		)
 		if err != nil {
-			log.Printf("Aggregate error: %v", err)
+			logger.Printf("Aggregate error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch applications")
 			return
 		}

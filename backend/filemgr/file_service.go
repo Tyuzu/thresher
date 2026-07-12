@@ -3,8 +3,8 @@ package filemgr
 import (
 	"fmt"
 	"io"
-	"log"
 	"mime/multipart"
+	log "naevis/utils/logger"
 	"net/http"
 	"strings"
 )

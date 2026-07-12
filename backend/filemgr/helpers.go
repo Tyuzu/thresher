@@ -8,7 +8,7 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
-	"log"
+	log "naevis/utils/logger"
 	"net"
 	"net/url"
 	"os"

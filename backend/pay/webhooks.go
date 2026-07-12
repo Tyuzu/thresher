@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"os"
 	"time"

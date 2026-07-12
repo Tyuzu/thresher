@@ -2,8 +2,8 @@ package filemgr
 
 import (
 	"fmt"
-	"log"
 	"mime/multipart"
+	log "naevis/utils/logger"
 	"net/http"
 	"path/filepath"
 	"strings"

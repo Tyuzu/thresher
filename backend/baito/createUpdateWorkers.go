@@ -1,7 +1,6 @@
 package baito
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	"naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -102,7 +102,7 @@ func CreateWorkerProfile(app *infra.Deps) httprouter.Handle {
 			return
 		}
 		if err != mongo.ErrNoDocuments {
-			log.Printf("DB error: %v", err)
+			logger.Printf("DB error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
@@ -127,7 +127,7 @@ func CreateWorkerProfile(app *infra.Deps) httprouter.Handle {
 		worker.BaitoWorkerId = userID
 
 		if err = app.DB.Insert(ctx, BaitoWorkersCollection, worker); err != nil {
-			log.Printf("Insert error: %v", err)
+			logger.Printf("Insert error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to save worker profile")
 			return
 		}
@@ -176,7 +176,7 @@ func UpdateWorkerProfile(app *infra.Deps) httprouter.Handle {
 
 		err = app.DB.UpdateOne(ctx, BaitoWorkersCollection, filter, update)
 		if err != nil {
-			log.Printf("Update error: %v", err)
+			logger.Printf("Update error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update worker profile")
 			return
 		}

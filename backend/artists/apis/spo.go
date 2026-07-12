@@ -17,7 +17,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-/* -------------------- Models -------------------- */
+    "io" 	log "naevis/utils/logger"
 
 type Artist struct {
 	ID        string   `json:"id"`

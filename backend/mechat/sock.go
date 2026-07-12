@@ -2,7 +2,7 @@ package mechat
 
 import (
 	"context"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"sync"
 	"time"

@@ -2,7 +2,7 @@ package merch
 
 import (
 	"encoding/json"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 
 	"naevis/config"

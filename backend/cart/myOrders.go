@@ -2,7 +2,6 @@ package cart
 
 import (
 	"context"
-	"log"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -52,7 +53,7 @@ func GetMyOrders(app *infra.Deps) httprouter.Handle {
 			&regularOrders,
 		)
 		if err != nil {
-			log.Println("GetMyOrders FindMany error:", err)
+			logger.Println("GetMyOrders FindMany error:", err)
 			http.Error(w, "Failed to fetch orders", http.StatusInternalServerError)
 			return
 		}
@@ -66,7 +67,7 @@ func GetMyOrders(app *infra.Deps) httprouter.Handle {
 			&farmOrders,
 		)
 		if err != nil {
-			log.Println("GetMyOrders farm orders error:", err)
+			logger.Println("GetMyOrders farm orders error:", err)
 			// Don't fail on farm orders error, just proceed with regular orders
 		}
 

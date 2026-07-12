@@ -2,13 +2,13 @@ package events
 
 import (
 	"context"
-	"log"
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 

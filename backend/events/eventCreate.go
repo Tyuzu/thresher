@@ -3,7 +3,6 @@ package events
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
@@ -11,6 +10,7 @@ import (
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"strings"
 	"time"

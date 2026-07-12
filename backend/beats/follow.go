@@ -3,7 +3,7 @@ package beats
 import (
 	"context"
 	"fmt"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 

@@ -3,7 +3,7 @@ package filemgr
 import (
 	"context"
 	"fmt"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"strings"
 

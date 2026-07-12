@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"context"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"strings"
 	"time"

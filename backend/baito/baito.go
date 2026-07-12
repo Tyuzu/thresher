@@ -1,7 +1,6 @@
 package baito
 
 import (
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -11,6 +10,7 @@ import (
 	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	"naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -36,7 +36,7 @@ func DeleteBaito(app *infra.Deps) httprouter.Handle {
 				utils.RespondWithError(w, http.StatusForbidden, "Baito not found or unauthorized")
 				return
 			}
-			log.Printf("Delete error: %v", err)
+			logger.Printf("Delete error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete baito")
 			return
 		}
@@ -74,13 +74,13 @@ func ApplyToBaito(app *infra.Deps) httprouter.Handle {
 		}
 
 		if err := app.DB.Insert(ctx, BaitoAppCollection, appx); err != nil {
-			log.Printf("Insert error: %v", err)
+			logger.Printf("Insert error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to save application")
 			return
 		}
 
 		if err := app.DB.Inc(ctx, BaitoCollection, bson.M{"baitoid": ps.ByName("baitoid")}, "applicationcount", 1); err != nil {
-			log.Printf("Failed to update application count for baito %s: %v", ps.ByName("baitoid"), err)
+			logger.Printf("Failed to update application count for baito %s: %v", ps.ByName("baitoid"), err)
 		}
 
 		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.AppliedToBaitoEvent, mqevent.AppliedToBaitoPayload{})

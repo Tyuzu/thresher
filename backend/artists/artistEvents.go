@@ -3,7 +3,6 @@ package artists
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
 	"naevis/infra"
@@ -11,6 +10,7 @@ import (
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 

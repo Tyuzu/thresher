@@ -1,8 +1,10 @@
 package logger
 
 import (
+	"fmt"
 	"io"
-	"log"
+	stdlog "log"
+	"os"
 
 	"go.uber.org/zap"
 )
@@ -31,7 +33,7 @@ func Init() error {
 	}
 
 	// redirect stdlib log output to zap
-	log.SetOutput(zapWriter{})
+	stdlog.SetOutput(zapWriter{})
 	return nil
 }
 
@@ -45,3 +47,66 @@ func Sync() error {
 
 // Writer exposes an io.Writer that writes to the zap logger
 func Writer() io.Writer { return zapWriter{} }
+
+// Compatibility wrappers matching the stdlib `log` package API.
+// This allows existing call sites to `import log "naevis/utils/logger"`
+// and keep calling `log.Println`, `log.Printf`, `log.Fatalf`, etc.
+func Print(v ...interface{}) {
+	if L == nil {
+		fmt.Print(v...)
+		return
+	}
+	L.Sugar().Info(v...)
+}
+func Println(v ...interface{}) {
+	if L == nil {
+		fmt.Println(v...)
+		return
+	}
+	L.Sugar().Info(v...)
+}
+func Printf(format string, v ...interface{}) {
+	if L == nil {
+		fmt.Printf(format, v...)
+		return
+	}
+	L.Sugar().Infof(format, v...)
+}
+
+func Fatal(v ...interface{}) {
+	if L == nil {
+		fmt.Fprint(os.Stderr, fmt.Sprintln(v...))
+		os.Exit(1)
+		return
+	}
+	L.Sugar().Fatal(v...)
+}
+func Fatalf(format string, v ...interface{}) {
+	if L == nil {
+		fmt.Fprintf(os.Stderr, format, v...)
+		os.Exit(1)
+		return
+	}
+	L.Sugar().Fatalf(format, v...)
+}
+
+func Panic(v ...interface{}) {
+	if L == nil {
+		panic(fmt.Sprint(v...))
+	}
+	L.Sugar().Panic(v...)
+}
+func Panicf(format string, v ...interface{}) {
+	if L == nil {
+		panic(fmt.Sprintf(format, v...))
+	}
+	L.Sugar().Panicf(format, v...)
+}
+
+func Printlnw(msg string, keysAndValues ...interface{}) {
+	if L == nil {
+		fmt.Println(msg)
+		return
+	}
+	L.Sugar().Infow(msg, keysAndValues...)
+}

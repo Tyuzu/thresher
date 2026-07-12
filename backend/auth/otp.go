@@ -9,11 +9,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	inmq "naevis/infra/mq"
 	"naevis/utils"
+	"naevis/utils/logger"
 	"net"
 	"net/http"
 	"net/mail"
@@ -85,22 +85,22 @@ func SendEmailOTP(toEmail, otp string) error {
 		host := strings.TrimSpace(os.Getenv("SMTP_HOST"))
 		port := strings.TrimSpace(os.Getenv("SMTP_PORT"))
 		if from == "" || pass == "" || host == "" || port == "" {
-			log.Printf("warn: SMTP not configured")
+			logger.Printf("warn: SMTP not configured")
 			return
 		}
 		parsedFrom, err := mail.ParseAddress(from)
 		if err != nil || parsedFrom == nil || parsedFrom.Address == "" {
-			log.Printf("warn: invalid SMTP sender address")
+			logger.Printf("warn: invalid SMTP sender address")
 			return
 		}
 		fromAddr := parsedFrom.Address
 		portNum, err := strconv.Atoi(port)
 		if err != nil || portNum < 1 || portNum > 65535 {
-			log.Printf("warn: invalid SMTP port")
+			logger.Printf("warn: invalid SMTP port")
 			return
 		}
 		if strings.ContainsAny(host, "\r\n\t ") || strings.Contains(host, "/") {
-			log.Printf("warn: invalid SMTP host")
+			logger.Printf("warn: invalid SMTP host")
 			return
 		}
 		msg := fmt.Appendf(nil, "Subject: Email Verification\r\n\r\nYour OTP is: %s\r\nIt expires in 10 minutes.\r\n", otp)
@@ -108,42 +108,42 @@ func SendEmailOTP(toEmail, otp string) error {
 		serverAddr := net.JoinHostPort(host, port)
 		client, err := smtp.Dial(serverAddr)
 		if err != nil {
-			log.Printf("warn: failed to connect to SMTP server: %v", err)
+			logger.Printf("warn: failed to connect to SMTP server: %v", err)
 			return
 		}
 		defer func() { _ = client.Close() }()
 		if err := client.Hello("localhost"); err != nil {
-			log.Printf("warn: failed to start SMTP conversation: %v", err)
+			logger.Printf("warn: failed to start SMTP conversation: %v", err)
 			return
 		}
 		if err := client.Auth(auth); err != nil {
-			log.Printf("warn: failed to authenticate SMTP client: %v", err)
+			logger.Printf("warn: failed to authenticate SMTP client: %v", err)
 			return
 		}
 		if err := client.Mail(fromAddr); err != nil {
-			log.Printf("warn: failed to set SMTP sender: %v", err)
+			logger.Printf("warn: failed to set SMTP sender: %v", err)
 			return
 		}
 		if err := client.Rcpt(recipient); err != nil {
-			log.Printf("warn: failed to set SMTP recipient: %v", err)
+			logger.Printf("warn: failed to set SMTP recipient: %v", err)
 			return
 		}
 		wc, err := client.Data()
 		if err != nil {
-			log.Printf("warn: failed to open SMTP data writer: %v", err)
+			logger.Printf("warn: failed to open SMTP data writer: %v", err)
 			return
 		}
 		if _, err := wc.Write(msg); err != nil {
-			log.Printf("warn: failed to write SMTP message: %v", err)
+			logger.Printf("warn: failed to write SMTP message: %v", err)
 			_ = wc.Close()
 			return
 		}
 		if err := wc.Close(); err != nil {
-			log.Printf("warn: failed to close SMTP data writer: %v", err)
+			logger.Printf("warn: failed to close SMTP data writer: %v", err)
 			return
 		}
 		if err := client.Quit(); err != nil {
-			log.Printf("warn: failed to quit SMTP session: %v", err)
+			logger.Printf("warn: failed to quit SMTP session: %v", err)
 		}
 	}(recipient)
 	return nil

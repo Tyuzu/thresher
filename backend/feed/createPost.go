@@ -2,10 +2,10 @@ package feed
 
 import (
 	"encoding/json"
-	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"

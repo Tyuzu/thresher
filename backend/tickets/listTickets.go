@@ -2,7 +2,7 @@ package tickets
 
 import (
 	"context"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"sort"
 	"time"

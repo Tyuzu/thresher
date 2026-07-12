@@ -16,6 +16,8 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
+	log "naevis/utils/logger"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"

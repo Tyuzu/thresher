@@ -3,11 +3,11 @@ package feed
 import (
 	"context"
 	"errors"
-	"log"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"regexp"
 	"strings"
 	"time"
