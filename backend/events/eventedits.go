@@ -66,7 +66,9 @@ func EditEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.EventUpdatedEvent, mqevent.EventUpdatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.EventUpdatedEvent, mqevent.EventUpdatedPayload{}); err != nil {
+			log.Printf("failed to publish event updated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, updatedEvent)
 	}

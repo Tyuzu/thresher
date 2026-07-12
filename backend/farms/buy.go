@@ -13,6 +13,7 @@ import (
 	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -156,7 +157,9 @@ func BuyCrop(app *infra.Deps) httprouter.Handle {
 				bson.M{"$set": bson.M{"outOfStock": true, "updatedAt": time.Now()}},
 			)
 		}
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CropBoughtEvent, mqevent.CropBoughtPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CropBoughtEvent, mqevent.CropBoughtPayload{}); err != nil {
+			log.Printf("failed to publish crop bought event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 	}
@@ -261,7 +264,9 @@ func updateOrderStatus(
 		)
 	}
 
-	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.OrderStatusUpdatedEvent, mqevent.OrderStatusUpdatedPayload{})
+	if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.OrderStatusUpdatedEvent, mqevent.OrderStatusUpdatedPayload{}); err != nil {
+		log.Printf("failed to publish order status updated event: %v", err)
+	}
 
 	utils.RespondWithJSON(
 		w,
@@ -435,7 +440,9 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 		response.Message = "No orders were updated"
 	}
 
-	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.OrdersBulkUpdatedEvent, mqevent.OrdersBulkUpdatedPayload{})
+	if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.OrdersBulkUpdatedEvent, mqevent.OrdersBulkUpdatedPayload{}); err != nil {
+		log.Printf("failed to publish orders bulk updated event: %v", err)
+	}
 
 	utils.RespondWithJSON(w, http.StatusOK, response)
 }

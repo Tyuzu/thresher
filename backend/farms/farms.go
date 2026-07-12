@@ -109,7 +109,9 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 
 		/* -------- Publish FarmCreated Event -------- */
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmCreatedEvent, mqevent.FarmCreatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmCreatedEvent, mqevent.FarmCreatedPayload{}); err != nil {
+			log.Printf("failed to publish farm created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
@@ -243,7 +245,9 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 			})
 			return
 		}
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmUpdatedEvent, mqevent.FarmUpdatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmUpdatedEvent, mqevent.FarmUpdatedPayload{}); err != nil {
+			log.Printf("failed to publish farm updated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
@@ -281,7 +285,9 @@ func DeleteFarm(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmDeletedEvent, mqevent.FarmDeletedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmDeletedEvent, mqevent.FarmDeletedPayload{}); err != nil {
+			log.Printf("failed to publish farm deleted event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,

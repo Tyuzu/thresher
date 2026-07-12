@@ -7,6 +7,7 @@ import (
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 
@@ -47,7 +48,9 @@ func BuyMenu(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuBoughtEvent, mqevent.MenuBoughtPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuBoughtEvent, mqevent.MenuBoughtPayload{}); err != nil {
+			log.Printf("failed to publish menu bought event: %v", err)
+		}
 
 		// Respond with remaining stock
 		resp := map[string]any{

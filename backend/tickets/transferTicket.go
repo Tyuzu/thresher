@@ -13,6 +13,7 @@ import (
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
+	log "naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -86,7 +87,9 @@ func TransferTicket(app *infra.Deps) httprouter.Handle {
 		userdata.DelUserData("ticket", payload.UniqueCode, requestingUserId, app)
 		userdata.SetUserData("ticket", payload.UniqueCode, payload.Recipient, "event", eventID, app)
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketTransferredEvent, mqevent.TicketTransferredPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketTransferredEvent, mqevent.TicketTransferredPayload{}); err != nil {
+			log.Printf("failed to publish ticket transferred event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

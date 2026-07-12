@@ -7,6 +7,7 @@ import (
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 
@@ -86,7 +87,9 @@ func EditMedia(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FanMediaUpdatedEvent, mqevent.FanMediaUpdatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FanMediaUpdatedEvent, mqevent.FanMediaUpdatedPayload{}); err != nil {
+			log.Printf("failed to publish fan media updated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, updatedMedias)
 	}

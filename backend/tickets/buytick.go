@@ -138,7 +138,9 @@ func BuysTicket(app *infra.Deps) httprouter.Handle {
 			},
 		)
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketBoughtEvent, mqevent.TicketBoughtPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketBoughtEvent, mqevent.TicketBoughtPayload{}); err != nil {
+			log.Printf("failed to publish ticket bought event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

@@ -8,6 +8,7 @@ import (
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -52,7 +53,9 @@ func DeleteMedia(app *infra.Deps) httprouter.Handle {
 
 		userdata.DelUserData("media", mediaID, requestingUserID, app)
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FanMediaRemovedEvent, mqevent.FanMediaRemovedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FanMediaRemovedEvent, mqevent.FanMediaRemovedPayload{}); err != nil {
+			log.Printf("failed to publish fan media removed event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

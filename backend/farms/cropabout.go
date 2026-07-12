@@ -8,6 +8,7 @@ import (
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 
@@ -49,7 +50,9 @@ func CreateCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CropAboutCreatedEvent, mqevent.CropAboutCreatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CropAboutCreatedEvent, mqevent.CropAboutCreatedPayload{}); err != nil {
+			log.Printf("failed to publish crop about created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
@@ -150,7 +153,9 @@ func UpdateCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			)
 			return
 		}
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CropAboutUpdatedEvent, mqevent.CropAboutUpdatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CropAboutUpdatedEvent, mqevent.CropAboutUpdatedPayload{}); err != nil {
+			log.Printf("failed to publish crop about updated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -178,7 +183,9 @@ func DeleteCropAboutHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CropAboutDeletedEvent, mqevent.CropAboutDeletedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CropAboutDeletedEvent, mqevent.CropAboutDeletedPayload{}); err != nil {
+			log.Printf("failed to publish crop about deleted event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

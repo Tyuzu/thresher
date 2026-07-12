@@ -3,6 +3,7 @@ package vendors
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -95,7 +96,9 @@ func CreateAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SlotCreatedEvent, mqevent.SlotCreatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.SlotCreatedEvent, mqevent.SlotCreatedPayload{}); err != nil {
+			log.Printf("failed to publish slot created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"ok": true, "slot": slot})
 	}
@@ -138,7 +141,9 @@ func DeleteAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SlotDeletedEvent, mqevent.SlotDeletedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.SlotDeletedEvent, mqevent.SlotDeletedPayload{}); err != nil {
+			log.Printf("failed to publish slot deleted event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"ok": true})
 	}

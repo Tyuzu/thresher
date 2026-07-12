@@ -74,7 +74,9 @@ func RemoveFromCart(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ItemRemovedFromCartEvent, mqevent.ItemRemovedFromCartPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.ItemRemovedFromCartEvent, mqevent.ItemRemovedFromCartPayload{}); err != nil {
+			log.Printf("failed to publish item removed event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, groupedCart)
 	}
@@ -100,7 +102,9 @@ func ClearCart(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CartClearedEvent, mqevent.CartClearedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CartClearedEvent, mqevent.CartClearedPayload{}); err != nil {
+			log.Printf("failed to publish cart cleared event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Cart cleared successfully",

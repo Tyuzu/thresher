@@ -44,7 +44,9 @@ func InitiateCheckout(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CheckoutInitiatedEvent, mqevent.CheckoutInitiatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CheckoutInitiatedEvent, mqevent.CheckoutInitiatedPayload{}); err != nil {
+			log.Printf("failed to publish checkout initiated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"status": "ok",
@@ -168,7 +170,9 @@ func CreateCheckoutSession(app *infra.Deps) httprouter.Handle {
 			"createdAt": time.Now(),
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CheckoutSessionCreatedEvent, mqevent.CheckoutSessionCreatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CheckoutSessionCreatedEvent, mqevent.CheckoutSessionCreatedPayload{}); err != nil {
+			log.Printf("failed to publish checkout session created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusCreated, session)
 	}

@@ -148,7 +148,9 @@ func (p *PaymentService) HandlePaymentWebhook(w http.ResponseWriter, r *http.Req
 
 	logWebhookAttempt(ctx, p.app, &payload, "processed", "")
 
-	_ = mq.PublishWithMeta(ctx, p.app.MQ, mqevent.PaymentProcessedEvent, mqevent.PaymentProcessedPayload{})
+	if err := mq.PublishWithMeta(ctx, p.app.MQ, mqevent.PaymentProcessedEvent, mqevent.PaymentProcessedPayload{}); err != nil {
+		log.Printf("failed to publish payment processed event: %v", err)
+	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 		"status": "processed",

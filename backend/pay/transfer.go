@@ -9,6 +9,7 @@ import (
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -227,7 +228,9 @@ func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request, _ http
 
 	p.successTxn(ctx, txnID)
 
-	_ = mq.PublishWithMeta(ctx, p.app.MQ, mqevent.MoneyTransferredEvent, mqevent.MoneyTransferredPayload{})
+	if err := mq.PublishWithMeta(ctx, p.app.MQ, mqevent.MoneyTransferredEvent, mqevent.MoneyTransferredPayload{}); err != nil {
+		log.Printf("failed to publish money transferred event: %v", err)
+	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"success":        true,

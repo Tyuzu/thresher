@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -87,7 +88,9 @@ func RegisterVendorHandler(app *infra.Deps) httprouter.Handle {
 			writeJSONError(w, http.StatusInternalServerError, "REGISTER_FAILED", "Failed to register vendor")
 			return
 		}
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorRegisteredEvent, mqevent.VendorRegisteredPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorRegisteredEvent, mqevent.VendorRegisteredPayload{}); err != nil {
+			log.Printf("failed to publish vendor registered event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
@@ -269,7 +272,9 @@ func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorUpdatedEvent, mqevent.VendorUpdatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorUpdatedEvent, mqevent.VendorUpdatedPayload{}); err != nil {
+			log.Printf("failed to publish vendor updated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -380,7 +385,9 @@ func HireVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorHiredEvent, mqevent.VendorHiredPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorHiredEvent, mqevent.VendorHiredPayload{}); err != nil {
+			log.Printf("failed to publish vendor hired event: %v", err)
+		}
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
 			"hiring":  hiring,
@@ -569,7 +576,9 @@ func UpdateVendorStatusHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorStatusUpdatedEvent, mqevent.VendorStatusUpdatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorStatusUpdatedEvent, mqevent.VendorStatusUpdatedPayload{}); err != nil {
+			log.Printf("failed to publish vendor status updated event: %v", err)
+		}
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"status":  status,

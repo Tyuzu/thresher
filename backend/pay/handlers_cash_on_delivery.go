@@ -7,6 +7,7 @@ import (
 	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 
@@ -131,7 +132,9 @@ func (p *PaymentService) CashOnDelivery(w http.ResponseWriter, r *http.Request, 
 		},
 	)
 
-	_ = mq.PublishWithMeta(ctx, p.app.MQ, mqevent.CashOnDeliveryProcessedEvent, mqevent.CashOnDeliveryProcessedPayload{})
+	if err := mq.PublishWithMeta(ctx, p.app.MQ, mqevent.CashOnDeliveryProcessedEvent, mqevent.CashOnDeliveryProcessedPayload{}); err != nil {
+		log.Printf("failed to publish cash on delivery processed event: %v", err)
+	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"success": true,

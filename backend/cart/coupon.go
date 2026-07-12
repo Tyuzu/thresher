@@ -15,6 +15,7 @@ import (
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/utils"
+	log "naevis/utils/logger"
 )
 
 /* ───────────────────────── Coupon Models ───────────────────────── */
@@ -154,7 +155,9 @@ func ValidateCouponHandler(app *infra.Deps) httprouter.Handle {
 			discount = (req.Cart * coupon.Discount) / 100
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CouponValidatedEvent, mqevent.CouponValidatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CouponValidatedEvent, mqevent.CouponValidatedPayload{}); err != nil {
+			log.Printf("failed to publish coupon validated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, CouponResponse{
 			Valid:    true,

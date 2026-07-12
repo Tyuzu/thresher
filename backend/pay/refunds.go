@@ -143,13 +143,9 @@ func CreateRefundRequest(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundRequested, mqevent.RefundRequestedPayload{})
-
-		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
-			"id":      refundReq.ID,
-			"status":  refundReq.Status,
-			"message": "Refund request submitted. An admin will review it shortly.",
-		})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundRequested, mqevent.RefundRequestedPayload{}); err != nil {
+			log.Printf("failed to publish refund event: %v", err)
+		}
 	}
 }
 
@@ -408,9 +404,13 @@ func ApproveRefundRequest(app *infra.Deps) httprouter.Handle {
 		}
 
 		payload, _ := json.Marshal(event)
-		_ = mq.PublishWithMeta(ctx, app.MQ, "order.refunded", payload)
+		if err := mq.PublishWithMeta(ctx, app.MQ, "order.refunded", payload); err != nil {
+			log.Printf("failed to publish order refunded event: %v", err)
+		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundAccepted, mqevent.RefundAcceptedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundAccepted, mqevent.RefundAcceptedPayload{}); err != nil {
+			log.Printf("failed to publish refund accepted event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"id":             refund.ID,
@@ -493,9 +493,13 @@ func RejectRefundRequest(app *infra.Deps) httprouter.Handle {
 		}
 
 		payload, _ := json.Marshal(event)
-		_ = mq.PublishWithMeta(ctx, app.MQ, "refund.rejected", payload)
+		if err := mq.PublishWithMeta(ctx, app.MQ, "refund.rejected", payload); err != nil {
+			log.Printf("failed to publish refund rejected event: %v", err)
+		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundRejected, mqevent.RefundRejectedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundRejected, mqevent.RefundRejectedPayload{}); err != nil {
+			log.Printf("failed to publish refund rejected mqevent: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"id":      refund.ID,

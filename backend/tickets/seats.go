@@ -8,6 +8,7 @@ import (
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 
@@ -53,7 +54,9 @@ func LockSeats(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SeatsLockedEvent, mqevent.SeatsLockedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.SeatsLockedEvent, mqevent.SeatsLockedPayload{}); err != nil {
+			log.Printf("failed to publish seats locked event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Seats locked successfully"})
 	}
@@ -99,7 +102,9 @@ func UnlockSeats(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SeatsUnlockedEvent, mqevent.SeatsUnlockedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.SeatsUnlockedEvent, mqevent.SeatsUnlockedPayload{}); err != nil {
+			log.Printf("failed to publish seats unlocked event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Seats unlocked successfully"})
 	}
@@ -151,7 +156,9 @@ func ConfirmSeatPurchase(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SeatPurchaseConfirmedEvent, mqevent.SeatPurchaseConfirmedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.SeatPurchaseConfirmedEvent, mqevent.SeatPurchaseConfirmedPayload{}); err != nil {
+			log.Printf("failed to publish seat purchase confirmed event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"success": true, "message": "Ticket purchased successfully"})
 	}

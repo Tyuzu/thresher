@@ -110,7 +110,9 @@ func AddMedia(app *infra.Deps) httprouter.Handle {
 			insertedMedia = append(insertedMedia, media)
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FanMediaCreatedEvent, mqevent.FanMediaCreatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FanMediaCreatedEvent, mqevent.FanMediaCreatedPayload{}); err != nil {
+			log.Printf("failed to publish fan media created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, insertedMedia)
 	}

@@ -9,6 +9,7 @@ import (
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -192,7 +193,9 @@ func (p *PaymentService) Refund(w http.ResponseWriter, r *http.Request, _ httpro
 		},
 	)
 
-	_ = mq.PublishWithMeta(ctx, p.app.MQ, mqevent.RefundCompleted, mqevent.RefundCompletedPayload{})
+	if err := mq.PublishWithMeta(ctx, p.app.MQ, mqevent.RefundCompleted, mqevent.RefundCompletedPayload{}); err != nil {
+		log.Printf("failed to publish refund completed event: %v", err)
+	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"success":        true,

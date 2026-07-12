@@ -200,7 +200,9 @@ func CancelTicket(app *infra.Deps) httprouter.Handle {
 				"reason":       "user_requested",
 			},
 		)
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketCancelledEvent, mqevent.TicketCancelledPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketCancelledEvent, mqevent.TicketCancelledPayload{}); err != nil {
+			log.Printf("failed to publish ticket cancelled event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

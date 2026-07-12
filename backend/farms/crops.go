@@ -12,6 +12,7 @@ import (
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -64,7 +65,9 @@ func AddCrop(app *infra.Deps) httprouter.Handle {
 
 		/* -------- Publish CropCreated Event -------- */
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CropCreatedEvent, mqevent.CropCreatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CropCreatedEvent, mqevent.CropCreatedPayload{}); err != nil {
+			log.Printf("failed to publish crop created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
@@ -166,7 +169,9 @@ func EditCrop(app *infra.Deps) httprouter.Handle {
 
 		/* -------- Publish CropUpdated Event -------- */
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CropUpdatedEvent, mqevent.CropUpdatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CropUpdatedEvent, mqevent.CropUpdatedPayload{}); err != nil {
+			log.Printf("failed to publish crop updated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 	}

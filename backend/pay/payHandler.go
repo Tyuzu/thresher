@@ -10,6 +10,7 @@ import (
 	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -286,7 +287,9 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request, _ httproute
 		},
 	)
 
-	_ = mq.PublishWithMeta(ctx, p.app.MQ, mqevent.PaymentDoneEvent, mqevent.PaymentDonePayload{})
+	if err := mq.PublishWithMeta(ctx, p.app.MQ, mqevent.PaymentDoneEvent, mqevent.PaymentDonePayload{}); err != nil {
+		log.Printf("failed to publish payment event: %v", err)
+	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"success":        true,

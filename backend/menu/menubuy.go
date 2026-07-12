@@ -89,7 +89,9 @@ func buyMenu(w http.ResponseWriter, request MenuPurchaseRequest, requestingUserI
 	// Save user purchase data
 	userdata.SetUserData("menu", menuID, requestingUserID, "place", placeId, app)
 
-	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuBoughtEvent, mqevent.MenuBoughtPayload{})
+	if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuBoughtEvent, mqevent.MenuBoughtPayload{}); err != nil {
+		log.Printf("failed to publish menu bought event: %v", err)
+	}
 	response := MenuPurchaseResponse{
 		Message: "Payment successfully processed. Menu purchased.",
 		Success: true,
@@ -129,7 +131,9 @@ func CreateMenuPaymentSession(app *infra.Deps) httprouter.Handle {
 			"stock":      session.Stock,
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuPaymentSessionInitiatedEvent, mqevent.MenuPaymentSessionInitiatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuPaymentSessionInitiatedEvent, mqevent.MenuPaymentSessionInitiatedPayload{}); err != nil {
+			log.Printf("failed to publish menu payment session initiated event: %v", err)
+		}
 
 		// Respond with the session URL
 		response := map[string]any{

@@ -69,7 +69,9 @@ func CreateMenu(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuCreatedEvent, mqevent.MenuCreatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuCreatedEvent, mqevent.MenuCreatedPayload{}); err != nil {
+			log.Printf("failed to publish menu created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"ok":      true,
@@ -122,7 +124,9 @@ func EditMenu(app *infra.Deps) httprouter.Handle {
 			log.Printf("failed to invalidate menu cache: %v", err)
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuUpdatedEvent, mqevent.MenuUpdatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuUpdatedEvent, mqevent.MenuUpdatedPayload{}); err != nil {
+			log.Printf("failed to publish menu updated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

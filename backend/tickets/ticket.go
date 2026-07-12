@@ -12,6 +12,7 @@ import (
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 
@@ -98,7 +99,9 @@ func CreateTicket(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketCreatedEvent, mqevent.TicketCreatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketCreatedEvent, mqevent.TicketCreatedPayload{}); err != nil {
+			log.Printf("failed to publish ticket created event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusCreated, tick)
 	}
@@ -165,7 +168,9 @@ func EditTicket(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketUpdatedEvent, mqevent.TicketUpdatedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketUpdatedEvent, mqevent.TicketUpdatedPayload{}); err != nil {
+			log.Printf("failed to publish ticket updated event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -228,7 +233,9 @@ func BuyTicket(app *infra.Deps) httprouter.Handle {
 		m := models.Index{}
 		userdata.SetUserData("ticket", ticketID, userID, m.EntityType, m.EntityId, app)
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketBoughtEvent, mqevent.TicketBoughtPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketBoughtEvent, mqevent.TicketBoughtPayload{}); err != nil {
+			log.Printf("failed to publish ticket bought event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

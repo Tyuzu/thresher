@@ -47,7 +47,9 @@ func AddFAQs(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FAQAddedEvent, mqevent.FAQAddedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FAQAddedEvent, mqevent.FAQAddedPayload{}); err != nil {
+			log.Printf("failed to publish FAQ added event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

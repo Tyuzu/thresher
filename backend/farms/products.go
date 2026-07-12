@@ -9,6 +9,7 @@ import (
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 
@@ -58,7 +59,9 @@ func createItem(w http.ResponseWriter, r *http.Request, itemType string, app *in
 		return
 	}
 
-	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmProductCreatedEvent, mqevent.FarmProductCreatedPayload{})
+	if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmProductCreatedEvent, mqevent.FarmProductCreatedPayload{}); err != nil {
+		log.Printf("failed to publish farm product created event: %v", err)
+	}
 
 	utils.RespondWithJSON(w, http.StatusOK, item)
 }
@@ -132,7 +135,9 @@ func updateItem(
 
 	/* -------- Publish ProductUpdated Event -------- */
 
-	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmProductUpdatedEvent, mqevent.FarmProductUpdatedPayload{})
+	if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmProductUpdatedEvent, mqevent.FarmProductUpdatedPayload{}); err != nil {
+		log.Printf("failed to publish farm product updated event: %v", err)
+	}
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"status":    "success",
@@ -188,7 +193,9 @@ func deleteItem(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmProductDeletedEvent, mqevent.FarmProductDeletedPayload{})
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmProductDeletedEvent, mqevent.FarmProductDeletedPayload{}); err != nil {
+			log.Printf("failed to publish farm product deleted event: %v", err)
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{"status": "deleted"})
 	}
