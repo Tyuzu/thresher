@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"sync"
 	"time"

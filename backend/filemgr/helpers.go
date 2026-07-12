@@ -95,7 +95,7 @@ func ExtractImageMetadata(img image.Image, uid string) error {
 	if LogFunc != nil {
 		LogFunc(msg, int64(size), "metadata")
 	} else {
-		fmt.Println(msg)
+		log.Println(msg)
 	}
 	return nil
 }

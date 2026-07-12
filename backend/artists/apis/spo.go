@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,8 +16,6 @@ import (
 
 	"github.com/joho/godotenv"
 )
-
-    "io" 	log "naevis/utils/logger"
 
 type Artist struct {
 	ID        string   `json:"id"`

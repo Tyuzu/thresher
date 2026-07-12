@@ -2,11 +2,11 @@ package vlive
 
 import (
 	"encoding/json"
-	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"path/filepath"
 	"strings"

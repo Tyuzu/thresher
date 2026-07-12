@@ -2,11 +2,11 @@ package vlive
 
 import (
 	"encoding/json"
-	"log"
 	"naevis/infra"
 	"naevis/infra/db"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"strings"
 	"time"
@@ -170,20 +170,11 @@ func ListStreams(app *infra.Deps) httprouter.Handle {
 			&streams,
 		)
 		if err != nil {
-			log.Printf("ListStreams: find error: %v", err)
-			utils.RespondWithError(w, http.StatusInternalServerError, "db error")
+			utils.RespondWithError(w, http.StatusInternalServerError, "failed to list streams")
 			return
 		}
 
-		for i := range streams {
-			streams[i].StreamKey = ""
-			streams[i].IngestURL = ""
-			streams[i].RecordingPath = ""
-			streams[i].ViewerCount =
-				getViewerCountCache(r.Context(), app, streams[i].LiveID)
-		}
-
-		utils.RespondWithJSON(w, http.StatusOK, streams)
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"streams": streams})
 	}
 }
 

@@ -3,10 +3,10 @@ package userdata
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"time"
 

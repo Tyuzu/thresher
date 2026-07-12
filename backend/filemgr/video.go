@@ -198,7 +198,7 @@ func ExtractVideoDuration(videoPath string) float64 {
 
 func processAudioResolutions(originalFilePath, uploadDir, uniqueID string) ([]int, string) {
 	if err := os.MkdirAll(uploadDir, 0o750); err != nil {
-		fmt.Printf("audio: failed to create output dir %s: %v\n", uploadDir, err)
+		log.Printf("audio: failed to create output dir %s: %v", uploadDir, err)
 		return []int{}, originalFilePath
 	}
 	outputPath := filepath.Join(uploadDir, uniqueID+".mp3")
@@ -228,7 +228,7 @@ func processAudioResolutions(originalFilePath, uploadDir, uniqueID string) ([]in
 
 	stdout, stderr, err := cmdRunner.Run(audioTimeout, "ffmpeg", args...)
 	if err != nil {
-		fmt.Printf("audio processing failed for %s -> %s: %v\nstdout: %s\nstderr: %s\n", originalFilePath, outputPath, err, stdout, stderr)
+		log.Printf("audio processing failed for %s -> %s: %v; stdout: %s; stderr: %s", originalFilePath, outputPath, err, stdout, stderr)
 		return []int{}, originalFilePath
 	}
 
@@ -386,7 +386,7 @@ func processVideoResolutionsParallel(originalFilePath, uploadDir, uniqueID strin
 			defer wg.Done()
 			for t := range jobs {
 				if err := processVideoResolution(originalFilePath, t.OutputPath, t.Height); err != nil {
-					fmt.Printf("Skipping %d due to error: %v\n", t.Height, err)
+					log.Printf("Skipping %d due to error: %v", t.Height, err)
 					results <- struct {
 						height int
 						path   string

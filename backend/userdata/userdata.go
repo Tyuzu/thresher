@@ -2,9 +2,9 @@ package userdata
 
 import (
 	"context"
-	"log"
 	"naevis/infra"
 	"naevis/models"
+	log "naevis/utils/logger"
 	"time"
 )
 

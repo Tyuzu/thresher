@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	log "naevis/utils/logger"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,7 +24,7 @@ type Subtitle struct {
 
 func createSubtitleFile(uniqueID string) {
 	if err := writeVTT(uniqueID, "en", nil); err != nil {
-		fmt.Printf("subtitle creation failed: %v\n", err)
+		log.Printf("subtitle creation failed: %v", err)
 	}
 }
 

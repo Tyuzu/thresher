@@ -3,12 +3,12 @@ package newchat
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/db"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 	"net/http"
 	"sort"
 	"strings"

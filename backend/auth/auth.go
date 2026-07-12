@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	log "naevis/utils/logger"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,8 +15,6 @@ import (
 	inmq "naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
-
-	log "naevis/utils/logger"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/julienschmidt/httprouter"
