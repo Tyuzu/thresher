@@ -1,10 +1,10 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 
 	"naevis/utils"
+	"naevis/utils/logger"
 )
 
 // SafeError represents a sanitized error for client responses
@@ -28,7 +28,7 @@ func SafeErrorHandler(handler func(http.ResponseWriter, *http.Request) error) ht
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := handler(w, r); err != nil {
 			// Log detailed error server-side
-			log.Printf("[%s] %s %s - Error: %v", r.RemoteAddr, r.Method, r.RequestURI, err)
+			logger.L.Sugar().Errorw("handler_error", "remote", r.RemoteAddr, "method", r.Method, "uri", r.RequestURI, "error", err)
 
 			// Return generic error to client
 			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{
@@ -40,7 +40,7 @@ func SafeErrorHandler(handler func(http.ResponseWriter, *http.Request) error) ht
 
 // LogErrorSafely logs full error server-side but returns generic message to client
 func LogErrorSafely(w http.ResponseWriter, r *http.Request, statusCode int, logMsg string, clientMsg string) {
-	log.Printf("[%s] %s - %s (from %s)", r.RemoteAddr, r.RequestURI, logMsg, r.RemoteAddr)
+	logger.L.Sugar().Errorw("request_error", "remote", r.RemoteAddr, "uri", r.RequestURI, "message", logMsg)
 
 	if clientMsg == "" {
 		clientMsg = "An error occurred. Please try again later."

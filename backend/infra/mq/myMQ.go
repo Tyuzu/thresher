@@ -3,7 +3,8 @@ package mq
 import (
 	"context"
 	"errors"
-	"log"
+
+	"naevis/utils/logger"
 )
 
 type StreamMQ struct {
@@ -18,7 +19,12 @@ func (j *StreamMQ) Publish(
 	subject string,
 	data []byte,
 ) error {
-	log.Printf("--> : %s ::: %v", subject, string(data))
+	logger.L.Sugar().Debugw("mq_publish_noop", "subject", subject, "data_len", len(data))
+	return nil
+}
+
+func (j *StreamMQ) Ping(ctx context.Context) error {
+	// StreamMQ is a no-op MQ used for local/dev; always healthy
 	return nil
 }
 

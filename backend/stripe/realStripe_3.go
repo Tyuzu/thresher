@@ -12,6 +12,7 @@ import (
 
 	"naevis/infra"
 	"naevis/utils"
+	"naevis/utils/logger"
 
 	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
@@ -25,7 +26,9 @@ func init() {
 	_ = godotenv.Load()
 	key := os.Getenv("STRIPE_SECRET_KEY")
 	if key == "" {
-		log.Fatal("STRIPE_SECRET_KEY not set")
+		// Do not panic in init; tests and local dev may not set this.
+		log.Println("STRIPE_SECRET_KEY not set; stripe functionality will be disabled until configured")
+		return
 	}
 	stripe.Key = key
 }
@@ -116,7 +119,7 @@ func CreatePaymentIntent(app *infra.Deps) httprouter.Handle {
 
 		pi, err := paymentintent.New(params)
 		if err != nil {
-			log.Println("Stripe PaymentIntent error:", err)
+			logger.L.Sugar().Errorw("stripe_payment_intent_error", "error", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create payment intent")
 			return
 		}
@@ -216,18 +219,18 @@ func StripeWebhook(app *infra.Deps) httprouter.Handle {
 				cancel()
 
 				if err != nil {
-					log.Println("PaymentIntent success DB update failed:", err)
+					logger.L.Sugar().Errorw("payment_intent_update_failed", "error", err, "payment_intent", pi.ID)
 				}
 			}
 
 		case "payment_intent.payment_failed":
 			var pi stripe.PaymentIntent
 			if err := json.Unmarshal(event.Data.Raw, &pi); err == nil {
-				log.Printf("PaymentIntent failed: %s error=%v\n", pi.ID, pi.LastPaymentError)
+				logger.L.Sugar().Warnw("payment_intent_failed", "payment_intent", pi.ID, "error", pi.LastPaymentError)
 			}
 
 		default:
-			log.Println("Unhandled Stripe event:", event.Type)
+			logger.L.Sugar().Infow("unhandled_stripe_event", "event", event.Type)
 		}
 
 		w.WriteHeader(http.StatusOK)

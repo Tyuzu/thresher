@@ -2,10 +2,10 @@ package infra
 
 import (
 	"context"
-	"log"
 	"os"
 	"time"
 
+	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -14,13 +14,15 @@ import (
 	"naevis/infra/cache"
 	"naevis/infra/db"
 	"naevis/infra/mq"
+	"naevis/utils/logger"
 )
 
 type Deps struct {
-	DB     db.Database
-	Cache  cache.Cache
-	MQ     mq.MQ
-	Config config.Config
+	DB       db.Database
+	Cache    cache.Cache
+	MQ       mq.MQ
+	NatsConn *nats.Conn
+	Config   config.Config
 }
 
 /* -------------------- Constructor -------------------- */
@@ -47,30 +49,37 @@ func New(cfg *config.Config) (*Deps, error) {
 	rclient := NewRedis(redisAddr, redisPassword, redisDB)
 	cacheLayer := cache.NewRedisCache(rclient)
 
-	/* -------- NATS JetStream -------- */
+	/* -------- NATS JetStream (optional) -------- */
 
-	// natsURL := env("NATS_URL", nats.DefaultURL)
-	// _, js, err := NewJetStream(natsURL)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	var mqLayer mq.MQ = mq.NewStreamMQ()
+	var nc *nats.Conn
 
-	// mqLayer := mq.NewJetStreamMQ(js, "naevis-consumer")
+	natsURL := env("NATS_URL", "")
+	if natsURL != "" {
+		// attempt to connect to NATS
+		conn, err := nats.Connect(natsURL)
+		if err != nil {
+			return nil, err
+		}
 
-	// err = mq.EnsureStreams(js)
-	// if err != nil {
-	// 	return nil, err
-	// }
+		js, err := conn.JetStream()
+		if err != nil {
+			_ = conn.Drain()
+			return nil, err
+		}
 
-	mqLayer := mq.NewStreamMQ()
+		mqLayer = mq.NewJetStreamMQ(js)
+		nc = conn
+	}
 
-	log.Println("infra initialized")
+	logger.L.Sugar().Infow("infra initialized", "nats_enabled", natsURL != "")
 
 	return &Deps{
-		DB:     dbLayer,
-		Cache:  cacheLayer,
-		MQ:     mqLayer,
-		Config: *cfg,
+		DB:       dbLayer,
+		Cache:    cacheLayer,
+		MQ:       mqLayer,
+		NatsConn: nc,
+		Config:   *cfg,
 	}, nil
 }
 

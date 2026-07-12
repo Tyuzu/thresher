@@ -38,6 +38,12 @@ func (j *JetStreamMQ) Publish(
 	return err
 }
 
+func (j *JetStreamMQ) Ping(ctx context.Context) error {
+	// perform a lightweight publish to a transient subject used for health checks
+	_, err := j.js.PublishMsg(&nats.Msg{Subject: "health.check", Data: []byte("ping")}, nats.Context(ctx))
+	return err
+}
+
 func (j *JetStreamMQ) Subscribe(
 	ctx context.Context,
 	subject string,
