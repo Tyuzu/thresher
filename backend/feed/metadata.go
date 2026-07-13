@@ -36,61 +36,21 @@ func GetPostsMetadata(app *infra.Deps) httprouter.Handle {
 		userID, _ := r.Context().Value("userId").(string)
 		postIDs := req.IDs
 
-		// --- Aggregate likes ---
-		likePipeline := []any{
-			map[string]any{"$match": map[string]any{"postid": map[string]any{"$in": postIDs}}},
-			map[string]any{"$group": map[string]any{"_id": "$postid", "count": map[string]any{"$sum": 1}}},
-		}
-
-		var likeResults []struct {
-			ID    string `bson:"_id"`
-			Count int64  `bson:"count"`
-		}
-		if err := app.DB.Aggregate(ctx, likesCollection, likePipeline, &likeResults); err != nil {
+		likeCounts, err := AggregateLikeCounts(ctx, app, postIDs)
+		if err != nil {
 			http.Error(w, "Failed to aggregate likes", http.StatusInternalServerError)
 			return
 		}
 
-		likeCounts := make(map[string]int64, len(likeResults))
-		for _, r := range likeResults {
-			likeCounts[r.ID] = r.Count
-		}
-
-		// --- Aggregate comments ---
-		commentPipeline := []any{
-			map[string]any{"$match": map[string]any{"postid": map[string]any{"$in": postIDs}}},
-			map[string]any{"$group": map[string]any{"_id": "$postid", "count": map[string]any{"$sum": 1}}},
-		}
-
-		var commentResults []struct {
-			ID    string `bson:"_id"`
-			Count int64  `bson:"count"`
-		}
-		if err := app.DB.Aggregate(ctx, commentsCollection, commentPipeline, &commentResults); err != nil {
+		commentCounts, err := AggregateCommentCounts(ctx, app, postIDs)
+		if err != nil {
 			http.Error(w, "Failed to aggregate comments", http.StatusInternalServerError)
 			return
 		}
 
-		commentCounts := make(map[string]int64, len(commentResults))
-		for _, r := range commentResults {
-			commentCounts[r.ID] = r.Count
-		}
-
-		// --- Find which posts are liked by the user ---
-		likedByUser := make(map[string]bool)
-		if userID != "" {
-			filter := map[string]any{
-				"postid": map[string]any{"$in": postIDs},
-				"userid": userID,
-			}
-			var userLikes []struct {
-				PostID string `bson:"postid"`
-			}
-			if err := app.DB.FindMany(ctx, likesCollection, filter, &userLikes); err == nil {
-				for _, l := range userLikes {
-					likedByUser[l.PostID] = true
-				}
-			}
+		likedByUser, err := FindLikedPostIDsByUser(ctx, app, userID, postIDs)
+		if err != nil {
+			likedByUser = map[string]bool{}
 		}
 
 		// --- Assemble final response ---

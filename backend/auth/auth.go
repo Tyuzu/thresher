@@ -18,7 +18,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/julienschmidt/httprouter"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -79,7 +78,7 @@ func Register(app *infra.Deps) httprouter.Handle {
 			Online:        false,
 		}
 
-		if err := app.DB.Insert(ctx, UsersCollection, user); err != nil {
+		if err := CreateUser(ctx, app.DB, user); err != nil {
 			if mongo.IsDuplicateKeyError(err) {
 				utils.RespondWithError(w, http.StatusConflict, "User already exists")
 				return
@@ -141,15 +140,8 @@ func Login(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		var user models.User
-
-		if err := app.DB.FindOne(
-			ctx,
-			UsersCollection,
-			bson.M{"username": creds.Username},
-			&user,
-		); err != nil {
-
+		user, err := FindUserByUsername(ctx, app.DB, creds.Username)
+		if err != nil {
 			cnt, err = app.Cache.Incr(ctx, failKey)
 			if err != nil {
 				log.Printf("warn: failed to increment auth fail count: %v", err)
@@ -227,21 +219,13 @@ func Login(app *infra.Deps) httprouter.Handle {
 
 		/* ---------------- Persist Session ---------------- */
 
-		err = app.DB.Update(
+		err = UpdateUserSession(
 			ctx,
-			UsersCollection,
-			bson.M{"userid": user.UserID},
-			bson.M{
-				"$set": bson.M{
-					"refresh_token":  hashRefreshToken(refreshToken),
-					"refresh_expiry": time.Now().Add(RefreshTokenTTL),
-					"refresh_ua":     uaHash(r),
-					"refresh_ip":     ipPrefix(ip),
-					"last_login":     time.Now(),
-					"online":         true,
-					"updated_at":     time.Now(),
-				},
-			},
+			app.DB,
+			user.UserID,
+			hashRefreshToken(refreshToken),
+			uaHash(r),
+			ipPrefix(ip),
 		)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Session error")
@@ -284,29 +268,7 @@ func LogoutUser(app *infra.Deps) httprouter.Handle {
 		if err == nil && cookie.Value != "" {
 			hashed := hashRefreshToken(cookie.Value)
 
-			var user models.User
-			_ = app.DB.FindOne(
-				ctx,
-				UsersCollection,
-				bson.M{"refresh_token": hashed},
-				&user,
-			)
-
-			_ = app.DB.Update(
-				ctx,
-				UsersCollection,
-				bson.M{"refresh_token": hashed},
-				bson.M{
-					"$unset": bson.M{
-						"refresh_token":  "",
-						"refresh_expiry": "",
-					},
-					"$set": bson.M{
-						"online":     false,
-						"updated_at": time.Now(),
-					},
-				},
-			)
+			_ = LogoutUserByRefreshToken(ctx, app.DB, hashed)
 
 			/* -------- Publish Logout Event -------- */
 			_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.UserLoggedOut, mqevent.UserLoggedOutPayload{})
@@ -346,24 +308,7 @@ func LogoutAllSessions(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		err = app.DB.Update(
-			ctx,
-			UsersCollection,
-			bson.M{"userid": claims.UserID},
-			bson.M{
-				"$unset": bson.M{
-					"refresh_token":  "",
-					"refresh_prev":   "",
-					"refresh_expiry": "",
-					"refresh_ua":     "",
-					"refresh_ip":     "",
-				},
-				"$set": bson.M{
-					"online":     false,
-					"updated_at": time.Now(),
-				},
-			},
-		)
+		err = LogoutAllUserSessions(ctx, app.DB, claims.UserID)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Logout failed")
 			return

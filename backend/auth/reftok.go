@@ -75,15 +75,7 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 	// -----------------------
 	// Find valid refresh session
 	// -----------------------
-	var user models.User
-	err := app.DB.FindOne(ctx, UsersCollection, bson.M{
-		"refresh_expiry": bson.M{"$gt": now},
-		"$or": []bson.M{
-			{"refresh_token": hashed},
-			{"refresh_prev": hashed},
-		},
-	}, &user)
-
+	user, err := FindValidRefreshSession(ctx, app.DB, hashed)
 	if err != nil {
 		// Invalid or expired token
 		return &RefreshResult{ClearCookie: true}, fmt.Errorf("invalid refresh token")
@@ -160,19 +152,13 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 		return nil, err
 	}
 
-	err = app.DB.Update(
+	err = RotateRefreshTokenForUser(
 		ctx,
-		UsersCollection,
-		bson.M{"userid": user.UserID},
-		bson.M{
-			"$set": bson.M{
-				"refresh_prev":   user.RefreshToken,
-				"refresh_token":  hashRefreshToken(newRefresh),
-				"refresh_expiry": now.Add(RefreshTokenTTL),
-				"refresh_ua":     uaHash(r),
-				"updated_at":     now,
-			},
-		},
+		app.DB,
+		user.UserID,
+		hashRefreshToken(newRefresh),
+		user.RefreshToken,
+		uaHash(r),
 	)
 	if err != nil {
 		return nil, err

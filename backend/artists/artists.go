@@ -34,13 +34,12 @@ func CreateArtist(app *infra.Deps) httprouter.Handle {
 		artist.ArtistID = utils.GenerateRandomString(12)
 		artist.EventIDs = []string{}
 
-		if err := app.DB.Insert(ctx, ArtistsCollection, artist); err != nil {
+		if err := InsertArtist(ctx, app.DB, &artist); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create artist")
 			return
 		}
 
 		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistCreatedEvent, mqevent.ArtistCreatedPayload{})
-
 		utils.RespondWithJSON(w, http.StatusCreated, artist)
 	}
 }
@@ -56,7 +55,7 @@ func UpdateArtist(app *infra.Deps) httprouter.Handle {
 		}
 
 		var existing models.Artist
-		if err := app.DB.FindOne(ctx, ArtistsCollection, bson.M{"artistid": idParam}, &existing); err != nil {
+		if err := FindArtistByID(ctx, app.DB, idParam, &existing); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
 			return
 		}
@@ -73,7 +72,7 @@ func UpdateArtist(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		err = app.DB.Update(ctx, ArtistsCollection, bson.M{"artistid": idParam}, bson.M{"$set": updateData})
+		err = UpdateArtistByID(ctx, app.DB, idParam, updateData)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update artist")
 			return
@@ -90,6 +89,7 @@ func UpdateArtist(app *infra.Deps) httprouter.Handle {
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Artist updated"})
 	}
 }
+
 func parseArtistFormData(r *http.Request, existing *models.Artist) (models.Artist, bson.M, []string, error) {
 	var artist models.Artist
 	updateData := bson.M{}
@@ -163,7 +163,7 @@ func parseArtistFormData(r *http.Request, existing *models.Artist) (models.Artis
 
 func DeleteArtistByID(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		dels.DeleteArtistByID(app)
+		dels.DeleteArtistByID(app)(w, r, ps)
 		// ctx := r.Context()
 		// artistID := ps.ByName("id")
 

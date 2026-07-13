@@ -42,26 +42,14 @@ func EditEvent(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		// Update using Database interface
-		if err := app.DB.UpdateOne(
-			ctx,
-			eventsCollection,
-			map[string]string{"eventid": eventID},
-			map[string]any{"$set": updateFields},
-		); err != nil {
+		if err := updateEvent(ctx, app, eventID, updateFields); err != nil {
 			log.Printf("Error updating event %s: %v", eventID, err)
 			http.Error(w, "Error updating event", http.StatusInternalServerError)
 			return
 		}
 
-		// Fetch updated event
 		var updatedEvent models.Event
-		if err := app.DB.FindOne(
-			ctx,
-			eventsCollection,
-			map[string]string{"eventid": eventID},
-			&updatedEvent,
-		); err != nil {
+		if err := findEventByID(ctx, app, eventID, &updatedEvent); err != nil {
 			http.Error(w, "Error retrieving updated event", http.StatusInternalServerError)
 			return
 		}
@@ -77,6 +65,6 @@ func EditEvent(app *infra.Deps) httprouter.Handle {
 // DeleteEvent deletes an event and its related data
 func DeleteEvent(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		dels.DeleteEvent(app)
+		dels.DeleteEvent(app)(w, r, ps)
 	}
 }

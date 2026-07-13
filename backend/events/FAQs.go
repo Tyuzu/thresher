@@ -41,7 +41,7 @@ func AddFAQs(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := app.DB.AddToSet(ctx, eventsCollection, map[string]string{"eventid": eventID}, "faqs", newFAQ); err != nil {
+		if err := addFAQToEvent(ctx, app, eventID, newFAQ); err != nil {
 			log.Printf("Error updating event %s: %v", eventID, err)
 			http.Error(w, "Error updating event", http.StatusInternalServerError)
 			return

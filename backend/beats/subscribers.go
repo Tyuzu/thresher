@@ -1,17 +1,14 @@
 package beats
 
 import (
-	"context"
-	"fmt"
-	log "naevis/utils/logger"
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
 
 	"naevis/infra"
 	"naevis/userdata"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
-	"go.mongodb.org/mongo-driver/bson"
+	log "naevis/utils/logger"
 )
 
 // Generic subscribe/follow/unfollow handler
@@ -65,96 +62,5 @@ func SubscribeEntity(app *infra.Deps) httprouter.Handle {
 func UnsubscribeEntity(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		HandleEntitySubscription(w, r, ps, ps.ByName("type"), "unsubscribe", app)
-	}
-}
-
-// Core logic for subscribe / unsubscribe
-func UpdateEntitySubscription(
-	ctx context.Context,
-	userID,
-	entityType,
-	entityID,
-	action string,
-	app *infra.Deps,
-) error {
-	if action != "subscribe" && action != "unsubscribe" {
-		return fmt.Errorf("invalid action: %s", action)
-	}
-
-	// Ensure both documents exist
-	EnsureSubscriptionEntry(ctx, userID, app)
-	EnsureSubscriptionEntry(ctx, entityID, app)
-
-	var userUpdate any
-	var entityUpdate any
-
-	if action == "subscribe" {
-		userUpdate = bson.M{
-			"$addToSet": bson.M{
-				"subscribed": entityID,
-			},
-		}
-		entityUpdate = bson.M{
-			"$addToSet": bson.M{
-				"subscribers": userID,
-			},
-		}
-	} else {
-		userUpdate = bson.M{
-			"$pull": bson.M{
-				"subscribed": entityID,
-			},
-		}
-		entityUpdate = bson.M{
-			"$pull": bson.M{
-				"subscribers": userID,
-			},
-		}
-	}
-
-	if err := app.DB.UpdateOne(
-		ctx,
-		subscribersCollection,
-		bson.M{"userid": userID},
-		userUpdate,
-	); err != nil {
-		return fmt.Errorf("failed to update user subscriptions: %w", err)
-	}
-
-	if err := app.DB.UpdateOne(
-		ctx,
-		subscribersCollection,
-		bson.M{"userid": entityID},
-		entityUpdate,
-	); err != nil {
-		return fmt.Errorf("failed to update entity subscribers: %w", err)
-	}
-
-	return nil
-}
-
-// Ensure a subscription document exists
-func EnsureSubscriptionEntry(
-	ctx context.Context,
-	userID string,
-	app *infra.Deps,
-) {
-	doc := bson.M{
-		"userid":      userID,
-		"subscribed":  []string{},
-		"subscribers": []string{},
-	}
-
-	err := app.DB.Upsert(
-		ctx,
-		subscribersCollection,
-		bson.M{"userid": userID},
-		bson.M{
-			"$setOnInsert": doc,
-		},
-	)
-
-	if err != nil {
-		log.Printf("Failed to ensure subscription entry for %s: %v", userID, err)
 	}
 }

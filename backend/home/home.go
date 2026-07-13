@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/infra"
-	"naevis/infra/db"
 	"naevis/utils"
 )
 
@@ -128,30 +127,14 @@ func HomeCardsHandler(app *infra.Deps) httprouter.Handle {
 		w.Header().Set("Content-Type", "application/json")
 
 		category := r.URL.Query().Get("category")
-		collection, projector := categoryProjection(category)
-		if collection == "" || projector == nil {
-			utils.RespondWithJSON(w, http.StatusOK, []HomeCard{})
-		}
+		skip, limit := utils.ParsePagination(r, 20, 20)
 
-		skip, limit := utils.ParsePagination(r, 0, 20)
-
-		opts := db.FindManyOptions{
-			Skip:  skip,
-			Limit: limit,
-			Sort:  bson.D{{Key: "createdAt", Value: -1}},
-		}
-
-		var docs []bson.M
-		if err := app.DB.FindManyWithOptions(ctx, collection, bson.M{}, opts, &docs); err != nil {
+		cards, err := fetchHomeCardsFromDB(ctx, app, category, skip, limit)
+		if err != nil {
 			log.Println("Find error:", err, "req_id:", reqID)
 			w.Header().Set("X-Error-Request-Id", reqID)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch home cards")
 			return
-		}
-
-		cards := make([]HomeCard, 0, len(docs))
-		for _, doc := range docs {
-			cards = append(cards, projector(doc))
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, cards)

@@ -9,7 +9,6 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
@@ -43,12 +42,7 @@ func EditMedia(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Fetch media to verify existence and ownership
-		var media models.Media
-		err := app.DB.FindOne(ctx, mediaCollection, bson.M{
-			"entityid":   entityID,
-			"entitytype": entityType,
-			"mediaid":    mediaID,
-		}, &media)
+		media, err := getMediaByID(ctx, app, entityType, entityID, mediaID)
 		if err != nil {
 			http.Error(w, "Media not found", http.StatusNotFound)
 			return
@@ -79,21 +73,7 @@ func EditMedia(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Update all media in the same group
-		err = app.DB.UpdateMany(ctx, mediaCollection,
-			bson.M{"mediaGroupId": media.MediaGroupID},
-			bson.M{"$set": updateFields},
-		)
-		if err != nil {
-			http.Error(w, "Failed to update media group", http.StatusInternalServerError)
-			return
-		}
-
-		// Fetch updated media group
-		var updatedMedias []models.Media
-		err = app.DB.FindMany(ctx, mediaCollection,
-			bson.M{"mediaGroupId": media.MediaGroupID},
-			&updatedMedias,
-		)
+		updatedMedias, err := updateMediaGroup(ctx, app, media.MediaGroupID, updateFields)
 		if err != nil {
 			http.Error(w, "Failed to load updated media", http.StatusInternalServerError)
 			return

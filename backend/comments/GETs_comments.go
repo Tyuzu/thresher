@@ -31,12 +31,7 @@ func GetComment(app *infra.Deps) httprouter.Handle {
 		}
 
 		var comment models.Comment
-		err := app.DB.FindOne(
-			ctx,
-			commentsCollection,
-			bson.M{"commentid": commentID},
-			&comment,
-		)
+		err := findCommentByID(ctx, app.DB, commentID, &comment)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Comment not found")
 			return
@@ -89,11 +84,6 @@ func GetComments(app *infra.Deps) httprouter.Handle {
 		skip := (page - 1) * limit
 		sortBy := r.URL.Query().Get("sort") // new | old | likes
 
-		filter := bson.M{
-			"entity_type": entityType,
-			"entity_id":   entityID,
-		}
-
 		/* ---------- Sorting (ORDERED) ---------- */
 		sort := bson.D{
 			{Key: "created_at", Value: -1},
@@ -120,8 +110,8 @@ func GetComments(app *infra.Deps) httprouter.Handle {
 		}
 
 		var comments []models.Comment
-		if err := app.DB.FindManyWithOptions(ctx, commentsCollection, filter, opts, &comments); err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch comments")
+		if err := findCommentsByEntity(ctx, app.DB, entityType, entityID, opts, &comments); err != nil {
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"message": "Failed to fetch comments"})
 			return
 		}
 

@@ -91,12 +91,7 @@ func CreateWorkerProfile(app *infra.Deps) httprouter.Handle {
 
 		// Check if worker profile already exists
 		var existing models.BaitoWorker
-		err := app.DB.FindOne(
-			ctx,
-			BaitoWorkersCollection,
-			bson.M{"userId": userID},
-			&existing,
-		)
+		err := findExistingWorkerProfile(ctx, app, userID, &existing)
 		if err == nil {
 			utils.RespondWithError(w, http.StatusConflict, "Worker profile already exists")
 			return
@@ -126,27 +121,16 @@ func CreateWorkerProfile(app *infra.Deps) httprouter.Handle {
 		worker.UserID = userID
 		worker.BaitoWorkerId = userID
 
-		if err = app.DB.Insert(ctx, BaitoWorkersCollection, worker); err != nil {
+		if err = createWorkerProfileRecord(ctx, app, worker); err != nil {
 			logger.Printf("Insert error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to save worker profile")
 			return
 		}
 
 		// update user role (non-fatal)
-		_ = app.DB.AddToSet(
-			ctx,
-			UsersCollection,
-			bson.M{"userid": userID},
-			"role",
-			"worker",
-		)
+		_ = addWorkerRoleToUser(ctx, app, userID)
 
-		_ = app.DB.UpdateOne(
-			ctx,
-			UsersCollection,
-			bson.M{"userid": userID},
-			bson.M{"updated_at": time.Now()},
-		)
+		_ = touchUserUpdatedAt(ctx, app, userID)
 
 		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.WorkerProfileCreatedEvent, mqevent.WorkerProfileCreatedPayload{})
 
@@ -169,12 +153,7 @@ func UpdateWorkerProfile(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		filter := bson.M{
-			"baitoWorkerId": workerID,
-			"userId":        userID,
-		}
-
-		err = app.DB.UpdateOne(ctx, BaitoWorkersCollection, filter, update)
+		err = updateWorkerProfileRecord(ctx, app, workerID, userID, update)
 		if err != nil {
 			logger.Printf("Update error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update worker profile")

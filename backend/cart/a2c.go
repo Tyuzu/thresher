@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/config/mqevent"
 	"naevis/infra"
@@ -65,37 +64,7 @@ func AddToCart(app *infra.Deps) httprouter.Handle {
 			item.EntityType = itemDetails.EntityType
 		}
 
-		// Build filter: match by userId, itemId, AND entity if provided
-		filter := bson.M{
-			"userId": userID,
-			"itemId": item.ItemID,
-		}
-
-		// Include entity in filter for unique identification
-		if item.EntityID != "" {
-			filter["entityId"] = item.EntityID
-		}
-		if item.EntityType != "" {
-			filter["entityType"] = item.EntityType
-		}
-
-		update := bson.M{
-			"$inc": bson.M{"quantity": item.Quantity},
-			"$set": bson.M{
-				"price":      item.Price,
-				"itemName":   item.ItemName,
-				"itemType":   item.ItemType,
-				"unit":       item.Unit,
-				"category":   item.Category,
-				"entityId":   item.EntityID,
-				"entityType": item.EntityType,
-			},
-			"$setOnInsert": bson.M{
-				"addedAt": time.Now(),
-			},
-		}
-
-		if err := app.DB.Upsert(ctx, cartCollection, filter, update); err != nil {
+		if err := upsertCartItemInDB(ctx, userID, item, app); err != nil {
 			http.Error(w, "Failed to add to cart", http.StatusInternalServerError)
 			return
 		}

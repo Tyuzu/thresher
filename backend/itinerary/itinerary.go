@@ -59,7 +59,7 @@ func CreateItinerary(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := app.DB.Insert(ctx, ItineraryCollection, it); err != nil {
+		if err := insertItinerary(ctx, app, it); err != nil {
 			http.Error(w, "Error inserting itinerary", http.StatusInternalServerError)
 			return
 		}
@@ -84,11 +84,8 @@ func UpdateItinerary(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var existing models.Itinerary
-		if err := app.DB.FindOne(ctx, ItineraryCollection, map[string]any{
-			"itineraryid": itineraryID,
-			"deleted":     map[string]any{"$ne": true},
-		}, &existing); err != nil {
+		existing, err := findItineraryByID(ctx, app, itineraryID)
+		if err != nil {
 			http.Error(w, "Itinerary not found", http.StatusNotFound)
 			return
 		}
@@ -118,7 +115,7 @@ func UpdateItinerary(app *infra.Deps) httprouter.Handle {
 			},
 		}
 
-		if err := app.DB.UpdateOne(ctx, ItineraryCollection, map[string]any{"itineraryid": itineraryID}, update); err != nil {
+		if err := updateItineraryFields(ctx, app, itineraryID, update); err != nil {
 			http.Error(w, "Error updating itinerary", http.StatusInternalServerError)
 			return
 		}
@@ -143,8 +140,7 @@ func DeleteItinerary(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		update := map[string]any{"$set": map[string]any{"deleted": true}}
-		if err := app.DB.UpdateOne(ctx, ItineraryCollection, map[string]any{"itineraryid": itineraryID, "userid": userID}, update); err != nil {
+		if err := softDeleteItinerary(ctx, app, itineraryID, userID); err != nil {
 			http.Error(w, "Itinerary not found or forbidden", http.StatusNotFound)
 			return
 		}
@@ -169,11 +165,8 @@ func ForkItinerary(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var original models.Itinerary
-		if err := app.DB.FindOne(ctx, ItineraryCollection, map[string]any{
-			"itineraryid": originalID,
-			"deleted":     map[string]any{"$ne": true},
-		}, &original); err != nil {
+		original, err := findItineraryByID(ctx, app, originalID)
+		if err != nil {
 			http.Error(w, "Original itinerary not found", http.StatusNotFound)
 			return
 		}
@@ -193,7 +186,7 @@ func ForkItinerary(app *infra.Deps) httprouter.Handle {
 			ForkedFrom:  &originalID,
 		}
 
-		if err := app.DB.Insert(ctx, ItineraryCollection, newItinerary); err != nil {
+		if err := insertItinerary(ctx, app, newItinerary); err != nil {
 			http.Error(w, "Error forking itinerary", http.StatusInternalServerError)
 			return
 		}
@@ -218,8 +211,7 @@ func PublishItinerary(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		update := map[string]any{"$set": map[string]any{"published": true}}
-		if err := app.DB.UpdateOne(ctx, ItineraryCollection, map[string]any{"itineraryid": id, "userid": userID}, update); err != nil {
+		if err := publishItinerary(ctx, app, id, userID); err != nil {
 			http.Error(w, "Itinerary not found or forbidden", http.StatusNotFound)
 			return
 		}

@@ -252,7 +252,7 @@ func CreateBaito(app *infra.Deps) httprouter.Handle {
 			utils.GetUserIDFromRequest(r),
 		)
 
-		if err := app.DB.Insert(ctx, BaitoCollection, baito); err != nil {
+		if err := createBaitoRecord(ctx, app, baito); err != nil {
 			logger.Printf("Insert error: %v", err)
 
 			utils.RespondWithError(
@@ -285,17 +285,7 @@ func UpdateBaito(app *infra.Deps) httprouter.Handle {
 
 		update := req.BuildUpdate()
 
-		filter := bson.M{
-			"baitoid": ps.ByName("baitoid"),
-			"ownerid": utils.GetUserIDFromRequest(r),
-		}
-
-		err = app.DB.UpdateOne(
-			ctx,
-			BaitoCollection,
-			filter,
-			update,
-		)
+		err = updateBaitoRecord(ctx, app, ps.ByName("baitoid"), utils.GetUserIDFromRequest(r), update)
 
 		if err != nil {
 			if err == mongo.ErrNoDocuments {

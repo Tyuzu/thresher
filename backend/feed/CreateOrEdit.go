@@ -69,8 +69,7 @@ func editExistingPost(ctx context.Context, claims *models.Claims, payload PostPa
 		return post, errors.New("nothing to update")
 	}
 
-	// Database interface call
-	if err := app.DB.FindOneAndUpdate(ctx, feedpostsCollection,
+	if err := FindAndUpdateFeedPost(ctx, app,
 		map[string]any{"postid": payload.PostID, "userid": claims.UserID},
 		map[string]any{"$set": update},
 		&post,
@@ -134,8 +133,7 @@ func insertNewPost(ctx context.Context, claims *models.Claims, payload PostPaylo
 		return post, errors.New("unsupported post type")
 	}
 
-	// Database interface insert
-	if err := app.DB.InsertOne(ctx, feedpostsCollection, post); err != nil {
+	if err := InsertFeedPost(ctx, app, post); err != nil {
 		return post, err
 	}
 

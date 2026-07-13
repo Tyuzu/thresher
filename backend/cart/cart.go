@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func UpdateCart(app *infra.Deps) httprouter.Handle {
@@ -33,12 +32,6 @@ func UpdateCart(app *infra.Deps) httprouter.Handle {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		// Clear existing cart
-		if _, err := app.DB.Delete(ctx, cartCollection, bson.M{"userId": userID}); err != nil {
-			http.Error(w, "Failed to clear cart", http.StatusInternalServerError)
 			return
 		}
 
@@ -79,16 +72,12 @@ func UpdateCart(app *infra.Deps) httprouter.Handle {
 			docs = append(docs, doc)
 		}
 
-		if len(docs) > 0 {
-			if err := app.DB.InsertMany(ctx, cartCollection, docs); err != nil {
-				http.Error(w, "Failed to update cart", http.StatusInternalServerError)
-				return
-			}
+		if err := replaceCartItemsInDB(ctx, userID, docs, app); err != nil {
+			http.Error(w, "Failed to update cart", http.StatusInternalServerError)
+			return
 		}
 
-		// Return fresh cart
-		var updated []models.CartItem
-		err := app.DB.FindMany(ctx, cartCollection, bson.M{"userId": userID}, &updated)
+		updated, err := getCartItemsFromDB(ctx, userID, app)
 		if err != nil {
 			http.Error(w, "Failed to fetch updated cart", http.StatusInternalServerError)
 			return
@@ -97,34 +86,6 @@ func UpdateCart(app *infra.Deps) httprouter.Handle {
 
 		utils.RespondWithJSON(w, http.StatusOK, updated)
 	}
-}
-
-/* ───────────────────────── Cart Fetch Helper ───────────────────────── */
-
-func getGroupedCart(
-	ctx context.Context,
-	userID string,
-	category string,
-	app *infra.Deps,
-) (map[string][]models.CartItem, error) {
-
-	filter := bson.M{"userId": userID}
-	if category != "" {
-		filter["category"] = category
-	}
-
-	var items []models.CartItem
-	if err := app.DB.FindMany(ctx, cartCollection, filter, &items); err != nil {
-		log.Println("getGroupedCart FindMany error:", err)
-		return nil, err
-	}
-
-	grouped := make(map[string][]models.CartItem)
-	for _, item := range items {
-		grouped[item.Category] = append(grouped[item.Category], item)
-	}
-
-	return grouped, nil
 }
 
 /* ───────────────────────── Update Item Quantity ───────────────────────── */
@@ -178,26 +139,7 @@ func UpdateItemQuantity(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		filter := bson.M{
-			"userId":   userID,
-			"itemId":   payload.ItemID,
-			"category": payload.Category,
-		}
-
-		if payload.EntityID != "" {
-			filter["entityId"] = payload.EntityID
-		}
-		if payload.EntityType != "" {
-			filter["entityType"] = payload.EntityType
-		}
-
-		update := bson.M{
-			"$set": bson.M{
-				"quantity": payload.Quantity,
-			},
-		}
-
-		if err := app.DB.Update(ctx, cartCollection, filter, update); err != nil {
+		if err := updateCartItemQuantityInDB(ctx, userID, payload.ItemID, payload.Category, payload.Quantity, payload.EntityID, payload.EntityType, app); err != nil {
 			log.Println("UpdateItemQuantity Update error:", err)
 			http.Error(w, "Failed to update item quantity", http.StatusInternalServerError)
 			return

@@ -11,7 +11,6 @@ import (
 	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func AutocompletePlaces(app *infra.Deps) httprouter.Handle {
@@ -24,25 +23,14 @@ func AutocompletePlaces(app *infra.Deps) httprouter.Handle {
 		query := strings.TrimSpace(r.URL.Query().Get("query"))
 		if len(query) < 2 {
 			utils.RespondWithJSON(w, http.StatusOK, []models.PlaceSuggestion{})
-		}
-
-		filter := bson.M{
-			"name": bson.M{
-				"$regex":   "^" + query,
-				"$options": "i",
-			},
+			return
 		}
 
 		var places []models.Place
 
-		err := app.DB.FindMany(
-			ctx,
-			AutocompleteCollection,
-			filter,
-			&places,
-		)
+		err := findPlacesByQuery(ctx, app.DB, query, &places)
 		if err != nil {
-			http.Error(w, "failed to fetch suggestions", http.StatusInternalServerError)
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"message": "failed to fetch suggestions"})
 			return
 		}
 

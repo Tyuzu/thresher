@@ -26,49 +26,8 @@ func GetEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		// Aggregate pipeline (simplified as map slices)
-		pipeline := []any{
-			map[string]any{"$match": map[string]any{"eventid": eventID}},
-			map[string]any{"$lookup": map[string]any{
-				"from":         "ticks",
-				"localField":   "eventid",
-				"foreignField": "eventid",
-				"as":           "tickets",
-			}},
-			map[string]any{"$lookup": map[string]any{
-				"from": "media",
-				"let":  map[string]any{"eid": "$eventid"},
-				"pipeline": []any{
-					map[string]any{"$match": map[string]any{
-						"$expr": map[string]any{
-							"$and": []any{
-								map[string]any{"$eq": []any{"$entityid", "$$eid"}},
-								map[string]any{"$eq": []any{"$entitytype", "event"}},
-							},
-						},
-					}},
-				},
-				"as": "media",
-			}},
-			map[string]any{"$lookup": map[string]any{
-				"from": "merch",
-				"let":  map[string]any{"eid": "$eventid"},
-				"pipeline": []any{
-					map[string]any{"$match": map[string]any{
-						"$expr": map[string]any{
-							"$and": []any{
-								map[string]any{"$eq": []any{"$entity_id", "$$eid"}},
-								map[string]any{"$eq": []any{"$entity_type", "event"}},
-							},
-						},
-					}},
-				},
-				"as": "merch",
-			}},
-		}
-
 		var events []models.Event
-		if err := app.DB.Aggregate(ctx, eventsCollection, pipeline, &events); err != nil {
+		if err := aggregateEvent(ctx, app, eventID, &events); err != nil {
 			log.Println("Aggregate error:", err)
 			http.Error(w, "Failed to fetch event", http.StatusInternalServerError)
 			return
@@ -93,7 +52,7 @@ func GetEvents(app *infra.Deps) httprouter.Handle {
 		skip, limit := utils.ParsePagination(r, 10, 100)
 		filter := map[string]any{} // optionally {"published": true}
 
-		totalCount, err := app.DB.CountDocuments(ctx, eventsCollection, filter)
+		totalCount, err := countEvents(ctx, app, filter)
 		if err != nil {
 			log.Println("CountDocuments error:", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event count")
@@ -107,7 +66,7 @@ func GetEvents(app *infra.Deps) httprouter.Handle {
 		}
 
 		var rawEvents []models.Event
-		if err := app.DB.FindManyWithOptions(ctx, eventsCollection, filter, opts, &rawEvents); err != nil {
+		if err := listEvents(ctx, app, filter, opts, &rawEvents); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
 			return
 		}

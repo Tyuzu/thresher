@@ -22,19 +22,19 @@ import { generateVideoPlayer } from "../../../components/ui/vidpopHelpers.js";
 function getFileType(media) {
   if (!media || !media.type) {
     if (media.url && /\.(mp4|webm|ogg)$/i.test(media.url)) {
-return "video";
-}
+      return "video";
+    }
     if (media.url && /\.(jpg|jpeg|png|gif|webp)$/i.test(media.url)) {
-return "image";
-}
+      return "image";
+    }
     return "unknown";
   }
   if (media.type.startsWith("image")) {
-return "image";
-}
+    return "image";
+  }
   if (media.type.startsWith("video")) {
-return "video";
-}
+    return "video";
+  }
   return "unknown";
 }
 
@@ -50,8 +50,8 @@ function buildMediaFragment(mediaData, entityType, entityId, isLoggedIn, prefix 
 
     group.forEach((media, i) => {
       if (!media.url) {
-return;
-}
+        return;
+      }
 
       const mediaType = getFileType(media);
       const figure = createElement("figure", {
@@ -69,8 +69,8 @@ return;
 
       figure.append(mediaEl, caption);
       if (translation) {
-figure.append(...translation);
-}
+        figure.append(...translation);
+      }
       figure.append(actions);
 
       wrapper.append(figure);
@@ -116,8 +116,8 @@ function buildMediaElement(media, thumbSrc, index, prefix, type) {
     generateVideoPlayer(videoSrc, thumbSrc, [], [], media.url)
       .then(videoPlayer => {
         if (videoPlayer) {
-vidEl.append(videoPlayer);
-}
+          vidEl.append(videoPlayer);
+        }
       })
       .catch(err => {
         console.error("Video load error:", err);
@@ -144,8 +144,8 @@ vidEl.append(videoPlayer);
 ------------------------------------------------------ */
 function buildTranslationSection(captionText) {
   if (!captionText) {
-return null;
-}
+    return null;
+  }
 
   const translationBox = createElement("div", {
     class: "translation-container",
@@ -181,8 +181,8 @@ export async function displayMedia(content, entityType, entityId, isLoggedIn) {
 
   const addBtn = createAddMediaButton(isLoggedIn, entityType, entityId, list, showMediaUploadForm);
   if (addBtn) {
-content.append(addBtn);
-}
+    content.append(addBtn);
+  }
 
   // Append upfront to minimize layout shifts
   content.append(title, loader, list);
@@ -203,8 +203,8 @@ content.append(addBtn);
     list.addEventListener("click", e => {
       const img = e.target.closest(".media-img");
       if (img) {
-return;
-}
+        return;
+      }
     });
   } catch (err) {
     console.error("Media fetch error:", err);

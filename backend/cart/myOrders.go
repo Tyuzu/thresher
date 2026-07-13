@@ -44,31 +44,11 @@ func GetMyOrders(app *infra.Deps) httprouter.Handle {
 			}
 		}
 
-		// Fetch regular orders
-		regularOrders := make([]models.Order, 0)
-		err := app.DB.FindMany(
-			ctx,
-			ordersCollection,
-			bson.M{"userId": userID},
-			&regularOrders,
-		)
+		regularOrders, farmOrders, err := fetchUserOrdersFromDB(ctx, userID, app)
 		if err != nil {
 			logger.Println("GetMyOrders FindMany error:", err)
 			http.Error(w, "Failed to fetch orders", http.StatusInternalServerError)
 			return
-		}
-
-		// Fetch farm orders
-		farmOrders := make([]models.FarmOrder, 0)
-		err = app.DB.FindMany(
-			ctx,
-			farmOrdersCollection,
-			bson.M{"userid": userID},
-			&farmOrders,
-		)
-		if err != nil {
-			logger.Println("GetMyOrders farm orders error:", err)
-			// Don't fail on farm orders error, just proceed with regular orders
 		}
 
 		// Combine and consolidate all orders by creation date

@@ -1,18 +1,14 @@
 package artists
 
 import (
-	"context"
 	"encoding/json"
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	inmq "naevis/infra/mq"
 	"naevis/models"
-	"naevis/userdata"
 	"naevis/utils"
-	log "naevis/utils/logger"
 	"net/http"
-	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -33,13 +29,13 @@ func CreateArtistEvent(app *infra.Deps) httprouter.Handle {
 		artistevent.CreatorID = utils.GetUserIDFromRequest(r)
 		artistevent.EventID = utils.GenerateRandomString(14)
 
-		err := app.DB.Insert(ctx, ArtistEventsCollection, artistevent)
+		err := InsertArtistEvent(ctx, app.DB, &artistevent)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
 
-		if _, err := addEventToDB(ctx, artistevent, app); err != nil {
+		if err := AddEventToDB(ctx, app, artistevent); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add event")
 			return
 		}
@@ -65,7 +61,7 @@ func UpdateArtistEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		err := app.DB.Update(ctx, ArtistEventsCollection, bson.M{"eventid": artisteventID}, updateData)
+		err := UpdateArtistEventByID(ctx, app.DB, artisteventID, updateData)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "ArtistEvent not found or update failed")
 			return
@@ -80,7 +76,7 @@ func UpdateArtistEvent(app *infra.Deps) httprouter.Handle {
 // Delete Artist Event
 func DeleteArtistEvent(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		dels.DeleteArtistEvent(app)
+		dels.DeleteArtistEvent(app)(w, r, ps)
 		// artisteventID := ps.ByName("id")
 
 		// result, err := app.DB.ArtistEventsCollection.DeleteOne(context.TODO(), bson.M{"eventid": artisteventID})
@@ -94,37 +90,6 @@ func DeleteArtistEvent(app *infra.Deps) httprouter.Handle {
 
 		// utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "ArtistEvent deleted successfully"})
 	}
-}
-func addEventToDB(ctx context.Context, artistEvent models.ArtistEvent, app *infra.Deps) (string, error) {
-	var event models.Event
-
-	dateString := artistEvent.Date
-	layout := "2006-01-02"
-
-	dateToSave, _ := time.Parse(layout, dateString)
-
-	event.CreatorID = artistEvent.CreatorID
-	event.CreatedAt = time.Now().UTC()
-	event.Date = dateToSave.UTC()
-	event.Status = "active"
-	event.FAQs = []models.FAQ{}
-	event.EventID = artistEvent.EventID
-	event.Artists = []string{artistEvent.ArtistID}
-	event.Title = artistEvent.Title
-	event.Location = artistEvent.Venue
-	event.Published = "draft"
-	event.Category = "concert"
-
-	// Use ctx here
-	err := app.DB.Insert(ctx, EventsCollection, event)
-	if err != nil {
-		log.Printf("Error inserting event into MongoDB: %v", err)
-		return "", err
-	}
-
-	userdata.SetUserData("event", event.EventID, artistEvent.ArtistID, "", "", app)
-
-	return "", err
 }
 
 func AddArtistToEvent(app *infra.Deps) httprouter.Handle {
@@ -146,16 +111,15 @@ func AddArtistToEvent(app *infra.Deps) httprouter.Handle {
 
 		// Fetch event details from EventsCollection
 		var event models.Event
-		err := app.DB.FindOne(ctx, EventsCollection, bson.M{"eventid": payload.EventID}, &event)
+		err := FindEventByID(ctx, app.DB, payload.EventID, &event)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Event not found")
 			return
 		}
 
 		// Check if ArtistEvent already exists
-		filter := bson.M{"eventid": payload.EventID, "artistid": payload.ArtistID}
 		var existing []models.ArtistEvent
-		err = app.DB.FindMany(ctx, ArtistEventsCollection, filter, &existing)
+		err = FindArtistEventsByEventAndArtist(ctx, app.DB, payload.EventID, payload.ArtistID, &existing)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error checking for existing artist event")
 			return
@@ -172,26 +136,15 @@ func AddArtistToEvent(app *infra.Deps) httprouter.Handle {
 			Title:     event.Title,
 			Date:      event.Date.Format("2006-01-02"),
 			Venue:     event.PlaceName,
-			City:      "", // optional: extract from event.Location
-			Country:   "", // optional: extract from event.Location
+			City:      "",
+			Country:   "",
 			CreatorID: event.CreatorID,
 			TicketURL: event.WebsiteURL,
 		}
 
-		// Insert into ArtistEventsCollection
-		err = app.DB.Insert(ctx, ArtistEventsCollection, artistEvent)
+		err = AddArtistToEventDB(ctx, app.DB, artistEvent)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add artist to artist events")
-			return
-		}
-
-		// Add artist ID to Event's Artists array
-		update := bson.M{
-			"$addToSet": bson.M{"artists": payload.ArtistID},
-		}
-		err = app.DB.Update(ctx, EventsCollection, bson.M{"eventid": payload.EventID}, update)
-		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update event with artist")
 			return
 		}
 

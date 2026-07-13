@@ -11,7 +11,6 @@ import (
 	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func AutocompleteUsers(app *infra.Deps) httprouter.Handle {
@@ -24,25 +23,14 @@ func AutocompleteUsers(app *infra.Deps) httprouter.Handle {
 		query := strings.TrimSpace(r.URL.Query().Get("query"))
 		if len(query) < 2 {
 			utils.RespondWithJSON(w, http.StatusOK, []models.UserSuggestion{})
-		}
-
-		filter := bson.M{
-			"username": bson.M{
-				"$regex":   "^" + query,
-				"$options": "i",
-			},
+			return
 		}
 
 		var users []models.User
 
-		err := app.DB.FindMany(
-			ctx,
-			AutocompleteCollection,
-			filter,
-			&users,
-		)
+		err := findUsersByQuery(ctx, app.DB, query, &users)
 		if err != nil {
-			http.Error(w, "failed to fetch suggestions", http.StatusInternalServerError)
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"message": "failed to fetch suggestions"})
 			return
 		}
 

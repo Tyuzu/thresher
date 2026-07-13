@@ -2,4 +2,4 @@ package fanmade
 
 import "naevis/config"
 
-var mediaCollection = config.Collections.MediaCollection
+var fanmadeMediaCollection = config.Collections.MediaCollection

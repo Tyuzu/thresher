@@ -23,34 +23,24 @@ func GetPost(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		// Step 1: Fetch post from DB
-		var post models.FeedPost
-		if err := app.DB.FindOne(ctx, feedpostsCollection, map[string]any{"postid": id}, &post); err != nil {
+		post, err := FindFeedPost(ctx, app, id)
+		if err != nil {
 			http.Error(w, "Post not found", http.StatusNotFound)
 			return
 		}
 
-		// Step 2: Fetch like count from Cache
 		redisKey := "like:count:post:" + id
 		var likeCount int64
 		if data, err := app.Cache.Get(ctx, redisKey); err == nil && data != nil {
 			likeCount, _ = strconv.ParseInt(string(data), 10, 64)
 		} else {
-			// fallback to DB count
-			likeCount, _ = app.DB.CountDocuments(ctx, likesCollection, map[string]any{
-				"entity_type": "post",
-				"entity_id":   id,
-			})
-			// cache the result
+			likeCount, _ = CountPostLikes(ctx, app, id)
 			_ = app.Cache.Set(ctx, redisKey, []byte(strconv.FormatInt(likeCount, 10)), 10*time.Minute)
 		}
 
 		post.Likes = likeCount
+		_ = UpdateFeedPostLikeCount(ctx, app, id, likeCount)
 
-		// Step 3: Update DB with latest like count
-		_ = app.DB.UpdateOne(ctx, feedpostsCollection, map[string]any{"postid": id}, map[string]any{"likes": likeCount})
-
-		// Step 4: Return enriched post
 		if err := json.NewEncoder(w).Encode(post); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to encode post data")
 		}
@@ -68,8 +58,8 @@ func GetPosts(app *infra.Deps) httprouter.Handle {
 			Sort:  bson.D{{Key: "timestamp", Value: -1}},
 			Skip:  0,
 		}
-		var posts []models.FeedPost
-		if err := app.DB.FindManyWithOptions(ctx, feedpostsCollection, map[string]any{}, opts, &posts); err != nil {
+		posts, err := FindFeedPosts(ctx, app, opts)
+		if err != nil {
 			http.Error(w, "Failed to fetch posts", http.StatusInternalServerError)
 			return
 		}
@@ -78,23 +68,20 @@ func GetPosts(app *infra.Deps) httprouter.Handle {
 			posts = []models.FeedPost{}
 		}
 
-		// collect unique user IDs
-		userIDs := map[string]struct{}{}
+		userIDs := make([]string, 0, len(posts))
+		seen := map[string]struct{}{}
 		for _, p := range posts {
-			userIDs[p.UserID] = struct{}{}
-		}
-
-		// fetch usernames from Cache
-		usernameMap := map[string]string{}
-		for id := range userIDs {
-			if data, err := app.Cache.HGet(ctx, "users", id); err == nil && data != nil {
-				usernameMap[id] = string(data)
-			} else {
-				usernameMap[id] = "unknown"
+			if p.UserID == "" {
+				continue
+			}
+			if _, ok := seen[p.UserID]; !ok {
+				seen[p.UserID] = struct{}{}
+				userIDs = append(userIDs, p.UserID)
 			}
 		}
 
-		// populate posts
+		usernameMap := GetCachedUsernames(ctx, app, userIDs)
+
 		for i := range posts {
 			if uname, ok := usernameMap[posts[i].UserID]; ok && uname != "" {
 				posts[i].Username = uname

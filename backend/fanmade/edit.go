@@ -5,13 +5,10 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"naevis/infra/db"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -43,12 +40,8 @@ func EditMedia(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Fetch the media to get MediaGroupID
-		var media models.Media
-		if err := app.DB.FindOne(ctx, mediaCollection, map[string]string{
-			"entityid":   entityID,
-			"entitytype": entityType,
-			"mediaid":    mediaID,
-		}, &media); err != nil {
+		media, err := getFanMediaByID(ctx, app, entityType, entityID, mediaID)
+		if err != nil {
 			http.Error(w, "Media not found", http.StatusNotFound)
 			return
 		}
@@ -74,16 +67,9 @@ func EditMedia(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Apply update to all media in the same group
-		if err := app.DB.UpdateMany(ctx, mediaCollection, map[string]string{"mediaGroupId": media.MediaGroupID}, map[string]any{"$set": update}); err != nil {
+		updatedMedias, err := updateFanMediaGroup(ctx, app, media.MediaGroupID, update)
+		if err != nil {
 			http.Error(w, "Failed to update media group", http.StatusInternalServerError)
-			return
-		}
-
-		// Fetch updated media group
-		var updatedMedias []models.Media
-		opts := db.FindManyOptions{} // fetch all
-		if err := app.DB.FindManyWithOptions(ctx, mediaCollection, map[string]string{"mediaGroupId": media.MediaGroupID}, opts, &updatedMedias); err != nil {
-			http.Error(w, "Failed to fetch updated media", http.StatusInternalServerError)
 			return
 		}
 

@@ -57,7 +57,7 @@ func PostNewSong(app *infra.Deps) httprouter.Handle {
 			PosterExtn:  payload.PosterExtn,
 		}
 
-		if err := app.DB.Insert(ctx, SongsCollection, newSong); err != nil {
+		if err := InsertArtistSong(ctx, app.DB, &newSong); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to save song")
 			return
 		}
@@ -129,10 +129,9 @@ func EditSong(app *infra.Deps) httprouter.Handle {
 
 		updateFields["updatedAt"] = time.Now()
 
-		filter := bson.M{"songid": songID, "artistid": artistID}
 		update := bson.M{"$set": updateFields}
 
-		err := app.DB.Update(ctx, SongsCollection, filter, update)
+		err := UpdateArtistSong(ctx, app.DB, artistID, songID, update)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update song")
 			return
@@ -155,9 +154,7 @@ func DeleteSong(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		filter := bson.M{"artistid": artistID, "songid": songID}
-
-		_, err := app.DB.Delete(ctx, SongsCollection, filter)
+		err := DeleteArtistSong(ctx, app.DB, artistID, songID)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete song")
 			return

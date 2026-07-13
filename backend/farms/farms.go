@@ -91,7 +91,7 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 			UpdatedAt:          time.Now(),
 		}
 
-		if err := app.DB.InsertOne(ctx, farmsCollection, farm); err != nil {
+		if err := insertFarm(ctx, app.DB, farm); err != nil {
 			log.Printf("Farm creation failed for user %s: %v", requestingUserID, err) // #nosec G706
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
@@ -146,13 +146,8 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Verify ownership
-		var farm models.Farm
-		if err := app.DB.FindOne(
-			ctx,
-			farmsCollection,
-			bson.M{"farmid": farmID},
-			&farm,
-		); err != nil {
+		farm, err := getFarmByID(ctx, app.DB, farmID)
+		if err != nil {
 			utils.RespondWithJSON(w, http.StatusNotFound, utils.M{
 				"success": false,
 				"message": "Farm not found",
@@ -228,16 +223,12 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 
 		update["updatedAt"] = time.Now()
 
-		if err := app.DB.UpdateOne(
+		if err := updateOwnedFarm(
 			ctx,
-			farmsCollection,
-			bson.M{
-				"farmid": farmID,
-				"userid": userID, // ownership check at DB level too
-			},
-			bson.M{
-				"$set": update,
-			},
+			app.DB,
+			farmID,
+			userID,
+			bson.M{"$set": update},
 		); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
@@ -278,7 +269,7 @@ func DeleteFarm(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		if _, err := app.DB.DeleteOne(ctx, farmsCollection, bson.M{"farmid": farmID}); err != nil {
+		if _, err := deleteFarmByID(ctx, app.DB, farmID); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 			})

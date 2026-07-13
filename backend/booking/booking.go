@@ -9,7 +9,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	inmq "naevis/infra/mq"
@@ -37,11 +36,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 
 		if p.EntityType == "vendor" {
 			var unavailable []models.AvailabilitySlot
-			if err := app.DB.FindMany(ctx, config.Collections.VendorAvailabilityCollection, bson.M{
-				"vendorid":   p.EntityId,
-				"start_date": bson.M{"$lte": p.Date},
-				"end_date":   bson.M{"$gte": p.Date},
-			}, &unavailable); err != nil {
+			if err := FindVendorAvailability(ctx, app.DB, p.EntityId, p.Date, &unavailable); err != nil {
 				http.Error(w, "db error", http.StatusInternalServerError)
 				return
 			}
@@ -55,7 +50,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 		}
 
 		// one booking per user per date (excluding cancelled)
-		count, err := app.DB.CountDocuments(ctx, bookingsCollection, bson.M{
+		count, err := CountBookings(ctx, app.DB, bson.M{
 			"entityType": p.EntityType,
 			"entityId":   p.EntityId,
 			"userId":     p.UserId,
@@ -76,7 +71,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 		// SLOT-BASED booking
 		if p.SlotId != "" {
 			var slot models.Slot
-			if err := app.DB.FindOne(ctx, slotsCollection, bson.M{"id": p.SlotId}, &slot); err != nil {
+			if err := FindSlotByID(ctx, app.DB, p.SlotId, &slot); err != nil {
 				utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 					"ok":     false,
 					"reason": "slot-missing",
@@ -85,7 +80,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 
 			// Sum seats for this slot (consider seats per booking), not just count documents
 			var slotBookings []models.Booking
-			if err := app.DB.FindMany(ctx, bookingsCollection, bson.M{
+			if err := FindBookings(ctx, app.DB, bson.M{
 				"entityType": p.EntityType,
 				"entityId":   p.EntityId,
 				"slotId":     p.SlotId,
@@ -116,7 +111,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 		// TIER-BASED booking
 		if p.SlotId == "" && p.TierId != "" {
 			var tier models.Tier
-			if err := app.DB.FindOne(ctx, tiersCollection, bson.M{"id": p.TierId}, &tier); err != nil {
+			if err := FindTierByID(ctx, app.DB, p.TierId, &tier); err != nil {
 				utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 					"ok":     false,
 					"reason": "tier-missing",
@@ -125,7 +120,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 
 			// Sum seats booked for this tier on the date
 			var tierBookings []models.Booking
-			if err := app.DB.FindMany(ctx, bookingsCollection, bson.M{
+			if err := FindBookings(ctx, app.DB, bson.M{
 				"entityType": p.EntityType,
 				"entityId":   p.EntityId,
 				"tierId":     p.TierId,
@@ -157,11 +152,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 		// DATE capacity (no slot, no tier)
 		if p.SlotId == "" && p.TierId == "" {
 			var dc models.DateCap
-			if err := app.DB.FindOne(ctx, dateCapsCollection, bson.M{
-				"entityType": p.EntityType,
-				"entityId":   p.EntityId,
-				"date":       p.Date,
-			}, &dc); err == nil {
+			if err := FindDateCap(ctx, app.DB, p.EntityType, p.EntityId, p.Date, &dc); err == nil {
 
 				// Sum seats booked for the date (consider seats per booking)
 				var dateBookings []models.Booking
@@ -193,7 +184,7 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 		p.Status = "pending"
 		p.CreatedAt = time.Now().Unix()
 
-		if err := app.DB.InsertOne(ctx, bookingsCollection, p); err != nil {
+		if err := InsertBooking(ctx, app.DB, p); err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return
 		}
@@ -234,10 +225,10 @@ func UpdateBookingStatus(app *infra.Deps) httprouter.Handle {
 		defer cancel()
 
 		var updated models.Booking
-		err := app.DB.FindOneAndUpdate(
+		err := UpdateBookingStatusByID(
 			ctx,
-			bookingsCollection,
-			bson.M{"id": bookingID},
+			app.DB,
+			bookingID,
 			bson.M{"$set": bson.M{"status": body.Status}},
 			&updated,
 		)
@@ -267,10 +258,10 @@ func CancelBooking(app *infra.Deps) httprouter.Handle {
 		defer cancel()
 
 		var updated models.Booking
-		err := app.DB.FindOneAndUpdate(
+		err := UpdateBookingStatusByID(
 			ctx,
-			bookingsCollection,
-			bson.M{"id": bookingID},
+			app.DB,
+			bookingID,
 			bson.M{"$set": bson.M{"status": "cancelled"}},
 			&updated,
 		)
@@ -308,14 +299,12 @@ func SetDateCapacity(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		err := app.DB.UpdateOne(
+		err := UpdateDateCapacity(
 			ctx,
-			dateCapsCollection,
-			bson.M{
-				"entityType": p.EntityType,
-				"entityId":   p.EntityId,
-				"date":       p.Date,
-			},
+			app.DB,
+			p.EntityType,
+			p.EntityId,
+			p.Date,
 			bson.M{"$set": p},
 		)
 		if err != nil {

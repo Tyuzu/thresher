@@ -101,7 +101,7 @@ func AddMedia(app *infra.Deps) httprouter.Handle {
 				Extn:         extn,
 			}
 
-			if err := app.DB.Insert(ctx, mediaCollection, media); err != nil {
+			if err := insertFanMedia(ctx, app, media); err != nil {
 				log.Printf("Failed to insert media %s: %v", filename, err)
 				continue
 			}

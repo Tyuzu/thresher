@@ -18,9 +18,8 @@ func GetArtistEvents(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		filter := bson.M{"artistid": ps.ByName("id")}
 		var artistevents []models.ArtistEvent
-		err := app.DB.FindMany(ctx, ArtistEventsCollection, filter, &artistevents)
+		err := FindArtistEvents(ctx, app.DB, ps.ByName("id"), &artistevents)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch artist events")
 			return
@@ -40,7 +39,7 @@ func GetArtistByID(app *infra.Deps) httprouter.Handle {
 		var artist models.Artist
 
 		// Fetch artist info
-		if err := app.DB.FindOne(ctx, ArtistsCollection, bson.M{"artistid": artistId}, &artist); err != nil {
+		if err := FindArtistByID(ctx, app.DB, artistId, &artist); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
 			return
 		}
@@ -53,12 +52,7 @@ func GetArtistByID(app *infra.Deps) httprouter.Handle {
 		if currentUserID != "" {
 			// Check if the user has subscribed to this artist
 			var subscribers []bson.M
-			err := app.DB.FindMany(ctx, SubscribersCollection, bson.M{
-				"userid": currentUserID,
-				"subscribed": bson.M{
-					"$in": []string{artistId},
-				},
-			}, &subscribers)
+			err := FindSubscribersForArtist(ctx, app.DB, currentUserID, artistId, &subscribers)
 			if err == nil && len(subscribers) > 0 {
 				isSubscribed = true
 			}
@@ -82,7 +76,7 @@ func GetArtistsByEvent(app *infra.Deps) httprouter.Handle {
 		eventID := ps.ByName("eventid")
 
 		var artists []models.Artist
-		err := app.DB.FindMany(ctx, ArtistsCollection, bson.M{"events": eventID}, &artists)
+		err := FindArtistsByEventID(ctx, app.DB, eventID, &artists)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error fetching artists")
 			return
@@ -103,7 +97,7 @@ func GetAllArtists(app *infra.Deps) httprouter.Handle {
 		defer cancel()
 
 		var artists []models.Artist
-		err := app.DB.FindMany(ctx, ArtistsCollection, bson.M{}, &artists)
+		err := FindAllArtists(ctx, app.DB, &artists)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error fetching artists")
 			return

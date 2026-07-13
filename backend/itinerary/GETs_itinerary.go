@@ -18,11 +18,8 @@ func GetItinerary(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var itinerary models.Itinerary
-		if err := app.DB.FindOne(ctx, ItineraryCollection, map[string]any{
-			"itineraryid": itineraryID,
-			"deleted":     map[string]any{"$ne": true},
-		}, &itinerary); err != nil {
+		itinerary, err := findItineraryByID(ctx, app, itineraryID)
+		if err != nil {
 			http.Error(w, "Itinerary not found", http.StatusNotFound)
 			return
 		}
@@ -38,8 +35,8 @@ func GetItineraries(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
-		var itineraries []models.Itinerary
-		if err := app.DB.FindMany(ctx, ItineraryCollection, map[string]any{"deleted": map[string]any{"$ne": true}}, &itineraries); err != nil {
+		itineraries, err := findItineraries(ctx, app, map[string]any{"deleted": map[string]any{"$ne": true}})
+		if err != nil {
 			http.Error(w, "Error fetching itineraries", http.StatusInternalServerError)
 			return
 		}
@@ -75,8 +72,8 @@ func SearchItineraries(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
-		var itineraries []models.Itinerary
-		if err := app.DB.FindMany(ctx, ItineraryCollection, filter, &itineraries); err != nil {
+		itineraries, err := findItineraries(ctx, app, filter)
+		if err != nil {
 			http.Error(w, "Error fetching itineraries", http.StatusInternalServerError)
 			return
 		}

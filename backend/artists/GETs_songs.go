@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // GetArtistsSongs returns all published songs for an artist.
@@ -20,10 +19,8 @@ func GetArtistsSongs(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		filter := bson.M{"artistid": artistID, "published": true}
-
 		var songs []models.ArtistSong
-		err := app.DB.FindMany(ctx, SongsCollection, filter, &songs)
+		err := FindSongsByArtist(ctx, app.DB, artistID, &songs)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch songs")
 			return

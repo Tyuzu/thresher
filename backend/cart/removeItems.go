@@ -62,7 +62,7 @@ func RemoveFromCart(app *infra.Deps) httprouter.Handle {
 			filter["entityType"] = payload.EntityType
 		}
 
-		if _, err := app.DB.Delete(ctx, cartCollection, filter); err != nil {
+		if err := deleteCartItemFromDB(ctx, userID, payload.ItemID, payload.Category, payload.EntityID, payload.EntityType, app); err != nil {
 			log.Println("RemoveFromCart Delete error:", err)
 			http.Error(w, "Failed to remove item from cart", http.StatusInternalServerError)
 			return
@@ -96,7 +96,7 @@ func ClearCart(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		if _, err := app.DB.Delete(ctx, cartCollection, bson.M{"userId": userID}); err != nil {
+		if err := clearCartForUser(ctx, userID, app); err != nil {
 			log.Println("ClearCart Delete error:", err)
 			http.Error(w, "Failed to clear cart", http.StatusInternalServerError)
 			return

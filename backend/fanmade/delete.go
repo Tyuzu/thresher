@@ -5,7 +5,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
 	log "naevis/utils/logger"
@@ -29,12 +28,7 @@ func DeleteMedia(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Fetch the media using Database interface
-		var media models.Media
-		err := app.DB.FindOne(ctx, mediaCollection, map[string]string{
-			"entityid":   entityID,
-			"entitytype": entityType,
-			"mediaid":    mediaID,
-		}, &media)
+		media, err := getFanMediaByID(ctx, app, entityType, entityID, mediaID)
 		if err != nil {
 			http.Error(w, "Media not found", http.StatusNotFound)
 			return
@@ -46,7 +40,7 @@ func DeleteMedia(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Delete media using Database interface
-		if _, err := app.DB.DeleteOne(ctx, mediaCollection, map[string]string{"mediaid": mediaID}); err != nil {
+		if _, err := deleteFanMediaByID(ctx, app, mediaID); err != nil {
 			http.Error(w, "Failed to delete media", http.StatusInternalServerError)
 			return
 		}

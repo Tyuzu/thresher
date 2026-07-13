@@ -1,6 +1,8 @@
 import { createElement } from "../../components/createElement.js";
 import { apiFetch } from "../../api/api.js";
 import { getState } from "../../state/state.js";
+import { persistTabs } from "../../utils/persistTabs.js";
+import { displayMedia } from "../media/ui/mediaGallery.js";
 
 import {
   getFavorites,
@@ -75,33 +77,42 @@ export async function displayRecipe(content, isLoggedIn, recipeid) {
   const tagsEl = renderTags(recipe.tags);
 
 
-  /* INGREDIENTS */
-  const ingredientsTitle = createElement("h3", {}, ["Ingredients"]);
-  const ingredientsEl = renderIngredients(
-    recipe.ingredients,
-    isLoggedIn,
-    recipe
-  );
-
-  /* STEPS */
-  const stepsTitle = createElement("h3", {}, ["Steps"]);
-  const stepsEl = renderSteps(
-    recipeid,
-    recipe.steps || [],
-    recipe
-  );
-
-  /* ACTIONS */
-  const actionsEl = renderActions(
-    recipe,
-    currentUser,
-    content,
-    isFavorite,
-    recipeid
-  );
-
-  /* COMMENTS */
-  const commentsEl = renderComments(recipe);
+  /* SETUP TABS */
+  const tabs = [
+    {
+      title: "Ingredients",
+      id: "ingredients-tab",
+      render: (c) => {
+        c.replaceChildren(renderIngredients(recipe.ingredients, isLoggedIn, recipe));
+      }
+    },
+    {
+      title: "Steps",
+      id: "steps-tab",
+      render: (c) => {
+        c.replaceChildren(renderSteps(recipeid, recipe.steps || [], recipe));
+      }
+    },
+    {
+      title: "Comments",
+      id: "comments-tab",
+      render: (c) => {
+        c.replaceChildren(renderComments(recipe));
+      }
+    },
+    {
+      title: "Media",
+      id: "media-tab",
+      render: (c) => displayMedia(c, "recipe", recipeid, isLoggedIn)
+    },
+    {
+      title: "Actions",
+      id: "actions-tab",
+      render: (c) => {
+        c.replaceChildren(renderActions(recipe, currentUser, content, isFavorite, recipeid));
+      }
+    }
+  ];
 
   /* FINAL ASSEMBLY */
   container.replaceChildren(
@@ -110,12 +121,9 @@ export async function displayRecipe(content, isLoggedIn, recipeid) {
     authorEl,
     bannerEl,
     infoBox,
-    tagsEl,
-    ingredientsTitle,
-    ingredientsEl,
-    stepsTitle,
-    stepsEl,
-    actionsEl,
-    commentsEl
+    tagsEl
   );
+
+  // Use persistent tabs component which handles storage and appending
+  persistTabs(container, tabs, `recipe-tabs:${recipeid}`);
 }

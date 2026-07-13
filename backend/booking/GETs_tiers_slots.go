@@ -30,7 +30,7 @@ func ListSlots(app *infra.Deps) httprouter.Handle {
 		defer cancel()
 
 		var slots []models.Slot
-		if err := app.DB.FindMany(ctx, slotsCollection, filter, &slots); err != nil {
+		if err := FindSlots(ctx, app.DB, filter, &slots); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -62,7 +62,7 @@ func ListBookings(app *infra.Deps) httprouter.Handle {
 		defer cancel()
 
 		var bookings []models.Booking
-		if err := app.DB.FindMany(ctx, bookingsCollection, filter, &bookings); err != nil {
+		if err := FindBookings(ctx, app.DB, filter, &bookings); err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return
 		}
@@ -88,16 +88,7 @@ func GetDateCapacity(app *infra.Deps) httprouter.Handle {
 		defer cancel()
 
 		var dc models.DateCap
-		err := app.DB.FindOne(
-			ctx,
-			dateCapsCollection,
-			bson.M{
-				"entityType": entityType,
-				"entityId":   entityID,
-				"date":       date,
-			},
-			&dc,
-		)
+		err := FindDateCap(ctx, app.DB, entityType, entityID, date, &dc)
 		if err != nil {
 			utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 				"capacity": nil,
@@ -127,7 +118,7 @@ func ListTiers(app *infra.Deps) httprouter.Handle {
 		defer cancel()
 
 		var tiers []models.Tier
-		if err := app.DB.FindMany(ctx, tiersCollection, filter, &tiers); err != nil {
+		if err := FindTiers(ctx, app.DB, filter, &tiers); err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return
 		}

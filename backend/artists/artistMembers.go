@@ -21,11 +21,7 @@ func AddArtistMember(app *infra.Deps) httprouter.Handle {
 
 		// Ensure artist exists
 		var artist models.Artist
-		if err := app.DB.FindOne(ctx, ArtistsCollection, bson.M{
-			"artistid": artistID,
-		}, &artist); err != nil {
-			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
-			return
+		if err := FindArtistByID(ctx, app.DB, artistID, &artist); err != nil {
 		}
 
 		var m models.BandMember
@@ -59,16 +55,7 @@ func AddArtistMember(app *infra.Deps) httprouter.Handle {
 			}
 		}
 
-		update := bson.M{
-			"$push": bson.M{"members": m},
-		}
-
-		if err := app.DB.Update(
-			ctx,
-			ArtistsCollection,
-			bson.M{"artistid": artistID},
-			update,
-		); err != nil {
+		if err := AddArtistMemberDB(ctx, app.DB, artistID, m); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add member")
 			return
 		}
@@ -112,19 +99,7 @@ func UpdateArtistMember(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		filter := bson.M{
-			"artistid":         artistID,
-			"members.memberid": memberID,
-		}
-
-		err := app.DB.Update(
-			ctx,
-			ArtistsCollection,
-			filter,
-			bson.M{"$set": updates},
-		)
-
-		if err != nil {
+		if err := UpdateArtistMemberDB(ctx, app.DB, artistID, memberID, bson.M{"$set": updates}); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update member")
 			return
 		}
@@ -144,18 +119,7 @@ func DeleteArtistMember(app *infra.Deps) httprouter.Handle {
 		artistID := ps.ByName("id")
 		memberID := ps.ByName("memberId")
 
-		update := bson.M{
-			"$pull": bson.M{
-				"members": bson.M{"memberid": memberID},
-			},
-		}
-
-		if err := app.DB.Update(
-			ctx,
-			ArtistsCollection,
-			bson.M{"artistid": artistID},
-			update,
-		); err != nil {
+		if err := DeleteArtistMemberDB(ctx, app.DB, artistID, memberID); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete member")
 			return
 		}

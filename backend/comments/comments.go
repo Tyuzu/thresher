@@ -3,6 +3,7 @@ package comments
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -73,7 +74,7 @@ func CreateComment(app *infra.Deps) httprouter.Handle {
 			UpdatedAt:  time.Now(),
 		}
 
-		if err := app.DB.Insert(ctx, commentsCollection, comment); err != nil {
+		if err := insertComment(ctx, app.DB, comment); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "DB insert failed")
 			return
 		}
@@ -115,14 +116,9 @@ func UpdateComment(app *infra.Deps) httprouter.Handle {
 
 		/* Fetch + ownership check */
 		var existing models.Comment
-		err := app.DB.FindOne(
-			ctx,
-			commentsCollection,
-			bson.M{"commentid": commentID},
-			&existing,
-		)
+		err := findCommentByID(ctx, app.DB, commentID, &existing)
 		if err != nil {
-			if err == mongo.ErrNoDocuments {
+			if errors.Is(err, mongo.ErrNoDocuments) {
 				utils.RespondWithError(w, http.StatusNotFound, "Comment not found")
 				return
 			}
@@ -135,28 +131,18 @@ func UpdateComment(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		update := bson.M{
+		update := bson.M{"$set": bson.M{
 			"content":    content,
 			"updated_at": time.Now(),
-		}
+		}}
 
-		if err := app.DB.UpdateOne(
-			ctx,
-			commentsCollection,
-			bson.M{"commentid": commentID},
-			update,
-		); err != nil {
+		if err := updateCommentContent(ctx, app.DB, commentID, update); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "DB update failed")
 			return
 		}
 
 		/* Return updated document */
-		err = app.DB.FindOne(
-			ctx,
-			commentsCollection,
-			bson.M{"commentid": commentID},
-			&existing,
-		)
+		err = findCommentByID(ctx, app.DB, commentID, &existing)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Fetch failed")
 			return
@@ -183,18 +169,13 @@ func DeleteComment(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		filter := bson.M{
-			"commentid": commentID,
-			"createdby": utils.GetUserIDFromRequest(r),
-		}
-
-		_, err := app.DB.Delete(ctx, commentsCollection, filter)
+		count, err := deleteComment(ctx, app.DB, commentID, utils.GetUserIDFromRequest(r))
 		if err != nil {
-			if err == mongo.ErrNoDocuments {
-				utils.RespondWithError(w, http.StatusForbidden, "Comment not found or forbidden")
-				return
-			}
 			utils.RespondWithError(w, http.StatusInternalServerError, "Delete failed")
+			return
+		}
+		if count == 0 {
+			utils.RespondWithError(w, http.StatusForbidden, "Comment not found or forbidden")
 			return
 		}
 

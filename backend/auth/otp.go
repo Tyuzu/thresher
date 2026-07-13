@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 const OTPExpiry = 10 * time.Minute
@@ -239,12 +238,7 @@ func VerifyOTPHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		if err = app.DB.Update(
-			ctx,
-			UsersCollection,
-			bson.M{"email": email},
-			bson.M{"$set": bson.M{"email_verified": true}},
-		); err != nil {
+		if err = VerifyUserEmail(ctx, app.DB, email); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to verify user")
 			return
 		}

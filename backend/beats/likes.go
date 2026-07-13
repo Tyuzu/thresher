@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -16,8 +15,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 )
-
-const likesCollection = "likes"
 
 // redisLikeKey builds the Redis key for a given entityType/entityID.
 func redisLikeKey(entityType, entityID string) string {
@@ -90,82 +87,6 @@ func ToggleLike(app *infra.Deps) httprouter.Handle {
 			"count": count,
 		})
 	}
-}
-
-// Cache helpers with DB fallback
-
-func decrementRedisOrMongo(
-	ctx context.Context,
-	cacheKey,
-	entityType,
-	entityID string,
-	app *infra.Deps,
-) int64 {
-	// Try cache decrement
-	val, err := app.Cache.Incr(ctx, cacheKey)
-	if err == nil {
-		// Incr only increments, so we simulate decrement by correcting
-		val = val - 2 // net effect: -1 from previous value
-
-		if val < 0 {
-			_ = app.Cache.Set(
-				ctx,
-				cacheKey,
-				[]byte("0"),
-				30*time.Second,
-			)
-			return 0
-		}
-
-		_ = app.Cache.Set(
-			ctx,
-			cacheKey,
-			[]byte(strconv.FormatInt(val, 10)),
-			30*time.Second,
-		)
-		return val
-	}
-
-	// Fallback to DB
-	count, _ := app.DB.CountDocuments(
-		ctx,
-		likesCollection,
-		bson.M{
-			"entity_type": entityType,
-			"entity_id":   entityID,
-		},
-	)
-	return count
-}
-
-func incrementRedisOrMongo(
-	ctx context.Context,
-	cacheKey,
-	entityType,
-	entityID string,
-	app *infra.Deps,
-) int64 {
-	val, err := app.Cache.Incr(ctx, cacheKey)
-	if err == nil {
-		_ = app.Cache.Set(
-			ctx,
-			cacheKey,
-			[]byte(strconv.FormatInt(val, 10)),
-			30*time.Second,
-		)
-		return val
-	}
-
-	// Fallback to DB
-	count, _ := app.DB.CountDocuments(
-		ctx,
-		likesCollection,
-		bson.M{
-			"entity_type": entityType,
-			"entity_id":   entityID,
-		},
-	)
-	return count
 }
 
 // BatchUserLikes handles POST /likes/:entitytype/batch/users

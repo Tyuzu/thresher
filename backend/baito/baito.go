@@ -13,7 +13,6 @@ import (
 	"naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -25,12 +24,7 @@ func DeleteBaito(app *infra.Deps) httprouter.Handle {
 		userID := utils.GetUserIDFromRequest(r)
 		baitoID := ps.ByName("baitoid")
 
-		filter := bson.M{
-			"baitoid": baitoID,
-			"ownerid": userID,
-		}
-
-		_, err := app.DB.DeleteOne(ctx, BaitoCollection, filter)
+		err := deleteBaitoRecord(ctx, app, baitoID, userID)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
 				utils.RespondWithError(w, http.StatusForbidden, "Baito not found or unauthorized")
@@ -73,13 +67,13 @@ func ApplyToBaito(app *infra.Deps) httprouter.Handle {
 			SubmittedAt: time.Now(),
 		}
 
-		if err := app.DB.Insert(ctx, BaitoAppCollection, appx); err != nil {
+		if err := saveBaitoApplication(ctx, app, appx); err != nil {
 			logger.Printf("Insert error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to save application")
 			return
 		}
 
-		if err := app.DB.Inc(ctx, BaitoCollection, bson.M{"baitoid": ps.ByName("baitoid")}, "applicationcount", 1); err != nil {
+		if err := incrementBaitoApplicationCount(ctx, app, ps.ByName("baitoid")); err != nil {
 			logger.Printf("Failed to update application count for baito %s: %v", ps.ByName("baitoid"), err)
 		}
 

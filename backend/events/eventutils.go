@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -72,8 +73,18 @@ func updateEventFields(r *http.Request) (bson.M, error) {
 
 // Validate required fields
 func validateUpdateFields(updateFields bson.M) error {
-	if updateFields["category"] == "" || updateFields["title"] == "" || updateFields["location"] == "" || updateFields["description"] == "" {
-		return fmt.Errorf("category, title, location, and description are required")
+	if len(updateFields) == 0 {
+		return fmt.Errorf("at least one event field is required")
+	}
+
+	for _, field := range []string{"category", "title", "location", "description"} {
+		value, ok := updateFields[field]
+		if !ok {
+			return fmt.Errorf("category, title, location, and description are required")
+		}
+		if strings.TrimSpace(fmt.Sprint(value)) == "" {
+			return fmt.Errorf("category, title, location, and description are required")
+		}
 	}
 	return nil
 }

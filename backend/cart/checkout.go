@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func InitiateCheckout(app *infra.Deps) httprouter.Handle {
@@ -27,13 +26,7 @@ func InitiateCheckout(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		var items []models.CartItem
-		err := app.DB.FindMany(
-			ctx,
-			cartCollection,
-			bson.M{"userId": userID},
-			&items,
-		)
+		items, err := getCartItemsFromDB(ctx, userID, app)
 		if err != nil {
 			http.Error(w, "Failed to fetch cart", http.StatusInternalServerError)
 			return

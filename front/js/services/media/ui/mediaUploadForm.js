@@ -15,11 +15,11 @@ export function uid() {
 // --- Helper to determine file type ---
 function getFileType(file) {
   if (file.type.startsWith("image/")) {
-return "image";
-}
+    return "image";
+  }
   if (file.type.startsWith("video/")) {
-return "video";
-}
+    return "video";
+  }
   return "unknown";
 }
 
@@ -79,8 +79,8 @@ export function showMediaUploadForm(isLoggedIn, entityType, entityId, _mediaList
       // Cleanup URLs to prevent blob leaks
       UploadStore.uploads.forEach((u) => {
         if (u.previewURL) {
-URL.revokeObjectURL(u.previewURL);
-}
+          URL.revokeObjectURL(u.previewURL);
+        }
       });
       UploadStore.clear();
     },
@@ -92,7 +92,7 @@ URL.revokeObjectURL(u.previewURL);
     e.preventDefault();
     dropZone.classList.remove("drag-active");
     const files = Array.from(e.dataTransfer.files);
-    handleFiles(files, caption, uploadsDiv, submit);
+    handleFiles(files, caption, uploadsDiv, submit, entityType, entityId);
   };
 
   dropZone.addEventListener("dragover", (e) => {
@@ -107,7 +107,7 @@ URL.revokeObjectURL(u.previewURL);
 
   // File selection via input
   fileInput.addEventListener("change", (e) =>
-    handleFiles(Array.from(e.target.files), caption, uploadsDiv, submit)
+    handleFiles(Array.from(e.target.files), caption, uploadsDiv, submit, entityType, entityId)
   );
 }
 
@@ -116,15 +116,15 @@ function validateFile(file) {
   const MAX_SIZE_MB = 100;
   const validTypes = ["image/", "video/"];
   if (!validTypes.some((t) => file.type.startsWith(t))) {
-throw new Error(`${file.name}: Unsupported file type`);
-}
+    throw new Error(`${file.name}: Unsupported file type`);
+  }
   if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-throw new Error(`${file.name}: File too large`);
-}
+    throw new Error(`${file.name}: File too large`);
+  }
 }
 
 // --- Handle files ---
-function handleFiles(files, caption, uploadsDiv, submit) {
+function handleFiles(files, caption, uploadsDiv, submit, entityType, entityId) {
   try {
     files.forEach(validateFile);
   } catch (err) {
@@ -139,6 +139,9 @@ function handleFiles(files, caption, uploadsDiv, submit) {
     uploading: true,
     fileType: getFileType(f),
     mediaEntity: "media",
+    // ensure entityType/entityId are sent to the FileDrop endpoint
+    entityType: entityType || "media",
+    entityId: entityId ? String(entityId) : "",
     extension: getFileExtension(f),
   }));
 
@@ -171,8 +174,8 @@ async function uploadFileAndTrack(u, uploadsDiv, submit) {
 async function submitGroupedUploads(caption, uploadsDiv, entityType, entityId, modal) {
   const ready = UploadStore.uploads.filter((u) => u.dropData && !u.serverData);
   if (!ready.length) {
-return Notify("No uploads ready to submit.", { type: "info" });
-}
+    return Notify("No uploads ready to submit.", { type: "info" });
+  }
 
   const captionLang = detectCaptionLang(caption.value);
   const payload = {
@@ -189,7 +192,7 @@ return Notify("No uploads ready to submit.", { type: "info" });
       ready.forEach((u, i) =>
         UploadStore.update(u.id, { serverData: res[i] })
       );
-      Notify("Media submitted successfully!", { type: "success", dismissible:true });
+      Notify("Media submitted successfully!", { type: "success", dismissible: true });
       modal.close?.();
     }
   } catch (err) {
@@ -205,8 +208,8 @@ function renderUploads(uploadsDiv, submit) {
   const currentIds = new Set(UploadStore.uploads.map((u) => u.id));
   uploadsDiv.querySelectorAll(".upload-card").forEach((el) => {
     if (!currentIds.has(el.dataset.id)) {
-el.remove();
-}
+      el.remove();
+    }
   });
 
   UploadStore.uploads.forEach((u) => {
@@ -214,8 +217,8 @@ el.remove();
     if (existing) {
       const bar = existing.querySelector(".upload-progress > div");
       if (bar) {
-bar.style.width = `${u.progress || 0}%`;
-}
+        bar.style.width = `${u.progress || 0}%`;
+      }
       existing.classList.toggle("upload-error", !!u.error);
       existing.classList.toggle("upload-done", !!u.done);
       return;
@@ -225,10 +228,10 @@ bar.style.width = `${u.progress || 0}%`;
       u.fileType === "image"
         ? Imagex({ src: u.previewURL, class: "upload-preview" })
         : createElement("video", {
-            src: u.previewURL,
-            controls: true,
-            class: "upload-preview",
-          });
+          src: u.previewURL,
+          controls: true,
+          class: "upload-preview",
+        });
 
     const progress = createElement("div", { class: "upload-progress" }, [
       createElement("div", {
@@ -243,8 +246,8 @@ bar.style.width = `${u.progress || 0}%`;
       {
         click: () => {
           if (u.previewURL) {
-URL.revokeObjectURL(u.previewURL);
-}
+            URL.revokeObjectURL(u.previewURL);
+          }
           UploadStore.remove(u.id);
           renderUploads(uploadsDiv, submit);
         },
