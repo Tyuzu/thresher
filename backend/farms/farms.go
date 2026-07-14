@@ -28,11 +28,11 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		ctx := r.Context()
 
-		// SECURITY: Limit multipart form size to prevent DoS (max 50MB)
 		r.Body = http.MaxBytesReader(nil, r.Body, 50<<20)
-		if err := r.ParseMultipartForm(50 << 20); err != nil { // #nosec G120
-			// #nosec G706
+
+		if err := r.ParseMultipartForm(50 << 20); err != nil {
 			log.Printf("Farm creation: form parse error from %s: %v", r.RemoteAddr, err)
+
 			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
 				"success": false,
 				"message": "Invalid form data",
@@ -47,9 +47,23 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 		description := strings.TrimSpace(r.FormValue("description"))
 		owner := strings.TrimSpace(r.FormValue("owner"))
 		contact := strings.TrimSpace(r.FormValue("contact"))
-		availabilityTiming := strings.TrimSpace(r.FormValue("availabilityTiming"))
+		social := strings.TrimSpace(r.FormValue("social"))
+		practice := strings.TrimSpace(r.FormValue("practice"))
 
-		// Validation
+		availabilityJSON := strings.TrimSpace(r.FormValue("availability"))
+
+		availability := models.WeeklyAvailability{}
+
+		if availabilityJSON != "" {
+			if err := json.Unmarshal([]byte(availabilityJSON), &availability); err != nil {
+				utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
+					"success": false,
+					"message": "Invalid availability",
+				})
+				return
+			}
+		}
+
 		if name == "" || location == "" || owner == "" || contact == "" {
 			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
 				"success": false,
@@ -58,9 +72,9 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		// SECURITY: Validate email/phone format
 		if !middleware.ValidatePhone(contact) && !middleware.ValidateEmail(contact) {
-			log.Printf("Farm creation: invalid contact format from user %s: %s", requestingUserID, contact) // #nosec G706
+			log.Printf("Farm creation: invalid contact format from user %s: %s", requestingUserID, contact)
+
 			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
 				"success": false,
 				"message": "Invalid contact format. Provide valid email or phone number",
@@ -68,7 +82,6 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		// Check input length to prevent injection/spam
 		if len(name) > 200 || len(location) > 500 || len(description) > 2000 {
 			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
 				"success": false,
@@ -78,21 +91,24 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 		}
 
 		farm := models.Farm{
-			FarmID:             utils.GenerateRandomString(14),
-			Name:               name,
-			Location:           location,
-			Description:        description,
-			Owner:              owner,
-			Contact:            contact,
-			AvailabilityTiming: availabilityTiming,
-			Crops:              []models.Crop{},
-			CreatedBy:          requestingUserID,
-			CreatedAt:          time.Now(),
-			UpdatedAt:          time.Now(),
+			FarmID:       utils.GenerateRandomString(14),
+			Name:         name,
+			Location:     location,
+			Description:  description,
+			Owner:        owner,
+			Contact:      contact,
+			Availability: availability,
+			Social:       social,
+			Practice:     practice,
+			Crops:        []models.Crop{},
+			CreatedBy:    requestingUserID,
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
 		}
 
 		if err := insertFarm(ctx, app.DB, farm); err != nil {
-			log.Printf("Farm creation failed for user %s: %v", requestingUserID, err) // #nosec G706
+			log.Printf("Farm creation failed for user %s: %v", requestingUserID, err)
+
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 				"message": "Failed to create farm",
@@ -100,14 +116,20 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		// SECURITY: Log audit trail
-		go auditlog.LogAction(ctx, app, r, requestingUserID, models.AuditActionFarmCreate,
-			"farm", farm.FarmID, "success", map[string]interface{}{
+		go auditlog.LogAction(
+			ctx,
+			app,
+			r,
+			requestingUserID,
+			models.AuditActionFarmCreate,
+			"farm",
+			farm.FarmID,
+			"success",
+			map[string]interface{}{
 				"name":     farm.Name,
 				"location": farm.Location,
-			})
-
-		/* -------- Publish FarmCreated Event -------- */
+			},
+		)
 
 		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmCreatedEvent, mqevent.FarmCreatedPayload{}); err != nil {
 			log.Printf("failed to publish farm created event: %v", err)
@@ -145,7 +167,6 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		// Verify ownership
 		farm, err := getFarmByID(ctx, app.DB, farmID)
 		if err != nil {
 			utils.RespondWithJSON(w, http.StatusNotFound, utils.M{
@@ -170,7 +191,8 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 
 		if strings.HasPrefix(contentType, "multipart/form-data") {
 			r.Body = http.MaxBytesReader(nil, r.Body, 10<<20)
-			if err := r.ParseMultipartForm(10 << 20); err != nil { // #nosec G120
+
+			if err := r.ParseMultipartForm(10 << 20); err != nil {
 				utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
 					"success": false,
 					"message": "Malformed multipart data",
@@ -178,12 +200,25 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 				return
 			}
 
-			input.Name = r.FormValue("name")
-			input.Location = r.FormValue("location")
-			input.Description = r.FormValue("description")
-			input.Owner = r.FormValue("owner")
-			input.Contact = r.FormValue("contact")
-			input.AvailabilityTiming = r.FormValue("availabilityTiming")
+			input.Name = strings.TrimSpace(r.FormValue("name"))
+			input.Location = strings.TrimSpace(r.FormValue("location"))
+			input.Description = strings.TrimSpace(r.FormValue("description"))
+			input.Owner = strings.TrimSpace(r.FormValue("owner"))
+			input.Contact = strings.TrimSpace(r.FormValue("contact"))
+			input.Social = strings.TrimSpace(r.FormValue("social"))
+			input.Practice = strings.TrimSpace(r.FormValue("practice"))
+
+			availabilityJSON := strings.TrimSpace(r.FormValue("availability"))
+
+			if availabilityJSON != "" {
+				if err := json.Unmarshal([]byte(availabilityJSON), &input.Availability); err != nil {
+					utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
+						"success": false,
+						"message": "Invalid availability",
+					})
+					return
+				}
+			}
 		} else {
 			if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 				utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
@@ -197,20 +232,33 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 		if input.Name != "" {
 			update["name"] = input.Name
 		}
+
 		if input.Location != "" {
 			update["location"] = input.Location
 		}
+
 		if input.Description != "" {
 			update["description"] = input.Description
 		}
+
 		if input.Owner != "" {
 			update["owner"] = input.Owner
 		}
+
 		if input.Contact != "" {
 			update["contact"] = input.Contact
 		}
-		if input.AvailabilityTiming != "" {
-			update["availabilityTiming"] = input.AvailabilityTiming
+
+		if input.Social != "" {
+			update["social"] = input.Social
+		}
+
+		if input.Practice != "" {
+			update["practice"] = input.Practice
+		}
+
+		if input.Availability != nil {
+			update["availability"] = input.Availability
 		}
 
 		if len(update) == 0 {
@@ -228,7 +276,9 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 			app.DB,
 			farmID,
 			userID,
-			bson.M{"$set": update},
+			bson.M{
+				"$set": update,
+			},
 		); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
@@ -236,6 +286,7 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 			})
 			return
 		}
+
 		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FarmUpdatedEvent, mqevent.FarmUpdatedPayload{}); err != nil {
 			log.Printf("failed to publish farm updated event: %v", err)
 		}

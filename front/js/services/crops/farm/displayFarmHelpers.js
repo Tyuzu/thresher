@@ -7,6 +7,7 @@ import { getState } from "../../../state/state.js";
 import { EntityType } from "../../../utils/imagePaths.js";
 import { editFarm } from "./editFarm.js";
 import Bannerx from "../../../components/base/Bannerx.js";
+import { renderAvailabilityWidget } from "./availabilityWidget.js";
 
 // ─────────── Local button helper ───────────
 function makeButton(title, id = "", onClick, classes = "", styles = {}) {
@@ -42,54 +43,78 @@ function makeButton(title, id = "", onClick, classes = "", styles = {}) {
 // ─────────── Farm details ───────────
 export function renderFarmDetails(farm, isCreator) {
   const daysAgo = getAgeInDays(farm.updatedAt);
+
   const freshness =
     daysAgo < 2
       ? "🟢 Updated today"
       : daysAgo < 7
-      ? "🟡 Updated this week"
-      : `🔴 Updated ${daysAgo} days ago`;
+        ? "🟡 Updated this week"
+        : `🔴 Updated ${daysAgo} days ago`;
 
   const actions = document.createElement("div");
   actions.className = "farm-actions";
 
   if (isCreator) {
     actions.append(
-      makeButton(`✏️ Edit`, `edit-${farm.farmid}`, () => editFarm(true, farm), "buttonx"),
-      makeButton(`🗑️ Delete`, `delete-${farm.farmid}`, async () => {
-        const ok = window.confirm?.(`Delete farm "${farm.name}"?`);
-        if (!ok) {
-          return;
-        }
+      makeButton(
+        "✏️ Edit",
+        `edit-${farm.farmid}`,
+        () => editFarm(true, farm),
+        "buttonx"
+      ),
+      makeButton(
+        "🗑️ Delete",
+        `delete-${farm.farmid}`,
+        async () => {
+          const ok = window.confirm?.(`Delete farm "${farm.name}"?`);
 
-        const res = await apiFetch(`/farms/farm/${farm.farmid}`, "DELETE");
-        if (res?.success) {
-          navigate("/farms");
-        }
-      }, "buttonx")
+          if (!ok) {
+            return;
+          }
+
+          const res = await apiFetch(`/farms/farm/${farm.farmid}`, "DELETE");
+
+          if (res?.success) {
+            navigate("/farms");
+          }
+        },
+        "buttonx"
+      )
     );
   }
 
   return createElement("div", { class: "farm-detail" }, [
     createElement("h2", {}, [farm.name || "Farm"]),
+
     createElement("p", {}, [`📍 Location: ${farm.location || "N/A"}`]),
+
     createElement("p", {}, [`📃 Description: ${farm.description || "N/A"}`]),
+
     createElement("p", {}, [`👤 Owner: ${farm.owner || "N/A"}`]),
+
     createElement("p", {}, [`📞 Contact: ${farm.contact || "N/A"}`]),
-    farm.practice && createElement("p", {}, [`🌱 Practice: ${farm.practice}`]),
+
+    farm.practice &&
+    createElement("p", {}, [`🌱 Practice: ${farm.practice}`]),
+
+    renderAvailabilityWidget(farm.availability),
+
     farm.social &&
-      createElement("p", {}, [
-        "🔗 ",
-        createElement(
-          "a",
-          {
-            href: farm.social,
-            target: "_blank",
-            rel: "noopener"
-          },
-          ["Visit farm page"]
-        )
-      ]),
+    createElement("p", {}, [
+      "🔗 ",
+      createElement(
+        "a",
+        {
+          href: farm.social,
+          target: "_blank",
+          rel: "noopener"
+        },
+        ["Visit farm page"]
+      )
+    ]),
+
     createElement("p", {}, [freshness]),
+
     actions
   ].filter(Boolean));
 }

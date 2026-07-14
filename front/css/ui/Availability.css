@@ -1,0 +1,189 @@
+.availability-widget {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 12px;
+}
+
+.availability-widget h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.availability-status {
+    align-self: flex-start;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: .85rem;
+    font-weight: 600;
+}
+
+.availability-open {
+    background: #e8f7ec;
+    color: #177a3d;
+}
+
+.availability-closed-status {
+    background: #fdecec;
+    color: #b42318;
+}
+
+/* ---------- Timeline ---------- */
+
+.availability-scale {
+    display: grid;
+    grid-template-columns: 42px 70px 1fr 70px;
+    align-items: center;
+}
+
+.availability-scale::before,
+.availability-scale::after {
+    content: "";
+}
+
+.availability-scale span {
+    font-size: .7rem;
+    color: #888;
+}
+
+.availability-scale span:nth-child(1) {
+    grid-column: 3;
+    justify-self: start;
+}
+
+.availability-scale span:nth-child(2) {
+    grid-column: 3;
+    justify-self: 25%;
+}
+
+.availability-scale span:nth-child(3) {
+    grid-column: 3;
+    justify-self: center;
+}
+
+.availability-scale span:nth-child(4) {
+    grid-column: 3;
+    justify-self: 75%;
+}
+
+.availability-scale span:nth-child(5) {
+    grid-column: 3;
+    justify-self: end;
+}
+
+/* ---------- Rows ---------- */
+
+.availability-row {
+    display: grid;
+    grid-template-columns: 42px 70px 1fr 70px;
+    align-items: center;
+    gap: .75rem;
+    min-height: 34px;
+    padding: .35rem .5rem;
+    border-radius: 8px;
+    transition: background .2s ease;
+}
+
+.availability-row:hover {
+    background: rgba(0, 0, 0, .035);
+}
+
+.availability-today {
+    background: rgba(34, 197, 94, .08);
+}
+
+.availability-day {
+    font-weight: 600;
+    font-size: .9rem;
+}
+
+.availability-time {
+    font-size: .8rem;
+    color: #666;
+    white-space: nowrap;
+}
+
+.availability-closed {
+    grid-column: 2 / span 3;
+    color: #999;
+    font-style: italic;
+}
+
+/* ---------- Timeline Bar ---------- */
+
+.availability-bar {
+    position: relative;
+    height: 12px;
+    border-radius: 999px;
+    overflow: hidden;
+
+    background:
+        repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent calc(100% / 24 - 1px),
+            rgba(0,0,0,.08) calc(100% / 24 - 1px),
+            rgba(0,0,0,.08) calc(100% / 24)
+        ),
+        #ececec;
+}
+
+.availability-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: inherit;
+
+    background: linear-gradient(
+        90deg,
+        #34c759,
+        #28a745
+    );
+
+    box-shadow: 0 0 6px rgba(52, 199, 89, .35);
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 700px) {
+
+    .availability-widget {
+        padding: .85rem;
+    }
+
+    .availability-row {
+        grid-template-columns: 42px 1fr;
+        row-gap: .4rem;
+    }
+
+    .availability-day {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .availability-time:first-of-type {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .availability-bar {
+        grid-column: 2;
+    }
+
+    .availability-time:last-of-type {
+        display: none;
+    }
+
+    .availability-scale {
+        display: none;
+    }
+
+    .availability-closed {
+        grid-column: 2;
+    }
+}

@@ -1,0 +1,453 @@
+﻿package infra
+
+import (
+	"context"
+	"os"
+	"testing"
+	"time"
+
+	"naevis/infra/cache"
+	"naevis/infra/db"
+	"naevis/infra/mq"
+)
+
+/* ============== Tests for env() helper ============== */
+
+func TestEnvWithSetVariable(t *testing.T) {
+	key := "TEST_INFRA_VAR"
+	expected := "test_value"
+
+	os.Setenv(key, expected)
+	defer os.Unsetenv(key)
+
+	result := env(key, "fallback")
+
+	if result != expected {
+		t.Errorf("env() = %q, want %q", result, expected)
+	}
+}
+
+func TestEnvWithUnsetVariable(t *testing.T) {
+	key := "NONEXISTENT_TEST_VAR_" + time.Now().Format("20060102150405")
+	expected := "fallback_value"
+
+	// Ensure the key is not set
+	os.Unsetenv(key)
+
+	result := env(key, expected)
+
+	if result != expected {
+		t.Errorf("env() = %q, want %q", result, expected)
+	}
+}
+
+func TestEnvWithEmptyVariable(t *testing.T) {
+	key := "TEST_INFRA_EMPTY"
+	expected := "fallback_value"
+
+	os.Setenv(key, "")
+	defer os.Unsetenv(key)
+
+	result := env(key, expected)
+
+	if result != expected {
+		t.Errorf("env() with empty string = %q, want %q (fallback)", result, expected)
+	}
+}
+
+func TestEnvWithMultipleValues(t *testing.T) {
+	testCases := []struct {
+		name     string
+		value    string
+		fallback string
+		expected string
+	}{
+		{"numeric value", "12345", "fallback", "12345"},
+		{"url value", "mongodb://localhost:27017", "mongodb://default", "mongodb://localhost:27017"},
+		{"empty fallback", "actual", "", "actual"},
+		{"special chars", "pass@word#123", "default", "pass@word#123"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			key := "TEST_VAR_" + tc.name
+			os.Setenv(key, tc.value)
+			defer os.Unsetenv(key)
+
+			result := env(key, tc.fallback)
+			if result != tc.expected {
+				t.Errorf("env() = %q, want %q", result, tc.expected)
+			}
+		})
+	}
+}
+
+/* ============== Mock Implementations ============== */
+
+// MockDatabase implements the db.Database interface for testing
+type MockDatabase struct {
+	PingCalled bool
+	PingError  error
+}
+
+func (m *MockDatabase) Ping(ctx context.Context) error {
+	m.PingCalled = true
+	return m.PingError
+}
+
+func (m *MockDatabase) WithDB(ctx context.Context, op func(ctx context.Context) error) error {
+	return op(ctx)
+}
+
+func (m *MockDatabase) RunTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	return fn(ctx)
+}
+
+func (m *MockDatabase) Insert(ctx context.Context, collection string, document any) error {
+	return nil
+}
+
+func (m *MockDatabase) InsertOne(ctx context.Context, collection string, document any) error {
+	return nil
+}
+
+func (m *MockDatabase) InsertMany(ctx context.Context, collection string, documents []any) error {
+	return nil
+}
+
+func (m *MockDatabase) BulkWrite(ctx context.Context, collection string, operations []any) error {
+	return nil
+}
+
+func (m *MockDatabase) FindOne(ctx context.Context, collection string, filter any, result any) error {
+	return nil
+}
+
+func (m *MockDatabase) FindOneWithProjection(ctx context.Context, collection string, filter any, projection []string, result any) error {
+	return nil
+}
+
+func (m *MockDatabase) FindMany(ctx context.Context, collection string, filter any, result any, opts ...any) error {
+	return nil
+}
+
+func (m *MockDatabase) FindManyWithOptions(ctx context.Context, collection string, filter any, opts db.FindManyOptions, result any) error {
+	return nil
+}
+
+func (m *MockDatabase) FindManyWithProjection(ctx context.Context, collection string, filter any, projection []string, opts db.FindManyOptions, result any) error {
+	return nil
+}
+
+func (m *MockDatabase) Distinct(ctx context.Context, collection string, field string, filter any, result any) error {
+	return nil
+}
+
+func (m *MockDatabase) Update(ctx context.Context, collection string, filter any, update any) error {
+	return nil
+}
+
+func (m *MockDatabase) UpdateOne(ctx context.Context, collection string, filter any, update any) error {
+	return nil
+}
+
+func (m *MockDatabase) UpdateMany(ctx context.Context, collection string, filter any, update any) error {
+	return nil
+}
+
+func (m *MockDatabase) Upsert(ctx context.Context, collection string, filter any, document any) error {
+	return nil
+}
+
+func (m *MockDatabase) Inc(ctx context.Context, collection string, filter any, field string, value int64) error {
+	return nil
+}
+
+func (m *MockDatabase) AddToSet(ctx context.Context, collection string, filter any, field string, value any) error {
+	return nil
+}
+
+func (m *MockDatabase) Delete(ctx context.Context, collection string, filter any) (int64, error) {
+	return 0, nil
+}
+
+func (m *MockDatabase) DeleteOne(ctx context.Context, collection string, filter any) (int64, error) {
+	return 0, nil
+}
+
+func (m *MockDatabase) DeleteMany(ctx context.Context, collection string, filter any) error {
+	return nil
+}
+
+func (m *MockDatabase) FindOneAndUpdate(ctx context.Context, collection string, filter any, update any, result any) error {
+	return nil
+}
+
+func (m *MockDatabase) Aggregate(ctx context.Context, collection string, pipeline any, result any) error {
+	return nil
+}
+
+func (m *MockDatabase) Count(ctx context.Context, collection string, filter any) (int64, error) {
+	return 0, nil
+}
+
+func (m *MockDatabase) CountDocuments(ctx context.Context, collection string, filter any) (int64, error) {
+	return 0, nil
+}
+
+func (m *MockDatabase) EstimatedDocumentCount(ctx context.Context, collection string) (int64, error) {
+	return 0, nil
+}
+
+// MockCache implements the cache.Cache interface for testing
+type MockCache struct {
+	GetCalls map[string]int
+	SetCalls int
+	DelCalls int
+}
+
+func (m *MockCache) Get(ctx context.Context, key string) ([]byte, error) {
+	if m.GetCalls == nil {
+		m.GetCalls = make(map[string]int)
+	}
+	m.GetCalls[key]++
+	return nil, nil
+}
+
+func (m *MockCache) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	m.SetCalls++
+	return nil
+}
+
+func (m *MockCache) SetNX(ctx context.Context, key string, value []byte, ttl time.Duration) (bool, error) {
+	return true, nil
+}
+
+func (m *MockCache) SetWithExpiry(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	return nil
+}
+
+func (m *MockCache) Exists(ctx context.Context, key string) (bool, error) {
+	return false, nil
+}
+
+func (m *MockCache) Del(ctx context.Context, key string) error {
+	m.DelCalls++
+	return nil
+}
+
+func (m *MockCache) HSet(ctx context.Context, key, field string, value []byte) error {
+	return nil
+}
+
+func (m *MockCache) HGet(ctx context.Context, key, field string) ([]byte, error) {
+	return nil, nil
+}
+
+func (m *MockCache) HDel(ctx context.Context, key, field string) (bool, error) {
+	return false, nil
+}
+
+func (m *MockCache) Incr(ctx context.Context, key string) (int64, error) {
+	return 0, nil
+}
+
+// MockMQ implements the mq.MQ interface for testing
+type MockMQ struct {
+	PublishCalls        int
+	PingCalled          bool
+	SubscribeCalls      int
+	QueueSubscribeCalls int
+}
+
+func (m *MockMQ) Publish(ctx context.Context, subject string, data []byte) error {
+	m.PublishCalls++
+	return nil
+}
+
+func (m *MockMQ) Ping(ctx context.Context) error {
+	m.PingCalled = true
+	return nil
+}
+
+func (m *MockMQ) Subscribe(ctx context.Context, subject string, handler mq.MessageHandler) (mq.Subscription, error) {
+	m.SubscribeCalls++
+	return &MockSubscription{}, nil
+}
+
+func (m *MockMQ) QueueSubscribe(ctx context.Context, subject string, queue string, handler mq.MessageHandler) (mq.Subscription, error) {
+	m.QueueSubscribeCalls++
+	return &MockSubscription{}, nil
+}
+
+// MockSubscription implements the mq.Subscription interface for testing
+type MockSubscription struct {
+	UnsubscribeCalled bool
+}
+
+func (m *MockSubscription) Unsubscribe() error {
+	m.UnsubscribeCalled = true
+	return nil
+}
+
+/* ============== Tests for Deps struct ============== */
+
+func TestDepsInitialization(t *testing.T) {
+	mockDB := &MockDatabase{}
+	mockCache := &MockCache{}
+	mockMQ := &MockMQ{}
+
+	var dbInterface db.Database = mockDB
+	var cacheInterface cache.Cache = mockCache
+	var mqInterface mq.MQ = mockMQ
+
+	deps := &Deps{
+		DB:    dbInterface,
+		Cache: cacheInterface,
+		MQ:    mqInterface,
+	}
+
+	if deps.DB == nil {
+		t.Error("Deps.DB is nil")
+	}
+	if deps.Cache == nil {
+		t.Error("Deps.Cache is nil")
+	}
+	if deps.MQ == nil {
+		t.Error("Deps.MQ is nil")
+	}
+}
+
+func TestDepsWithNilDependencies(t *testing.T) {
+	deps := &Deps{
+		DB:    nil,
+		Cache: nil,
+		MQ:    nil,
+	}
+
+	if deps.DB != nil {
+		t.Error("Deps.DB should be nil")
+	}
+	if deps.Cache != nil {
+		t.Error("Deps.Cache should be nil")
+	}
+	if deps.MQ != nil {
+		t.Error("Deps.MQ should be nil")
+	}
+}
+
+/* ============== Tests for integration scenarios ============== */
+
+func TestMockDatabaseIntegration(t *testing.T) {
+	mockDB := &MockDatabase{}
+	ctx := context.Background()
+
+	err := mockDB.Ping(ctx)
+	if err != nil {
+		t.Errorf("Ping() returned unexpected error: %v", err)
+	}
+	if !mockDB.PingCalled {
+		t.Error("Ping() was not called on mock database")
+	}
+}
+
+func TestMockCacheOperations(t *testing.T) {
+	mockCache := &MockCache{}
+	ctx := context.Background()
+
+	mockCache.Set(ctx, "test_key", []byte("test_value"), time.Minute)
+	if mockCache.SetCalls != 1 {
+		t.Errorf("SetCalls = %d, want 1", mockCache.SetCalls)
+	}
+
+	mockCache.Get(ctx, "test_key")
+	if mockCache.GetCalls["test_key"] != 1 {
+		t.Errorf("GetCalls['test_key'] = %d, want 1", mockCache.GetCalls["test_key"])
+	}
+
+	mockCache.Del(ctx, "test_key")
+	if mockCache.DelCalls != 1 {
+		t.Errorf("DelCalls = %d, want 1", mockCache.DelCalls)
+	}
+}
+
+func TestMockMQOperations(t *testing.T) {
+	mockMQ := &MockMQ{}
+	ctx := context.Background()
+
+	mockMQ.Publish(ctx, "test_subject", []byte("test_data"))
+	if mockMQ.PublishCalls != 1 {
+		t.Errorf("PublishCalls = %d, want 1", mockMQ.PublishCalls)
+	}
+
+	mockMQ.Ping(ctx)
+	if !mockMQ.PingCalled {
+		t.Error("Ping() was not called on mock MQ")
+	}
+
+	sub, err := mockMQ.Subscribe(ctx, "test_subject", func(ctx context.Context, msg mq.Message) error {
+		return nil
+	})
+	if err != nil {
+		t.Errorf("Subscribe() returned unexpected error: %v", err)
+	}
+	if mockMQ.SubscribeCalls != 1 {
+		t.Errorf("SubscribeCalls = %d, want 1", mockMQ.SubscribeCalls)
+	}
+
+	if mockSub, ok := sub.(*MockSubscription); ok {
+		mockSub.Unsubscribe()
+		if !mockSub.UnsubscribeCalled {
+			t.Error("Unsubscribe() was not called on mock subscription")
+		}
+	}
+}
+
+func TestEnvDefaultBehaviors(t *testing.T) {
+	tests := []struct {
+		name      string
+		envVar    string
+		envValue  string
+		fallback  string
+		shouldSet bool
+		expected  string
+	}{
+		{
+			name:      "mongo uri default",
+			envVar:    "MONGO_URI",
+			fallback:  "mongodb://localhost:27017",
+			shouldSet: false,
+			expected:  "mongodb://localhost:27017",
+		},
+		{
+			name:      "redis addr default",
+			envVar:    "REDIS_ADDR",
+			fallback:  "localhost:6379",
+			shouldSet: false,
+			expected:  "localhost:6379",
+		},
+		{
+			name:      "nats url default",
+			envVar:    "NATS_URL",
+			fallback:  "",
+			shouldSet: false,
+			expected:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldSet {
+				os.Setenv(tt.envVar, tt.envValue)
+				defer os.Unsetenv(tt.envVar)
+			} else {
+				os.Unsetenv(tt.envVar)
+			}
+
+			result := env(tt.envVar, tt.fallback)
+			if result != tt.expected {
+				t.Errorf("env(%q, %q) = %q, want %q", tt.envVar, tt.fallback, result, tt.expected)
+			}
+		})
+	}
+}

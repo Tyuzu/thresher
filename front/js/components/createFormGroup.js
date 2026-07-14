@@ -163,7 +163,111 @@ export function createFormGroup({
         inputElement.multiple = true;
       }
       break;
+    case "availability": {
+      const days = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ];
 
+      const availability =
+        typeof value === "object" && value !== null ? value : {};
+
+      const wrapper = createElement("div", {
+        class: "availability-picker"
+      });
+
+      const hiddenInput = createElement("input", {
+        type: "hidden",
+        id: id || undefined,
+        name: inputName || undefined
+      });
+
+      const state = {};
+
+      const updateValue = () => {
+        hiddenInput.value = JSON.stringify(state);
+        hiddenInput.dispatchEvent(new Event("change", { bubbles: true }));
+      };
+
+      days.forEach(day => {
+        const key = day.toLowerCase();
+
+        state[key] = {
+          enabled: availability[key]?.enabled || false,
+          from: availability[key]?.from || "09:00",
+          to: availability[key]?.to || "17:00"
+        };
+
+        const row = createElement("div", {
+          class: "availability-row"
+        });
+
+        const checkbox = createElement("input", {
+          type: "checkbox"
+        });
+        checkbox.checked = state[key].enabled;
+
+        const dayLabel = createElement("span", {
+          class: "availability-day"
+        }, [day]);
+
+        const fromInput = createElement("input", {
+          type: "time",
+          value: state[key].from
+        });
+
+        const toInput = createElement("input", {
+          type: "time",
+          value: state[key].to
+        });
+
+        fromInput.disabled = !checkbox.checked;
+        toInput.disabled = !checkbox.checked;
+
+        checkbox.addEventListener("change", () => {
+          state[key].enabled = checkbox.checked;
+
+          fromInput.disabled = !checkbox.checked;
+          toInput.disabled = !checkbox.checked;
+
+          updateValue();
+        });
+
+        fromInput.addEventListener("input", () => {
+          state[key].from = fromInput.value;
+          updateValue();
+        });
+
+        toInput.addEventListener("input", () => {
+          state[key].to = toInput.value;
+          updateValue();
+        });
+
+        row.append(
+          checkbox,
+          dayLabel,
+          fromInput,
+          createElement("span", {}, ["–"]),
+          toInput
+        );
+
+        wrapper.appendChild(row);
+      });
+
+      updateValue();
+
+      wrapper.appendChild(hiddenInput);
+
+      inputElement = hiddenInput;
+      group.appendChild(wrapper);
+
+      break;
+    }
     default:
       inputElement = createElement("input", {
         type,

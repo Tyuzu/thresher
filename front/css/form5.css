@@ -79,3 +79,44 @@ button[type="submit"]:hover {
     padding: var(--space-md);
   }
 }
+
+.availability-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.availability-row {
+    display: grid;
+    grid-template-columns: 24px 100px 1fr auto 1fr;
+    gap: 10px;
+    align-items: center;
+}
+
+.availability-day {
+    font-weight: 500;
+}
+
+.availability-row input[type="time"] {
+    width: 100%;
+    min-width: 120px;
+}
+
+@media (max-width: 640px) {
+    .availability-row {
+        grid-template-columns: 24px 1fr;
+        row-gap: 6px;
+    }
+
+    .availability-day {
+        grid-column: 2;
+    }
+
+    .availability-row input[type="time"] {
+        grid-column: 2;
+    }
+
+    .availability-row span:last-of-type {
+        display: none;
+    }
+}

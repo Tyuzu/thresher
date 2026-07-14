@@ -197,7 +197,7 @@ func GetCropTypeFarms(app *infra.Deps) httprouter.Handle {
 
 					FavoritesCount: farm.FavoritesCount,
 
-					Availability: farm.AvailabilityTiming,
+					Availability: farm.Availability,
 					Phone:        farm.ContactInfo.Phone,
 
 					InventoryValue: crop.Price * float64(crop.Quantity),

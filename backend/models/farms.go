@@ -11,27 +11,38 @@ type ContactInfo struct {
 	Website string `bson:"website,omitempty" json:"website,omitempty"`
 }
 
+type AvailableSlot struct {
+	Enabled bool   `json:"enabled" bson:"enabled"`
+	From    string `json:"from" bson:"from"`
+	To      string `json:"to" bson:"to"`
+}
+
+type WeeklyAvailability map[string]AvailableSlot
+
 type Farm struct {
-	FarmID             string      `bson:"farmid,omitempty"         json:"farmid"`
-	Name               string      `bson:"name"                  json:"name"`
-	Location           string      `bson:"location"              json:"location"`
-	Latitude           float64     `bson:"latitude,omitempty"    json:"latitude,omitempty"`
-	Longitude          float64     `bson:"longitude,omitempty"   json:"longitude,omitempty"`
-	Description        string      `bson:"description,omitempty" json:"description,omitempty"`
-	Owner              string      `bson:"owner"                 json:"owner"`
-	ContactInfo        ContactInfo `bson:"contactInfo,omitempty" json:"contactInfo,omitempty"`
-	AvailabilityTiming string      `bson:"availabilityTiming,omitempty" json:"availabilityTiming,omitempty"`
-	Tags               []string    `bson:"tags,omitempty"        json:"tags,omitempty"`
-	Banner             string      `bson:"banner,omitempty"       json:"photo,omitempty"`
-	Crops              []Crop      `bson:"crops" json:"crops,omitempty"` // loaded via lookup or separate query
-	Media              []string    `bson:"media,omitempty"       json:"media,omitempty"`
-	AvgRating          float64     `bson:"avgRating,omitempty"   json:"avgRating,omitempty"`
-	ReviewCount        int         `bson:"reviewCount,omitempty" json:"reviewCount,omitempty"`
-	FavoritesCount     int64       `bson:"favoritesCount,omitempty" json:"favoritesCount,omitempty"`
-	CreatedBy          string      `bson:"createdBy"             json:"createdBy"`
-	CreatedAt          time.Time   `bson:"createdAt"             json:"createdAt"`
-	UpdatedAt          time.Time   `bson:"updatedAt"             json:"updatedAt"`
-	Contact            string      `json:"contact"`
+	FarmID         string             `bson:"farmid,omitempty"         json:"farmid"`
+	Name           string             `bson:"name"                  json:"name"`
+	Location       string             `bson:"location"              json:"location"`
+	Latitude       float64            `bson:"latitude,omitempty"    json:"latitude,omitempty"`
+	Longitude      float64            `bson:"longitude,omitempty"   json:"longitude,omitempty"`
+	Description    string             `bson:"description,omitempty" json:"description,omitempty"`
+	Owner          string             `bson:"owner"                 json:"owner"`
+	ContactInfo    ContactInfo        `bson:"contactInfo,omitempty" json:"contactInfo,omitempty"`
+	Availability   WeeklyAvailability `json:"availability" bson:"availability"`
+	Tags           []string           `bson:"tags,omitempty"        json:"tags,omitempty"`
+	Banner         string             `bson:"banner,omitempty"       json:"photo,omitempty"`
+	Crops          []Crop             `bson:"crops" json:"crops,omitempty"` // loaded via lookup or separate query
+	Media          []string           `bson:"media,omitempty"       json:"media,omitempty"`
+	AvgRating      float64            `bson:"avgRating,omitempty"   json:"avgRating,omitempty"`
+	ReviewCount    int                `bson:"reviewCount,omitempty" json:"reviewCount,omitempty"`
+	FavoritesCount int64              `bson:"favoritesCount,omitempty" json:"favoritesCount,omitempty"`
+	CreatedBy      string             `bson:"createdBy"             json:"createdBy"`
+	CreatedAt      time.Time          `bson:"createdAt"             json:"createdAt"`
+	UpdatedAt      time.Time          `bson:"updatedAt"             json:"updatedAt"`
+	Contact        string             `json:"contact"`
+
+	Social   string `json:"social,omitempty" bson:"social,omitempty"`
+	Practice string `json:"practice,omitempty" bson:"practice,omitempty"`
 }
 
 type PricePoint struct {
@@ -143,8 +154,8 @@ type CropListing struct {
 
 	FavoritesCount int64 `json:"favoritesCount"`
 
-	Availability string `json:"availability,omitempty"`
-	Phone        string `json:"phone,omitempty"`
+	Availability WeeklyAvailability `json:"availability" bson:"availability"`
+	Phone        string             `json:"phone,omitempty"`
 
 	InventoryValue float64 `json:"inventoryValue"`
 
