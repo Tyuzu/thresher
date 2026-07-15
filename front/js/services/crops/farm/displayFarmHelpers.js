@@ -7,7 +7,6 @@ import { getState } from "../../../state/state.js";
 import { EntityType } from "../../../utils/imagePaths.js";
 import { editFarm } from "./editFarm.js";
 import Bannerx from "../../../components/base/Bannerx.js";
-import { renderAvailabilityWidget } from "./availabilityWidget.js";
 
 // ─────────── Local button helper ───────────
 function makeButton(title, id = "", onClick, classes = "", styles = {}) {
@@ -38,6 +37,34 @@ function makeButton(title, id = "", onClick, classes = "", styles = {}) {
   }
 
   return button;
+}
+
+// ─────────── Availability Widget Helper ───────────
+export function renderAvailabilityWidget(availability) {
+  if (!availability) return null;
+
+  const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+  const listItems = [];
+
+  for (const day of days) {
+    const dayData = availability[day];
+    if (dayData && dayData.enabled) {
+      const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+      listItems.push(
+        createElement("li", { class: "availability-item" }, [
+          createElement("span", { class: "day-name" }, [`${dayName}: `]),
+          createElement("span", { class: "day-hours" }, [`${dayData.from} - ${dayData.to}`])
+        ])
+      );
+    }
+  }
+
+  if (listItems.length === 0) return null;
+
+  return createElement("div", { class: "availability-widget" }, [
+    createElement("strong", { class: "availability-title" }, ["🕒 Operating Hours"]),
+    createElement("ul", { class: "availability-list" }, listItems)
+  ]);
 }
 
 // ─────────── Farm details ───────────
@@ -97,6 +124,7 @@ export function renderFarmDetails(farm, isCreator) {
     farm.practice &&
     createElement("p", {}, [`🌱 Practice: ${farm.practice}`]),
 
+    // Render operational schedules dynamically
     renderAvailabilityWidget(farm.availability),
 
     farm.social &&
@@ -123,20 +151,28 @@ export function renderFarmDetails(farm, isCreator) {
 export function renderCropSummary(crops) {
   const total = crops.length;
   const inStock = crops.filter((c) => c.quantity > 0).length;
+  
+  // Account for discounts in the average price calculation
+  const getFinalPrice = (c) => {
+    const orig = c.price || 0;
+    const disc = c.discount || 0;
+    return orig - (orig * disc / 100);
+  };
+
   const avgPrice = (
-    crops.reduce((sum, c) => sum + (c.price || 0), 0) / (total || 1)
+    crops.reduce((sum, c) => sum + getFinalPrice(c), 0) / (total || 1)
   ).toFixed(2);
 
   return createElement("div", { class: "crop-summary" }, [
     createElement("p", {}, [`🌱 ${total} crops`]),
     createElement("p", {}, [`📦 ${inStock} in stock`]),
-    createElement("p", {}, [`💸 Avg. price: ₹${avgPrice}`])
+    createElement("p", {}, [`💸 Avg. Price: ₹${avgPrice}`])
   ]);
 }
 
 // ─────────── Crop emoji distribution ───────────
 export function renderCropEmojiMap(crops) {
-  const emoji = ["🥔", "🌾", "🍅", "🌽", "🥬", "🍆"];
+  const emoji = ["🥔", "🌾", "🍅", "🌽", "🥬", "🍆", "🥕", "🌹"];
   const counts = {};
 
   for (const c of crops) {
@@ -224,26 +260,71 @@ function createCropBannerSection(crop, isCreator) {
 function createCropCard(crop, farmName, farmId, mainCon, editcon, isLoggedIn, isCreator) {
   const card = createElement("div", { class: "crop-card" });
 
+  // FIXED CASE-SENSITIVITY: crop.HarvestDate instead of crop.harvestDate
   const harvestAge =
-    crop.harvestDate
-      ? `${getAgeInDays(crop.harvestDate)} days old`
+    crop.HarvestDate
+      ? `${getAgeInDays(crop.HarvestDate)} days old`
       : "Unknown age";
 
-  const price = new Intl.NumberFormat("en-IN", {
+  // Calculate Expiry urgency
+  let expiryNotice = null;
+  if (crop.expiryDate) {
+    const daysUntilExpiry = -getAgeInDays(crop.expiryDate);
+    if (daysUntilExpiry <= 0) {
+      expiryNotice = createElement("span", { class: "badge badge-expired" }, ["⚠️ Expired"]);
+    } else if (daysUntilExpiry <= 2) {
+      expiryNotice = createElement("span", { class: "badge badge-warning" }, [`⚠️ Expires in ${daysUntilExpiry} days`]);
+    }
+  }
+
+  // Handle prices & discounts
+  const originalVal = crop.price || 0;
+  const discountVal = crop.discount || 0;
+  const finalVal = discountVal > 0 ? originalVal - (originalVal * discountVal / 100) : originalVal;
+
+  const formatter = new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    maximumFractionDigits: 0
-  }).format(crop.price || 0);
+    maximumFractionDigits: 2
+  });
 
+  const priceElements = [];
+  if (discountVal > 0) {
+    priceElements.push(
+      createElement("span", { class: "original-price-slashed", style: "text-decoration: line-through; color: #888; margin-right: 8px;" }, [
+        formatter.format(originalVal)
+      ]),
+      createElement("strong", { class: "discounted-price" }, [
+        `${formatter.format(finalVal)} per ${crop.unit || "unit"} `
+      ]),
+      createElement("span", { class: "discount-badge", style: "background-color: #e1f7ec; color: #15803d; padding: 2px 6px; font-size: 11px; font-weight: bold; border-radius: 4px;" }, [
+        ` ${discountVal}% OFF`
+      ])
+    );
+  } else {
+    priceElements.push(
+      createElement("strong", {}, [
+        `${formatter.format(originalVal)} per ${crop.unit || "unit"}`
+      ])
+    );
+  }
+
+// Change the card append section at the end of createCropCard to this:
   card.append(
-    createCropBannerSection(crop, isCreator),
-    createElement("h4", {}, [crop.name || "Crop"]),
-    createElement("p", {}, [`💰 ${price} per ${crop.unit || "unit"}`]),
-    createElement("p", {}, [`📦 Stock: ${crop.quantity ?? 0}`]),
-    createElement("p", {}, [`🕓 Harvested: ${harvestAge}`]),
-    createElement("p", {}, [
-      crop.quantity > 0 ? "✅ Available" : "❌ Out of Stock"
-    ])
+    ...[
+      createCropBannerSection(crop, isCreator),
+      createElement("div", { class: "crop-header" }, [
+        createElement("h4", { style: "display: inline-block; margin-right: 8px;" }, [crop.name || "Crop"]),
+        crop.category ? createElement("span", { class: "badge-category", style: "background: var(--color-fg);color:var(--color-bg); font-size: 11px; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;" }, [crop.category]) : null
+      ].filter(Boolean)),
+      createElement("p", { class: "price-display-wrapper" }, priceElements),
+      createElement("p", {}, [`📦 Stock: ${crop.quantity ?? 0} ${crop.unit || ""}`]),
+      createElement("p", {}, [`🕓 Harvested: ${harvestAge}`]),
+      createElement("p", {}, [
+        crop.quantity > 0 ? "✅ Available" : "❌ Out of Stock"
+      ]),
+      expiryNotice // If null, it will be cleanly filtered out below!
+    ].filter(Boolean)
   );
 
   if (crop.history?.length > 1) {
@@ -384,7 +465,8 @@ function sortCrops(crops, sortBy) {
       case "quantity":
         return (b.quantity || 0) - (a.quantity || 0);
       case "age":
-        return getAgeInDays(b.harvestDate) - getAgeInDays(a.harvestDate);
+        // Case safety fixed here too
+        return getAgeInDays(b.HarvestDate) - getAgeInDays(a.HarvestDate);
       case "name":
       default:
         return (a.name || "").localeCompare(b.name || "");

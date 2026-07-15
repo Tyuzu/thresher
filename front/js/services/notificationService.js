@@ -1,11 +1,9 @@
-// services/notificationService.js
 import { apiFetch } from "../api/apiClient.js";
 
 /**
  * Notification Service - handles all notification-related API calls
  */
-
-export const notificationService = {
+const notificationService = {
     /**
      * Get all notifications for the current user
      * @param {string} userId - The user ID
@@ -184,4 +182,6 @@ export const notificationService = {
     }
 };
 
+// Exporting both variants keeps the API module resilient
+export { notificationService };
 export default notificationService;

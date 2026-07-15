@@ -170,35 +170,6 @@
   margin-bottom: var(--space-sm);
 }
 
-/* === Buttons === */
-/* .buttonx {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  padding: var(--space-xs) var(--space-md);
-  border-radius: var(--radius-sm);
-  border: none;
-  cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
-}
-
-.buttonx.button {
-  background: var(--color-btn-bg);
-  color: var(--color-btn-fg);
-}
-
-.buttonx.button:hover {
-  background: var(--color-btn-hover-bg);
-}
-
-.buttonx.secondary {
-  background: var(--color-surface);
-  color: var(--color-accent);
-  border: 1px solid var(--color-border);
-}
-
-.buttonx.secondary:hover {
-  background: var(--color-space);
-} */
 
 /* === Social Links === */
 .socials {

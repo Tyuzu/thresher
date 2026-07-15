@@ -27,7 +27,7 @@ const NoLink = (
   }
 
   // Add default class
-  span.classList.add("span");
+  span.classList.add("nolink-span");
 
   // Attach custom event listeners
   for (const [event, handler] of Object.entries(events)) {

@@ -61,10 +61,6 @@
 }
 
 
-/**/
-.seating-wrapper { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-/* .buttonx { padding: 6px 10px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer; }
-.buttonx.primary { background:#2b6cb0; color:#fff; border-color:#2b6cb0; } */
 .seating-tooltip { transition: opacity 120ms ease; }
 .seating-footer .disabled { opacity: 0.6; pointer-events: none; }
 

@@ -1,5 +1,5 @@
-import "../../../../css/ui/Availability.css";
-import { createElement } from "../../../components/createElement.js";
+import "../../../css/ui/Availability.css";
+import { createElement } from "../createElement.js";
 
 const DAYS = [
   ["monday", "Mon."],
@@ -188,7 +188,7 @@ export function renderAvailabilityWidget(availability = {}) {
   );
 
   container.append(
-    createElement("h3", {
+    createElement("h4", {
       class: "availability-title"
     }, [
       "Business Hours"

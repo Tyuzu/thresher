@@ -1,83 +1,36 @@
-/* Container */
+/* ==========================================================================
+   Crop Page Container & Header
+   ========================================================================== */
 .croppage {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 2rem;
 }
 
-/* Header */
 .crop-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
+  align-items: baseline;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+}
+
+.crop-header h1, 
+.crop-header a {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2e7d32; /* Organic green tone */
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.crop-header a:hover {
+  text-decoration: underline;
 }
 
 .crop-meta {
-  font-size: 0.95rem;
-  opacity: 0.8;
-}
-
-/* Filters */
-.toggle-filters-btn {
-  margin-bottom: 1rem;
-}
-
-.filter-controls {
-  display: none;
-  padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-}
-
-.filter-controls.open {
-  display: block;
-}
-
-.filter-controls fieldset {
-  border: none;
-  padding: 0;
-  margin: 0;
-}
-
-.filter-controls legend {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.filter-row label {
-  width: 180px;
-  font-weight: 600;
-}
-
-.filter-row input {
-  flex: 1;
-  min-width: 0;
-  padding: 0.65rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.filter-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.filter-actions button {
-  padding: 0.7rem 1rem;
-  cursor: pointer;
+  font-size: 14px;
 }
 
 /* Listings */
@@ -179,12 +132,16 @@
   border-top: 1px solid #eee;
 }
 
+.quantity-display{
+  padding: 0 1rem;
+}
+
 .quantity-control {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
-
+/*
 .quantity-control button {
   min-width: 34px;
   height: 34px;
@@ -192,7 +149,7 @@
   border-radius: 6px;
   cursor: pointer;
 }
-
+*/
 .quantity-value {
   min-width: 40px;
   text-align: center;

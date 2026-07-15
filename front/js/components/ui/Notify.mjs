@@ -14,12 +14,22 @@ const Notify = (message, {
   notify.setAttribute("aria-live", "assertive");
   notify.textContent = message;
 
+  // Track timeouts so we can clear them if dismissed early
+  let hideTimeoutId = null;
+  let removeTimeoutId = null;
+
+  const removeNotification = () => {
+    if (hideTimeoutId) clearTimeout(hideTimeoutId);
+    if (removeTimeoutId) clearTimeout(removeTimeoutId);
+    notify.remove();
+  };
+
   if (dismissible) {
     const closeBtn = document.createElement('button');
     closeBtn.className = 'notify-close';
     closeBtn.textContent = '×';
     closeBtn.setAttribute('aria-label', 'Close');
-    closeBtn.addEventListener('click', () => notify.remove());
+    closeBtn.addEventListener('click', removeNotification);
     notify.appendChild(closeBtn);
   }
 
@@ -29,17 +39,22 @@ const Notify = (message, {
     container = document.createElement("div");
     container.id = containerId;
     container.className = "notify-container";
-    document.getElementById("app").appendChild(container);
+    
+    // Fall back safely to document.body if '#app' isn't in the DOM yet
+    const appRoot = document.getElementById("app") || document.body;
+    appRoot.appendChild(container);
   }
 
   container.appendChild(notify);
 
+  // Auto-dismiss logic
   const timeout = duration || Math.max(3000, message.length * 50);
-  setTimeout(() => {
+  hideTimeoutId = setTimeout(() => {
     notify.classList.add("hide");
-    setTimeout(() => notify.remove(), 500);
+    removeTimeoutId = setTimeout(() => notify.remove(), 500);
   }, timeout);
 
+  // Global app state & Side Effects
   setState("unreadNotifications", (getState("unreadNotifications") || 0) + 1);
   playSoundAlert({ type: "notification" });
 
@@ -51,6 +66,7 @@ const Notify = (message, {
   });
 
   persistNotification(payload).catch(() => {});
+  
   return notify;
 };
 

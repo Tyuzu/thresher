@@ -22,6 +22,7 @@ import { displayFanMedia } from "../../fanmade/ui/mediaGallery.js";
 import { renderWeatherDetails } from "../weather/weather.js";
 import { createCrop } from "../crop/createCrop.js";
 import Modal from "../../../components/ui/Modal.mjs";
+import { renderAvailabilityWidget } from "../../../components/ui/Availability.mjs";
 
 export async function displayFarm(isLoggedIn, farmId, content) {
   const container = createElement("div", { class: "farmpage" });
@@ -124,6 +125,7 @@ export async function displayFarm(isLoggedIn, farmId, content) {
     farmCTA,
     summaryStats,
     cropDistribution,
+    renderAvailabilityWidget(farm.availability),
     reviewPlaceholder
   ]);
 

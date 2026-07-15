@@ -18,8 +18,8 @@ import (
 )
 
 type FilePayload struct {
-	Filename string `json:"filename"`
-	Extn     string `json:"extn"`
+	Filename  string `json:"filename"`
+	Extension string `json:"extension"` // Fixed: Matches frontend response schema "extension"
 }
 
 func AddMedia(app *infra.Deps) httprouter.Handle {
@@ -72,9 +72,9 @@ func AddMedia(app *infra.Deps) httprouter.Handle {
 			}
 
 			// Use provided extension or extract from filename
-			extn := file.Extn
+			extn := file.Extension
 			if extn == "" {
-				// Try to extract from filename
+				// Try to extract from filename if the payload extension is somehow missing
 				if lastDot := strings.LastIndex(file.Filename, "."); lastDot != -1 {
 					extn = file.Filename[lastDot:]
 				}
@@ -87,6 +87,7 @@ func AddMedia(app *infra.Deps) httprouter.Handle {
 				mediaType = models.MediaTypeImage
 				mimeType = "image/" + strings.TrimPrefix(extn, ".")
 			case ".mp4", ".webm", ".ogg", ".mov", ".avi":
+				mediaType = "video" // Fixed: Added missing type categorization for videos
 				mimeType = "video/" + strings.TrimPrefix(extn, ".")
 			default:
 				mediaType = "unknown"
