@@ -1,5 +1,4 @@
 import "../../../css/ui/createTabs.css";
-import { createDivButton, createContainer } from "../eventHelper.js";
 import { createElement } from "../../components/createElement.js";
 import { getRouteState, setRouteState } from "../../state/state.js";
 import { makeDraggableScroll } from "../dragnav.js";
@@ -11,9 +10,10 @@ import { makeDraggableScroll } from "../dragnav.js";
  * @param {Function|null} onTabChange - optional callback: (tabId) => void
  */
 export function createTabs(tabs, routeKey = null, initialTabId = null, onTabChange = null) {
-  const tabContainer = createContainer(["tabs-container"]);
-  const tabButtons = createContainer(["tab-buttons"]);
-  const tabContents = createContainer(["tab-contents"]);
+  // --- Create wrapper elements using createElement ---
+  const tabContainer = createElement("div", { class: "tabs-container" });
+  const tabButtons = createElement("div", { class: "tab-buttons" });
+  const tabContents = createElement("div", { class: "tab-contents" });
 
   const tabContentMap = new Map(); // id → content container
   const buttonMap = new Map();     // id → button element
@@ -22,17 +22,16 @@ export function createTabs(tabs, routeKey = null, initialTabId = null, onTabChan
   tabs.forEach(({ id, title }) => {
     const contentContainer = createElement("article", {
       id,
-      class: ["tab-content"]
+      class: "tab-content"
     });
 
-    const tabButton = createDivButton({
-      text: title,
-      classes: ["tab-button"],
-      attributes: { "data-id": id }, // ✅ added so outside code can always read
+    const tabButton = createElement("div", {
+      class: "tab-button",
+      dataset: { id: id }, // Native dataset API via helper sets "data-id"
       events: {
         click: () => activateTab(id)
       }
-    });
+    }, [title]); // Passes title as text child
 
     tabButtons.appendChild(tabButton);
     tabContents.appendChild(contentContainer);
@@ -68,8 +67,8 @@ export function createTabs(tabs, routeKey = null, initialTabId = null, onTabChan
     }
 
     if (onTabChange) {
-onTabChange(tabId);
-} // ✅ ensures search form updates `currentTab`
+      onTabChange(tabId);
+    } // ✅ ensures search form updates `currentTab`
   }
 
   // --- Determine and activate initial tab ---
@@ -89,3 +88,6 @@ onTabChange(tabId);
 
   return tabContainer;
 }
+
+// Keep the utility exported at the bottom as originally defined
+export { createElement };

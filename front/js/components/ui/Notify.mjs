@@ -1,7 +1,7 @@
 import "../../../css/ui/Notify.css";
 import { getState, setState } from "../../state/state.js";
-import { playSoundAlert } from "../../utils/soundAlerts.js";
-import { buildNotificationPayload, persistNotification } from "../../utils/notificationPersistence.js";
+import { playSoundAlert } from "../../services/notifications/soundAlerts.js";
+import { buildNotificationPayload, persistNotification } from "../../services/notifications/notificationPersistence.js";
 
 const Notify = (message, {
   type = 'info',

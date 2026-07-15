@@ -1,7 +1,7 @@
 // components/notifications/modal.js
 import Modal from "../../components/ui/Modal.mjs";
 import { createElement } from "../../components/createElement.js";
-import notificationService from "../notificationService.js";
+import { apiFetch } from "../../api/api.js";
 
 export async function openNotificationsModal() {
     let notifications = [];
@@ -28,7 +28,7 @@ export async function openNotificationsModal() {
     // Fetch notifications from backend
     if (userId) {
         try {
-            const response = await notificationService.getNotifications(userId);
+            const response = await apiFetch(`/notifs/user/${userId}`);
             if (response && Array.isArray(response)) {
                 notifications = response.sort((a, b) => {
                     return new Date(b.createdAt) - new Date(a.createdAt);
@@ -148,7 +148,9 @@ export async function openNotificationsModal() {
                 markReadBtn.addEventListener("click", async (e) => {
                     e.stopPropagation();
                     try {
-                        await notificationService.markAsRead(n.id || n._id);
+                        await apiFetch(`/notifs/notif/${n.id}/read`, {
+                            method: "PUT"
+                        });
                         notifItem.style.backgroundColor = "#f7f7f7";
                         notifItem.style.borderColor = "#ddd";
                         markReadBtn.style.display = "none";
@@ -191,7 +193,9 @@ export async function openNotificationsModal() {
             `,
             onclick: async () => {
                 try {
-                    await notificationService.markAllAsRead(userId);
+                    await apiFetch(`/notifs/user/${userId}/read-all`, {
+                        method: "PUT"
+                    });
                     location.reload(); // Reload to refresh
                 } catch (error) {
                     console.error("Failed to mark all as read", error);
@@ -224,7 +228,9 @@ export async function openNotificationsModal() {
             onclick: async () => {
                 if (confirm("Clear all notifications?")) {
                     try {
-                        await notificationService.clearAllNotifications(userId);
+                        await apiFetch(`/notifs/user/${userId}`, {
+                            method: "DELETE"
+                        });
                         location.reload(); // Reload to refresh
                     } catch (error) {
                         console.error("Failed to clear notifications", error);

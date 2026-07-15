@@ -5,9 +5,9 @@ import { renderItemForm } from "./createOrEdit.js";
 import { renderItemCard } from "./renderItemCard.js";
 import { renderCategoryChips } from "./renderCategoryChips.js";
 import { capitalize } from "../../profile/profileHelpers.js";
-import {renderSearchAndSortUI} from "./renderSearchAndSortUI.js";
-import {sortItems} from "./sortItems.js";
-import {renderPagination} from "./renderPagination.js";
+import { renderSearchAndSortUI } from "./renderSearchAndSortUI.js";
+import { sortItems } from "./sortItems.js";
+import { renderPagination } from "./renderPagination.js";
 
 export async function displayItems(
   type,
@@ -22,7 +22,11 @@ export async function displayItems(
   const refresh = () =>
     displayItems(type, content, isLoggedIn, { limit, offset, search, category, sort });
 
-  container.appendChild(createElement("h2", {}, [`${capitalize(type)}s`]));
+  container.appendChild(createElement("h2", { class: "page-title" }, [`${capitalize(type)}s`]));
+
+  // Setup dedicated sub-container for category chips so they don't replace global container children
+  const chipsWrapper = createElement("div", { class: "chips-wrapper" });
+  container.appendChild(chipsWrapper);
 
   const { sortSelect, searchInput } = renderSearchAndSortUI(type, sort, search, (newSort, newSearch) =>
     displayItems(type, content, isLoggedIn, {
@@ -34,7 +38,7 @@ export async function displayItems(
     })
   );
 
-  await renderCategoryChips(container, category, (newCategory) =>
+  await renderCategoryChips(chipsWrapper, category, (newCategory) =>
     displayItems(type, content, isLoggedIn, {
       limit,
       offset: 0,
@@ -44,19 +48,20 @@ export async function displayItems(
     }), type
   );
 
-  if (isLoggedIn) {
-    const topBar = createElement("div", { class: "items-topbar" }, [
-      searchInput,
-      sortSelect,
-      Button(
+  const topBar = createElement("div", { class: "items-topbar" }, [
+    searchInput,
+    sortSelect,
+    isLoggedIn
+      ? Button(
         `Create ${type}`,
         `create-${type}-btn`,
         { click: () => renderItemForm(container, "create", null, type, refresh) },
-        "primary-button"
-      ),
-    ]);
-    container.appendChild(topBar);
-  }
+        "primary-button critical-action"
+      )
+      : null,
+  ].filter(Boolean));
+
+  container.appendChild(topBar);
 
   let items = [];
   let total = 0;
@@ -66,23 +71,21 @@ export async function displayItems(
     const result = await apiFetch(`/farm/items?${qs.toString()}`);
     items = result.items || [];
     total = result.total ?? items.length;
-  // eslint-disable-next-line no-unused-vars
   } catch (err) {
-    container.appendChild(createElement("p", {}, [`Failed to load ${type}s.`]));
+    container.appendChild(createElement("p", { class: "error-message" }, [`Failed to load ${type}s.`]));
     return;
   }
 
   if (items.length === 0) {
-    container.appendChild(createElement("p", {}, [`No ${type}s found.`]));
+    container.appendChild(createElement("p", { class: "no-results" }, [`No ${type}s found.`]));
     return;
   }
 
   sortItems(items, sort);
 
-  const grid = createElement("div", { class: `${type}-grid` });
+  const grid = createElement("div", { class: `${type}-grid items-grid` });
   items.forEach((item) => {
     grid.appendChild(renderItemCard(item, type, isLoggedIn, container, refresh));
-    // console.log(renderItemCard(item, type, isLoggedIn, container, refresh));
   });
 
   container.appendChild(grid);

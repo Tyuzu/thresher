@@ -1,7 +1,17 @@
+/* ==========================================================================
+   CSS Variables mapped to your design system tokens
+   ========================================================================== */
 :root {
-  --tab-accent: var(--color-btn-bg);
-  --tab-header-bg: #f8f8f8;
-  --tab-border: #ddd;
+  --tab-accent: var(--color-btn-bg);               /* Mapped to current theme button background */
+  --tab-bg: var(--color-bg);                       /* Base background of the app */
+  --tab-header-bg: var(--color-surface);           /* Slightly offset container header surface */
+  --tab-hover-bg: var(--color-space);              /* Inter-item spacing background */
+  --tab-hover-text: var(--color-fg);               /* Full contrast hover text */
+  --tab-text-inactive: var(--color-muted);         /* Slate / Grey muted text style */
+  --tab-text-active: var(--color-fg);              /* Main heading / text foreground */
+  --tab-border: var(--color-border);               /* Standardized system borders */
+  --tab-border-radius: var(--radius-md);           /* Replaces hardcoded 8px with your token */
+  --tab-transition: var(--transition-fast);        /* Speeds up interaction responsiveness */
 }
 
 /* --- Container Layout --- */
@@ -9,23 +19,36 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  border: 1px solid var(--tab-border, #ddd);
-  border-radius: 6px;
+  border: 1px solid var(--tab-border);
+  border-radius: var(--tab-border-radius);
+  background: var(--tab-bg);
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-elev-1);               /* Mapped to your light subtle shadow */
+  transition: var(--tab-transition);
 }
 
 /* --- Tab Buttons Row --- */
 .tab-buttons {
   display: flex;
   align-items: center;
+  background-color: var(--tab-header-bg);
+  border-bottom: 1px solid var(--tab-border);
   overflow-x: auto;
   white-space: nowrap;
-  border-bottom: 1px solid var(--tab-border, #ddd);
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  
+  /* Draggable navigation utility properties */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+  user-select: none;
+  cursor: grab;
+  -webkit-overflow-scrolling: touch; /* Butter-smooth scrolling on iOS Safari */
 }
 
+.tab-buttons:active {
+  cursor: grabbing;
+}
+
+/* Hide scrollbar for Chrome/Safari/Opera */
 .tab-buttons::-webkit-scrollbar {
   display: none;
 }
@@ -33,77 +56,94 @@
 /* --- Individual Tab Button --- */
 .tab-button {
   flex-shrink: 0;
-  padding: 10px 18px;
-  cursor: pointer;
-  font-weight: 500;
+  padding: var(--space-sm) var(--space-md);        /* Managed by your spacing tokens */
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--tab-text-inactive);
   border-bottom: 2px solid transparent;
-  user-select: none;
+  transition: var(--tab-transition);
+  position: relative;
 }
 
+/* Hover State styling */
 .tab-button:hover {
-  background: var(--tab-hover-bg, #f0f0f0);
-  color: var(--tab-hover-text, #000);
+  background: var(--tab-hover-bg);
+  color: var(--tab-hover-text);
 }
 
+/* Active State with clean scale indicator */
 .tab-button.active {
-  border-bottom: 2px solid var(--tab-accent, var(--color-btn-bg));
+  color: var(--tab-text-active);
+  background: var(--tab-bg);
+}
+
+/* Animated Underline Indicator */
+.tab-button.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--tab-accent);
+  border-radius: var(--radius-full);
+  transform: scaleX(1);
+  transition: var(--tab-transition);
 }
 
 /* --- Tab Content Area --- */
 .tab-contents {
   flex: 1;
-  padding: 8px;
-  position: relative;
+  padding: var(--space-md);                        /* Clean standard 16px padding */
+  background: var(--tab-bg);
   min-height: 120px;
-  overflow-x: auto;
 }
 
 .tab-content {
   display: none;
-  animation: fadeIn 0.25s ease;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
 }
 
 .tab-content.active {
   display: block;
+  opacity: 1;
+  transform: translateY(0);
 }
 
-/* --- Fade Animation --- */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(2px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* --- Nested Tabs (for cases like “Artist → Fanmade/Posts”) --- */
+/* --- Nested Tabs (for clean sub-navigation nesting) --- */
 .tab-content .tabs-container {
   border: none;
   box-shadow: none;
-  margin-top: 12px;
+  margin-top: var(--space-sm);
+  background: transparent;
 }
 
 .tab-content .tab-buttons {
-  border: 1px solid var(--nested-tab-border, #eee);
-  border-radius: 4px;
+  background: transparent;
+  border-bottom: 2px solid var(--tab-border);
+}
+
+.tab-content .tab-button {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-xs);
 }
 
 .tab-content .tab-button.active {
-  border-bottom-color: var(--nested-tab-accent, var(--color-btn-bg));
+  background: transparent;
 }
 
 /* --- Responsive Adjustments --- */
-@media (max-width: 600px) {
-  .tab-button {
-    padding: 8px 12px;
-    font-size: 14px;
+@media (max-width: var(--max-width-sm)) {          /* Mapped to your 640px breakpoint token */
+  .tabs-container {
+    border-radius: 0; /* Full edge bleed on smaller viewports */
+    border-left: none;
+    border-right: none;
   }
 
   .tab-contents {
-    padding: 6px;
+    padding: var(--space-sm);
   }
 }

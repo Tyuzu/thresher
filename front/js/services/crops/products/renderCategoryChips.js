@@ -15,13 +15,13 @@ export async function renderCategoryChips(container, selectedCategory, onSelect,
     categories = [];
   }
 
-  const chipContainer = createElement("div", { class: "chip-container" });
+  const chipContainer = createElement("div", { class: "chip-container sub-nav-chips" });
 
   const allChip = Button(
     "All",
     "chip-all",
     { click: () => onSelect("") },
-    selectedCategory ? "chip" : "chip selected"
+    !selectedCategory ? "chip selected filter-chip active" : "chip filter-chip"
   );
 
   const chips = [allChip];
@@ -31,7 +31,7 @@ export async function renderCategoryChips(container, selectedCategory, onSelect,
       cat,
       `chip-${cat}`,
       { click: () => onSelect(cat) },
-      selectedCategory === cat ? "chip selected" : "chip"
+      selectedCategory === cat ? "chip selected filter-chip active" : "chip filter-chip"
     );
     chips.push(chip);
   }

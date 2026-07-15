@@ -1,5 +1,5 @@
-import { notificationService } from '../services/notificationService.js'; // Fixed named import
-import { getState } from '../state/state.js';
+import { notificationService } from './notificationService.js'; // Fixed named import
+import { getState } from '../../state/state.js';
 
 /**
  * Builds a clean, unified notification payload matching backend specs.

@@ -50,8 +50,8 @@ export async function displayManageWorkerProfile(contentContainer, isLoggedIn, w
                     renderDetail("🎯", "Specialties", worker.preferredRoles),
                     renderDetail("📝", "Bio", worker.bio ? worker.bio.substring(0, 100) + "..." : "No bio"),
                     createElement("div", { class: "action-buttons" }, [
-                        Button("✏️ Edit", "", { click: () => editProfile() }, "secondary"),
-                        Button("🖼️ Update Photo", "", { click: () => updatePhoto() }, "secondary")
+                        Button("✏️ Edit", "", { click: () => editProfile() }, "buttonx secondary"),
+                        Button("🖼️ Update Photo", "", { click: () => updatePhoto() }, "buttonx secondary")
                     ])
                 ]));
             }

@@ -2,7 +2,7 @@ import { createElement } from "../../components/createElement.js";
 import { CHAT_WS, getState, setState, state } from "../../state/state.js";
 import { renderMessage } from "./renderMessage.js";
 import { setupFileUpload } from "./fileUpload.js";
-import { playSoundAlert, setChatSoundPreference, resolveSoundPreference } from "../../utils/soundAlerts.js";
+import { playSoundAlert, setChatSoundPreference, resolveSoundPreference } from "../notifications/soundAlerts.js";
 
 let activeSocket = null;
 

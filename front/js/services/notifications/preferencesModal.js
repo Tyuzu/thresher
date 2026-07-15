@@ -1,8 +1,8 @@
 // components/notifications/preferencesModal.js
 import Modal from "../../components/ui/Modal.mjs";
 import { createElement } from "../../components/createElement.js";
-import notificationService from "../../services/notificationService.js";
-import { getSoundSettings, setSoundSettings } from "../../utils/soundAlerts.js";
+import notificationService from "./notificationService.js";
+import { getSoundSettings, setSoundSettings } from "./soundAlerts.js";
 
 export async function openNotificationPreferencesModal() {
     let userId = null;

@@ -25,7 +25,7 @@ import (
 
 func isValidEntityType(t string) bool {
 	switch t {
-	case "post", "article", "profile", "recipe": // Added "recipe"
+	case "blogpost", "feedpost", "article", "profile", "recipe": // Added "recipe"
 		return true
 	default:
 		return false
