@@ -253,7 +253,7 @@ async function loadWorkerBookings(workerId, container) {
                 upcoming.length > 0 && createSectionCard("Upcoming", [
                     createElement("ul", { class: "booking-list" }, upcoming.map(b =>
                         createElement("li", { class: `booking-item status-${b.status}` }, [
-                            `${b.date} @ ${b.start} - ${b.start || "TBD"} (${b.status})`
+                            `${b.date} @ ${b.start} - ${b.end || "TBD"} (${b.status})`
                         ])
                     ))
                 ]),

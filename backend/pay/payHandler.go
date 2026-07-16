@@ -39,6 +39,13 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request, _ httproute
 		req.Method = "wallet"
 	}
 
+	// Validate allowed methods globally or forward to CashOnDelivery handler if req.Method == "cod"
+	if req.Method == "cod" {
+		// Route or handle through CashOnDelivery logic contextually
+		p.CashOnDelivery(w, r, nil)
+		return
+	}
+
 	// Validate required fields
 	if req.PaymentType == "" || req.EntityType == "" || req.EntityID == "" {
 		utils.RespondWithError(w, http.StatusBadRequest, "missing required fields: paymentType, entityType, or entityId")

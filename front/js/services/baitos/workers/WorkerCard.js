@@ -4,44 +4,54 @@ import { resolveImagePath, EntityType, PictureType } from "../../../utils/imageP
 import { navigate } from "../../../routes/index.js";
 import { getState } from "../../../state/state.js";
 import Imagex from "../../../components/base/Imagex.js";
+import { openHireWorkerModal } from "./WorkerModal.js"; // Import it!
 
-export function HireWorkerCard(worker) {
-  const isLoggedIn = Boolean(getState("token"));
+export function HireWorkerCard(worker, isLoggedIn) {
+  // Use passed param or fallback to global state
+  const userLoggedIn = isLoggedIn !== undefined ? isLoggedIn : Boolean(getState("token"));
   const isSelf = getState("user") === worker.userId;
 
   const card = createElement("div", { class: "worker-card" });
 
   // Worker photo
   const photo = createElement("div", { class: "worker-photo" });
-
-  const profileImg = Imagex( {
+  const profileImg = Imagex({
     src: resolveImagePath(EntityType.WORKER, PictureType.THUMB, worker.avatar),
     classes: "profile-thumbnail",
     loading: "lazy",
     alt: `${worker.name || "Worker"}'s profile photo`
   });
-
   photo.appendChild(profileImg);
 
-  // Render details
+  // Helper to render lines
   function renderDetail(icon, text) {
-    if (!text) {
-return null;
-}
-    return createElement("p", {}, [
-      icon + " ",
-      String(text)
+    if (!text) return null;
+    const cleanText = Array.isArray(text) ? text.join(", ") : String(text);
+    return createElement("p", { class: "worker-card-detail" }, [
+      createElement("span", { class: "detail-icon" }, [icon]),
+      ` ${cleanText}`
     ]);
   }
-
 
   const details = createElement("div", { class: "worker-details" }, [
     createElement("h3", {}, [worker.name || "Unnamed Worker"]),
     renderDetail("📞", worker.phone),
-    renderDetail("🛠", worker.preferredRoles?.join(", ")),
+    renderDetail("🎯", worker.preferredRoles),
     renderDetail("📍", worker.location),
-    renderDetail("📝", worker.bio),
-    !isSelf && isLoggedIn
+    renderDetail("📝", worker.bio ? (worker.bio.length > 80 ? worker.bio.substring(0, 77) + "..." : worker.bio) : null),
+    // Inside details layout:
+    Button(
+      "👁️ Quick View",
+      `quick-${worker.baitoWorkerId}`,
+      {
+        click: (e) => {
+          e.stopPropagation(); // Stop card click navigation
+          openHireWorkerModal(worker);
+        }
+      },
+      "btn btn-secondary"
+    ),
+    !isSelf && userLoggedIn
       ? Button(
         "View Profile",
         `hire-${worker.baitoWorkerId}`,
@@ -51,31 +61,17 @@ return null;
             navigate(`/baitos/worker/${worker.baitoWorkerId}`);
           }
         },
-        "btn btn-primary",
-        {}
+        "btn btn-primary"
       )
       : !isSelf
-        ? createElement("p", { style: "color:gray;" }, ["🔒 Login to hire"])
-        : null
+        ? createElement("p", { class: "login-warning-text" }, ["🔒 Login to hire"])
+        : createElement("span", { class: "badge self-profile-badge" }, ["Your Profile"])
   ].filter(Boolean));
-
 
   card.appendChild(photo);
   card.appendChild(details);
 
-  // Click anywhere on card to view profile
   card.addEventListener("click", () => navigate(`/baitos/worker/${worker.baitoWorkerId}`));
 
   return card;
-  // return createElement("a", {
-  //   href: `/baitos/worker/${worker.baito_user_id}`,
-  //   events: {
-  //     click: (e) => {
-  //       e.preventDefault();
-  //       e.stopPropagation();
-  //       navigate(`/baitos/worker/${worker.baito_user_id}`);
-  //     }
-  //   }
-  // }, [card]);
-  
 }

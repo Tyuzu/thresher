@@ -27,10 +27,31 @@ export async function displayHireWorkers(isLoggedIn, container) {
   // ---------- TITLE ----------
   main.append(createElement("h1", {}, ["Find Skilled Workers"]));
 
-  // ---------- FILTERS ----------
+  // ---------- FILTERS & VIEW TOGGLE ----------
   const filterContainer = createElement("div", { class: "workers-filters" });
-  const searchInput = createElement("input", { type: "text", placeholder: "Search by name/skills/profession...", class:"sort-box" });
-  filterContainer.append(searchInput);
+  const searchInput = createElement("input", { 
+    type: "text", 
+    placeholder: "Search by name, skills, or roles...", 
+    class: "sort-box" 
+  });
+  
+  // Create active layout toggle
+  let isGridView = localStorage.getItem("workerView") !== "list";
+  const toggleViewBtn = Button(
+    isGridView ? "📋 List View" : "grid_view Grid View", 
+    "layout-toggle-btn", 
+    {
+      click: () => {
+        isGridView = !isGridView;
+        localStorage.setItem("workerView", isGridView ? "grid" : "list");
+        toggleViewBtn.textContent = isGridView ? "📋 List View" : "🎛️ Grid View";
+        renderWorkers(getFilteredWorkers());
+      }
+    },
+    "buttonx secondary"
+  );
+
+  filterContainer.append(searchInput, toggleViewBtn);
   main.append(filterContainer);
 
   // ---------- BODY AD ----------
@@ -62,18 +83,17 @@ export async function displayHireWorkers(isLoggedIn, container) {
     const paged = paginate(filtered, currentPage);
 
     if (!paged.length) {
-      list.append(createElement("p", {}, ["No workers found."]));
+      list.append(createElement("p", { class: "no-results" }, ["No workers found."]));
       return;
     }
 
-    const isGridView = localStorage.getItem("workerView") !== "list";
     renderWorkerList(list, paged, isGridView, isLoggedIn);
 
     // ---------- ADS ----------
     paged.forEach((_, idx) => {
       if ((idx + 1) % 6 === 0) {
-list.append(adspace("inlist"));
-}
+        list.append(adspace("inlist"));
+      }
     });
 
     // ---------- PAGINATION ----------
@@ -83,32 +103,44 @@ list.append(adspace("inlist"));
 
       if (currentPage > 1) {
         pager.append(Button("Prev", "", { click: () => {
- currentPage--; renderWorkers(filtered); 
-} }, "buttonx secondary"));
+          currentPage--; renderWorkers(filtered); 
+        } }, "buttonx secondary"));
       }
 
       if (currentPage < totalPages) {
         pager.append(Button("Next", "", { click: () => {
- currentPage++; renderWorkers(filtered); 
-} }, "buttonx secondary"));
+          currentPage++; renderWorkers(filtered); 
+        } }, "buttonx secondary"));
       }
 
       list.append(pager);
     }
   }
 
-  // ---------- FILTER LOGIC ----------
-  function applyFilters() {
-    const keyword = searchInput.value.toLowerCase();
-    const filtered = allWorkers.filter(w => {
-      const nameMatch = w.name?.toLowerCase().includes(keyword);
-      const skillsMatch = (w.skills || []).join(" ").toLowerCase().includes(keyword);
-      const profMatch = w.profession?.toLowerCase().includes(keyword);
-      return nameMatch || skillsMatch || profMatch;
-    });
+  // Helper to extract filtered subset safely
+  function getFilteredWorkers() {
+    const keyword = searchInput.value.toLowerCase().trim();
+    if (!keyword) return allWorkers;
 
+    return allWorkers.filter(w => {
+      const nameMatch = w.name?.toLowerCase().includes(keyword);
+      
+      // Safe skills formatting check
+      const skillsArray = Array.isArray(w.skills) ? w.skills : typeof w.skills === 'string' ? [w.skills] : [];
+      const skillsMatch = skillsArray.join(" ").toLowerCase().includes(keyword);
+      
+      // Fallback check against roles (profession)
+      const preferredRolesArray = Array.isArray(w.preferredRoles) ? w.preferredRoles : typeof w.preferredRoles === 'string' ? [w.preferredRoles] : [];
+      const rolesMatch = preferredRolesArray.join(" ").toLowerCase().includes(keyword);
+      const profMatch = w.profession?.toLowerCase().includes(keyword);
+
+      return nameMatch || skillsMatch || rolesMatch || profMatch;
+    });
+  }
+
+  function applyFilters() {
     currentPage = 1;
-    renderWorkers(filtered);
+    renderWorkers(getFilteredWorkers());
   }
 
   searchInput.addEventListener("input", applyFilters);

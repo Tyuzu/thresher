@@ -60,7 +60,7 @@ func TestPaymentMethodValidation(t *testing.T) {
 			allowedMethods := map[string]bool{
 				"wallet":   true,
 				"card":     true,
-				"cod":      true,
+				"cod":      true, // Certified inside the map
 				"transfer": true,
 			}
 			isValid := allowedMethods[tt.method]

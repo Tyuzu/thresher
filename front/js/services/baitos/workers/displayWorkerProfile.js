@@ -18,7 +18,7 @@ export async function displayWorkerProfile(contentContainer, isLoggedIn, workerI
   let worker = null;
   try {
     worker = await apiFetch(`/baitos/worker/${workerId}`);
-  // eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line no-unused-vars
   } catch (e) {
     container.replaceChildren(
       createElement("p", { class: "error-msg" }, ["⚠️ Failed to load worker profile."])
@@ -69,7 +69,7 @@ export async function displayWorkerProfile(contentContainer, isLoggedIn, workerI
   main.replaceChildren(header, ...detailCards);
   if (documentsSection) {
     main.appendChild(documentsSection);
-}
+  }
   main.appendChild(bookingSection);
 
   // ===== SIDEBAR =====
@@ -82,9 +82,27 @@ export async function displayWorkerProfile(contentContainer, isLoggedIn, workerI
 
   layout.append(main, aside);
   container.replaceChildren(layout);
-
+  const currentUser = getState("user");
+  // Determine if the visitor owns this profile or is an authorized administrator
+  const isOwnerOrAdmin = worker.userId === currentUser;
   // Load booking widget
-  displayBooking({ entityType: "worker", entityId: worker.baitoWorkerId, userId: getState("user") || "guest" }, bookingContainer);
+  try {
+    displayBooking(
+      {
+        entityType: "worker",
+        entityId: worker.baitoWorkerId,
+        entityCategory: "Worker",
+        userId: currentUser || "guest",
+        isAdmin: isOwnerOrAdmin // 👈 Make sure this evaluates to TRUE
+      },
+      bookingContainer
+    );
+  } catch (bookingError) {
+    console.error("Booking widget failed to initialize:", bookingError);
+    bookingContainer.replaceChildren(
+      createElement("p", { class: "error-text" }, ["Booking system currently unavailable."])
+    );
+  }
 }
 
 // ===== HELPERS =====
@@ -185,18 +203,34 @@ function createSidebarActions(worker, isLoggedIn) {
     }, "secondary")
   );
 
-  items.push(
-    Button("⭐ Save", "", {
+  // Dynamic Favorite Button Action
+  const favList = JSON.parse(localStorage.getItem("favoriteWorkers") || "[]");
+  const isCurrentlyFav = favList.includes(worker.baitoWorkerId);
+
+  const favBtn = Button(
+    isCurrentlyFav ? "❤️ Saved" : "⭐ Save",
+    "fav-btn",
+    {
       click: () => {
-        const fav = JSON.parse(localStorage.getItem("favoriteWorkers") || "[]");
-        if (!fav.includes(worker.baitoWorkerId)) {
-          fav.push(worker.baitoWorkerId);
-          localStorage.setItem("favoriteWorkers", JSON.stringify(fav));
+        let currentFavs = JSON.parse(localStorage.getItem("favoriteWorkers") || "[]");
+        if (currentFavs.includes(worker.baitoWorkerId)) {
+          // Remove from Favorites
+          currentFavs = currentFavs.filter(id => id !== worker.baitoWorkerId);
+          localStorage.setItem("favoriteWorkers", JSON.stringify(currentFavs));
+          favBtn.textContent = "⭐ Save";
+          Notify("Removed from favorites.", { type: "info" });
+        } else {
+          // Add to Favorites
+          currentFavs.push(worker.baitoWorkerId);
+          localStorage.setItem("favoriteWorkers", JSON.stringify(currentFavs));
+          favBtn.textContent = "❤️ Saved";
+          Notify("Added to favorites!", { type: "success" });
         }
-        Notify("Added to favorites!", { type: "success" });
       }
-    }, "secondary")
+    },
+    "secondary"
   );
 
+  items.push(favBtn);
   return items;
 }

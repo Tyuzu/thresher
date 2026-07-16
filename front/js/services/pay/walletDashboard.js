@@ -1,3 +1,4 @@
+// walletDashboard.js
 import { WalletManager } from "./WalletManager.js";
 import { WalletTransactions } from "./walletTransactions.js";
 import { WalletTransfer } from "./walletTransfer.js";

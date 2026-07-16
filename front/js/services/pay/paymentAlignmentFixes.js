@@ -1,124 +1,54 @@
-/**
- * ALIGNMENT FIXES - Frontend Payment & Wallet Services
- * 
- * Critical Issue: Monetary units inconsistency
- * Backend stores values in base units (rupees as float, paise as int64)
- * Frontend must handle conversion correctly
- * 
- * Solution: All amounts should be stored as paise (10 INR = 1000 paise)
- * and converted for display using formatCurrency utility
- */
-
 import { formatCurrency } from "../../types/api.types.ts";
+import { apiFetch } from "../../api/api.js";
 
-/**
- * FIX 1: Wallet Transactions Display
- * Before: amount.toLocaleString() displayed raw paise/rupees incorrectly
- * After: Divide by 100 and format as currency
- */
-export function formatTransactionAmount(amount, _currency = "INR") {
-  return formatCurrency(amount); // Uses api.types utility
+export function formatTransactionAmount(amount) {
+  return formatCurrency(amount);
 }
 
-/**
- * FIX 2: Cart Item Price Display
- * Before: ticket.price / 100 divided already-rupee values
- * After: Price field indicates unit in model/API response
- * If backend sends price in rupees (float64): display directly
- * If backend sends price in paise (int64): divide by 100
- */
 export function formatCartItemPrice(item) {
-  // Assume backend sends prices in paise (smallest unit)per API_CONTRACTS.md
-  if (typeof item.price === 'number') {
-    return formatCurrency(item.price); // item.price in paise
+  if (typeof item?.price === 'number') {
+    return formatCurrency(item.price);
   }
-  return `${item.currency || 'INR'} ${item.price}`;
+  return `${item?.currency || 'INR'} ${item?.price || 0}`;
 }
 
-/**
- * FIX 3: Coupon Validation
- * Before: Coupon code passed to order but never validated
- * After: Validate coupon before checkout
- */
 export async function validateCouponCode(couponCode, cartTotal) {
-  if (!couponCode || couponCode.trim().length === 0) {
-    return { valid: false, discount: 0 };
-  }
+  if (!couponCode?.trim()) return { valid: false, discount: 0 };
   
   try {
-    const response = await fetch('/api/v1/cart/validate-coupon', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      },
-      body: JSON.stringify({
-        coupon_code: couponCode,
-        cart_total: cartTotal // in paise
-      })
+    const response = await apiFetch('/cart/validate-coupon', 'POST', {
+      coupon_code: couponCode,
+      cart_total: cartTotal
     });
-
-    if (!response.ok) {
-      return { valid: false, discount: 0, reason: 'Coupon validation failed' };
-    }
-
-    const data = await response.json();
-    return data.data || { valid: false, discount: 0 };
+    return response?.data || { valid: false, discount: 0 };
   } catch (error) {
-    console.error('Coupon validation error:', error);
+    console.error('Coupon alignment verification error:', error);
     return { valid: false, discount: 0, reason: error.message };
   }
 }
 
-/**
- * FIX 4: Balance Display
- * Wallet balance should always be displayed in rupees (paise / 100)
- */
 export function formatWalletBalance(balanceInPaise) {
-  return formatCurrency(balanceInPaise); // Converts paise to rupees
+  return formatCurrency(balanceInPaise);
 }
 
-/**
- * FIX 5: Transaction List Response Format
- * Standardize response wrapper to always have .data.transactions
- */
 export function normalizeTransactionResponse(response) {
-  // Handle different response formats from backend
-  if (response && response.data && response.data.transactions) {
-    return response.data.transactions;
-  } else if (response && Array.isArray(response)) {
-    return response;
-  } else if (response && response.transactions && Array.isArray(response.transactions)) {
-    return response.transactions;
-  }
+  if (response?.data?.transactions) return response.data.transactions;
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.transactions)) return response.transactions;
   return [];
 }
 
-// ============================================================================
-// PAYMENT CHECKOUT HELPER
-// ============================================================================
-
-/**
- * Calculate order totals with proper paise handling
- */
 export function calculateOrderTotals(items, couponDiscount = 0) {
-  // All amounts in paise
   let subtotal = 0;
-  
   items.forEach(item => {
-    // price is in paise, quantity is count
-    subtotal += item.price * item.quantity;
+    subtotal += (Number(item.price) || 0) * (Number(item.quantity) || 0);
   });
 
-  const tax = Math.round(subtotal * 0.18); // 18% GST
-  const total = subtotal + tax - couponDiscount;
+  const tax = Math.round(subtotal * 0.18);
+  const total = Math.max(0, subtotal + tax - couponDiscount);
 
   return {
-    subtotal,
-    tax,
-    discount: couponDiscount,
-    total,
-    // For display
+    subtotal, tax, discount: couponDiscount, total,
     display: {
       subtotal: formatCurrency(subtotal),
       tax: formatCurrency(tax),
@@ -128,33 +58,15 @@ export function calculateOrderTotals(items, couponDiscount = 0) {
   };
 }
 
-/**
- * Topup request should return transaction ID for receipt
- */
 export async function requestWalletTopup(amount, paymentMethod) {
-  const response = await fetch('/api/v1/wallet/topup', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-    },
-    body: JSON.stringify({
-      amount, // in paise
+  try {
+    const res = await apiFetch('/wallet/topup', 'POST', {
+      amount,
       payment_method: paymentMethod
-    })
-  });
-
-  if (!response.ok) {
-throw new Error('Topup failed');
-}
-  
-  const data = await response.json();
-  
-  // Ensure we have transaction_id for receipt
-  if (!data.data || !data.data.transaction_id) {
-    console.warn('Backend topup did not return transaction_id');
+    });
+    return res?.data;
+  } catch (err) {
+    console.error("Topup submission broken:", err);
+    throw err;
   }
-  
-  return data.data;
 }
-

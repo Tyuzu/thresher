@@ -1,246 +1,99 @@
 import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { Button } from "../../components/base/Button.js";
+import { formatCurrency } from "../../types/api.types.ts";
 import { v4 as uuidv4 } from "https://jspm.dev/uuid";
 import Datex from "../../components/base/Datex.js";
 import Notify from "../../components/ui/Notify.mjs";
 
-// Format currency: convert paise to rupees for display
-function formatCurrency(paise) {
-    return new Intl.NumberFormat("en-IN", {
-        style: "currency",
-        currency: "INR"
-    }).format((paise || 0) / 100);
-}
-
 export function WalletTransactions({ onBalanceChange }) {
-    const container = createElement(
-        "div",
-        { id: "wallet-transactions", class: "wallet-card" },
-        [
-            createElement(
-                "h3",
-                { class: "wallet-section-title" },
-                ["Transactions"]
-            )
-        ]
-    );
+    const container = createElement("div", { id: "wallet-transactions", class: "wallet-card" }, [
+        createElement("h3", { class: "wallet-section-title" }, ["Transaction Ledger History"])
+    ]);
 
     let skip = 0;
     const limit = 10;
+    let refundIdempotencyKeys = {}; // Tracks specific mapping targets independently 
 
     function renderStatusBadge(state = "") {
         const classes = {
-            initiated: "badge-pending",
-            pending: "badge-pending",
-            success: "badge-success",
-            failed: "badge-failed",
-            reversed: "badge-reversed"
+            initiated: "badge-pending", pending: "badge-pending",
+            success: "badge-success", failed: "badge-failed", reversed: "badge-reversed"
         };
-
-        return createElement(
-            "span",
-            {
-                class: `txn-badge ${classes[String(state).toLowerCase()] || ""}`
-            },
-            [String(state).toUpperCase()]
-        );
+        return createElement("span", {
+            class: `txn-badge ${classes[String(state).toLowerCase()] || ""}`
+        }, [String(state).toUpperCase()]);
     }
 
     async function loadTransactions() {
-        container
-            .querySelectorAll(".load-more, .txn-error")
-            .forEach((el) => el.remove());
+        container.querySelectorAll(".load-more, .txn-error").forEach((el) => el.remove());
 
         try {
-            const res = await apiFetch(
-                `/wallet/transactions?skip=${skip}&limit=${limit}`
-            );
-
-            const transactions = Array.isArray(res)
-                ? res
-                : res?.transactions;
+            const res = await apiFetch(`/wallet/transactions?skip=${skip}&limit=${limit}`);
+            const transactions = Array.isArray(res) ? res : res?.transactions;
 
             if (!Array.isArray(transactions)) {
-                container.appendChild(
-                    createElement(
-                        "div",
-                        { class: "txn-error" },
-                        ["Error loading transactions"]
-                    )
-                );
+                container.appendChild(createElement("div", { class: "txn-error" }, ["Could not load ledger profile info"]));
                 return;
             }
 
             transactions.forEach((txn) => {
-                const typeLabel =
-                    txn.type === "topup"
-                        ? "Top-up"
-                        : txn.type === "payment"
-                            ? "Payment"
-                            : String(txn.type || "").toUpperCase();
+                // Initialize specific tracking reference key if parsing unique context configurations
+                if (!refundIdempotencyKeys[txn.id]) {
+                    refundIdempotencyKeys[txn.id] = uuidv4();
+                }
 
-                const typeClass =
-                    txn.type === "topup"
-                        ? "txn-topup"
-                        : txn.type === "payment"
-                            ? "txn-payment"
-                            : `txn-${txn.type}`;
+                const typeLabel = txn.type === "topup" ? "Top-up" : txn.type === "payment" ? "Payment" : String(txn.type || "").toUpperCase();
+                const typeClass = `txn-${txn.type || 'default'}`;
 
-                const txnEl = createElement(
-                    "div",
-                    { class: `txn-item ${typeClass}` },
-                    [
-                        createElement(
-                            "div",
-                            { class: "txn-info" },
-                            [
-                                `${typeLabel} ${formatCurrency(txn.amount)} via ${txn.method}`
-                            ]
-                        )
-                    ]
-                );
+                const txnEl = createElement("div", { class: `txn-item ${typeClass}` }, [
+                    createElement("div", { class: "txn-info" }, [
+                        `${typeLabel} ${formatCurrency(txn.amount)} via ${txn.method || 'System standard channel'}`
+                    ])
+                ]);
 
-                // Meta row
-                const metaEl = createElement(
-                    "div",
-                    { class: "txn-meta" },
-                    []
-                );
-
+                const metaEl = createElement("div", { class: "txn-meta" }, []);
                 metaEl.appendChild(renderStatusBadge(txn.status));
 
                 const dateEl = Datex(txn.created_at);
-
                 if (dateEl instanceof Node) {
                     dateEl.classList.add("txn-date");
                     metaEl.appendChild(dateEl);
                 } else {
-                    metaEl.appendChild(
-                        createElement(
-                            "span",
-                            { class: "txn-date" },
-                            [String(dateEl)]
-                        )
-                    );
+                    metaEl.appendChild(createElement("span", { class: "txn-date" }, [String(dateEl)]));
                 }
 
                 txnEl.appendChild(metaEl);
 
-                // Sender/recipient info
-                const accounts = [];
+                if (txn.type === "payment" && txn.status === "success" && txn.from_account === txn.userid) {
+                    const refundBtn = Button("Process Refund", "btn-refund", {
+                        click: async () => {
+                            if (!confirm("Confirm transaction reversion protocol?")) return;
 
-                if (txn.from_account) {
-                    accounts.push(`From: ${txn.from_account}`);
-                }
+                            refundBtn.disabled = true;
+                            try {
+                                const refundRes = await apiFetch("/wallet/refund", "POST", 
+                                    { transaction_id: txn.id },
+                                    { headers: { "Idempotency-Key": refundIdempotencyKeys[txn.id] } }
+                                );
 
-                if (txn.to_account) {
-                    accounts.push(`To: ${txn.to_account}`);
-                }
-
-                if (accounts.length) {
-                    txnEl.appendChild(
-                        createElement(
-                            "div",
-                            { class: "txn-accounts" },
-                            [accounts.join(" | ")]
-                        )
-                    );
-                }
-
-                // Additional metadata
-                const extraInfo = [];
-
-                if (txn.meta?.note) {
-                    extraInfo.push(txn.meta.note);
-                }
-
-                const entityType =
-                    txn.entity_type || txn.meta?.entity_type;
-
-                const entityId =
-                    txn.entity_id || txn.meta?.entity_id;
-
-                if (entityType && entityId) {
-                    extraInfo.push(`${entityType} (${entityId})`);
-                }
-
-                if (extraInfo.length) {
-                    txnEl.appendChild(
-                        createElement(
-                            "div",
-                            { class: "txn-extra" },
-                            [extraInfo.join(" | ")]
-                        )
-                    );
-                }
-
-                // Refund button
-                if (
-                    txn.type === "payment" &&
-                    txn.status === "success" &&
-                    txn.from_account === txn.userid
-                ) {
-                    const refundBtn = Button(
-                        "Refund",
-                        "",
-                        {
-                            click: async () => {
-                                if (!confirm("Refund this transaction?")) {
-                                    return;
+                                if (refundRes?.success) {
+                                    Notify("Reversion payload complete.", { type: "success" });
+                                    delete refundIdempotencyKeys[txn.id]; // Purge old signature map key
+                                    if (onBalanceChange) onBalanceChange();
+                                    skip = 0;
+                                    await loadTransactions();
+                                } else {
+                                    Notify(refundRes?.message || "Reversion denied by interface rules", { type: "error" });
                                 }
-
-                                refundBtn.disabled = true;
-
-                                try {
-                                    const idempotencyKey = uuidv4();
-
-                                    const refundRes = await apiFetch(
-                                        "/wallet/refund",
-                                        "POST",
-                                        {
-                                            transaction_id: txn.id
-                                        },
-                                        {
-                                            headers: {
-                                                "Idempotency-Key":
-                                                    idempotencyKey
-                                            }
-                                        }
-                                    );
-
-                                    if (refundRes?.success) {
-                                        Notify("Refund successful", {
-                                            type: "success"
-                                        });
-
-                                        if (onBalanceChange) {
-                                            onBalanceChange();
-                                        }
-
-                                        skip = 0;
-                                        await loadTransactions();
-                                    } else {
-                                        Notify(
-                                            refundRes?.message ||
-                                            "Refund failed",
-                                            { type: "error" }
-                                        );
-                                    }
-                                } catch (err) {
-                                    console.error(err);
-
-                                    Notify(
-                                        "Refund failed due to server error",
-                                        { type: "error" }
-                                    );
-                                } finally {
-                                    refundBtn.disabled = false;
-                                }
+                            } catch (err) {
+                                console.error("Refund configuration collision:", err);
+                                Notify("Server encountered error executing transactional return sequence", { type: "error" });
+                            } finally {
+                                refundBtn.disabled = false;
                             }
                         }
-                    );
-
+                    });
                     metaEl.appendChild(refundBtn);
                 }
 
@@ -248,39 +101,25 @@ export function WalletTransactions({ onBalanceChange }) {
             });
 
             if (transactions.length === limit) {
-                const moreBtn = Button(
-                    "Load More",
-                    "load-more",
-                    {
-                        click: async () => {
-                            moreBtn.disabled = true;
-
-                            try {
-                                skip += limit;
-                                await loadTransactions();
-                            } finally {
-                                moreBtn.disabled = false;
-                            }
+                const moreBtn = Button("Load More History", "load-more", {
+                    click: async () => {
+                        moreBtn.disabled = true;
+                        try {
+                            skip += limit;
+                            await loadTransactions();
+                        } finally {
+                            moreBtn.disabled = false;
                         }
                     }
-                );
-
+                });
                 container.appendChild(moreBtn);
             }
         } catch (err) {
             console.error(err);
-
-            container.appendChild(
-                createElement(
-                    "div",
-                    { class: "txn-error" },
-                    ["Error loading transactions"]
-                )
-            );
+            container.appendChild(createElement("div", { class: "txn-error" }, ["Ledger mapping broken by server fault."]));
         }
     }
 
     loadTransactions();
-
     return container;
 }
