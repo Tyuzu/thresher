@@ -1,10 +1,11 @@
-import { createElement } from "../../components/createElement.js";
+import { createElement } from "../createElement";
 
 /**
  * Imagex component
  * - Async image decoding
  * - Single fallback attempt
  * - Prevents infinite error loops
+ * - Leverages declarative events and attributes from createElement
  */
 const Imagex = (attributes = {}) => {
     const {
@@ -12,48 +13,51 @@ const Imagex = (attributes = {}) => {
         decodeAsync = true,
         classes,
         class: className,
+        loading = "lazy",
+        events = {},
         ...rest
     } = attributes;
 
-    if (!rest.class && (className || classes)) {
-        rest.class = className || classes;
+    // 1. Normalize class strings for createElement to parse cleanly
+    const mergedClass = [className, classes].filter(Boolean).join(" ").trim();
+    if (mergedClass) {
+        rest.class = mergedClass;
     }
 
-    const img = createElement("img", rest);
-
+    // 2. Set loading and decoding attributes declaratively
+    rest.loading = loading;
     if (decodeAsync) {
-        img.decoding = "async";
+        rest.decoding = "async";
     }
-
-    img.loading ??= "lazy";
 
     let triedFallback = false;
 
-    img.addEventListener("error", () => {
-        if (triedFallback) {
-            img.onerror = null;
-            img.removeAttribute("src");
+    // 3. Inject our error-handling lifecycle into the events dictionary
+    rest.events = {
+        ...events,
+        error: (event) => {
+            const img = event.currentTarget;
 
-            img.alt =
-                img.alt ||
-                "Image unavailable";
+            if (triedFallback) {
+                img.onerror = null;
+                img.removeAttribute("src");
+                img.alt = img.alt || "Image unavailable";
+                img.classList.add("image-error");
+            } else {
+                triedFallback = true;
+                if (typeof fallback === "string" && fallback.trim() !== "") {
+                    img.src = fallback;
+                }
+            }
 
-            img.classList.add("image-error");
-
-            return;
+            // Execute the consumer's original error event handler if provided
+            if (typeof events.error === "function") {
+                events.error(event);
+            }
         }
+    };
 
-        triedFallback = true;
-
-        if (
-            typeof fallback === "string" &&
-            fallback.trim() !== ""
-        ) {
-            img.src = fallback;
-        }
-    });
-
-    return img;
+    return createElement("img", rest);
 };
 
 export default Imagex;

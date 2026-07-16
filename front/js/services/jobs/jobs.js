@@ -3,7 +3,7 @@ import Button from "../../components/base/Button.js";
 import { apiFetch } from "../../api/api.js";
 import Modal from "../../components/ui/Modal.mjs";
 import Notify from "../../components/ui/Notify.mjs";
-import { createFormGroup } from "../../components/createFormGroup.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
 import { buildCard } from "../baitos/baitoslisting/JobCard.js";
 
 // --- Category → Roles Map (light version) ---

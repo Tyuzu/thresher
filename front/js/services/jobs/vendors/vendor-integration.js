@@ -12,6 +12,7 @@ import { VENDOR_EVENTS } from "./vendorEvents.js";
 import { apiFetch } from "../../../api/api.js";
 import { deleteVendor } from "./vendorService.js";
 import Notify from "../../../components/ui/Notify.mjs";
+import { createElement } from "../../../components/createElement.js";
 
 async function renderEventVendorSummary(eventId, container, options = {}) {
     const {
@@ -25,85 +26,66 @@ async function renderEventVendorSummary(eventId, container, options = {}) {
 
         if (response?.success === false) {
             container.innerHTML = "";
-            const errorEl = document.createElement("p");
-            errorEl.textContent = "Failed to load vendors.";
-            container.appendChild(errorEl);
+            container.appendChild(createElement("p", {}, "Failed to load vendors."));
             return;
         }
 
         const vendors = normalizeVendorList(response);
 
-        const summary = document.createElement("div");
-        summary.className = "vendors-summary";
+        const summary = createElement("div", { class: "vendors-summary" });
 
-        const title = document.createElement("h3");
-        title.textContent = vendors.length > 0
+        const titleText = vendors.length > 0
             ? `Hired Vendors (${vendors.length})`
             : "Event Vendors";
-        summary.appendChild(title);
+        summary.appendChild(createElement("h3", {}, titleText));
 
         if (!vendors.length) {
-            const empty = document.createElement("p");
-            empty.textContent = "No vendors hired yet for this event.";
-            summary.appendChild(empty);
+            summary.appendChild(createElement("p", {}, "No vendors hired yet for this event."));
         } else {
-            const list = document.createElement("div");
-            list.className = "hired-vendors-list";
+            const list = createElement("div", { class: "hired-vendors-list" });
 
             vendors.forEach((vendor) => {
-                const item = document.createElement("div");
-                item.className = "vendor-summary-item";
+                const item = createElement("div", { class: "vendor-summary-item" });
 
                 const vendorId = getVendorId(vendor);
                 const vendorName = getVendorName(vendor);
 
-                const nameEl = document.createElement("h4");
-                nameEl.textContent = vendorName;
-                item.appendChild(nameEl);
-
-                const categoryEl = document.createElement("span");
-                categoryEl.className = "vendor-category";
-                categoryEl.textContent = vendor?.category || "General";
-                item.appendChild(categoryEl);
+                item.appendChild(createElement("h4", {}, vendorName));
+                item.appendChild(createElement("span", { class: "vendor-category" }, vendor?.category || "General"));
 
                 const ratingValue = Number(vendor?.rating || 0);
                 if (ratingValue > 0) {
-                    const ratingEl = document.createElement("div");
-                    ratingEl.className = "rating";
-                    ratingEl.textContent = `⭐ ${ratingValue.toFixed(1)}`;
-                    item.appendChild(ratingEl);
+                    item.appendChild(createElement("div", { class: "rating" }, `⭐ ${ratingValue.toFixed(1)}`));
                 }
 
                 if (allowRemove && vendorId) {
-                    const actions = document.createElement("div");
-                    actions.className = "vendor-summary-actions";
+                    const removeBtn = createElement("button", {
+                        type: "button",
+                        class: "btn-secondary remove-vendor-btn",
+                        events: {
+                            click: async () => {
+                                const confirmed = window.confirm(`Remove ${vendorName} from this event?`);
+                                if (!confirmed) {
+                                    return;
+                                }
 
-                    const removeBtn = document.createElement("button");
-                    removeBtn.type = "button";
-                    removeBtn.className = "btn-secondary remove-vendor-btn";
-                    removeBtn.textContent = "Remove";
+                                const original = removeBtn.textContent;
+                                removeBtn.disabled = true;
+                                removeBtn.textContent = "Removing...";
 
-                    removeBtn.addEventListener("click", async () => {
-                        const confirmed = window.confirm(`Remove ${vendorName} from this event?`);
-                        if (!confirmed) {
-                            return;
+                                const removed = await removeVendor(eventId, vendorId, vendorName);
+
+                                removeBtn.disabled = false;
+                                removeBtn.textContent = original;
+
+                                if (removed) {
+                                    await renderEventVendorSummary(eventId, container, options);
+                                }
+                            }
                         }
+                    }, "Remove");
 
-                        const original = removeBtn.textContent;
-                        removeBtn.disabled = true;
-                        removeBtn.textContent = "Removing...";
-
-                        const removed = await removeVendor(eventId, vendorId, vendorName);
-
-                        removeBtn.disabled = false;
-                        removeBtn.textContent = original;
-
-                        if (removed) {
-                            await renderEventVendorSummary(eventId, container, options);
-                        }
-                    });
-
-                    actions.appendChild(removeBtn);
+                    const actions = createElement("div", { class: "vendor-summary-actions" }, [removeBtn]);
                     item.appendChild(actions);
                 }
 
@@ -114,17 +96,19 @@ async function renderEventVendorSummary(eventId, container, options = {}) {
         }
 
         if (showManageButton) {
-            const manageBtn = document.createElement("button");
-            manageBtn.type = "button";
-            manageBtn.className = "btn-primary manage-vendors-btn";
-            manageBtn.textContent = "Manage Vendors";
-            manageBtn.addEventListener("click", () => {
-                if (typeof onManageClick === "function") {
-                    onManageClick();
-                    return;
+            const manageBtn = createElement("button", {
+                type: "button",
+                class: "btn-primary manage-vendors-btn",
+                events: {
+                    click: () => {
+                        if (typeof onManageClick === "function") {
+                            onManageClick();
+                            return;
+                        }
+                        openVendorManagementModal(eventId);
+                    }
                 }
-                openVendorManagementModal(eventId);
-            });
+            }, "Manage Vendors");
             summary.appendChild(manageBtn);
         }
 
@@ -133,10 +117,7 @@ async function renderEventVendorSummary(eventId, container, options = {}) {
     } catch (error) {
         console.error("Error loading vendors summary:", error);
         container.innerHTML = "";
-
-        const errorEl = document.createElement("p");
-        errorEl.textContent = "Failed to load vendors.";
-        container.appendChild(errorEl);
+        container.appendChild(createElement("p", {}, "Failed to load vendors."));
     }
 }
 
@@ -146,9 +127,10 @@ export async function initEventVendorManagement(eventId, containerElement) {
         return;
     }
 
-    const vendorTab = document.createElement("div");
-    vendorTab.id = "event-vendors-tab";
-    vendorTab.className = "event-section";
+    const vendorTab = createElement("div", {
+        id: "event-vendors-tab",
+        class: "event-section"
+    });
 
     await renderEventVendorSummary(eventId, vendorTab, {
         allowRemove: false,
@@ -176,12 +158,10 @@ export async function openVendorManagementModal(eventId) {
 
     document.body.appendChild(modal);
 
-    const summaryContainer = document.createElement("div");
-    summaryContainer.className = "vendor-management-summary";
+    const summaryContainer = createElement("div", { class: "vendor-management-summary" });
     body.appendChild(summaryContainer);
 
-    const marketplaceContainer = document.createElement("div");
-    marketplaceContainer.className = "vendor-management-marketplace";
+    const marketplaceContainer = createElement("div", { class: "vendor-management-marketplace" });
     body.appendChild(marketplaceContainer);
 
     refreshSummary = async () => {
@@ -220,21 +200,12 @@ export async function openVendorManagementModal(eventId) {
 }
 
 export async function addVendorSelectionToEventCreation(eventId, formElement) {
-    const vendorSection = document.createElement("div");
-    vendorSection.className = "event-creation-section";
-
-    const title = document.createElement("h3");
-    title.textContent = "Vendors (Optional)";
-
-    const description = document.createElement("p");
-    description.textContent = "Hire vendors to provide services for your event";
-
-    const vendorContainer = document.createElement("div");
-    vendorContainer.className = "event-creation-vendors";
-
-    vendorSection.appendChild(title);
-    vendorSection.appendChild(description);
-    vendorSection.appendChild(vendorContainer);
+    const vendorContainer = createElement("div", { class: "event-creation-vendors" });
+    const vendorSection = createElement("div", { class: "event-creation-section" }, [
+        createElement("h3", {}, "Vendors (Optional)"),
+        createElement("p", {}, "Hire vendors to provide services for your event"),
+        vendorContainer
+    ]);
 
     formElement.appendChild(vendorSection);
 
@@ -248,38 +219,31 @@ export async function showVendorProfile(userId, container) {
         if (user?.success === false) {
             console.error("API error loading user:", user.error);
             container.innerHTML = "";
-            const errorEl = document.createElement("p");
-            errorEl.textContent = "Error loading profile";
-            container.appendChild(errorEl);
+            container.appendChild(createElement("p", {}, "Error loading profile"));
             return;
         }
 
         container.innerHTML = "";
 
         if (!user || !user.is_vendor) {
-            const profile = document.createElement("div");
-            profile.className = "no-vendor-profile";
+            const registerBtn = createElement("button", {
+                type: "button",
+                id: "register-vendor-btn",
+                class: "btn-primary",
+                events: {
+                    click: () => {
+                        openVendorRegistration(async () => {
+                            await showVendorProfile(userId, container);
+                        });
+                    }
+                }
+            }, "Register as Vendor");
 
-            const title = document.createElement("h3");
-            title.textContent = "Become a Vendor";
-
-            const description = document.createElement("p");
-            description.textContent = "Register as a vendor to start offering your services for events";
-
-            const registerBtn = document.createElement("button");
-            registerBtn.type = "button";
-            registerBtn.id = "register-vendor-btn";
-            registerBtn.className = "btn-primary";
-            registerBtn.textContent = "Register as Vendor";
-            registerBtn.addEventListener("click", () => {
-                openVendorRegistration(async () => {
-                    await showVendorProfile(userId, container);
-                });
-            });
-
-            profile.appendChild(title);
-            profile.appendChild(description);
-            profile.appendChild(registerBtn);
+            const profile = createElement("div", { class: "no-vendor-profile" }, [
+                createElement("h3", {}, "Become a Vendor"),
+                createElement("p", {}, "Register as a vendor to start offering your services for events"),
+                registerBtn
+            ]);
 
             container.appendChild(profile);
             return;
@@ -288,83 +252,74 @@ export async function showVendorProfile(userId, container) {
         const vendorData = user.vendor_profile || {};
         const vendorId = getVendorId(vendorData);
 
-        const profile = document.createElement("div");
-        profile.className = "vendor-profile";
+        const profile = createElement("div", { class: "vendor-profile" }, [
+            createElement("h3", {}, "Your Vendor Profile"),
+            createProfileField("Category:", vendorData.category || "—"),
+            createProfileField("Rating:", `⭐ ${vendorData.rating || "Not rated yet"}`),
+            createProfileField("Status:", vendorData.verified ? "✓ Verified" : "Pending verification")
+        ]);
 
-        const title = document.createElement("h3");
-        title.textContent = "Your Vendor Profile";
-        profile.appendChild(title);
+        const editBtn = createElement("button", {
+            type: "button",
+            id: "edit-vendor-btn",
+            class: "btn-secondary",
+            events: {
+                click: () => {
+                    openEditVendorProfile(userId, vendorData, async () => {
+                        await showVendorProfile(userId, container);
+                    });
+                }
+            }
+        }, "Edit Profile");
 
-        profile.appendChild(createProfileField("Category:", vendorData.category || "—"));
-        profile.appendChild(createProfileField("Rating:", `⭐ ${vendorData.rating || "Not rated yet"}`));
-        profile.appendChild(
-            createProfileField(
-                "Status:",
-                vendorData.verified ? "✓ Verified" : "Pending verification"
-            )
-        );
-
-        const actions = document.createElement("div");
-        actions.className = "vendor-profile-actions";
-
-        const editBtn = document.createElement("button");
-        editBtn.type = "button";
-        editBtn.id = "edit-vendor-btn";
-        editBtn.className = "btn-secondary";
-        editBtn.textContent = "Edit Profile";
-        editBtn.addEventListener("click", () => {
-            openEditVendorProfile(userId, vendorData, async () => {
-                await showVendorProfile(userId, container);
-            });
-        });
-
-        actions.appendChild(editBtn);
+        const actions = createElement("div", { class: "vendor-profile-actions" }, [editBtn]);
 
         if (vendorId) {
-            const deleteBtn = document.createElement("button");
-            deleteBtn.type = "button";
-            deleteBtn.className = "btn-danger";
-            deleteBtn.textContent = "Delete Vendor Profile";
+            const deleteBtn = createElement("button", {
+                type: "button",
+                class: "btn-danger",
+                events: {
+                    click: async () => {
+                        const confirmed = window.confirm("Delete this vendor profile? This cannot be undone.");
+                        if (!confirmed) {
+                            return;
+                        }
 
-            deleteBtn.addEventListener("click", async () => {
-                const confirmed = window.confirm("Delete this vendor profile? This cannot be undone.");
-                if (!confirmed) {
-                    return;
-                }
+                        deleteBtn.disabled = true;
+                        deleteBtn.textContent = "Deleting...";
 
-                deleteBtn.disabled = true;
-                deleteBtn.textContent = "Deleting...";
+                        try {
+                            const response = await deleteVendor(vendorId);
 
-                try {
-                    const response = await deleteVendor(vendorId);
+                            if (response?.success === false) {
+                                throw new Error(response?.error || "Failed to delete vendor profile.");
+                            }
 
-                    if (response?.success === false) {
-                        throw new Error(response?.error || "Failed to delete vendor profile.");
+                            Notify("Vendor profile deleted.", {
+                                type: "success",
+                                duration: 3000
+                            });
+
+                            dispatchVendorEvent(VENDOR_EVENTS.DELETED, {
+                                userId,
+                                vendorId,
+                                response
+                            });
+
+                            await showVendorProfile(userId, container);
+                        } catch (error) {
+                            console.error("Error deleting vendor profile:", error);
+                            Notify("Failed to delete vendor profile.", {
+                                type: "error",
+                                duration: 3000
+                            });
+                        } finally {
+                            deleteBtn.disabled = false;
+                            deleteBtn.textContent = "Delete Vendor Profile";
+                        }
                     }
-
-                    Notify("Vendor profile deleted.", {
-                        type: "success",
-                        duration: 3000
-                    });
-
-                    dispatchVendorEvent(VENDOR_EVENTS.DELETED, {
-                        userId,
-                        vendorId,
-                        response
-                    });
-
-                    await showVendorProfile(userId, container);
-                } catch (error) {
-                    console.error("Error deleting vendor profile:", error);
-                    Notify("Failed to delete vendor profile.", {
-                        type: "error",
-                        duration: 3000
-                    });
-                } finally {
-                    deleteBtn.disabled = false;
-                    deleteBtn.textContent = "Delete Vendor Profile";
                 }
-            });
+            }, "Delete Vendor Profile");
 
             actions.appendChild(deleteBtn);
         }
@@ -373,15 +328,11 @@ export async function showVendorProfile(userId, container) {
         container.appendChild(profile);
 
         if (vendorId) {
-            const requestsSection = document.createElement("div");
-            requestsSection.className = "vendor-requests-section";
-            const requestsTitle = document.createElement("h3");
-            requestsTitle.textContent = "Incoming Vendor Requests";
-            requestsSection.appendChild(requestsTitle);
-
-            const requestsContainer = document.createElement("div");
-            requestsContainer.className = "vendor-requests-list";
-            requestsSection.appendChild(requestsContainer);
+            const requestsContainer = createElement("div", { class: "vendor-requests-list" });
+            const requestsSection = createElement("div", { class: "vendor-requests-section" }, [
+                createElement("h3", {}, "Incoming Vendor Requests"),
+                requestsContainer
+            ]);
 
             container.appendChild(requestsSection);
             await refreshVendorRequests(requestsContainer);
@@ -389,9 +340,7 @@ export async function showVendorProfile(userId, container) {
     } catch (error) {
         console.error("Error loading vendor profile:", error);
         container.innerHTML = "";
-        const errorEl = document.createElement("p");
-        errorEl.textContent = "Error loading profile";
-        container.appendChild(errorEl);
+        container.appendChild(createElement("p", {}, "Error loading profile"));
     }
 }
 
@@ -410,55 +359,46 @@ async function refreshVendorRequests(container) {
 
         const requests = Array.isArray(response.requests) ? response.requests : [];
         if (requests.length === 0) {
-            const empty = document.createElement("div");
-            empty.className = "vendor-requests-empty";
-            empty.textContent = "No incoming request at this time.";
-            container.appendChild(empty);
+            container.appendChild(
+                createElement("div", { class: "vendor-requests-empty" }, "No incoming request at this time.")
+            );
             return;
         }
 
         for (const request of requests) {
-            const requestCard = document.createElement("div");
-            requestCard.className = "vendor-request-card";
-
-            const title = document.createElement("div");
-            title.className = "vendor-request-title";
-            title.textContent = `Event: ${request.eventid || request.eventId || "Unknown"}`;
-            requestCard.appendChild(title);
-
             const statusText = formatVendorRequestStatus(request.status);
-            const statusBadge = document.createElement("span");
-            statusBadge.className = `vendor-request-status status-${(request.status || "unknown").toLowerCase()}`;
-            statusBadge.textContent = statusText;
-            requestCard.appendChild(statusBadge);
+            const statusBadge = createElement("span", {
+                class: `vendor-request-status status-${(request.status || "unknown").toLowerCase()}`
+            }, statusText);
 
-            const details = document.createElement("div");
-            details.className = "vendor-request-details";
-            details.textContent = `Requested by: ${request.hiredby || request.hiredBy || "Unknown organizer"}`;
-            requestCard.appendChild(details);
+            const requestCard = createElement("div", { class: "vendor-request-card" }, [
+                createElement("div", { class: "vendor-request-title" }, `Event: ${request.eventid || request.eventId || "Unknown"}`),
+                statusBadge,
+                createElement("div", { class: "vendor-request-details" }, `Requested by: ${request.hiredby || request.hiredBy || "Unknown organizer"}`)
+            ]);
 
             if (String(request.status || "").toLowerCase() === "pending") {
-                const actions = document.createElement("div");
-                actions.className = "vendor-request-actions";
+                const acceptBtn = createElement("button", {
+                    type: "button",
+                    class: "btn-primary vendor-request-accept",
+                    events: {
+                        click: async () => {
+                            await handleVendorRequestAction(request, "accepted", acceptBtn, rejectBtn, container);
+                        }
+                    }
+                }, "Accept");
 
-                const acceptBtn = document.createElement("button");
-                acceptBtn.type = "button";
-                acceptBtn.className = "btn-primary vendor-request-accept";
-                acceptBtn.textContent = "Accept";
-                acceptBtn.addEventListener("click", async () => {
-                    await handleVendorRequestAction(request, "accepted", acceptBtn, rejectBtn, container);
-                });
+                const rejectBtn = createElement("button", {
+                    type: "button",
+                    class: "btn-danger vendor-request-reject",
+                    events: {
+                        click: async () => {
+                            await handleVendorRequestAction(request, "rejected", acceptBtn, rejectBtn, container);
+                        }
+                    }
+                }, "Reject");
 
-                const rejectBtn = document.createElement("button");
-                rejectBtn.type = "button";
-                rejectBtn.className = "btn-danger vendor-request-reject";
-                rejectBtn.textContent = "Reject";
-                rejectBtn.addEventListener("click", async () => {
-                    await handleVendorRequestAction(request, "rejected", acceptBtn, rejectBtn, container);
-                });
-
-                actions.appendChild(acceptBtn);
-                actions.appendChild(rejectBtn);
+                const actions = createElement("div", { class: "vendor-request-actions" }, [acceptBtn, rejectBtn]);
                 requestCard.appendChild(actions);
             }
 
@@ -466,10 +406,9 @@ async function refreshVendorRequests(container) {
         }
     } catch (error) {
         console.error("Error loading vendor requests:", error);
-        const errorMessage = document.createElement("div");
-        errorMessage.className = "vendor-requests-error";
-        errorMessage.textContent = "Unable to load your vendor requests.";
-        container.appendChild(errorMessage);
+        container.appendChild(
+            createElement("div", { class: "vendor-requests-error" }, "Unable to load your vendor requests.")
+        );
     }
 }
 
@@ -521,19 +460,10 @@ function formatVendorRequestStatus(status) {
 }
 
 function createProfileField(labelText, valueText) {
-    const field = document.createElement("div");
-    field.className = "profile-field";
-
-    const label = document.createElement("label");
-    label.textContent = labelText;
-
-    const value = document.createElement("span");
-    value.textContent = valueText;
-
-    field.appendChild(label);
-    field.appendChild(value);
-
-    return field;
+    return createElement("div", { class: "profile-field" }, [
+        createElement("label", {}, labelText),
+        createElement("span", {}, valueText)
+    ]);
 }
 
 export async function openVendorRegistration(onSuccess = null) {
@@ -614,127 +544,125 @@ export async function openEditVendorProfile(userId, existingVendorProfile = null
         body.appendChild(form);
 
         if (vendorId) {
-            const actions = document.createElement("div");
-            actions.className = "vendor-edit-actions";
+            const actions = createElement("div", { class: "vendor-edit-actions" });
 
-            const reserveSection = document.createElement("div");
-            reserveSection.className = "vendor-availability-section";
+            const availabilityList = createElement("div", { class: "vendor-availability-list" });
 
-            const availabilityTitle = document.createElement("h4");
-            availabilityTitle.textContent = "Availability Slots";
-            reserveSection.appendChild(availabilityTitle);
+            const availabilityForm = createElement("form", {
+                class: "vendor-availability-form",
+                events: {
+                    submit: async (event) => {
+                        event.preventDefault();
 
-            const availabilityList = document.createElement("div");
-            availabilityList.className = "vendor-availability-list";
-            reserveSection.appendChild(availabilityList);
+                        const startDate = availabilityForm.querySelector("input[name='start_date']").value;
+                        const endDate = availabilityForm.querySelector("input[name='end_date']").value;
+                        const notes = availabilityForm.querySelector("input[name='notes']").value;
 
-            const availabilityForm = document.createElement("form");
-            availabilityForm.className = "vendor-availability-form";
-            availabilityForm.innerHTML = `
-                <div class="form-row">
-                    <label>Start Date</label>
-                    <input type="date" name="start_date" required />
-                </div>
-                <div class="form-row">
-                    <label>End Date</label>
-                    <input type="date" name="end_date" required />
-                </div>
-                <div class="form-row">
-                    <label>Notes</label>
-                    <input type="text" name="notes" placeholder="Optional note" />
-                </div>
-                <button type="submit" class="btn-primary">Add Slot</button>
-            `;
+                        if (!startDate || !endDate) {
+                            Notify("Please provide both start and end dates.", { type: "warning", duration: 3000 });
+                            return;
+                        }
 
-            availabilityForm.addEventListener("submit", async (event) => {
-                event.preventDefault();
+                        const submitBtn = availabilityForm.querySelector("button[type='submit']");
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = "Adding...";
 
-                const startDate = availabilityForm.querySelector("input[name='start_date']").value;
-                const endDate = availabilityForm.querySelector("input[name='end_date']").value;
-                const notes = availabilityForm.querySelector("input[name='notes']").value;
+                        try {
+                            const response = await createAvailability(vendorId, { start_date: startDate, end_date: endDate, notes });
+                            if (response?.success === false) {
+                                throw new Error(response?.error || response?.message || "Failed to add availability slot.");
+                            }
 
-                if (!startDate || !endDate) {
-                    Notify("Please provide both start and end dates.", { type: "warning", duration: 3000 });
-                    return;
-                }
-
-                const submitBtn = availabilityForm.querySelector("button[type='submit']");
-                submitBtn.disabled = true;
-                submitBtn.textContent = "Adding...";
-
-                try {
-                    const response = await createAvailability(vendorId, { start_date: startDate, end_date: endDate, notes });
-                    if (response?.success === false) {
-                        throw new Error(response?.error || response?.message || "Failed to add availability slot.");
+                            Notify("Availability slot added.", { type: "success", duration: 3000 });
+                            availabilityForm.reset();
+                            await loadAvailability();
+                        } catch (error) {
+                            console.error("Unable to add availability slot:", error);
+                            Notify(error?.message || "Failed to add availability slot.", { type: "error", duration: 3000 });
+                        } finally {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = "Add Slot";
+                        }
                     }
-
-                    Notify("Availability slot added.", { type: "success", duration: 3000 });
-                    availabilityForm.reset();
-                    await loadAvailability();
-                } catch (error) {
-                    console.error("Unable to add availability slot:", error);
-                    Notify(error?.message || "Failed to add availability slot.", { type: "error", duration: 3000 });
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = "Add Slot";
                 }
             });
 
-            reserveSection.appendChild(availabilityForm);
+            // Populate Form Template Declaratively
+            availabilityForm.appendChild(createElement("div", { class: "form-row" }, [
+                createElement("label", {}, "Start Date"),
+                createElement("input", { type: "date", name: "start_date", required: "true" })
+            ]));
+            availabilityForm.appendChild(createElement("div", { class: "form-row" }, [
+                createElement("label", {}, "End Date"),
+                createElement("input", { type: "date", name: "end_date", required: "true" })
+            ]));
+            availabilityForm.appendChild(createElement("div", { class: "form-row" }, [
+                createElement("label", {}, "Notes"),
+                createElement("input", { type: "text", name: "notes", placeholder: "Optional note" })
+            ]));
+            availabilityForm.appendChild(createElement("button", { type: "submit", class: "btn-primary" }, "Add Slot"));
+
+            const reserveSection = createElement("div", { class: "vendor-availability-section" }, [
+                createElement("h4", {}, "Availability Slots"),
+                availabilityList,
+                availabilityForm
+            ]);
+
             actions.appendChild(reserveSection);
 
-            const deleteBtn = document.createElement("button");
-            deleteBtn.type = "button";
-            deleteBtn.className = "btn-danger";
-            deleteBtn.textContent = "Delete Vendor Profile";
+            const deleteBtn = createElement("button", {
+                type: "button",
+                class: "btn-danger",
+                events: {
+                    click: async () => {
+                        const confirmed = window.confirm("Delete this vendor profile? This cannot be undone.");
+                        if (!confirmed) {
+                            return;
+                        }
 
-            deleteBtn.addEventListener("click", async () => {
-                const confirmed = window.confirm("Delete this vendor profile? This cannot be undone.");
-                if (!confirmed) {
-                    return;
-                }
+                        deleteBtn.disabled = true;
+                        deleteBtn.textContent = "Deleting...";
 
-                deleteBtn.disabled = true;
-                deleteBtn.textContent = "Deleting...";
+                        try {
+                            const response = await deleteVendor(vendorId);
 
-                try {
-                    const response = await deleteVendor(vendorId);
+                            if (response?.success === false) {
+                                throw new Error(response?.error || "Failed to delete vendor profile.");
+                            }
 
-                    if (response?.success === false) {
-                        throw new Error(response?.error || "Failed to delete vendor profile.");
+                            Notify("Vendor profile deleted.", {
+                                type: "success",
+                                duration: 3000
+                            });
+
+                            dispatchVendorEvent(VENDOR_EVENTS.DELETED, {
+                                userId,
+                                vendorId,
+                                response
+                            });
+
+                            modal.remove();
+                            if (typeof onSuccess === "function") {
+                                await onSuccess({
+                                    userId,
+                                    vendorId,
+                                    response,
+                                    mode: "delete"
+                                });
+                            }
+                        } catch (error) {
+                            console.error("Error deleting vendor profile:", error);
+                            Notify("Failed to delete vendor profile.", {
+                                type: "error",
+                                duration: 3000
+                            });
+                        } finally {
+                            deleteBtn.disabled = false;
+                            deleteBtn.textContent = "Delete Vendor Profile";
+                        }
                     }
-
-                    Notify("Vendor profile deleted.", {
-                        type: "success",
-                        duration: 3000
-                    });
-
-                    dispatchVendorEvent(VENDOR_EVENTS.DELETED, {
-                        userId,
-                        vendorId,
-                        response
-                    });
-
-                    modal.remove();
-                    if (typeof onSuccess === "function") {
-                        await onSuccess({
-                            userId,
-                            vendorId,
-                            response,
-                            mode: "delete"
-                        });
-                    }
-                } catch (error) {
-                    console.error("Error deleting vendor profile:", error);
-                    Notify("Failed to delete vendor profile.", {
-                        type: "error",
-                        duration: 3000
-                    });
-                } finally {
-                    deleteBtn.disabled = false;
-                    deleteBtn.textContent = "Delete Vendor Profile";
                 }
-            });
+            }, "Delete Vendor Profile");
 
             actions.appendChild(deleteBtn);
             body.appendChild(actions);
@@ -749,44 +677,46 @@ export async function openEditVendorProfile(userId, existingVendorProfile = null
 
                     const slots = response?.slots || [];
                     if (!slots.length) {
-                        availabilityList.innerHTML = "<p>No availability slots yet.</p>";
+                        availabilityList.innerHTML = "";
+                        availabilityList.appendChild(createElement("p", {}, "No availability slots yet."));
                         return;
                     }
 
                     availabilityList.innerHTML = "";
                     for (const slot of slots) {
-                        const slotRow = document.createElement("div");
-                        slotRow.className = "availability-slot-row";
-
-                        const label = document.createElement("div");
-                        label.className = "availability-slot-label";
-                        label.textContent = `${slot.start_date} → ${slot.end_date}` + (slot.notes ? ` — ${slot.notes}` : "");
-                        slotRow.appendChild(label);
-
-                        const removeBtn = document.createElement("button");
-                        removeBtn.type = "button";
-                        removeBtn.className = "btn-link btn-small";
-                        removeBtn.textContent = "Remove";
-                        removeBtn.addEventListener("click", async () => {
-                            removeBtn.disabled = true;
-                            removeBtn.textContent = "Removing...";
-                            try {
-                                const deleted = await deleteAvailability(vendorId, slot.slotid);
-                                if (deleted?.success === false) {
-                                    throw new Error(deleted?.error || deleted?.message || "Failed to remove slot.");
+                        const removeBtn = createElement("button", {
+                            type: "button",
+                            class: "btn-link btn-small",
+                            events: {
+                                click: async () => {
+                                    removeBtn.disabled = true;
+                                    removeBtn.textContent = "Removing...";
+                                    try {
+                                        const deleted = await deleteAvailability(vendorId, slot.slotid);
+                                        if (deleted?.success === false) {
+                                            throw new Error(deleted?.error || deleted?.message || "Failed to remove slot.");
+                                        }
+                                        Notify("Slot removed.", { type: "success", duration: 2500 });
+                                        await loadAvailability();
+                                    } catch (error) {
+                                        console.error("Unable to remove availability slot:", error);
+                                        Notify(error?.message || "Failed to remove slot.", { type: "error", duration: 3000 });
+                                    }
                                 }
-                                Notify("Slot removed.", { type: "success", duration: 2500 });
-                                await loadAvailability();
-                            } catch (error) {
-                                console.error("Unable to remove availability slot:", error);
-                                Notify(error?.message || "Failed to remove slot.", { type: "error", duration: 3000 });
                             }
-                        });
-                        slotRow.appendChild(removeBtn);
+                        }, "Remove");
+
+                        const slotLabel = `${slot.start_date} → ${slot.end_date}` + (slot.notes ? ` — ${slot.notes}` : "");
+                        const slotRow = createElement("div", { class: "availability-slot-row" }, [
+                            createElement("div", { class: "availability-slot-label" }, slotLabel),
+                            removeBtn
+                        ]);
+
                         availabilityList.appendChild(slotRow);
                     }
                 } catch (error) {
-                    availabilityList.innerHTML = "<p>Failed to load availability.</p>";
+                    availabilityList.innerHTML = "";
+                    availabilityList.appendChild(createElement("p", {}, "Failed to load availability."));
                     console.error("Error loading availability:", error);
                 }
             }

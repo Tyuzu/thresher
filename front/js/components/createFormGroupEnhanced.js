@@ -1,10 +1,4 @@
-/**
- * Enhanced Form Group with Built-in Validation
- * Drop-in replacement for createFormGroup with validation and error display
- */
-
 import { createElement } from "./createElement.js";
-import { validateField } from "../validation/validators.js";
 
 export function createFormGroupWithValidation({
   type = "text",
@@ -27,21 +21,18 @@ export function createFormGroupWithValidation({
   const inputName = name || id || "";
   let inputElement;
 
-  // Create label
+  // --- 1. Create Label ---
   if (label) {
-    const labelAttrs = {};
-    if (id) {
-labelAttrs.for = id;
-}
-    const requiredSpan = required ? createElement("span", { class: "form-required" }, ["*"]) : null;
+    const labelAttrs = id ? { for: id } : {};
     const labelElement = createElement("label", labelAttrs, [label]);
-    if (requiredSpan) {
-labelElement.appendChild(requiredSpan);
-}
+
+    if (required) {
+      labelElement.appendChild(createElement("span", { class: "form-required" }, ["*"]));
+    }
     group.appendChild(labelElement);
   }
 
-  // Create input element based on type
+  // --- 2. Create Input Elements ---
   switch (type) {
     case "textarea":
       inputElement = createElement("textarea", {
@@ -65,13 +56,19 @@ labelElement.appendChild(requiredSpan);
       }
 
       if (placeholder) {
-        const placeholderOption = createElement("option", {
+        inputElement.appendChild(createElement("option", {
           value: "",
           disabled: true,
           selected: !value
-        }, [placeholder]);
-        inputElement.appendChild(placeholderOption);
+        }, [placeholder]));
       }
+
+      // Optimize: Pre-compute search keys outside loop
+      const targetValues = new Set(
+        Array.isArray(value)
+          ? value.map(v => String(v).toLowerCase())
+          : [String(value).toLowerCase()]
+      );
 
       options.forEach(opt => {
         const { value: optValue, label: optLabel } =
@@ -84,14 +81,7 @@ labelElement.appendChild(requiredSpan);
 
         const option = createElement("option", optionAttrs, [optLabel]);
 
-        const valueLower = Array.isArray(value)
-          ? value.map(v => String(v).toLowerCase())
-          : String(value).toLowerCase();
-
-        if (
-          (Array.isArray(value) && valueLower.includes(String(optValue).toLowerCase())) ||
-          (!Array.isArray(value) && String(optValue).toLowerCase() === String(value).toLowerCase())
-        ) {
+        if (targetValues.has(String(optValue).toLowerCase())) {
           option.selected = true;
         }
 
@@ -111,15 +101,120 @@ labelElement.appendChild(requiredSpan);
 
     case "file":
       inputElement = createElement("input", {
-        type,
+        type: "file",
         id: id || undefined,
         name: inputName || undefined,
         accept: accept || undefined
       });
-      if (multiple) {
-        inputElement.multiple = true;
-      }
+      if (multiple) inputElement.multiple = true;
       break;
+
+
+    case "availability": {
+      const days = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ];
+
+      const availability =
+        typeof value === "object" && value !== null ? value : {};
+
+      const wrapper = createElement("div", {
+        class: "availability-picker"
+      });
+
+      const hiddenInput = createElement("input", {
+        type: "hidden",
+        id: id || undefined,
+        name: inputName || undefined
+      });
+
+      const state = {};
+
+      const updateValue = () => {
+        hiddenInput.value = JSON.stringify(state);
+        hiddenInput.dispatchEvent(new Event("change", { bubbles: true }));
+      };
+
+      days.forEach(day => {
+        const key = day.toLowerCase();
+
+        state[key] = {
+          enabled: availability[key]?.enabled || false,
+          from: availability[key]?.from || "09:00",
+          to: availability[key]?.to || "17:00"
+        };
+
+        const row = createElement("div", {
+          class: "availability-row"
+        });
+
+        const checkbox = createElement("input", {
+          type: "checkbox"
+        });
+        checkbox.checked = state[key].enabled;
+
+        const dayLabel = createElement("span", {
+          class: "availability-day"
+        }, [day]);
+
+        const fromInput = createElement("input", {
+          type: "time",
+          value: state[key].from
+        });
+
+        const toInput = createElement("input", {
+          type: "time",
+          value: state[key].to
+        });
+
+        fromInput.disabled = !checkbox.checked;
+        toInput.disabled = !checkbox.checked;
+
+        checkbox.addEventListener("change", () => {
+          state[key].enabled = checkbox.checked;
+
+          fromInput.disabled = !checkbox.checked;
+          toInput.disabled = !checkbox.checked;
+
+          updateValue();
+        });
+
+        fromInput.addEventListener("input", () => {
+          state[key].from = fromInput.value;
+          updateValue();
+        });
+
+        toInput.addEventListener("input", () => {
+          state[key].to = toInput.value;
+          updateValue();
+        });
+
+        row.append(
+          checkbox,
+          dayLabel,
+          fromInput,
+          createElement("span", {}, ["–"]),
+          toInput
+        );
+
+        wrapper.appendChild(row);
+      });
+
+      updateValue();
+
+      wrapper.appendChild(hiddenInput);
+
+      inputElement = hiddenInput;
+      group.appendChild(wrapper);
+
+      break;
+    }
 
     default:
       inputElement = createElement("input", {
@@ -129,21 +224,14 @@ labelElement.appendChild(requiredSpan);
         placeholder: placeholder || "",
         value: (value !== null && value !== undefined) ? String(value) : ""
       });
-      if (accept) {
-        inputElement.accept = accept;
-      }
-      if (type === "file" && multiple) {
-        inputElement.multiple = true;
-      }
+      if (accept) inputElement.accept = accept;
+      if (type === "file" && multiple) inputElement.multiple = true;
       break;
   }
 
-  // Apply required attribute
-  if (required) {
-    inputElement.required = true;
-  }
+  if (required) inputElement.required = true;
 
-  // Apply additional properties
+  // Apply extra dynamic attribute updates safely
   Object.entries(additionalProps).forEach(([key, val]) => {
     try {
       if (key in inputElement) {
@@ -156,26 +244,23 @@ labelElement.appendChild(requiredSpan);
     }
   });
 
-  // Create error message element
+  // --- 3. Error Elements & States ---
   const errorElement = createElement("div", {
     class: "form-error",
     style: "display: none; color: #d32f2f; font-size: 0.875rem; margin-top: 0.25rem;"
   });
 
-  // Create hidden input to track validation state
   const validationStateInput = document.createElement("input");
   validationStateInput.type = "hidden";
   validationStateInput.className = "form-validation-state";
   validationStateInput.value = "valid";
 
-  // Validation function
+  // Fixed ReferenceError Bug: Execute the provided validator closure callback
   const validateInput = () => {
-    if (!validator) {
-return true;
-}
+    if (!validator) return true;
 
     const fieldValue = type === "file" ? inputElement : inputElement.value;
-    const error = validateField(fieldValue, validator);
+    const error = validator(fieldValue); // Standard execution interface wrapper
 
     if (error) {
       errorElement.textContent = error;
@@ -196,37 +281,37 @@ return true;
     return !error;
   };
 
-  // Attach validation listeners
+  // --- 4. Event Subscriptions & Debouncing ---
   if (validator) {
-    const validateOn = () => {
-      // Debounce for better UX
-      if (inputElement._validateTimeout) {
-        clearTimeout(inputElement._validateTimeout);
-      }
-      inputElement._validateTimeout = setTimeout(validateInput, 300);
+    let debounceTimeout = null;
+
+    const validateWithDebounce = () => {
+      if (debounceTimeout) clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(validateInput, 300);
     };
 
     if (validationTrigger === "blur" || validationTrigger === "both") {
-      inputElement.addEventListener("blur", validateInput);
+      inputElement.addEventListener("blur", () => {
+        if (debounceTimeout) clearTimeout(debounceTimeout);
+        validateInput();
+      });
     }
 
     if (validationTrigger === "change" || validationTrigger === "both") {
-      inputElement.addEventListener("change", validateOn);
-      inputElement.addEventListener("input", validateOn);
+      inputElement.addEventListener("change", validateWithDebounce);
+      inputElement.addEventListener("input", validateWithDebounce);
     }
   }
 
-  // Expose validation method
+  // Bind utilities onto element API references
   inputElement.validate = validateInput;
   inputElement.isValid = () => validationStateInput.value === "valid";
   inputElement.getError = () => errorElement.textContent;
 
-  // Append elements
   group.appendChild(inputElement);
   group.appendChild(errorElement);
   group.appendChild(validationStateInput);
 
-  // Append additional nodes
   if (Array.isArray(additionalNodes)) {
     additionalNodes.forEach(node => group.appendChild(node));
   }
@@ -234,9 +319,6 @@ return true;
   return group;
 }
 
-/**
- * Backward compatible wrapper - use enhanced version by default
- */
 export function createFormGroup(config) {
   return createFormGroupWithValidation(config);
 }

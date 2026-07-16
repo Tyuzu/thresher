@@ -5,7 +5,7 @@ import Modal from "../../components/ui/Modal.mjs";
 import Notify from "../../components/ui/Notify.mjs";
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
-import { createFormGroup } from "../../components/createFormGroup.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
 
 /* ────────── Add Ticket API ────────── */
 async function addTicket(eventId, ticketList, closeModal) {

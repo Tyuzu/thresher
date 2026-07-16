@@ -1,7 +1,7 @@
 // js/services/recipes/createOrEditRecipe.js
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
-import { createFormGroup } from "../../components/createFormGroup.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
 import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/index.js";
 

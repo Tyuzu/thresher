@@ -1,6 +1,6 @@
 import { apiFetch } from "../../api/api";
 import { createElement } from "../../components/createElement";
-import { createFormGroup } from "../../components/createFormGroup.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
 import Button from "../../components/base/Button.js";
 import { capitalize } from "../profile/profileHelpers.js";
 import { resolveImagePath, PictureType, EntityType } from "../../utils/imagePaths.js";

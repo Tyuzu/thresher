@@ -103,7 +103,6 @@ const setupTabs = (eventData, eventId, _isCreator, isLoggedIn) => {
 };
 
 async function displayEvent(isLoggedIn, eventId, content) {
-    content.replaceChildren();
     const container = createElement('div', { class: "eventpage" }, []);
     content.appendChild(container);
 

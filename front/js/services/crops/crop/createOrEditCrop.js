@@ -1,5 +1,5 @@
 import { createElement } from "../../../components/createElement.js";
-import { createFormGroup } from "../../../components/createFormGroup.js";
+import { createFormGroup } from "../../../components/createFormGroupEnhanced.js";
 import { cropCategoryMap } from "./cropCategories.js";
 
 export function createCommonCropForm({ crop = {}, currentFarmName = "", isEdit = false, onSubmit }) {

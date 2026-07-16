@@ -1,15 +1,9 @@
 import { createheader } from "../components/header.js";
 import { createNav, highlightActiveNav } from "../components/navigation.js";
 import { render } from "./router.js";
-import {
-  setState,
-  getRouteState,
-  saveScroll,
-  restoreScroll
-} from "../state/state.js";
+import { setState, getRouteState, saveScroll, restoreScroll } from "../state/state.js";
 import { Footer } from "../components/footer.js";
 
-// Proper state object instead of function properties
 const layoutState = {
   isHydrated: false,
   headerRendered: false,
@@ -40,49 +34,41 @@ async function loadContent(url) {
 
     if (token && userRaw) {
       let user = userRaw;
-      try {
-        user = JSON.parse(userRaw);
-      } catch { }
-
+      try { user = JSON.parse(userRaw); } catch {}
       setState({ token, user }, true);
     }
-
     layoutState.isHydrated = true;
   }
 
-  main.replaceChildren();
-
+  // --- 1. Render Global Structural Layout Once ---
   if (!layoutState.headerRendered) {
     const headerContent = createheader();
-    if (headerContent) {
-      header.appendChild(headerContent);
-    }
+    if (headerContent) header.appendChild(headerContent);
     layoutState.headerRendered = true;
   }
 
-// const shouldShowNav = !["/home", "/merechats"].includes(url);
-  const shouldShowNav = !["/merechats"].includes(url);
-
-  if (shouldShowNav && !layoutState.navRendered) {
+  if (!layoutState.navRendered) {
     const navContent = createNav();
-    if (navContent) {
-      nav.appendChild(navContent);
-      layoutState.navRendered = true;
-    }
-  }
-
-  if (layoutState.navRendered) {
-    highlightActiveNav(url);
+    if (navContent) nav.appendChild(navContent);
+    layoutState.navRendered = true;
   }
 
   if (!layoutState.footerRendered) {
     const footerContent = Footer();
-    if (footerContent) {
-      footer.appendChild(footerContent);
-    }
+    if (footerContent) footer.appendChild(footerContent);
     layoutState.footerRendered = true;
   }
 
+  // --- 2. Toggle Navigation Visibility Reactively ---
+  const shouldHideNav = ["/merechats"].includes(url);
+  nav.style.display = shouldHideNav ? "none" : ""; 
+
+  if (!shouldHideNav) {
+    highlightActiveNav(url);
+  }
+
+  // --- 3. Render Views Seamlessly ---
+  // Note: main.replaceChildren() should ideally happen inside render() right before insertion
   await render(url, main);
 
   const routeState = getRouteState(url);
@@ -111,10 +97,8 @@ function navigate(path, { storeRedirect = false } = {}) {
     getRouteState(window.location.pathname)
   );
 
-  if (storeRedirect) {
-    if (!["/", "/login", "/logout"].includes(window.location.pathname)) {
-      localStorage.setItem("redirectAfterLogin", window.location.pathname);
-    }
+  if (storeRedirect && !["/", "/login", "/logout"].includes(window.location.pathname)) {
+    localStorage.setItem("redirectAfterLogin", window.location.pathname);
   }
 
   history.pushState(null, "", path);
@@ -126,13 +110,6 @@ function navigate(path, { storeRedirect = false } = {}) {
     });
 }
 
-/* -------------------- Browser back / forward -------------------- */
-window.addEventListener("popstate", () => {
-  loadContent(window.location.pathname).catch(err =>
-    console.error("Popstate navigation failed:", err)
-  );
-});
-
 /**
  * Initial render
  */
@@ -140,5 +117,6 @@ async function renderPage() {
   await loadContent(window.location.pathname);
 }
 
-export { navigate, renderPage, loadContent };
+// NOTE: Duplicated window.popstate listener removed. It is handled in the main execution file.
 
+export { navigate, renderPage, loadContent };

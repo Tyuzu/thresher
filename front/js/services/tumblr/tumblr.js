@@ -1,6 +1,6 @@
 import { apiFetch } from "../../api/api";
 import { fetchFeed } from "../feed/fetchFeed.js";
-import { createFormGroup } from "../../components/createFormGroup.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
 import { renderNewPost } from "../feed/renderNewPost.js";
 import {
   createEl,

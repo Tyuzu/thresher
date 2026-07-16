@@ -4,41 +4,46 @@ let translations = {};
 let currentLang = "en";
 let activeRequest = 0;
 
+// Cache the Promises rather than data objects to resolve race-condition fetches
 const cache = new Map();
+// Cache the PluralRules instance to save massive CPU iteration cycles
+let cachedPluralRules = null;
 
 const SUPPORTED_LANGS = ["en", "es", "fr", "hi", "ar", "ja"];
 const FALLBACK_LANG = "en";
 
-async function fetchTranslations(lang) {
-  const res = await fetch(`/static/i18n/${lang}.json`);
-  if (!res.ok) {
-    throw new Error(`Failed to load ${lang}`);
-  }
-  return res.json();
+function fetchTranslations(lang) {
+  return fetch(`/static/i18n/${lang}.json`).then(res => {
+    if (!res.ok) throw new Error(`Failed to load ${lang}`);
+    return res.json();
+  });
 }
 
 async function loadTranslations(lang) {
   const requestId = ++activeRequest;
 
   try {
+    // 1. Store the Promise in cache immediately. Prevents concurrent duplicate fetches.
     if (!cache.has(lang)) {
-      cache.set(lang, await fetchTranslations(lang));
+      cache.set(lang, fetchTranslations(lang));
     }
 
-    if (requestId !== activeRequest) {
-      return;
+    const data = await cache.get(lang);
+
+    if (requestId !== activeRequest) return;
+    
+    translations = data;
+    
+    if (currentLang !== lang) {
+      currentLang = lang;
+      cachedPluralRules = null; // Flush PluralRules constructor snapshot on update
     }
-    translations = cache.get(lang);
-    currentLang = lang;
 
     localStorage.setItem("lang", lang);
     setState("lang", lang);
 
-    // eslint-disable-next-line no-unused-vars
   } catch (err) {
-    if (requestId !== activeRequest) {
-      return;
-    }
+    if (requestId !== activeRequest) return;
 
     if (lang !== FALLBACK_LANG) {
       return loadTranslations(FALLBACK_LANG);
@@ -49,37 +54,29 @@ async function loadTranslations(lang) {
 }
 
 export async function setLanguage(lang) {
-  if (!SUPPORTED_LANGS.includes(lang)) {
-    lang = FALLBACK_LANG;
-  }
-  await loadTranslations(lang);
+  const targetLang = SUPPORTED_LANGS.includes(lang) ? lang : FALLBACK_LANG;
+  await loadTranslations(targetLang);
 }
 
 export function detectLanguage() {
   const saved = localStorage.getItem("lang");
-  if (saved && SUPPORTED_LANGS.includes(saved)) {
-    return saved;
-  }
+  if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
 
   const langs = navigator.languages || [navigator.language];
-
-  for (const l of langs) {
-    if (SUPPORTED_LANGS.includes(l)) {
-      return l;
-    }
+  for (let i = 0; i < langs.length; i++) {
+    const l = langs[i];
+    if (SUPPORTED_LANGS.includes(l)) return l;
+    
     const base = l.split("-")[0];
-    if (SUPPORTED_LANGS.includes(base)) {
-      return base;
-    }
+    if (SUPPORTED_LANGS.includes(base)) return base;
   }
 
   return FALLBACK_LANG;
 }
 
-export function getCurrentLanguage() {
-  return currentLang;
-}
+export const getCurrentLanguage = () => currentLang;
 
+// Flatten object string lookups loops cleanly
 function getNested(obj, path) {
   return path.split(".").reduce((o, k) => o?.[k], obj);
 }
@@ -88,15 +85,18 @@ export function t(key, vars = {}, fallback = "") {
   let template = getNested(translations, key);
 
   if (typeof vars.count === "number") {
-    const rule = new Intl.PluralRules(currentLang).select(vars.count);
-    const plural = getNested(translations, `${key}.${rule}`);
-    if (plural) {
-      template = plural;
+    // Reuse constructor context to avoid runtime memory thrashing
+    if (!cachedPluralRules) {
+      cachedPluralRules = new Intl.PluralRules(currentLang);
     }
+    const rule = cachedPluralRules.select(vars.count);
+    const plural = getNested(translations, `${key}.${rule}`);
+    if (plural) template = plural;
   }
 
   if (!template) {
-    if (import.meta.env.DEV) {
+    // process.env checking checks safely depending on standard bundle outputs
+    if (import.meta.env?.DEV) {
       console.warn(`Missing translation: ${key}`);
     }
     template = fallback || key;

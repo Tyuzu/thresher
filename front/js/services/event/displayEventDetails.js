@@ -191,7 +191,8 @@ function createInfoSection(eventData, isCreator, isLoggedIn) {
         actions.push({ text: '✏ Edit Event', onClick: () => editEvent(isLoggedIn, eventData.eventid, document.getElementById("editevent")), classes: ['edit-btn', "buttonx"] });
         actions.push({ text: '🗑 Delete Event', onClick: () => deleteEvent(isLoggedIn, eventData.eventid), classes: ['delete-btn', 'buttonx'] });
         actions.push({ text: '📊 View Analytics', onClick: () => viewEventAnalytics(evanacon, isLoggedIn, eventData.eventid), classes: ['analytics-btn', "buttonx"] });
-        actions.push({ text: 'Hire Vendors', onClick: () => hireVendors(evanacon, isLoggedIn, eventData.eventid), classes: ['analytics-btn', "buttonx"] });
+    } if (isLoggedIn) {
+        actions.push({ text: 'Hire Vendors', onClick: () => hireVendors(evanacon, isCreator, isLoggedIn, eventData.eventid), classes: ['analytics-btn', "buttonx"] });
     } else if (isLoggedIn) {
         actions.push({ text: 'Report Event', onClick: () => reportEntity(eventData.eventid, 'event') });
     }

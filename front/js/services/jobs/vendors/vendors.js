@@ -1,8 +1,46 @@
 import Notify from "../../../components/ui/Notify.mjs";
 import { loadVendors } from "./loadVendors.js";
 import { vendorForm } from "./vendorForm.js";
+import { createElement } from "../../../components/createElement.js";
 
-export async function hireVendors(anacon, isLoggedIn, eventId, options = {}) {
+/**
+ * Builds the marketplace top header section.
+ */
+function buildHeader(eventId) {
+    return createElement("div", { class: "vendors-header" }, [
+        createElement("h2", { class: "vendors-title" }, "Vendors Marketplace"),
+        createElement("p", { class: "vendors-subtitle" }, eventId
+            ? "Hire vendors for your event"
+            : "Browse vendors and register your own profile")
+    ]);
+}
+
+/**
+ * Handles form toggle visibility state, focusing first input safely.
+ */
+function setupToggleInterface(section, button, formElement) {
+    formElement.classList.add("hidden");
+    section.appendChild(formElement);
+
+    button.addEventListener("click", () => {
+        const isCurrentlyHidden = formElement.classList.toggle("hidden");
+        button.textContent = isCurrentlyHidden
+            ? "List Yourself as Vendor"
+            : "Hide Registration";
+
+        if (!isCurrentlyHidden) {
+            const firstField = formElement.querySelector("input, select, textarea");
+            if (firstField && typeof firstField.focus === "function") {
+                firstField.focus();
+            }
+        }
+    });
+}
+
+/**
+ * Orchestrates and renders the core vendors UI view panel.
+ */
+export async function hireVendors(anacon, isCreator, isLoggedIn, eventId, options = {}) {
     if (!anacon) {
         console.error("Vendor container element is required.");
         return null;
@@ -17,92 +55,61 @@ export async function hireVendors(anacon, isLoggedIn, eventId, options = {}) {
         return null;
     }
 
-    const refresh = async () => {
-        await render();
+    const onActionTriggered = async () => {
         if (typeof options.onChange === "function") {
             await options.onChange();
         }
+        await renderUI();
     };
 
-    const render = async () => {
+    const renderUI = async () => {
         anacon.innerHTML = "";
 
-        const container = document.createElement("div");
-        container.id = "vendors-wrapper";
-        container.className = "vendors-container";
+        const wrapper = createElement("div", {
+            id: "vendors-wrapper",
+            class: "vendors-container"
+        }, [
+            buildHeader(eventId)
+        ]);
 
-        const header = document.createElement("div");
-        header.className = "vendors-header";
-
-        const title = document.createElement("h2");
-        title.className = "vendors-title";
-        title.textContent = "Vendors Marketplace";
-
-        const subtitle = document.createElement("p");
-        subtitle.className = "vendors-subtitle";
-        subtitle.textContent = eventId
-            ? "Hire vendors for your event"
-            : "Browse vendors and register your own profile";
-
-        header.appendChild(title);
-        header.appendChild(subtitle);
-        container.appendChild(header);
-
+        // Load Vendor List (isCreator determines if action buttons are visible)
         const vendorListEl = await loadVendors(eventId, isLoggedIn, {
-            onHireSuccess: refresh
+            isCreator,
+            onHireSuccess: onActionTriggered
         });
-        container.appendChild(vendorListEl);
+        wrapper.appendChild(vendorListEl);
 
-        const registrationSection = document.createElement("div");
-        registrationSection.className = "vendor-registration-section";
+        // Only non-creators can register themselves as vendors.
+        if (!isCreator) {
+            const toggleBtn = createElement("button", {
+                type: "button",
+                class: "btn-secondary vendor-list-btn"
+            }, "List Yourself as Vendor");
 
-        const registrationTitle = document.createElement("h3");
-        registrationTitle.className = "registration-title";
-        registrationTitle.textContent = "Want to Become a Vendor?";
-        registrationSection.appendChild(registrationTitle);
+            const registrationSection = createElement("div", {
+                class: "vendor-registration-section"
+            }, [
+                createElement("h3", { class: "registration-title" }, "Want to Become a Vendor?"),
+                toggleBtn
+            ]);
 
-        // Toggle button to show/hide the vendor registration form for better UX
-        const toggleBtn = document.createElement("button");
-        toggleBtn.type = "button";
-        toggleBtn.className = "btn-secondary vendor-list-btn";
-        toggleBtn.textContent = "List Yourself as Vendor";
-        registrationSection.appendChild(toggleBtn);
+            const formElement = vendorForm(
+                anacon,
+                isLoggedIn,
+                eventId,
+                onActionTriggered,
+                { mode: "create" }
+            );
 
-        const form = vendorForm(
-            anacon,
-            isLoggedIn,
-            eventId,
-            async () => {
-                if (typeof options.onChange === "function") {
-                    await options.onChange();
-                }
-                await render();
-            },
-            {
-                mode: "create"
-            }
-        );
+            setupToggleInterface(registrationSection, toggleBtn, formElement);
+            wrapper.appendChild(registrationSection);
+        } else {
+            console.log("Event creator detected: registration form hidden.");
+        }
 
-        toggleBtn.addEventListener("click", () => {
-            if (!registrationSection.contains(form)) {
-                registrationSection.appendChild(form);
-                toggleBtn.textContent = "Hide Registration";
-                // focus first input for quicker entry
-                const firstField = form.querySelector("input, select, textarea");
-                if (firstField && typeof firstField.focus === "function") {
-firstField.focus();
-}
-            } else {
-                registrationSection.removeChild(form);
-                toggleBtn.textContent = "List Yourself as Vendor";
-            }
-        });
-
-        container.appendChild(registrationSection);
-
-        anacon.appendChild(container);
-        return container;
+        anacon.appendChild(wrapper);
+        return wrapper;
     };
 
-    return render();
+    return renderUI();
 }

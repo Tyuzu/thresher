@@ -1,6 +1,6 @@
 import { displayCrop } from "../../services/crops/crop/cropPage.js";
 
-async function Crop(isLoggedIn, cropID, contentContainer) {
+async function Crop(isLoggedIn, t, cropID, contentContainer) {
     contentContainer.innerHTML = '';
     displayCrop(contentContainer, cropID, isLoggedIn);
 }

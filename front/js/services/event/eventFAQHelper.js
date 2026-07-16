@@ -3,7 +3,7 @@ import Modal from "../../components/ui/Modal.mjs";
 import { createElement } from "../../components/createElement.js";
 import { apiFetch } from "../../api/api.js";
 import { Accordion } from "../../components/ui/Accordion.mjs";
-import { createFormGroup } from "../../components/createFormGroup.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
 
 async function displayEventFAQs(isCreator, faqContainer, eventId, faques) {
   faqContainer.innerHTML = "";

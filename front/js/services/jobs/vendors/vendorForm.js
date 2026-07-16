@@ -2,39 +2,56 @@ import Notify from "../../../components/ui/Notify.mjs";
 import { createVendor, updateVendor } from "./vendorService.js";
 import { dispatchVendorEvent, VENDOR_EVENTS } from "./vendorEvents.js";
 import { isValidEmail, normalizeErrorMessage } from "./vendorUtils.js";
+import { createElement } from "../../../components/createElement.js";
 
 export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, options = {}) {
     const mode = options.mode === "edit" ? "edit" : "create";
     const initialData = options.initialData || {};
     const vendorId = options.vendorId ?? initialData.vendorid ?? initialData.vendor_id ?? initialData.vendorId ?? initialData.id ?? null;
 
-    const form = document.createElement("form");
-    form.className = mode === "edit" ? "vendor-registration-form vendor-edit-form" : "vendor-registration-form";
-    form.noValidate = true;
+    const form = createElement("form", {
+        class: mode === "edit" ? "vendor-registration-form vendor-edit-form" : "vendor-registration-form",
+        noValidate: "true",
+        events: {
+            submit: async (event) => {
+                event.preventDefault();
+                await handleVendorSubmit(form, {
+                    isLoggedIn,
+                    eventId,
+                    onSuccess,
+                    mode,
+                    vendorId
+                });
+            }
+        }
+    });
 
-    const title = document.createElement("h4");
-    title.textContent = mode === "edit" ? "Edit Vendor Profile" : "List Yourself as a Vendor";
+    const title = createElement("h4", {}, mode === "edit" ? "Edit Vendor Profile" : "List Yourself as a Vendor");
     form.appendChild(title);
 
     const nameInput = createInput({
         type: "text",
         placeholder: "Your Full Name",
         name: "name",
-        required: true,
-        className: "form-input",
+        required: "true",
+        class: "form-input",
         value: initialData.name ?? initialData.full_name ?? ""
     });
 
-    const categorySelect = document.createElement("select");
-    categorySelect.name = "category";
-    categorySelect.required = true;
-    categorySelect.className = "form-input";
+    const categorySelect = createElement("select", {
+        name: "category",
+        required: "true",
+        class: "form-input"
+    });
 
-    const placeholderOption = document.createElement("option");
-    placeholderOption.value = "";
-    placeholderOption.textContent = "Select a Category";
-    placeholderOption.disabled = true;
-    placeholderOption.selected = !initialData.category;
+    const placeholderOption = createElement("option", {
+        value: "",
+        disabled: "true"
+    }, "Select a Category");
+    
+    if (!initialData.category) {
+        placeholderOption.selected = true;
+    }
     categorySelect.appendChild(placeholderOption);
 
     const categories = [
@@ -49,9 +66,7 @@ export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, option
     ];
 
     for (const [value, label] of categories) {
-        const option = document.createElement("option");
-        option.value = value;
-        option.textContent = label;
+        const option = createElement("option", { value }, label);
         categorySelect.appendChild(option);
     }
 
@@ -62,8 +77,8 @@ export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, option
     const descriptionInput = createTextarea({
         name: "description",
         placeholder: "Brief description of your services (optional)",
-        className: "form-input",
-        rows: 3,
+        class: "form-input",
+        rows: "3",
         value: initialData.description ?? ""
     });
 
@@ -71,7 +86,7 @@ export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, option
         type: "email",
         placeholder: "Contact Email (optional)",
         name: "email",
-        className: "form-input",
+        class: "form-input",
         value: initialData.email ?? ""
     });
 
@@ -79,7 +94,7 @@ export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, option
         type: "tel",
         placeholder: "Contact Phone (optional)",
         name: "phone",
-        className: "form-input",
+        class: "form-input",
         value: initialData.phone ?? ""
     });
 
@@ -87,15 +102,15 @@ export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, option
         type: "text",
         placeholder: "Location/Service Area (optional)",
         name: "location",
-        className: "form-input",
+        class: "form-input",
         value: initialData.location ?? ""
     });
 
-    const submitButton = document.createElement("button");
-    submitButton.type = "submit";
-    submitButton.id = `vendor-submit-${Math.random().toString(36).slice(2, 10)}`;
-    submitButton.className = "btn-primary";
-    submitButton.textContent = mode === "edit" ? "Save Changes" : "Register as Vendor";
+    const submitButton = createElement("button", {
+        type: "submit",
+        id: `vendor-submit-${Math.random().toString(36).slice(2, 10)}`,
+        class: "btn-primary"
+    }, mode === "edit" ? "Save Changes" : "Register as Vendor");
 
     form.appendChild(nameInput);
     form.appendChild(categorySelect);
@@ -104,17 +119,6 @@ export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, option
     form.appendChild(phoneInput);
     form.appendChild(locationInput);
     form.appendChild(submitButton);
-
-    form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        await handleVendorSubmit(form, {
-            isLoggedIn,
-            eventId,
-            onSuccess,
-            mode,
-            vendorId
-        });
-    });
 
     return form;
 }
@@ -244,41 +248,19 @@ async function handleVendorSubmit(formEl, { isLoggedIn, eventId, onSuccess, mode
 }
 
 function createInput(attributes) {
-    const input = document.createElement("input");
-
-    for (const [key, value] of Object.entries(attributes)) {
-        if (value === undefined || value === null) {
-            continue;
-        }
-
-        if (key === "className") {
-            input.className = value;
-        } else if (key === "value") {
-            input.value = String(value);
-        } else {
-            input.setAttribute(key, String(value));
-        }
+    const safeAttributes = { ...attributes };
+    if (safeAttributes.className) {
+        safeAttributes.class = safeAttributes.className;
+        delete safeAttributes.className;
     }
-
-    return input;
+    return createElement("input", safeAttributes);
 }
 
 function createTextarea(attributes) {
-    const textarea = document.createElement("textarea");
-
-    for (const [key, value] of Object.entries(attributes)) {
-        if (value === undefined || value === null) {
-            continue;
-        }
-
-        if (key === "className") {
-            textarea.className = value;
-        } else if (key === "value") {
-            textarea.value = String(value);
-        } else {
-            textarea.setAttribute(key, String(value));
-        }
+    const safeAttributes = { ...attributes };
+    if (safeAttributes.className) {
+        safeAttributes.class = safeAttributes.className;
+        delete safeAttributes.className;
     }
-
-    return textarea;
+    return createElement("textarea", safeAttributes);
 }

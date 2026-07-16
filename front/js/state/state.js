@@ -1,63 +1,35 @@
-// --- API Configuration ---
 import { apiConfig } from "../config/env.js";
 
 export const webSiteName = "Farmium";
 
-// Re-export API URLs from centralized config
 export const {
-  MAIN_URL,
-  EMBED_URL,
-  BANNERDROP_URL,
-  API_URL,
-  STRIPE_URL,
-  AD_URL,
-  SEARCH_URL,
-  MERE_URL,
-  MERE_WS,
-  CHAT_URL,
-  CHAT_WS,
-  MUSIC_URL,
-  LIVE_URL,
-  SRC_URL,
-  FILEDROP_URL,
-  CHATDROP_URL
+  MAIN_URL, EMBED_URL, BANNERDROP_URL, API_URL, STRIPE_URL, AD_URL,
+  SEARCH_URL, MERE_URL, MERE_WS, CHAT_URL, CHAT_WS, MUSIC_URL,
+  LIVE_URL, SRC_URL, FILEDROP_URL, CHATDROP_URL
 } = apiConfig;
-
 
 // --- Allowed and persisted keys ---
 const allowedKeys = new Set([
   "token", "user", "username", "userProfile", "socket", "role", "environment",
-  "lang", "lastPath", "currentRoute", "routeCache", "routeState", "currentChatId", "isLoading", "userId", "unreadMessages", "unreadNotifications"
+  "lang", "lastPath", "currentRoute", "routeCache", "routeState", "currentChatId", 
+  "isLoading", "userId", "unreadMessages", "unreadNotifications"
 ]);
 
-const PERSISTED_KEYS = ["token", "userProfile", "user", "username", "role", "unreadMessages",  "unreadNotifications"];
-
-// --- Event system ---
-const globalEvents = {};
-function publish(eventName, data) {
-  if (globalEvents[eventName]) {
-    globalEvents[eventName].forEach(cb => cb(data));
-  }
-}
-function globalSubscribe(eventName, callback) {
-  if (!globalEvents[eventName]) {
-    globalEvents[eventName] = [];
-  }
-  globalEvents[eventName].push(callback);
-}
+const PERSISTED_KEYS = new Set(["token", "userProfile", "user", "username", "role", "unreadMessages", "unreadNotifications"]);
 
 // --- Safe JSON parse ---
 function safeParse(key) {
   try {
-    return JSON.parse(sessionStorage.getItem(key) || localStorage.getItem(key)) || null;
+    const item = localStorage.getItem(key) || sessionStorage.getItem(key);
+    return item ? JSON.parse(item) : null;
   } catch {
     return null;
   }
 }
 
 // --- Listeners ---
-const listeners = new Map(); // top-level key => Set<callback>
-const deepListeners = new Map(); // deep path => Set<callback>
+const listeners = new Map(); 
+const deepListeners = new Map(); 
 
 // --- Batched notifications ---
 const notifyQueue = new Set();
@@ -68,28 +40,21 @@ function getValueByPath(path) {
 }
 
 function scheduleNotify(key, value) {
-  notifyQueue.add({ key, value });
+  notifyQueue.add(key);
   if (!notifyPending) {
     notifyPending = true;
-    requestAnimationFrame(() => {
-      for (const { key, value } of notifyQueue) {
-        // top-level notifications
-        const fns = listeners.get(key);
-        if (fns) {
-          for (const fn of fns) {
-            fn(value);
-          }
-        }
-        publish(`${key}Changed`, value);
-        publish("stateChange", { [key]: value });
+    queueMicrotask(() => { // Using microtask instead of animation frame for faster, snappy UI states
+      for (const queueKey of notifyQueue) {
+        const val = queueKey.includes(".") ? getValueByPath(queueKey) : state[queueKey];
+        
+        // 1. Top level listeners
+        listeners.get(queueKey)?.forEach(fn => fn(val));
 
-        // deep path notifications
+        // 2. Deep path processing
         for (const [path, fns] of deepListeners) {
-          if (path === key || path.startsWith(key + ".")) {
-            const val = getValueByPath(path);
-            for (const fn of fns) {
-              fn(val);
-            }
+          if (path === queueKey || path.startsWith(queueKey + ".")) {
+            const deepVal = getValueByPath(path);
+            fns.forEach(fn => fn(deepVal));
           }
         }
       }
@@ -99,20 +64,10 @@ function scheduleNotify(key, value) {
   }
 }
 
-// --- Deep proxy for reactivity (optimized - only for watched paths) ---
+// --- Lean Deep Proxy Configuration ---
 function createReactiveObject(obj, path = []) {
-  // Don't proxy Maps or Sets
-  if (obj instanceof Map || obj instanceof Set) {
+  if (obj instanceof Map || obj instanceof Set || obj === null || typeof obj !== "object") {
     return obj;
-  }
-
-  // Only create proxy if this path has deep listeners
-  const shouldProxy = Array.from(deepListeners.keys()).some(
-    watchPath => watchPath.startsWith(path.join(".")) || path.join(".").startsWith(watchPath)
-  );
-
-  if (!shouldProxy && path.length > 0) {
-    return obj; // Skip proxy if no listeners watching this path
   }
 
   return new Proxy(obj, {
@@ -124,13 +79,11 @@ function createReactiveObject(obj, path = []) {
       return val;
     },
     set(target, prop, value) {
-      const oldValue = target[prop];
-      if (oldValue === value) {
-        return true;
-      } // Skip if value unchanged
+      if (target[prop] === value) return true;
 
       target[prop] = value;
       const fullPath = path.concat(prop).join(".");
+      
       scheduleNotify(fullPath, value);
       if (path.length > 0) {
         scheduleNotify(path[0], target);
@@ -149,14 +102,9 @@ function createReactiveObject(obj, path = []) {
   });
 }
 
-// Alias for backward compatibility
-function reactive(obj, path = []) {
-  return createReactiveObject(obj, path);
-}
-
 // --- Initialize reactive state ---
 const rawState = {
-  token: sessionStorage.getItem("token") || localStorage.getItem("token") || null,
+  token: localStorage.getItem("token") || sessionStorage.getItem("token") || null,
   userProfile: safeParse("userProfile") || {},
   user: safeParse("user") || {},
   lastPath: window.location.pathname,
@@ -168,13 +116,11 @@ const rawState = {
   unreadMessages: 0,
   unreadNotifications: 0,
 };
-const state = reactive(rawState);
+const state = createReactiveObject(rawState);
 
 // --- Core state functions ---
 function getState(key) {
-  if (!allowedKeys.has(key)) {
-    throw new Error(`Invalid state key: ${key}`);
-  }
+  if (!allowedKeys.has(key)) throw new Error(`Invalid state key: ${key}`);
   return state[key];
 }
 
@@ -182,16 +128,12 @@ function getState(key) {
 function setState(keyOrObj, persist = false, value = undefined) {
   if (typeof keyOrObj === "object" && keyOrObj !== null) {
     for (const [key, val] of Object.entries(keyOrObj)) {
-      if (!allowedKeys.has(key)) {
-        throw new Error(`Invalid state key: ${key}`);
-      }
-      if (key === "routeCache" || key === "routeState") {
-        console.warn(`⚠️ Skipping overwrite of ${key}`);
-        continue;
-      }
+      if (!allowedKeys.has(key)) throw new Error(`Invalid state key: ${key}`);
+      if (key === "routeCache" || key === "routeState") continue;
+      
       state[key] = val;
 
-      if (persist && PERSISTED_KEYS.includes(key)) {
+      if (persist && PERSISTED_KEYS.has(key)) {
         const str = typeof val === "string" ? val : JSON.stringify(val);
         sessionStorage.setItem(key, str);
         localStorage.setItem(key, str);
@@ -201,163 +143,94 @@ function setState(keyOrObj, persist = false, value = undefined) {
   }
 
   const key = keyOrObj;
-  if (!allowedKeys.has(key)) {
-    throw new Error(`Invalid state key: ${key}`);
-  }
-  if (key === "routeCache" || key === "routeState") {
-    console.warn(`⚠️ Skipping overwrite of ${key}`);
-    return;
-  }
+  if (!allowedKeys.has(key)) throw new Error(`Invalid state key: ${key}`);
+  if (key === "routeCache" || key === "routeState") return;
 
   state[key] = value;
 
-  if (persist && PERSISTED_KEYS.includes(key)) {
+  if (persist && PERSISTED_KEYS.has(key)) {
     const str = typeof value === "string" ? value : JSON.stringify(value);
     sessionStorage.setItem(key, str);
     localStorage.setItem(key, str);
   }
-
-  scheduleNotify(key, value);
-  return value;
 }
 
 // --- Subscriptions with automatic cleanup ---
 function subscribe(key, fn) {
-  if (!allowedKeys.has(key)) {
-    throw new Error(`Cannot subscribe to invalid key: ${key}`);
-  }
-  if (!listeners.has(key)) {
-    listeners.set(key, new Set());
-  }
+  if (!allowedKeys.has(key)) throw new Error(`Cannot subscribe to invalid key: ${key}`);
+  if (!listeners.has(key)) listeners.set(key, new Set());
+  
   listeners.get(key).add(fn);
-
-  // Return unsubscribe function for automatic cleanup
   return () => {
     listeners.get(key)?.delete(fn);
-    // Clean up empty listener sets
-    if (listeners.get(key)?.size === 0) {
-      listeners.delete(key);
-    }
+    if (listeners.get(key)?.size === 0) listeners.delete(key);
   };
 }
 
 function unsubscribe(key, fn) {
   listeners.get(key)?.delete(fn);
-  // Clean up empty listener sets
-  if (listeners.get(key)?.size === 0) {
-    listeners.delete(key);
-  }
+  if (listeners.get(key)?.size === 0) listeners.delete(key);
 }
 
-// --- Deep path subscriptions with automatic cleanup ---
 function subscribeDeep(path, fn) {
-  if (!deepListeners.has(path)) {
-    deepListeners.set(path, new Set());
-  }
+  if (!deepListeners.has(path)) deepListeners.set(path, new Set());
+  
   deepListeners.get(path).add(fn);
-
-  // Return unsubscribe function for automatic cleanup
   return () => {
     deepListeners.get(path)?.delete(fn);
-    // Clean up empty listener sets
-    if (deepListeners.get(path)?.size === 0) {
-      deepListeners.delete(path);
-    }
+    if (deepListeners.get(path)?.size === 0) deepListeners.delete(path);
   };
 }
 
 function unsubscribeDeep(path, fn) {
   deepListeners.get(path)?.delete(fn);
-  // Clean up empty listener sets
-  if (deepListeners.get(path)?.size === 0) {
-    deepListeners.delete(path);
-  }
+  if (deepListeners.get(path)?.size === 0) deepListeners.delete(path);
 }
 
-// --- Clear all listeners (useful for testing or cleanup) ---
 function clearAllListeners() {
   listeners.clear();
   deepListeners.clear();
 }
 
-// // --- Store initialization ---
-// function initStore() {
-//   const saved = localStorage.getItem("user");
-//   if (saved) {
-//     state.user = JSON.parse(saved);
-//     scheduleNotify("user", state.user);
-//   }
-// }
 /* =========================
-   ROUTE CACHE
+   ROUTE CACHE & STATE
 ========================= */
-
-function getRouteModule(path) {
-  return state.routeCache.get(path);
-}
-
-function setRouteModule(path, module) {
-  state.routeCache.set(path, module);
-  scheduleNotify("routeCache", state.routeCache);
-}
-
-function hasRouteModule(path) {
-  return state.routeCache.has(path);
-}
+function getRouteModule(path) { return state.routeCache.get(path); }
+function setRouteModule(path, module) { state.routeCache.set(path, module); }
+function hasRouteModule(path) { return state.routeCache.has(path); }
 
 function clearRouteCache() {
   state.routeCache.clear();
   state.routeState.clear();
-
-  scheduleNotify("routeCache", state.routeCache);
-  scheduleNotify("routeState", state.routeState);
+  scheduleNotify("routeCache");
+  scheduleNotify("routeState");
 }
-
-/* =========================
-   PER-ROUTE STATE
-========================= */
 
 function getRouteState(path) {
   let route = state.routeState.get(path);
-
   if (!route) {
     route = Object.create(null);
     state.routeState.set(path, route);
-
-    // notify creation
-    scheduleNotify("routeState", state.routeState);
   }
-
   return route;
 }
 
 function setRouteState(path, value) {
-  const prev = state.routeState.get(path);
-
-  if (prev === value) {
-    return;
-
-  }
-
+  if (state.routeState.get(path) === value) return;
   state.routeState.set(path, value);
-
-  scheduleNotify("routeState", state.routeState);
+  scheduleNotify("routeState");
 }
 
 /* =========================
    CLEAR STATE
 ========================= */
-
 function clearState(preserveKeys = []) {
   const preserved = {};
 
-  // capture persisted values safely
   for (const key of preserveKeys) {
-    if (PERSISTED_KEYS.includes(key)) {
+    if (PERSISTED_KEYS.has(key)) {
       const val = sessionStorage.getItem(key) ?? localStorage.getItem(key);
-      if (val !== null) {
-        preserved[key] = val;
-      }
+      if (val !== null) preserved[key] = val;
     }
   }
 
@@ -365,111 +238,57 @@ function clearState(preserveKeys = []) {
   localStorage.clear();
 
   for (const key of allowedKeys) {
-    if (preserveKeys.includes(key)) {
-      continue;
-
-    }
+    if (preserveKeys.includes(key)) continue;
 
     if (key === "routeCache" || key === "routeState") {
       state[key].clear?.();
-
-      // ensure observers update
-      scheduleNotify(key, state[key]);
       continue;
     }
 
     if (state[key] !== null) {
       state[key] = null;
-      scheduleNotify(key, null);
     }
   }
 
-  // restore preserved values
   for (const [key, value] of Object.entries(preserved)) {
     sessionStorage.setItem(key, value);
     localStorage.setItem(key, value);
-
     try {
       state[key] = JSON.parse(value);
     } catch {
       state[key] = value;
     }
-
-    scheduleNotify(key, state[key]);
-  }
-
-  // enforce Map integrity
-  if (!(state.routeCache instanceof Map)) {
-    state.routeCache = new Map();
-    scheduleNotify("routeCache", state.routeCache);
-  }
-
-  if (!(state.routeState instanceof Map)) {
-    state.routeState = new Map();
-    scheduleNotify("routeState", state.routeState);
   }
 }
 
 /* =========================
-   SCROLL STATE
+   SCROLL & UTILS
 ========================= */
-
 function saveScroll(container, scrollState) {
-  if (!scrollState) {
-    return;
-
-  }
-  scrollState.scrollY = container?.scrollTop ?? 0;
+  if (scrollState) scrollState.scrollY = container?.scrollTop ?? 0;
 }
 
 function restoreScroll(container, scrollState) {
-  if (!container || !scrollState) {
-    return;
-
-  }
-
-  // allow 0 (valid scroll position)
-  if ("scrollY" in scrollState) {
+  if (container && scrollState && "scrollY" in scrollState) {
     container.scrollTop = scrollState.scrollY;
   }
 }
 
-// --- Role helpers ---
 function hasRole(...roles) {
   const current = state.userProfile?.role;
-  if (!current) {
-    return false;
-  }
+  if (!current) return false;
   return roles.some(r => (Array.isArray(current) ? current : [current]).includes(r));
 }
-function isAdmin() {
-  return hasRole("admin");
-}
 
-// --- Snapshot & Actions ---
-function getGlobalSnapshot() {
-  return Object.freeze({ ...state });
-}
-function setLoading(val) {
-  setState("isLoading", val);
-}
+const isAdmin = () => hasRole("admin");
+const getGlobalSnapshot = () => Object.freeze({ ...state });
+const setLoading = (val) => setState("isLoading", false, val);
 
-
-// --- Exports ---
 export {
-  state,
-
-  getState, setState, clearState, getGlobalSnapshot,
-
+  state, getState, setState, clearState, getGlobalSnapshot,
   subscribe, unsubscribe, subscribeDeep, unsubscribeDeep, clearAllListeners,
-  publish, globalSubscribe,
-
   saveScroll, restoreScroll,
-
   getRouteModule, setRouteModule, hasRouteModule, clearRouteCache,
   getRouteState, setRouteState,
-
-  hasRole, isAdmin,
-  setLoading,
-
+  hasRole, isAdmin, setLoading
 };

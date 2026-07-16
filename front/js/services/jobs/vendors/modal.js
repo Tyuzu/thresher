@@ -1,3 +1,5 @@
+import { createElement } from "../../../components/createElement.js";
+
 export function createModal({
     title = "",
     className = "",
@@ -5,42 +7,40 @@ export function createModal({
     modalId = "",
     onClose = null
 } = {}) {
-    const modal = document.createElement("div");
-    modal.className = ["modal", className].filter(Boolean).join(" ");
-    modal.setAttribute("role", "dialog");
-    modal.setAttribute("aria-modal", "true");
-
-    if (modalId) {
-        modal.id = modalId;
-    }
-
-    const content = document.createElement("div");
-    content.className = "modal-content";
-
-    const header = document.createElement("div");
-    header.className = "modal-header";
-
-    const titleEl = document.createElement("h2");
-    titleEl.textContent = title;
-
-    const closeBtn = document.createElement("button");
-    closeBtn.type = "button";
-    closeBtn.className = "close-btn";
+    const closeBtn = createElement("button", {
+        type: "button",
+        class: "close-btn",
+        events: {
+            click: () => close()
+        }
+    });
     closeBtn.innerHTML = "&times;";
 
-    header.appendChild(titleEl);
-    header.appendChild(closeBtn);
+    const titleEl = createElement("h2", {}, title);
+    const header = createElement("div", { class: "modal-header" }, [titleEl, closeBtn]);
+    
+    const bodyAttributes = bodyId ? { class: "modal-body", id: bodyId } : { class: "modal-body" };
+    const body = createElement("div", bodyAttributes);
 
-    const body = document.createElement("div");
-    body.className = "modal-body";
+    const content = createElement("div", { class: "modal-content" }, [header, body]);
 
-    if (bodyId) {
-        body.id = bodyId;
+    const modalAttributes = {
+        class: ["modal", className].filter(Boolean).join(" "),
+        role: "dialog",
+        "aria-modal": "true",
+        events: {
+            click: (event) => {
+                if (event.target === modal) {
+                    close();
+                }
+            }
+        }
+    };
+    if (modalId) {
+        modalAttributes.id = modalId;
     }
 
-    content.appendChild(header);
-    content.appendChild(body);
-    modal.appendChild(content);
+    const modal = createElement("div", modalAttributes, [content]);
 
     const close = () => {
         if (typeof onClose === "function") {
@@ -48,14 +48,6 @@ export function createModal({
         }
         modal.remove();
     };
-
-    closeBtn.addEventListener("click", close);
-
-    modal.addEventListener("click", (event) => {
-        if (event.target === modal) {
-            close();
-        }
-    });
 
     return {
         modal,

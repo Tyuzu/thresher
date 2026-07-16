@@ -61,3 +61,15 @@ export function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 }
+
+export function formatRequestStatus(status) {
+    if (!status) return "Pending";
+    switch (String(status).toLowerCase()) {
+        case "pending": return "Request Pending";
+        case "accepted":
+        case "hired": return "Already Hired ✓";
+        case "completed": return "Completed";
+        case "cancelled": return "Cancelled";
+        default: return status;
+    }
+}

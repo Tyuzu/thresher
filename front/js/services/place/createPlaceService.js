@@ -2,7 +2,7 @@ import { createElement } from "../../components/createElement.js";
 import { navigate } from "../../routes/index.js";
 import { createPlace } from "./placeService.js";
 import Notify from "../../components/ui/Notify.mjs";
-import { createFormGroup } from "../../components/createFormGroup.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
 
 const categoryMap = {
     "Food & Beverage": ["Restaurant", "Cafe", "Bakery"],

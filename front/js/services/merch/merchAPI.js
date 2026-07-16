@@ -2,7 +2,7 @@ import { apiFetch } from "../../api/api.js";
 import Modal from "../../components/ui/Modal.mjs";
 import Notify from "../../components/ui/Notify.mjs";
 import { createElement } from "../../components/createElement.js";
-import { createFormGroup } from "../../components/createFormGroup.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
 import { Button } from "../../components/base/Button.js";
 import Imagex from "../../components/base/Imagex.js";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";

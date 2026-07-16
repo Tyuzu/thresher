@@ -1,7 +1,7 @@
 // songsTab.js
 import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
-import { createFormGroup } from "../../components/createFormGroup.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
 import Modal from "../../components/ui/Modal.mjs";
 import Imagex from "../../components/base/Imagex.js";
 import Notify from "../../components/ui/Notify.mjs";

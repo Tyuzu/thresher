@@ -128,7 +128,7 @@ async function payViaStripe({ paymentType = "purchase", entityType, entityId }) 
     },
     onClose: () => {
       if (elementsInstance) {
-        try { elementsInstance.getElement('payment')?.destroy(); } catch(e){}
+        try { elementsInstance.getElement('payment')?.destroy(); } catch (e) { }
       }
       resolveResult({ success: false, error: "Window closed by customer" });
     }
@@ -136,5 +136,172 @@ async function payViaStripe({ paymentType = "purchase", entityType, entityId }) 
 
   return resultPromise;
 }
+async function showPaymentModal({
+  paymentType = "purchase",
+  entityType,
+  entityId,
+  entityName
+}) {
+  const validation = validatePaymentConfig(
+    paymentType,
+    entityType
+  );
 
-export { payViaStripe };
+  if (!validation.valid) {
+    console.warn(
+      "Payment validation failed:",
+      validation.error
+    );
+
+    return Promise.resolve({
+      success: false,
+      error: validation.error
+    });
+  }
+
+  const rules = PAYMENT_RULES[paymentType];
+
+  if (!rules) {
+    return Promise.resolve({
+      success: false,
+      error: "Invalid payment type"
+    });
+  }
+
+  let modalRef = null;
+
+  const messageEl = createMessageElement();
+
+  const paymentHandlers = {
+    card: () =>
+      payViaStripe({
+        paymentType,
+        entityType,
+        entityId
+      }),
+
+    wallet: () =>
+      payViaWallet({
+        paymentType,
+        entityType,
+        entityId
+      }),
+
+    cash_on_delivery: () =>
+      payCashOnDelivery({
+        paymentType,
+        entityType,
+        entityId
+      })
+  };
+
+  const confirmBtn = Button(
+    "Confirm Payment",
+    "",
+
+    {
+      click: async () => {
+        const method = document.querySelector(
+          "input[name=paymethod]:checked"
+        )?.value;
+
+        if (!method) {
+          setMessage(
+            messageEl,
+            "Select a payment method"
+          );
+
+          return;
+        }
+
+        const handler = paymentHandlers[method];
+
+        if (!handler) {
+          setMessage(
+            messageEl,
+            "Unsupported payment method"
+          );
+
+          return;
+        }
+
+        confirmBtn.disabled = true;
+
+        const originalText =
+          confirmBtn.textContent;
+
+        confirmBtn.textContent = "Processing…";
+
+        setMessage(messageEl, "");
+
+        try {
+          const result = await handler();
+
+          if (result?.success) {
+            modalRef.close({
+              success: true,
+              method
+            });
+
+            return;
+          }
+
+          setMessage(
+            messageEl,
+            result?.error || "Payment failed"
+          );
+
+        } catch (err) {
+          console.error(
+            "Payment processing error:",
+            err
+          );
+
+          setMessage(
+            messageEl,
+            err?.message ||
+            "An unexpected error occurred"
+          );
+
+        } finally {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = originalText;
+        }
+      }
+    },
+
+    "buttonx"
+  );
+
+  modalRef = Modal({
+    title: `Pay for ${entityName}`,
+
+    content: createElement("div", { class: "payoptions" }, [
+      ...rules.methods.map(method =>
+        createElement("label", {}, [
+          createElement("input", {
+            type: "radio",
+            name: "paymethod",
+            value: method,
+            checked:
+              method === rules.methods[0]
+          }),
+
+          ` ${method
+            .replaceAll("_", " ")
+            .toUpperCase()}`
+        ])
+      ),
+
+      messageEl
+    ]),
+
+    actions: () => confirmBtn,
+
+    returnDataOnClose: true
+  });
+
+  return modalRef.closed;
+}
+
+export { payViaStripe, showPaymentModal };

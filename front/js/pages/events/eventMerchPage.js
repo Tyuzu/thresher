@@ -1,6 +1,6 @@
 import { renderMerchPage } from "../../services/tickets/merchOnlyPage.js";
 
-async function EventMerch(isLoggedIn, eventid, contentContainer) {
+async function EventMerch(isLoggedIn, t, eventid, contentContainer) {
     renderMerchPage(isLoggedIn, eventid, contentContainer)
 }
 

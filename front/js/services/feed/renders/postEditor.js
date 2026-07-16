@@ -2,7 +2,7 @@ import Modal from "../../../components/ui/Modal.mjs";
 import { createElement } from "../../../components/createElement.js";
 import { apiFetch } from "../../../api/api.js";
 import Notify from "../../../components/ui/Notify.mjs";
-import { createFormGroup } from "../../../components/createFormGroup.js";
+import { createFormGroup } from "../../../components/createFormGroupEnhanced.js";
 
 export function openEditModal(post) {
   // --- form fields ---

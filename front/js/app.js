@@ -2,50 +2,10 @@ import { loadContent } from "./routes/index.js";
 import { setState } from "./state/state.js";
 import { detectLanguage, setLanguage } from "./i18n/i18n.js";
 
-// --- Register Service Worker ---
-// if ("serviceWorker" in navigator) {
-//   window.addEventListener("load", () => {
-//     navigator.serviceWorker.register("/service-worker.js")
-//       .then(async (reg) => {
-//         await navigator.serviceWorker.ready;
-//         console.log("🔌 Service worker active:", reg.scope);
-//       })
-//       .catch((err) => console.error("❌ Service worker registration failed:", err));
-//   });
-// }
-
-// --- Environment Profiling ---
-async function measureEnvironment() {
-  const measurePerformance = async () => {
-    const t0 = performance.now();
-    for (let i = 0; i < 100000; i++) {
-      Math.sqrt(i);
-    }
-    const t1 = performance.now();
-    return Math.max(100 - (t1 - t0), 0);
-  };
-
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-  return {
-    deviceType: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
-    browser: isSafari
-      ? "safari"
-      : navigator.userAgent.includes("Firefox")
-        ? "firefox"
-        : navigator.userAgent.includes("Chrome")
-          ? "chrome"
-          : "unknown",
-    networkSpeed: navigator.connection?.effectiveType || "unknown",
-    theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
-    online: navigator.onLine,
-    performanceScore: await measurePerformance(),
-  };
-}
-
-async function profileEnvironment() {
+// --- Environment Profiling (Lightweight & Non-blocking) ---
+function profileEnvironment() {
   const ENV_CACHE_KEY = "env-profile-v1";
-  const ENV_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+  const ENV_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
   const cachedEnv = localStorage.getItem(ENV_CACHE_KEY);
   if (cachedEnv) {
@@ -57,214 +17,147 @@ async function profileEnvironment() {
         return;
       }
     } catch (_e) {
-      localStorage.removeItem(ENV_CACHE_KEY); // Clear corrupted cache
+      localStorage.removeItem(ENV_CACHE_KEY);
     }
   }
 
-  const envData = await measureEnvironment();
-  setState("environment", envData);
-  window.__env = envData;
-  try {
-    localStorage.setItem(ENV_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: envData }));
-  } catch (e) {
-    // Handle quota exceeded
-    console.warn("⚠️ Cannot cache environment profile:", e.message);
-  }
-
-  // Determine UI tier
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  const networkSpeed = navigator.connection?.effectiveType || "unknown";
+  
   let uiTier = localStorage.getItem("ui-tier-v1");
   if (!uiTier) {
-    if (envData.deviceType === "mobile" || envData.networkSpeed.includes("2g")) {
+    if (isMobile || networkSpeed.includes("2g")) {
       uiTier = "light";
-    } else if (envData.performanceScore < 50) {
+    } else if (navigator.deviceMemory && navigator.deviceMemory < 4) {
       uiTier = "medium";
     } else {
       uiTier = "full";
     }
     localStorage.setItem("ui-tier-v1", uiTier);
   }
+
+  const envData = {
+    deviceType: isMobile ? "mobile" : "desktop",
+    networkSpeed,
+    online: navigator.onLine,
+    cores: navigator.hardwareConcurrency || "unknown",
+    memory: navigator.deviceMemory || "unknown"
+  };
+
+  setState("environment", envData);
+  window.__env = envData;
+
+  try {
+    localStorage.setItem(ENV_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: envData }));
+  } catch (e) {
+    console.warn("âš ï¸ Cannot cache environment profile:", e.message);
+  }
 }
 
 // --- Offline Banner ---
 let offlineTimer = null;
-
-function showOfflineBanner() {
-  if (document.getElementById("offline-banner")) {
-    return;
-  }
-  const banner = document.createElement("div");
-  banner.id = "offline-banner";
-  Object.assign(banner.style, {
-    position: "fixed",
-    top: "0",
-    left: "0",
-    right: "0",
-    background: "#b00020",
-    color: "#fff",
-    textAlign: "center",
-    padding: "0.5rem",
-    zIndex: "9999",
-    fontSize: "0.9rem",
-  });
-  banner.textContent = "📴 You're offline. Some features may not work.";
-  document.body.appendChild(banner);
+function toggleOfflineBanner(isOffline) {
+  clearTimeout(offlineTimer);
+  offlineTimer = setTimeout(() => {
+    let banner = document.getElementById("offline-banner");
+    if (isOffline) {
+      if (banner) return;
+      banner = document.createElement("div");
+      banner.id = "offline-banner";
+      Object.assign(banner.style, {
+        position: "fixed", top: "0", left: "0", right: "0",
+        background: "#b00020", color: "#fff", textAlign: "center",
+        padding: "0.5rem", zIndex: "9999", fontSize: "0.9rem",
+      });
+      banner.textContent = "ðŸ“´ You're offline. Some features may not work.";
+      document.body.appendChild(banner);
+    } else if (banner) {
+      banner.remove();
+    }
+  }, 1000);
 }
 
-function removeOfflineBanner() {
-  const banner = document.getElementById("offline-banner");
-  if (banner) {
-    banner.remove();
-  }
-}
+window.addEventListener("offline", () => toggleOfflineBanner(true));
+window.addEventListener("online", () => toggleOfflineBanner(false));
 
-window.addEventListener("offline", () => {
-  clearTimeout(offlineTimer);
-  offlineTimer = setTimeout(showOfflineBanner, 1000);
-});
-
-window.addEventListener("online", () => {
-  clearTimeout(offlineTimer);
-  offlineTimer = setTimeout(removeOfflineBanner, 1000);
-});
-
-// --- Start App ---
-window.addEventListener("error", (event) => {
-  console.error("🚨 Uncaught error:", event.error);
-  // Dispatch to error tracker if available
+// --- Global Error Tracking ---
+const trackError = (error, context) => {
+  console.error("ðŸš¨", error, context);
   if (window.__errorTracker) {
-    window.__errorTracker.track(event.error, {
-      type: "uncaught_error",
-      message: event.message,
-      filename: event.filename,
-      lineno: event.lineno,
-      colno: event.colno
-    });
+    window.__errorTracker.track(error, context);
   }
-});
+};
 
-window.addEventListener("unhandledrejection", (event) => {
-  console.error("🚨 Unhandled rejection:", event.reason);
-  // Dispatch to error tracker if available
-  if (window.__errorTracker) {
-    window.__errorTracker.track(event.reason, {
-      type: "unhandled_rejection"
-    });
-  }
-});
+window.addEventListener("error", (e) => trackError(e.error, { type: "uncaught_error", message: e.message }));
+window.addEventListener("unhandledrejection", (e) => trackError(e.reason, { type: "unhandled_rejection" }));
 
-async function setupPerformanceMonitoring() {
-  if (!window.PerformanceObserver) {
-    return;
-  }
-
+// --- Performance Monitoring ---
+function setupPerformanceMonitoring() {
+  if (!window.PerformanceObserver) return;
   try {
     const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        // Flag slow operations (> 3 seconds)
         if (entry.duration > 3000) {
-          // Build a compact details object to avoid circular refs
-          const details = {
-            name: entry.name,
-            entryType: entry.entryType,
-            duration: Math.round(entry.duration),
-            startTime: Math.round(entry.startTime),
-          };
-
-          // Add resource-specific fields when available
-          if (entry.entryType === "resource") {
-            details.initiatorType = entry.initiatorType || "unknown";
-            details.encodedBodySize = entry.encodedBodySize || 0;
-            details.transferSize = entry.transferSize || 0;
-            details.fetchStart = Math.round(entry.fetchStart || 0);
-            details.responseEnd = Math.round(entry.responseEnd || 0);
-          }
-
-          // Add navigation/paint-specific helpful markers
-          if (entry.entryType === "navigation") {
-            details.loadEventEnd = Math.round(entry.loadEventEnd || 0);
-            details.domContentLoadedEventEnd = Math.round(entry.domContentLoadedEventEnd || 0);
-          }
-
-          console.warn(`⚠️ Slow operation: ${details.name} (${details.duration}ms)`, details);
-
-          // Send to tracker with more context
-          if (window.__errorTracker) {
-            window.__errorTracker.track(new Error("Performance degradation"), Object.assign({
-              type: "slow_operation",
-            }, details));
-          }
-
-          // For quick local debugging also expose the full entry in dev builds
-          if (window.location.hostname === "localhost") {
-            try {
-              // Some entry fields are not enumerable; keep this behind the existing warning path
-              window.__perfDebug = entry;
-            } catch (_e) {
-              // Ignore logging errors
-            }
-          }
+          const details = { name: entry.name, entryType: entry.entryType, duration: Math.round(entry.duration) };
+          trackError(new Error("Performance degradation"), Object.assign({ type: "slow_operation" }, details));
         }
       }
     });
 
-    observer.observe({
-      entryTypes: ["navigation", "resource", "paint", "largest-contentful-paint"]
-    });
+    // FIX: Observe entry types separately to safely use the buffered flag
+    const typesToObserve = ["navigation", "resource", "paint", "largest-contentful-paint"];
+    
+    for (const type of typesToObserve) {
+      try {
+        observer.observe({ type, buffered: true });
+      } catch (err) {
+        // Fallback for browsers that don't support specific entry types
+        console.warn(`Performance type "${type}" not supported:`, err.message);
+      }
+    }
   } catch (e) {
     console.warn("Performance monitoring unavailable:", e);
   }
 }
 
+// --- Start App ---
 window.addEventListener("DOMContentLoaded", async () => {
   try {
-    await profileEnvironment();
-    await setupPerformanceMonitoring();
-
     const lang = detectLanguage();
     await setLanguage(lang);
     await loadContent(window.location.pathname);
 
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => {
+        profileEnvironment();
+        setupPerformanceMonitoring();
+      });
+    } else {
+      setTimeout(() => {
+        profileEnvironment();
+        setupPerformanceMonitoring();
+      }, 1);
+    }
+
     window.addEventListener("popstate", async () => {
-      if (!document.hidden) {
-        await loadContent(window.location.pathname);
-      }
+      if (!document.hidden) await loadContent(window.location.pathname);
     });
 
     window.addEventListener("pageshow", async (event) => {
       if (event.persisted) {
-        console.warn("Restored from bfcache");
         const token = sessionStorage.getItem("token") || localStorage.getItem("token") || null;
         setState("token", token);
         await loadContent(window.location.pathname);
       }
     });
 
-    window.addEventListener("pagehide", (event) => {
-      if (event.persisted) {
-        console.warn("Page *may* be cached by bfcache.");
-      }
-    });
+    if (!navigator.onLine) toggleOfflineBanner(true);
 
-    if (!navigator.onLine) {
-      showOfflineBanner();
-      console.warn("📴 Offline mode: degraded functionality expected.");
-    }
   } catch (error) {
-    console.error("🚨 App initialization failed:", error);
-    if (window.__errorTracker) {
-      window.__errorTracker.track(error, { type: "init_failure" });
-    }
+    trackError(error, { type: "init_failure" });
     const errEl = document.createElement("div");
-    Object.assign(errEl.style, {
-      padding: "2rem",
-      textAlign: "center",
-      fontFamily: "system-ui, -apple-system, sans-serif"
-    });
-    errEl.innerHTML = `
-      <h1>⚠️ Application Error</h1>
-      <p>Unable to start the application. Please refresh the page.</p>
-      <p style="font-size: 0.9em; color: #666;">${error.message}</p>
-    `;
+    Object.assign(errEl.style, { padding: "2rem", textAlign: "center", fontFamily: "system-ui, sans-serif" });
+    errEl.innerHTML = `<h1> Application Error</h1><p>Unable to start the application. Please refresh.</p>`;
     document.body.replaceChildren(errEl);
   }
 });
