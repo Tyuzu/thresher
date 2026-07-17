@@ -8,7 +8,7 @@ import Button from "../../components/base/Button.js";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
 
 /* ────────── Add Ticket API ────────── */
-async function addTicket(eventId, ticketList, closeModal) {
+async function addTicket(eventId, ticketList, modalInstance) {
     const payload = {
         name: document.getElementById("ticket-name").value.trim(),
         price: Number(document.getElementById("ticket-price").value),
@@ -25,48 +25,28 @@ async function addTicket(eventId, ticketList, closeModal) {
         payload.quantity <= 0 ||
         payload.seatstart > payload.seatend
     ) {
-        Notify(
-            "Please enter valid ticket details.",
-            { type: "warning", dismissible: true, duration: 3000 }
-        );
+        Notify("Please enter valid ticket details.", { type: "warning", dismissible: true, duration: 3000 });
         return;
     }
 
     try {
-        const ticket = await apiFetch(
-            `/ticket/event/${eventId}`,
-            "POST",
-            payload
-        );
+        const ticket = await apiFetch(`/ticket/event/${eventId}`, "POST", payload);
 
         if (ticket && ticket.ticketid) {
-            Notify(
-                "Ticket added successfully.",
-                { type: "success", dismissible: true, duration: 3000 }
-            );
+            Notify("Ticket added successfully.", { type: "success", dismissible: true, duration: 3000 });
 
-            displayNewTicket(
-                ticket,
-                ticketList,
-                true,
-                true,
-                eventId
-            );
+            displayNewTicket(ticket, ticketList, true, true, eventId);
 
             clearTicketForm();
-            closeModal();
+            if (modalInstance && typeof modalInstance.close === "function") {
+                modalInstance.close();
+            }
         } else {
-            Notify(
-                "Failed to add ticket.",
-                { type: "error", dismissible: true }
-            );
+            Notify("Failed to add ticket.", { type: "error", dismissible: true });
         }
     } catch (err) {
         console.error(err);
-        Notify(
-            "Error adding ticket.",
-            { type: "error", dismissible: true }
-        );
+        Notify("Error adding ticket.", { type: "error", dismissible: true });
     }
 }
 
@@ -84,16 +64,15 @@ function addTicketForm(eventId, ticketList) {
 
     fields.forEach(f => form.append(createFormGroup(f)));
 
-    /* Currency */
+    /* Currency Dropdown Setup */
     const currencySelect = createElement("select", {
         id: "ticket-currency",
         required: true
     });
 
-    ["USD", "EUR", "GBP", "CAD", "AUD", "JPY"].forEach(c =>
-        currencySelect.append(
-            createElement("option", { value: c }, [c])
-        )
+    // Added INR to the option stack to map correctly to the standard currency formatting rule
+    ["INR", "USD", "EUR", "GBP", "CAD", "AUD", "JPY"].forEach(c =>
+        currencySelect.append(createElement("option", { value: c }, [c]))
     );
 
     form.append(
@@ -103,7 +82,7 @@ function addTicketForm(eventId, ticketList) {
         ])
     );
 
-    /* Color */
+    /* Color Selection */
     form.append(
         createElement("div", { class: "form-group" }, [
             createElement("label", { for: "ticket-color" }, ["Ticket Color"]),
@@ -115,6 +94,7 @@ function addTicketForm(eventId, ticketList) {
         ])
     );
 
+    // Single assignments setup to avoid re-instantiation assignment runtime blowups
     const modal = Modal({
         title: "Add Ticket",
         content: form
@@ -132,14 +112,10 @@ function addTicketForm(eventId, ticketList) {
 
     form.append(submitBtn, cancelBtn);
 
-    modal = Modal({
-        title: "Add Ticket",
-        content: form
-    });
-
     form.addEventListener("submit", e => {
         e.preventDefault();
-        addTicket(eventId, ticketList, modal.close);
+        // Safe reference scoping passing the parent modal reference cleanly down
+        addTicket(eventId, ticketList, modal);
     });
 }
 

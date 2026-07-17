@@ -11,7 +11,7 @@ import Notify from "../../components/ui/Notify.mjs";
 import { apiFetch } from "../../api/api.js";
 
 /* =========================
-   SIGNUP
+   SIGNUP (With error parsing fix)
 ========================= */
 async function signup(event) {
     if (event) event.preventDefault();
@@ -38,7 +38,6 @@ async function signup(event) {
         }
     ]);
 
-    // Fixed: Ensure arrays or objects don't trigger error state falsely
     const hasErrors = Array.isArray(errors) ? errors.length > 0 : errors && Object.keys(errors).length > 0;
 
     if (hasErrors) {
@@ -51,7 +50,7 @@ async function signup(event) {
     }
 
     try {
-        await apiFetch("/auth/register", "POST", { username, email, password });
+        await apiFetch("/auth/register", "POST", { username, email, password }, { credentials: "include" });
 
         Notify("Signup successful! You can now log in.", {
             type: "success",
@@ -62,13 +61,25 @@ async function signup(event) {
         localStorage.setItem("redirectAfterLogin", "/home");
         navigate("/login");
     } catch (err) {
-        Notify(err.message || "Signup failed.", {
+        const errorMsg = typeof err === "string" ? err : err?.message || err?.error || "Signup failed.";
+        Notify(errorMsg, {
             type: "error",
             duration: 3000,
             dismissible: true
         });
     }
 }
+
+/* =========================
+   REACTIVE SUBSCRIPTIONS (Robust Role Check)
+========================= */
+subscribeDeep("userProfile.role", role => {
+    const isAdmin = Array.isArray(role) 
+        ? role.includes("admin") 
+        : role === "admin";
+
+    document.body.dataset.isAdmin = isAdmin ? "true" : "false";
+});
 
 /* =========================
    LOGIN
@@ -177,12 +188,5 @@ function silentLogout() {
     });
 }
 
-/* =========================
-   REACTIVE SUBSCRIPTIONS
-========================= */
-subscribeDeep("userProfile.role", role => {
-    document.body.dataset.isAdmin =
-        Array.isArray(role) && role.includes("admin") ? "true" : "false";
-});
 
 export { signup, login, logout, silentLogout, refreshAccessToken };

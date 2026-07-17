@@ -15,12 +15,20 @@ import { listMyTickets } from './listmyTickets.js';
 import { showPaymentModal } from '../pay/pay.js';
 import Modal from '../../components/ui/Modal.mjs';
 
-// CRITICAL FIX: Format currency from paise to rupees
-function formatCurrency(paise) {
-    return new Intl.NumberFormat('en-IN', {
+// DYNAMIC FIX: Format currency properly according to chosen ISO code
+function formatCurrency(minorValue, currencyCode = 'INR') {
+    const code = currencyCode.toUpperCase();
+    // JPY does not use minor units/sub-units
+    const divisor = code === 'JPY' ? 1 : 100;
+    
+    // Fallback locale map for standard clean formatting
+    const localeMap = { 'INR': 'en-IN', 'USD': 'en-US', 'EUR': 'de-DE', 'GBP': 'en-GB' };
+    const locale = localeMap[code] || navigator.language || 'en-US';
+
+    return new Intl.NumberFormat(locale, {
         style: 'currency',
-        currency: 'INR'
-    }).format((paise || 0) / 100);
+        currency: code
+    }).format((minorValue || 0) / divisor);
 }
 
 /* ────────── Ticket Card ────────── */
@@ -31,14 +39,12 @@ function createTicketCard(ticket, eventId, isCreator, isLoggedIn) {
         seatend: ticket.seatend,
         creator: isCreator,
         name: ticket.name,
-        price: formatCurrency(ticket.price), // CRITICAL FIX: Use proper currency formatting
+        price: formatCurrency(ticket.price, ticket.currency), // Dynamically target currency
         quantity: ticket.quantity,
         color: ticket.color || "#a3a3a349",
         attributes: { "data-ticket-id": ticket.ticketid },
         onClick: async () => {
-            if (!isLoggedIn || isCreator) {
-return;
-}
+            if (!isLoggedIn || isCreator) return;
           
             const quantityInput = createElement("input", {
               type: "number",
@@ -67,9 +73,7 @@ return;
                           quantity < 1 ||
                           quantity > ticket.quantity
                         ) {
-                          return alert(
-                            `⚠️ Enter a valid quantity (1-${ticket.quantity}).`
-                          );
+                          return alert(`⚠️ Enter a valid quantity (1-${ticket.quantity}).`);
                         }
           
                         modal.close();
@@ -113,11 +117,9 @@ return;
                   )
                 ])
             });
-          }
-          
+        }
     });
 
-    // ── Creator Actions ──
     if (isCreator) {
         const actions = createElement("div", { class: "hflex-sb", style: "padding:0 0.5rem;" });
         actions.append(
@@ -130,15 +132,12 @@ return;
     return card;
 }
 
-/* ────────── Single Ticket Insert ────────── */
 export function displayNewTicket(ticketData, ticketList, isCreator = false, isLoggedIn = false, eventId) {
     ticketList.append(createTicketCard(ticketData, eventId, isCreator, isLoggedIn));
 }
 
-/* ────────── Ticket List ────────── */
 export function displayTickets(ticketContainer, tickets, eventId, isCreator, isLoggedIn) {
     ticketContainer.replaceChildren(createElement("h2", {}, ["Tickets"]));
-
     const actionsCon = createElement("div", { class: "hvflex" });
 
     if (!isCreator && tickets?.length > 0) {

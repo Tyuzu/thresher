@@ -53,11 +53,13 @@ function renderItems(items) {
 
   flattenItems(items).forEach(item => {
     const price = toRupees(item.price);
-    const total = price * item.quantity;
+    // FIXED: Calculate total in integer paise first to prevent floating point variations
+    const total = toRupees((item.price || 0) * (item.quantity || 0));
+    const name = item.itemName || item.name || "Item";
 
     list.append(
       createElement("li", {}, [
-        `${item.itemName} – ${item.quantity} × ${formatINR(price)} = `,
+        `${name} – ${item.quantity} × ${formatINR(price)} = `,
         createElement("strong", {}, [formatINR(total)])
       ])
     );
@@ -74,9 +76,7 @@ function renderTotalsFromBackend(order) {
   const total = toRupees(order.total || 0);
 
   return createElement("div", { class: "payment-totals" }, [
-    createElement("div", {}, [
-      `Subtotal: ${formatINR(subtotal)}`
-    ]),
+    createElement("div", {}, [`Subtotal: ${formatINR(subtotal)}`]),
 
     ...(discount > 0
       ? [
@@ -88,263 +88,151 @@ function renderTotalsFromBackend(order) {
         ]
       : []),
 
-    createElement("div", {}, [
-      `Tax: ${formatINR(tax)}`
-    ]),
-
-    createElement("div", {}, [
-      `Delivery: ${formatINR(delivery)}`
-    ]),
-
-    createElement(
-      "div",
-      { class: "total-line" },
-      [`Total: ${formatINR(total)}`]
-    )
+    createElement("div", {}, [`Tax: ${formatINR(tax)}`]),
+    createElement("div", {}, [`Delivery: ${formatINR(delivery)}`]),
+    createElement("div", { class: "total-line" }, [`Total: ${formatINR(total)}`])
   ]);
 }
 
 /* ────────────────────── API ────────────────────── */
 
-async function createOrder({
-  items,
-  address,
-  couponCode
-}) {
+async function createOrder({ items, address, couponCode }) {
   const payload = {
     address,
     items: groupByCategory(items),
     coupon: couponCode || null
   };
 
-  const res = await apiFetch(
-    "/order",
-    "POST",
-    payload
-  );
-
-  console.log("Order response:", res);
+  const res = await apiFetch("/order", "POST", payload);
 
   if (!res?.success) {
-    throw new Error(
-      res?.message || "Order creation failed"
-    );
+    throw new Error(res?.message || "Order creation failed");
   }
 
-  const order =
-    res?.farmOrders?.[0] ||
-    res?.order;
-
-  const orderId =
-    order?.orderid ||
-    order?.orderId ||
-    order?.OrderID;
+  const order = res?.farmOrders?.[0] || res?.order;
+  const orderId = order?.orderid || order?.orderId || order?.OrderID;
 
   if (!orderId) {
-    console.error(
-      "Invalid order response:",
-      res
-    );
-
+    console.error("Invalid order response:", res);
     throw new Error("Missing order ID");
   }
 
   return {
     ...order,
     orderid: orderId,
-    total:
-      order?.total ||
-      order?.totalAmount ||
-      0
+    total: order?.total || order?.totalAmount || 0
   };
 }
 
-async function processPayment(
-  orderId,
-  total
-) {
-  try {
-    return await showPaymentModal({
-      paymentType: "purchase",
-      entityType: "order",
-      entityId: orderId,
-      entityName: "Order",
-      amount: total
-    });
-  } catch (err) {
-    console.warn(
-      "Payment error:",
-      err
-    );
-
-    return null;
-  }
+async function processPayment(orderId, total) {
+  // FIXED: Propagate error rejections up so the main catch block knows why it failed
+  return await showPaymentModal({
+    paymentType: "purchase",
+    entityType: "order",
+    entityId: orderId,
+    entityName: "Order",
+    amount: total
+  });
 }
 
 /* ────────────────────── Main Entry ────────────────────── */
 
-export function displayPayment(
-  container,
-  sessionData = {}
-) {
+export function displayPayment(container, sessionData = {}) {
   container.replaceChildren(
-    createElement("h2", {}, [
-      "Order Summary"
-    ])
+    createElement("h2", {}, ["Order Summary"])
   );
 
-  let items = flattenItems(
-    sessionData.items
-  );
+  let items = flattenItems(sessionData.items);
+  let createdOrder = null; // FIXED: State variable to track an already created order tracking reference
 
   if (sessionData.category) {
-    items = items.filter(
-      item =>
-        item.category ===
-        sessionData.category
-    );
+    items = items.filter(item => item.category === sessionData.category);
   }
 
   container.append(
-    createElement("h3", {}, [
-      "Delivery Address"
-    ]),
-
-    createElement("p", {}, [
-      sessionData.address || "N/A"
-    ]),
-
+    createElement("h3", {}, ["Delivery Address"]),
+    createElement("p", {}, [sessionData.address || "N/A"]),
     createElement("h3", {}, ["Items"]),
-
     renderItems(items)
   );
 
-  const totalsContainer =
-    createElement("div", {});
-
-  container.append(
-    totalsContainer
-  );
+  const totalsContainer = createElement("div", {});
+  container.append(totalsContainer);
 
   const confirmBtn = Button(
     "Pay & Place Order",
     "confirm-order-btn",
-    {
-      click: () => handleConfirm()
-    },
+    { click: () => handleConfirm() },
     "primary-button"
   );
 
   container.append(confirmBtn);
 
   async function handleConfirm() {
+    if (confirmBtn.disabled) return;
+    
     confirmBtn.disabled = true;
-    confirmBtn.textContent =
-      "Processing…";
+    confirmBtn.textContent = "Processing…";
 
     try {
-      const order =
-        await createOrder({
+      // FIXED: If payment failed previously, don't hit the createOrder endpoint again. Reuse the created one.
+      if (!createdOrder) {
+        createdOrder = await createOrder({
           items,
-          address:
-            sessionData.address,
-          couponCode:
-            sessionData.couponCode
+          address: sessionData.address,
+          couponCode: sessionData.couponCode
         });
+      }
 
       totalsContainer.replaceChildren(
-        renderTotalsFromBackend(order)
+        renderTotalsFromBackend(createdOrder)
       );
 
-      if (
-        (order.discount || 0) > 0
-      ) {
-        Notify(
-          `Discount applied: ${formatINR(
-            toRupees(
-              order.discount
-            )
-          )}`,
-          {
-            type: "success",
-            duration: 2000
-          }
-        );
+      if ((createdOrder.discount || 0) > 0) {
+        Notify(`Discount applied: ${formatINR(toRupees(createdOrder.discount))}`, {
+          type: "success",
+          duration: 2000
+        });
       }
 
-      const paymentResult =
-        await processPayment(
-          order.orderid,
-          toRupees(order.total)
-        );
+      const paymentResult = await processPayment(
+        createdOrder.orderid,
+        toRupees(createdOrder.total)
+      );
 
       if (!paymentResult) {
-        throw new Error(
-          "Payment was not completed"
-        );
+        throw new Error("Payment window closed or cancelled.");
       }
 
-      const successContainer =
-        createElement(
-          "div",
-          {
-            class:
-              "success-message"
-          },
-          [
-            createElement(
-              "h3",
-              {},
-              [
-                "Order placed successfully"
-              ]
-            ),
-
-            createElement(
-              "p",
-              {},
-              [
-                `Order ID: ${order.orderid}`
-              ]
-            )
-          ]
-        );
+      const successContainer = createElement(
+        "div",
+        { class: "success-message" },
+        [
+          createElement("h3", {}, ["Order placed successfully"]),
+          createElement("p", {}, [`Order ID: ${createdOrder.orderid}`])
+        ]
+      );
 
       const printBtn = Button(
         "Print Invoice",
         "print-invoice-btn",
-        {
-          click: () =>
-            printInvoice(
-              order,
-              items
-            )
-        },
+        { click: () => printInvoice(createdOrder, items) },
         "secondary-button"
       );
 
-      successContainer.append(
-        printBtn
-      );
-
-      container.replaceChildren(
-        successContainer
-      );
+      successContainer.append(printBtn);
+      container.replaceChildren(successContainer);
+      
     } catch (err) {
-      console.error(err);
+      console.error("Checkout process error:", err);
 
-      Notify(
-        err?.message ||
-          "Order failed",
-        {
-          type: "error",
-          duration: 3000
-        }
-      );
+      Notify(err?.message || "Order processing failed", {
+        type: "error",
+        duration: 4000
+      });
 
       confirmBtn.disabled = false;
-      confirmBtn.textContent =
-        "Pay & Place Order";
+      confirmBtn.textContent = createdOrder ? "Retry Payment" : "Pay & Place Order";
     }
   }
 }

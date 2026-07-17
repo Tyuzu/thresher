@@ -1,9 +1,50 @@
 import { createElement } from "../../../components/createElement.js";
 import { apiFetch } from "../../../api/api.js";
 
-// Show refund request form
+/**
+ * Renders an isolated refund request form node.
+ * @param {Object} order - The normalized target order payload.
+ * @param {Function} onClose - Dismiss callback function.
+ * @param {Function} onSubmit - Form submission processing handler callback.
+ */
 export function renderRefundRequestForm(order, onClose, onSubmit) {
-  const form = createElement("div", { class: "refund-request-form" }, [
+  if (!order) return createElement("div", {}, ["Missing order details."]);
+
+  // FIXED: Maintain local node reference pointers directly to bypass document.getElementById collisions
+  const textareaEl = createElement("textarea", {
+    class: "form-input",
+    placeholder: "Please explain why you want to refund this order...",
+    rows: "4",
+    minlength: "10",
+    maxlength: "500",
+  });
+
+  const submitBtn = createElement("button", {
+    class: "btn btn-primary",
+    type: "button",
+  }, ["Submit Refund Request"]);
+
+  // Set event listener explicitly using the direct element reference
+  submitBtn.addEventListener("click", async () => {
+    const reason = textareaEl.value.trim();
+    if (!reason || reason.length < 10) {
+      alert("Please provide at least 10 characters explaining the reason");
+      return;
+    }
+    
+    submitBtn.disabled = true;
+    const oldText = submitBtn.textContent;
+    submitBtn.textContent = "Submitting...";
+
+    try {
+      await onSubmit(reason);
+    } catch (err) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = oldText;
+    }
+  });
+
+  return createElement("div", { class: "refund-request-form" }, [
     createElement("div", { class: "form-header" }, [
       createElement("h3", {}, ["Request Refund"]),
       createElement("button", {
@@ -16,26 +57,19 @@ export function renderRefundRequestForm(order, onClose, onSubmit) {
     createElement("div", { class: "form-content" }, [
       createElement("div", { class: "form-group" }, [
         createElement("label", {}, ["Order ID"]),
-        createElement("p", { class: "order-id-display" }, [order.orderId]),
+        createElement("p", { class: "order-id-display" }, [String(order.orderId || "N/A")]),
       ]),
 
       createElement("div", { class: "form-group" }, [
         createElement("label", {}, ["Amount to Refund"]),
         createElement("p", { class: "amount-display" }, [
-          `₹${(order.total / 100).toFixed(2)}`,
+          `₹${((order.total || 0) / 100).toFixed(2)}`,
         ]),
       ]),
 
       createElement("div", { class: "form-group" }, [
-        createElement("label", { for: "refund-reason" }, ["Reason for Refund"]),
-        createElement("textarea", {
-          id: "refund-reason",
-          class: "form-input",
-          placeholder: "Please explain why you want to refund this order...",
-          rows: "4",
-          minlength: "10",
-          maxlength: "500",
-        }, []),
+        createElement("label", {}, ["Reason for Refund"]),
+        textareaEl,
       ]),
 
       createElement("div", { class: "form-info" }, [
@@ -51,32 +85,18 @@ export function renderRefundRequestForm(order, onClose, onSubmit) {
         type: "button",
         onclick: onClose,
       }, ["Cancel"]),
-      createElement("button", {
-        class: "btn btn-primary",
-        type: "button",
-        onclick: () => {
-          const reason = document.getElementById("refund-reason").value.trim();
-          if (!reason || reason.length < 10) {
-            alert("Please provide at least 10 characters explaining the reason");
-            return;
-          }
-          onSubmit(reason);
-        },
-      }, ["Submit Refund Request"]),
+      submitBtn,
     ]),
   ]);
-
-  return form;
 }
 
 // Submit refund request
 export async function submitRefundRequest(orderId, reason) {
   try {
-    const res = await apiFetch("/refunds/request", "POST", {
+    return await apiFetch("/refunds/request", "POST", {
       order_id: orderId,
       reason: reason,
     });
-    return res;
   } catch (err) {
     console.error("Failed to submit refund request:", err);
     throw err;
@@ -86,8 +106,7 @@ export async function submitRefundRequest(orderId, reason) {
 // Get user's refund requests
 export async function fetchMyRefunds(skip = 0, limit = 10) {
   try {
-    const res = await apiFetch(`/refunds/my-requests?skip=${skip}&limit=${limit}`, "GET");
-    return res;
+    return await apiFetch(`/refunds/my-requests?skip=${Number(skip)}&limit=${Number(limit)}`, "GET");
   } catch (err) {
     console.error("Failed to fetch refund requests:", err);
     throw err;
@@ -96,7 +115,7 @@ export async function fetchMyRefunds(skip = 0, limit = 10) {
 
 // Render refund status badge
 export function renderRefundStatus(order) {
-  if (!order.refundStatus || order.refundStatus === "none") {
+  if (!order || !order.refundStatus || order.refundStatus === "none") {
     return null;
   }
 
@@ -109,18 +128,23 @@ export function renderRefundStatus(order) {
   }[order.refundStatus] || order.refundStatus;
 
   return createElement("span", { class: `refund-status ${statusClass}` }, [
-    statusText,
+    String(statusText),
   ]);
 }
 
 // Check if order can be refunded
 export function canRefundOrder(order) {
-  // Can refund if:
-  // - Order is completed/delivered
-  // - No active refund request exists
-  // - Order is within refund window (e.g., 30 days)
+  if (!order) return false;
+
   const isCompleted = order.status === "completed" || order.status === "delivered";
-  const noActiveRefund = !order.refundStatus || order.refundStatus === "rejected" || order.refundStatus === "completed";
   
-  return isCompleted && noActiveRefund;
+  // FIXED: A completed or already refunded state must prevent further requests
+  const hasNoPriorRefundRequests = !order.refundStatus || order.refundStatus === "none";
+  
+  // Optional check: enforce a standard 30-day time window restriction
+  const withinWindow = order.createdAt 
+    ? (Date.now() - new Date(order.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 
+    : true;
+
+  return isCompleted && hasNoPriorRefundRequests && withinWindow;
 }

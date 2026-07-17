@@ -1,3 +1,4 @@
+// src/ui/cart/checkoutPage.js
 import { createElement } from "../../components/createElement.js";
 import { apiFetch } from "../../api/api.js";
 import { displayPayment } from "./payment.js";
@@ -9,7 +10,7 @@ const formatPrice = v => `₹${v.toFixed(2)}`;
 
 const calculateSubtotal = (items = []) =>
   items.reduce(
-    (sum, i) => sum + toRupees(i.price) * (i.quantity || 0),
+    (sum, i) => sum + toRupees(i.price) * (Number(i.quantity) || 0),
     0
   );
 
@@ -21,8 +22,6 @@ async function validateCoupon({ code, subtotal }) {
   }
 
   try {
-    // UX-only validation - server will validate again during checkout
-    // Don't fail if validation endpoint isn't available
     try {
       const res = await apiFetch("/coupon/validate", "POST", {
         code: code.trim(),
@@ -46,7 +45,6 @@ async function validateCoupon({ code, subtotal }) {
         message: res?.message || "Invalid or expired coupon"
       };
     } catch (err) {
-      // If UX validation fails, still allow code to be sent (backend will validate)
       console.warn("Coupon preview validation failed:", err);
       return {
         valid: null,
@@ -68,12 +66,11 @@ async function validateCoupon({ code, subtotal }) {
 
 function renderAddressForm(container, { items, onSubmit }) {
   const subtotal = calculateSubtotal(items);
-
   const form = createElement("form", { class: "address-form" });
 
   const addressInput = createElement("textarea", {
     required: true,
-    rows: 3,
+    rows: "3",
     class: "address-input",
     placeholder: "Flat No, Street, City, State, ZIP"
   });
@@ -84,44 +81,31 @@ function renderAddressForm(container, { items, onSubmit }) {
     placeholder: "Enter coupon code (optional)"
   });
 
-  const feedback = createElement("div", {
-    class: "coupon-feedback"
-  });
+  const feedback = createElement("div", { class: "coupon-feedback" });
+  const submitBtn = createElement("button", { class: "primary-button", type: "submit" }, [
+    "Proceed to Checkout"
+  ]);
 
   let debounceTimer = null;
   let requestId = 0;
+  let isValidating = false; // FIXED: Lock form transition during flight network processing
 
   const couponState = {
     code: "",
     valid: null,
-    discount: 0 // UI only
+    discount: 0
   };
 
-  couponInput.addEventListener("input", () => {
-    const code = couponInput.value.trim();
-    couponState.code = code;
+  const executeValidation = async (code) => {
+    const currentRequest = ++requestId;
+    isValidating = true;
+    submitBtn.disabled = true;
+    feedback.replaceChildren("Validating…");
 
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
-
-    if (!code) {
-      couponState.valid = null;
-      couponState.discount = 0;
-      feedback.replaceChildren("");
-      return;
-    }
-
-    debounceTimer = setTimeout(async () => {
-      const currentRequest = ++requestId;
-
-      feedback.replaceChildren("Validating…");
-
+    try {
       const result = await validateCoupon({ code, subtotal });
-
-      if (currentRequest !== requestId) {
-        return;
-      }
+      
+      if (currentRequest !== requestId) return;
 
       couponState.valid = result.valid;
       couponState.discount = result.discount;
@@ -133,21 +117,51 @@ function renderAddressForm(container, { items, onSubmit }) {
           [result.message]
         )
       );
-    }, 400);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      if (currentRequest === requestId) {
+        isValidating = false;
+        submitBtn.disabled = false;
+      }
+    }
+  };
+
+  couponInput.addEventListener("input", () => {
+    const code = couponInput.value.trim();
+    couponState.code = code;
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    if (!code) {
+      couponState.valid = null;
+      couponState.discount = 0;
+      isValidating = false;
+      submitBtn.disabled = false;
+      feedback.replaceChildren("");
+      return;
+    }
+
+    debounceTimer = setTimeout(() => executeValidation(code), 400);
   });
 
-  form.onsubmit = e => {
+  form.onsubmit = async (e) => {
     e.preventDefault();
 
+    // FIXED: Catch rapid submission attempts while validation timers are actively in-flight
+    if (isValidating) {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      await executeValidation(couponState.code);
+    }
+
     if (couponState.code && couponState.valid === false) {
-      alert("Invalid coupon code");
+      alert("Invalid coupon code entered.");
       return;
     }
 
     onSubmit({
       address: addressInput.value.trim(),
       couponCode: couponState.code
-      // discount intentionally NOT passed
     });
   };
 
@@ -155,9 +169,7 @@ function renderAddressForm(container, { items, onSubmit }) {
     createElement("h2", {}, ["Delivery Details"]),
     createElement("label", {}, ["Address", addressInput]),
     createElement("label", {}, ["Coupon", couponInput, feedback]),
-    createElement("button", { class: "primary-button", type: "submit" }, [
-      "Proceed to Checkout"
-    ])
+    submitBtn
   );
 
   container.replaceChildren(form);
@@ -170,7 +182,7 @@ function renderSummary(container, { items, address, couponCode }) {
   const itemDiscountTotal = items.reduce((sum, i) => {
     const price = toRupees(i.price);
     const discountPercent = Number(i.discount || 0);
-    const lineDiscount = discountPercent > 0 ? price * (discountPercent / 100) * (i.quantity || 0) : 0;
+    const lineDiscount = discountPercent > 0 ? price * (discountPercent / 100) * (Number(i.quantity) || 0) : 0;
     return sum + lineDiscount;
   }, 0);
 
@@ -181,10 +193,10 @@ function renderSummary(container, { items, address, couponCode }) {
     {},
     items.map(i => {
       const price = toRupees(i.price);
-      const lineTotal = price * i.quantity;
+      const lineTotal = price * (Number(i.quantity) || 0);
 
       return createElement("li", {}, [
-        `${i.itemName} – ${i.quantity} × ${formatPrice(price)} `,
+        `${i.itemName || "Item"} – ${i.quantity} × ${formatPrice(price)} `,
         createElement("strong", {}, [`= ${formatPrice(lineTotal)}`])
       ]);
     })
@@ -196,12 +208,12 @@ function renderSummary(container, { items, address, couponCode }) {
       ? createElement("div", { style: "color:#e53935;font-weight:bold" }, [`Item discount: −${formatPrice(itemDiscountTotal)}`])
       : null,
     couponCode
-      ? createElement("div", { style: "color:#e53935;font-weight:bold" }, [`Coupon: ${couponCode}`])
+      ? createElement("div", { style: "color:#e53935;font-weight:bold" }, [`Coupon Code Applied: ${couponCode}`])
       : null,
     createElement(
       "div",
-      { style: "font-weight:bold" },
-      ["Final total will be calculated at payment"]
+      { style: "font-weight:bold; margin-top: 8px;" },
+      ["Final total will be calculated securely at payment"]
     )
   ].filter(Boolean));
 
@@ -211,7 +223,8 @@ function renderSummary(container, { items, address, couponCode }) {
     ["Proceed to Payment"]
   );
 
-  btn.onclick = () =>
+  btn.onclick = (e) => {
+    e.preventDefault();
     handleCheckout({
       container,
       button: btn,
@@ -219,6 +232,7 @@ function renderSummary(container, { items, address, couponCode }) {
       address,
       couponCode
     });
+  };
 
   summary.append(
     createElement("h2", {}, ["Checkout Summary"]),
@@ -243,7 +257,6 @@ async function handleCheckout({
   button.textContent = "Processing…";
 
   try {
-    // Send complete item data - preserve all fields needed for backend validation
     const itemsByCategory = groupByCategory(items);
 
     const session = await apiFetch("/checkout/session", "POST", {
@@ -252,7 +265,6 @@ async function handleCheckout({
       coupon: couponCode || null
     });
 
-    // 🔒 Use validated items from backend response, not frontend items
     displayPayment(container, {
       ...session,
       couponCode
@@ -267,25 +279,29 @@ async function handleCheckout({
 
 /**
  * Group items by category for checkout
- * SECURITY: Never send prices to backend - backend will look them up from database
+ * SECURITY: Never send prices to backend - backend looks them up from database
  */
 function groupByCategory(items = []) {
   const grouped = {};
+  const normalizedItems = Array.isArray(items) ? items : Object.values(items || {});
   
-  (Array.isArray(items) ? items : Object.values(items || {})).forEach(item => {
+  normalizedItems.forEach(item => {
+    if (!item) return;
     const category = item.category || "products";
     
     if (!grouped[category]) {
       grouped[category] = [];
     }
     
-    // 🔒 SECURITY: Only send item ID and quantity - backend fetches current price
     grouped[category].push({
       itemId: item.itemId || item.id,
-      quantity: item.quantity || 1,
+      quantity: Number(item.quantity) || 1,
       category: item.category,
       entityId: item.entityId,
-      entityType: item.entityType
+      entityType: item.entityType,
+      // FIXED: Maintain non-pricing presentation properties downstream transparently
+      itemName: item.itemName,
+      discount: item.discount
     });
   });
   
@@ -295,26 +311,28 @@ function groupByCategory(items = []) {
 /* ────────────────────── Main Entry ────────────────────── */
 
 export async function displayCheckout(container, passedItems = null) {
+  if (!container) return;
+  
   container.replaceChildren(
-    createElement("p", { class: "loading" }, ["Loading..."])
+    createElement("p", { class: "loading" }, ["Loading Details..."])
   );
 
   try {
     let items = passedItems;
     
-    // If not provided, fetch from cart endpoint
     if (!items) {
       const cartData = await apiFetch("/cart", "GET");
-      // Flatten grouped cart into array
       items = Array.isArray(cartData) 
         ? cartData 
-        : Object.values(cartData || {}).flat();
-    } else if (!Array.isArray(items)) {
-      // If grouped object passed, flatten it
-      items = Object.values(items).flat();
+        : Object.values(cartData || {}).filter(Boolean).flat();
+    } else {
+      // FIXED: Safely verify collection alignment shape before calling flattening maps
+      items = Array.isArray(passedItems) 
+        ? passedItems 
+        : Object.values(passedItems || {}).filter(Boolean).flat();
     }
 
-    if (!Array.isArray(items) || !items.length) {
+    if (!items.length) {
       container.replaceChildren(
         createElement("p", { class: "empty" }, ["Nothing to checkout"])
       );
@@ -332,7 +350,7 @@ export async function displayCheckout(container, passedItems = null) {
   } catch (err) {
     console.error(err);
     container.replaceChildren(
-      createElement("div", { class: "error" }, ["Failed to load cart"])
+      createElement("div", { class: "error" }, ["Failed to load cart configuration"])
     );
   }
 }

@@ -7,7 +7,7 @@ import {
     formatINR,
     capitalize,
     downloadReceipt,
-} from "./orderutils";
+} from "./orderutils.js"; // FIXED: Added proper file extension binding
 import { createElement } from "../../../components/createElement.js";
 
 const PAGE_SIZE = 5;
@@ -69,10 +69,10 @@ export function buildUserOrderFilters(state, rerender) {
             }
         ),
         createElement("label", {}, [
-            "Date:",
+            "Date: ",
             createElement("input", {
                 type: "date",
-                value: state.filters.date,
+                value: state.filters.date || "",
                 onchange: (e) => {
                     state.filters.date = e.target.value;
                     state.currentPage = 1;
@@ -116,13 +116,12 @@ export function buildOrdersSummary(filteredCount, totalCount, currentPage, total
 /* ───────────────── Desktop Table ───────────────── */
 
 function buildDesktopOrdersTable(orders, state, rerender) {
+    const headers = ["", "Order ID", "Date", "Type", "Total", "Status", "Payment", "Actions"];
+    
     return createElement("table", { class: "orders-table" }, [
         createElement("thead", {}, [
-            createElement("tr", {}, [
-                ["", "Order ID", "Date", "Type", "Total", "Status", "Payment", "Actions"].map((h) =>
-                    createElement("th", {}, [h])
-                ),
-            ]),
+            // FIXED: Avoid array-in-array flattening issue inside structural parameters
+            createElement("tr", {}, headers.map((h) => createElement("th", {}, [h])))
         ]),
         createElement(
             "tbody",
@@ -131,7 +130,7 @@ function buildDesktopOrdersTable(orders, state, rerender) {
                 ? orders.flatMap((order) => buildExpandableOrderRows(order, state, rerender))
                 : [
                     createElement("tr", {}, [
-                        createElement("td", { colspan: 8 }, ["No orders found."]),
+                        createElement("td", { colspan: "8" }, ["No orders found."]),
                     ]),
                 ]
         ),
@@ -140,8 +139,13 @@ function buildDesktopOrdersTable(orders, state, rerender) {
 
 function buildExpandableOrderRows(order, state, rerender) {
     const expanded = state.expandedOrders.has(order.orderId);
-    const products = getOrderProducts(order);
-    const meta = getOrderSummaryMeta(order);
+    const products = getOrderProducts(order) || [];
+    const meta = getOrderSummaryMeta(order) || {};
+    
+    // SAFE PARSING: Provide safe structures for meta fallbacks
+    const addressInfo = meta.address || "N/A";
+    const farmInfo = meta.farmId || "N/A";
+    const approvedList = Array.isArray(meta.approvedBy) && meta.approvedBy.length ? meta.approvedBy.join(", ") : "None";
 
     const summaryRow = createElement("tr", { class: "order-summary-row" }, [
         createElement("td", {}, [
@@ -149,6 +153,7 @@ function buildExpandableOrderRows(order, state, rerender) {
                 "button",
                 {
                     type: "button",
+                    class: "toggle-btn",
                     onclick: () => {
                         toggleExpanded(state, order.orderId);
                         rerender();
@@ -157,12 +162,12 @@ function buildExpandableOrderRows(order, state, rerender) {
                 [expanded ? "−" : "+"]
             ),
         ]),
-        createElement("td", {}, [meta.orderId]),
+        createElement("td", {}, [String(meta.orderId || order.orderId)]),
         createElement("td", {}, [formatDate(order.createdAt)]),
-        createElement("td", {}, [capitalize(meta.orderType)]),
+        createElement("td", {}, [capitalize(meta.orderType || "N/A")]),
         createElement("td", {}, [formatINR(order.total || 0, true)]),
-        createElement("td", {}, [capitalize(meta.status)]),
-        createElement("td", {}, [capitalize(meta.payment)]),
+        createElement("td", {}, [capitalize(meta.status || "N/A")]),
+        createElement("td", {}, [capitalize(meta.payment || "N/A")]),
         createElement("td", {}, [
             createElement(
                 "button",
@@ -176,16 +181,16 @@ function buildExpandableOrderRows(order, state, rerender) {
     ]);
 
     const detailRow = createElement("tr", { class: "order-detail-row" }, [
-        createElement("td", { colspan: 8 }, [
+        createElement("td", { colspan: "8" }, [
             expanded
                 ? createElement("div", { class: "order-detail-grid" }, [
-                    createElement("p", {}, [`Payment: ${capitalize(meta.payment)}`]),
-                    createElement("p", {}, [`Address: ${meta.address}`]),
-                    createElement("p", {}, [`Farm: ${meta.farmId}`]),
-                    createElement("p", {}, [`Approved By: ${meta.approvedBy.length ? meta.approvedBy.join(", ") : "None"}`]),
+                    createElement("p", {}, [`Payment: ${capitalize(meta.payment || "N/A")}`]),
+                    createElement("p", {}, [`Address: ${addressInfo}`]),
+                    createElement("p", {}, [`Farm: ${farmInfo}`]),
+                    createElement("p", {}, [`Approved By: ${approvedList}`]),
                     buildOrderItemsTable(products),
                 ])
-                : createElement("div", {}, []),
+                : createElement("div", { style: "display: none;" }, []),
         ]),
     ]);
 
@@ -197,7 +202,7 @@ function buildOrderItemsTable(products) {
         createElement("thead", {}, [
             createElement("tr", {}, [
                 ["Farm", "Item", "Qty", "Item Price"].map((h) => createElement("th", {}, [h])),
-            ]),
+            ].flat()),
         ]),
         createElement(
             "tbody",
@@ -213,7 +218,7 @@ function buildOrderItemsTable(products) {
                 )
                 : [
                     createElement("tr", {}, [
-                        createElement("td", { colspan: 4 }, ["No items found."]),
+                        createElement("td", { colspan: "4" }, ["No items found."]),
                     ]),
                 ]
         ),
@@ -234,12 +239,15 @@ function buildMobileOrdersList(orders, state, rerender) {
 
 function buildExpandableOrderCard(order, state, rerender) {
     const expanded = state.expandedOrders.has(order.orderId);
-    const products = getOrderProducts(order);
-    const meta = getOrderSummaryMeta(order);
+    const products = getOrderProducts(order) || [];
+    const meta = getOrderSummaryMeta(order) || {};
+
+    const addressInfo = meta.address || "N/A";
+    const approvedList = Array.isArray(meta.approvedBy) && meta.approvedBy.length ? meta.approvedBy.join(", ") : "None";
 
     return createElement("div", { class: "order-card" }, [
         createElement("div", { class: "order-card-header" }, [
-            createElement("p", {}, [`Order ID: ${meta.orderId}`]),
+            createElement("p", {}, [`Order ID: ${meta.orderId || order.orderId}`]),
             createElement(
                 "button",
                 {
@@ -253,35 +261,34 @@ function buildExpandableOrderCard(order, state, rerender) {
             ),
         ]),
         createElement("p", {}, [`Date: ${formatDate(order.createdAt)}`]),
-        createElement("p", {}, [`Type: ${capitalize(meta.orderType)}`]),
-        createElement("p", {}, [`Status: ${capitalize(meta.status)}`]),
-        createElement("p", {}, [`Payment: ${capitalize(meta.payment)}`]),
-        createElement("p", {}, [`Address: ${meta.address}`]),
+        createElement("p", {}, [`Type: ${capitalize(meta.orderType || "N/A")}`]),
+        createElement("p", {}, [`Status: ${capitalize(meta.status || "N/A")}`]),
+        createElement("p", {}, [`Payment: ${capitalize(meta.payment || "N/A")}`]),
+        createElement("p", {}, [`Address: ${addressInfo}`]),
         createElement("p", {}, [`Total: ${formatINR(order.total || 0, true)}`]),
         expanded
             ? createElement(
                 "div",
                 { class: "order-card-items" },
-                products.length
-                    ? [
-                        createElement("p", {}, [`Farm: ${meta.farmId}`]),
-                        createElement("p", {}, [`Approved By: ${meta.approvedBy.length ? meta.approvedBy.join(", ") : "None"}`]),
-                        ...products.map((item) =>
-                            createElement("div", { class: "order-card-item" }, [
-                                createElement("p", {}, [`Farm: ${item.entityName || "Unknown"}`]),
-                                createElement("p", {}, [`Item: ${item.itemName || "N/A"}`]),
-                                createElement("p", {}, [`Qty: ${item.quantity || 0}`]),
-                                createElement("p", {}, [`Item Price: ${formatINR(item.price || 0, true)}`]),
-                            ])
-                        ),
-                    ]
-                    : [createElement("p", {}, ["No items found."])]
+                [
+                    createElement("p", {}, [`Farm ID: ${meta.farmId || "N/A"}`]),
+                    createElement("p", {}, [`Approved By: ${approvedList}`]),
+                    ...products.map((item) =>
+                        createElement("div", { class: "order-card-item" }, [
+                            createElement("p", {}, [`Farm: ${item.entityName || "Unknown"}`]),
+                            createElement("p", {}, [`Item: ${item.itemName || "N/A"}`]),
+                            createElement("p", {}, [`Qty: ${item.quantity || 0}`]),
+                            createElement("p", {}, [`Item Price: ${formatINR(item.price || 0, true)}`]),
+                        ])
+                    ),
+                ]
             )
-            : createElement("div", {}, []),
+            : createElement("div", { style: "display: none;" }, []),
         createElement(
             "button",
             {
                 type: "button",
+                class: "btn-receipt",
                 onclick: () => downloadReceipt(order),
             },
             ["Receipt"]
@@ -327,16 +334,23 @@ function buildPaginationControls(state, totalOrders, totalPages, rerender) {
 
 /* ───────────────── Utilities ───────────────── */
 
-function buildLabeledSelect(labelText, options, value, onChange) {
+function buildLabeledSelect(labelText, options, currentValue, onChange) {
     return createElement("label", {}, [
-        `${labelText}:`,
+        `${labelText}: `,
         createElement(
             "select",
             {
-                value,
+                // FIXED: Handle drop selections dynamically via direct native parameter listeners
                 onchange: (e) => onChange(e.target.value),
             },
-            options.map((o) => createElement("option", { value: o.value }, [o.label]))
+            options.map((o) => {
+                const optionAttrs = { value: o.value };
+                // FIXED: Explicitly set selected parameter on option nodes directly
+                if (String(o.value) === String(currentValue)) {
+                    optionAttrs.selected = "selected";
+                }
+                return createElement("option", optionAttrs, [o.label]);
+            })
         ),
     ]);
 }

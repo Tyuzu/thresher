@@ -6,35 +6,24 @@ import Notify from "../../components/ui/Notify.mjs";
 /* ────────────────────── Constants & Helpers ────────────────────── */
 
 const toRupees = (paise = 0) => paise / 100;
-
 const formatPrice = (value = 0) => `₹${value.toFixed(2)}`;
-
-const normalize = (v) =>
-  typeof v === "string" ? v.trim().toLowerCase() : "";
-
-const capitalize = (str = "") =>
-  str ? str[0].toUpperCase() + str.slice(1) : "";
+const normalize = (v) => typeof v === "string" ? v.trim().toLowerCase() : "";
+const capitalize = (str = "") => str ? str[0].toUpperCase() + str.slice(1) : "";
 
 const qtyUpdateTimers = new Map();
 
+const getItemIdentityKey = (item) => 
+  `${item?.itemId ?? "unknown"}__${item?.entityId ?? "none"}`;
+
 const getQtyTimerKey = (item, category) =>
-  `${normalize(category)}:${item?.itemId ?? ""}:${item?.entityId ?? ""}:${normalize(
-    item?.entityType
-  )}`;
+  `${normalize(category)}:${getItemIdentityKey(item)}:${normalize(item?.entityType)}`;
 
 /* ────────────────────── API Layer ────────────────────── */
 
 function buildPayload(base, entityId, entityType) {
   const payload = { ...base };
-
-  if (entityId) {
-    payload.entityId = entityId;
-  }
-
-  if (entityType) {
-    payload.entityType = normalize(entityType);
-  }
-
+  if (entityId) payload.entityId = entityId;
+  if (entityType) payload.entityType = normalize(entityType);
   return payload;
 }
 
@@ -92,7 +81,10 @@ export function renderCartCategory({
     "Checkout",
     "checkoutbtn",
     {
-      click: () => {
+      click: async (e) => {
+        e.preventDefault();
+        // FIXED: Flush pending debounce updates to guarantee data consistency before checkout
+        await flushCategoryTimers();
         if (items.length) {
           displayCheckout(contentContainer, items);
         }
@@ -125,14 +117,15 @@ export function renderCartCategory({
   }
 
   function renderItems() {
+    // FIXED: Build the UI from the current state rather than stale list offsets
     cardsContainer.replaceChildren(
-      ...items.map((item, i) => createCard(item, i))
+      ...items.map((item) => createCard(item))
     );
   }
 
   function updateTotals() {
     const subtotal = items.reduce(
-      (sum, x) => sum + toRupees(x.price) * (x.quantity || 1),
+      (sum, x) => sum + toRupees(x.price) * (Number(x.quantity) || 1),
       0
     );
 
@@ -152,48 +145,38 @@ export function renderCartCategory({
 
     section.remove();
     delete cart[category];
-    delete sectionTotals[category];
+    sectionTotals[category] = 0; // Explicitly zero out the key to notify observers safely
     updateGrandTotal();
   }
 
-  function createCard(item, index) {
+  function createCard(item) {
     const price = toRupees(item.price);
-    const qty = item.quantity || 1;
+    const qty = Number(item.quantity) || 1;
+    const targetKey = getItemIdentityKey(item);
 
-    return createElement("div", { class: "cart-card" }, [
+    return createElement("div", { class: "cart-card", "data-item-key": targetKey }, [
       createDetails(item),
-      createQuantityControls(index, qty),
+      createQuantityControls(targetKey, qty),
       createPricing(price, qty),
-      createActions(item, index)
+      createActions(item, targetKey)
     ]);
   }
 
   function createDetails(it) {
-    const nodes = [
-      createElement("p", {}, [`Item: ${it.itemName || "Item"}`])
-    ];
-
-    if (it.itemType) {
-      nodes.push(createElement("p", {}, [`Type: ${it.itemType}`]));
-    }
-
+    const nodes = [createElement("p", {}, [`Item: ${it.itemName || "Item"}`])];
+    if (it.itemType) nodes.push(createElement("p", {}, [`Type: ${it.itemType}`]));
     if (it.entityName) {
-      nodes.push(
-        createElement("p", {}, [
-          `${it.entityType || "Entity"}: ${it.entityName}`
-        ])
-      );
+      nodes.push(createElement("p", {}, [`${it.entityType || "Entity"}: ${it.entityName}`]));
     }
-
     return createElement("div", { class: "cart-card-details" }, nodes);
   }
 
-  function createQuantityControls(index, qty) {
+  function createQuantityControls(targetKey, qty) {
     return createElement("div", { class: "quantity-line" }, [
       createElement("span", {}, ["Qty:"]),
-      Button("−", "", { click: () => changeQty(index, -1) }, "buttonx subtle"),
+      Button("−", "", { click: () => changeQtyByIdentity(targetKey, -1) }, "buttonx subtle"),
       createElement("span", { class: "quantity-value" }, [String(qty)]),
-      Button("+", "", { click: () => changeQty(index, 1) }, "buttonx subtle")
+      Button("+", "", { click: () => changeQtyByIdentity(targetKey, 1) }, "buttonx subtle")
     ]);
   }
 
@@ -204,28 +187,27 @@ export function renderCartCategory({
     ]);
   }
 
-  function createActions(item, index) {
+  function createActions(item, targetKey) {
     return createElement("div", { class: "action-row" }, [
       Button(
         "✕ Remove",
         "",
-        { click: () => handleRemove(item, index) },
+        { click: () => handleRemoveByIdentity(item, targetKey) },
         "buttonx danger"
       ),
       Button(
         "♡ Save for Later",
         "",
         {
-          click: () => {
-            alert(`Saved "${item.itemName || "item"}" for later`);
-          }
+          click: () => alert(`Saved "${item.itemName || "item"}" for later`)
         },
         "buttonx secondary"
       )
     ]);
   }
 
-  async function handleRemove(item, index) {
+  // FIXED: Look up items by identifier key instead of array indices to prevent index shifting bugs
+  async function handleRemoveByIdentity(item, targetKey) {
     try {
       clearQtyTimer(item);
 
@@ -236,7 +218,11 @@ export function renderCartCategory({
         item.entityType
       );
 
-      items.splice(index, 1);
+      const realIndex = items.findIndex(it => getItemIdentityKey(it) === targetKey);
+      if (realIndex !== -1) {
+        items.splice(realIndex, 1);
+      }
+
       Notify("Item removed from cart", { type: "success", duration: 2000 });
       render();
     } catch (err) {
@@ -247,22 +233,23 @@ export function renderCartCategory({
 
   function clearQtyTimer(item) {
     const key = getQtyTimerKey(item, category);
-    const timer = qtyUpdateTimers.get(key);
+    const executionContext = qtyUpdateTimers.get(key);
 
-    if (timer) {
-      clearTimeout(timer);
+    if (executionContext) {
+      clearTimeout(executionContext.timerId);
       qtyUpdateTimers.delete(key);
     }
   }
 
   function scheduleQtyUpdate(item) {
     const key = getQtyTimerKey(item, category);
-
     clearQtyTimer(item);
 
-    const timer = setTimeout(async () => {
-      qtyUpdateTimers.delete(key);
+    let resolvePromise;
+    const flushPromise = new Promise((res) => { resolvePromise = res; });
 
+    const timerId = setTimeout(async () => {
+      qtyUpdateTimers.delete(key);
       try {
         await CartAPI.updateQty(
           item.itemId,
@@ -273,26 +260,54 @@ export function renderCartCategory({
         );
       } catch (err) {
         console.error(err);
-        Notify("Failed to update quantity", {
-          type: "error",
-          duration: 3000
-        });
+        Notify("Failed to update quantity", { type: "error", duration: 3000 });
+      } finally {
+        resolvePromise();
       }
     }, 300);
 
-    qtyUpdateTimers.set(key, timer);
+    // Save both the timer and completion handler for safety flushes
+    qtyUpdateTimers.set(key, { timerId, resolve: resolvePromise, promise: flushPromise });
   }
 
-  function changeQty(index, delta) {
-    const item = items[index];
-
-    if (!item) {
-      return;
+  async function flushCategoryTimers() {
+    const activeFlushes = [];
+    for (const [key, ctx] of qtyUpdateTimers.entries()) {
+      if (key.startsWith(`${normalize(category)}:`)) {
+        clearTimeout(ctx.timerId);
+        
+        // Execute the microtask immediately
+        const task = (async () => {
+          qtyUpdateTimers.delete(key);
+          const targetItem = items.find(it => getQtyTimerKey(it, category) === key);
+          if (!targetItem) return;
+          try {
+            await CartAPI.updateQty(
+              targetItem.itemId,
+              category,
+              targetItem.quantity,
+              targetItem.entityId,
+              targetItem.entityType
+            );
+          } catch (e) {
+            console.error("Flush failure:", e);
+          }
+        })();
+        activeFlushes.push(task);
+      }
     }
+    if (activeFlushes.length) {
+      await Promise.all(activeFlushes);
+    }
+  }
 
-    const newQty = Math.max(1, (item.quantity || 1) + delta);
+  function changeQtyByIdentity(targetKey, delta) {
+    const item = items.find(it => getItemIdentityKey(it) === targetKey);
+    if (!item) return;
 
+    const newQty = Math.max(1, (Number(item.quantity) || 1) + delta);
     item.quantity = newQty;
+    
     render();
     scheduleQtyUpdate(item);
   }

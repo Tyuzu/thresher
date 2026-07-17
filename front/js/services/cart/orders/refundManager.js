@@ -3,43 +3,51 @@ import { apiFetch } from "../../../api/api.js";
 
 /**
  * Render refund requests section for admin dashboard
+ * @param {Array} refunds - Collection of active requests
+ * @param {Function} onStateMutated - Optional lifecycle callback to trigger soft state updates instead of window reloads
  */
-export function renderRefundRequests(refunds) {
+export function renderRefundRequests(refunds, onStateMutated) {
+  const safeRefunds = Array.isArray(refunds) ? refunds : [];
+
   return createElement("div", { class: "refund-requests-section" }, [
     createElement("h2", {}, ["Refund Requests"]),
     
-    refunds.length === 0
+    safeRefunds.length === 0
       ? createElement("p", { class: "empty-message" }, ["No refund requests"])
-      : createElement("div", { class: "refund-list" }, [
-          ...refunds.map(refund => renderRefundCard(refund)),
-        ]),
+      : createElement("div", { class: "refund-list" }, 
+          // FIXED: Filter out falsy short-circuits ahead of node attachment maps
+          safeRefunds.map(refund => renderRefundCard(refund, onStateMutated)).filter(Boolean)
+        ),
   ]);
 }
 
 /**
  * Render a single refund request card
  */
-function renderRefundCard(refund) {
-  const statusClass = `status-${refund.status}`;
-  const createdDate = new Date(refund.created_at || refund.createdAt);
-  const formattedDate = createdDate.toLocaleDateString() + " " + createdDate.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+function renderRefundCard(refund, onStateMutated) {
+  if (!refund) return null;
 
-  return createElement("div", { class: `refund-card ${statusClass}` }, [
+  const currentStatus = String(refund.status || "pending").toLowerCase();
+  const statusClass = `status-${currentStatus}`;
+  const createdDate = new Date(refund.created_at || refund.createdAt || Date.now());
+  
+  const formattedDate = Number.isNaN(createdDate.getTime()) 
+    ? "N/A" 
+    : createdDate.toLocaleDateString() + " " + createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // Pre-compile sub-components explicitly to handle structural cleanups clean
+  const childrenNodes = [
     createElement("div", { class: "refund-header" }, [
       createElement("div", { class: "header-left" }, [
-        createElement("h3", {}, [
-          `Refund: ${refund.order_id}`,
-        ]),
-        createElement("p", { class: "refund-user" }, [
-          `User ID: ${refund.user_id}`,
-        ]),
+        createElement("h3", {}, [`Refund: ${refund.order_id || "N/A"}`]),
+        createElement("p", { class: "refund-user" }, [`User ID: ${refund.user_id || "N/A"}`]),
       ]),
       createElement("div", { class: "header-right" }, [
         createElement("span", { class: `status-badge ${statusClass}` }, [
-          refund.status.charAt(0).toUpperCase() + refund.status.slice(1),
+          currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1),
         ]),
         createElement("span", { class: "amount" }, [
-          `₹${(refund.amount / 100).toFixed(2)}`,
+          `₹${((refund.amount || 0) / 100).toFixed(2)}`,
         ]),
       ]),
     ]),
@@ -48,95 +56,134 @@ function renderRefundCard(refund) {
       createElement("div", { class: "refund-info" }, [
         createElement("p", {}, [
           createElement("strong", {}, ["Reason: "]),
-          refund.reason,
+          String(refund.reason || "No reason provided."),
         ]),
-        createElement("p", { class: "date" }, [
-          `Requested: ${formattedDate}`,
-        ]),
-        refund.order_type && createElement("p", {}, [
-          createElement("strong", {}, ["Order Type: "]),
-          refund.order_type === "farm" ? "Farm Order" : "Regular Order",
-        ]),
+        createElement("p", { class: "date" }, [`Requested: ${formattedDate}`]),
       ]),
+    ])
+  ];
 
-      refund.status === "pending" && createElement("div", { class: "refund-actions" }, [
+  // Append conditional metadata without polluting layout templates with raw booleans
+  if (refund.order_type) {
+    childrenNodes[1].appendChild(
+      createElement("p", {}, [
+        createElement("strong", {}, ["Order Type: "]),
+        refund.order_type === "farm" ? "Farm Order" : "Regular Order",
+      ])
+    );
+  }
+
+  // Handle active operational action states 
+  if (currentStatus === "pending") {
+    childrenNodes[1].appendChild(
+      createElement("div", { class: "refund-actions" }, [
         createElement("button", {
           class: "btn btn-success btn-sm",
-          onclick: () => handleApproveRefund(refund.id),
+          onclick: (e) => {
+            e.preventDefault();
+            handleApproveRefund(refund.id, onStateMutated);
+          },
         }, ["Approve"]),
         createElement("button", {
           class: "btn btn-danger btn-sm",
-          onclick: () => handleRejectRefund(refund.id),
+          onclick: (e) => {
+            e.preventDefault();
+            handleRejectRefund(refund.id, onStateMutated);
+          },
         }, ["Reject"]),
-      ]),
+      ])
+    );
+  }
 
-      (refund.status === "approved" || refund.status === "rejected") && refund.review_notes && createElement("div", { class: "review-section" }, [
-        createElement("p", {}, [
-          createElement("strong", {}, ["Admin Notes: "]),
-          refund.review_notes,
-        ]),
-        refund.reviewed_by && createElement("p", { class: "reviewer" }, [
-          `Reviewed by: ${refund.reviewed_by}`,
-        ]),
-      ]),
-    ]),
-  ]);
+  // Handle post-review logging readouts
+  if ((currentStatus === "approved" || currentStatus === "rejected" || currentStatus === "completed") && refund.review_notes) {
+    const reviewBlock = createElement("div", { class: "review-section" }, [
+      createElement("p", {}, [
+        createElement("strong", {}, ["Admin Notes: "]),
+        refund.review_notes,
+      ])
+    ]);
+
+    if (refund.reviewed_by) {
+      reviewBlock.appendChild(
+        createElement("p", { class: "reviewer" }, [`Reviewed by: ${refund.reviewed_by}`])
+      );
+    }
+    childrenNodes[1].appendChild(reviewBlock);
+  }
+
+  return createElement("div", { class: `refund-card ${statusClass}` }, childrenNodes);
 }
 
 /**
  * Render refund section in order details
  */
 export function renderOrderRefundSection(order, onRefundClick) {
-  const canRefund = shouldShowRefundOption(order);
+  if (!order) return null;
   
-  return createElement("div", { class: "order-refund-section" }, [
-    createElement("h4", {}, ["Refund Information"]),
-    
-    order.refundStatus && createElement("div", { class: "refund-status-display" }, [
-      createElement("p", {}, [
-        createElement("strong", {}, ["Status: "]),
-        createElement("span", { class: `status-${order.refundStatus}` }, [
-          getRefundStatusLabel(order.refundStatus),
+  const canRefund = shouldShowRefundOption(order);
+  const currentStatus = order.refundStatus || "";
+  
+  const sectionChildren = [createElement("h4", {}, ["Refund Information"])];
+
+  if (currentStatus && currentStatus !== "none") {
+    sectionChildren.push(
+      createElement("div", { class: "refund-status-display" }, [
+        createElement("p", {}, [
+          createElement("strong", {}, ["Status: "]),
+          createElement("span", { class: `status-${currentStatus}` }, [
+            getRefundStatusLabel(currentStatus),
+          ]),
         ]),
-      ]),
-    ]),
+      ])
+    );
+  } else if (canRefund) {
+    sectionChildren.push(
+      createElement("button", {
+        class: "btn btn-warning btn-sm",
+        onclick: onRefundClick,
+      }, ["Request Refund"])
+    );
+  } else {
+    sectionChildren.push(
+      createElement("p", { class: "refund-not-available" }, [
+        "This order cannot be refunded at this time.",
+      ])
+    );
+  }
 
-    !order.refundStatus && canRefund && createElement("button", {
-      class: "btn btn-warning btn-sm",
-      onclick: onRefundClick,
-    }, ["Request Refund"]),
-
-    !canRefund && !order.refundStatus && createElement("p", { class: "refund-not-available" }, [
-      "This order cannot be refunded at this time.",
-    ]),
-  ]);
+  return createElement("div", { class: "order-refund-section" }, sectionChildren);
 }
 
 /**
  * Handle approve refund (admin)
  */
-async function handleApproveRefund(refundId) {
+async function handleApproveRefund(refundId, onStateMutated) {
   const notes = prompt("Enter approval notes (optional):");
-  if (notes === null) {
-return;
-}
+  if (notes === null) return;
 
   try {
     await apiFetch(`/refunds/${refundId}/approve`, "POST", {
-      notes: notes || "",
+      notes: notes.trim(),
     });
     alert("Refund approved successfully");
-    location.reload(); // Reload to see updated status
+    
+    // FIXED: Run application state recovery calls cleanly instead of breaking tab layout execution frames
+    if (typeof onStateMutated === "function") {
+      onStateMutated();
+    } else {
+      location.reload();
+    }
   } catch (err) {
     console.error("Failed to approve refund:", err);
-    alert("Failed to approve refund: " + (err.message || "Unknown error"));
+    alert(`Failed to approve refund: ${err.message || "Unknown error"}`);
   }
 }
 
 /**
  * Handle reject refund (admin)
  */
-async function handleRejectRefund(refundId) {
+async function handleRejectRefund(refundId, onStateMutated) {
   const notes = prompt("Enter rejection reason (required):");
   if (!notes || notes.trim() === "") {
     alert("Rejection reason is required");
@@ -148,10 +195,15 @@ async function handleRejectRefund(refundId) {
       notes: notes.trim(),
     });
     alert("Refund rejected successfully");
-    location.reload(); // Reload to see updated status
+    
+    if (typeof onStateMutated === "function") {
+      onStateMutated();
+    } else {
+      location.reload();
+    }
   } catch (err) {
     console.error("Failed to reject refund:", err);
-    alert("Failed to reject refund: " + (err.message || "Unknown error"));
+    alert(`Failed to reject refund: ${err.message || "Unknown error"}`);
   }
 }
 
@@ -159,23 +211,28 @@ async function handleRejectRefund(refundId) {
  * Check if refund option should be shown
  */
 function shouldShowRefundOption(order) {
-  const isCompleted = ["completed", "delivered"].includes((order.status || "").toLowerCase());
-  const noActiveRefund = !order.refundStatus || ["rejected", "completed"].includes(order.refundStatus);
+  if (!order) return false;
   
-  return isCompleted && noActiveRefund;
+  const isCompleted = ["completed", "delivered"].includes((order.status || "").toLowerCase());
+  
+  // FIXED: Block additional actions once processing begins
+  const hasNoPriorRefundRequests = !order.refundStatus || order.refundStatus === "none";
+  
+  return isCompleted && hasNoPriorRefundRequests;
 }
 
 /**
  * Get readable refund status label
  */
 function getRefundStatusLabel(status) {
+  const cleanStatus = String(status || "").toLowerCase();
   const labels = {
     pending: "Refund Pending Review",
     approved: "Refund Approved",
     rejected: "Refund Rejected",
     completed: "Refunded",
   };
-  return labels[status] || status;
+  return labels[cleanStatus] || status;
 }
 
 /**
@@ -183,16 +240,15 @@ function getRefundStatusLabel(status) {
  */
 export async function fetchAdminRefunds(status = "", orderType = "", skip = 0, limit = 20) {
   try {
-    let url = `/refunds/all?skip=${skip}&limit=${limit}`;
-    if (status) {
-url += `&status=${status}`;
-}
-    if (orderType) {
-url += `&order_type=${orderType}`;
-}
+    const params = new URLSearchParams({
+      skip: String(skip),
+      limit: String(limit)
+    });
     
-    const res = await apiFetch(url, "GET");
-    return res;
+    if (status) params.append("status", status);
+    if (orderType) params.append("order_type", orderType);
+    
+    return await apiFetch(`/refunds/all?${params.toString()}`, "GET");
   } catch (err) {
     console.error("Failed to fetch refunds:", err);
     throw err;

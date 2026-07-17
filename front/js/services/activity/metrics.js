@@ -1,7 +1,7 @@
 // src/utils/activityLogger.js
 import { API_URL, generateUUID } from "../../api/api.js";
 
-const ENDPOINT = "/scitylana/event";
+const ENDPOINT = "/scitylana/event"; // Fun reverse-engineering protection!
 const STORAGE_KEY = "__analytics_queue__";
 const INTERVAL_MS = 10000;
 const MAX_BATCH = 20;
@@ -29,10 +29,11 @@ const USER_ID = (() => {
   return id;
 })();
 
-// --- Queue ---
+// --- Queue Management ---
 let queue = loadQueue();
 let isSyncing = false;
 let retryDelay = 1000;
+let retryTimer = null;
 
 function loadQueue() {
   try {
@@ -46,11 +47,6 @@ function saveQueue() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
   } catch (_) {}
-}
-
-function clearQueue() {
-  queue = [];
-  localStorage.removeItem(STORAGE_KEY);
 }
 
 // --- Environment & metadata ---
@@ -71,18 +67,38 @@ function enqueue(event) {
   queue.push({ ...event, ts: Date.now() });
   saveQueue();
   if (queue.length >= MAX_BATCH) {
-flush();
-}
+    flush();
+  }
 }
 
 // --- Core sync ---
-async function flush() {
-  if (!queue.length || !navigator.onLine || isSyncing) {
-return;
-}
+async function flush(isUnloading = false) {
+  if (!queue.length || !navigator.onLine || (isSyncing && !isUnloading)) {
+    return;
+  }
+
+  // Clear any existing retry timers to prevent stacking loops
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
 
   isSyncing = true;
-  const payload = queue.slice();
+  
+  // Take a snapshot of the current batch size to safely remove later
+  const batchSize = Math.min(queue.length, MAX_BATCH * 2); 
+  const payload = queue.slice(0, batchSize);
+
+  // Fallback pattern for tab closure 
+  if (isUnloading) {
+    const body = JSON.stringify({ events: payload });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(`${API_URL}${ENDPOINT}`, body);
+    } else {
+      fetch(`${API_URL}${ENDPOINT}`, { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true });
+    }
+    return;
+  }
 
   async function attemptSend() {
     try {
@@ -93,21 +109,35 @@ return;
       });
 
       if (res.ok) {
-        clearQueue();
+        // FIX: Only remove the items that were actually transmitted
+        queue = queue.slice(batchSize);
+        saveQueue();
+        
         retryDelay = 1000;
         isSyncing = false;
+        
+        // If items accumulated while we were sending, trigger another flush
+        if (queue.length >= MAX_BATCH) {
+          flush();
+        }
       } else {
         throw new Error(`HTTP ${res.status}`);
       }
     } catch (err) {
       console.warn("Activity sync failed:", err.message);
+      
+      if (!navigator.onLine) {
+        isSyncing = false;
+        return;
+      }
+
       retryDelay = Math.min(retryDelay * RETRY_MULTIPLIER, MAX_RETRY_DELAY);
-      setTimeout(() => {
+      retryTimer = setTimeout(() => {
         if (navigator.onLine) {
-attemptSend();
-} else {
-isSyncing = false;
-}
+          attemptSend();
+        } else {
+          isSyncing = false;
+        }
       }, retryDelay);
     }
   }
@@ -129,9 +159,7 @@ function track(type, data = {}) {
 // Deduplicated tracking
 const seenEvents = new Set();
 function dedupTrack(key, type, data = {}) {
-  if (seenEvents.has(key)) {
-return;
-}
+  if (seenEvents.has(key)) return;
   seenEvents.add(key);
   track(type, data);
 }
@@ -153,11 +181,10 @@ track("pageview");
 
 document.addEventListener("click", (e) => {
   const el = e.target.closest("a, button");
-  if (!el) {
-return;
-}
+  if (!el) return;
+  
   const tag = el.tagName.toLowerCase();
-  const label = el.getAttribute("aria-label") || el.innerText?.slice(0, 40) || "";
+  const label = el.getAttribute("aria-label") || el.innerText?.trim().slice(0, 40) || "";
   const href = el.href || null;
   track("click", { tag, label, href });
 });
@@ -165,9 +192,9 @@ return;
 document.addEventListener(
   "scroll",
   throttle(() => {
-    const scroll = Math.round(
-      (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100
-    );
+    const denominator = document.documentElement.scrollHeight - window.innerHeight;
+    // FIX: Guard against zero division on short pages
+    const scroll = denominator > 0 ? Math.round((window.scrollY / denominator) * 100) : 0;
     track("scroll", { scroll });
   }, 5000)
 );
@@ -175,7 +202,7 @@ document.addEventListener(
 document.addEventListener("focusin", (e) => {
   const el = e.target;
   if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
-    track("input_focus", { name: el.name || el.id || "", type: el.type || "unknown" });
+    track("input_focus", { name: el.name || el.id || "unnamed", type: el.type || "text" });
   }
 });
 
@@ -184,25 +211,22 @@ const pageStart = Date.now();
 window.addEventListener("beforeunload", () => {
   const duration = Date.now() - pageStart;
   track("time_on_page", { duration });
-  flush();
+  flush(true); // Pass true flag to use sendBeacon / keepalive fetch
 });
 
 // --- Network events ---
-window.addEventListener("online", flush);
+window.addEventListener("online", () => {
+  retryDelay = 1000;
+  flush();
+});
 
 // --- Periodic flush ---
 setInterval(flush, INTERVAL_MS);
 
-// --- Public API ---
-function trackPageView() {
- track("page_view"); 
-}
-function trackButtonClick(buttonName) {
- track("button_click", { button: buttonName }); 
-}
-function trackPurchase(itemId, price) {
- track("purchase", { itemId, price }); 
-}
+// --- Public API Alignment ---
+function trackPageView() { track("pageview"); }
+function trackButtonClick(buttonName) { track("button_click", { button: buttonName }); }
+function trackPurchase(itemId, price) { track("purchase", { itemId, price }); }
 
 export {
   track,

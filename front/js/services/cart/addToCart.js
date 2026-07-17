@@ -17,92 +17,50 @@ const TYPE_MAP = Object.freeze({
 });
 
 function normalize(value) {
-  return typeof value === "string" ? value.trim().toLowerCase() : "";
+  return value !== null && value !== undefined ? String(value).trim().toLowerCase() : "";
 }
 
-function getCategory(itemType = "", entityType = "") {
-  const type = normalize(itemType);
-  const entity = normalize(entityType);
-
-  if (TYPE_MAP[type]) {
-    return TYPE_MAP[type];
+function getCategory(cleanItemType, cleanEntityType) {
+  if (TYPE_MAP[cleanItemType]) {
+    return TYPE_MAP[cleanItemType];
   }
 
-  if (TYPE_MAP[entity]) {
-    return TYPE_MAP[entity];
+  if (TYPE_MAP[cleanEntityType]) {
+    return TYPE_MAP[cleanEntityType];
   }
 
-  return entity || "general";
+  return cleanEntityType || "general";
 }
 
-function validateInput({
+/**
+ * Validates fully pre-normalized inputs.
+ */
+function validateNormalizedInput({
   itemId,
   itemType,
   entityType,
   entityId,
   quantity
 }) {
-  const qty = Number(quantity);
-
-  if (!itemId || typeof itemId !== "string") {
-    return "Invalid item ID";
-  }
-
-  if (!itemType || typeof itemType !== "string") {
-    return "Invalid item type";
-  }
-
-  if (!entityType || typeof entityType !== "string") {
-    return "Invalid entity type";
-  }
-
-  if (!entityId || typeof entityId !== "string") {
-    return "Invalid entity ID";
-  }
-
-  if (!Number.isFinite(qty) || qty <= 0) {
+  if (!itemId) return "Invalid item ID";
+  if (!itemType) return "Invalid item type";
+  if (!entityType) return "Invalid entity type";
+  if (!entityId) return "Invalid entity ID";
+  
+  if (!Number.isFinite(quantity) || quantity <= 0) {
     return "Invalid quantity";
   }
 
   return null;
 }
 
-function buildPayload(options) {
-  const {
-    itemId,
-    itemType,
-    quantity,
-    itemName,
-    entityType,
-    entityId,
-    entityName
-  } = options;
-
-  const payload = {
-    itemId,
-    itemType: normalize(itemType),
-    entityType: normalize(entityType),
-    entityId,
-    quantity: Number(quantity),
-    category: getCategory(itemType, entityType)
-  };
-
-  if (itemName) {
-    payload.itemName = itemName;
-  }
-
-  if (entityName) {
-    payload.entityName = entityName;
-  }
-
-  return payload;
-}
-
 /**
  * Add item to cart
+ * @param {Object} options - Add configurations.
+ * @param {Function} [options.onCartUpdated] - Optional local callback hook to run reactive state adjustments.
  */
 export async function addToCart(options = {}) {
-  const { isLoggedIn = false } = options;
+  const { isLoggedIn = false, onCartUpdated } = options;
 
   if (!isLoggedIn) {
     Notify("Please log in to add items to your cart", {
@@ -112,8 +70,16 @@ export async function addToCart(options = {}) {
     return false;
   }
 
-  const error = validateInput(options);
+  // FIXED: Pre-normalize all components to avoid validation mismatches and mapping drops
+  const cleanFields = {
+    itemId: normalize(options.itemId),
+    itemType: normalize(options.itemType),
+    entityType: normalize(options.entityType),
+    entityId: normalize(options.entityId),
+    quantity: Number(options.quantity)
+  };
 
+  const error = validateNormalizedInput(cleanFields);
   if (error) {
     Notify(error, {
       type: "warning",
@@ -122,15 +88,35 @@ export async function addToCart(options = {}) {
     return false;
   }
 
-  const payload = buildPayload(options);
+  // Build payload using clean values
+  const payload = {
+    itemId: cleanFields.itemId,
+    itemType: cleanFields.itemType,
+    entityType: cleanFields.entityType,
+    entityId: cleanFields.entityId,
+    quantity: cleanFields.quantity,
+    category: getCategory(cleanFields.itemType, cleanFields.entityType)
+  };
+
+  if (options.itemName) payload.itemName = String(options.itemName).trim();
+  if (options.entityName) payload.entityName = String(options.entityName).trim();
 
   try {
-    await apiFetch("/cart", "POST", payload);
+    const response = await apiFetch("/cart", "POST", payload);
 
     Notify("Added to cart successfully", {
       type: "success",
       duration: 3000
     });
+
+    // FIXED: Broadcast the state update locally and globally to prevent navigation layout sync blocks
+    if (typeof onCartUpdated === "function") {
+      onCartUpdated(response);
+    }
+    
+    window.dispatchEvent(new CustomEvent("cart:mutated", { 
+      detail: { action: "add", payload } 
+    }));
 
     return true;
   } catch (err) {
