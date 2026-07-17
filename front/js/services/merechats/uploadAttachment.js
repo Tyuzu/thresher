@@ -7,7 +7,7 @@ import {
   reconcilePending
 } from "./chatSocket.js";
 
-const MAX_FILE_SIZE = 25 * 1024 * 1024;
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -36,15 +36,12 @@ function getUploadKey(file) {
   if (file.type.startsWith("image/")) {
     return "photo";
   }
-
   if (file.type.startsWith("video/")) {
     return "video";
   }
-
   if (file.type.startsWith("audio/")) {
     return "audio";
   }
-
   return "file";
 }
 
@@ -53,19 +50,15 @@ function createOptimisticMessage(file, mediaId, clientId) {
 
   return {
     previewUrl,
-
     message: {
       messageid: clientId,
       sender: getState("user"),
       createdAt: new Date().toISOString(),
-
       media: {
         mediaId,
         url: previewUrl,
         mimeType: file.type,
-        type: file.type.startsWith("video")
-          ? "video"
-          : "image"
+        type: file.type.startsWith("video") ? "video" : "image"
       }
     }
   };
@@ -91,12 +84,7 @@ async function retry(fn, retries = MAX_RETRIES) {
   throw lastError;
 }
 
-async function sendMediaMessage(
-  chatid,
-  mediaId,
-  upload,
-  file
-) {
+async function sendMediaMessage(chatid, mediaId, upload, file) {
   const form = new FormData();
 
   form.append("mediaid", mediaId);
@@ -111,8 +99,9 @@ async function sendMediaMessage(
       method: "POST",
       body: form,
       headers: {
-        Authorization:
-          `Bearer ${getState("token") || ""}`
+        Authorization: `Bearer ${getState("token") || ""}`
+        // NOTE: DO NOT add a Content-Type header here.
+        // Letting the browser assign it dynamically ensures valid multi-part boundaries.
       }
     }
   );
@@ -129,30 +118,20 @@ function reconcilePreview(serverMessage, previewUrl) {
     return serverMessage;
   }
 
-  serverMessage.media.serverUrl =
-    serverMessage.media.url;
-
-  serverMessage.media.previewUrl =
-    previewUrl;
-
+  serverMessage.media.serverUrl = serverMessage.media.url;
+  serverMessage.media.previewUrl = previewUrl;
   serverMessage.media.__local_preview = true;
 
   return serverMessage;
 }
 
-async function uploadSingleFile(
-  chatid,
-  file
-) {
+async function uploadSingleFile(chatid, file) {
   isValidFile(file);
 
   const mediaId = uid();
   const clientId = `f_${mediaId}`;
 
-  const {
-    previewUrl,
-    message
-  } = createOptimisticMessage(
+  const { previewUrl, message } = createOptimisticMessage(
     file,
     mediaId,
     clientId
@@ -175,111 +154,79 @@ async function uploadSingleFile(
         key: getUploadKey(file),
         entityType: "chat",
         entityId: String(chatid),
-
         onProgress(percent) {
-          const pending =
-            pendingMap.get(clientId);
-
-          if (!pending) {
-            return;
-          }
+          const pending = pendingMap.get(clientId);
+          if (!pending) return;
 
           pending.progress = percent;
 
           if (pending.el?.dataset) {
-            pending.el.dataset.progress =
-              String(percent);
+            pending.el.dataset.progress = String(percent);
           }
         }
       })
     );
 
-    if (
-      !upload?.filename ||
-      !upload?.extension
-    ) {
-      throw new Error(
-        "Upload response invalid"
-      );
+    if (!upload?.filename || !upload?.extension) {
+      throw new Error("Upload response invalid");
     }
 
     const msg = await retry(() =>
-      sendMediaMessage(
-        chatid,
-        mediaId,
-        upload,
-        file
-      )
+      sendMediaMessage(chatid, mediaId, upload, file)
     );
 
     reconcilePending(
       chatid,
       clientId,
-      reconcilePreview(
-        msg,
-        previewUrl
-      )
+      reconcilePreview(msg, previewUrl)
     );
 
     pendingMap.delete(clientId);
 
-    URL.revokeObjectURL(previewUrl);
+    // FIXED: Deferred Blob URL cleanup to allow the browser thread to fully paint the new image
+    setTimeout(() => {
+      try {
+        URL.revokeObjectURL(previewUrl);
+      } catch {}
+    }, 30000); // 30s delay prevents flickering
+
   } catch (error) {
-    console.error(
-      "File upload failed",
-      error
-    );
+    console.error("File upload failed", error);
 
-    const pending =
-      pendingMap.get(clientId);
-
+    const pending = pendingMap.get(clientId);
     if (pending?.el) {
       pending.el.remove();
     }
 
     pendingMap.delete(clientId);
 
-    URL.revokeObjectURL(
-      previewUrl
-    );
+    // If failed, clean up the object URL immediately to reclaim browser memory
+    try {
+      URL.revokeObjectURL(previewUrl);
+    } catch {}
 
     throw error;
   }
 }
 
-export async function uploadAttachment(
-  chatid,
-  fileInput
-) {
-  const files = Array.from(
-    fileInput.files || []
-  );
+export async function uploadAttachment(chatid, fileInput) {
+  const files = Array.from(fileInput.files || []);
 
   if (!files.length) {
     return;
   }
 
   try {
-    const results =
-      await Promise.allSettled(
-        files.map(file =>
-          uploadSingleFile(
-            chatid,
-            file
-          )
-        )
-      );
+    const results = await Promise.allSettled(
+      files.map(file => uploadSingleFile(chatid, file))
+    );
 
     const failed = results.filter(
-      result =>
-        result.status === "rejected"
+      result => result.status === "rejected"
     );
 
     if (failed.length) {
-      console.error(
-        "Some uploads failed:",
-        failed
-      );
+      console.error("Some uploads failed:", failed);
     }
   } finally {
     fileInput.value = "";
@@ -291,10 +238,9 @@ function extToMime(ext) {
     return "application/octet-stream";
   }
 
-  const normalized =
-    ext.startsWith(".")
-      ? ext.toLowerCase()
-      : `.${ext.toLowerCase()}`;
+  const normalized = ext.startsWith(".")
+    ? ext.toLowerCase().trim()
+    : `.${ext.toLowerCase().trim()}`;
 
   return {
     ".jpg": "image/jpeg",

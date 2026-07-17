@@ -13,7 +13,6 @@ export function displayNewChat(
   currentUserId
 ) {
   clearContainer(contentContainer);
-
   cleanupChat();
 
   const chatBox = createElement("div", {
@@ -26,7 +25,6 @@ export function displayNewChat(
   });
 
   let socket = null;
-
   if (isLoggedIn) {
     socket = createWebSocket(chatid);
     activeSocket = socket;
@@ -151,6 +149,7 @@ function createInputRow(socket) {
     inputField.value = "";
   }
 
+  // Bind input element events cleanly
   inputField.addEventListener("keydown", e => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -196,6 +195,14 @@ function createChatSoundControls(chatid, messagePreference, notificationPreferen
     }
   });
 
+  // Helper to construct sound selector options with initial 'selected' state
+  const buildOptions = (currentVal) => [
+    createElement("option", { value: "default", ...(currentVal === "default" && { selected: true }) }, ["Default"]),
+    createElement("option", { value: "chime", ...(currentVal === "chime" && { selected: true }) }, ["Chime"]),
+    createElement("option", { value: "sharp", ...(currentVal === "sharp" && { selected: true }) }, ["Sharp"])
+  ];
+
+  // FIXED: Changed event binding from onchange attribute property to standard events schema block
   const messageTone = createElement("label", {
     style: {
       display: "flex",
@@ -206,17 +213,14 @@ function createChatSoundControls(chatid, messagePreference, notificationPreferen
   }, [
     "Message tone",
     createElement("select", {
-      value: messagePreference.tone,
-      onchange: e => {
-        setChatSoundPreference(chatid, {
-          messageTone: e.target.value
-        });
+      events: {
+        change: e => {
+          setChatSoundPreference(chatid, {
+            messageTone: e.target.value
+          });
+        }
       }
-    }, [
-      createElement("option", { value: "default" }, ["Default"]),
-      createElement("option", { value: "chime" }, ["Chime"]),
-      createElement("option", { value: "sharp" }, ["Sharp"])
-    ])
+    }, buildOptions(messagePreference?.tone))
   ]);
 
   const notificationTone = createElement("label", {
@@ -229,17 +233,14 @@ function createChatSoundControls(chatid, messagePreference, notificationPreferen
   }, [
     "Notification tone",
     createElement("select", {
-      value: notificationPreference.tone,
-      onchange: e => {
-        setChatSoundPreference(chatid, {
-          notificationTone: e.target.value
-        });
+      events: {
+        change: e => {
+          setChatSoundPreference(chatid, {
+            notificationTone: e.target.value
+          });
+        }
       }
-    }, [
-      createElement("option", { value: "default" }, ["Default"]),
-      createElement("option", { value: "chime" }, ["Chime"]),
-      createElement("option", { value: "sharp" }, ["Sharp"])
-    ])
+    }, buildOptions(notificationPreference?.tone))
   ]);
 
   container.append(messageTone, notificationTone);
@@ -306,25 +307,18 @@ function disableInputs(elements) {
 
 function createWebSocket(chatid) {
   const token = state.token ?? "";
-
   let base = CHAT_WS.replace(/\/+$/, "");
 
   if (
     !base.startsWith("ws://") &&
     !base.startsWith("wss://")
   ) {
-    const protocol =
-      location.protocol === "https:"
-        ? "wss"
-        : "ws";
-
+    const protocol = location.protocol === "https:" ? "wss" : "ws";
     base = `${protocol}://${base}`;
   }
 
   return new WebSocket(
-    `${base}/${encodeURIComponent(
-      chatid
-    )}?token=${encodeURIComponent(token)}`
+    `${base}/${encodeURIComponent(chatid)}?token=${encodeURIComponent(token)}`
   );
 }
 
@@ -343,7 +337,6 @@ function setupSocketListeners(
     if (socket !== activeSocket) {
       return;
     }
-
     sendButton.disabled = false;
   });
 
@@ -351,7 +344,6 @@ function setupSocketListeners(
     if (socket !== activeSocket) {
       return;
     }
-
     sendButton.disabled = true;
   });
 
@@ -359,7 +351,6 @@ function setupSocketListeners(
     if (socket !== activeSocket) {
       return;
     }
-
     console.error("WebSocket error:", err);
     sendButton.disabled = true;
   });
@@ -369,18 +360,22 @@ function setupSocketListeners(
       return;
     }
 
-    const unread = getState("unreadMessages") || 0;
-
-    setState("unreadMessages", unread + 1);
-
     try {
       const msg = JSON.parse(event.data);
       const isOwn =
         msg?.senderid === currentUserId ||
         msg?.userId === currentUserId;
 
+      // FIXED: Only increment unread badge count and alert if the message was received in a background chat
+      const isWindowHidden = typeof document !== "undefined" && document.visibilityState === "hidden";
+      
       if (!isOwn) {
         playSoundAlert({ type: "message", chatId: chatid });
+        
+        if (isWindowHidden) {
+          const unread = getState("unreadMessages") || 0;
+          setState("unreadMessages", unread + 1);
+        }
       }
 
       await renderMessage(
@@ -390,13 +385,9 @@ function setupSocketListeners(
         socket
       );
 
-      messagesContainer.scrollTop =
-        messagesContainer.scrollHeight;
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     } catch (err) {
-      console.error(
-        "Invalid WebSocket payload:",
-        err
-      );
+      console.error("Invalid WebSocket payload:", err);
     }
   });
 }

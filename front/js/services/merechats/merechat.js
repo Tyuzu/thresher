@@ -4,8 +4,6 @@ import { t } from "./i18n.js";
 import { safemereFetch, displayOneChat } from "./onechat.js";
 import { renderSharedChatList } from "../chat/sharedChatList.js";
 
-const chatBodies = new Map();
-
 export async function displayChats(contentContainer, isLoggedIn) {
   await renderSharedChatList({
     container: contentContainer,
@@ -18,12 +16,12 @@ export async function displayChats(contentContainer, isLoggedIn) {
     },
     renderChat: async (chatView, chat) => {
       const chatId = chat?.chatid;
-      let chatBody = chatBodies.get(chatId);
 
-      if (!chatBody) {
-        chatBody = createElement("div", { class: "chat-body" });
-        chatBodies.set(chatId, chatBody);
-      }
+      // FIXED: Always close any active socket from the previous chat BEFORE switching
+      closeExistingSocket("switch");
+
+      // FIXED: Avoided the global chatBodies Map cache to prevent detached DOM memory leaks
+      const chatBody = createElement("div", { class: "chat-body" });
 
       const backBtn = createElement(
         "button",
@@ -39,7 +37,10 @@ export async function displayChats(contentContainer, isLoggedIn) {
         chatView.replaceChildren();
       });
 
+      // Assemble and display the clean DOM structure
       chatView.replaceChildren(backBtn, chatBody);
+      
+      // Initialize the new chat connection and render messages
       await displayOneChat(chatBody, chatId);
     },
     getChatId: chat => chat?.chatid,

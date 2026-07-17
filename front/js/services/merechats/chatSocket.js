@@ -7,6 +7,8 @@ import { playSoundAlert } from "../notifications/soundAlerts.js";
 --------------------------*/
 const pendingMap = new Map();
 const renderedIdsMap = new Map();
+let reconnectTimer = null;
+let messageContainer = null;
 
 /* -------------------------
    ChatState (singleton)
@@ -20,40 +22,30 @@ const ChatState = (() => {
     setSocket: ws => {
       socket = ws;
     },
-
     getSocket: () => socket,
-
     setReconnectAttempts: n => {
       reconnectAttempts = n;
     },
-
     getReconnectAttempts: () => reconnectAttempts,
-
     incrementReconnectAttempts: () => {
       reconnectAttempts += 1;
     },
-
     resetReconnectAttempts: () => {
       reconnectAttempts = 0;
     },
-
     setChatId: id => {
       currentChatId = id;
-
       if (!renderedIdsMap.has(id)) {
         renderedIdsMap.set(id, new Set());
       }
     },
-
     getChatId: () => currentChatId
   };
 })();
 
 /* -------------------------
-   Shared message container
+   Shared message container helpers
 --------------------------*/
-let messageContainer = null;
-
 export function getMessageContainer() {
   return messageContainer;
 }
@@ -67,12 +59,10 @@ export function setMessageContainer(el) {
 --------------------------*/
 function ensureRenderedSet(chatid) {
   let set = renderedIdsMap.get(chatid);
-
   if (!set) {
     set = new Set();
     renderedIdsMap.set(chatid, set);
   }
-
   return set;
 }
 
@@ -82,6 +72,39 @@ function normalizeId(msg) {
     msg?.id ||
     crypto.randomUUID()
   );
+}
+
+/**
+ * Normalizes incoming network structures onto the internal client schema
+ */
+function normalizeMessagePayload(data) {
+  if (!data) return {};
+  return {
+    ...data,
+    messageid: data.messageid || data.id,
+    content: data.content || data.text || data.message || ""
+  };
+}
+
+/**
+ * Smoothly scrolls message viewport down, taking un-rendered media heights into account
+ */
+function scrollToBottom(container) {
+  if (!container) return;
+  
+  // Safe calculation for immediate render heights
+  container.scrollTop = container.scrollHeight;
+
+  // FIXED: Detect heavy media assets inside the newly appended element 
+  // and trigger a viewport re-scroll after they load.
+  const images = container.querySelectorAll("img, video");
+  images.forEach(media => {
+    if (!media.complete) {
+      media.addEventListener("load", () => {
+        container.scrollTop = container.scrollHeight;
+      }, { once: true });
+    }
+  });
 }
 
 /* -------------------------
@@ -100,15 +123,17 @@ export function mountMessage(
     return null;
   }
 
-  const id = normalizeId(msg);
+  const normalized = normalizeMessagePayload(msg);
+  const id = normalizeId(normalized);
   const domId = `msg-${id}`;
 
-  if (document.getElementById(domId)) {
-    return document.getElementById(domId);
+  const existingNode = document.getElementById(domId);
+  if (existingNode) {
+    return existingNode;
   }
 
   const node = renderMessage({
-    ...msg,
+    ...normalized,
     pending
   });
 
@@ -120,11 +145,7 @@ export function mountMessage(
   }
 
   targetContainer.appendChild(node);
-
-  try {
-    targetContainer.scrollTop =
-      targetContainer.scrollHeight;
-  } catch { }
+  scrollToBottom(targetContainer);
 
   return node;
 }
@@ -137,78 +158,52 @@ export function reconcilePending(
   clientId,
   serverMessage
 ) {
-  const pending =
-    pendingMap.get(clientId);
-
-  const rendered =
-    ensureRenderedSet(chatid);
-
-  const serverId = String(
-    serverMessage.messageid
-  );
+  const pending = pendingMap.get(clientId);
+  const rendered = ensureRenderedSet(chatid);
+  
+  const normalized = normalizeMessagePayload(serverMessage);
+  const serverId = String(normalized.messageid);
 
   if (!pending) {
     if (!rendered.has(serverId)) {
-      mountMessage(serverMessage);
+      mountMessage(normalized);
       rendered.add(serverId);
     }
-
     return;
   }
 
   const oldEl = pending.el;
-
-  const newEl = renderMessage(serverMessage);
-
+  const newEl = renderMessage(normalized);
   newEl.id = `msg-${serverId}`;
 
-  if (oldEl?.parentNode) {
-    oldEl.parentNode.replaceChild(
-      newEl,
-      oldEl
-    );
-  } else {
-    const targetContainer =
-      pending.container ||
-      getMessageContainer() ||
-      document.querySelector(
-        ".chat-messages"
-      );
+  const targetContainer =
+    pending.container ||
+    getMessageContainer() ||
+    document.querySelector(".chat-messages");
 
-    if (targetContainer) {
-      targetContainer.appendChild(newEl);
-    }
+  if (oldEl?.parentNode) {
+    oldEl.parentNode.replaceChild(newEl, oldEl);
+  } else if (targetContainer) {
+    targetContainer.appendChild(newEl);
   }
 
   rendered.add(serverId);
   pendingMap.delete(clientId);
+
+  if (targetContainer) {
+    scrollToBottom(targetContainer);
+  }
 }
 
 /* -------------------------
-   Exports
---------------------------*/
-export {
-  ChatState,
-  pendingMap,
-  renderedIdsMap,
-  renderMessage
-};
-
-/* -------------------------
-   WebSocket utils
+   WebSocket configuration
 --------------------------*/
 function wsUrl() {
   const token = getState("token");
-
-  let url =
-    MERE_WS.replace(/^http/, "ws") +
-    "/ws/merechat";
-
+  let url = MERE_WS.replace(/^http/, "ws") + "/ws/merechat";
   if (token) {
-    url +=
-      `?token=${encodeURIComponent(token)}`;
+    url += `?token=${encodeURIComponent(token)}`;
   }
-
   return url;
 }
 
@@ -216,25 +211,26 @@ function joinChatRoom(socket, chatid) {
   if (!socket || !chatid) {
     return;
   }
-
   if (socket.readyState === WebSocket.OPEN) {
     try {
       socket.send(JSON.stringify({ type: "join", chatid }));
-    } catch {
-      // ignore join failures and rely on a reconnect if needed
-    }
+    } catch {}
   }
 }
 
-export function closeExistingSocket(
-  reason = ""
-) {
+export function closeExistingSocket(reason = "") {
   const ws = ChatState.getSocket();
 
   if (ws) {
+    // FIXED: Cleanly unbind closing callbacks before closing manually to prevent infinite reconnect cascades
+    ws.onclose = null;
+    ws.onerror = null;
+    ws.onmessage = null;
+    ws.onopen = null;
+
     try {
       ws.close();
-    } catch { }
+    } catch {}
 
     ChatState.setSocket(null);
   }
@@ -242,27 +238,19 @@ export function closeExistingSocket(
   clearTimeout(reconnectTimer);
   reconnectTimer = null;
   ChatState.resetReconnectAttempts();
-
-  if (reason) {
-  }
 }
 
 /* -------------------------
-   WebSocket connection
+   WebSocket connection manager
 --------------------------*/
-let reconnectTimer = null;
-
 export function connectWebSocket() {
-  const existing =
-    ChatState.getSocket();
+  const existing = ChatState.getSocket();
 
   if (
     existing &&
     (
-      existing.readyState ===
-      WebSocket.OPEN ||
-      existing.readyState ===
-      WebSocket.CONNECTING
+      existing.readyState === WebSocket.OPEN ||
+      existing.readyState === WebSocket.CONNECTING
     )
   ) {
     const chatid = ChatState.getChatId();
@@ -275,7 +263,6 @@ export function connectWebSocket() {
   clearTimeout(reconnectTimer);
 
   let socket;
-
   try {
     socket = new WebSocket(wsUrl());
   } catch {
@@ -288,9 +275,7 @@ export function connectWebSocket() {
   socket.onopen = () => {
     ChatState.resetReconnectAttempts();
 
-    const token =
-      getState("token");
-
+    const token = getState("token");
     if (token) {
       socket.send(
         JSON.stringify({
@@ -300,21 +285,17 @@ export function connectWebSocket() {
       );
     }
 
-    const chatid =
-      ChatState.getChatId();
-
+    const chatid = ChatState.getChatId();
     joinChatRoom(socket, chatid);
   };
 
   socket.onmessage = ev => {
     let data;
-
     try {
       data = JSON.parse(ev.data);
     } catch {
       return;
     }
-
     handleWSMessage(data);
   };
 
@@ -328,29 +309,11 @@ export function connectWebSocket() {
   };
 }
 
-// socket.on("message", msg => {
-//     setState(
-//         "unreadMessages",
-//         getState("unreadMessages") + 1
-//     );
-
-//     showToast({
-//         title: msg.senderName,
-//         body: msg.text
-//     });
-// });
-
 function scheduleReconnect() {
-  const attempts =
-    ChatState.getReconnectAttempts();
-
-  const delay = Math.min(
-    30000,
-    1000 * Math.pow(2, attempts)
-  );
+  const attempts = ChatState.getReconnectAttempts();
+  const delay = Math.min(30000, 1000 * Math.pow(2, attempts));
 
   ChatState.incrementReconnectAttempts();
-
   clearTimeout(reconnectTimer);
 
   reconnectTimer = setTimeout(
@@ -360,33 +323,29 @@ function scheduleReconnect() {
 }
 
 /* -------------------------
-   Handle WS messages
+   Handle incoming WebSocket packets
 --------------------------*/
-/* -------------------------
-   Handle WS messages
---------------------------*/
-function handleWSMessage(data) {
-  if (!data?.type) {
+function handleWSMessage(rawData) {
+  if (!rawData?.type) {
     return;
   }
+
+  const data = normalizeMessagePayload(rawData);
 
   switch (data.type) {
     case "message": {
       const chatid = data.chatid;
-
       if (!chatid) {
         return;
       }
 
       playSoundAlert({ type: "message", chatId: chatid });
 
-      // Message belongs to another chat
+      // Handle message targeting other non-active feeds
       if (chatid !== ChatState.getChatId()) {
         const unread = getState("unreadMessages") || 0;
-
         setState("unreadMessages", unread + 1);
 
-        // Browser notification (if supported and permitted)
         if (
           typeof Notification !== "undefined" &&
           document.visibilityState === "hidden" &&
@@ -394,51 +353,37 @@ function handleWSMessage(data) {
         ) {
           try {
             new Notification(
-              data.senderName ||
-              data.username ||
-              "New message",
+              data.senderName || data.username || "New message",
               {
-                body:
-                  data.text ||
-                  data.message ||
-                  "",
+                body: data.content,
                 icon: "/favicon.ico"
               }
             );
           } catch {}
         }
-
         return;
       }
 
       const serverId = String(data.messageid);
-
       const rendered = ensureRenderedSet(chatid);
 
-      // Replace optimistic message
+      // Reconcile optimistic/pending elements matching this id
       if (
         data.clientId &&
         pendingMap.has(data.clientId)
       ) {
-        reconcilePending(
-          chatid,
-          data.clientId,
-          data
-        );
-
+        reconcilePending(chatid, data.clientId, data);
         rendered.add(serverId);
         return;
       }
 
-      // Prevent duplicate rendering
+      // Prevent duplicating UI nodes
       if (rendered.has(serverId)) {
         return;
       }
 
       mountMessage(data);
-
       rendered.add(serverId);
-
       break;
     }
 
@@ -452,3 +397,10 @@ function handleWSMessage(data) {
       break;
   }
 }
+
+export {
+  ChatState,
+  pendingMap,
+  renderedIdsMap,
+  renderMessage
+};

@@ -11,11 +11,10 @@ import {
   mountMessage
 } from "./chatSocket.js";
 import { mereFetch } from "../../api/api.js";
-import { debounce } from "../../utils/deutils.js";
+import { throttle } from "../../utils/deutils.js"; // FIXED: Changed from debounce to throttle
 import { getState } from "../../state/state.js";
 import { t } from "./i18n.js";
 import { uploadAttachment } from "./uploadAttachment.js";
-// import { getFileType } from "../media/mediaCommon.js";
 
 /* -------------------------
    Safe fetch
@@ -40,9 +39,8 @@ function ensureRenderedSet(chatid) {
   return set;
 }
 
-
 /* -------------------------
-   Send message (WS first)
+   Send message (WS first with REST fallback)
 --------------------------*/
 export function sendMessage(chatid, content, targetContainer = getMessageContainer()) {
   if (!content || !content.trim()) {
@@ -58,6 +56,7 @@ export function sendMessage(chatid, content, targetContainer = getMessageContain
     createdAt: new Date().toISOString()
   };
 
+  // Ensure target container context is preserved during mounting
   const el = mountMessage(optimistic, { container: targetContainer });
   pendingMap.set(clientId, { el, chatid, container: targetContainer });
 
@@ -68,13 +67,15 @@ export function sendMessage(chatid, content, targetContainer = getMessageContain
     try {
       ws.send(JSON.stringify(payload));
       return;
-    } catch { }
+    } catch (err) {
+      console.warn("WS send failed, attempting REST fallback...", err);
+    }
   }
 
-  sendMessageRESTFallback(chatid, content, clientId);
+  sendMessageRESTFallback(chatid, content, clientId, targetContainer);
 }
 
-async function sendMessageRESTFallback(chatid, content, clientId) {
+async function sendMessageRESTFallback(chatid, content, clientId, targetContainer) {
   try {
     const msg = await mereFetch(
       `/merechats/chat/${encodeURIComponent(chatid)}/message`,
@@ -82,52 +83,46 @@ async function sendMessageRESTFallback(chatid, content, clientId) {
       JSON.stringify({ content, clientId })
     );
 
-    reconcilePending(chatid, clientId, msg);
+    reconcilePending(chatid, clientId, msg, targetContainer);
   } catch (e) {
     console.error("REST send failed", e);
     pendingMap.delete(clientId);
   }
 }
 
-function reconcilePending(chatid, clientId, serverMsg) {
+function reconcilePending(chatid, clientId, serverMsg, targetContainer = getMessageContainer()) {
   if (!serverMsg?.messageid) {
     return;
   }
 
   const rendered = ensureRenderedSet(chatid);
   const realId = String(serverMsg.messageid);
-
   const pending = pendingMap.get(clientId);
+
   if (pending?.el) {
-    // If the pending entry carries a local preview URL (from upload), inject it
-    // into the server message so the newly mounted message shows the local copy.
     if (pending.previewUrl && serverMsg.media) {
       serverMsg.media = serverMsg.media || {};
-      // override displayed url with local preview for UX; server url remains in other fields
       serverMsg.media.url = pending.previewUrl;
       serverMsg.media.__local_preview = true;
     }
 
-    pending.el.replaceWith(mountMessage(serverMsg));
+    // FIXED: Preserved target container context during node replacement to prevent scrolling/rendering bugs
+    const freshElement = mountMessage(serverMsg, { container: targetContainer });
+    pending.el.replaceWith(freshElement);
   } else if (!rendered.has(realId)) {
-    // No pending element: if we have a global map of local previews keyed by media id,
-    // we could also inject it here. For now, mount server message as-is.
-    mountMessage(serverMsg);
+    mountMessage(serverMsg, { container: targetContainer });
   }
 
   rendered.add(realId);
 
-  // cleanup: if pending carried a preview URL, keep a short-lived revoke to avoid leaks.
+  // Clean up Object URL to prevent browser memory leaks
   if (pending?.previewUrl) {
-    try {
-      const url = pending.previewUrl;
-      // revoke after a delay to allow the image element to load from the blob URL.
-      setTimeout(() => {
-        try {
-          URL.revokeObjectURL(url);
-        } catch { }
-      }, 60 * 1000); // 60s
-    } catch { }
+    const url = pending.previewUrl;
+    setTimeout(() => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch {}
+    }, 60000); // 60s
   }
 
   pendingMap.delete(clientId);
@@ -164,14 +159,7 @@ async function loadHistory(chatid, targetContainer = getMessageContainer()) {
 }
 
 /* -------------------------
-   Upload attachment
-   - show local preview on optimistic message
-   - ensure mounted server message uses local preview immediately on success
---------------------------*/
-
-
-/* -------------------------
-   UI
+   UI Rendering
 --------------------------*/
 export async function displayOneChat(containerx, chatid) {
   let container = containerx.querySelector(".onechatcon");
@@ -217,29 +205,37 @@ export async function displayOneChat(containerx, chatid) {
     uploadAttachment(chatid, fileInput)
   );
 
+  const handleSend = () => {
+    const txt = input.value.trim();
+    if (txt) {
+      sendMessage(chatid, txt, messages);
+      input.value = "";
+    }
+  };
+
   const sendBtn = Button(
     t("chat.send"),
     "",
-    {
-      click: () => {
-        const txt = input.value.trim();
-        if (txt) {
-          sendMessage(chatid, txt);
-          input.value = "";
-        }
-      }
-    },
+    { click: handleSend },
     "chat-send-btn"
   );
 
+  // FIXED: Added 'Enter' keyup handler to allow quick message submission
+  input.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      handleSend();
+    }
+  });
+
+  // FIXED: Converted typing notification to a throttle (signals immediately on start of typing)
   input.addEventListener(
     "input",
-    debounce(() => {
+    throttle(() => {
       const ws = ChatState.getSocket();
-      if (ws?.readyState === WebSocket.OPEN && input.value.trim().length > 1) {
+      if (ws?.readyState === WebSocket.OPEN && input.value.trim().length > 0) {
         ws.send(JSON.stringify({ type: "typing", chatid }));
       }
-    }, 800)
+    }, 1500)
   );
 
   if (!container.querySelector(".chat-header")) {
@@ -255,6 +251,7 @@ export async function displayOneChat(containerx, chatid) {
     );
   }
 
+  // FIXED: Instantly align local state references before running async calls to eliminate race conditions
   ChatState.setChatId(chatid);
   setMessageContainer(messages);
 
