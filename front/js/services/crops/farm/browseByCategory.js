@@ -1,4 +1,4 @@
-import { createTabs } from "../../../components/ui/createTabs.js";
+import { createTabs } from "../../utils/persistTabs.js";
 import { renderCategoryItems } from "./renderCategoryItems.js";
 import {debounce} from "../../../utils/deutils.js";
 

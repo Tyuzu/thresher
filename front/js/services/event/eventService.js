@@ -12,7 +12,7 @@ import { displayTickets } from "../tickets/displayTickets.js";
 import { displayMerchandise } from "../merch/merchService.js";
 import { displayMedia } from "../media/ui/mediaGallery.js";
 // import { persistTabs } from "../../utils/persistTabs.js";
-import { createTabs } from "../../components/ui/createTabs.js";
+import { createTabs } from "../../utils/persistTabs.js";
 import { showSeatingBanner } from "../tickets/seatingBanner.js";
 import { displayEventNews } from "./eventMoreTabs.js";
 

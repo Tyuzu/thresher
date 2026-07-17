@@ -1,17 +1,34 @@
 import Datex from "../components/base/Datex";
 
-// Utility function to escape HTML to prevent XSS
+/**
+ * Safely escapes HTML characters to prevent DOM-based XSS.
+ * Optimized to avoid DOM generation/memory thrashing.
+ */
 function escapeHTML(str) {
-    const div = document.createElement('div');
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
+    if (typeof str !== 'string') return '';
+    return str.replace(/[&<>"']/g, (match) => {
+        switch (match) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '"': return '&quot;';
+            case "'": return '&#x27;';
+            default: return match;
+        }
+    });
 }
 
+/**
+ * Validates a list of inputs against custom rules.
+ * Returns a newline-separated string of errors, or null if all pass.
+ */
 function validateInputs(inputs) {
+    if (!Array.isArray(inputs)) return null;
+    
     const errors = [];
 
     inputs.forEach(({ value, validator, message }) => {
-        if (!validator(value)) {
+        if (typeof validator === 'function' && !validator(value)) {
             errors.push(message);
         }
     });
@@ -19,20 +36,37 @@ function validateInputs(inputs) {
     return errors.length ? errors.join('\n') : null;
 }
 
-// Example validators
-const isValidUsername = username => username.length >= 3 && username.length <= 20;
-const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const isValidPassword = password => password.length >= 6;
+/* =========================
+   VALIDATORS
+========================= */
+const isValidUsername = username => 
+    typeof username === 'string' && username.length >= 3 && username.length <= 20;
 
+const isValidEmail = email => 
+    typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 
-// Utility function to format dates
+const isValidPassword = password => 
+    typeof password === 'string' && password.length >= 6;
+
+/* =========================
+   FORMATTERS & HANDLERS
+========================= */
 function formatDate(dateString) {
     return dateString ? Datex(dateString) : null;
 }
 
-
 function handleError(errorMessage) {
-    console.error(errorMessage);
+    // Extract message if an Error object is accidentally passed
+    const msg = errorMessage instanceof Error ? errorMessage.message : errorMessage;
+    console.error(`[App Error]: ${msg}`);
 }
 
-export { escapeHTML, validateInputs, isValidUsername, isValidEmail, isValidPassword, handleError, formatDate };
+export { 
+    escapeHTML, 
+    validateInputs, 
+    isValidUsername, 
+    isValidEmail, 
+    isValidPassword, 
+    handleError, 
+    formatDate 
+};

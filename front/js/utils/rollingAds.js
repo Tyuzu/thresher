@@ -1,97 +1,139 @@
 // rollingAds.js (module)
-
 import { apiFetch } from "../api/api";
 import Imagex from "../components/base/Imagex";
 import { createElement } from "../components/createElement";
 import { resolveImagePath, EntityType, PictureType } from "./imagePaths.js";
 
 const adCache = {};
-const adIntervals = new Map();
+const adInstances = new Map(); // Tracks structural context configuration models
 const DISPLAY_TIME = 5000; // rotate every 5s
 
-function clearContainer(container) {
-  while (container.firstChild) {
-    container.removeChild(container.firstChild);
-  }
-}
-
-function renderRollingAd(container, ads, index) {
-  clearContainer(container);
-
-  const currentAd = ads[index];
+/**
+ * Builds the structural DOM trees safely for individual data maps
+ */
+function buildAdElement(currentAd) {
   const imageUrl = resolveImagePath(EntityType.ADVT, PictureType.THUMB, currentAd.image);
 
-  const adArea = createElement("div", { class: "rolling-ad-area" }, [
+  return createElement("div", { class: "rolling-ad-area" }, [
     createElement(
       "a",
       {
-        href: currentAd.link,
+        href: currentAd.link || "#",
         target: "_blank",
-        rel: "noopener",
+        rel: "noopener noreferrer", // Fixed: Added complete window isolation mitigation
         class: "rolling-ad-link",
       },
       [
         Imagex({
           src: imageUrl,
-          alt: currentAd.title,
+          alt: currentAd.title || "Ad",
           loading: "lazy",
-          style: "width:100%;height:auto;object-fit:cover;border-radius:6px;",
+          style: "width:100%;height:auto;object-fit:cover;border-radius:6px;display:block;",
         }),
         createElement("div", { class: "rolling-ad-caption" }, [
-          createElement("h3", {}, [currentAd.title]),
-          createElement("p", {}, [currentAd.description]),
+          createElement("h3", {}, [currentAd.title || ""]),
+          createElement("p", {}, [currentAd.description || ""]),
         ]),
       ]
     ),
   ]);
-
-  container.appendChild(adArea);
 }
 
-function startRolling(container, ads) {
-  let index = 0;
-  renderRollingAd(container, ads, index);
+/**
+ * Handles transitioning structural layouts smoothly
+ */
+function transitionToAd(container, instance) {
+  const currentAdData = instance.ads[instance.currentIndex];
+  const newAdNode = buildAdElement(currentAdData);
+  
+  // Set starting point state for CSS animation sequence
+  newAdNode.classList.add("fade-out");
 
-  if (adIntervals.has(container)) {
-    clearInterval(adIntervals.get(container));
+  const existingAdNode = container.querySelector(".rolling-ad-area");
+
+  if (existingAdNode) {
+    existingAdNode.classList.remove("fade-in");
+    existingAdNode.classList.add("fade-out");
+
+    // Listen for completion of the fade out transition instead of guessing with a setTimeout
+    existingAdNode.addEventListener("transitionend", function handleFade() {
+      existingAdNode.removeEventListener("transitionend", handleFade);
+      container.innerHTML = "";
+      container.appendChild(newAdNode);
+      
+      // Force layout layout reflow processing to trigger entry animation
+      void newAdNode.offsetWidth;
+      newAdNode.classList.remove("fade-out");
+      newAdNode.classList.add("fade-in");
+    }, { once: true });
+  } else {
+    container.innerHTML = "";
+    container.appendChild(newAdNode);
+    void newAdNode.offsetWidth;
+    newAdNode.classList.remove("fade-out");
+    newAdNode.classList.add("fade-in");
   }
+}
 
-  const intervalId = setInterval(() => {
-    index = (index + 1) % ads.length;
+/**
+ * Registers tracking loops and hooks persistent event observers once
+ */
+function initAdInstance(container, ads) {
+  if (adInstances.has(container)) return;
 
-    const currentAd = container.querySelector(".rolling-ad-area");
-    if (currentAd) {
-      currentAd.classList.remove("fade-in");
-      currentAd.classList.add("fade-out");
-      setTimeout(() => {
-        renderRollingAd(container, ads, index);
-        container.firstChild.classList.add("fade-in");
-      }, 500);
-    } else {
-      renderRollingAd(container, ads, index);
+  const instance = {
+    ads,
+    currentIndex: 0,
+    intervalId: null,
+    isPaused: false
+  };
+
+  adInstances.set(container, instance);
+
+  const triggerNextRotation = () => {
+    if (instance.isPaused) return;
+    instance.currentIndex = (instance.currentIndex + 1) % instance.ads.length;
+    transitionToAd(container, instance);
+  };
+
+  // Render initialization display layer
+  transitionToAd(container, instance);
+  instance.intervalId = setInterval(triggerNextRotation, DISPLAY_TIME);
+
+  // FIXED: Event listeners are attached exactly once per initialization
+  container.addEventListener("mouseenter", () => {
+    instance.isPaused = true;
+    if (instance.intervalId) {
+      clearInterval(instance.intervalId);
+      instance.intervalId = null;
     }
-  }, DISPLAY_TIME);
+  });
 
-  adIntervals.set(container, intervalId);
-
-  container.addEventListener("mouseenter", () => clearInterval(intervalId));
-  container.addEventListener("mouseleave", () => startRolling(container, ads));
+  container.addEventListener("mouseleave", () => {
+    instance.isPaused = false;
+    if (!instance.intervalId) {
+      instance.intervalId = setInterval(triggerNextRotation, DISPLAY_TIME);
+    }
+  });
 }
 
 function loadAndDisplayRollingAds(container, category = "default") {
   if (adCache[category]) {
-    startRolling(container, adCache[category]);
+    initAdInstance(container, adCache[category]);
     return;
   }
 
   apiFetch(`/sda/sda?category=${category}`)
     .then((ads) => {
-      if (!ads.length) {
+      // Normalise potential wrapping array variants
+      const dataPayload = ads?.data || ads;
+
+      if (!Array.isArray(dataPayload) || !dataPayload.length) {
         container.remove();
         return;
       }
-      adCache[category] = ads;
-      startRolling(container, ads);
+      adCache[category] = dataPayload;
+      initAdInstance(container, dataPayload);
     })
     .catch((error) => {
       console.error(`Error fetching rolling ads for category '${category}':`, error);
@@ -111,33 +153,3 @@ export function initRollingAds() {
     loadAndDisplayRollingAds(container, category);
   });
 }
-
-/* CSS to include:
-.rolling-ad-area {
-  position: relative;
-  max-width: 800px;
-  margin: 0 auto;
-  transition: opacity 0.5s ease-in-out;
-}
-.rolling-ad-area.fade-in {
-  opacity: 1;
-}
-.rolling-ad-area.fade-out {
-  opacity: 0;
-}
-.rolling-ad-link {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-}
-.rolling-ad-caption {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(0,0,0,0.5);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-*/

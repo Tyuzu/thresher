@@ -1,6 +1,6 @@
 import { SEARCH_URL } from "../../state/state.js";
 import Notify from "../../components/ui/Notify.mjs";
-import { createTabs } from "../../components/ui/createTabs.js";
+import { createTabs } from "../../utils/persistTabs.js";
 import { createElement } from "../../components/createElement.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import { createIconButton } from "../../utils/svgIconButton.js";

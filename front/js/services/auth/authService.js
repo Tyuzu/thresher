@@ -13,13 +13,12 @@ import { apiFetch } from "../../api/api.js";
 /* =========================
    SIGNUP
 ========================= */
-
 async function signup(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
 
-    const username = document.getElementById("signup-username").value.trim();
-    const email = document.getElementById("signup-email").value.trim();
-    const password = document.getElementById("signup-password").value;
+    const username = document.getElementById("signup-username")?.value?.trim() || "";
+    const email = document.getElementById("signup-email")?.value?.trim() || "";
+    const password = document.getElementById("signup-password")?.value || "";
 
     const errors = validateInputs([
         {
@@ -39,8 +38,11 @@ async function signup(event) {
         }
     ]);
 
-    if (errors) {
-        Notify(errors, {
+    // Fixed: Ensure arrays or objects don't trigger error state falsely
+    const hasErrors = Array.isArray(errors) ? errors.length > 0 : errors && Object.keys(errors).length > 0;
+
+    if (hasErrors) {
+        Notify(Array.isArray(errors) ? errors.join(", ") : errors, {
             type: "error",
             duration: 3000,
             dismissible: true
@@ -49,11 +51,7 @@ async function signup(event) {
     }
 
     try {
-        await apiFetch("/auth/register", "POST", {
-            username,
-            email,
-            password
-        });
+        await apiFetch("/auth/register", "POST", { username, email, password });
 
         Notify("Signup successful! You can now log in.", {
             type: "success",
@@ -76,13 +74,10 @@ async function signup(event) {
    LOGIN
 ========================= */
 async function login(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
 
-    const usernameEl = document.getElementById("login-username");
-    const passwordEl = document.getElementById("login-password");
-
-    const username = usernameEl?.value?.trim() || "";
-    const password = passwordEl?.value || "";
+    const username = document.getElementById("login-username")?.value?.trim() || "";
+    const password = document.getElementById("login-password")?.value || "";
 
     if (!username || !password) {
         Notify("Username and password are required.", {
@@ -94,36 +89,22 @@ async function login(event) {
     }
 
     try {
-        // <-- credentials: "include" is required so browser stores the HttpOnly refresh cookie
-        const res = await apiFetch("/auth/login", "POST", {
-            username,
-            password
-        }, {
-            credentials: "include"
-        });
+        const res = await apiFetch("/auth/login", "POST", 
+            { username, password }, 
+            { credentials: "include" }
+        );
 
         const token = res?.data?.token;
         const userId = res?.data?.userid;
 
         if (!token || !userId) {
-            throw new Error("Login failed.");
+            throw new Error("Invalid response format from server.");
         }
 
-        // --------------------------------------------------
-        // Persist access token ONLY (refresh is cookie)
-        // --------------------------------------------------
-        setState(
-            {
-                token,
-                user: userId,
-                username
-            },
-            true
-        );
+        // Persist access token & base user data
+        setState({ token, user: userId, username }, true);
 
-        // --------------------------------------------------
         // Best-effort profile fetch
-        // --------------------------------------------------
         try {
             const profile = await fetchProfile();
             if (profile) {
@@ -137,12 +118,8 @@ async function login(event) {
             });
         }
 
-        // --------------------------------------------------
         // Redirect handling
-        // --------------------------------------------------
-        const redirect =
-            localStorage.getItem("redirectAfterLogin") || "/home";
-
+        const redirect = localStorage.getItem("redirectAfterLogin") || "/home";
         localStorage.removeItem("redirectAfterLogin");
 
         navigate(redirect === "/login" ? "/home" : redirect);
@@ -156,15 +133,12 @@ async function login(event) {
     }
 }
 
-// =========================
-// OPTIONAL: helper to refresh access token
-// call this when you receive 401 to rotate via refresh cookie
-// =========================
+/* =========================
+   TOKEN REFRESH
+========================= */
 async function refreshAccessToken() {
     try {
-        const res = await apiFetch("/auth/refresh", "POST", null, {
-            credentials: "include"
-        });
+        const res = await apiFetch("/auth/refresh", "POST", null, { credentials: "include" });
         const token = res?.data?.token;
         if (token) {
             setState({ token }, true);
@@ -172,7 +146,6 @@ async function refreshAccessToken() {
         }
         throw new Error("No token returned");
     } catch (err) {
-        // token refresh failed -> clear client state
         silentLogout();
         throw err;
     }
@@ -181,42 +154,35 @@ async function refreshAccessToken() {
 /* =========================
    LOGOUT
 ========================= */
-
-// user-initiated
 async function logout() {
     try {
         await apiFetch("/auth/logout", "POST", null, {
             headers: { "X-Refresh-Intent": "1" },
             credentials: "include"
         });
-    } catch {}
-
+    } catch (e) {
+        // Fail silently on server-side logout errors to ensure UI cleans up regardless
+    }
     silentLogout();
 }
 
-// silent / automatic (TDZ-safe)
 function silentLogout() {
     clearState();
-
     sessionStorage.clear();
     localStorage.removeItem("redirectAfterLogin");
 
-    // ⚠️ MUST be async to avoid module-evaluation TDZ
+    // Defends against Module Evaluation TDZ
     queueMicrotask(() => {
         navigate("/login");
     });
 }
 
 /* =========================
-   REACTIVE
+   REACTIVE SUBSCRIPTIONS
 ========================= */
-
 subscribeDeep("userProfile.role", role => {
     document.body.dataset.isAdmin =
-        Array.isArray(role) && role.includes("admin")
-            ? "true"
-            : "false";
+        Array.isArray(role) && role.includes("admin") ? "true" : "false";
 });
 
 export { signup, login, logout, silentLogout, refreshAccessToken };
-

@@ -31,19 +31,7 @@ export function openCropperWithCropperJSBoundedFixedBox({
 
     const controls = createControls(null);
 
-    const {
-      overlay,
-      _wrapper,
-      stage,
-      image,
-      cropTargetW,
-      cropTargetH,
-      aspectRatio
-    } = buildUI({
-      file,
-      type,
-      controlsPanel: controls.panel
-    });
+    const { overlay, _wrapper, stage, image, cropTargetW, cropTargetH, aspectRatio } = buildUI({ file, type, controlsPanel: controls.panel });
 
     objectUrl = image.src;
 
@@ -54,111 +42,72 @@ export function openCropperWithCropperJSBoundedFixedBox({
     //
 
     function cleanup() {
-
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKeyDown);
 
       unlockBodyScroll(previousOverflow);
-
       destroyCropper(cropper);
 
       if (objectUrl) {
         try {
           URL.revokeObjectURL(objectUrl);
-        } catch (_) {}
+        } catch (_) { }
       }
 
       const assets = getAddedAssets();
 
-      if (
-        assets.script &&
-        assets.script.parentNode
-      ) {
-        assets.script.parentNode.removeChild(
-          assets.script
-        );
+      if (assets.script && assets.script.parentNode) {
+        assets.script.parentNode.removeChild(assets.script);
       }
 
-      if (
-        assets.link &&
-        assets.link.parentNode
-      ) {
-        assets.link.parentNode.removeChild(
-          assets.link
-        );
+      if (assets.link && assets.link.parentNode) {
+        assets.link.parentNode.removeChild(assets.link);
       }
 
-      if (
-        overlay &&
-        overlay.parentNode
-      ) {
-        overlay.parentNode.removeChild(
-          overlay
-        );
+      if (overlay && overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
       }
-
     }
 
     //
     // Window handlers
     //
 
-    function onResize() {
-
-      resizeStage(
-        stage,
-        cropTargetW,
-        cropTargetH
-      );
-
+    // Debounce the resize handler by 100ms
+    const onResize = debounce(() => {
+      resizeStage(stage, cropTargetW, cropTargetH);
       if (cropper) {
         cropper.resize();
+        // Recalculate crop box center after resize is done
+        import("./cropperCore.js").then(({ centerCropBox }) => {
+          centerCropBox(cropper, cropTargetW, cropTargetH);
+        });
       }
+    }, 100);
 
-    }
 
     function onKeyDown(e) {
-
       if (e.key === "Escape") {
-
         e.preventDefault();
-
         cleanup();
-
         resolve(null);
-
       }
-
     }
 
-    window.addEventListener(
-      "resize",
-      onResize
-    );
-
-    window.addEventListener(
-      "keydown",
-      onKeyDown
-    );
+    window.addEventListener("resize", onResize);
+    window.addEventListener("keydown", onKeyDown);
 
     //
     // Load CropperJS
     //
 
     try {
-
       await ensureCropper();
-
     } catch (err) {
-
       console.error(err);
-
       cleanup();
-
       resolve(null);
-
       return;
-
     }
 
     //
@@ -166,35 +115,20 @@ export function openCropperWithCropperJSBoundedFixedBox({
     //
 
     try {
-
       cropper = createCropper({
-
         image,
-
         aspectRatio,
-
         cropTargetW,
-
         cropTargetH,
-
         onReady() {
-
           applyPreviewFilters(stage);
-
         }
-
       });
-
     } catch (err) {
-
       console.error(err);
-
       cleanup();
-
       resolve(null);
-
       return;
-
     }
 
     //
@@ -210,108 +144,46 @@ export function openCropperWithCropperJSBoundedFixedBox({
       cancel: cancelBtn
     } = controls.buttons;
 
-    rotateLeftBtn.addEventListener(
-      "click",
-      () => rotateLeft(cropper)
-    );
-
-    rotateRightBtn.addEventListener(
-      "click",
-      () => rotateRight(cropper)
-    );
-
-    zoomInBtn.addEventListener(
-      "click",
-      () => zoomIn(cropper)
-    );
-
-    zoomOutBtn.addEventListener(
-      "click",
-      () => zoomOut(cropper)
-    );
-
-    // ---- Part 2 continues here ----
-
-        //
-    // Fix stage reference for filter previews
-    //
-    // If you followed the previous modules exactly, add this function
-    // to filters.js:
-    //
-    // let previewStage = null;
-    // export function setPreviewStage(stage) {
-    //     previewStage = stage;
-    // }
-    //
-    // Then call:
-    //
-    // setPreviewStage(stage);
-    //
-    // Otherwise, if your controls already receive stage correctly,
-    // you can ignore this section.
+    rotateLeftBtn.addEventListener("click", () => rotateLeft(cropper));
+    rotateRightBtn.addEventListener("click", () => rotateRight(cropper));
+    zoomInBtn.addEventListener("click", () => zoomIn(cropper));
+    zoomOutBtn.addEventListener("click", () => zoomOut(cropper));
 
     //
     // Cancel
     //
-
-    cancelBtn.addEventListener("click", () => {
-
-      cleanup();
-
-      resolve(null);
-
-    });
+    cancelBtn.addEventListener("click", () => { cleanup(); resolve(null); });
 
     //
     // Confirm
     //
-
     confirmBtn.addEventListener("click", async () => {
-
       try {
-
-        const dpr = Math.max(
-          1,
-          window.devicePixelRatio || 1
-        );
-
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
         const blob = await exportBlob({
-
           cropper,
-
-          cropWidth: Math.round(
-            cropTargetW * dpr
-          ),
-
-          cropHeight: Math.round(
-            cropTargetH * dpr
-          ),
-
+          cropWidth: Math.round(cropTargetW * dpr),
+          cropHeight: Math.round(cropTargetH * dpr),
           quality: 0.92
-
         });
-
         cleanup();
-
         resolve(blob);
-
       } catch (err) {
-
-        console.error(
-          "Crop export failed:",
-          err
-        );
-
+        console.error("Crop export failed:", err);
         cleanup();
-
         resolve(null);
-
       }
-
     });
-
   });
+}
 
+// Lightweight debounce utility
+function debounce(func, wait) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
 }
 
 export {

@@ -36,31 +36,12 @@ export function createCropper({
 
     aspectRatio,
 
-    ready() {
+ready() {
       try {
-        const container = this.getContainerData();
-
-        const fitScale = Math.min(
-          1,
-          container.width / cropTargetW,
-          container.height / cropTargetH
-        );
-
-        const cropWidth = cropTargetW * fitScale;
-        const cropHeight = cropTargetH * fitScale;
-
-        this.setCropBoxData({
-          left: (container.width - cropWidth) / 2,
-          top: (container.height - cropHeight) / 2,
-          width: cropWidth,
-          height: cropHeight
-        });
-
+        centerCropBox(this, cropTargetW, cropTargetH);
         this.crop();
       } catch {
-        try {
-          this.crop();
-        } catch {}
+        try { this.crop(); } catch {}
       }
 
       if (typeof onReady === "function") {
@@ -130,5 +111,29 @@ return null;
     height,
     imageSmoothingEnabled: true,
     imageSmoothingQuality: "high"
+  });
+}
+
+// cropperCore.js
+
+export function centerCropBox(cropper, cropTargetW, cropTargetH) {
+  if (!cropper) return;
+  
+  const container = cropper.getContainerData();
+
+  const fitScale = Math.min(
+    1,
+    container.width / cropTargetW,
+    container.height / cropTargetH
+  );
+
+  const cropWidth = cropTargetW * fitScale;
+  const cropHeight = cropTargetH * fitScale;
+
+  cropper.setCropBoxData({
+    left: (container.width - cropWidth) / 2,
+    top: (container.height - cropHeight) / 2,
+    width: cropWidth,
+    height: cropHeight
   });
 }

@@ -1,45 +1,49 @@
-import { AD_URL } from "../state/state";
+import { AD_URL } from "../state/state.js";
 
 (function () {
-    const adElements = document.querySelectorAll(".advertisement");
+    // 1. Unified State Management Systems
+    const adCache = {}; // Stores arrays or network promises
+    const adInstances = new Map(); // Tracks dynamic metadata per active slot
 
+    const adElements = document.querySelectorAll(".advertisement");
     if (adElements.length === 0) {
         console.warn("No advertisement containers found!");
         return;
     }
 
-    const adCache = {}; 
-    const adIntervals = new Map();
-
+    /**
+     * Safely updates DOM structure with a transition fade overlay
+     */
     function renderAd(container, ads, index) {
         const ad = ads[index % ads.length];
+        if (!ad) return;
 
-        // Create ad elements using safe methods instead of innerHTML
         container.classList.add("fade-out");
+
         setTimeout(() => {
-            container.innerHTML = ""; // Clear container
+            container.innerHTML = ""; // Safe container sweep
 
             const adCard = document.createElement("div");
             adCard.className = "ad-card";
 
             const img = document.createElement("img");
-            img.src = ad.image;
-            img.alt = ad.title;
+            img.src = ad.image || "";
+            img.alt = ad.title || "Advertisement";
             img.loading = "lazy";
 
             const adContent = document.createElement("div");
             adContent.className = "ad-content";
 
             const title = document.createElement("h3");
-            title.textContent = ad.title;
+            title.textContent = ad.title || "";
 
             const desc = document.createElement("p");
-            desc.textContent = ad.description;
+            desc.textContent = ad.description || "";
 
             const link = document.createElement("a");
-            link.href = ad.link;
+            link.href = ad.link || "#";
             link.target = "_blank";
-            link.rel = "noopener";
+            link.rel = "noopener noreferrer"; // Hardened window isolation
             link.textContent = "Learn More";
 
             const progress = document.createElement("div");
@@ -54,71 +58,115 @@ import { AD_URL } from "../state/state";
             adCard.appendChild(progress);
 
             container.appendChild(adCard);
+            
             container.classList.remove("fade-out");
             container.classList.add("fade-in");
 
-            // Animate progress bar
-            if (progress) {
-                progress.style.animation = "progressAnim 10s linear forwards";
-            }
+            // Restart progress bar animation sync
+            progress.style.animation = "none";
+            // Force reflow layout calculations to reset the CSS keyframe chain safely
+            void progress.offsetWidth; 
+            progress.style.animation = "progressAnim 10s linear forwards";
         }, 300);
     }
 
-    function loadAndDisplayAds(container, category = "default") {
-        if (adCache[category]) {
-            startRotation(container, adCache[category]);
-            return;
-        }
+    /**
+     * Deduplicates outgoing category queries
+     */
+    async function loadAndDisplayAds(container, category = "default") {
+        try {
+            // Check if active cache layer contains elements or a mid-flight promise
+            if (!adCache[category]) {
+                adCache[category] = fetch(`${AD_URL}?category=${category}`)
+                    .then(res => {
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        return res.json();
+                    })
+                    .catch(err => {
+                        adCache[category] = null; // Flush cache on failure to allow retries
+                        throw err;
+                    });
+            }
 
-        fetch(`${AD_URL}?category=${category}`)
-            .then((response) => response.json())
-            .then((ads) => {
-                if (!ads.length) {
-                    const noAdsMsg = document.createElement("p");
-                    noAdsMsg.textContent = "No ads available";
-                    container.innerHTML = "";
-                    container.appendChild(noAdsMsg);
-                    return;
-                }
-                adCache[category] = ads;
-                startRotation(container, ads);
-            })
-            .catch((error) => {
-                console.error(`Error fetching ads for category '${category}':`, error);
-                const errorMsg = document.createElement("p");
-                errorMsg.textContent = "Error loading ads";
-                container.innerHTML = "";
-                container.appendChild(errorMsg);
-            });
+            const ads = await adCache[category];
+
+            if (!ads || !ads.length) {
+                renderPlaceholder(container, "No ads available");
+                return;
+            }
+
+            initAdRotationSystem(container, ads);
+        } catch (error) {
+            console.error(`Error loading ads for category '${category}':`, error);
+            renderPlaceholder(container, "Error loading ads");
+        }
     }
 
-    function startRotation(container, ads) {
-        let index = 0;
-        renderAd(container, ads, index);
+    function renderPlaceholder(container, message) {
+        const msg = document.createElement("p");
+        msg.className = "ad-placeholder-msg";
+        msg.textContent = message;
+        container.innerHTML = "";
+        container.appendChild(msg);
+    }
 
-        if (adIntervals.has(container)) {
-            clearInterval(adIntervals.get(container));
-        }
+    /**
+     * Initializes rotation tracking context and attaches permanent event listeners ONCE
+     */
+    function initAdRotationSystem(container, ads) {
+        // Initialize instance context properties
+        const instance = {
+            ads,
+            currentIndex: 0,
+            intervalId: null,
+            isPaused: false
+        };
 
-        const intervalId = setInterval(() => {
-            index = (index + 1) % ads.length;
-            renderAd(container, ads, index);
-        }, 10000);
+        adInstances.set(container, instance);
 
-        adIntervals.set(container, intervalId);
+        // Core loop execution worker
+        const cycleRotation = () => {
+            if (instance.isPaused) return;
+            instance.currentIndex = (instance.currentIndex + 1) % instance.ads.length;
+            renderAd(container, instance.ads, instance.currentIndex);
+        };
 
-        // Pause on hover
-        container.addEventListener("mouseenter", () => clearInterval(intervalId));
+        // Render the very first advertisement card
+        renderAd(container, instance.ads, instance.currentIndex);
+        instance.intervalId = setInterval(cycleRotation, 10000);
+
+        // ATTACH PERMANENT LISTENERS (Executed exactly once per block initialization)
+        container.addEventListener("mouseenter", () => {
+            instance.isPaused = true;
+            if (instance.intervalId) {
+                clearInterval(instance.intervalId);
+                instance.intervalId = null;
+            }
+            // Optional: pause the progress bar animation via standard CSS layout state
+            const progress = container.querySelector(".ad-progress");
+            if (progress) progress.style.animationPlayState = "paused";
+        });
+
         container.addEventListener("mouseleave", () => {
-            startRotation(container, ads); // restart rotation
+            instance.isPaused = false;
+            
+            const progress = container.querySelector(".ad-progress");
+            if (progress) progress.style.animationPlayState = "running";
+
+            // Restart structural rotation framework loop safely without stacking bindings
+            if (!instance.intervalId) {
+                instance.intervalId = setInterval(cycleRotation, 10000);
+            }
         });
     }
 
+    // Lazy load runtime configurations
     const observer = new IntersectionObserver((entries, obs) => {
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
                 const container = entry.target;
                 obs.unobserve(container);
+                
                 const category = container.getAttribute("data-category") || "default";
                 loadAndDisplayAds(container, category);
             }

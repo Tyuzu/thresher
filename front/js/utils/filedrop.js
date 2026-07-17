@@ -7,16 +7,34 @@ import Notify from "../components/ui/Notify.mjs";
 const CHUNK_SIZE = 256 * 1024; // 256KB
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 
-// Validate file MIME type by reading first 512 bytes (like backend)
+/**
+ * Validates a file's underlying MIME signature by checking its binary magic numbers.
+ * Safely handles validation without blowing out the JavaScript call stack.
+ */
 async function validateFile(file) {
-    const blob = file.slice(0, 512);
+    // Read the first 4 bytes of the file to identify its file signature
+    const blob = file.slice(0, 4);
     const buffer = await blob.arrayBuffer();
     const arr = new Uint8Array(buffer);
-    const header = String.fromCharCode.apply(null, arr);
-    const mime = new Blob([header]).type || file.type;
+    
+    let hexSignature = "";
+    for (let i = 0; i < arr.length; i++) {
+        hexSignature += arr[i].toString(16).toUpperCase().padStart(2, "0");
+    }
 
-    if (!ALLOWED_TYPES.includes(mime)) {
-        throw new Error(`Unsupported file type: ${file.type}`);
+    // Determine the MIME type using known hex byte markers
+    let derivedMime = "";
+    if (hexSignature.startsWith("89504E47")) {
+        derivedMime = "image/png";
+    } else if (hexSignature.startsWith("FFD8FF")) {
+        derivedMime = "image/jpeg";
+    } else {
+        // Fall back to the browser-reported type if signature checking is inconclusive
+        derivedMime = file.type;
+    }
+
+    if (!ALLOWED_TYPES.includes(derivedMime)) {
+        throw new Error(`Unsupported file signature format variant: ${file.type}`);
     }
 }
 
@@ -28,9 +46,10 @@ export async function uploadChunk(formData, signal) {
     });
 
     if (!res.ok) {
-throw new Error("Chunk upload failed");
-}
-    return await res.json();
+        const errorText = await res.text().catch(() => "Unknown upload server exception.");
+        throw new Error(`Chunk upload failed: ${res.status} - ${errorText}`);
+    }
+    return res.json();
 }
 
 export async function uploadFileInChunks({
@@ -43,12 +62,17 @@ export async function uploadFileInChunks({
     onProgress = () => {},
     maxRetries = 3
 }) {
-    await validateFile(file); // frontend MIME check
+    await validateFile(file);
 
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
     let uploadedBytes = 0;
 
     for (let i = 0; i < totalChunks; i++) {
+        // Stop execution immediately if the user cancels the upload
+        if (signal?.aborted) {
+            throw new DOMException("Upload aborted by user action context.", "AbortError");
+        }
+
         const start = i * CHUNK_SIZE;
         const end = Math.min(start + CHUNK_SIZE, file.size);
         const chunk = file.slice(start, end);
@@ -67,16 +91,22 @@ export async function uploadFileInChunks({
 
         let attempt = 0;
         let success = false;
+        
         while (attempt < maxRetries && !success) {
             try {
                 await uploadChunk(formData, signal);
                 success = true;
             } catch (err) {
+                // Do not retry if the operation was explicitly cancelled
+                if (err.name === "AbortError" || signal?.aborted) {
+                    throw new DOMException("Upload safely cancelled.", "AbortError");
+                }
+                
                 attempt++;
-                if (attempt === maxRetries) {
-throw err;
-}
-                await new Promise(res => setTimeout(res, 500 * attempt));
+                if (attempt === maxRetries) throw err;
+                
+                // Exponential backoff delay tracking calculation logic
+                await new Promise((res) => setTimeout(res, 500 * attempt));
             }
         }
 
@@ -99,29 +129,35 @@ export async function uploadImagesWithQueue({
     onError = () => {},
     concurrency = 3
 }) {
-    const queue = files.filter(file => ALLOWED_TYPES.includes(file.type));
+    // Standardize deep array copying references safely
+    const workingQueue = [...files];
     const uploaded = [];
     const failed = [];
-    const controllers = [];
-
-    if (queue.length < files.length) {
-        Notify("Only .jpg and .png files are allowed.", {type:"warning",duration:3000, dismissible:true});
-    }
+    const activeControllers = new Set();
 
     function createProgressBar(fileName) {
         const label = createElement("div", {}, [`Uploading ${fileName}`]);
-        const bar = createElement("progress", { max: 100, value: 0 });
+        const bar = createElement("progress", { max: "100", value: "0" });
         const wrapper = createElement("div", { class: "upload-progress-wrapper" }, [label, bar]);
-        containerEl.appendChild(wrapper);
+        if (containerEl) containerEl.appendChild(wrapper);
         return bar;
     }
 
-    async function startNext(slotId) {
-        while (queue.length) {
-            const file = queue.shift();
-            const controller = new AbortController();
-            controllers.push(controller);
+    // Atomic worker pool runner logic context loop execution
+    async function workerInstance() {
+        while (workingQueue.length > 0) {
+            const file = workingQueue.shift();
+            if (!file) continue;
 
+            // Pre-validation filtering to prevent unexpected layout shifts
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                failed.push({ file, error: "MIME format layout rejected context rules." });
+                Notify(`Skipped invalid file format: ${file.name}`, { type: "warning", duration: 3000 });
+                continue;
+            }
+
+            const controller = new AbortController();
+            activeControllers.add(controller);
             const bar = createProgressBar(file.name);
 
             try {
@@ -132,40 +168,49 @@ export async function uploadImagesWithQueue({
                     entityId,
                     token,
                     signal: controller.signal,
-                    onProgress: percent => bar.value = percent
+                    onProgress: (percent) => {
+                        if (bar) bar.value = percent;
+                    }
                 });
                 uploaded.push(result);
             } catch (err) {
                 failed.push({ file, error: err.message });
-                bar.value = 0;
-                bar.classList.add("error");
-                Notify(`Upload failed: ${file.name}`, {type:"error",duration:3000, dismissible:true});
+                if (bar) {
+                    bar.value = 0;
+                    bar.classList.add("error");
+                }
+                if (err.name !== "AbortError") {
+                    Notify(`Upload failed: ${file.name}`, { type: "error", duration: 3000, dismissible: true });
+                }
+            } finally {
+                activeControllers.delete(controller);
             }
         }
     }
 
-    // Run slots concurrently
-    const slots = Array.from({ length: concurrency }, (_, i) => startNext(i));
-    await Promise.all(slots);
+    // Initialize parallel operational processing slots safely
+    const activeWorkersCount = Math.min(concurrency, workingQueue.length);
+    const workerPromises = Array.from({ length: activeWorkersCount }, () => workerInstance());
+    
+    await Promise.all(workerPromises);
 
-    if (uploaded.length) {
-onComplete(uploaded);
-}
-    if (failed.length) {
-onError(failed);
-}
+    if (uploaded.length > 0) onComplete(uploaded);
+    if (failed.length > 0) onError(failed);
 
     return {
-        cancelAll: () => controllers.forEach(ctrl => ctrl.abort())
+        cancelAll: () => {
+            activeControllers.forEach((ctrl) => ctrl.abort());
+            activeControllers.clear();
+            workingQueue.length = 0; // Completely purge remaining array elements securely
+        }
     };
 }
 
-
-async function fileAlreadyExists({ entityType, pictureType, entityId, fileName }) {
+export async function fileAlreadyExists({ entityType, pictureType, entityId, fileName }) {
     try {
         const res = await fetch(
             `${FILEDROP_URL}/uploads/exists?entityType=${entityType}&pictureType=${pictureType}&entityId=${entityId}&fileName=${encodeURIComponent(fileName)}`,
-            { method: 'HEAD' }
+            { method: "HEAD" }
         );
         return res.ok;
     } catch {

@@ -8,7 +8,7 @@ import Imagex from "../../../components/base/Imagex.js";
 import { updateImageWithCrop } from "../../../utils/bannerEditor.js";
 import { displayCreateOrEditBaitoProfile } from "../create/createBaitoProfile.js";
 import Notify from "../../../components/ui/Notify.mjs";
-import { createTabs } from "../../../components/ui/createTabs.js";
+import { createTabs } from "../../utils/persistTabs.js";
 
 export async function displayManageWorkerProfile(contentContainer, isLoggedIn, workerId) {
     const container = createElement("div", { id: "manage-worker-profile-page", class: "manage-worker-profile-page" });

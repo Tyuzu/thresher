@@ -68,9 +68,18 @@ export async function exportBlob({
 
   const filteredCanvas = exportWithFilters(canvas);
 
-  return await toBlobAsync(
+  const blob = await toBlobAsync(
     filteredCanvas,
     "image/jpeg",
     quality
   );
+
+  // Performance win: Explicitly clear widths to free up GPU memory 
+  // and trigger immediate browser garbage collection on large canvas contexts
+  canvas.width = 0;
+  canvas.height = 0;
+  filteredCanvas.width = 0;
+  filteredCanvas.height = 0;
+
+  return blob;
 }

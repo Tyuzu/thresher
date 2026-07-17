@@ -1,47 +1,60 @@
 import { createElement } from "../components/createElement";
 
-// --- Icon button utility with optional label and aria-label ---
+/**
+ * Creates an accessible custom icon button.
+ * 
+ * @param {Object} props
+ * @param {string} props.classSuffix - CSS subclass appended to the button container.
+ * @param {string} props.svgMarkup - Raw inline SVG content string.
+ * @param {Function} props.onClick - Execution callback when the button is triggered.
+ * @param {string} [props.label=""] - Optional text displayed inside the button next to the icon.
+ * @param {string} [props.id=""] - DOM ID identification.
+ * @param {string} [props.ariaLabel=""] - Direct screen-reader identifier.
+ * @returns {HTMLElement} The initialized interactive button node.
+ */
 export function createIconButton({ classSuffix, svgMarkup, onClick, label = "", id = "", ariaLabel = "" }) {
+  // Defensive validation for class strings
+  const suffix = classSuffix ? ` ${classSuffix}` : "";
+  
   const button = createElement("div", { 
-    class: `logoicon ${classSuffix}`, 
-    id,
+    class: `logoicon${suffix}`.trim(), 
+    id: id || undefined, // Drop attribute if value is blank
     role: "button",
     "aria-label": ariaLabel || label || "Icon Button",
-    tabIndex: 0
+    "tabindex": "0" // Kept lowercase for strict HTML parsing safety
   });
 
-  // Wrap SVG in span
-  const iconSpan = createElement("span", {});
-  iconSpan.innerHTML = svgMarkup;
+  // Render SVG safely wrapped in an isolated layout element
+  const iconSpan = createElement("span", { class: "icon-wrapper" });
+  if (svgMarkup) {
+    iconSpan.innerHTML = svgMarkup;
+  }
+  button.appendChild(iconSpan);
 
-  const children = [iconSpan];
-
-  // If label text provided, add another span visually
+  // Append text label if provided
   if (label) {
-    const textSpan = createElement("span", {}, [label]);
-    children.push(textSpan);
+    const textSpan = createElement("span", { class: "button-label" }, [label]);
+    button.appendChild(textSpan);
   }
 
-  children.forEach(child => button.appendChild(child));
-
-  // Click handler
-  if (onClick) {
+  // Interactivity setup
+  if (typeof onClick === "function") {
     const clickHandler = (e) => { 
       e.preventDefault(); 
-      onClick(); 
+      onClick(e); // Pass the event object upstream
     };
-    button.addEventListener("click", clickHandler);
 
-    // Keyboard accessibility (Enter/Space)
     const keyHandler = (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        onClick();
+        onClick(e); // Pass the event object upstream
       }
     };
+
+    button.addEventListener("click", clickHandler);
     button.addEventListener("keydown", keyHandler);
 
-    // Return a cleanup function for removing listeners if needed
+    // Clean reference layer to handle manual element dismounts
     button.cleanup = () => {
       button.removeEventListener("click", clickHandler);
       button.removeEventListener("keydown", keyHandler);

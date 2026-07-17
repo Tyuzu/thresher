@@ -1,35 +1,190 @@
+/* ==========================================================================
+   Image Cropper Component Stylesheet
+   ========================================================================== */
+
+/* 1. Backdrop Overlay */
 .crop-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.8);
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-  }
-  
-  .crop-container {
-    position: relative;
-    touch-action: none;
-    user-select: none;
-    flex-grow: 1;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-  }
-  
-  .crop-box {
-    pointer-events: none;
-    border: 2px solid white;
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
-    position: absolute;
-    z-index: 10;
-  }
-  
-  .crop-buttons {
-    margin-top: 10px;
-    display: flex;
-    gap: 10px;
-  }
-  
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75); /* Deepened slightly for better focus */
+  z-index: 10000;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* 2. Scrollable Modal Wrapper */
+.crop-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 96vw;
+  max-height: 94vh;
+  overflow: auto;
+}
+
+/* 3. The Cropper Area Stage */
+.crop-stage {
+  max-width: 95vw;
+  max-height: 90vh;
+  background: #111;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+/* 4. Controls Main Panel */
+.crop-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(95vw, 1200px);
+  margin-top: 12px;
+  color: #fff;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  box-sizing: border-box;
+}
+
+/* 5. Toolbars & Action Buttons Layouts */
+.crop-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.crop-presets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* 6. Base Button Customization */
+.crop-panel button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.crop-panel button:hover {
+  background: #3a3a3a;
+}
+
+.crop-panel button:active {
+  transform: scale(0.97);
+}
+
+/* Specific Preset Buttons */
+.crop-presets button {
+  background: #1f3a5f;
+}
+
+.crop-presets button:hover {
+  background: #2a4f82;
+}
+
+/* 7. Grid for Adjustments */
+.crop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+/* 8. Individual Slider Panel Groups */
+.adjustment-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  box-sizing: border-box;
+}
+
+.adjustment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.adjustment-header strong {
+  font-size: 14px;
+}
+
+.adjustment-header span {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.adjustment-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 9. Dark-Themed Range Sliders customization */
+.crop-panel input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Track styles */
+.crop-panel input[type="range"]::-webkit-slider-runnable-track {
+  background: rgba(255, 255, 255, 0.15);
+  height: 6px;
+  border-radius: 3px;
+}
+
+.crop-panel input[type="range"]::-moz-range-track {
+  background: rgba(255, 255, 255, 0.15);
+  height: 6px;
+  border-radius: 3px;
+}
+
+/* Thumb/Handler styles */
+.crop-panel input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -5px; /* Centers thumb on track in Chrome */
+  background-color: #3b82f6; /* Blue Accent */
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  transition: transform 0.1s ease;
+}
+
+.crop-panel input[type="range"]::-moz-range-thumb {
+  border: none;
+  background-color: #3b82f6;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  transition: transform 0.1s ease;
+}
+
+.crop-panel input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.crop-panel input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.15);
+}

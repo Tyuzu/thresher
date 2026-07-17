@@ -5,7 +5,7 @@ import { navigate } from "../../routes/index.js";
 import Button from "../../components/base/Button.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import Imagex from "../../components/base/Imagex.js";
-import { createTabs } from "../../components/ui/createTabs.js";
+import { createTabs } from "../../utils/persistTabs.js";
 
 export const clearElement = (el) => {
   while (el.firstChild) {

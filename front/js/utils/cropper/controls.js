@@ -244,6 +244,8 @@ export function createControls(stage) {
       grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
       gap:10px;
       width:100%;
+      overflow-y:scroll;
+      max-height:30vh;
     `
   });
 

@@ -1,6 +1,6 @@
 /**
  * Application Initialization Best Practices
- * Shows how to use the new utilities for error tracking, performance monitoring, etc.
+ * Production-optimized error tracking, lifecycle diagnostics, and execution monitoring.
  */
 
 import { errorTracker } from "../api/errorHandler.js";
@@ -8,40 +8,61 @@ import { PerformanceMonitor } from "../utils/performanceMonitor.js";
 import { deferNonCritical } from "../utils/lazyLoad.js";
 
 /**
+ * Cleanly decodes JWT signatures supporting unicode payload sets safely
+ */
+function safeDecodeJWT(token) {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    
+    const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+    
+    // FIXED: Resolves malformed character bugs across broad multi-byte/unicode payload variations
+    const binaryString = atob(padded);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    const decodedText = new TextDecoder().decode(bytes);
+    return JSON.parse(decodedText);
+  } catch (err) {
+    console.error("[Auth] Token extraction metadata failure:", err);
+    return null;
+  }
+}
+
+/**
  * Initialize error tracking
  */
 export function initializeErrorTracking() {
-  // Set user ID when authenticated
   const token = localStorage.getItem("token");
   if (token) {
-    try {
-      const payload = token.split(".")[1];
-      const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-      const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
-      const decoded = JSON.parse(atob(padded));
-      errorTracker.userId = decoded.userId || decoded.sub || "anonymous";
-    } catch {
-      errorTracker.userId = "anonymous";
-    }
+    const decoded = safeDecodeJWT(token);
+    errorTracker.userId = decoded?.userId || decoded?.sub || "anonymous";
+  } else {
+    errorTracker.userId = "anonymous";
   }
 
-  // Set environment
   const isDev = window.location.hostname.includes("localhost");
   errorTracker.environment = isDev ? "development" : "production";
 
-  // Listen for uncaught errors
   window.addEventListener("error", (event) => {
     errorTracker.track(event.error || new Error(event.message), {
       type: "uncaught_error",
       filename: event.filename,
-      lineno: event.lineno
+      lineno: event.lineno,
+      colno: event.colno,
+      url: window.location.href
     });
   });
 
-  // Listen for unhandled promise rejections
   window.addEventListener("unhandledrejection", (event) => {
-    errorTracker.track(event.reason || new Error("Unhandled promise rejection"), {
-      type: "unhandled_rejection"
+    const reason = event.reason;
+    errorTracker.track(reason instanceof Error ? reason : new Error(String(reason)), {
+      type: "unhandled_rejection",
+      url: window.location.href
     });
   });
 }
@@ -53,88 +74,110 @@ export function initializePerformanceMonitoring() {
   const perfMonitor = new PerformanceMonitor({
     enabled: true,
     verbose: window.location.hostname.includes("localhost"),
-    reportEndpoint: null // Set to your metrics endpoint
+    reportEndpoint: "/api/v1/metrics" 
   });
 
-  // Start observing Web Vitals
   perfMonitor.observeWebVitals();
-
-  // Mark app initialization
   perfMonitor.mark("app-init-start");
 
-  // Report metrics after page load
-  window.addEventListener("load", () => {
+  const finalizeMetrics = () => {
     perfMonitor.mark("app-init-end");
     perfMonitor.measure("app-init", "app-init-start", "app-init-end");
 
-    // Defer reporting to avoid blocking
     deferNonCritical([
       () => perfMonitor.reportMetrics()
     ]);
-  });
+  };
+
+  // FIXED: Bypasses the race-condition where `load` fires before initialization scripts execute
+  if (document.readyState === "complete") {
+    finalizeMetrics();
+  } else {
+    window.addEventListener("load", finalizeMetrics, { once: true });
+  }
 
   return perfMonitor;
 }
 
 /**
- * Initialize analytics tracking (example)
+ * Initialize analytics tracking
  */
 export function initializeAnalytics() {
-  // Defer analytics initialization to improve FCP
   deferNonCritical([
     () => {
       if (window.location.hostname.includes("localhost")) {
         console.warn("[Analytics] Deferred initialization complete");
       }
-      // Load your analytics library here
+      // Load third-party tags safely here
     }
   ]);
 }
 
 /**
- * Setup health checks
+ * Setup health checks with background performance optimizations
  */
 export function setupHealthChecks() {
-  // Monitor API health periodically
-  setInterval(async () => {
+  let intervalId = null;
+
+  const runCheck = async () => {
+    // FIXED: Aborts execution loops if the page context shifts out of operational focus
+    if (document.hidden) return;
+
     try {
       const response = await fetch("/api/v1/health", {
         signal: AbortSignal.timeout(5000)
       });
 
       if (!response.ok) {
-        console.warn("API health check failed:", response.status);
+        errorTracker.track(new Error(`API Health failure: ${response.status}`), {
+          context: "health_check",
+          status: response.status
+        });
       }
     } catch (error) {
-      console.warn("API health check error:", error);
-      // Could track this to errorTracker
+      errorTracker.track(error, { context: "health_check_network_fault" });
     }
-  }, 5 * 60 * 1000); // Every 5 minutes
+  };
+
+  const startPolling = () => {
+    if (!intervalId) {
+      intervalId = setInterval(runCheck, 5 * 60 * 1000);
+      runCheck(); // Initial execution invocation
+    }
+  };
+
+  const stopPolling = () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  };
+
+  // Listens directly to the host application interface layer lifecycle context shifts
+  document.addEventListener("visibilitychange", () => {
+    document.hidden ? stopPolling() : startPolling();
+  });
+
+  startPolling();
 }
 
 /**
- * Full app initialization
+ * Full application bootstrap execution pipeline
  */
 export async function initializeApp() {
   try {
-    // 1. Setup error tracking (do this first!)
     initializeErrorTracking();
 
-    // 2. Setup performance monitoring
     const perfMonitor = initializePerformanceMonitoring();
 
-    // 3. Setup analytics (deferred)
     initializeAnalytics();
 
-    // 4. Setup health checks (deferred)
     deferNonCritical([setupHealthChecks]);
 
-    if (window.location.hostname.includes("localhost")) {
-      console.warn("[App] Initialization complete");
-    }
+    const isLocal = window.location.hostname.includes("localhost");
 
-    // Expose for debugging
-    if (window.location.hostname.includes("localhost")) {
+    if (isLocal) {
+      console.warn("[App] Initialization complete");
       window.__APP_DEBUG = {
         perfMonitor,
         errorTracker,

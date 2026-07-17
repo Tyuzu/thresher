@@ -2,7 +2,7 @@ import { createElement } from "../../components/createElement.js";
 import { reportEntity } from "../reporting/reporting.js";
 import { apiFetch } from "../../api/api.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
-import { createTabs } from "../../components/ui/createTabs.js";
+import { createTabs } from "../../utils/persistTabs.js";
 import Imagex from "../../components/base/Imagex.js";
 
 // --- Helpers ---

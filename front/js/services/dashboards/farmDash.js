@@ -1,6 +1,6 @@
 import { createElement } from "../../components/createElement.js";
 import { apiFetch } from "../../api/api.js";
-import { createTabs } from "../../components/ui/createTabs.js";
+import { createTabs } from "../../utils/persistTabs.js";
 import { displayOrders } from "../crops/orders/orders.js";
 import { displayMyFarm } from "../crops/farm/myFarms.js";
 
