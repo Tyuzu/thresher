@@ -15,15 +15,15 @@ export async function renderPost(posts, postsContainer, postmetadata, isNew) {
     if (activeVideoPlayers.length > 0) {
         activeVideoPlayers.forEach(v => {
             if (v && typeof v.cleanup === "function") {
-v.cleanup();
-}
+                v.cleanup();
+            }
         });
         activeVideoPlayers = [];
     }
 
     if (!Array.isArray(posts)) {
-posts = [posts];
-}
+        posts = [posts];
+    }
 
     const isLoggedIn = Boolean(getState("token"));
     const user = getState("user");
@@ -98,8 +98,8 @@ posts = [posts];
 export function cleanupRenderPost() {
     activeVideoPlayers.forEach(v => {
         if (v && typeof v.cleanup === "function") {
-v.cleanup();
-}
+            v.cleanup();
+        }
     });
     activeVideoPlayers = [];
 }
