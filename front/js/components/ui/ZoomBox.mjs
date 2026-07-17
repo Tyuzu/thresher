@@ -19,19 +19,19 @@ import { dispatchZoomBoxEvent } from "../../utils/eventDispatcher.js";
 function getMediaType(src) {
     const lower = src.toLowerCase();
     if (/\.(mp4|webm|ogg|mov|avi|mkv)$/.test(lower)) {
-return "video";
-}
+        return "video";
+    }
     return "image";
 }
 
 // Main ZoomBox factory
 const ZoomBox = (mediaItems, initialIndex = 0) => {
     if (!Array.isArray(mediaItems) || mediaItems.length === 0) {
-return;
-}
+        return;
+    }
     if (document.getElementById("zoombox")) {
-return;
-}
+        return;
+    }
 
     const state = {
         zoomLevel: 1,
@@ -50,6 +50,7 @@ return;
         mediaType: null
     };
 
+    // --- Base DOM Shell Preparation ---
     const zoombox = createOverlay();
     zoombox.id = "zoombox";
     zoombox.setAttribute("role", "dialog");
@@ -60,92 +61,14 @@ return;
     content.setAttribute("data-zoombox-content", "");
     content.setAttribute("tabindex", "-1");
     content.style.outline = "none";
+    zoombox.appendChild(content);
 
-    // --- Media renderer ---
-    const renderMedia = (index) => {
-        // Cleanup previous listeners
-        if (state.currentMedia && state.currentMedia._cleanupListeners) {
-            state.currentMedia._cleanupListeners();
-        }
-        if (state.currentMedia) {
-state.currentMedia.remove();
-}
+    let zoomButtonsContainer = null;
 
-        const src = mediaItems[index];
-        const type = getMediaType(src);
-        state.mediaType = type;
-
-        const element = type === "video"
-            ? createVideoElement(src)
-            : createImageElement(src);
-
-        // Setup image-specific interactions
-        if (type === "image") {
-            const onWheel = (e) => smoothZoom(e, element, state, zoombox);
-            const onDown = (e) => handleMouseDown(e, state, element);
-
-            element.addEventListener("wheel", onWheel, { passive: false });
-            element.addEventListener("mousedown", onDown);
-
-            // Cleanup helper
-            element._cleanupListeners = () => {
-                element.removeEventListener("wheel", onWheel);
-                element.removeEventListener("mousedown", onDown);
-            };
-
-            preloadImages(mediaItems, index);
-        }
-
-        content.insertBefore(element, closeBtn);
-        state.currentMedia = element;
-
-        dispatchZoomBoxEvent("mediachange", { index, src, type });
-    };
-
-    // --- Initial render ---
-    const initialSrc = mediaItems[state.currentIndex];
-    const initialType = getMediaType(initialSrc);
-    const media = initialType === "video"
-        ? createVideoElement(initialSrc)
-        : createImageElement(initialSrc);
-
-    state.mediaType = initialType;
-    state.currentMedia = media;
-
-    if (initialType === "image") {
-        const onWheel = (e) => smoothZoom(e, media, state, zoombox);
-        const onDown = (e) => handleMouseDown(e, state, media);
-        media.addEventListener("wheel", onWheel, { passive: false });
-        media.addEventListener("mousedown", onDown);
-        media._cleanupListeners = () => {
-            media.removeEventListener("wheel", onWheel);
-            media.removeEventListener("mousedown", onDown);
-        };
-        preloadImages(mediaItems, state.currentIndex);
-    }
-
-    content.appendChild(media);
-
-    // --- Navigation buttons ---
-    if (mediaItems.length > 1) {
-        const [prevBtn, nextBtn] = createNavigationButtons(
-            mediaItems,
-            media,
-            state,
-            preloadImages,
-            updateTransform,
-            renderMedia
-        );
-        content.appendChild(prevBtn);
-        content.appendChild(nextBtn);
-    }
-
-    // --- Close button ---
+    // --- Close logic (defined early so renderMedia and closeBtn can use it) ---
     const closeZoomBox = () => {
         const box = document.getElementById("zoombox");
-        if (!box) {
-return;
-}
+        if (!box) return;
 
         const transitionDuration =
             parseFloat(getComputedStyle(box).transitionDuration || "0.3") * 1000;
@@ -164,15 +87,77 @@ return;
     const closeBtn = createCloseButton(closeZoomBox);
     content.appendChild(closeBtn);
 
-    // --- Zoom buttons (only for images) ---
-    if (initialType === "image") {
-        const zoomButtons = createZoomButtons(media, state, zoombox);
-        zoombox.appendChild(zoomButtons);
+    // --- Media renderer ---
+    const renderMedia = (index) => {
+        // 1. Cleanup previous media & event listeners
+        if (state.currentMedia) {
+            if (state.currentMedia._cleanupListeners) {
+                state.currentMedia._cleanupListeners();
+            }
+            state.currentMedia.remove();
+        }
+
+        // 2. Clean up old zoom buttons if they exist
+        if (zoomButtonsContainer) {
+            zoomButtonsContainer.remove();
+            zoomButtonsContainer = null;
+        }
+
+        const src = mediaItems[index];
+        const type = getMediaType(src);
+        state.mediaType = type;
+
+        const element = type === "video"
+            ? createVideoElement(src)
+            : createImageElement(src);
+
+        // 3. Setup interactions (Images only)
+        if (type === "image") {
+            const onWheel = (e) => smoothZoom(e, element, state, zoombox);
+            const onDown = (e) => handleMouseDown(e, state, element);
+
+            element.addEventListener("wheel", onWheel, { passive: false });
+            element.addEventListener("mousedown", onDown);
+
+            element._cleanupListeners = () => {
+                element.removeEventListener("wheel", onWheel);
+                element.removeEventListener("mousedown", onDown);
+            };
+
+            preloadImages(mediaItems, index);
+
+            // Dynamically inject zoom UI only when viewing an image
+            zoomButtonsContainer = createZoomButtons(element, state, zoombox);
+            zoombox.appendChild(zoomButtonsContainer);
+        }
+
+        // 4. Insert before the close button to keep DOM ordering clean
+        content.insertBefore(element, closeBtn);
+        state.currentMedia = element;
+
+        dispatchZoomBoxEvent("mediachange", { index, src, type });
+    };
+
+    // --- Run Initial Render via the unified renderMedia ---
+    renderMedia(state.currentIndex);
+
+    // --- Navigation controls ---
+    if (mediaItems.length > 1) {
+        const [prevBtn, nextBtn] = createNavigationButtons(
+            mediaItems,
+            state.currentMedia,
+            state,
+            preloadImages,
+            updateTransform,
+            renderMedia
+        );
+        content.appendChild(prevBtn);
+        content.appendChild(nextBtn);
     }
 
-    // --- Assemble DOM ---
-    zoombox.appendChild(content);
-    document.getElementById("app").appendChild(zoombox);
+    // --- Mount safely ---
+    const mountPoint = document.getElementById("app") || document.body;
+    mountPoint.appendChild(zoombox);
 
     // --- Keyboard handling ---
     const onKeyDown = (e) => {
@@ -193,7 +178,7 @@ return;
     };
     document.addEventListener("keydown", onKeyDown);
 
-    // --- Show box ---
+    // --- Reveal transition ---
     requestAnimationFrame(() => {
         zoombox.style.opacity = "1";
         closeBtn.focus();

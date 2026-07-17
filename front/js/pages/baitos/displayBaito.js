@@ -1,6 +1,6 @@
 import { displayBaito } from '../../services/baitos/onebaito/baitoDisplay.js';
 
-async function Baito(isLoggedIn, t, baitoid, contentContainer) {
+async function Baito(isLoggedIn,  baitoid, contentContainer) {
     displayBaito(isLoggedIn, baitoid, contentContainer)
 }
 

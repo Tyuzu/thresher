@@ -1,7 +1,8 @@
 import "../../../css/ui/Modal.css";
 import { createElement } from "../../components/createElement.js";
 
-let openModals = 0;
+let activeModalCount = 0;
+let uniqueInstanceIdCounter = 0;
 let bodyStyleEl = null;
 
 function lockBodyScroll() {
@@ -14,19 +15,19 @@ function lockBodyScroll() {
 }
 
 function unlockBodyScroll() {
-  if (openModals === 0 && bodyStyleEl) {
+  if (activeModalCount === 0 && bodyStyleEl) {
     bodyStyleEl.remove();
     bodyStyleEl = null;
   }
 }
 
-function makeHeader(title, onClose, uid, showCloseButton) {
+function makeHeader(title, onClose, instanceId, showCloseButton) {
   if (!title && !showCloseButton) {
-return null;
-}
+    return null;
+  }
 
   const heading = title
-    ? createElement("h3", { id: `modal-title-${uid}` }, [title])
+    ? createElement("h3", { id: `modal-title-${instanceId}` }, [title])
     : null;
 
   const closeBtn = showCloseButton
@@ -48,15 +49,21 @@ return null;
   };
 }
 
-function makeBody(content, uid) {
+function makeBody(content, instanceId) {
   const node = typeof content === "function" ? content() : content;
-  const children = node instanceof HTMLElement
-    ? [node]
-    : [document.createTextNode(node === null ? "" : String(node))];
+  let children = [];
+
+  if (node instanceof HTMLElement || node instanceof DocumentFragment) {
+    children = [node];
+  } else if (Array.isArray(node)) {
+    children = node;
+  } else {
+    children = [document.createTextNode(node === null || node === undefined ? "" : String(node))];
+  }
 
   const body = createElement(
     "div",
-    { class: "modal-body", id: `modal-desc-${uid}` },
+    { class: "modal-body", id: `modal-desc-${instanceId}` },
     children
   );
 
@@ -66,16 +73,10 @@ function makeBody(content, uid) {
 function simpleDurationMs(el) {
   const cs = window.getComputedStyle(el);
   const toMs = v => {
-    if (!v) {
-return 0;
-}
+    if (!v) return 0;
     v = v.split(",")[0].trim();
-    if (v.endsWith("ms")) {
-return parseFloat(v) || 0;
-}
-    if (v.endsWith("s")) {
-return (parseFloat(v) || 0) * 1000;
-}
+    if (v.endsWith("ms")) return parseFloat(v) || 0;
+    if (v.endsWith("s")) return (parseFloat(v) || 0) * 1000;
     return parseFloat(v) || 0;
   };
   return Math.max(
@@ -86,7 +87,6 @@ return (parseFloat(v) || 0) * 1000;
 }
 
 export default function Modal({
-  // existing
   title = "",
   content = "",
   onClose = null,
@@ -99,7 +99,6 @@ export default function Modal({
   actions = null,
   force = false,
 
-  // NEW (all optional, backward-safe)
   variant = "default",          // default | theater | alert | sheet
   showHeader = true,
   showCloseButton = true,
@@ -108,11 +107,14 @@ export default function Modal({
   onBeforeClose = null,
   onAfterClose = null
 } = {}) {
-  openModals += 1;
-  const uid = openModals;
+  activeModalCount += 1;
+  uniqueInstanceIdCounter += 1;
+  
+  // Fixed: Collision-free instance IDs separate from active layout count
+  const instanceId = uniqueInstanceIdCounter;
 
   const zBase = 1000;
-  const zIndex = zBase + uid * 10;
+  const zIndex = zBase + activeModalCount * 10;
 
   const overlay = createElement("div", { class: "modal-overlay" });
   const dialog = createElement("div", {
@@ -129,8 +131,13 @@ export default function Modal({
   lockBodyScroll();
   const previouslyFocused = document.activeElement;
 
+  // Track closure execution to block duplicate invocation cycles
+  let isClosing = false;
+
   const cleanup = () => {
-    dialog.removeEventListener("keydown", trap);
+    if (isClosing) return;
+    isClosing = true;
+
     modal.classList.remove("modal--fade-in");
     modal.classList.add("modal--fade-out");
 
@@ -141,25 +148,29 @@ export default function Modal({
     );
 
     setTimeout(() => {
+      // Fixed: Keydown trap dismantled only when element leaves the view layer
+      modal.removeEventListener("keydown", trap);
       modal.remove();
-      openModals = Math.max(0, openModals - 1);
+      
+      activeModalCount = Math.max(0, activeModalCount - 1);
       unlockBodyScroll();
-      previouslyFocused?.focus?.();
+      
+      if (previouslyFocused && typeof previouslyFocused.focus === "function") {
+        previouslyFocused.focus();
+      }
+      onAfterClose?.();
     }, ms + 40);
   };
 
   const wrappedClose = (data) => {
-    if (force) {
-return;
-}
+    if (force || isClosing) return;
     onBeforeClose?.();
     cleanup();
     if (returnDataOnClose) {
-onClose?.(data);
-} else {
-onClose?.();
-}
-    onAfterClose?.();
+      onClose?.(data);
+    } else {
+      onClose?.();
+    }
   };
 
   if (closeOnOverlayClick && !force) {
@@ -171,7 +182,7 @@ onClose?.();
     const headerData = makeHeader(
       title,
       () => wrappedClose(),
-      uid,
+      instanceId,
       showCloseButton
     );
 
@@ -181,16 +192,16 @@ onClose?.();
     }
   }
 
-  const { body, descId } = makeBody(content, uid);
+  const { body, descId } = makeBody(content, instanceId);
   if (flushBody) {
-body.classList.add("modal-body--flush");
-}
+    body.classList.add("modal-body--flush");
+  }
 
   dialog.appendChild(body);
 
   if (typeof actions === "function") {
     const act = actions();
-    if (act instanceof HTMLElement) {
+    if (act instanceof HTMLElement || act instanceof DocumentFragment) {
       const footer = createElement("div", { class: "modal-footer" }, [act]);
       dialog.appendChild(footer);
     }
@@ -198,26 +209,50 @@ body.classList.add("modal-body--flush");
 
   dialog.setAttribute("aria-modal", "true");
   if (titleId) {
-dialog.setAttribute("aria-labelledby", titleId);
-}
+    dialog.setAttribute("aria-labelledby", titleId);
+  }
   dialog.setAttribute("aria-describedby", descId);
 
   const focusableSel =
     "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
 
   function trap(e) {
+    // Block input evaluations if the component is performing its exit animation
+    if (isClosing) {
+      e.preventDefault();
+      return;
+    }
+
     const focusables = Array
       .from(dialog.querySelectorAll(focusableSel))
-      .filter(n => !n.disabled);
+      .filter(n => !n.disabled && n.tabIndex !== -1 && n.offsetWidth > 0 && n.offsetHeight > 0);
 
-    if (!focusables.length) {
-return;
-}
+    if (e.key === "Escape" && !force) {
+      e.preventDefault();
+      wrappedClose();
+      return;
+    }
 
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
+    if (e.key === "Enter" && onConfirm && variant !== "theater") {
+      // Direct text editing inputs should pass standard Enter events
+      if (document.activeElement.tagName === "TEXTAREA" || document.activeElement.tagName === "INPUT") {
+        return;
+      }
+      e.preventDefault();
+      onConfirm();
+      return;
+    }
 
     if (e.key === "Tab") {
+      if (!focusables.length) {
+        e.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
@@ -225,25 +260,17 @@ return;
         e.preventDefault();
         first.focus();
       }
-    } else if (e.key === "Escape" && !force) {
-      wrappedClose();
-    } else if (
-      e.key === "Enter" &&
-      onConfirm &&
-      variant !== "theater"
-    ) {
-      e.preventDefault();
-      onConfirm();
     }
   }
 
-  dialog.addEventListener("keydown", trap);
+  // Fixed: Listener bound onto high-level root wrapper node capturing peripheral paths
+  modal.addEventListener("keydown", trap);
 
   const container = document.getElementById("modalcon");
   if (!container) {
-    dialog.removeEventListener("keydown", trap);
+    modal.removeEventListener("keydown", trap);
+    activeModalCount = Math.max(0, activeModalCount - 1);
     unlockBodyScroll();
-    openModals = Math.max(0, openModals - 1);
     throw new Error('No element with id "modalcon" found');
   }
 

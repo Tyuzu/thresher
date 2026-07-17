@@ -1,5 +1,11 @@
+/**
+ * Safely extracts regex capture groups and filters out undefined values.
+ * Returns an array of clean string arguments to pass directly to page initializers.
+ */
 function safeArgBuilder(match) {
-  return match && match[1] ? [true, ...match.slice(1)] : [true];
+  if (!match) return [];
+  // Slice(1) extracts only the capture groups, omitting the full matched path at index 0.
+  return match.slice(1).filter(val => val !== undefined);
 }
 
 export const staticRoutes = {
@@ -71,6 +77,7 @@ export const dynamicRoutes = [
     argBuilder: safeArgBuilder
   },
   {
+    // Alias route matching /deliveries/:id
     pattern: /^\/deliveries\/([\w-]+)$/,
     moduleImport: () => import("../pages/cart/displayDelivery.js"),
     functionName: "Delivery",
@@ -84,20 +91,6 @@ export const dynamicRoutes = [
     protected: true,
     argBuilder: safeArgBuilder
   },
-  // {
-  //   pattern: /^\/event\/([\w-]+)\/merch$/,
-  //   moduleImport: () => import("../pages/events/eventMerchPage.js"),
-  //   functionName: "EventMerch",
-  //   protected: true,
-  //   argBuilder: safeArgBuilder
-  // },
-  // {
-  //   pattern: /^\/event\/([\w-]+)\/analytics$/,
-  //   moduleImport: () => import("../pages/events/eventAnalyticsPage.js"),
-  //   functionName: "EventAnalytics",
-  //   protected: true,
-  //   argBuilder: safeArgBuilder
-  // },
   {
     pattern: /^\/event\/([\w-]+)$/,
     moduleImport: () => import("../pages/events/eventPage.js"),
@@ -134,13 +127,13 @@ export const dynamicRoutes = [
     argBuilder: safeArgBuilder
   },
   {
+    // Capture group 1: serverId, Capture group 2: channelId
     pattern: /^\/discord\/([\w-]+)\/([\w-]+)$/,
     moduleImport: () => import("../pages/discord/discordChannel.js"),
     functionName: "DiscordChannel",
     protected: true,
     argBuilder: safeArgBuilder
   },  
-  // Route for single-segment liveid
   {
     pattern: /^\/live\/([\w-]+)$/,
     moduleImport: () => import("../pages/vlive/vlivePage.js"),
@@ -148,9 +141,8 @@ export const dynamicRoutes = [
     protected: false,
     argBuilder: safeArgBuilder
   },
-
-  // Route for entityType/entityId/liveid
   {
+    // Capture groups: entityType, entityId, liveId
     pattern: /^\/live\/([\w-]+)\/([\w-]+)\/([\w-]+)$/,
     moduleImport: () => import("../pages/vlive/entityLivePage.js"),
     functionName: "Vlive",
@@ -200,6 +192,7 @@ export const dynamicRoutes = [
     argBuilder: safeArgBuilder
   },
   {
+    // Capture group 1: product|tool type, Capture group 2: productId
     pattern: /^\/products\/(product|tool)\/([\w-]+)$/,
     moduleImport: () => import("../pages/product/product.js"),
     functionName: "Product",

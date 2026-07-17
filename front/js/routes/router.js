@@ -14,11 +14,14 @@ function renderError(container, message = "404 Not Found") {
 
 /**
  * Invokes and caches a page's render function.
+ * Evaluates dynamic states (like auth and target container) cleanly upon call.
  */
-async function handleRoute({ path, moduleImport, functionName, args = [], contentContainer, cache }) {
-  // 1. If cached, render synchronously and exit instantly
+async function handleRoute({ path, moduleImport, functionName, routeParams = [], contentContainer, cache }) {
+  // 1. If cached, retrieve the render function and execute with fresh states
   if (cache && hasRouteModule(path)) {
-    return getRouteModule(path).render(contentContainer);
+    const cachedRender = getRouteModule(path).render;
+    contentContainer.replaceChildren(); // Ensure cache hits clear previous views cleanly
+    return cachedRender(isLoggedIn, ...routeParams, contentContainer);
   }
 
   // 2. Fetch the chunk over the network before tearing down the existing DOM
@@ -31,14 +34,16 @@ async function handleRoute({ path, moduleImport, functionName, args = [], conten
   // 3. Clear container ONLY when new content is ready to inject (Prevents white flash)
   contentContainer.replaceChildren();
 
-  const fullArgs = [...args, contentContainer];
+  // Assemble arguments dynamically
+  const fullArgs = [isLoggedIn, ...routeParams, contentContainer];
   await renderFn(...fullArgs);
 
+  // 4. Cache the raw render function pointer, keeping arguments dynamic
   if (cache) {
     setRouteModule(path, {
-      render: (container) => {
-        container.replaceChildren(); // Ensure cache hits clear previous views cleanly
-        return renderFn(...args, container);
+      render: (freshIsLoggedIn, ...paramsAndContainer) => {
+        // paramsAndContainer will contain [...routeParams, contentContainer] when called
+        return renderFn(freshIsLoggedIn, ...paramsAndContainer);
       }
     });
   }
@@ -46,10 +51,9 @@ async function handleRoute({ path, moduleImport, functionName, args = [], conten
 
 /**
  * Resolves and renders the appropriate route.
+ * Keep paths normalized and execute authentication guards.
  */
 export async function render(rawPath, contentContainer) {
-  // trackPageView();
-
   let cleanPath = decodeURIComponent(String(rawPath).split(/[?#]/)[0]);
   if (cleanPath.length > 1 && cleanPath.endsWith("/")) {
     cleanPath = cleanPath.slice(0, -1);
@@ -59,7 +63,14 @@ export async function render(rawPath, contentContainer) {
   const legalRoute = legalRoutes[cleanPath];
   if (legalRoute) {
     try {
-      await handleRoute({ path: cleanPath, moduleImport: legalRoute.moduleImport, functionName: legalRoute.functionName, args: [], contentContainer, cache: true });
+      await handleRoute({ 
+        path: cleanPath, 
+        moduleImport: legalRoute.moduleImport, 
+        functionName: legalRoute.functionName, 
+        routeParams: [], 
+        contentContainer, 
+        cache: true 
+      });
     } catch (err) {
       console.error("Legal route error:", err);
       renderError(contentContainer, "500 Internal Error");
@@ -76,7 +87,14 @@ export async function render(rawPath, contentContainer) {
     }
 
     try {
-      await handleRoute({ path: cleanPath, moduleImport: staticRoute.moduleImport, functionName: staticRoute.functionName, args: [isLoggedIn], contentContainer, cache: true });
+      await handleRoute({ 
+        path: cleanPath, 
+        moduleImport: staticRoute.moduleImport, 
+        functionName: staticRoute.functionName, 
+        routeParams: [], // Empty for static routes
+        contentContainer, 
+        cache: true 
+      });
     } catch (err) {
       console.error("Static route error:", err);
       renderError(contentContainer, "500 Internal Error");
@@ -84,7 +102,7 @@ export async function render(rawPath, contentContainer) {
     return;
   }
 
-  // 2) Dynamic routes (Refactored to clean for...of to fix ReferenceError)
+  // 2) Dynamic routes
   for (const route of dynamicRoutes) {
     const match = cleanPath.match(route.pattern);
     if (!match) continue;
@@ -94,20 +112,17 @@ export async function render(rawPath, contentContainer) {
       return navigate("/login");
     }
 
-    // Extract the raw URL parameters using the builder (or fallback to match chunks)
+    // Extract clean URL dynamic parameters
     const routeParams = typeof route.argBuilder === "function" 
       ? route.argBuilder(match) 
       : match.slice(1);
-
-    // Explicitly inject the correct, dynamic reactive auth state right here
-    const args = [isLoggedIn, ...routeParams];
 
     try {
       await handleRoute({ 
         path: cleanPath, 
         moduleImport: route.moduleImport, 
-        functionName: route.moduleImport ? route.functionName : undefined, // fallback check
-        args, 
+        functionName: route.moduleImport ? route.functionName : undefined,
+        routeParams, // Clean arguments passed dynamically
         contentContainer, 
         cache: true 
       });
@@ -123,7 +138,7 @@ export async function render(rawPath, contentContainer) {
 }
 
 /* ------------------------------------------------------
-    Unified Subscriber (Replaces redundant subscribeDeep)
+    Unified Subscriber (Handles post-login redirects)
 --------------------------------------------------------- */
 subscribe("token", (token) => {
   isLoggedIn = Boolean(token);

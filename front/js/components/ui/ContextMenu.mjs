@@ -18,7 +18,7 @@ const ContextMenu = (() => {
         class: `ctx-item${disabled ? " disabled" : ""}`,
         role: "menuitem",
         tabindex: disabled ? -1 : 0
-      }, label); // ✅ pass string directly
+      }, label); 
 
       if (!disabled) {
         item._action = action;
@@ -45,11 +45,10 @@ const ContextMenu = (() => {
   };
 
   const setupEventListeners = () => {
+    // 1. Element-bound listeners (Automatically garbage collected when menu is removed)
     menu.addEventListener("click", (e) => {
       const item = e.target.closest(".ctx-item:not(.disabled)");
-      if (!item) {
-return;
-}
+      if (!item) return;
       item._action?.();
       removeMenu();
     });
@@ -64,10 +63,10 @@ return;
         removeMenu();
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        items[(idx + 1) % items.length].focus();
+        if (items.length) items[(idx + 1) % items.length].focus();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        items[(idx - 1 + items.length) % items.length].focus();
+        if (items.length) items[(idx - 1 + items.length) % items.length].focus();
       } else if (e.key === "Enter" && current._action) {
         e.preventDefault();
         current._action();
@@ -75,15 +74,21 @@ return;
       }
     });
 
+    // 2. Global Document/Window listeners
     document.addEventListener("mousedown", outsideClickHandler);
-    window.addEventListener("scroll", removeMenu, { passive: true });
-    window.addEventListener("resize", removeMenu);
+    window.addEventListener("scroll", windowCloseHandler, { passive: true });
+    window.addEventListener("resize", windowCloseHandler);
   };
 
+  // Safe orchestrators to decouple cleanups from global browser event structures
   const outsideClickHandler = (e) => {
-    if (!menu.contains(e.target)) {
+    if (menu && !menu.contains(e.target)) {
       removeMenu();
     }
+  };
+
+  const windowCloseHandler = () => {
+    removeMenu();
   };
 
   const focusFirstItem = () => {
@@ -93,9 +98,11 @@ return;
 
   const removeMenu = () => {
     if (menu) {
+      // Clean up global window/document bindings cleanly
       document.removeEventListener("mousedown", outsideClickHandler);
-      window.removeEventListener("scroll", removeMenu);
-      window.removeEventListener("resize", removeMenu);
+      window.removeEventListener("scroll", windowCloseHandler);
+      window.removeEventListener("resize", windowCloseHandler);
+      
       menu.remove();
       menu = null;
     }

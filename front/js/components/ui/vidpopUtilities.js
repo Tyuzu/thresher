@@ -1,6 +1,10 @@
-import {debounce} from "../../utils/deutils";
-
+/**
+ * Advanced Video Utility Management Module
+ * Implements performance-optimized zoom, pan, transformation, and hotkey listeners.
+ */
 function setupVideoUtilityFunctions(video, videoid) {
+    if (!video) return null;
+
     const container = video.parentElement || document.body;
 
     if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
@@ -11,11 +15,32 @@ function setupVideoUtilityFunctions(video, videoid) {
     let panX = 0, panY = 0;
     let angle = 0, flip = false;
     const minZoom = 1, maxZoom = 8;
-    let isDragging = false, startX = 0, startY = 0;
+    
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let initialPinchDistance = 0;
+    let initialPinchZoom = 1;
 
-    const updateTransform = debounce(() => {
+    let saveIntervalId = null;
+
+    // Fixed: Performance rendering pipeline avoiding debounce latency
+    const updateTransform = () => {
         video.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel}) rotate(${angle}deg) ${flip ? "scaleX(-1)" : ""}`;
-    }, 30);
+        if (zoomLevel === 1) {
+            video.style.transition = "transform 0.2s ease";
+        } else {
+            video.style.transition = "none";
+        }
+    };
+
+    const constrainPan = () => {
+        const rect = video.getBoundingClientRect();
+        const maxPanX = Math.max(0, (rect.width * (zoomLevel - 1)) / 2);
+        const maxPanY = Math.max(0, (rect.height * (zoomLevel - 1)) / 2);
+
+        panX = Math.min(maxPanX, Math.max(-maxPanX, panX));
+        panY = Math.min(maxPanY, Math.max(-maxPanY, panY));
+    };
 
     const changeZoom = (delta, event) => {
         const rect = video.getBoundingClientRect();
@@ -23,28 +48,18 @@ function setupVideoUtilityFunctions(video, videoid) {
         const cursorY = event ? event.clientY - rect.top : rect.height / 2;
 
         const prevZoom = zoomLevel;
-        zoomLevel *= delta > 0 ? 0.95 : 1.05; // Smoother zoom steps
+        zoomLevel *= delta > 0 ? 0.92 : 1.08; 
         zoomLevel = Math.max(minZoom, Math.min(maxZoom, zoomLevel));
 
         const zoomFactor = zoomLevel / prevZoom;
 
-        // Adjust pan to ensure cursor stays fixed relative to zoom
+        // Anchor offsets directly against coordinate interaction origins
         panX -= (cursorX - rect.width / 2) * (zoomFactor - 1);
         panY -= (cursorY - rect.height / 2) * (zoomFactor - 1);
 
         constrainPan();
         updateTransform();
     };
-
-    const constrainPan = () => {
-        const rect = video.getBoundingClientRect();
-        const maxPanX = (rect.width * (zoomLevel - 1)) / 2;
-        const maxPanY = (rect.height * (zoomLevel - 1)) / 2;
-
-        panX = Math.min(maxPanX, Math.max(-maxPanX, panX));
-        panY = Math.min(maxPanY, Math.max(-maxPanY, panY));
-    };
-
 
     const onWheel = (event) => {
         event.preventDefault();
@@ -56,88 +71,86 @@ function setupVideoUtilityFunctions(video, videoid) {
         updateTransform();
     };
 
-    const onMouseDown = (event) => {
-        if (zoomLevel <= 1) {
-return;
-}
-        event.preventDefault();
+    // === Unified Unified Drag / Pointer Interactions ===
+    const handleDragStart = (clientX, clientY) => {
+        if (zoomLevel <= 1) return;
         isDragging = true;
-        startX = event.clientX - panX;
-        startY = event.clientY - panY;
+        startX = clientX - panX;
+        startY = clientY - panY;
+    };
+
+    const handleDragMove = (clientX, clientY) => {
+        if (!isDragging) return;
+        panX = clientX - startX;
+        panY = clientY - startY;
+        constrainPan();
+        updateTransform();
+    };
+
+    const onMouseDown = (event) => {
+        if (zoomLevel <= 1) return;
+        event.preventDefault();
+        handleDragStart(event.clientX, event.clientY);
     };
 
     const onMouseMove = (event) => {
-        if (!isDragging) {
-return;
-}
-        event.preventDefault();
-        panX = event.clientX - startX;
-        panY = event.clientY - startY;
-        constrainPan();
-        updateTransform();
+        handleDragMove(event.clientX, event.clientY);
     };
 
     const onMouseUp = () => {
         isDragging = false;
     };
 
+    // === Unified Multi-Touch Lifecycle Engine ===
     const onTouchStart = (event) => {
         if (event.touches.length === 2) {
             event.preventDefault();
-            const initialPinchDistance = Math.hypot(
+            isDragging = false; // Override drag with pinch mechanics
+            initialPinchDistance = Math.hypot(
                 event.touches[0].clientX - event.touches[1].clientX,
                 event.touches[0].clientY - event.touches[1].clientY
             );
-
-            const onTouchMove = debounce((moveEvent) => {
-                const newDistance = Math.hypot(
-                    moveEvent.touches[0].clientX - moveEvent.touches[1].clientX,
-                    moveEvent.touches[0].clientY - moveEvent.touches[1].clientY
-                );
-                const scaleFactor = newDistance / initialPinchDistance;
-
-                zoomLevel = Math.max(minZoom, Math.min(maxZoom, zoomLevel * scaleFactor));
-                constrainPan();
-                updateTransform();
-            }, 30);
-
-            const onTouchEnd = () => {
-                video.removeEventListener("touchmove", onTouchMove);
-                video.removeEventListener("touchend", onTouchEnd);
-            };
-
-            video.addEventListener("touchmove", onTouchMove, { passive: false });
-            video.addEventListener("touchend", onTouchEnd);
+            initialPinchZoom = zoomLevel;
         } else if (event.touches.length === 1) {
+            handleDragStart(event.touches[0].clientX, event.touches[0].clientY);
+        }
+    };
+
+    const onTouchMove = (event) => {
+        if (event.touches.length === 2) {
+            event.preventDefault();
+            const currentDistance = Math.hypot(
+                event.touches[0].clientX - event.touches[1].clientX,
+                event.touches[0].clientY - event.touches[1].clientY
+            );
+            if (initialPinchDistance === 0) return;
+            
+            const scaleFactor = currentDistance / initialPinchDistance;
+            zoomLevel = Math.max(minZoom, Math.min(maxZoom, initialPinchZoom * scaleFactor));
+            constrainPan();
+            updateTransform();
+        } else if (event.touches.length === 1 && isDragging) {
+            handleDragMove(event.touches[0].clientX, event.touches[0].clientY);
+        }
+    };
+
+    const onTouchEnd = (event) => {
+        if (event.touches.length === 0) {
+            isDragging = false;
+            initialPinchDistance = 0;
+        } else if (event.touches.length === 1) {
+            // Pivot fallback safely back to active dragging anchor points
             isDragging = true;
             startX = event.touches[0].clientX - panX;
             startY = event.touches[0].clientY - panY;
         }
     };
 
-    const onTouchMove = (event) => {
-        if (!isDragging || event.touches.length !== 1) {
-return;
-}
-        panX = event.touches[0].clientX - startX;
-        panY = event.touches[0].clientY - startY;
-        constrainPan();
-        updateTransform();
-    };
-
-    const onTouchEnd = () => {
-        isDragging = false;
-    };
-    const hotkeysEnabled = true;
-
+    // === Safe Keyboard Layout Interception Engine ===
     const isInputField = (element) => ["INPUT", "TEXTAREA"].includes(element.tagName) || element.isContentEditable;
 
-    window.addEventListener("keydown", (e) => {
-        if (!hotkeysEnabled || isInputField(e.target)) {
-return;
-}
-
-        e.preventDefault();
+    const onKeyDown = (e) => {
+        if (isInputField(e.target)) return;
 
         const actions = {
             "h": flipVideo,
@@ -154,17 +167,16 @@ return;
             ".": () => video.currentTime = Math.min(video.duration, video.currentTime + 1 / 12),
             "r": () => {
                 angle = (angle + 90) % 360;
-                video.style.width = "100vh";
+                updateTransform();
             },
-
-            // Modifier key combos
             "Shift+ArrowUp": () => setVolume(video, 0.1),
             "Shift+ArrowDown": () => setVolume(video, -0.1),
             "Ctrl+ArrowLeft": () => video.currentTime = Math.max(0, video.currentTime - 5),
             "Ctrl+ArrowRight": () => video.currentTime = Math.min(video.duration, video.currentTime + 5),
             "Alt+r": () => {
- angle = 0; video.style.width = ""; 
-}, // Reset rotation
+                angle = 0; 
+                updateTransform();
+            }
         };
 
         const keyCombo = [
@@ -176,17 +188,35 @@ return;
         ].filter(Boolean).join("+");
 
         if (actions[keyCombo]) {
+            // Fixed: Only intercept default execution if key matches map profiles
+            e.preventDefault();
             actions[keyCombo]();
-            if (!["m", "v"].includes(e.key)) {
-updateTransform();
-} // Only update transform if needed
         }
-    });
+    };
 
+    window.addEventListener("keydown", onKeyDown);
+
+    // === Progress Persistence Pipeline ===
     if (videoid) {
-        saveVideoProgress(video, videoid);
+        const postId = videoid;
+
+        saveIntervalId = setInterval(() => {
+            if (!video.paused && video.currentTime > 0) {
+                localStorage.setItem(`videoProgress-${postId}`, video.currentTime);
+            }
+        }, 5000);
+
+        video.addEventListener("loadedmetadata", () => {
+            const savedTime = localStorage.getItem(`videoProgress-${postId}`);
+            if (savedTime) video.currentTime = parseFloat(savedTime);
+        });
+
+        video.addEventListener("ended", () => {
+            localStorage.removeItem(`videoProgress-${postId}`);
+        });
     }
 
+    // Attach Event Listeners
     video.addEventListener("wheel", onWheel, { passive: false });
     video.addEventListener("mousedown", onMouseDown);
     video.addEventListener("mousemove", onMouseMove);
@@ -195,22 +225,28 @@ updateTransform();
     video.addEventListener("touchstart", onTouchStart, { passive: false });
     video.addEventListener("touchmove", onTouchMove, { passive: false });
     video.addEventListener("touchend", onTouchEnd);
+
+    // Fixed: Expose teardown hook to eliminate background memory leaks
+    return {
+        destroy: () => {
+            if (saveIntervalId) clearInterval(saveIntervalId);
+            window.removeEventListener("keydown", onKeyDown);
+            video.removeEventListener("wheel", onWheel);
+            video.removeEventListener("mousedown", onMouseDown);
+            video.removeEventListener("mousemove", onMouseMove);
+            video.removeEventListener("mouseup", onMouseUp);
+            video.removeEventListener("mouseleave", onMouseUp);
+            video.removeEventListener("touchstart", onTouchStart);
+            video.removeEventListener("touchmove", onTouchMove);
+            video.removeEventListener("touchend", onTouchEnd);
+        }
+    };
 }
 
-// // Debounce function to limit how often a function runs
-// function debounce(func, wait) {
-//     let timeout;
-//     return function (...args) {
-//         clearTimeout(timeout);
-//         timeout = setTimeout(() => func.apply(this, args), wait);
-//     };
-// }
-
-
+// === Support Functions ===
 function setVolume(video, value) {
     video.volume = Math.min(1, Math.max(0, video.volume + value));
 }
-
 
 function toggleMute(video, button = null) {
     video.muted = !video.muted;
@@ -230,47 +266,5 @@ function slower(video) {
 function faster(video) {
     video.playbackRate = Math.min(3.0, video.playbackRate + 0.15);
 }
-
-/**
- * 
- * @param {*} video 
- * @param {*} postId 
- * @returns 
- */
-
-function saveVideoProgress(video, postIdArray) {
-    const postId = postIdArray;
-
-    if (!postId) {
-return;
-}
-
-    // Save progress every 5 seconds
-    const saveInterval = setInterval(() => {
-        if (!video.paused && video.currentTime > 0) {
-            localStorage.setItem(`videoProgress-${postId}`, video.currentTime);
-        }
-    }, 5000);
-
-    // Restore progress when video loads
-    video.addEventListener("loadedmetadata", () => {
-        const savedTime = localStorage.getItem(`videoProgress-${postId}`);
-        if (savedTime) {
-            video.currentTime = parseFloat(savedTime);
-        }
-    });
-
-    // Remove progress when video ends
-    video.addEventListener("ended", () => {
-        localStorage.removeItem(`videoProgress-${postId}`);
-        clearInterval(saveInterval);
-    });
-
-    // Stop saving if video is removed
-    video.addEventListener("pause", () => clearInterval(saveInterval));
-}
-
-
-/********** */
 
 export { setupVideoUtilityFunctions };

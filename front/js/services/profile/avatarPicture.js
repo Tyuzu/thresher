@@ -8,7 +8,7 @@ import {
 } from "../../utils/imagePaths.js";
 import { createElement } from "../../components/createElement.js";
 import { handleError } from "../../utils/utils.js";
-import SightBox from "../../components/ui/SightBox.mjs";
+import SightBox from "../../components/ui/Sightbox_zoom.mjs";
 import Notify from "../../components/ui/Notify.mjs";
 import { updateImageWithCrop } from "../../utils/bannerEditor.js";
 

@@ -1,5 +1,5 @@
 import "../../../css/ui/Gallery.css";
-import SightBox from "./SightBox.mjs";
+import SightBox from "./Sightbox_zoom.mjs";
 
 const Gallery = (imagesArray) => {
     const galleryContainer = document.createElement('div');

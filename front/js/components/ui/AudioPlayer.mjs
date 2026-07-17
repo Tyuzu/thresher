@@ -48,41 +48,41 @@ function AudioPlayer(audioSrc) {
   // Seek bar
   const seekBar = document.createElement("input");
   seekBar.type = "range";
-  seekBar.min = 0;
-  seekBar.max = 100;
-  seekBar.value = 0;
+  seekBar.min = "0";
+  seekBar.max = "100";
+  seekBar.value = "0";
   seekBar.className = "seek-bar";
 
   audio.addEventListener("timeupdate", () => {
     if (!isNaN(audio.duration)) {
-      seekBar.value = (audio.currentTime / audio.duration) * 100;
+      seekBar.value = ((audio.currentTime / audio.duration) * 100).toString();
     }
     updateTimeDisplay();
   });
 
   seekBar.addEventListener("input", () => {
     if (!isNaN(audio.duration)) {
-      audio.currentTime = (seekBar.value / 100) * audio.duration;
+      audio.currentTime = (parseFloat(seekBar.value) / 100) * audio.duration;
     }
   });
 
   // Volume
   const volumeSlider = document.createElement("input");
   volumeSlider.type = "range";
-  volumeSlider.min = 0;
-  volumeSlider.max = 1;
-  volumeSlider.step = 0.1;
-  volumeSlider.value = audio.volume;
+  volumeSlider.min = "0";
+  volumeSlider.max = "1";
+  volumeSlider.step = "0.1";
+  volumeSlider.value = audio.volume.toString();
   volumeSlider.className = "volume-slider";
   volumeSlider.addEventListener("input", () => {
-    audio.volume = volumeSlider.value;
+    audio.volume = parseFloat(volumeSlider.value);
   });
 
   // Speed
   const speedSelect = document.createElement("select");
   [0.5, 1, 1.5, 2].forEach((speed) => {
     const option = document.createElement("option");
-    option.value = speed;
+    option.value = speed.toString();
     option.textContent = `${speed}x`;
     speedSelect.appendChild(option);
   });
@@ -101,14 +101,10 @@ function AudioPlayer(audioSrc) {
     const format = (s) => {
       const m = Math.floor(s / 60);
       const sec = Math.floor(s % 60);
-      return `${m.toString().padStart(2, "0")}:${sec
-        .toString()
-        .padStart(2, "0")}`;
+      return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
     };
     if (!isNaN(audio.duration)) {
-      timeDisplay.textContent = `${format(audio.currentTime)} / ${format(
-        audio.duration
-      )}`;
+      timeDisplay.textContent = `${format(audio.currentTime)} / ${format(audio.duration)}`;
     }
   };
 
@@ -118,57 +114,61 @@ function AudioPlayer(audioSrc) {
   bufferingIndicator.textContent = "Loading...";
   bufferingIndicator.style.display = "none";
 
-  audio.addEventListener("waiting", () => {
-    bufferingIndicator.style.display = "inline-block";
-  });
+  audio.addEventListener("waiting", () => { bufferingIndicator.style.display = "inline-block"; });
+  audio.addEventListener("playing", () => { bufferingIndicator.style.display = "none"; });
+  audio.addEventListener("seeking", () => { bufferingIndicator.style.display = "inline-block"; });
+  audio.addEventListener("seeked", () => { bufferingIndicator.style.display = "none"; });
 
-  audio.addEventListener("playing", () => {
-    bufferingIndicator.style.display = "none";
-  });
+  controlsContainer.append(playButton, muteButton, seekBar, timeDisplay, bufferingIndicator, volumeSlider, speedSelect);
 
-  audio.addEventListener("seeking", () => {
-    bufferingIndicator.style.display = "inline-block";
-  });
-
-  audio.addEventListener("seeked", () => {
-    bufferingIndicator.style.display = "none";
-  });
-
-  controlsContainer.appendChild(playButton);
-  controlsContainer.appendChild(muteButton);
-  controlsContainer.appendChild(seekBar);
-  controlsContainer.appendChild(timeDisplay);
-  controlsContainer.appendChild(bufferingIndicator);
-  controlsContainer.appendChild(volumeSlider);
-  controlsContainer.appendChild(speedSelect);
-
-  // === LYRICS ===
+  // === LYRICS ENGINE ===
   const lyricsContainer = document.createElement("div");
   lyricsContainer.id = "lyrics-container";
 
-  if (Array.isArray(audioSrc.lyricsData)) {
-    audioSrc.lyricsData.forEach((lyric) => {
-      const p = document.createElement("p");
-      p.textContent = lyric.text;
-      p.dataset.time = lyric.time;
-      lyricsContainer.appendChild(p);
-    });
-  }
+  let lastActiveIndex = -1;
+  const linesData = Array.isArray(audioSrc.lyricsData) ? audioSrc.lyricsData : [];
+  const lineElements = [];
+
+  linesData.forEach((lyric) => {
+    const p = document.createElement("p");
+    p.textContent = lyric.text;
+    lyricsContainer.appendChild(p);
+    lineElements.push(p);
+  });
 
   function updateLyrics() {
-    const t = audio.currentTime;
-    const lines = lyricsContainer.querySelectorAll("p");
-    lines.forEach((el) => {
-      const tm = parseFloat(el.dataset.time);
-      el.classList.toggle("active", t >= tm);
-    });
-    const active = lyricsContainer.querySelector("p.active");
-    if (active) {
-active.scrollIntoView({ behavior: "smooth", block: "center" });
-}
+    const currentTime = audio.currentTime;
+    let currentActiveIndex = -1;
+
+    // Find the current active line based on timing thresholds
+    for (let i = 0; i < linesData.length; i++) {
+      if (currentTime >= linesData[i].time) {
+        currentActiveIndex = i;
+      } else {
+        break;
+      }
+    }
+
+    // Only update DOM if the active lyric line has actually changed
+    if (currentActiveIndex !== lastActiveIndex) {
+      if (lastActiveIndex !== -1 && lineElements[lastActiveIndex]) {
+        lineElements[lastActiveIndex].classList.remove("active");
+      }
+      
+      if (currentActiveIndex !== -1 && lineElements[currentActiveIndex]) {
+        const activeEl = lineElements[currentActiveIndex];
+        activeEl.classList.add("active");
+        activeEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      
+      lastActiveIndex = currentActiveIndex;
+    }
   }
 
   audio.addEventListener("timeupdate", updateLyrics);
+
+  // Reset indices if the track is manually scrubbed/rewound backwards
+  audio.addEventListener("seeking", () => { lastActiveIndex = -1; });
 
   // === DARK MODE TOGGLE ===
   const themeToggle = document.createElement("button");
@@ -176,17 +176,11 @@ active.scrollIntoView({ behavior: "smooth", block: "center" });
   themeToggle.className = "theme-toggle";
   themeToggle.onclick = () => {
     player.classList.toggle("dark-mode");
-    themeToggle.textContent = player.classList.contains("dark-mode")
-      ? "☀️ Light Mode"
-      : "🌙 Dark Mode";
+    themeToggle.textContent = player.classList.contains("dark-mode") ? "☀️ Light Mode" : "🌙 Dark Mode";
   };
 
   // === APPEND ALL ===
-  player.appendChild(img);
-  player.appendChild(audio);
-  player.appendChild(controlsContainer);
-  player.appendChild(lyricsContainer);
-  player.appendChild(themeToggle);
+  player.append(img, audio, controlsContainer, lyricsContainer, themeToggle);
 
   return player;
 }

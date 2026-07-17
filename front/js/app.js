@@ -1,4 +1,4 @@
-import { loadContent } from "./routes/index.js";
+import { loadContent, navigate } from "./routes/index.js";
 import { setState } from "./state/state.js";
 import { detectLanguage, setLanguage } from "./i18n/i18n.js";
 
@@ -12,7 +12,7 @@ function profileEnvironment() {
     try {
       const parsed = JSON.parse(cachedEnv);
       if (Date.now() - parsed.ts < ENV_CACHE_TTL_MS) {
-        setState("environment", parsed.data);
+        setState({ environment: parsed.data });
         window.__env = parsed.data;
         return;
       }
@@ -44,13 +44,13 @@ function profileEnvironment() {
     memory: navigator.deviceMemory || "unknown"
   };
 
-  setState("environment", envData);
+  setState({ environment: envData });
   window.__env = envData;
 
   try {
     localStorage.setItem(ENV_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: envData }));
   } catch (e) {
-    console.warn("âš ï¸ Cannot cache environment profile:", e.message);
+    console.warn("⚠️ Cannot cache environment profile:", e.message);
   }
 }
 
@@ -69,7 +69,7 @@ function toggleOfflineBanner(isOffline) {
         background: "#b00020", color: "#fff", textAlign: "center",
         padding: "0.5rem", zIndex: "9999", fontSize: "0.9rem",
       });
-      banner.textContent = "ðŸ“´ You're offline. Some features may not work.";
+      banner.textContent = "🔌 You're offline. Some features may not work.";
       document.body.appendChild(banner);
     } else if (banner) {
       banner.remove();
@@ -82,7 +82,7 @@ window.addEventListener("online", () => toggleOfflineBanner(false));
 
 // --- Global Error Tracking ---
 const trackError = (error, context) => {
-  console.error("ðŸš¨", error, context);
+  console.error("🚨 Error Logged:", error, context);
   if (window.__errorTracker) {
     window.__errorTracker.track(error, context);
   }
@@ -104,14 +104,12 @@ function setupPerformanceMonitoring() {
       }
     });
 
-    // FIX: Observe entry types separately to safely use the buffered flag
     const typesToObserve = ["navigation", "resource", "paint", "largest-contentful-paint"];
     
     for (const type of typesToObserve) {
       try {
         observer.observe({ type, buffered: true });
       } catch (err) {
-        // Fallback for browsers that don't support specific entry types
         console.warn(`Performance type "${type}" not supported:`, err.message);
       }
     }
@@ -125,8 +123,11 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     const lang = detectLanguage();
     await setLanguage(lang);
+    
+    // Initial Render of current URL
     await loadContent(window.location.pathname);
 
+    // Profile and observe lazily when the CPU is idle
     if (window.requestIdleCallback) {
       window.requestIdleCallback(() => {
         profileEnvironment();
@@ -139,14 +140,19 @@ window.addEventListener("DOMContentLoaded", async () => {
       }, 1);
     }
 
+    // --- Clean History State Syncing ---
     window.addEventListener("popstate", async () => {
-      if (!document.hidden) await loadContent(window.location.pathname);
+      if (!document.hidden) {
+        // Run navigation through standard flow to allow the layout manager 
+        // to handle scroll restoration and set navigation lock state.
+        await loadContent(window.location.pathname);
+      }
     });
 
     window.addEventListener("pageshow", async (event) => {
       if (event.persisted) {
         const token = sessionStorage.getItem("token") || localStorage.getItem("token") || null;
-        setState("token", token);
+        setState({ token });
         await loadContent(window.location.pathname);
       }
     });
@@ -157,7 +163,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     trackError(error, { type: "init_failure" });
     const errEl = document.createElement("div");
     Object.assign(errEl.style, { padding: "2rem", textAlign: "center", fontFamily: "system-ui, sans-serif" });
-    errEl.innerHTML = `<h1> Application Error</h1><p>Unable to start the application. Please refresh.</p>`;
+    errEl.innerHTML = `<h1>⚠️ Application Error</h1><p>Unable to start the application. Please refresh.</p>`;
     document.body.replaceChildren(errEl);
   }
 });

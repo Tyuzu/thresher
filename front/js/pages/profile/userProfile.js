@@ -9,7 +9,7 @@ async function MyProfile(isLoggedIn, contentContainer) {
     displayProfile(isLoggedIn, content);
 }
 
-async function UserProfile(isLoggedIn, t, username, contentContainer) {
+async function UserProfile(isLoggedIn,  username, contentContainer) {
     contentContainer.innerHTML = "";
     const content = document.createElement("div");
     content.classList = "profilepage";

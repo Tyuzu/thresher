@@ -226,7 +226,7 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
             await apiFetch(
                 url,
                 method,
-                JSON.stringify(payload),
+                payload,
                 {
                     headers: {
                         "Content-Type": "application/json"

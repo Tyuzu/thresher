@@ -21,48 +21,61 @@ function readStoredSettings() {
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       const raw = window.localStorage.getItem(SOUND_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        memorySettings = parsed; // Sync memory cache on successful reads
+        return parsed;
+      }
     } catch {
       return memorySettings;
     }
   }
-
-  return memorySettings;
+  return memorySettings || DEFAULT_SETTINGS;
 }
 
 function readStoredChatSettings() {
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       const raw = window.localStorage.getItem(SOUND_CHAT_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        memoryChatSettings = parsed;
+        return parsed;
+      }
     } catch {
       return memoryChatSettings;
     }
   }
-
   return memoryChatSettings;
 }
 
 function writeStoredSettings(settings) {
   memorySettings = settings;
-
   if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.setItem(SOUND_STORAGE_KEY, JSON.stringify(settings));
+    try {
+      window.localStorage.setItem(SOUND_STORAGE_KEY, JSON.stringify(settings));
+    } catch (e) {
+      console.warn("Storage write failed, falling back safely to isolation memory:", e);
+    }
   }
 }
 
 function writeStoredChatSettings(settings) {
   memoryChatSettings = settings;
-
   if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.setItem(SOUND_CHAT_STORAGE_KEY, JSON.stringify(settings));
+    try {
+      window.localStorage.setItem(SOUND_CHAT_STORAGE_KEY, JSON.stringify(settings));
+    } catch (e) {
+      console.warn("Chat storage write failed, falling back safely to isolation memory:", e);
+    }
   }
 }
 
 function mergeSettings(partial = {}) {
+  const currentGlobal = readStoredSettings();
   return {
     ...DEFAULT_SETTINGS,
-    ...(readStoredSettings() || {}),
+    ...currentGlobal,
     ...partial
   };
 }
@@ -78,9 +91,7 @@ function setSoundSettings(partial = {}) {
 }
 
 function setChatSoundPreference(chatId, preferences = {}) {
-  if (!chatId) {
-    return;
-  }
+  if (!chatId) return;
 
   const current = readStoredChatSettings();
   const next = {
@@ -98,10 +109,20 @@ function setChatSoundPreference(chatId, preferences = {}) {
 function resolveSoundPreference({ type = 'message', chatId } = {}) {
   const settings = getSoundSettings();
   const chatSettings = chatId ? readStoredChatSettings()[chatId] || {} : {};
+  
   const toneKey = type === 'notification' ? 'notificationTone' : 'messageTone';
   const enabledKey = type === 'notification' ? 'notificationEnabled' : 'messageEnabled';
+  
   const resolvedTone = chatSettings[toneKey] || settings[toneKey] || DEFAULT_TONES[type] || 'default';
-  const isEnabled = chatSettings[enabledKey] ?? settings[enabledKey] ?? settings.enabled ?? true;
+  
+  // Enforce hierarchical structural precedence rules:
+  // 1. Global Master Switch OFF overrides all targets.
+  // 2. Chat-specific setting override takes next precedence if available.
+  // 3. Channel-specific global setting takes last priority fallback.
+  let isEnabled = settings.enabled ?? true;
+  if (isEnabled) {
+    isEnabled = chatSettings[enabledKey] ?? settings[enabledKey] ?? true;
+  }
 
   return {
     enabled: isEnabled,
@@ -114,9 +135,60 @@ function resetSoundSettings() {
   memoryChatSettings = {};
 
   if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.removeItem(SOUND_STORAGE_KEY);
-    window.localStorage.removeItem(SOUND_CHAT_STORAGE_KEY);
+    try {
+      window.localStorage.removeItem(SOUND_STORAGE_KEY);
+      window.localStorage.removeItem(SOUND_CHAT_STORAGE_KEY);
+    } catch (e) {
+      // Catch isolation context security sandboxing flags safely
+    }
   }
+}
+
+export function playSoundAlert({ type = 'message', chatId } = {}) {
+  const preference = resolveSoundPreference({ type, chatId });
+
+  if (!preference.enabled || typeof window === 'undefined') {
+    return false;
+  }
+
+  const AudioCtor = window.AudioContext || window.webkitAudioContext;
+  if (typeof AudioCtor !== 'function') {
+    return false;
+  }
+
+  // Handle global execution singleton context layer securely
+  if (!window.__appSoundContext) {
+    window.__appSoundContext = new AudioCtor();
+  }
+  const context = window.__appSoundContext;
+
+  // Unlocking explicit browser window threads safely
+  if (context.state === 'suspended') {
+    context.resume();
+  }
+
+  const oscillator = context.createOscillator();
+  const gainNode = context.createGain();
+
+  oscillator.type = 'sine';
+  oscillator.frequency.value = preference.tone === 'chime' ? 880 : preference.tone === 'sharp' ? 1320 : 660;
+  
+  gainNode.gain.setValueAtTime(0.04, context.currentTime);
+
+  oscillator.connect(gainNode);
+  gainNode.connect(context.destination);
+
+  oscillator.start();
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.25);
+  oscillator.stop(context.currentTime + 0.3);
+
+  // Explicitly clear structural references on stream completion to prevent memory leaks
+  oscillator.onended = () => {
+    oscillator.disconnect();
+    gainNode.disconnect();
+  };
+
+  return true;
 }
 
 export {
@@ -127,48 +199,3 @@ export {
   resolveSoundPreference,
   resetSoundSettings
 };
-
-export function playSoundAlert({ type = 'message', chatId } = {}) {
-  const preference = resolveSoundPreference({ type, chatId });
-
-  if (!preference.enabled) {
-    return false;
-  }
-
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  const AudioCtor = window.AudioContext || window.webkitAudioContext;
-  if (typeof AudioCtor !== 'function') {
-    return false;
-  }
-
-  const context = typeof window.__appSoundContext !== 'undefined'
-    ? window.__appSoundContext
-    : new AudioCtor();
-
-  if (!context || typeof context.createOscillator !== 'function') {
-    return false;
-  }
-
-  if (typeof window.__appSoundContext === 'undefined') {
-    window.__appSoundContext = context;
-  }
-
-  const oscillator = context.createOscillator();
-  const gainNode = context.createGain();
-
-  oscillator.type = 'sine';
-  oscillator.frequency.value = preference.tone === 'chime' ? 880 : preference.tone === 'sharp' ? 1320 : 660;
-  gainNode.gain.value = 0.04;
-
-  oscillator.connect(gainNode);
-  gainNode.connect(context.destination);
-
-  oscillator.start();
-  gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.25);
-  oscillator.stop(context.currentTime + 0.3);
-
-  return true;
-}

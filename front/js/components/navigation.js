@@ -29,7 +29,9 @@ const getNavOrder = () => {
 const createNavItem = (href, label) => {
     const li = document.createElement("li");
     li.className = "navigation__item";
-    li.setAttribute("draggable", "true");
+    
+    // Start as non-draggable so normal clicks fire cleanly
+    li.setAttribute("draggable", "false");
 
     const anchor = document.createElement("a");
     anchor.href = href;
@@ -47,6 +49,17 @@ const enableDragDrop = (ul, toggle) => {
     const placeholder = document.createElement("li");
     placeholder.className = "navigation__placeholder";
 
+    // Dynamically toggle draggability of items based on edit-mode toggle
+    const updateDraggableState = () => {
+        const isEditable = toggle.checked;
+        ul.querySelectorAll(".navigation__item").forEach(item => {
+            item.setAttribute("draggable", isEditable ? "true" : "false");
+        });
+    };
+
+    // Watch for toggle switches to enable/disable dragging safety
+    toggle.addEventListener("change", updateDraggableState);
+
     const onDragStart = (e) => {
         if (!toggle.checked) {
             return;
@@ -62,7 +75,8 @@ const enableDragDrop = (ul, toggle) => {
         }
         draggingEl = null;
         placeholder.remove();
-        // save order
+        
+        // Save order
         const order = Array.from(ul.children)
             .filter(el => el !== placeholder)
             .map(el => el.querySelector("a").getAttribute("href"));
@@ -70,10 +84,12 @@ const enableDragDrop = (ul, toggle) => {
     };
 
     const onDragOver = (e) => {
-        e.preventDefault();
+        // Only prevent default and show drop target if dragging is active
         if (!toggle.checked) {
             return;
         }
+        e.preventDefault();
+        
         const target = e.target.closest("li");
         if (!target || target === draggingEl || target === placeholder) {
             return;
@@ -105,21 +121,17 @@ const enableDragDrop = (ul, toggle) => {
 const createNav = () => {
     const defaultNavItems = [
         { href: "/grocery", label: "Grocery" },
-        // { href: "/farms", label: "Farms" },
-        // { href: "/crops", label: "Crops" },
         { href: "/tools", label: "Tools" },
         { href: "/recipes", label: "Recipes" },
         { href: "/products", label: "Products" },
         { href: "/places", label: "Places" },
         { href: "/itinerary", label: "Itinerary" },
         { href: "/events", label: "Events" },
-        // { href: "/music", label: "Music" },
         { href: "/artists", label: "Artists" },
         { href: "/social", label: "Social" },
         { href: "/posts", label: "Posts" },
         { href: "/baitos", label: "Baito" },
         { href: "/baitos/hire", label: "Hire" },
-        // { href: "/music", label: "Music" },
         { href: "/merechats", label: "TextChat" }
     ];
 
@@ -150,6 +162,7 @@ const createNav = () => {
     inner.className = "navigation__inner";
 
     const ul = document.createElement("ul");
+    nav.className = "navigation";
     ul.className = "navigation__list horizontal";
 
     navItems.forEach(({ href, label }) => ul.appendChild(createNavItem(href, label)));

@@ -1,6 +1,6 @@
 import { displayFarm } from '../../services/crops/farm/farmDisplay.js';
 
-async function Farm(isLoggedIn, t, farmid, contentContainer) {
+async function Farm(isLoggedIn,  farmid, contentContainer) {
     displayFarm(isLoggedIn, farmid, contentContainer)
 }
 

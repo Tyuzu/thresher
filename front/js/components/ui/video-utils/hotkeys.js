@@ -19,11 +19,12 @@ import {
 } from "../vidpopHelpers/vutils.js";
 
 export function setupHotkeys(video) {
-  const isInput = (el) => ["INPUT", "TEXTAREA"].includes(el.tagName) || el.isContentEditable;
+  const isInput = (el) => ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName) || el.isContentEditable;
 
   const actions = {
     "h": () => flipVideo(video),
     "+": () => changeZoom(-1, null, video),
+    "=": () => changeZoom(-1, null, video), // Fallback map for un-shifted zoom keys
     "-": () => changeZoom(1, null, video),
     "c": () => faster(video),
     "x": () => resetSpeed(video),
@@ -32,6 +33,7 @@ export function setupHotkeys(video) {
     "n": () => setVolume(video, 0.1),
     "m": () => toggleMute(video),
     "v": () => video.paused ? video.play() : video.pause(),
+    " ": () => video.paused ? video.play() : video.pause(), // Universal Spacebar play/pause
     ",": () => video.currentTime = Math.max(0, video.currentTime - 1 / 12),
     ".": () => video.currentTime = Math.min(video.duration, video.currentTime + 1 / 12),
     "f": () => toggleFullScreen(video),
@@ -39,40 +41,59 @@ export function setupHotkeys(video) {
     "j": () => video.currentTime = Math.max(0, video.currentTime - 10),
     "l": () => video.currentTime = Math.min(video.duration, video.currentTime + 10),
     "r": () => rotateVideo(video),
-    "Alt+r": () => resetRotation(video),
-    "Shift+ArrowUp": () => setVolume(video, 0.1),
-    "Shift+ArrowDown": () => setVolume(video, -0.1),
-    "Ctrl+ArrowLeft": () => video.currentTime -= 5,
-    "Ctrl+ArrowRight": () => video.currentTime += 5,
+    "alt+r": () => resetRotation(video),
+    "shift+arrowup": () => setVolume(video, 0.1),
+    "shift+arrowdown": () => setVolume(video, -0.1),
+    "ctrl+arrowleft": () => video.currentTime -= 5,
+    "ctrl+arrowright": () => video.currentTime += 5,
     "s": () => subtitles(video),
     "p": () => togglePictureInPicture(video),
   };
 
-  // Add digit keys for percentage seeking
+  // Set up 0-9 timeline progress mapping
   for (let i = 0; i <= 9; i++) {
-    actions[String(i)] = () => video.currentTime = video.duration * (i / 10);
+    actions[String(i)] = () => {
+      if (!isNaN(video.duration)) {
+        video.currentTime = video.duration * (i / 10);
+      }
+    };
   }
 
-  window.addEventListener("keydown", async (e) => {
-    if (isInput(e.target)) {
-return;
-}
+  const handleKeyDown = async (e) => {
+    if (isInput(e.target)) return;
 
-    const combo = [
-      e.ctrlKey && "Ctrl",
-      e.shiftKey && "Shift",
-      e.altKey && "Alt",
-      e.key.length === 1 ? e.key : e.code,
-    ].filter(Boolean).join("+");
+    // Build combo string using lowercase variants exclusively to avoid matching conflicts
+    const modifiers = [];
+    if (e.ctrlKey || e.metaKey) modifiers.push("ctrl"); // Map Meta (Cmd on Mac) to Ctrl cleanly
+    if (e.shiftKey) modifiers.push("shift");
+    if (e.altKey) modifiers.push("alt");
 
-    const action = actions[combo] || actions[e.key];
+    const baseKey = e.key.length === 1 ? e.key.toLowerCase() : e.key.toLowerCase();
+    
+    // Fallback array checks strings against full modifier chains or structural codes
+    const combo = modifiers.length ? [...modifiers, baseKey].join("+") : baseKey;
+    const arrowCombo = modifiers.length ? [...modifiers, e.code.toLowerCase()].join("+") : e.code.toLowerCase();
+
+    // Resolve key maps via structural string configurations
+    const action = actions[combo] || actions[arrowCombo] || actions[baseKey];
+
     if (action) {
-      await action(); // handle async (e.g., PiP)
-      if (!["m", "v"].includes(e.key)) {
-updateTransform(video);
-}
       e.preventDefault();
+      e.stopPropagation(); // Restrict shortcut updates inside nested component loops
+      
+      await action();
+      
+      // Update transformations except for simple media toggles
+      if (!["m", "v", " "].includes(baseKey)) {
+        updateTransform(video);
+      }
     }
-  });
+  };
 
+  window.addEventListener("keydown", handleKeyDown);
+
+  // Return a cleanup callback to destroy listeners when components unmount
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+  };
 }

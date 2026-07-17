@@ -55,8 +55,8 @@ function createModalBody(content, doc) {
 
 function createModalFooter(actions, doc) {
   if (typeof actions !== 'function') {
-return null;
-}
+    return null;
+  }
 
   const footer = doc.createElement('div');
   footer.className = 'modal-footer';
@@ -87,15 +87,12 @@ const Modal = ({
   host.style.left = "0";
   host.style.width = "100%";
   host.style.height = "100%";
-  host.style.zIndex = 1000 + openModals * 10;
+  host.style.zIndex = (1000 + openModals * 10).toString();
 
   const shadow = host.attachShadow({ mode: "open" });
 
-  // inject css
-
-// inline css (copied contents of Modal.css here)
-const style = document.createElement("style");
-style.textContent = `
+  const style = document.createElement("style");
+  style.textContent = `
 /* Modal container */
 .modal {
   position: fixed;
@@ -137,7 +134,7 @@ style.textContent = `
   position: relative;
   border-radius: 6px;
   max-width: 90%;
-  background-color: var(--color-bg);
+  background-color: var(--color-bg, #fff);
   max-height: 90%;
   overflow: hidden;
   display: flex;
@@ -207,32 +204,35 @@ style.textContent = `
 @media (max-width: 600px) {
   .modal-dialog { width: 90%; }
 }
-
 `;
-shadow.appendChild(style);
+  shadow.appendChild(style);
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
 
-  const dialog = document.createElement('div');
-  dialog.className = `modal modal--${size}`;
-  dialog.setAttribute('tabindex', '-1');
-  dialog.setAttribute('role', 'dialog');
+  // Master viewport shell
+  const modalWrapper = document.createElement('div');
+  modalWrapper.className = `modal modal--${size}`;
+
+  // Actual UI Dialog Card (Missing structure added here)
+  const dialogCard = document.createElement('div');
+  dialogCard.className = 'modal-dialog';
+  dialogCard.setAttribute('tabindex', '-1');
+  dialogCard.setAttribute('role', 'dialog');
+  dialogCard.setAttribute('aria-modal', 'true');
 
   addBodyOverflowHidden();
   const previouslyFocused = document.activeElement;
   openModals++;
 
   const wrappedOnClose = (data) => {
-    if (force) {
-return;
-}
+    if (force) return;
     cleanup();
     if (returnDataOnClose) {
-onClose?.(data);
-} else {
-onClose?.();
-}
+      onClose?.(data);
+    } else {
+      onClose?.();
+    }
   };
 
   if (closeOnOverlayClick && !force) {
@@ -243,38 +243,39 @@ onClose?.();
   const { body, descId } = createModalBody(content, document);
   const footer = createModalFooter(actions, document);
 
-  dialog.setAttribute('aria-modal', 'true');
-  dialog.setAttribute('aria-labelledby', titleId);
-  dialog.setAttribute('aria-describedby', descId);
+  dialogCard.setAttribute('aria-labelledby', titleId);
+  dialogCard.setAttribute('aria-describedby', descId);
 
-  dialog.appendChild(header);
-  dialog.appendChild(body);
+  dialogCard.appendChild(header);
+  dialogCard.appendChild(body);
   if (footer) {
-dialog.appendChild(footer);
-}
+    dialogCard.appendChild(footer);
+  }
 
+  modalWrapper.appendChild(dialogCard);
   shadow.appendChild(overlay);
-  shadow.appendChild(dialog);
+  shadow.appendChild(modalWrapper);
 
   const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
   const trapFocus = (e) => {
-    if (force && e.key === 'Escape') {
-return;
-}
-    const focusableEls = dialog.querySelectorAll(focusableSelectors);
-    if (!focusableEls.length) {
-return;
-}
+    if (force && e.key === 'Escape') return;
+
+    // Fixed: Query within dialogCard boundary specifically
+    const focusableEls = Array.from(dialogCard.querySelectorAll(focusableSelectors));
+    if (!focusableEls.length) return;
 
     const firstEl = focusableEls[0];
     const lastEl = focusableEls[focusableEls.length - 1];
+    
+    // Fixed: Track encapsulated shadow boundary layout focus
+    const activeElement = shadow.activeElement;
 
     if (e.key === 'Tab') {
-      if (e.shiftKey && document.activeElement === firstEl) {
+      if (e.shiftKey && activeElement === firstEl) {
         e.preventDefault();
         lastEl.focus();
-      } else if (!e.shiftKey && document.activeElement === lastEl) {
+      } else if (!e.shiftKey && activeElement === lastEl) {
         e.preventDefault();
         firstEl.focus();
       }
@@ -286,34 +287,40 @@ return;
     }
   };
 
-  dialog.addEventListener('keydown', trapFocus);
-  dialog.classList.add('modal--fade-in');
+  modalWrapper.addEventListener('keydown', trapFocus);
+  
+  // Apply visual fade animation target classes safely
+  requestAnimationFrame(() => {
+    modalWrapper.classList.add('modal--fade-in');
+  });
 
   const modalContainer = document.getElementById('modalcon');
   if (!modalContainer) {
-throw new Error('No element with id "modalcon" found');
-}
+    throw new Error('No element with id "modalcon" found');
+  }
   modalContainer.appendChild(host);
 
   if (onOpen) {
-onOpen();
-}
+    onOpen();
+  }
 
   if (autofocusSelector) {
-    const el = dialog.querySelector(autofocusSelector);
+    const el = dialogCard.querySelector(autofocusSelector);
     el?.focus();
   } else {
-    dialog.focus();
+    dialogCard.focus();
   }
 
   function cleanup() {
-    dialog.removeEventListener('keydown', trapFocus);
-    dialog.classList.remove('modal--fade-in');
-    dialog.classList.add('modal--fade-out');
+    modalWrapper.removeEventListener('keydown', trapFocus);
+    modalWrapper.classList.remove('modal--fade-in');
+    modalWrapper.classList.add('modal--fade-out');
 
-    dialog.addEventListener('animationend', () => {
+    const handleTransitionEnd = () => {
+      modalWrapper.removeEventListener('transitionend', handleTransitionEnd);
       host.remove();
-    });
+    };
+    modalWrapper.addEventListener('transitionend', handleTransitionEnd);
 
     openModals = Math.max(0, openModals - 1);
     removeBodyOverflowHidden();

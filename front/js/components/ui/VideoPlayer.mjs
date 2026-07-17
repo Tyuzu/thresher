@@ -19,8 +19,8 @@ const determineInitialSource = (baseSrc, availableResolutions = []) => {
   );
 
   if (validQualities.length === 0) {
-return `${baseSrc}-360.mp4`;
-}
+    return `${baseSrc}-360.mp4`;
+  }
 
   const lowestAvailable = Math.min(...validQualities);
   const fallback = `${baseSrc}-${lowestAvailable}.mp4`;
@@ -41,14 +41,12 @@ const createVideoElement = (src, resolutions, poster) => {
 
   const baseSrc = src.replace(/\.(mp4|webm)$/, "");
 
-
   const defaultSrc = resolutions?.length
     ? determineInitialSource(baseSrc, resolutions)
     : src;
 
   video.src = defaultSrc;
   video.poster = poster || `${baseSrc}`;
-
 
   return video;
 };
@@ -57,21 +55,21 @@ const createVideoElement = (src, resolutions, poster) => {
 const applyVideoAttributes = (video, attrs = {}) => {
   Object.entries(attrs).forEach(([key, value]) => {
     if (key in video) {
-video[key] = value;
-}
+      video[key] = value;
+    }
   });
 };
 
 // ---- Click-to-Play Toggle ----
 const togglePlayOnClick = (video) => {
-  const handler = () => (video.paused ? video.play() : video.pause());
+  const handler = () => (video.paused ? video.play().catch(() => {}) : video.pause());
   video.addEventListener("click", handler);
   return () => video.removeEventListener("click", handler);
 };
 
 // ---- Quality Selector ----
 export const createQualitySelector = (video, baseSrc, availableResolutions) => {
-  const selector = createElement("select", { class: "quality-selector buttonx" });
+  const selector = createElement("select", { class: "quality-selector buttonx", "aria-label": "Select Video Quality" });
 
   const allQualities = [1440, 1080, 720, 480, 360, 240, 144];
   const available = allQualities.filter(q => availableResolutions.includes(q));
@@ -81,11 +79,13 @@ export const createQualitySelector = (video, baseSrc, availableResolutions) => {
   available.forEach((quality) => {
     const option = createElement("option", { value: `${baseSrc}-${quality}.mp4` }, [`${quality}p`]);
     if (stored === quality) {
-option.setAttribute("selected", "true");
-}
+      option.setAttribute("selected", "true");
+    }
     fragment.appendChild(option);
   });
   selector.appendChild(fragment);
+
+  let activeMetadataHandler = null;
 
   const switchQuality = (target) => {
     const selectedSrc = target.value;
@@ -94,14 +94,22 @@ option.setAttribute("selected", "true");
     const wasPaused = video.paused;
 
     localStorage.setItem("videoQuality", selectedQuality);
-    video.src = selectedSrc;
 
-    video.addEventListener("loadedmetadata", () => {
+    // Fixed: Safe asynchronous metadata tracking loop resetting
+    if (activeMetadataHandler) {
+      video.removeEventListener("loadedmetadata", activeMetadataHandler);
+    }
+
+    activeMetadataHandler = () => {
       video.currentTime = currentTime;
       if (!wasPaused) {
-video.play();
-}
-    }, { once: true });
+        video.play().catch(() => {});
+      }
+      activeMetadataHandler = null;
+    };
+
+    video.src = selectedSrc;
+    video.addEventListener("loadedmetadata", activeMetadataHandler, { once: true });
   };
 
   const changeHandler = (e) => switchQuality(e.target);
@@ -110,13 +118,17 @@ video.play();
   return {
     selector,
     qualities: available,
-    cleanup: () => selector.removeEventListener("change", changeHandler)
+    cleanup: () => {
+      selector.removeEventListener("change", changeHandler);
+      if (activeMetadataHandler) {
+        video.removeEventListener("loadedmetadata", activeMetadataHandler);
+      }
+    }
   };
 };
 
 // ---- Main Component ----
 const VideoPlayer = (
-  // eslint-disable-next-line no-unused-vars
   { src, poster, controls = false, autoplay = false, muted = true, theme = "light", loop = false, subtitles = [], availableResolutions = [] },
   videoId,
 ) => {
@@ -134,9 +146,9 @@ const VideoPlayer = (
   const videocon = createElement("div", { class: "videocon" });
 
   // --- Load User Settings ---
-  const userAutoPlay = localStorage.getItem("videoAutoPlay") === "true";
-  const userAutoMute = localStorage.getItem("videoAutoMute") !== "false";
-  const stopWhenOutOfView = localStorage.getItem("videoStopWhenOutOfView") === "true";
+  const userAutoPlay = localStorage.getItem("videoAutoPlay") === "true" || autoplay;
+  const userAutoMute = localStorage.getItem("videoAutoMute") !== "false" && muted;
+  const stopWhenOutOfView = localStorage.getItem("videoStopWhenOutOfView") !== "false";
 
   // --- Video Element ---
   const baseSrc = src.replace(/\.(mp4|webm)$/, "");
@@ -167,17 +179,45 @@ const VideoPlayer = (
     svgMarkup: video.paused ? playSVG : pauseSVG,
     onClick: () => {
       if (video.paused) {
-        video.play();
-        playButton.innerHTML = pauseSVG;
+        video.play().catch(() => {});
       } else {
         video.pause();
-        playButton.innerHTML = playSVG;
       }
     },
     label: "",
     ariaLabel: "Play/Pause"
   });
   controlsl.appendChild(playButton);
+
+  // --- Mute Button ---
+  const muteButton = createIconButton({
+    classSuffix: "bonw",
+    svgMarkup: video.muted ? muteSVG : vol2SVG,
+    onClick: () => {
+      video.muted = !video.muted;
+      localStorage.setItem("videoAutoMute", video.muted ? "true" : "false");
+    },
+    label: "",
+    ariaLabel: video.muted ? "Unmute" : "Mute"
+  });
+  controlsl.appendChild(muteButton);
+
+  // Fixed: Direct state hook lifecycles avoiding async markup collapse
+  const updatePlayStyles = () => {
+    const iconContainer = playButton.querySelector('.icon-svg-target') || playButton;
+    iconContainer.innerHTML = video.paused ? playSVG : pauseSVG;
+    playButton.setAttribute("aria-label", video.paused ? "Play" : "Pause");
+  };
+
+  const updateVolumeStyles = () => {
+    const iconContainer = muteButton.querySelector('.icon-svg-target') || muteButton;
+    iconContainer.innerHTML = video.muted ? muteSVG : vol2SVG;
+    muteButton.setAttribute("aria-label", video.muted ? "Unmute" : "Mute");
+  };
+
+  video.addEventListener("play", updatePlayStyles);
+  video.addEventListener("pause", updatePlayStyles);
+  video.addEventListener("volumechange", updateVolumeStyles);
 
   const removeTogglePlay = togglePlayOnClick(video);
 
@@ -190,20 +230,6 @@ const VideoPlayer = (
     availableQualities = qualities;
     qualityCleanup = cleanup;
   }
-
-  // --- Mute Button ---
-  const muteButton = createIconButton({
-    classSuffix: "bonw",
-    svgMarkup: video.muted ? muteSVG : vol2SVG,
-    onClick: () => {
-      video.muted = !video.muted;
-      muteButton.innerHTML = video.muted ? muteSVG : vol2SVG;
-      muteButton.setAttribute("aria-label", video.muted ? "Muted" : "Unmuted");
-      localStorage.setItem("videoAutoMute", video.muted ? "true" : "false");
-    },
-    label: ""
-  });
-  controlsl.appendChild(muteButton);
 
   // --- Subtitles ---
   if (Array.isArray(subtitles) && subtitles.length > 0) {
@@ -241,15 +267,19 @@ const VideoPlayer = (
   videocon.appendChild(fragment);
   container.appendChild(videocon);
 
-  // ---- Cleanup ----
+  // ---- Complete Cleanup ----
   container.cleanup = () => {
     removeTogglePlay();
+    video.removeEventListener("play", updatePlayStyles);
+    video.removeEventListener("pause", updatePlayStyles);
+    video.removeEventListener("volumechange", updateVolumeStyles);
+    
     if (qualityCleanup) {
-qualityCleanup();
-}
+      qualityCleanup();
+    }
     if (observer) {
-observer.disconnect();
-}
+      observer.disconnect();
+    }
   };
 
   return container;

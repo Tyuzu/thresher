@@ -2,15 +2,31 @@ import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
 
 function MultiSelect({ options = [], selected = [], placeholder = "", onChange }) {
-  const wrapper = createElement("div", { class: "multiselect-wrapper" });
-  const input = createElement("input", { type: "text", placeholder });
-  const dropdown = createElement("div", { class: "multiselect-dropdown" });
-  const chipsContainer = createElement("div", { class: "multiselect-chips" });
-
+  // Work with a local copy of state to avoid parent reference contamination
+  let localSelected = [...selected];
   let open = false;
 
+  // DOM Composition Assembly
+  const wrapper = createElement("div", { class: "multiselect-wrapper" });
+  
+  // Custom interactive wrapper for structural layout alignment
+  const controlBox = createElement("div", { class: "multiselect-control" });
+  const chipsContainer = createElement("div", { class: "multiselect-chips" });
+  const input = createElement("input", { 
+    type: "text", 
+    placeholder: localSelected.length === 0 ? placeholder : "",
+    class: "multiselect-input"
+  });
+  
+  controlBox.append(chipsContainer, input);
+
+  const dropdown = createElement("div", { 
+    class: "multiselect-dropdown",
+    style: "display: none;" 
+  });
+
   // ---------------------------
-  // DROPDOWN OPEN / CLOSE
+  // DROPDOWN OPERATIONS
   // ---------------------------
   const openDropdown = () => {
     dropdown.style.display = "block";
@@ -21,66 +37,80 @@ function MultiSelect({ options = [], selected = [], placeholder = "", onChange }
   const closeDropdown = () => {
     dropdown.style.display = "none";
     open = false;
+    input.value = "";
   };
 
-  document.addEventListener("click", (e) => {
+  // Safe Document-wide reference click toggle
+  const handleOutsideClick = (e) => {
     if (!wrapper.contains(e.target)) {
-closeDropdown();
-}
-  });
+      closeDropdown();
+    }
+  };
 
+  document.addEventListener("click", handleOutsideClick);
   input.addEventListener("focus", openDropdown);
 
   // ---------------------------
-  // UPDATE DROPDOWN
+  // RENDER DROPDOWN OPTIONS
   // ---------------------------
   const refreshDropdown = () => {
     dropdown.replaceChildren();
 
-    if (!open) {
-return;
-}
+    if (!open) return;
 
     const query = input.value.trim().toLowerCase();
-
     const filtered = options.filter(opt =>
-      opt.toLowerCase().includes(query) && !selected.includes(opt)
+      opt.toLowerCase().includes(query) && !localSelected.includes(opt)
     );
 
-    filtered.forEach(opt => {
-      const item = createElement("div", { class: "multiselect-item" }, [opt]);
+    if (filtered.length === 0) {
+      const none = createElement("div", { class: "multiselect-item item-no-matches" }, ["No matches found"]);
+      dropdown.append(none);
+      return;
+    }
 
-      item.addEventListener("click", () => {
-        selected.push(opt);
-        onChange(selected);
+    filtered.forEach(opt => {
+      const item = createElement("div", { 
+        class: "multiselect-item",
+        role: "option"
+      }, [opt]);
+
+      item.addEventListener("click", (e) => {
+        e.stopPropagation();
+        localSelected = [...localSelected, opt];
+        
+        onChange?.(localSelected);
         refreshChips();
         input.value = "";
+        input.focus(); // Keep focus for fast sequential entry
         refreshDropdown();
       });
 
       dropdown.append(item);
     });
-
-    if (filtered.length === 0) {
-      const none = createElement("div", { class: "multiselect-item" }, ["No matches"]);
-      dropdown.append(none);
-    }
   };
 
   // ---------------------------
-  // UPDATE CHIPS
+  // RENDER SELECTED SELECTIONS
   // ---------------------------
   const refreshChips = () => {
     chipsContainer.replaceChildren();
+    
+    // Manage input placeholder visibility depending on chosen tag volumes
+    input.placeholder = localSelected.length === 0 ? placeholder : "";
 
-    selected.forEach((val, i) => {
+    localSelected.forEach((val) => {
       const chip = createElement("div", { class: "chip" }, [
-        createElement("span", {}, [val]),
+        createElement("span", { class: "chip-label" }, [val]),
         Button("×", "", {
           click: (e) => {
             e.preventDefault();
-            selected.splice(i, 1);
-            onChange(selected);
+            e.stopPropagation();
+            
+            // Non-destructive removal loop processing
+            localSelected = localSelected.filter(item => item !== val);
+            
+            onChange?.(localSelected);
             refreshChips();
             refreshDropdown();
           }
@@ -92,20 +122,36 @@ return;
   };
 
   // ---------------------------
-  // INPUT HANDLER
+  // KEYBOARD UTILITIES & ENTRY TRACKS
   // ---------------------------
-  input.addEventListener("input", () => {
-    openDropdown();
+  input.addEventListener("input", refreshDropdown);
+
+  input.addEventListener("keydown", (e) => {
+    // Enable backspace clearing tracking if input buffer is empty
+    if (e.key === "Backspace" && input.value === "" && localSelected.length > 0) {
+      localSelected.pop();
+      onChange?.(localSelected);
+      refreshChips();
+      refreshDropdown();
+    } else if (e.key === "Escape") {
+      closeDropdown();
+      input.blur();
+    }
   });
 
-  // ---------------------------
-  // INIT
-  // ---------------------------
-  refreshChips();
-  refreshDropdown();
-  wrapper.append(input, dropdown, chipsContainer);
+  // Structural Append Ordering: Control Container sits directly above the dropdown options
+  wrapper.append(controlBox, dropdown);
 
-  return wrapper;
+  // Initialize view layers
+  refreshChips();
+
+  // Return DOM tree root paired alongside explicit destructor routine
+  return {
+    element: wrapper,
+    destroy: () => {
+      document.removeEventListener("click", handleOutsideClick);
+    }
+  };
 }
 
 export default MultiSelect;
