@@ -131,13 +131,13 @@ func main() {
 		var err error
 
 		// Fall back to standard HTTP if we are terminating TLS upstream or if paths are empty
-		if !cfg.TerminateTLSAtLB && cfg.TLSCertPath != "" && cfg.TLSKeyPath != "" {
-			logger.L.Sugar().Infow("Starting server with internal TLS configurations")
-			err = server.ListenAndServeTLS(cfg.TLSCertPath, cfg.TLSKeyPath)
-		} else {
-			logger.L.Sugar().Infow("Starting server on standard HTTP (TLS terminated externally)")
-			err = server.ListenAndServe()
-		}
+		//if !cfg.TerminateTLSAtLB && cfg.TLSCertPath != "" && cfg.TLSKeyPath != "" {
+		//	logger.L.Sugar().Infow("Starting server with internal TLS configurations")
+		//	err = server.ListenAndServeTLS(cfg.TLSCertPath, cfg.TLSKeyPath)
+		//} else {
+		logger.L.Sugar().Infow("Starting server on standard HTTP (TLS terminated externally)")
+		err = server.ListenAndServe()
+		//}
 
 		if err != nil && err != http.ErrServerClosed {
 			logger.L.Sugar().Fatalw("Server error", "error", err)

@@ -52,7 +52,7 @@ func InitConfig() (*Config, error) {
 	}
 
 	// Parse TLS termination setting
-	terminateTLSAtLB := false
+	terminateTLSAtLB := true
 	if v := os.Getenv("TERMINATE_TLS_AT_LB"); v != "" {
 		if b, err := strconv.ParseBool(v); err == nil {
 			terminateTLSAtLB = b
