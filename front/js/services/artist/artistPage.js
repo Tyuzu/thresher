@@ -16,7 +16,7 @@ import { persistTabs } from "../../utils/persistTabs.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import { updateImageWithCrop } from "../../utils/bannerEditor.js";
 import Imagex from "../../components/base/Imagex.js";
-import { renderPostsTab, renderLiveTab } from "./moretabs.js";
+import { renderPostsTab } from "./moretabs.js";
 import { displayNotices } from "../notices/notices.js";
 import { renderBandMembers, renderManageMembersButton } from "./memberManage.js";
 import { blueskySVG, facebookSVG, instagramSVG, soundcloudSVG, spotifySVG, tiktokSVG, twitterSVG, xitterSVG, youtubeSVG } from "../../components/socialSVGs.js";
@@ -182,7 +182,6 @@ photoBannerRow.appendChild(photoSection);
       { title: "Overview", id: "artist-overview", render: (c) => renderOverviewTab(c, artist, isCreator, isLoggedIn) },
       { title: "Events", id: "artist-events", render: (c) => renderEventsTab(c, artistID, isCreator) },
       { title: "Posts", id: "artist-posts", render: (c) => renderPostsTab(c, artistID, isLoggedIn) },
-      { title: "Live", id: "artist-live", render: (c) => renderLiveTab(c, artistID, isLoggedIn, isCreator) },
       { title: "Notices", id: "notices-tab", render: (tabContainer) => {
  displayNotices("artist", artistID, tabContainer, isCreator); 
 } },

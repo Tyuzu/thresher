@@ -1,12 +1,6 @@
 import { displayFanMedia } from "../fanmade/ui/mediaGallery.js";
-import { displayLive } from "../vlive/displayLive.js";
 import { displayMedia } from "../media/ui/mediaGallery.js";
 import { persistTabs } from "../../utils/persistTabs.js";
-
-
-export function renderLiveTab(containter, artistid, isL, isCreator) {
-    displayLive(containter, "artist", artistid, isCreator);
-}
 
 
 export async function renderPostsTab(container, artistID, isLoggedIn) {

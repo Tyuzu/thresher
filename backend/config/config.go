@@ -21,6 +21,7 @@ type Config struct {
 	TLSCertPath           string
 	TLSKeyPath            string
 	AllowCredentials      bool
+	TerminateTLSAtLB      bool // Added to support external TLS termination
 }
 
 // InitConfig loads environment variables and performs basic validation.
@@ -50,6 +51,14 @@ func InitConfig() (*Config, error) {
 		}
 	}
 
+	// Parse TLS termination setting
+	terminateTLSAtLB := false
+	if v := os.Getenv("TERMINATE_TLS_AT_LB"); v != "" {
+		if b, err := strconv.ParseBool(v); err == nil {
+			terminateTLSAtLB = b
+		}
+	}
+
 	cfg := &Config{
 		Env:                   env,
 		HTTPPort:              port,
@@ -61,6 +70,7 @@ func InitConfig() (*Config, error) {
 		TLSCertPath:           os.Getenv("TLS_CERT_PATH"),
 		TLSKeyPath:            os.Getenv("TLS_KEY_PATH"),
 		AllowCredentials:      allowCreds,
+		TerminateTLSAtLB:      terminateTLSAtLB,
 	}
 
 	// Basic validation
@@ -77,9 +87,11 @@ func InitConfig() (*Config, error) {
 			return nil, fmt.Errorf("REDIS_URL must be set in production")
 		}
 
-		// TLS must be provided or you must terminate TLS upstream
-		if cfg.TLSCertPath == "" || cfg.TLSKeyPath == "" {
-			return nil, fmt.Errorf("TLS_CERT_PATH and TLS_KEY_PATH must be set in production or terminate TLS at a load balancer")
+		// Only enforce internal TLS if we aren't terminating it upstream at a load balancer
+		if !cfg.TerminateTLSAtLB {
+			if cfg.TLSCertPath == "" || cfg.TLSKeyPath == "" {
+				return nil, fmt.Errorf("TLS_CERT_PATH and TLS_KEY_PATH must be set in production or set TERMINATE_TLS_AT_LB=true")
+			}
 		}
 
 		// Do not allow wildcard origins with credentials in production

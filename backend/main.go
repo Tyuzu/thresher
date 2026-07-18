@@ -34,7 +34,6 @@ func main() {
 	if err != nil {
 		logger.L.Sugar().Fatalw("config validation failed", "error", err)
 	}
-	env := cfg.Env
 
 	app, err := infra.New(cfg)
 	if err != nil {
@@ -131,16 +130,13 @@ func main() {
 
 		var err error
 
-		if env == "production" {
-			// Require TLS certs to be configured in production (validated earlier)
+		// Fall back to standard HTTP if we are terminating TLS upstream or if paths are empty
+		if !cfg.TerminateTLSAtLB && cfg.TLSCertPath != "" && cfg.TLSKeyPath != "" {
+			logger.L.Sugar().Infow("Starting server with internal TLS configurations")
 			err = server.ListenAndServeTLS(cfg.TLSCertPath, cfg.TLSKeyPath)
 		} else {
-			// allow optional TLS in non-production if paths provided
-			if cfg.TLSCertPath != "" && cfg.TLSKeyPath != "" {
-				err = server.ListenAndServeTLS(cfg.TLSCertPath, cfg.TLSKeyPath)
-			} else {
-				err = server.ListenAndServe()
-			}
+			logger.L.Sugar().Infow("Starting server on standard HTTP (TLS terminated externally)")
+			err = server.ListenAndServe()
 		}
 
 		if err != nil && err != http.ErrServerClosed {

@@ -10,7 +10,8 @@ import {
   rotateLeft,
   rotateRight,
   zoomIn,
-  zoomOut
+  zoomOut,
+  centerCropBox
 } from "./cropperCore.js";
 import { exportBlob } from "./export.js";
 
@@ -79,9 +80,7 @@ export function openCropperWithCropperJSBoundedFixedBox({
       if (cropper) {
         cropper.resize();
         // Recalculate crop box center after resize is done
-        import("./cropperCore.js").then(({ centerCropBox }) => {
-          centerCropBox(cropper, cropTargetW, cropTargetH);
-        });
+        centerCropBox(cropper, cropTargetW, cropTargetH);
       }
     }, 100);
 
