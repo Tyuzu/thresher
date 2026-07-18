@@ -1,7 +1,6 @@
 import "../../../css/ui/Notify.css";
 import { getState, setState } from "../../state/state.js";
 import { playSoundAlert } from "../../services/notifications/soundAlerts.js";
-import { buildNotificationPayload, persistNotification } from "../../services/notifications/notificationPersistence.js";
 
 const Notify = (message, {
   type = 'info',
@@ -57,15 +56,6 @@ const Notify = (message, {
   // Global app state & Side Effects
   setState("unreadNotifications", (getState("unreadNotifications") || 0) + 1);
   playSoundAlert({ type: "notification" });
-
-  const payload = buildNotificationPayload({
-    type,
-    title: type === "error" ? "Alert" : "New notification",
-    message,
-    entityType: "notify"
-  });
-
-  persistNotification(payload).catch(() => {});
   
   return notify;
 };

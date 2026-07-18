@@ -15,6 +15,8 @@ func AddPayRoutes(r *httprouter.Router, app *infra.Deps, rl *middleware.RateLimi
 	paySvc := pay.NewPaymentService(app)
 	paySvc.RegisterDefaultResolvers()
 
+	r.POST("/api/v1/wallet/create", middleware.Chain(rl.Limit, auth)(paySvc.CreateWallet)) //
+
 	r.GET("/api/v1/wallet/balance", middleware.Chain(rl.Limit, auth)(paySvc.GetBalance))
 	r.POST("/api/v1/wallet/topup", middleware.Chain(rl.Limit, auth, middleware.WithTxn)(paySvc.TopUp))
 	r.POST("/api/v1/wallet/pay", middleware.Chain(rl.Limit, auth, middleware.WithTxn)(paySvc.Pay))

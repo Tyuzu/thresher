@@ -17,7 +17,8 @@ const layoutState = {
  * Matches both static paths and dynamic sub-paths (e.g., /merechats, /merechats/123)
  */
 function isNavHidden(url) {
-  return url === "/merechats" || url.startsWith("/merechats/");
+  // return url === "/merechats" || url.startsWith("/merechats/");
+  return false;
 }
 
 /**
@@ -36,26 +37,26 @@ async function loadContent(url) {
   }
 
   /* -------------------- Hydrate persisted auth state once -------------------- */
-if (!layoutState.isHydrated) {
-  const token = localStorage.getItem("token");
-  const userRaw = localStorage.getItem("user");
+  if (!layoutState.isHydrated) {
+    const token = localStorage.getItem("token");
+    const userRaw = localStorage.getItem("user");
 
-  if (token && userRaw) {
-    let user = userRaw;
-    
-    // Only attempt parsing if it actually looks like a JSON object or array
-    if (userRaw.trim().startsWith("{") || userRaw.trim().startsWith("[")) {
-      try { 
-        user = JSON.parse(userRaw); 
-      } catch (err) {
-        console.warn("Failed parsing stored user JSON, falling back to raw string:", err);
+    if (token && userRaw) {
+      let user = userRaw;
+
+      // Only attempt parsing if it actually looks like a JSON object or array
+      if (userRaw.trim().startsWith("{") || userRaw.trim().startsWith("[")) {
+        try {
+          user = JSON.parse(userRaw);
+        } catch (err) {
+          console.warn("Failed parsing stored user JSON, falling back to raw string:", err);
+        }
       }
+
+      setState({ token, user }, true);
     }
-    
-    setState({ token, user }, true);
+    layoutState.isHydrated = true;
   }
-  layoutState.isHydrated = true;
-}
 
   // --- 1. Render Global Structural Layout Once ---
   if (!layoutState.headerRendered) {
@@ -84,7 +85,7 @@ if (!layoutState.isHydrated) {
 
   // --- 2. Toggle Navigation Visibility (Supports Dynamic Routes) ---
   const shouldHideNav = isNavHidden(url);
-  nav.style.display = shouldHideNav ? "none" : ""; 
+  nav.style.display = shouldHideNav ? "none" : "";
 
   if (!shouldHideNav) {
     highlightActiveNav(url);
