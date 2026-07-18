@@ -135,21 +135,6 @@ export const dynamicRoutes = [
     argBuilder: safeArgBuilder
   },  
   {
-    pattern: /^\/live\/([\w-]+)$/,
-    moduleImport: () => import("../pages/vlive/vlivePage.js"),
-    functionName: "Vlive",
-    protected: false,
-    argBuilder: safeArgBuilder
-  },
-  {
-    // Capture groups: entityType, entityId, liveId
-    pattern: /^\/live\/([\w-]+)\/([\w-]+)\/([\w-]+)$/,
-    moduleImport: () => import("../pages/vlive/entityLivePage.js"),
-    functionName: "Vlive",
-    protected: false,
-    argBuilder: safeArgBuilder
-  },
-  {
     pattern: /^\/post\/([\w-]+)$/,
     moduleImport: () => import("../pages/posts/displayPost.js"),
     functionName: "Post",

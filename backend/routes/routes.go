@@ -9,7 +9,6 @@ import (
 	"naevis/beats/notifications"
 	"naevis/booking"
 	"naevis/cart"
-	"naevis/comments"
 	"naevis/events"
 	"naevis/fanmade"
 	"naevis/farms"
@@ -21,22 +20,17 @@ import (
 	"naevis/jobs"
 	"naevis/maps"
 	"naevis/mechat"
-	"naevis/media"
-	"naevis/menu"
-	"naevis/merch"
 	"naevis/metrics/activity"
 	"naevis/metrics/ads"
 	"naevis/metrics/analytics"
 	"naevis/middleware"
 	"naevis/musicon"
 	"naevis/newchat"
-	"naevis/notices"
 	"naevis/places"
 	"naevis/posts"
 	"naevis/products"
 	"naevis/profile"
 	"naevis/recipes"
-	"naevis/reviews"
 	"naevis/search"
 	"naevis/settings"
 	"naevis/stripe"
@@ -46,7 +40,12 @@ import (
 	"naevis/userdata/metadata"
 	"naevis/utils"
 	"naevis/vendors"
-	"naevis/vlive"
+	"naevis/verticals/comments"
+	"naevis/verticals/media"
+	"naevis/verticals/menu"
+	"naevis/verticals/merch"
+	"naevis/verticals/notices"
+	"naevis/verticals/reviews"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -893,40 +892,6 @@ func AddNewChatRoutes(router *httprouter.Router, hub *newchat.Hub, app *infra.De
 }
 
 // ----------------------- ROUTES -----------------------
-
-func AddVliveRoutes(r *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	auth := middleware.Authenticate(app)
-
-	// Streams collection
-	r.POST("/api/v1/vlive", auth(vlive.CreateStream(app)))
-	r.GET("/api/v1/vlive", vlive.ListStreams(app))
-
-	// Streams by ID
-	r.GET("/api/v1/vlive/id/:liveid", vlive.GetStream(app))
-	r.POST("/api/v1/vlive/id/:liveid/ready", auth(vlive.MarkReady(app)))
-	r.POST("/api/v1/vlive/id/:liveid/start", auth(vlive.StartStream(app)))
-	r.POST("/api/v1/vlive/id/:liveid/end", auth(vlive.StopStream(app)))
-	r.POST("/api/v1/vlive/id/:liveid/privacy", auth(vlive.SetPrivacy(app)))
-	r.PUT("/api/v1/vlive/id/:liveid", auth(vlive.UpdateStreamMetadata(app)))
-
-	// VOD
-	r.GET("/api/v1/vlive/id/:liveid/vod", auth(vlive.GetVOD(app)))
-	r.POST("/api/v1/vlive/id/:liveid/vod/publish", auth(vlive.PublishVOD(app)))
-	r.DELETE("/api/v1/vlive/id/:liveid/vod", auth(vlive.DeleteVOD(app)))
-
-	// Ingest / Recording
-	r.POST("/api/v1/vlive/ingest/start", vlive.StartStream(app))
-	r.POST("/api/v1/vlive/ingest/recording/complete", vlive.RecordingComplete(app))
-
-	// Chat
-	r.GET("/ws/v1/vlive/id/:liveid/chat", auth(vlive.ChatWebSocket(app)))
-	r.POST("/api/v1/vlive/id/:liveid/chat/enable", auth(vlive.ChatEnable(app, true)))
-	r.POST("/api/v1/vlive/id/:liveid/chat/disable", auth(vlive.ChatEnable(app, false)))
-	r.POST("/api/v1/vlive/id/:liveid/chat/slow", auth(vlive.ChatSlowMode(app)))
-
-	// WebRTC
-	r.GET("/api/v1/vlive/webrtc/turn", auth(vlive.GetTURNServers(app)))
-}
 
 // Vendor Routes
 func AddVendorRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
