@@ -20,7 +20,7 @@ func CreateArtistEvent(app *infra.Deps) httprouter.Handle {
 
 		var artistevent models.ArtistEvent
 		if err := json.NewDecoder(r.Body).Decode(&artistevent); err != nil {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+			utils.RespondWithError(w, http.StatusBadRequest, ErrInvalidPayload.Error())
 			return
 		}
 
@@ -31,7 +31,7 @@ func CreateArtistEvent(app *infra.Deps) httprouter.Handle {
 
 		err := InsertArtistEvent(ctx, app.DB, &artistevent)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
+			utils.RespondWithError(w, http.StatusInternalServerError, ErrDatabase.Error())
 			return
 		}
 
@@ -57,7 +57,7 @@ func UpdateArtistEvent(app *infra.Deps) httprouter.Handle {
 
 		var updateData bson.M
 		if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+			utils.RespondWithError(w, http.StatusBadRequest, ErrInvalidPayload.Error())
 			return
 		}
 
@@ -102,7 +102,7 @@ func AddArtistToEvent(app *infra.Deps) httprouter.Handle {
 
 		var payload RequestPayload
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+			utils.RespondWithError(w, http.StatusBadRequest, ErrInvalidPayload.Error())
 			return
 		}
 

@@ -105,8 +105,8 @@ async function login(event) {
             { credentials: "include" }
         );
 
-        const token = res?.data?.token;
-        const userId = res?.data?.userid;
+        const token = res?.token;
+        const userId = res?.userid;
 
         if (!token || !userId) {
             throw new Error("Invalid response format from server.");
