@@ -8,7 +8,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"naevis/utils/logger"
@@ -263,7 +263,7 @@ func CreateBaito(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.BaitoCreatedEvent, mqevent.BaitoCreatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BaitoCreatedEvent, mqevent.BaitoCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, struct {
 			BaitoID string `json:"baitoid"`
@@ -307,7 +307,7 @@ func UpdateBaito(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.BaitoUpdatedEvent, mqevent.BaitoUpdatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BaitoUpdatedEvent, mqevent.BaitoUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, struct {
 			Message string `json:"message"`

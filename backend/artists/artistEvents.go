@@ -5,7 +5,7 @@ import (
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -40,7 +40,7 @@ func CreateArtistEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventCreatedEvent, mqevent.ArtistEventCreatePayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventCreatedEvent, mqevent.ArtistEventCreatePayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
 			"message": "ArtistEvent created successfully",
@@ -67,7 +67,7 @@ func UpdateArtistEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventUpdatedEvent, mqevent.ArtistEventUpdatePayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventUpdatedEvent, mqevent.ArtistEventUpdatePayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "ArtistEvent updated successfully"})
 	}
@@ -148,7 +148,7 @@ func AddArtistToEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistAddedToEvent, mqevent.ArtistAddedToEventPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistAddedToEvent, mqevent.ArtistAddedToEventPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Artist successfully added to event"})
 	}

@@ -14,7 +14,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 )
@@ -79,7 +79,7 @@ func CreateComment(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.CommentCreatedEvent, mqevent.CommentCreatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CommentCreatedEvent, mqevent.CommentCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, comment)
 	}
@@ -148,7 +148,7 @@ func UpdateComment(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.CommentUpdatedEvent, mqevent.CommentUpdatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.CommentUpdatedEvent, mqevent.CommentUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, existing)
 	}

@@ -11,7 +11,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 )
@@ -79,7 +79,7 @@ func ToggleLike(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.UserLikedEvent, mqevent.UserLikedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserLikedEvent, mqevent.UserLikedPayload{})
 
 		count := incrementRedisOrMongo(ctx, redisKey, entityType, entityID, app)
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -143,7 +143,7 @@ func BatchUserLikes(app *infra.Deps) httprouter.Handle {
 			result[eid] = liked
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.UserLikesBatchFlushedEvent, mqevent.UserLikesBatchFlushedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserLikesBatchFlushedEvent, mqevent.UserLikesBatchFlushedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"data": result,

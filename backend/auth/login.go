@@ -12,7 +12,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
@@ -75,7 +75,7 @@ func Login(app *infra.Deps) httprouter.Handle {
 		_ = ClearRateLimitCounter(ctx, app, failKey)
 
 		setRefreshCookie(w, refreshToken)
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.UserLoggedIn, mqevent.UserLoggedInPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserLoggedIn, mqevent.UserLoggedInPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, LoginResponse{
 			Message: "Login successful",

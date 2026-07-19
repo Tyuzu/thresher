@@ -8,7 +8,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/userdata"
 	"naevis/utils"
 	log "naevis/utils/logger"
@@ -48,7 +48,7 @@ func HandleFollowAction(
 		"ok":          true,
 	}
 
-	_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.UserFollowedEvent, mqevent.UserFollowedPayload{})
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserFollowedEvent, mqevent.UserFollowedPayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, response)
 }

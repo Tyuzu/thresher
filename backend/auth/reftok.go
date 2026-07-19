@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
@@ -54,7 +54,7 @@ func RefreshToken(app *infra.Deps) httprouter.Handle {
 			setRefreshCookie(w, result.NewRefresh)
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.TokenRefreshed, mqevent.TokenRefreshPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TokenRefreshed, mqevent.TokenRefreshPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"message": "Token refreshed successfully",

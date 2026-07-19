@@ -8,7 +8,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	"naevis/utils/logger"
@@ -132,7 +132,7 @@ func CreateWorkerProfile(app *infra.Deps) httprouter.Handle {
 
 		_ = touchUserUpdatedAt(ctx, app, userID)
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.WorkerProfileCreatedEvent, mqevent.WorkerProfileCreatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.WorkerProfileCreatedEvent, mqevent.WorkerProfileCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Worker profile created successfully",
@@ -160,7 +160,7 @@ func UpdateWorkerProfile(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.WorkerProfileUpdatedEvent, mqevent.WorkerProfileUpdatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.WorkerProfileUpdatedEvent, mqevent.WorkerProfileUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message":  "Worker profile updated successfully",

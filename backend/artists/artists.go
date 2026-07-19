@@ -9,7 +9,7 @@ import (
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 
@@ -39,7 +39,7 @@ func CreateArtist(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistCreatedEvent, mqevent.ArtistCreatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistCreatedEvent, mqevent.ArtistCreatedPayload{})
 		utils.RespondWithJSON(w, http.StatusCreated, artist)
 	}
 }
@@ -84,7 +84,7 @@ func UpdateArtist(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* -------- Publish ArtistUpdated Event -------- */
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistUpdatedEvent, mqevent.ArtistUpdatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistUpdatedEvent, mqevent.ArtistUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Artist updated"})
 	}

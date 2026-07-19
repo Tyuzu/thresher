@@ -12,7 +12,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/cache"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
@@ -67,7 +67,7 @@ func deleteByField(
 		after(ctx, entityID, userID)
 	}
 
-	_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.HardDeletedEvent, mqevent.HardDeletedPayload{})
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.HardDeletedEvent, mqevent.HardDeletedPayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 }
@@ -111,7 +111,7 @@ func softDeleteByField(
 		after(ctx, entityID, userID)
 	}
 
-	_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.SoftDeletedEvent, mqevent.SoftDeletedPayload{})
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SoftDeletedEvent, mqevent.SoftDeletedPayload{})
 
 	utils.RespondWithJSON(w, http.StatusOK, utils.M{"success": true})
 }

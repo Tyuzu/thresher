@@ -2,10 +2,10 @@ package artists
 
 import (
 	"naevis/infra"
+	"naevis/media"
+	"naevis/merch"
 	"naevis/models"
 	"naevis/utils"
-	"naevis/verticals/media"
-	"naevis/verticals/merch"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"

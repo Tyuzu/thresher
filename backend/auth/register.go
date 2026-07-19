@@ -10,7 +10,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 
@@ -93,7 +93,7 @@ func ProcessRegistration(ctx context.Context, app *infra.Deps, input SignUpReque
 		return models.User{}, err
 	}
 
-	_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.UserRegistered, mqevent.UserRegisteredPayload{})
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserRegistered, mqevent.UserRegisteredPayload{})
 
 	return user, nil
 }

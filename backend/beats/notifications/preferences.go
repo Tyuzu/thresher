@@ -9,7 +9,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 
@@ -124,7 +124,7 @@ func UpdatePreferences(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.NotificationPreferencesUpdatedEvent, mqevent.NotificationPreferencesUpdatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.NotificationPreferencesUpdatedEvent, mqevent.NotificationPreferencesUpdatedPayload{})
 
 		// Fetch and return updated preferences
 		var updated models.NotificationPreference

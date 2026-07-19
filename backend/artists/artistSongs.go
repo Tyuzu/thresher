@@ -7,7 +7,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 
@@ -64,7 +64,7 @@ func PostNewSong(app *infra.Deps) httprouter.Handle {
 
 		/* -------- Publish SongCreated Event -------- */
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.SongCreatedEvent, mqevent.SongCreatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SongCreatedEvent, mqevent.SongCreatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusCreated, newSong)
 	}
@@ -138,7 +138,7 @@ func EditSong(app *infra.Deps) httprouter.Handle {
 		}
 
 		/* -------- Publish SongUpdated Event -------- */
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.SongUpdatedEvent, mqevent.SongUpdatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SongUpdatedEvent, mqevent.SongUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Song updated successfully"})
 	}
@@ -160,7 +160,7 @@ func DeleteSong(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.SongDeletedEvent, mqevent.SongDeletedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SongDeletedEvent, mqevent.SongDeletedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Song deleted successfully"})
 	}

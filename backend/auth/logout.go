@@ -7,7 +7,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	inmq "naevis/infra/mq"
+	"naevis/infra/mq"
 	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
@@ -61,7 +61,7 @@ func RevokeSessionAndEmit(ctx context.Context, app *infra.Deps, hashedToken stri
 		return err
 	}
 
-	_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.UserLoggedOut, mqevent.UserLoggedOutPayload{})
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserLoggedOut, mqevent.UserLoggedOutPayload{})
 	return nil
 }
 
@@ -112,6 +112,6 @@ func RevokeAllSessionsAndEmit(ctx context.Context, app *infra.Deps, userID strin
 		return err
 	}
 
-	_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.UserLoggedOutAllSessions, mqevent.UserLoggedOutPayload{})
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserLoggedOutAllSessions, mqevent.UserLoggedOutPayload{})
 	return nil
 }
