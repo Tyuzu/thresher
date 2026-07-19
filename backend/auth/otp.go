@@ -9,11 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"naevis/config/mqevent"
-	"naevis/infra"
-	inmq "naevis/infra/mq"
-	"naevis/utils"
-	"naevis/utils/logger"
 	"net"
 	"net/http"
 	"net/mail"
@@ -23,20 +18,158 @@ import (
 	"strings"
 	"time"
 
+	"naevis/config/mqevent"
+	"naevis/infra"
+	inmq "naevis/infra/mq"
+	"naevis/utils"
+	"naevis/utils/logger"
+
 	"github.com/julienschmidt/httprouter"
 )
 
 const OTPExpiry = 10 * time.Minute
 
-func hashPlainSHA256(s string) string {
-	h := sha256.New()
-	h.Write([]byte(s))
-	return hex.EncodeToString(h.Sum(nil))
+// Custom errors for handling explicit HTTP mapping statuses out of services
+var (
+	ErrInvalidInput        = errors.New("invalid input")
+	ErrInvalidEmail        = errors.New("invalid email")
+	ErrOTPInvalidOrExpired = errors.New("invalid or expired otp")
+	ErrInternalProcessing  = errors.New("internal server error")
+)
+
+// Structural Data Transfers
+type RequestOTPInput struct {
+	Email string `json:"email"`
 }
 
-// ========================
-// OTP / EMAIL
-// ========================
+type VerifyOTPInput struct {
+	Email string `json:"email"`
+	OTP   string `json:"otp"`
+}
+
+/* ============================================================
+   1. HANDLERS (HTTP LAYER)
+============================================================ */
+
+func RequestOTPHandler(app *infra.Deps) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		var input RequestOTPInput
+		dec := json.NewDecoder(r.Body)
+		dec.DisallowUnknownFields()
+
+		if err := dec.Decode(&input); err != nil || input.Email == "" {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+			return
+		}
+
+		err := ProcessOTPRequest(ctx, app, input.Email)
+		if err != nil {
+			if errors.Is(err, ErrInvalidEmail) {
+				utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
+				return
+			}
+			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
+			"message": "OTP sent if the email exists",
+		})
+	}
+}
+
+func VerifyOTPHandler(app *infra.Deps) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		var input VerifyOTPInput
+		dec := json.NewDecoder(r.Body)
+		dec.DisallowUnknownFields()
+
+		if err := dec.Decode(&input); err != nil || input.Email == "" || input.OTP == "" {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
+			return
+		}
+
+		err := ProcessOTPVerification(ctx, app, input.Email, input.OTP)
+		if err != nil {
+			if errors.Is(err, ErrInvalidEmail) {
+				utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
+				return
+			}
+			if errors.Is(err, ErrOTPInvalidOrExpired) {
+				utils.RespondWithError(w, http.StatusUnauthorized, "Invalid or expired OTP")
+				return
+			}
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to verify user")
+			return
+		}
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
+			"message": "User verified successfully",
+		})
+	}
+}
+
+/* ============================================================
+   2. SERVICES (BUSINESS LAYER)
+============================================================ */
+
+func ProcessOTPRequest(ctx context.Context, app *infra.Deps, rawEmail string) error {
+	email, err := sanitizeEmailAddress(rawEmail)
+	if err != nil {
+		return ErrInvalidEmail
+	}
+
+	otp, err := GenerateOTP(6)
+	if err != nil {
+		return errors.New("Failed to generate OTP")
+	}
+
+	hashedOTP := hashPlainSHA256(otp)
+
+	if err = SaveOTPCache(ctx, app, email, hashedOTP); err != nil {
+		return errors.New("Failed to store OTP")
+	}
+
+	if err = SendEmailOTP(email, otp); err != nil {
+		_ = DeleteOTPCache(ctx, app, email)
+		return errors.New("Failed to send OTP")
+	}
+
+	_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.OTPRequested, mqevent.UserOTPPayload{})
+	return nil
+}
+
+func ProcessOTPVerification(ctx context.Context, app *infra.Deps, rawEmail, inputOTP string) error {
+	email, err := sanitizeEmailAddress(rawEmail)
+	if err != nil {
+		return ErrInvalidEmail
+	}
+
+	storedHashedOTP, err := GetOTPCache(ctx, app, email)
+	if err != nil || len(storedHashedOTP) == 0 {
+		return ErrOTPInvalidOrExpired
+	}
+
+	expectedHashedOTP := hashPlainSHA256(inputOTP)
+	if subtle.ConstantTimeCompare([]byte(storedHashedOTP), []byte(expectedHashedOTP)) != 1 {
+		return ErrOTPInvalidOrExpired
+	}
+
+	if err = UpdateUserVerificationStatus(ctx, app, email); err != nil {
+		return err
+	}
+
+	_ = DeleteOTPCache(ctx, app, email)
+	_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.OTPVerified, mqevent.UserOTPPayload{})
+
+	return nil
+}
 
 func GenerateOTP(length int) (string, error) {
 	if length <= 0 {
@@ -70,6 +203,12 @@ func sanitizeEmailAddress(raw string) (string, error) {
 	}
 
 	return email, nil
+}
+
+func hashPlainSHA256(s string) string {
+	h := sha256.New()
+	h.Write([]byte(s))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func SendEmailOTP(toEmail, otp string) error {
@@ -148,107 +287,25 @@ func SendEmailOTP(toEmail, otp string) error {
 	return nil
 }
 
-type RequestOTPInput struct {
-	Email string `json:"email"`
+/* ============================================================
+   3. REPOSITORIES (DATA ACCESS / STORAGE LAYER)
+============================================================ */
+
+func SaveOTPCache(ctx context.Context, app *infra.Deps, email, hashedOTP string) error {
+	key := "otp:" + email
+	return app.Cache.SetWithExpiry(ctx, key, []byte(hashedOTP), OTPExpiry)
 }
 
-type VerifyOTPInput struct {
-	Email string `json:"email"`
-	OTP   string `json:"otp"`
+func GetOTPCache(ctx context.Context, app *infra.Deps, email string) ([]byte, error) {
+	key := "otp:" + email
+	return app.Cache.Get(ctx, key)
 }
 
-func RequestOTPHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-		defer cancel()
-
-		var input RequestOTPInput
-		dec := json.NewDecoder(r.Body)
-		dec.DisallowUnknownFields()
-
-		if err := dec.Decode(&input); err != nil || input.Email == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-			return
-		}
-
-		email, err := sanitizeEmailAddress(input.Email)
-		if err != nil {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
-			return
-		}
-
-		otp, err := GenerateOTP(6)
-		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to generate OTP")
-			return
-		}
-
-		hashed := hashPlainSHA256(otp)
-		key := "otp:" + email
-
-		if err = app.Cache.SetWithExpiry(ctx, key, []byte(hashed), OTPExpiry); err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to store OTP")
-			return
-		}
-
-		if err = SendEmailOTP(email, otp); err != nil {
-			_ = app.Cache.Del(ctx, key)
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to send OTP")
-			return
-		}
-
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.OTPRequested, mqevent.UserOTPPayload{})
-
-		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
-			"message": "OTP sent if the email exists",
-		})
-	}
+func DeleteOTPCache(ctx context.Context, app *infra.Deps, email string) error {
+	key := "otp:" + email
+	return app.Cache.Del(ctx, key)
 }
 
-func VerifyOTPHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-		defer cancel()
-
-		var input VerifyOTPInput
-		dec := json.NewDecoder(r.Body)
-		dec.DisallowUnknownFields()
-
-		if err := dec.Decode(&input); err != nil || input.Email == "" || input.OTP == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-			return
-		}
-
-		email, err := sanitizeEmailAddress(input.Email)
-		if err != nil {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
-			return
-		}
-		key := "otp:" + email
-
-		stored, err := app.Cache.Get(ctx, key)
-		if err != nil || len(stored) == 0 {
-			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid or expired OTP")
-			return
-		}
-
-		expected := hashPlainSHA256(input.OTP)
-		if subtle.ConstantTimeCompare([]byte(stored), []byte(expected)) != 1 {
-			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid or expired OTP")
-			return
-		}
-
-		if err = VerifyUserEmail(ctx, app.DB, email); err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to verify user")
-			return
-		}
-
-		_ = app.Cache.Del(ctx, key)
-
-		_ = inmq.PublishWithMeta(ctx, app.MQ, mqevent.OTPVerified, mqevent.UserOTPPayload{})
-
-		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
-			"message": "User verified successfully",
-		})
-	}
+func UpdateUserVerificationStatus(ctx context.Context, app *infra.Deps, email string) error {
+	return VerifyUserEmail(ctx, app, email)
 }

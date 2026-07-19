@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"naevis/config"
-	"naevis/infra/db"
+	"naevis/infra"
 	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,20 +13,24 @@ import (
 
 var UsersCollection = config.Collections.UserCollection
 
-func CreateUser(ctx context.Context, dbLayer db.Database, user models.User) error {
-	return dbLayer.Insert(ctx, UsersCollection, user)
+/* ============================================================
+   3. REPOSITORIES (DATA ACCESS LAYER)
+============================================================ */
+
+func CreateUser(ctx context.Context, app *infra.Deps, user models.User) error {
+	return app.DB.Insert(ctx, UsersCollection, user)
 }
 
-func FindUserByUsername(ctx context.Context, dbLayer db.Database, username string) (*models.User, error) {
+func FindUserByUsername(ctx context.Context, app *infra.Deps, username string) (models.User, error) {
 	var user models.User
-	if err := dbLayer.FindOne(ctx, UsersCollection, bson.M{"username": username}, &user); err != nil {
-		return nil, err
+	if err := app.DB.FindOne(ctx, UsersCollection, bson.M{"username": username}, &user); err != nil {
+		return models.User{}, err
 	}
-	return &user, nil
+	return user, nil
 }
 
-func UpdateUserSession(ctx context.Context, dbLayer db.Database, userID, refreshTokenHash, ua, ip string) error {
-	return dbLayer.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
+func UpdateUserSession(ctx context.Context, app *infra.Deps, userID, refreshTokenHash, ua, ip string) error {
+	return app.DB.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
 		"$set": bson.M{
 			"refresh_token":  refreshTokenHash,
 			"refresh_expiry": time.Now().Add(RefreshTokenTTL),
@@ -39,8 +43,8 @@ func UpdateUserSession(ctx context.Context, dbLayer db.Database, userID, refresh
 	})
 }
 
-func LogoutUserByRefreshToken(ctx context.Context, dbLayer db.Database, hashedToken string) error {
-	return dbLayer.Update(ctx, UsersCollection, bson.M{"refresh_token": hashedToken}, bson.M{
+func LogoutUserByRefreshToken(ctx context.Context, app *infra.Deps, hashedToken string) error {
+	return app.DB.Update(ctx, UsersCollection, bson.M{"refresh_token": hashedToken}, bson.M{
 		"$unset": bson.M{
 			"refresh_token":  "",
 			"refresh_expiry": "",
@@ -52,8 +56,8 @@ func LogoutUserByRefreshToken(ctx context.Context, dbLayer db.Database, hashedTo
 	})
 }
 
-func LogoutAllUserSessions(ctx context.Context, dbLayer db.Database, userID string) error {
-	return dbLayer.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
+func LogoutAllUserSessions(ctx context.Context, app *infra.Deps, userID string) error {
+	return app.DB.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
 		"$unset": bson.M{
 			"refresh_token":  "",
 			"refresh_prev":   "",
@@ -68,10 +72,10 @@ func LogoutAllUserSessions(ctx context.Context, dbLayer db.Database, userID stri
 	})
 }
 
-func FindValidRefreshSession(ctx context.Context, dbLayer db.Database, hashedToken string) (*models.User, error) {
+func FindValidRefreshSession(ctx context.Context, app *infra.Deps, hashedToken string) (models.User, error) {
 	now := time.Now()
 	var user models.User
-	err := dbLayer.FindOne(ctx, UsersCollection, bson.M{
+	err := app.DB.FindOne(ctx, UsersCollection, bson.M{
 		"refresh_expiry": bson.M{"$gt": now},
 		"$or": []bson.M{
 			{"refresh_token": hashedToken},
@@ -79,14 +83,14 @@ func FindValidRefreshSession(ctx context.Context, dbLayer db.Database, hashedTok
 		},
 	}, &user)
 	if err != nil {
-		return nil, err
+		return models.User{}, err
 	}
-	return &user, nil
+	return user, nil
 }
 
-func InvalidateUserSession(ctx context.Context, dbLayer db.Database, userID string) error {
+func InvalidateUserSession(ctx context.Context, app *infra.Deps, userID string) error {
 	now := time.Now()
-	return dbLayer.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
+	return app.DB.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
 		"$set": bson.M{
 			"refresh_token":  nil,
 			"refresh_prev":   nil,
@@ -97,9 +101,9 @@ func InvalidateUserSession(ctx context.Context, dbLayer db.Database, userID stri
 	})
 }
 
-func RotateRefreshTokenForUser(ctx context.Context, dbLayer db.Database, userID, newRefreshHash, prevRefreshHash, ua string) error {
+func RotateRefreshTokenForUser(ctx context.Context, app *infra.Deps, userID, newRefreshHash, prevRefreshHash, ua string) error {
 	now := time.Now()
-	return dbLayer.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
+	return app.DB.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
 		"$set": bson.M{
 			"refresh_prev":   prevRefreshHash,
 			"refresh_token":  newRefreshHash,
@@ -110,6 +114,10 @@ func RotateRefreshTokenForUser(ctx context.Context, dbLayer db.Database, userID,
 	})
 }
 
-func VerifyUserEmail(ctx context.Context, dbLayer db.Database, email string) error {
-	return dbLayer.Update(ctx, UsersCollection, bson.M{"email": email}, bson.M{"$set": bson.M{"email_verified": true}})
+func VerifyUserEmail(ctx context.Context, app *infra.Deps, email string) error {
+	return app.DB.Update(ctx, UsersCollection, bson.M{"email": email}, bson.M{
+		"$set": bson.M{
+			"email_verified": true,
+		},
+	})
 }

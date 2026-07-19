@@ -75,7 +75,7 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 	// -----------------------
 	// Find valid refresh session
 	// -----------------------
-	user, err := FindValidRefreshSession(ctx, app.DB, hashed)
+	user, err := FindValidRefreshSession(ctx, app, hashed)
 	if err != nil {
 		// Invalid or expired token
 		return &RefreshResult{ClearCookie: true}, fmt.Errorf("invalid refresh token")
@@ -154,7 +154,7 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 
 	err = RotateRefreshTokenForUser(
 		ctx,
-		app.DB,
+		app,
 		user.UserID,
 		hashRefreshToken(newRefresh),
 		user.RefreshToken,

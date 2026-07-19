@@ -5,13 +5,14 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"naevis/config"
-	"naevis/models"
 	"net"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
+
+	"naevis/config"
+	"naevis/models"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -30,7 +31,7 @@ var (
 )
 
 /* ============================================================
-   Helpers
+   HELPERS
 ============================================================ */
 
 func clientIP(r *http.Request) string {
@@ -68,8 +69,7 @@ func hashRefreshToken(token string) string {
 
 func generateRefreshToken() (string, error) {
 	b := make([]byte, 64)
-	_, err := rand.Read(b)
-	if err != nil {
+	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
@@ -93,38 +93,21 @@ func setRefreshCookie(w http.ResponseWriter, token string) {
 	})
 }
 
-// func setRefreshCookie(w http.ResponseWriter, token string) {
-// 	sameSite, secure := refreshCookieAttrs()
-
-// 	http.SetCookie(w, &http.Cookie{
-// 		Name:     "refresh_token",
-// 		Value:    token,
-// 		Path:     "/",
-// 		HttpOnly: true,
-// 		Secure:   secure,
-// 		SameSite: sameSite,
-// 		Expires:  time.Now().Add(RefreshTokenTTL),
-// 		MaxAge:   int(RefreshTokenTTL.Seconds()),
-// 	})
-// }
-
 func clearRefreshCookie(w http.ResponseWriter) {
-	sameSite, secure := http.SameSiteLaxMode, true
-
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   secure,
-		SameSite: sameSite,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 	})
 }
 
 /* ============================================================
-   Validators
+   VALIDATORS
 ============================================================ */
 
 func validateUsername(u string) bool { return usernameRegex.MatchString(u) }
