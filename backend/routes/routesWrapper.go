@@ -35,7 +35,7 @@ func RoutesWrapper(router *httprouter.Router, app *infra.Deps, rateLimiter *midd
 	AddMerchRoutes(router, app, rateLimiter)
 	AddMusicRoutes(router, app, rateLimiter)
 	AddNoticesRoutes(router, app, rateLimiter)
-	AddNotificationsRoutes(router, app, rateLimiter)
+	// AddNotificationsRoutes(router, app, rateLimiter)
 	AddPayRoutes(router, app, rateLimiter)
 	AddPlaceRoutes(router, app, rateLimiter)
 	AddPlaceTabRoutes(router, app, rateLimiter)

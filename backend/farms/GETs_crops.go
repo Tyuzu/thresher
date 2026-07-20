@@ -233,21 +233,12 @@ func GetCropTypes(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		type agg struct {
-			Name           string
-			MinPrice       float64
-			MaxPrice       float64
-			AvailableCount int
-			Unit           string
-			Banner         string
-		}
-
-		m := map[string]*agg{}
+		m := map[string]*Agg{}
 
 		for _, c := range crops {
 			a, ok := m[c.Name]
 			if !ok {
-				m[c.Name] = &agg{
+				m[c.Name] = &Agg{
 					Name:     c.Name,
 					MinPrice: c.Price,
 					MaxPrice: c.Price,
@@ -268,7 +259,7 @@ func GetCropTypes(app *infra.Deps) httprouter.Handle {
 			}
 		}
 
-		result := make([]agg, 0, len(m))
+		result := make([]Agg, 0, len(m))
 		for _, v := range m {
 			result = append(result, *v)
 		}

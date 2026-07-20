@@ -1,0 +1,166 @@
+/* ==========================================================================
+   Page Footer Component
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Outer Container & Base Setup
+   -------------------------------------------------------------------------- */
+.pagefooter {
+  width: 100%;
+  margin-top: auto; /* Pushes footer to bottom in flex column layouts */
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm, 0.875rem);
+  transition: background-color var(--transition-fast, 150ms ease),
+              border-color var(--transition-fast, 150ms ease);
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-8, 2rem) var(--space-4, 1rem) var(--space-6, 1.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+}
+
+/* --------------------------------------------------------------------------
+   02. Navigation Links Section (.footer-nav)
+   -------------------------------------------------------------------------- */
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2, 0.5rem) var(--space-4, 1rem);
+}
+
+.footer-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium, 500);
+  transition: color var(--transition-fast, 150ms ease);
+}
+
+.footer-link:hover {
+  color: var(--accent-color);
+}
+
+/* Optional subtle dot separator between nav items */
+.footer-nav .footer-link:not(:last-child)::after {
+  content: "•";
+  margin-left: var(--space-4, 1rem);
+  color: var(--border-strong, var(--border-color));
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   03. Footer Bottom Bar (.footer-bottom)
+   -------------------------------------------------------------------------- */
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4, 1rem);
+  padding-top: var(--space-6, 1.5rem);
+  border-top: 1px solid var(--border-color);
+}
+
+.footer-bottom p {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--text-muted, var(--text-secondary));
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   04. Language Selector Controls (.lang-select)
+   -------------------------------------------------------------------------- */
+.lang-select {
+  padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 4px);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast, 150ms ease),
+              background-color var(--transition-fast, 150ms ease);
+}
+
+.lang-select:hover {
+  background-color: var(--hover-bg);
+  border-color: var(--border-strong, var(--border-color));
+}
+
+.lang-select:focus-visible {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+/* --------------------------------------------------------------------------
+   05. Feedback Button (.buttonx)
+   -------------------------------------------------------------------------- */
+#feedback-btn,
+.buttonx {
+  padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  transition: background-color var(--transition-fast, 150ms ease),
+              border-color var(--transition-fast, 150ms ease),
+              color var(--transition-fast, 150ms ease);
+}
+
+#feedback-btn:hover,
+.buttonx:hover {
+  background-color: var(--hover-bg);
+  border-color: var(--border-strong, var(--border-color));
+  color: var(--accent-color);
+}
+
+/* --------------------------------------------------------------------------
+   06. Responsive Layout Adjustments
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .footer-container {
+    padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
+  }
+
+  /* Hide bullet separators on small screens for cleaner flex wrapping */
+  .footer-nav .footer-link:not(:last-child)::after {
+    display: none;
+  }
+
+  .footer-nav {
+    gap: var(--space-3, 0.75rem);
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-3, 0.75rem);
+  }
+
+  .footer-bottom p {
+    order: 3; /* Places copyright at the bottom on mobile screens */
+  }
+
+  .lang-select {
+    order: 1;
+  }
+
+  #feedback-btn,
+  .buttonx {
+    order: 2;
+  }
+}

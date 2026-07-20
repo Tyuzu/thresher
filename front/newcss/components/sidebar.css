@@ -1,0 +1,267 @@
+/* ==========================================================================
+   Control Center Component Overlay & Panel
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Base Container & Slide-in Overlay
+   -------------------------------------------------------------------------- */
+.control-center {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: none; /* Prevents unwanted browser scrolling while dragging */
+}
+
+/* Visibility State toggles via JavaScript */
+.control-center.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.control-center.hidden {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   02. Close Button
+   -------------------------------------------------------------------------- */
+.cc-close {
+  position: absolute;
+  top: var(--space-4, 1rem);
+  right: var(--space-4, 1rem);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary, #ffffff);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 10;
+  transition: background-color var(--transition-fast, 150ms ease),
+              transform var(--transition-fast, 150ms ease);
+}
+
+.cc-close:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.cc-close:active {
+  transform: scale(0.95);
+}
+
+/* --------------------------------------------------------------------------
+   03. Scrollable Content Sheet
+   -------------------------------------------------------------------------- */
+.cc-scroll {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  max-height: 85vh;
+  overflow-y: auto;
+  background-color: var(--bg-surface, #1e1e24);
+  border-top-left-radius: var(--radius-lg, 24px);
+  border-top-right-radius: var(--radius-lg, 24px);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem) var(--space-6, 1.5rem);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+  color: var(--text-primary, #ffffff);
+  
+  /* Smooth slide up animation */
+  transform: translateY(100%);
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  
+  /* Custom thin scrollbar */
+  scrollbar-width: thin;
+}
+
+.control-center.open .cc-scroll {
+  transform: translateY(0);
+}
+
+/* Drag Handle Bar */
+.cc-handle {
+  width: 40px;
+  height: 5px;
+  background-color: var(--border-color, rgba(255, 255, 255, 0.2));
+  border-radius: 999px;
+  margin: 0 auto var(--space-2, 0.5rem) auto;
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+/* --------------------------------------------------------------------------
+   04. Personal Hub Header Section
+   -------------------------------------------------------------------------- */
+.cc-personal-hub {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-3, 0.75rem);
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-md, 16px);
+  gap: var(--space-2, 0.5rem);
+}
+
+.cc-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--accent-subtle, rgba(99, 102, 241, 0.2));
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="%23818cf8"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg>');
+  background-size: 60%;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 2px solid var(--accent-color, #6366f1);
+}
+
+.cc-profile-name {
+  font-size: var(--font-size-md, 1.125rem);
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+}
+
+.cc-btn-row {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+  width: 100%;
+  margin-top: var(--space-1, 0.25rem);
+}
+
+.cc-small-btn {
+  flex: 1;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--text-primary, #ffffff);
+  background-color: var(--bg-surface, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  transition: background-color var(--transition-fast, 150ms ease),
+              border-color var(--transition-fast, 150ms ease);
+}
+
+.cc-small-btn:hover {
+  background-color: var(--hover-bg, rgba(255, 255, 255, 0.15));
+  border-color: var(--border-strong, rgba(255, 255, 255, 0.25));
+}
+
+/* --------------------------------------------------------------------------
+   05. Live Tiles Section
+   -------------------------------------------------------------------------- */
+.cc-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-2, 0.5rem);
+}
+
+.cc-live-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-3, 0.75rem);
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-md, 12px);
+}
+
+.cc-tile-label {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cc-tile-value {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   06. Navigation Grid Section (.cc-nav-grid)
+   -------------------------------------------------------------------------- */
+.cc-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2, 0.5rem);
+}
+
+.cc-nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3, 0.875rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 500;
+  color: var(--text-primary, #ffffff);
+  background-color: var(--bg-secondary, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-md, 12px);
+  cursor: pointer;
+  text-align: center;
+  transition: background-color var(--transition-fast, 150ms ease),
+              border-color var(--transition-fast, 150ms ease),
+              transform var(--transition-fast, 150ms ease);
+}
+
+.cc-nav-link:hover {
+  background-color: var(--hover-bg, rgba(255, 255, 255, 0.12));
+  border-color: var(--accent-color, #6366f1);
+  transform: translateY(-1px);
+}
+
+.cc-nav-link:active {
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   07. Desktop / Wider Screen Adjustments
+   -------------------------------------------------------------------------- */
+@media (min-width: 640px) {
+  .control-center {
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4, 1rem);
+  }
+
+  .cc-scroll {
+    border-radius: var(--radius-lg, 24px);
+    max-height: 80vh;
+    transform: scale(0.95) translateY(20px);
+  }
+
+  .control-center.open .cc-scroll {
+    transform: scale(1) translateY(0);
+  }
+
+  .cc-nav-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

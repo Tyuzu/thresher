@@ -84,13 +84,6 @@ func GetFarmDash(app *infra.Deps) httprouter.Handle {
 
 		categories := make(map[string]int)
 
-		type TopCrop struct {
-			Name     string  `json:"name"`
-			Quantity int     `json:"quantity"`
-			Unit     string  `json:"unit"`
-			Value    float64 `json:"value"`
-		}
-
 		var topCrops []TopCrop
 
 		for _, crop := range crops {
@@ -147,13 +140,6 @@ func GetFarmDash(app *infra.Deps) httprouter.Handle {
 		var todayOrders int
 
 		customerSet := map[string]struct{}{}
-
-		type RecentOrder struct {
-			OrderID string    `json:"orderId"`
-			Status  string    `json:"status"`
-			Total   float64   `json:"total"`
-			Date    time.Time `json:"date"`
-		}
 
 		var recentOrders []RecentOrder
 
@@ -218,12 +204,6 @@ func GetFarmDash(app *infra.Deps) httprouter.Handle {
 		// ==================================================
 		// ALERTS
 		// ==================================================
-
-		type Alert struct {
-			Type     string `json:"type"`
-			Severity string `json:"severity"`
-			Message  string `json:"message"`
-		}
 
 		var alerts []Alert
 

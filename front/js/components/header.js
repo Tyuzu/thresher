@@ -61,7 +61,7 @@ function createDropdownMenu(id, labelText, items) {
     menu.classList.toggle("open");
   });
 
-  return createElement("div", { class: "logoicon dropdown" }, [toggle, menu]);
+  return createElement("div", { class: "dropdown" }, [toggle, menu]);
 }
 
 export function createProfileSection(userId) {

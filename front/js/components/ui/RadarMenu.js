@@ -1,5 +1,5 @@
 import "../../../css/ui/RadarMenu.css";
-import { makeDraggable } from "../makeDraggable.js"; // Import draggable utility
+import { makeDraggable } from "./fabHelpers/makeDraggable.js";
 
 const RadarMenu = (menuItems = [], options = {}) => {
   const {

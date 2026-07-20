@@ -18,23 +18,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type BaitoRequest struct {
-	Title           string
-	Description     string
-	Category        string
-	SubCategory     string
-	Location        string
-	Wage            string
-	Phone           string
-	Requirements    string
-	WorkHours       string
-	Benefits        string
-	Email           string
-	Tags            []string
-	Duration        string
-	LastDateToApply string
-}
-
 func parseTags(raw string) []string {
 	var tags []string
 

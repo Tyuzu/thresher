@@ -1,6 +1,6 @@
 import "../../../css/ui/FAB.css";
 import { createNavItem } from "../navigation.js";
-import { makeDraggable } from "../makeDraggable.js";
+import { makeDraggable } from "./fabHelpers/makeDraggable.js";
 
 /** Default FAB Navigation Menu */
 const defaultNavItems = [

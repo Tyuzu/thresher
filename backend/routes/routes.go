@@ -6,7 +6,6 @@ import (
 	"naevis/autocomplete"
 	"naevis/baito"
 	"naevis/beats"
-	"naevis/beats/notifications"
 	"naevis/booking"
 	"naevis/cart"
 	"naevis/comments"
@@ -169,38 +168,38 @@ func AddNoticesRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *m
 	router.DELETE("/api/v1/notices/:entitytype/:entityid/:noticeid", rateLimiter.Limit(authmidware(notices.DeleteNotice(app))))
 }
 
-// Notifications routes
-func AddNotificationsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
+// // Notifications routes
+// func AddNotificationsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
+// 	authmidware := middleware.Authenticate(app)
 
-	// Create notification
-	router.POST("/api/v1/notifs", rateLimiter.Limit(authmidware(notifications.CreateNotification(app))))
+// 	// Create notification
+// 	router.POST("/api/v1/notifs", rateLimiter.Limit(authmidware(notifications.CreateNotification(app))))
 
-	// Bulk create notifications
-	router.POST("/api/v1/notifs/bulk", rateLimiter.Limit(authmidware(notifications.BulkCreateNotifications(app))))
+// 	// Bulk create notifications
+// 	router.POST("/api/v1/notifs/bulk", rateLimiter.Limit(authmidware(notifications.BulkCreateNotifications(app))))
 
-	// Get user notifications
-	router.GET("/api/v1/notifs/user/:userid", notifications.GetUserNotifications(app))
+// 	// Get user notifications
+// 	router.GET("/api/v1/notifs/user/:userid", notifications.GetUserNotifications(app))
 
-	// Get unread count
-	router.GET("/api/v1/notifs/user/:userid/unread", notifications.GetUnreadCount(app))
+// 	// Get unread count
+// 	router.GET("/api/v1/notifs/user/:userid/unread", notifications.GetUnreadCount(app))
 
-	// Mark notification as read
-	router.PUT("/api/v1/notifs/notif/:notificationid/read", rateLimiter.Limit(authmidware(notifications.MarkAsRead(app))))
+// 	// Mark notification as read
+// 	router.PUT("/api/v1/notifs/notif/:notificationid/read", rateLimiter.Limit(authmidware(notifications.MarkAsRead(app))))
 
-	// Mark all as read
-	router.PUT("/api/v1/notifs/user/:userid/read-all", rateLimiter.Limit(authmidware(notifications.MarkAllAsRead(app))))
+// 	// Mark all as read
+// 	router.PUT("/api/v1/notifs/user/:userid/read-all", rateLimiter.Limit(authmidware(notifications.MarkAllAsRead(app))))
 
-	// Delete notification
-	router.DELETE("/api/v1/notifs/notif/:notificationid", rateLimiter.Limit(authmidware(notifications.DeleteNotification(app))))
+// 	// Delete notification
+// 	router.DELETE("/api/v1/notifs/notif/:notificationid", rateLimiter.Limit(authmidware(notifications.DeleteNotification(app))))
 
-	// Clear all notifications
-	router.DELETE("/api/v1/notifs/user/:userid", rateLimiter.Limit(authmidware(notifications.ClearAllNotifications(app))))
+// 	// Clear all notifications
+// 	router.DELETE("/api/v1/notifs/user/:userid", rateLimiter.Limit(authmidware(notifications.ClearAllNotifications(app))))
 
-	// Notification preferences
-	router.GET("/api/v1/notifs/user/:userid/preferences", authmidware(notifications.GetPreferences(app)))
-	router.PUT("/api/v1/notifs/user/:userid/preferences", rateLimiter.Limit(authmidware(notifications.UpdatePreferences(app))))
-}
+// 	// Notification preferences
+// 	router.GET("/api/v1/notifs/user/:userid/preferences", authmidware(notifications.GetPreferences(app)))
+// 	router.PUT("/api/v1/notifs/user/:userid/preferences", rateLimiter.Limit(authmidware(notifications.UpdatePreferences(app))))
+// }
 
 func AddCommentsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)

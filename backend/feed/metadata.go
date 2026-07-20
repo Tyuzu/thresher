@@ -11,17 +11,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type BulkMetadataRequest struct {
-	IDs []string `json:"ids"`
-}
-
-type PostMetadata struct {
-	PostID      string `json:"postId"`
-	Likes       int64  `json:"likes"`
-	Comments    int64  `json:"comments"`
-	LikedByUser bool   `json:"likedByUser"`
-}
-
 func GetPostsMetadata(app *infra.Deps) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)

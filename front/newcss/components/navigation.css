@@ -1,0 +1,188 @@
+/* ==========================================================================
+   Primary Navigation Component
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Layout Wrapper
+   -------------------------------------------------------------------------- */
+.primary-nav {
+  position: relative;
+  width: 100%;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  user-select: none;
+}
+
+.navigation {
+  position: relative;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.navigation__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  gap: var(--space-2, 0.5rem);
+}
+
+/* Hidden state trigger checkbox */
+.navigation .toggle {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   02. Horizontal Navigation List
+   -------------------------------------------------------------------------- */
+.navigation__list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Hide scrollbar while preserving touch scrolling */
+  scrollbar-width: none; /* Firefox */
+}
+
+.navigation__list::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+/* Item wrappers */
+.navigation__item {
+  flex-shrink: 0;
+  position: relative;
+  transition: transform var(--transition-fast, 150ms ease),
+              opacity var(--transition-fast, 150ms ease);
+}
+
+/* Navigation Links */
+.navigation__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: var(--radius, 10px);
+  background-color: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: color var(--transition-fast, 150ms ease),
+              background-color var(--transition-fast, 150ms ease),
+              border-color var(--transition-fast, 150ms ease);
+}
+
+.navigation__link:hover {
+  color: var(--text-primary);
+  background-color: var(--hover-bg);
+}
+
+/* Active Page State */
+.navigation__link.active {
+  color: var(--accent-color);
+  background-color: var(--accent-subtle);
+  font-weight: var(--font-weight-bold, 600);
+}
+
+/* --------------------------------------------------------------------------
+   03. "More" Toggle Switch (.navigation__toggle)
+   -------------------------------------------------------------------------- */
+.navigation__toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.navigation__toggle .navigation__link {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.navigation__toggle .navigation__link:hover {
+  background-color: var(--hover-bg);
+  border-color: var(--border-strong, var(--border-color));
+}
+
+/* --------------------------------------------------------------------------
+   04. Expanded Grid & Drag-Drop Mode (#more:checked)
+   -------------------------------------------------------------------------- */
+
+/* Active toggle visual indicator */
+.navigation .toggle:checked ~ .navigation__inner .navigation__toggle .navigation__link {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border-color: var(--accent-color);
+}
+
+/* Switch horizontal overflow list to wrapped grid */
+.navigation .toggle:checked ~ .navigation__inner .navigation__list {
+  flex-wrap: wrap;
+  overflow-x: visible;
+  padding-bottom: var(--space-2, 0.5rem);
+}
+
+/* Drag mode visual cue on items */
+.navigation .toggle:checked ~ .navigation__inner .navigation__item {
+  cursor: grab;
+}
+
+.navigation .toggle:checked ~ .navigation__inner .navigation__item:active {
+  cursor: grabbing;
+}
+
+.navigation .toggle:checked ~ .navigation__inner .navigation__item .navigation__link {
+  border: 1px dashed var(--border-strong, var(--border-color));
+  background-color: var(--bg-secondary);
+}
+
+/* State during dragging operation */
+.navigation__item.dragging {
+  opacity: 0.4;
+  transform: scale(0.95);
+}
+
+/* Drag-and-Drop Insertion Placeholder */
+.navigation__placeholder {
+  flex-shrink: 0;
+  width: 80px;
+  height: 36px;
+  border: 2px dashed var(--accent-color);
+  border-radius: var(--radius, 10px);
+  background-color: var(--accent-subtle);
+  animation: placeholderPulse 1s infinite alternate ease-in-out;
+}
+
+@keyframes placeholderPulse {
+  from { opacity: 0.5; }
+  to { opacity: 0.9; }
+}
+
+/* --------------------------------------------------------------------------
+   05. Responsive Adjustments
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .navigation__inner {
+    padding: var(--space-2, 0.5rem);
+  }
+
+  .navigation__link {
+    font-size: var(--font-size-xs, 0.75rem);
+    padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+  }
+}
