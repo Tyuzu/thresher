@@ -7,23 +7,32 @@ import { resolveImagePath, EntityType, PictureType } from "../utils/imagePaths.j
 import Imagex from "./base/Imagex.js";
 import { sticky } from "./sticky.js";
 import Button from "./base/Button.js";
-
-const themes = ["light", "solarized", "dimmed", "dark"];
+const themes = ["light", "solarized", "dimmed", "dark", "emerald", "cyberpunk"];
 let currentThemeIndex = 0;
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  currentThemeIndex = themes.indexOf(theme);
+}
 
 function loadTheme() {
   const saved = localStorage.getItem("theme");
-  const index = themes.indexOf(saved);
-  if (index >= 0) {
-    document.documentElement.dataset.theme = saved;
-    currentThemeIndex = index;
+  
+  if (saved && themes.includes(saved)) {
+    applyTheme(saved);
+  } else {
+    // Default to OS preference if no saved theme exists
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const defaultTheme = prefersDark ? "dark" : "light";
+    applyTheme(defaultTheme);
   }
 }
 
 function toggleTheme() {
   currentThemeIndex = (currentThemeIndex + 1) % themes.length;
   const theme = themes[currentThemeIndex];
-  document.documentElement.dataset.theme = theme;
+  
+  applyTheme(theme);
   localStorage.setItem("theme", theme);
 }
 
