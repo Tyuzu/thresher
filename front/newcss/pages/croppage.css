@@ -1,0 +1,314 @@
+/* ==========================================================================
+   Crop Detail & Listings Page (.croppage)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Page Container & Header
+   -------------------------------------------------------------------------- */
+.croppage {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
+  box-sizing: border-box;
+  color: var(--text-primary, #0f172a);
+}
+
+.crop-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.crop-header span {
+  font-weight: 700;
+  text-transform: capitalize;
+  line-height: 1.2;
+}
+
+.crop-meta {
+  margin: 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-secondary, #64748b);
+  font-weight: 500;
+}
+
+/* Filter Toggle Button */
+.toggle-filters-btn {
+  margin-bottom: var(--space-4, 1rem);
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.toggle-filters-btn:hover {
+  background-color: var(--bg-secondary, #f8fafc);
+}
+
+/* --------------------------------------------------------------------------
+   02. Filter Controls Form
+   -------------------------------------------------------------------------- */
+.filter-controls {
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: var(--space-4, 1rem);
+  margin-bottom: var(--space-6, 1.5rem);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.filter-controls fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3, 0.75rem);
+}
+
+.filter-controls legend {
+  font-weight: 700;
+  font-size: var(--font-size-md, 1rem);
+  margin-bottom: var(--space-3, 0.75rem);
+  color: var(--text-primary, #0f172a);
+}
+
+.filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-row label {
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+  min-height: 16px; /* Keeps empty labels aligned for min/max inputs */
+}
+
+.filter-row input {
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-primary, #0f172a);
+  background-color: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  outline: none;
+}
+
+.filter-row input:focus {
+  background-color: var(--bg-surface, #ffffff);
+  border-color: var(--accent-color, #2563eb);
+}
+
+.filter-actions {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+  margin-top: var(--space-4, 1rem);
+  justify-content: flex-end;
+}
+
+.filter-actions button {
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+#apply-filters {
+  color: #ffffff;
+  background-color: var(--accent-color, #2563eb);
+  border: none;
+}
+
+#apply-filters:hover {
+  background-color: var(--accent-hover, #1d4ed8);
+}
+
+#reset-filters {
+  color: var(--text-secondary, #475569);
+  background-color: transparent;
+  border: 1px solid var(--border-color, #cbd5e1);
+}
+
+#reset-filters:hover {
+  background-color: var(--bg-secondary, #f8fafc);
+}
+
+/* --------------------------------------------------------------------------
+   03. Crop Listings Section
+   -------------------------------------------------------------------------- */
+.crop-listings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.listing-card {
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: var(--space-4, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.listing-image {
+  width: 100%;
+  height: 200px;
+  background-color: var(--bg-secondary, #f1f5f9);
+  border-radius: var(--radius-sm, 8px);
+  overflow: hidden;
+}
+
+.listing-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.listing-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-4, 1rem);
+}
+
+/* Detail Paragraphs Grid */
+.listing-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-2, 0.5rem) var(--space-4, 1rem);
+}
+
+.listing-details h3.farm-link {
+  grid-column: 1 / -1;
+  margin: 0 0 var(--space-2, 0.5rem) 0;
+  font-size: var(--font-size-lg, 1.25rem);
+  font-weight: 700;
+}
+
+.listing-details h3.farm-link a {
+  color: var(--accent-color, #2563eb);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.listing-details h3.farm-link a:hover {
+  text-decoration: underline;
+}
+
+.listing-details p {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.8125rem);
+  color: var(--text-secondary, #475569);
+  line-height: 1.5;
+}
+
+/* Span full width for long textual fields like Availability */
+.listing-details p:nth-child(n + 13) {
+  grid-column: 1 / -1;
+  background-color: var(--bg-secondary, #f8fafc);
+  padding: var(--space-2, 0.5rem);
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--border-color, #f1f5f9);
+}
+
+/* --------------------------------------------------------------------------
+   04. Listing Actions & Quantity Control
+   -------------------------------------------------------------------------- */
+.listing-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 1rem);
+  padding-top: var(--space-3, 0.75rem);
+  border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+.listing-controls label {
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  overflow: hidden;
+  background-color: var(--bg-surface, #ffffff);
+}
+
+.quantity-control .subtle {
+  width: 32px;
+  height: 32px;
+  background-color: var(--bg-secondary, #f8fafc);
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quantity-control .subtle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.quantity-display {
+  padding: 0 var(--space-3, 0.75rem);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+}
+
+#a2c-crop-crd {
+  margin-left: auto;
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--accent-color, #2563eb);
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+#a2c-crop-crd:hover {
+  background-color: var(--accent-hover, #1d4ed8);
+}
+
+/* --------------------------------------------------------------------------
+   05. Responsive Media Queries
+   -------------------------------------------------------------------------- */
+@media (min-width: 640px) {
+  .listing-card {
+    flex-direction: row;
+  }
+
+  .listing-image {
+    width: 220px;
+    height: 100%;
+    min-height: 200px;
+  }
+}

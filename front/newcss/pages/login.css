@@ -1,0 +1,199 @@
+/* ==========================================================================
+   Authentication Page (Login / Signup) Component
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Main Layout & Wrapper
+   -------------------------------------------------------------------------- */
+
+.auth-wrapper {
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+}
+
+.auth-box {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 
+              0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   02. Form Sections & Titles
+   -------------------------------------------------------------------------- */
+.auth-section {
+  flex: 1;
+  padding: var(--space-8, 2rem) var(--space-6, 1.5rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-title {
+  margin: 0 0 var(--space-6, 1.5rem) 0;
+  font-size: var(--font-size-xl, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+/* --------------------------------------------------------------------------
+   03. Form Inputs & Elements
+   -------------------------------------------------------------------------- */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.auth-form input[type="text"],
+.auth-form input[type="email"],
+.auth-form input[type="password"] {
+  width: 100%;
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-primary, #0f172a);
+  background-color: var(--bg-secondary, #f1f5f9);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-md, 8px);
+  outline: none;
+  transition: border-color 150ms ease,
+              background-color 150ms ease,
+              box-shadow 150ms ease;
+}
+
+.auth-form input[type="text"]::placeholder,
+.auth-form input[type="email"]::placeholder,
+.auth-form input[type="password"]::placeholder {
+  color: var(--text-muted, #94a3b8);
+}
+
+.auth-form input[type="text"]:focus,
+.auth-form input[type="email"]:focus,
+.auth-form input[type="password"]:focus {
+  background-color: var(--bg-surface, #ffffff);
+  border-color: var(--accent-color, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Terms Checkbox */
+.auth-terms {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--text-secondary, #475569);
+  cursor: pointer;
+  margin-top: var(--space-1, 0.25rem);
+  user-select: none;
+}
+
+.auth-terms input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-color, #6366f1);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+}
+
+/* Submit Buttons */
+.auth-form button[type="submit"] {
+  width: 100%;
+  margin-top: var(--space-2, 0.5rem);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--accent-color, #6366f1);
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: background-color 150ms ease,
+              transform 150ms ease,
+              box-shadow 150ms ease;
+}
+
+.auth-form button[type="submit"]:hover {
+  background-color: var(--accent-hover, #4f46e5);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+.auth-form button[type="submit"]:active {
+  transform: translateY(1px);
+}
+
+/* --------------------------------------------------------------------------
+   04. Divider Section
+   -------------------------------------------------------------------------- */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-4, 1rem);
+  color: var(--text-muted, #94a3b8);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+}
+
+/* Horizontal line for mobile */
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-color, #e2e8f0);
+}
+
+.auth-divider::before {
+  margin-right: var(--space-3, 0.75rem);
+}
+
+.auth-divider::after {
+  margin-left: var(--space-3, 0.75rem);
+}
+
+/* --------------------------------------------------------------------------
+   05. Desktop Layout Adjustment (Side-by-Side)
+   -------------------------------------------------------------------------- */
+@media (min-width: 640px) {
+  .auth-box {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .auth-section {
+    padding: var(--space-10, 2.5rem) var(--space-8, 2rem);
+  }
+
+  /* Switch divider to a vertical separator on desktop */
+  .auth-divider {
+    flex-direction: column;
+    padding: var(--space-8, 2rem) 0;
+  }
+
+  .auth-divider::before,
+  .auth-divider::after {
+    width: 1px;
+    height: 100%;
+  }
+
+  .auth-divider::before {
+    margin-right: 0;
+    margin-bottom: var(--space-3, 0.75rem);
+  }
+
+  .auth-divider::after {
+    margin-left: 0;
+    margin-top: var(--space-3, 0.75rem);
+  }
+}

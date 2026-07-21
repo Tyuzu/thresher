@@ -1,0 +1,237 @@
+/* ==========================================================================
+   Product Detail Page Component (.product-page)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Layout & Wrapper
+   -------------------------------------------------------------------------- */
+.product-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6, 1.5rem);
+  color: var(--text-primary, #0f172a);
+  background-color: var(--bg-surface, #ffffff);
+  border-radius: var(--radius-lg, 16px);
+}
+
+/* --------------------------------------------------------------------------
+   02. Gallery Section
+   -------------------------------------------------------------------------- */
+.gallery-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.product-gallery-wrapper {
+  background-color: var(--bg-secondary, #f8fafc);
+  padding: var(--space-4, 1rem);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+}
+
+.image-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 0.75rem) !important; /* Overrides inline gap */
+}
+
+.image-gallery img {
+  width: 100px !important;
+  height: 100px !important;
+  object-fit: cover;
+  border-radius: var(--radius-sm, 8px) !important;
+  border: 2px solid transparent !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 150ms ease, border-color 150ms ease;
+}
+
+.image-gallery img:hover {
+  transform: scale(1.03);
+  border-color: var(--accent-color, #2563eb) !important;
+}
+
+.edit-gallery-images {
+  align-self: flex-start;
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+  background-color: var(--bg-secondary, #f1f5f9);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.edit-gallery-images:hover {
+  background-color: var(--hover-bg, #e2e8f0);
+}
+
+/* --------------------------------------------------------------------------
+   03. Product Info Section
+   -------------------------------------------------------------------------- */
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+}
+
+.product-title {
+  margin: 0 0 var(--space-2, 0.5rem) 0;
+  font-size: var(--font-size-2xl, 1.875rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.product-price {
+  font-size: var(--font-size-xl, 1.5rem);
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+}
+
+.product-discount {
+  margin: 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  display: inline-block;
+}
+
+.product-availability {
+  margin: var(--space-1, 0.25rem) 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.product-availability.available {
+  color: #16a34a; /* Green */
+}
+
+.product-description {
+  margin: var(--space-3, 0.75rem) 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-secondary, #475569);
+  line-height: 1.6;
+}
+
+.product-category,
+.product-sku {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--text-muted, #64748b);
+}
+
+/* --------------------------------------------------------------------------
+   04. Actions & Quantity Control
+   -------------------------------------------------------------------------- */
+.product-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+  padding-top: var(--space-4, 1rem);
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  margin-top: var(--space-2, 0.5rem);
+}
+
+.quantity-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 1rem);
+}
+
+.quantity-section label {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  overflow: hidden;
+  background-color: var(--bg-surface, #ffffff);
+}
+
+.quantity-btn {
+  width: 36px;
+  height: 36px;
+  background-color: var(--bg-secondary, #f8fafc);
+  border: none;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 150ms ease;
+}
+
+.quantity-btn:hover {
+  background-color: var(--hover-bg, #e2e8f0);
+}
+
+.quantity-value {
+  padding: 0 var(--space-4, 1rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.product-actions .primary-button {
+  padding: var(--space-3, 0.75rem) var(--space-5, 1.25rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--accent-color, #2563eb);
+  border: none;
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  text-align: center;
+}
+
+.product-actions .primary-button:hover {
+  background-color: var(--accent-hover, #1d4ed8);
+}
+
+.product-actions .buttonx {
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+  background-color: transparent;
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  transition: all 150ms ease;
+  text-align: center;
+}
+
+.product-actions .buttonx:hover {
+  background-color: var(--bg-secondary, #f8fafc);
+  color: var(--text-primary, #0f172a);
+}
+
+/* --------------------------------------------------------------------------
+   05. Desktop Grid Layout (768px and above)
+   -------------------------------------------------------------------------- */
+@media (min-width: 768px) {
+  .product-page {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-8, 2rem);
+  }
+
+  .product-actions {
+    grid-column: 2; /* Keeps actions on the right side under product info */
+  }
+}

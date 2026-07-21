@@ -1,0 +1,216 @@
+/* ==========================================================================
+   Itinerary Management Dashboard (.itinerary-layout)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Master-Detail Layout Setup
+   -------------------------------------------------------------------------- */
+.itinerary-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
+  box-sizing: border-box;
+  color: var(--text-primary, #0f172a);
+}
+
+.itinerary-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+  min-width: 0;
+}
+
+.itinerary-right {
+  flex: 1;
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 16px);
+  padding: var(--space-6, 1.5rem);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.itinerary-right p {
+  margin: 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-muted, #94a3b8);
+  font-style: italic;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   02. Search Controls & Primary Actions
+   -------------------------------------------------------------------------- */
+.itinerary-search-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-3, 0.75rem);
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: var(--space-4, 1rem);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.itinerary-search-form input {
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.8125rem);
+  color: var(--text-primary, #0f172a);
+  background-color: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  outline: none;
+}
+
+.itinerary-search-form input:focus {
+  background-color: var(--bg-surface, #ffffff);
+  border-color: var(--accent-color, #2563eb);
+}
+
+.itinerary-search-form button[type="submit"] {
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.8125rem);
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--accent-color, #2563eb);
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.itinerary-search-form button[type="submit"]:hover {
+  background-color: var(--accent-hover, #1d4ed8);
+}
+
+/* Main Create Button */
+.itinerary-create-btn {
+  width: fit-content;
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--accent-color, #2563eb);
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.itinerary-create-btn:hover {
+  background-color: var(--accent-hover, #1d4ed8);
+}
+
+/* --------------------------------------------------------------------------
+   03. Itinerary List Items & Row Actions
+   -------------------------------------------------------------------------- */
+.itinerary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.itinerary-list-item {
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  flex-wrap: wrap;
+}
+
+.itinerary-list-item strong {
+  font-size: var(--font-size-md, 1rem);
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+}
+
+.itinerary-list-item span {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--text-secondary, #64748b);
+  font-style: italic;
+  margin-right: auto; /* Pushes action buttons to the right side */
+}
+
+/* Row Action Buttons */
+.itinerary-btn {
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  background-color: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
+  color: var(--text-primary, #0f172a);
+  transition: all 150ms ease;
+}
+
+.itinerary-btn:hover {
+  background-color: var(--bg-surface, #ffffff);
+  border-color: var(--text-muted, #94a3b8);
+}
+
+.itinerary-btn.secondary {
+  color: var(--text-secondary, #475569);
+}
+
+.itinerary-btn.danger {
+  color: #dc2626;
+  background-color: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.itinerary-btn.danger:hover {
+  background-color: #fee2e2;
+  border-color: #f87171;
+}
+
+.itinerary-btn.success {
+  color: #16a34a;
+  background-color: #f0fdf4;
+  border-color: #86efac;
+}
+
+.itinerary-btn.success:hover {
+  background-color: #dcfce7;
+  border-color: #4ade80;
+}
+
+/* --------------------------------------------------------------------------
+   04. Desktop Split View Grid (768px+)
+   -------------------------------------------------------------------------- */
+@media (min-width: 768px) {
+  .itinerary-layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .itinerary-left {
+    flex: 1.2;
+  }
+
+  .itinerary-right {
+    flex: 0.8;
+    position: sticky;
+    top: var(--space-4, 1rem);
+    min-height: 400px;
+  }
+}

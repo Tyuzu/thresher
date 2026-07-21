@@ -1,0 +1,499 @@
+/* ==========================================================================
+   Recipe Page Component (.recipepage)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Page Container & Layout
+   -------------------------------------------------------------------------- */
+.recipepage {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
+    box-sizing: border-box;
+    color: var(--text-primary, #0f172a);
+}
+
+.recipepage h2 {
+    margin: 0 0 var(--space-1, 0.25rem) 0;
+    font-size: var(--font-size-2xl, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.author-info {
+    margin: 0 0 var(--space-4, 1rem) 0;
+    font-size: var(--font-size-sm, 0.875rem);
+    color: var(--text-secondary, #64748b);
+}
+
+.author-info a {
+    color: var(--accent-color, #2563eb);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.author-info a:hover {
+    text-decoration: underline;
+}
+
+/* Banner Image */
+.recipe-banner {
+    position: relative;
+    width: 100%;
+    max-height: 380px;
+    border-radius: var(--radius-lg, 16px);
+    overflow: hidden;
+    margin-bottom: var(--space-5, 1.25rem);
+    background-color: var(--bg-secondary, #f1f5f9);
+}
+
+.recipe-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* --------------------------------------------------------------------------
+   02. Recipe Info Box & Tags
+   -------------------------------------------------------------------------- */
+.recipe-info-box {
+    background-color: var(--bg-surface, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-md, 12px);
+    padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
+    margin-bottom: var(--space-5, 1.25rem);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-3, 0.75rem);
+}
+
+.recipe-description {
+    grid-column: 1 / -1;
+    margin: 0 0 var(--space-2, 0.5rem) 0;
+    font-size: var(--font-size-sm, 0.9375rem);
+    color: var(--text-secondary, #475569);
+    line-height: 1.6;
+}
+
+.info-row {
+    font-size: var(--font-size-xs, 0.8125rem);
+    display: flex;
+    gap: 4px;
+}
+
+.info-label {
+    color: var(--text-primary, #0f172a);
+}
+
+.info-value {
+    color: var(--text-secondary, #64748b);
+}
+
+/* Tags Section */
+.tags-section {
+    margin-bottom: var(--space-5, 1.25rem);
+}
+
+.tags-section h3 {
+    margin: 0 0 var(--space-2, 0.5rem) 0;
+    font-size: var(--font-size-xs, 0.75rem);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #94a3b8);
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2, 0.5rem);
+}
+
+.tag {
+    font-size: var(--font-size-xs, 0.75rem);
+    font-weight: 600;
+    padding: 4px 12px;
+    background-color: var(--accent-subtle, #eff6ff);
+    color: var(--accent-color, #2563eb);
+    border-radius: 999px;
+}
+
+/* --------------------------------------------------------------------------
+   03. Tabs Component
+   -------------------------------------------------------------------------- */
+.tabs-container {
+    background-color: var(--bg-surface, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-lg, 16px);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.tab-buttons {
+    display: flex;
+    gap: var(--space-2, 0.5rem);
+    padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+    background-color: var(--bg-secondary, #f8fafc);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    overflow-x: auto;
+}
+
+.tab-button {
+    padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+    font-size: var(--font-size-sm, 0.875rem);
+    font-weight: 600;
+    color: var(--text-secondary, #64748b);
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 150ms ease;
+    user-select: none;
+}
+
+.tab-button:hover {
+    color: var(--text-primary, #0f172a);
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.tab-button.active {
+    color: var(--accent-color, #2563eb);
+    background-color: var(--bg-surface, #ffffff);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tab-contents {
+    padding: var(--space-5, 1.25rem);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* --------------------------------------------------------------------------
+   04. Tab Panels: Ingredients & Steps
+   -------------------------------------------------------------------------- */
+/* Ingredients List */
+.ingredients-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3, 0.75rem);
+}
+
+.ingredients-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+    background-color: var(--bg-secondary, #f8fafc);
+    border-radius: var(--radius-sm, 8px);
+    font-size: var(--font-size-sm, 0.875rem);
+}
+
+.ingredients-list .warning {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #dc2626;
+    background-color: #fee2e2;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+/* Steps Checklist & Progress Bar */
+.steps-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 1rem);
+}
+
+.progress-bar {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    background-color: var(--bg-secondary, #e2e8f0);
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background-color: var(--accent-color, #16a34a);
+    transition: width 200ms ease;
+}
+
+.progress-text {
+    position: relative;
+    z-index: 1;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--text-primary, #0f172a);
+}
+
+.steps-section ol {
+    padding-left: 0;
+    margin: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3, 0.75rem);
+}
+
+.steps-section li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3, 0.75rem);
+    padding: var(--space-3, 0.75rem);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-sm, 8px);
+}
+
+.steps-section input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    cursor: pointer;
+}
+
+.steps-section li span {
+    font-size: var(--font-size-sm, 0.875rem);
+    line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   05. Tab Panels: Comments Section
+   -------------------------------------------------------------------------- */
+.recipe-comments h4 {
+    margin: 0 0 var(--space-2, 0.5rem) 0;
+    font-size: var(--font-size-md, 1rem);
+}
+
+.toggle-comments {
+    background: none;
+    border: none;
+    color: var(--accent-color, #2563eb);
+    font-size: var(--font-size-xs, 0.75rem);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: var(--space-4, 1rem);
+}
+
+.comments-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 1rem);
+}
+
+.comment-sort {
+    align-self: flex-end;
+    padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+    font-size: var(--font-size-xs, 0.75rem);
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: var(--radius-sm, 6px);
+    outline: none;
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2, 0.5rem);
+}
+
+.comment-input {
+    width: 100%;
+    height: 70px;
+    padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+    font-family: inherit;
+    font-size: var(--font-size-sm, 0.875rem);
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: var(--radius-sm, 6px);
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.comment-form button[type="submit"] {
+    align-self: flex-end;
+    padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+    font-size: var(--font-size-xs, 0.75rem);
+    font-weight: 600;
+    color: #ffffff;
+    background-color: var(--accent-color, #2563eb);
+    border: none;
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3, 0.75rem);
+}
+
+.comment {
+    display: flex;
+    gap: var(--space-3, 0.75rem);
+    padding: var(--space-3, 0.75rem);
+    background-color: var(--bg-secondary, #f8fafc);
+    border-radius: var(--radius-sm, 8px);
+}
+
+.comment-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    object-fit: cover;
+}
+
+.comment-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comment-username {
+    font-size: var(--font-size-xs, 0.75rem);
+    font-weight: 700;
+}
+
+.comment-timestamp {
+    font-size: 0.6875rem;
+    color: var(--text-muted, #94a3b8);
+}
+
+.comment-body p {
+    margin: 0;
+    font-size: var(--font-size-xs, 0.8125rem);
+    color: var(--text-secondary, #475569);
+}
+
+.comment-actions {
+    display: flex;
+    gap: var(--space-2, 0.5rem);
+    margin-top: var(--space-1, 0.25rem);
+}
+
+.comment-actions button {
+    padding: 2px 8px;
+    font-size: 0.6875rem;
+    background: transparent;
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.comment-error {
+    font-size: var(--font-size-xs, 0.75rem);
+    color: var(--text-muted, #94a3b8);
+    font-style: italic;
+    margin: 0;
+}
+
+.load-more-comments {
+    align-self: center;
+    padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+    font-size: var(--font-size-xs, 0.75rem);
+    background: transparent;
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   06. Tab Panels: Media & Actions
+   -------------------------------------------------------------------------- */
+#add-media-btn {
+    padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+    font-size: var(--font-size-xs, 0.75rem);
+    font-weight: 600;
+    color: #ffffff;
+    background-color: var(--accent-color, #2563eb);
+    border: none;
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+    margin-bottom: var(--space-4, 1rem);
+}
+
+.media-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-4, 1rem);
+}
+
+.media-item {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.media-img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: var(--radius-md, 8px);
+    background-color: var(--bg-secondary, #f1f5f9);
+}
+
+.media-caption {
+    font-size: var(--font-size-xs, 0.75rem);
+    color: var(--text-secondary, #64748b);
+}
+
+.translate-toggle {
+    font-size: 0.6875rem;
+    color: var(--accent-color, #2563eb);
+    cursor: pointer;
+}
+
+/* Actions Panel */
+.recipe-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3, 0.75rem);
+}
+
+.recipe-actions button {
+    padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+    font-family: inherit;
+    font-size: var(--font-size-sm, 0.875rem);
+    font-weight: 600;
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+
+.recipe-actions .primary {
+    color: #ffffff;
+    background-color: var(--accent-color, #2563eb);
+    border: none;
+}
+
+.recipe-actions .secondary {
+    color: var(--text-primary, #0f172a);
+    background-color: var(--bg-surface, #ffffff);
+    border: 1px solid var(--border-color, #cbd5e1);
+}
+
+.recipe-actions button:hover {
+    opacity: 0.9;
+}

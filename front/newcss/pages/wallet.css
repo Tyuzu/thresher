@@ -1,0 +1,211 @@
+/* ==========================================================================
+   Wallet Dashboard Component
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Layout & Grid Setup
+   -------------------------------------------------------------------------- */
+.wallet-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4, 1rem);
+  box-sizing: border-box;
+}
+
+.wallet-left-col,
+.wallet-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+  width: 100%;
+}
+
+.wallet-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --------------------------------------------------------------------------
+   02. Cards & Containers
+   -------------------------------------------------------------------------- */
+.wallet-card {
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 16px);
+  padding: var(--space-6, 1.5rem);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.wallet-section-title {
+  margin: 0;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.01em;
+}
+
+/* --------------------------------------------------------------------------
+   03. Account Balance Display
+   -------------------------------------------------------------------------- */
+.balance-display {
+  font-size: var(--font-size-2xl, 1.5rem);
+  font-weight: 700;
+  color: var(--accent-color, #16a34a);
+  background-color: var(--accent-subtle, #f0fdf4);
+  border: 1px solid var(--accent-border, #bbf7d0);
+  border-radius: var(--radius-md, 12px);
+  padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   04. Forms & Form Controls
+   -------------------------------------------------------------------------- */
+.wallet-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.wallet-form.grid-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3, 0.75rem);
+}
+
+.wallet-form input[type="number"],
+.wallet-form input[type="text"],
+.wallet-form select,
+.form-input {
+  width: 100%;
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-primary, #0f172a);
+  background-color: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-md, 8px);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.wallet-form input::placeholder {
+  color: var(--text-muted, #94a3b8);
+}
+
+.wallet-form input:focus,
+.wallet-form select:focus,
+.form-input:focus {
+  background-color: var(--bg-surface, #ffffff);
+  border-color: var(--accent-color, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Buttons */
+.wallet-dashboard .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3, 0.75rem) var(--space-5, 1.25rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--accent-color, #2563eb);
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+.wallet-dashboard .button:hover {
+  background-color: var(--accent-hover, #1d4ed8);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.wallet-dashboard .button:active {
+  transform: translateY(1px);
+}
+
+/* --------------------------------------------------------------------------
+   05. Transaction Ledger & Items
+   -------------------------------------------------------------------------- */
+.txn-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  background-color: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+}
+
+.txn-info {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+.txn-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 0.5rem);
+}
+
+.txn-date {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--text-muted, #64748b);
+}
+
+.txn-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.badge-success {
+  color: #15803d;
+  background-color: #dcfce7;
+  border: 1px solid #86efac;
+}
+
+/* --------------------------------------------------------------------------
+   06. Desktop Responsive Layout (Side-by-Side)
+   -------------------------------------------------------------------------- */
+@media (min-width: 768px) {
+  .wallet-dashboard {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .wallet-left-col {
+    flex: 3;
+  }
+
+  .wallet-right-col {
+    flex: 2;
+  }
+
+  .txn-item {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .txn-meta {
+    justify-content: flex-end;
+  }
+}

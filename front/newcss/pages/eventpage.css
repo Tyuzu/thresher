@@ -1,0 +1,370 @@
+/* ==========================================================================
+   Single Event Detail Page (.eventpage)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Page Container & Theme Accent
+   -------------------------------------------------------------------------- */
+.eventpage {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
+  box-sizing: border-box;
+  color: var(--text-primary, #0f172a);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+}
+
+/* Theme accent hook for Sports */
+.color-sports {
+  --event-accent: #059669;
+  --event-accent-subtle: #ecfdf5;
+}
+
+.event-wrapper {
+  width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   02. Hero Banner & Card Info Layout
+   -------------------------------------------------------------------------- */
+.eventx-card {
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.hvflex {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.hvflex.gap20 {
+  gap: 1.25rem;
+}
+
+.event-banner {
+  width: 100%;
+  max-height: 380px;
+  background-color: var(--bg-secondary, #f1f5f9);
+  overflow: hidden;
+}
+
+.event-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.event-info {
+  padding: var(--space-5, 1.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.event-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+}
+
+.eventpage-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+}
+
+.event-title {
+  margin: 0;
+  font-size: var(--font-size-2xl, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #0f172a);
+}
+
+.event-status {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary, #64748b);
+}
+
+.event-date {
+  margin: 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--event-accent, #059669);
+}
+
+.event-description {
+  margin: var(--space-2, 0.5rem) 0 0 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-secondary, #475569);
+  line-height: 1.5;
+}
+
+/* Badge & Save Action Icon */
+.event-header-row span[style*="background:darkgreen"] {
+  background-color: var(--event-accent, #059669) !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.logoicon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2, 0.5rem);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.logoicon:hover {
+  background-color: var(--bg-secondary, #f1f5f9);
+}
+
+.logoicon:hover svg {
+  stroke: var(--accent-color, #2563eb);
+}
+
+.event-countdown {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.8125rem);
+  font-weight: 600;
+  color: #d97706; /* Amber countdown alert */
+  background-color: #fffbeb;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  border-radius: var(--radius-sm, 6px);
+  width: fit-content;
+}
+
+.event-actions {
+  margin-top: var(--space-2, 0.5rem);
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+}
+
+/* --------------------------------------------------------------------------
+   03. Tabs & Panel Container
+   -------------------------------------------------------------------------- */
+.tabs-container {
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.tab-buttons {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  background-color: var(--bg-secondary, #f8fafc);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  overflow-x: auto;
+}
+
+.tab-button {
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 150ms ease;
+  user-select: none;
+}
+
+.tab-button:hover {
+  color: var(--text-primary, #0f172a);
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.tab-button.active {
+  color: var(--accent-color, #2563eb);
+  background-color: var(--bg-surface, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tab-contents {
+  padding: var(--space-5, 1.25rem);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.tab-content h2 {
+  margin: 0 0 var(--space-4, 1rem) 0;
+  font-size: var(--font-size-lg, 1.25rem);
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   04. Ticket Cards Styling
+   -------------------------------------------------------------------------- */
+.ticket-card {
+  position: relative;
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  overflow: hidden;
+  display: flex;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.ticket-card .corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+}
+
+.ticket-card .stripe-container {
+  width: 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ticket-card .perforation {
+  border-left: 2px dashed rgba(255, 255, 255, 0.6);
+  height: 80%;
+}
+
+.ticket-card .content {
+  padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+}
+
+.ticket-card .content h2 {
+  margin: 0;
+  font-size: var(--font-size-lg, 1.25rem);
+  font-weight: 800;
+}
+
+.ticket-card .tickinfo {
+  display: flex;
+  gap: var(--space-4, 1rem);
+  font-size: var(--font-size-xs, 0.8125rem);
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+}
+
+/* --------------------------------------------------------------------------
+   05. Merchandise Tab Grid
+   -------------------------------------------------------------------------- */
+.merchcon {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-4, 1rem);
+}
+
+.merch-card {
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: var(--space-3, 0.75rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+}
+
+.merch-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius-sm, 6px);
+  background-color: var(--bg-secondary, #f1f5f9);
+}
+
+.merch-actions {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+  margin-top: var(--space-2, 0.5rem);
+}
+
+.merch-actions .buttonx {
+  flex: 1;
+}
+
+/* --------------------------------------------------------------------------
+   06. Reusable Button Utilities
+   -------------------------------------------------------------------------- */
+.buttonx {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 150ms ease;
+  box-sizing: border-box;
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #cbd5e1);
+  color: var(--text-primary, #0f172a);
+}
+
+.buttonx:hover {
+  background-color: var(--bg-secondary, #f8fafc);
+  border-color: var(--text-muted, #94a3b8);
+}
+
+.buttonx.primary {
+  color: #ffffff;
+  background-color: var(--accent-color, #2563eb);
+  border-color: var(--accent-color, #2563eb);
+}
+
+.buttonx.primary:hover {
+  background-color: var(--accent-hover, #1d4ed8);
+  border-color: var(--accent-hover, #1d4ed8);
+}
+
+.action-btn {
+  font-size: var(--font-size-xs, 0.75rem);
+  padding: 6px 12px;
+}
+
+/* Responsive side-by-side hero on wider screens */
+@media (min-width: 768px) {
+  .eventx-card {
+    flex-direction: row;
+  }
+
+  .event-banner {
+    width: 45%;
+    max-height: none;
+  }
+
+  .event-info {
+    width: 55%;
+  }
+}

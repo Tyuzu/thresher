@@ -1,0 +1,247 @@
+/* ==========================================================================
+   User Orders Page - Mobile Card Layout
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Main Container & Typography
+   -------------------------------------------------------------------------- */
+.user-orders-page {
+  width: 100%;
+  /*max-width: 600px;*/
+  margin: 0 auto;
+  padding: var(--space-4, 1rem);
+  box-sizing: border-box;
+  color: var(--text-primary, #0f172a);
+  font-family: inherit;
+}
+
+.user-orders-page h2 {
+  margin: 0 0 var(--space-4, 1rem) 0;
+  font-size: var(--font-size-xl, 1.25rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* --------------------------------------------------------------------------
+   02. Mobile Filter Section (.filters)
+   -------------------------------------------------------------------------- */
+.user-orders-page .filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-4, 1rem);
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.user-orders-page .filters label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 500;
+  color: var(--text-secondary, #475569);
+}
+
+.user-orders-page .filters select,
+.user-orders-page .filters input[type="date"] {
+  width: 60%;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-primary, #0f172a);
+  background-color: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.user-orders-page .filters select:focus,
+.user-orders-page .filters input[type="date"]:focus {
+  border-color: var(--accent-color, #2563eb);
+  background-color: var(--bg-surface, #ffffff);
+}
+
+/* Filter buttons container */
+.user-orders-page .filters button {
+  width: 100%;
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: background-color 150ms ease, opacity 150ms ease;
+}
+
+/* Primary "Filter" Button */
+.user-orders-page .filters button[type="button"]:nth-of-type(1) {
+  background-color: var(--accent-color, #2563eb);
+  color: #ffffff;
+  border: none;
+}
+
+/* Secondary "Reset" Button */
+.user-orders-page .filters button[type="button"]:nth-of-type(2) {
+  background-color: transparent;
+  color: var(--text-secondary, #64748b);
+  border: 1px solid var(--border-color, #cbd5e1);
+}
+
+.user-orders-page .filters button:active {
+  opacity: 0.8;
+}
+
+/* --------------------------------------------------------------------------
+   03. Orders Summary Text
+   -------------------------------------------------------------------------- */
+.orders-summary {
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
+  margin: 0 0 var(--space-3, 0.75rem) 0;
+}
+
+/* --------------------------------------------------------------------------
+   04. Order Cards Wrapper & Individual Card (.order-card)
+   -------------------------------------------------------------------------- */
+.orders-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+  margin-bottom: var(--space-6, 1.5rem);
+}
+
+.order-card {
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 12px);
+  padding: var(--space-4, 1rem);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+}
+
+/* Header Row: ID + Expand Button */
+.order-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-2, 0.5rem);
+  border-bottom: 1px solid var(--border-color, #f1f5f9);
+  margin-bottom: var(--space-1, 0.25rem);
+}
+
+.order-card-header p {
+  margin: 0;
+  font-weight: 700;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-primary, #0f172a);
+}
+
+/* Expand / Details Toggle Button */
+.order-card-header button {
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+  background-color: var(--bg-secondary, #f1f5f9);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.order-card-header button:hover {
+  background-color: var(--hover-bg, #e2e8f0);
+}
+
+/* Card Body Details */
+.order-card p:not(.order-card-header p) {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--text-secondary, #475569);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Highlight total price */
+.order-card p:has(+ .btn-receipt),
+.order-card p:nth-last-of-type(1) {
+  font-weight: 700;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-primary, #0f172a);
+  margin-top: var(--space-1, 0.25rem);
+  padding-top: var(--space-2, 0.5rem);
+  border-top: 1px dashed var(--border-color, #e2e8f0);
+}
+
+/* --------------------------------------------------------------------------
+   05. Receipt Action Button (.btn-receipt)
+   -------------------------------------------------------------------------- */
+.btn-receipt {
+  width: 100%;
+  margin-top: var(--space-2, 0.5rem);
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--accent-color, #2563eb);
+  background-color: var(--accent-subtle, #eff6ff);
+  border: 1px solid var(--accent-border, #bfdbfe);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.btn-receipt:hover {
+  background-color: var(--accent-color, #2563eb);
+  color: #ffffff;
+}
+
+.btn-receipt:active {
+  opacity: 0.85;
+}
+
+/* --------------------------------------------------------------------------
+   06. Pagination Controls (.pagination)
+   -------------------------------------------------------------------------- */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 0.5rem);
+  margin-top: var(--space-4, 1rem);
+}
+
+.pagination span {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--text-secondary, #64748b);
+  font-weight: 500;
+  text-align: center;
+}
+
+.pagination button {
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--bg-secondary, #f1f5f9);
+}

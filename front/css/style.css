@@ -1,3 +1,9 @@
 @import url(theme1.css);
+@import url(_core.css);
 @import url(../newcss/styles.css);
-@import url(sticky3.css);
+@import url(_features-inistyles.css);
+@import url(_features-subpages.css);
+@import url(_features-farm.css);
+@import url(_forms.css);
+@import url(_pages.css);
+@import url(_ui.css);

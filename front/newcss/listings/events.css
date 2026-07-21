@@ -1,0 +1,236 @@
+/* ==========================================================================
+   Events Directory & Catalog Page (.events-page)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. Main Page Layout Container
+   -------------------------------------------------------------------------- */
+.events-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
+  box-sizing: border-box;
+  color: var(--text-primary, #0f172a);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+}
+
+.events-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5, 1.25rem);
+  min-width: 0; /* Prevents overflow from wide content */
+}
+
+.events-main h1 {
+  margin: 0;
+  font-size: var(--font-size-2xl, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text-primary, #0f172a);
+}
+
+/* --------------------------------------------------------------------------
+   02. Events Grid & Card Components
+   -------------------------------------------------------------------------- */
+.events-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-5, 1.25rem);
+}
+
+.event-card {
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.event-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  border-color: var(--border-hover, #cbd5e1);
+}
+
+.event-link {
+  display: block;
+  text-decoration: none;
+  overflow: hidden;
+  background-color: var(--bg-secondary, #f1f5f9);
+}
+
+.event-link img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+  transition: transform 300ms ease;
+}
+
+.event-card:hover .event-link img {
+  transform: scale(1.02);
+}
+
+.event-info {
+  padding: var(--space-4, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+  flex: 1;
+}
+
+.event-info h2 {
+  margin: 0;
+  font-size: var(--font-size-md, 1.125rem);
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  line-height: 1.3;
+}
+
+.event-info p {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.8125rem);
+  color: var(--text-secondary, #64748b);
+  line-height: 1.4;
+}
+
+.event-info p strong {
+  color: var(--text-primary, #0f172a);
+}
+
+/* Share & Action Buttons inside cards */
+.event-info button[type="button"] {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 4px 12px;
+  font-family: inherit;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+  background-color: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.event-info button[type="button"]:hover {
+  background-color: var(--bg-surface, #ffffff);
+  border-color: var(--accent-color, #2563eb);
+  color: var(--accent-color, #2563eb);
+}
+
+/* --------------------------------------------------------------------------
+   03. Sidebar Layout & Actions (.events-aside)
+   -------------------------------------------------------------------------- */
+.events-aside {
+  width: 100%;
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 16px);
+  padding: var(--space-5, 1.25rem);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  box-sizing: border-box;
+}
+
+.events-aside h2 {
+  margin: 0 0 var(--space-2, 0.5rem) 0;
+  font-size: var(--font-size-lg, 1.25rem);
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  padding-bottom: var(--space-2, 0.5rem);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+/* --------------------------------------------------------------------------
+   04. Advertisements & Placeholders
+   -------------------------------------------------------------------------- */
+.advert {
+  width: 100%;
+  margin: var(--space-2, 0.5rem) 0;
+}
+
+.ad-slot {
+  width: 100%;
+  background-color: var(--bg-secondary, #f8fafc);
+  border: 1px dashed var(--border-color, #cbd5e1);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-4, 1rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.ad-fallback-text {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #94a3b8);
+}
+
+/* --------------------------------------------------------------------------
+   05. Reusable Button Utilities
+   -------------------------------------------------------------------------- */
+.buttonx {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 150ms ease;
+  box-sizing: border-box;
+}
+
+.buttonx.primary {
+  color: #ffffff;
+  background-color: var(--accent-color, #2563eb);
+  border: 1px solid var(--accent-color, #2563eb);
+}
+
+.buttonx.primary:hover {
+  background-color: var(--accent-hover, #1d4ed8);
+  border-color: var(--accent-hover, #1d4ed8);
+}
+
+.buttonx.secondary {
+  color: var(--text-primary, #0f172a);
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #cbd5e1);
+}
+
+.buttonx.secondary:hover {
+  background-color: var(--bg-secondary, #f8fafc);
+  border-color: var(--text-muted, #94a3b8);
+}
+
+/* --------------------------------------------------------------------------
+   06. Desktop Media Query (768px+)
+   -------------------------------------------------------------------------- */
+@media (min-width: 768px) {
+  .events-page {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .events-aside {
+    width: 280px;
+    position: sticky;
+    top: var(--space-4, 1rem);
+  }
+}

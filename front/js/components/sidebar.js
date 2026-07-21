@@ -12,7 +12,6 @@ let isOpen = false;
 const LINKS = [
   { href: "/farms", label: "Farms" },
   { href: "/dash", label: "Dash" },
-  { href: "/recipes", label: "Recipes" },
   { href: "/products", label: "Products" },
   { href: "/tools", label: "Tools" },
   { href: "/merechats", label: "Textchat" },

@@ -10,22 +10,22 @@ import EventTimeline from "../../components/ui/EventTimeline.mjs";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
 
 
-async function displayEventReviews(reviewsContainer, eventId, _isCreator, _isLoggedIn) {
+async function displayEventReviews(reviewsContainer, eventId, isCreator, isLoggedIn) {
     displayReviews(reviewsContainer, isCreator, isLoggedIn, "event", eventId);
 }
 
-async function displayEventVenue(venueList, _isLoggedIn, _eventID, seatingplan) {
+async function displayEventVenue(venueList, isLoggedIn, eventID, seatingplan) {
     // displaySeatingMap(venueList, place, eventid, isLoggedIn);
     // loadMap(venueList, isLoggedIn, { type: "event", id: eventID });
     const imgx = resolveImagePath(EntityType.EVENT, PictureType.SEATING, seatingplan);
     venueList.appendChild(Imagex({ src: imgx }));
 }
 
-async function displayEventFAQ(faqContainer, _isCreator, eventId, faqs) {
+async function displayEventFAQ(faqContainer, isCreator, eventId, faqs) {
     displayEventFAQs(isCreator, faqContainer, eventId, faqs);
 }
 
-async function displayLostAndFound(lnfContainer, _isCreator, eventId) {
+async function displayLostAndFound(lnfContainer, isCreator, eventId) {
     lnfContainer.appendChild(createElement("h2", {}, ["Lost And Found"]));
     lnfContainer.appendChild(createElement("p", {}, ["Did anyone lose or find something?"]));
 

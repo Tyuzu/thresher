@@ -7,8 +7,9 @@ import {
     formatINR,
     capitalize,
     downloadReceipt,
-} from "./orderutils.js"; // FIXED: Added proper file extension binding
+} from "./orderutils.js";
 import { createElement } from "../../../components/createElement.js";
+import { Button } from "../../../components/base/Button.js"; // Adjust import path as needed
 
 const PAGE_SIZE = 5;
 
@@ -80,30 +81,20 @@ export function buildUserOrderFilters(state, rerender) {
                 },
             }),
         ]),
-        createElement(
-            "button",
-            {
-                type: "button",
-                onclick: () => {
-                    state.currentPage = 1;
-                    rerender();
-                },
-            },
-            ["Filter"]
-        ),
-        createElement(
-            "button",
-            {
-                type: "button",
-                onclick: () => {
-                    state.filters.status = "";
-                    state.filters.date = "";
-                    state.currentPage = 1;
-                    rerender();
-                },
-            },
-            ["Reset"]
-        ),
+        Button("Filter", "", {
+            click: () => {
+                state.currentPage = 1;
+                rerender();
+            }
+        }),
+        Button("Reset", "", {
+            click: () => {
+                state.filters.status = "";
+                state.filters.date = "";
+                state.currentPage = 1;
+                rerender();
+            }
+        }),
     ]);
 }
 
@@ -120,7 +111,6 @@ function buildDesktopOrdersTable(orders, state, rerender) {
     
     return createElement("table", { class: "orders-table" }, [
         createElement("thead", {}, [
-            // FIXED: Avoid array-in-array flattening issue inside structural parameters
             createElement("tr", {}, headers.map((h) => createElement("th", {}, [h])))
         ]),
         createElement(
@@ -142,25 +132,23 @@ function buildExpandableOrderRows(order, state, rerender) {
     const products = getOrderProducts(order) || [];
     const meta = getOrderSummaryMeta(order) || {};
     
-    // SAFE PARSING: Provide safe structures for meta fallbacks
     const addressInfo = meta.address || "N/A";
     const farmInfo = meta.farmId || "N/A";
     const approvedList = Array.isArray(meta.approvedBy) && meta.approvedBy.length ? meta.approvedBy.join(", ") : "None";
 
     const summaryRow = createElement("tr", { class: "order-summary-row" }, [
         createElement("td", {}, [
-            createElement(
-                "button",
+            Button(
+                expanded ? "−" : "+",
+                "",
                 {
-                    type: "button",
-                    class: "toggle-btn",
-                    onclick: () => {
+                    click: () => {
                         toggleExpanded(state, order.orderId);
                         rerender();
-                    },
+                    }
                 },
-                [expanded ? "−" : "+"]
-            ),
+                "toggle-btn"
+            )
         ]),
         createElement("td", {}, [String(meta.orderId || order.orderId)]),
         createElement("td", {}, [formatDate(order.createdAt)]),
@@ -169,14 +157,7 @@ function buildExpandableOrderRows(order, state, rerender) {
         createElement("td", {}, [capitalize(meta.status || "N/A")]),
         createElement("td", {}, [capitalize(meta.payment || "N/A")]),
         createElement("td", {}, [
-            createElement(
-                "button",
-                {
-                    type: "button",
-                    onclick: () => downloadReceipt(order),
-                },
-                ["Receipt"]
-            ),
+            Button("Receipt", "", { click: () => downloadReceipt(order) })
         ]),
     ]);
 
@@ -200,9 +181,9 @@ function buildExpandableOrderRows(order, state, rerender) {
 function buildOrderItemsTable(products) {
     return createElement("table", { class: "order-items-table" }, [
         createElement("thead", {}, [
-            createElement("tr", {}, [
-                ["Farm", "Item", "Qty", "Item Price"].map((h) => createElement("th", {}, [h])),
-            ].flat()),
+            createElement("tr", {}, 
+                ["Farm", "Item", "Qty", "Item Price"].map((h) => createElement("th", {}, [h]))
+            ),
         ]),
         createElement(
             "tbody",
@@ -248,17 +229,16 @@ function buildExpandableOrderCard(order, state, rerender) {
     return createElement("div", { class: "order-card" }, [
         createElement("div", { class: "order-card-header" }, [
             createElement("p", {}, [`Order ID: ${meta.orderId || order.orderId}`]),
-            createElement(
-                "button",
+            Button(
+                expanded ? "Collapse" : "Expand",
+                "",
                 {
-                    type: "button",
-                    onclick: () => {
+                    click: () => {
                         toggleExpanded(state, order.orderId);
                         rerender();
-                    },
-                },
-                [expanded ? "Collapse" : "Expand"]
-            ),
+                    }
+                }
+            )
         ]),
         createElement("p", {}, [`Date: ${formatDate(order.createdAt)}`]),
         createElement("p", {}, [`Type: ${capitalize(meta.orderType || "N/A")}`]),
@@ -284,15 +264,12 @@ function buildExpandableOrderCard(order, state, rerender) {
                 ]
             )
             : createElement("div", { style: "display: none;" }, []),
-        createElement(
-            "button",
-            {
-                type: "button",
-                class: "btn-receipt",
-                onclick: () => downloadReceipt(order),
-            },
-            ["Receipt"]
-        ),
+        Button(
+            "Receipt",
+            "",
+            { click: () => downloadReceipt(order) },
+            "btn-receipt"
+        )
     ]);
 }
 
@@ -300,35 +277,37 @@ function buildExpandableOrderCard(order, state, rerender) {
 
 function buildPaginationControls(state, totalOrders, totalPages, rerender) {
     return createElement("div", { class: "pagination" }, [
-        createElement(
-            "button",
+        Button(
+            "Prev",
+            "",
             {
-                type: "button",
-                disabled: state.currentPage <= 1,
-                onclick: () => {
+                click: () => {
                     if (state.currentPage > 1) {
                         state.currentPage -= 1;
                         rerender();
                     }
-                },
+                }
             },
-            ["Prev"]
+            "",
+            {},
+            { disabled: state.currentPage <= 1 }
         ),
         createElement("span", {}, [`Page ${state.currentPage} of ${totalPages} · ${totalOrders} order(s)`]),
-        createElement(
-            "button",
+        Button(
+            "Next",
+            "",
             {
-                type: "button",
-                disabled: state.currentPage >= totalPages,
-                onclick: () => {
+                click: () => {
                     if (state.currentPage < totalPages) {
                         state.currentPage += 1;
                         rerender();
                     }
-                },
+                }
             },
-            ["Next"]
-        ),
+            "",
+            {},
+            { disabled: state.currentPage >= totalPages }
+        )
     ]);
 }
 
@@ -340,12 +319,10 @@ function buildLabeledSelect(labelText, options, currentValue, onChange) {
         createElement(
             "select",
             {
-                // FIXED: Handle drop selections dynamically via direct native parameter listeners
                 onchange: (e) => onChange(e.target.value),
             },
             options.map((o) => {
                 const optionAttrs = { value: o.value };
-                // FIXED: Explicitly set selected parameter on option nodes directly
                 if (String(o.value) === String(currentValue)) {
                     optionAttrs.selected = "selected";
                 }

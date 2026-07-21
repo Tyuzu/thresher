@@ -6,13 +6,12 @@
    01. Header Outer Layout & Sticky Wrapper
    -------------------------------------------------------------------------- */
 .main-header {
-  position: sticky;
+  position: relative;
   top: 0;
   z-index: var(--z-dropdown, 1000);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
   padding: 0 var(--space-4, 1rem);
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-color);

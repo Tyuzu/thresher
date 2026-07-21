@@ -51,7 +51,8 @@
 }
 
 .filter-bar button.active {
-    background: #ddd;
+    background: var(--color-fg);
+    color: var(--color-bg);
 }
 
 /* View toggle buttons */
@@ -60,13 +61,13 @@
     border-radius: 4px;
     border: 1px solid #ccc;
     cursor: pointer;
-    background: #fff;
     font-size: 13px;
     transition: background 0.2s ease;
 }
 
 .view-toggle button.active {
-    background: #ddd;
+    background: var(--color-fg);
+    color: var(--color-bg);
 }
 
 /* ---------- Live Cards ---------- */
