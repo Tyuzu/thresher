@@ -1,9 +1,6 @@
-@import url(theme1.css);
-@import url(_core.css);
-@import url(../newcss/styles.css);
-@import url(_features-inistyles.css);
-@import url(_features-subpages.css);
-@import url(_features-farm.css);
-@import url(_forms.css);
-@import url(_pages.css);
-@import url(_ui.css);
+@import url(theme.css);
+@import url(base.css);
+@import url(layout.css);
+/* @import url(components.css); */
+@import url(pages.css);
+@import url(inistyles.css);

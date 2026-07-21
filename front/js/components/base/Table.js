@@ -1,5 +1,3 @@
-import "../../../css/ui/Table.css";
-
 // Table component with enhanced functionality
 const Table = (
   headers = [], // Array of header names

@@ -1,4 +1,3 @@
-import "../../../css/ui/Modal.css";
 import { createElement } from "../../components/createElement.js";
 
 let activeModalCount = 0;

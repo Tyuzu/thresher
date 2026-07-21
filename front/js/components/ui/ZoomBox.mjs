@@ -1,4 +1,3 @@
-import "../../../css/ui/ZoomBox.css";
 import {
     createOverlay,
     createImageElement,

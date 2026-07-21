@@ -5,6 +5,9 @@ import { safemereFetch, displayOneChat } from "./onechat.js";
 import { renderSharedChatList } from "../chat/sharedChatList.js";
 
 export async function displayChats(contentContainer, isLoggedIn) {
+  // Add a base class to container for layout styling
+  contentContainer.classList.add("chats-view-wrapper");
+
   await renderSharedChatList({
     container: contentContainer,
     isLoggedIn,
@@ -17,30 +20,41 @@ export async function displayChats(contentContainer, isLoggedIn) {
     renderChat: async (chatView, chat) => {
       const chatId = chat?.chatid;
 
-      // FIXED: Always close any active socket from the previous chat BEFORE switching
+      // Close active socket from previous chat session
       closeExistingSocket("switch");
 
-      // FIXED: Avoided the global chatBodies Map cache to prevent detached DOM memory leaks
       const chatBody = createElement("div", { class: "chat-body" });
 
+      // Mobile back button with proper touch-target aria labels
       const backBtn = createElement(
         "button",
         {
           class: "chat-back-button",
+          type: "button",
           "aria-label": t("chat.back")
         },
-        ["← ", t("chat.back")]
+        [
+          createElement("span", { class: "back-icon", "aria-hidden": "true" }, ["←"]),
+          createElement("span", { class: "back-text" }, [t("chat.back")])
+        ]
       );
 
-      backBtn.addEventListener("click", () => {
+      const handleBack = () => {
         closeExistingSocket("back");
         chatView.replaceChildren();
-      });
+        // Remove active state on mobile to reveal the list again
+        contentContainer.classList.remove("has-open-chat");
+      };
 
-      // Assemble and display the clean DOM structure
+      backBtn.addEventListener("click", handleBack);
+
+      // Assemble chat viewport
       chatView.replaceChildren(backBtn, chatBody);
       
-      // Initialize the new chat connection and render messages
+      // Mark wrapper as active to trigger mobile sliding/full-screen view
+      contentContainer.classList.add("has-open-chat");
+
+      // Initialize chat connection and render messages
       await displayOneChat(chatBody, chatId);
     },
     getChatId: chat => chat?.chatid,

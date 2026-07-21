@@ -1,4 +1,3 @@
-import "../../../css/ui/Modal.css";
 
 let openModals = 0;
 let bodyStyleEl = null;

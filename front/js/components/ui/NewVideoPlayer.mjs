@@ -1,4 +1,3 @@
-import "../../../css/ui/VideoPlayer.css";
 import Vidpop from "./Vidpop.mjs";
 import { createIconButton } from "../../utils/svgIconButton";
 import { maximizeSVG, muteSVG, vol2SVG, playSVG, pauseSVG } from "../svgs.js";

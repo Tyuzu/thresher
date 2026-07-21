@@ -11,7 +11,7 @@ import {
   mountMessage
 } from "./chatSocket.js";
 import { mereFetch } from "../../api/api.js";
-import { throttle } from "../../utils/deutils.js"; // FIXED: Changed from debounce to throttle
+import { throttle } from "../../utils/deutils.js";
 import { getState } from "../../state/state.js";
 import { t } from "./i18n.js";
 import { uploadAttachment } from "./uploadAttachment.js";
@@ -39,6 +39,12 @@ function ensureRenderedSet(chatid) {
   return set;
 }
 
+function scrollToBottom(container) {
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
 /* -------------------------
    Send message (WS first with REST fallback)
 --------------------------*/
@@ -56,9 +62,11 @@ export function sendMessage(chatid, content, targetContainer = getMessageContain
     createdAt: new Date().toISOString()
   };
 
-  // Ensure target container context is preserved during mounting
   const el = mountMessage(optimistic, { container: targetContainer });
   pendingMap.set(clientId, { el, chatid, container: targetContainer });
+  
+  // Smooth scroll to bottom on new message
+  scrollToBottom(targetContainer);
 
   const ws = ChatState.getSocket();
   const payload = { type: "message", chatid, content, clientId };
@@ -106,7 +114,6 @@ function reconcilePending(chatid, clientId, serverMsg, targetContainer = getMess
       serverMsg.media.__local_preview = true;
     }
 
-    // FIXED: Preserved target container context during node replacement to prevent scrolling/rendering bugs
     const freshElement = mountMessage(serverMsg, { container: targetContainer });
     pending.el.replaceWith(freshElement);
   } else if (!rendered.has(realId)) {
@@ -115,17 +122,17 @@ function reconcilePending(chatid, clientId, serverMsg, targetContainer = getMess
 
   rendered.add(realId);
 
-  // Clean up Object URL to prevent browser memory leaks
   if (pending?.previewUrl) {
     const url = pending.previewUrl;
     setTimeout(() => {
       try {
         URL.revokeObjectURL(url);
       } catch {}
-    }, 60000); // 60s
+    }, 60000);
   }
 
   pendingMap.delete(clientId);
+  scrollToBottom(targetContainer);
 }
 
 /* -------------------------
@@ -153,6 +160,9 @@ async function loadHistory(chatid, targetContainer = getMessageContainer()) {
         rendered.add(id);
       }
     }
+    
+    // Initial scroll after loading conversation history
+    scrollToBottom(targetContainer);
   } catch (e) {
     console.error("loadHistory failed", e);
   }
@@ -169,8 +179,9 @@ export async function displayOneChat(containerx, chatid) {
     containerx.replaceChildren(container);
   }
 
+  // Header with back button slot or title
   const header = createElement("div", { class: "chat-header" }, [
-    `${t("chat.with")} ${chatid}`
+    createElement("span", { class: "chat-title" }, [`${t("chat.with")} ${chatid}`])
   ]);
 
   let messages = container.querySelector(".chat-messages");
@@ -184,50 +195,61 @@ export async function displayOneChat(containerx, chatid) {
     });
   }
 
+  // Inputs configured for mobile keyboard & accessibility
   const input = createElement("input", {
     type: "text",
-    placeholder: t("chat.type_message")
+    placeholder: t("chat.type_message"),
+    class: "chat-input",
+    autocomplete: "off",
+    autocapitalize: "sentences",
+    enterkeyhint: "send" // Sets action key on native mobile keyboard to "Send"
   });
 
   const fileInput = createElement("input", {
     type: "file",
-    style: "display:none"
+    style: "display:none",
+    accept: "image/*,video/*,application/pdf"
   });
 
   const uploadBtn = Button(
     t("chat.upload"),
     "",
-    { click: () => fileInput.click() },
-    "chat-upload-btn"
+    { click: (e) => { e.preventDefault(); fileInput.click(); } },
+    "chat-btn chat-upload-btn"
   );
 
   fileInput.addEventListener("change", () =>
     uploadAttachment(chatid, fileInput)
   );
 
-  const handleSend = () => {
+  const handleSend = (e) => {
+    if (e) e.preventDefault(); // Handles both button taps and form submits
     const txt = input.value.trim();
     if (txt) {
       sendMessage(chatid, txt, messages);
       input.value = "";
+      input.focus(); // Retain focus for continuous messaging
     }
   };
 
   const sendBtn = Button(
     t("chat.send"),
     "",
-    { click: handleSend },
-    "chat-send-btn"
+    { type: "submit" },
+    "chat-btn chat-send-btn"
   );
 
-  // FIXED: Added 'Enter' keyup handler to allow quick message submission
-  input.addEventListener("keyup", (e) => {
-    if (e.key === "Enter") {
-      handleSend();
-    }
-  });
+  // Wrapped footer in a <form> to natively support mobile "Send" / "Go" actions
+  const formFooter = createElement(
+    "form",
+    {
+      class: "chat-footer",
+      events: { submit: handleSend }
+    },
+    [uploadBtn, fileInput, input, sendBtn]
+  );
 
-  // FIXED: Converted typing notification to a throttle (signals immediately on start of typing)
+  // Send typing notification
   input.addEventListener(
     "input",
     throttle(() => {
@@ -239,19 +261,9 @@ export async function displayOneChat(containerx, chatid) {
   );
 
   if (!container.querySelector(".chat-header")) {
-    container.append(
-      header,
-      messages,
-      createElement("div", { class: "chat-footer" }, [
-        uploadBtn,
-        fileInput,
-        input,
-        sendBtn
-      ])
-    );
+    container.append(header, messages, formFooter);
   }
 
-  // FIXED: Instantly align local state references before running async calls to eliminate race conditions
   ChatState.setChatId(chatid);
   setMessageContainer(messages);
 

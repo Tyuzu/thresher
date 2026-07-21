@@ -1,0 +1,150 @@
+/* ==========================================================================
+   Main Navigation Container & Wrapper
+   ========================================================================== */
+
+.navigation {
+  position: relative;
+  width: 100%;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  user-select: none;
+  transition: background-color var(--transition-medium);
+}
+
+.navigation__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+}
+
+/* ==========================================================================
+   Navigation List & Items
+   ========================================================================== */
+
+.navigation__list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  list-style: none;
+  margin: 0;
+  padding: var(--space-xs) 0;
+  overflow-x: auto;
+  /* Hide scrollbar for a clean UI while keeping scrollability */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.navigation__list::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
+.navigation__item {
+  position: relative;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+/* Base Nav Link Styling */
+.navigation__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xs) var(--space-sm);
+  font-family: var(--font-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast), 
+              color var(--transition-fast), 
+              border-color var(--transition-fast);
+}
+
+.navigation__link:hover {
+  background-color: var(--color-space);
+  color: var(--color-accent);
+}
+
+/* Active State (Triggered by highlightActiveNav) */
+.navigation__link.active {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+  background-color: var(--color-highlight);
+}
+
+.navigation__link.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background-color: var(--color-accent);
+  border-radius: var(--radius-full);
+}
+
+/* ==========================================================================
+   Edit Mode & Drag-and-Drop Feedback
+   ========================================================================== */
+
+/* Hide the raw checkbox input safely */
+.navigation .toggle {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Toggle Switch / Edit Mode Button */
+.navigation__toggle {
+  flex-shrink: 0;
+  margin-left: var(--space-xs);
+}
+
+/* When Edit Mode (Checkbox) is Checked */
+.navigation .toggle:checked ~ .navigation__inner .navigation__item {
+  cursor: grab;
+}
+
+.navigation .toggle:checked ~ .navigation__inner .navigation__item[draggable="true"] .navigation__link {
+  border: 1px dashed var(--color-input-border);
+  background-color: var(--color-bg);
+}
+
+.navigation .toggle:checked ~ .navigation__inner .navigation__toggle .navigation__link {
+  background-color: var(--color-accent);
+  color: #ffffff;
+}
+
+/* Styling for the item actively being dragged */
+.navigation__item.dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.navigation__item.dragging .navigation__link {
+  border-color: var(--color-accent);
+  background-color: var(--color-space);
+}
+
+/* Placeholder indicating target drop zone */
+.navigation__placeholder {
+  flex-shrink: 0;
+  width: 4rem;
+  height: 2rem;
+  border: 2px dashed var(--color-accent);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-highlight);
+  animation: pulse-placeholder 1s infinite alternate;
+}
+
+@keyframes pulse-placeholder {
+  from { opacity: 0.5; }
+  to { opacity: 0.9; }
+}

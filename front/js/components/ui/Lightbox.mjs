@@ -1,4 +1,3 @@
-import "../../../css/ui/Sightbox.css";
 import { createIconButton } from "../../utils/svgIconButton";
 import { xSVG } from "../svgs";
 

@@ -1,4 +1,3 @@
-import "../../../css/ui/Availability.css";
 import { createElement } from "../createElement.js";
 
 const DAYS = [

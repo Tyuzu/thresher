@@ -1,4 +1,3 @@
-import "../../../css/ui/Footer.css";
 const Footer = () => {
     const footer = document.createElement('footer');
     footer.className = 'footer';

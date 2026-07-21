@@ -1,4 +1,3 @@
-import "../../../css/ui/Gallery.css";
 import SightBox from "./Sightbox_zoom.mjs";
 
 const Gallery = (imagesArray) => {

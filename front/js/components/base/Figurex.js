@@ -1,5 +1,3 @@
-import "../../../css/ui/Figure.css";
-
 // Figure component with responsive image and figcaption
 const Figurex = (
   src, // Primary image source

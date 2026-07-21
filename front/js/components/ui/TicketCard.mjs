@@ -1,5 +1,4 @@
 import { applyButtonColors } from "../../utils/lumicolor.js";
-import "../../../css/ui/TicketCard1.css";
 import Button from "../base/Button.js";
 
 const TicketCard = ({ isl, seatstart, seatend, creator, name, price, quantity, color, attributes = {}, onClick }) => {

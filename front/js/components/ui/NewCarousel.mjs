@@ -1,5 +1,4 @@
 import Imagex from "../base/Imagex";
-import "../../../css/ui/Carousel.css";
 import { playSVG } from "../svgs";
 
 // Helper: convert SVG string -> DOM element

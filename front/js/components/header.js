@@ -8,7 +8,7 @@ import Imagex from "./base/Imagex.js";
 import { sticky } from "./sticky.js";
 import Button from "./base/Button.js";
 
-const themes = ["light", "dark", "solarized", "dimmed"];
+const themes = ["light", "solarized", "dimmed", "dark"];
 let currentThemeIndex = 0;
 
 function loadTheme() {

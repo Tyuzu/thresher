@@ -1,4 +1,3 @@
-import "../../../css/ui/Tooltip.css";
 
 const Tooltip = (text, { trigger = "?", position = "top" } = {}) => {
   const tooltip = document.createElement("span");

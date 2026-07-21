@@ -160,14 +160,14 @@ type ItemDetails struct {
 }
 
 func lookupItemDetails(ctx context.Context, itemID string, app *infra.Deps) (*ItemDetails, error) {
-	product, err := lookupProduct(ctx, itemID, app)
-	if err == nil && product != nil {
-		return product, nil
-	}
-
 	crop, err := lookupCrop(ctx, itemID, app)
 	if err == nil && crop != nil {
 		return crop, nil
+	}
+
+	product, err := lookupProduct(ctx, itemID, app)
+	if err == nil && product != nil {
+		return product, nil
 	}
 
 	menu, err := lookupMenu(ctx, itemID, app)

@@ -1,4 +1,3 @@
-import "../../../css/ui/SightboxZoom.css";
 import { createZoomableMedia } from "./createZoomableMedia";
 import { createElement } from "../../components/createElement";
 import { createIconButton } from "../../utils/svgIconButton";

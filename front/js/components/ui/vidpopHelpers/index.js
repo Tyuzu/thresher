@@ -1,4 +1,3 @@
-import "../../../../css/ui/Vidpop.css";
 import { createControls } from "./controls.js";
 import { setupSubtitles } from "./subtitles.js";
 import { createVideoElement } from "./createVideo.js";

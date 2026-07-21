@@ -1,4 +1,3 @@
-import "../../css/ui/controlcenter.css";
 import { createElement } from "../components/createElement.js";
 import { navigate } from "../routes/index.js";
 
@@ -12,9 +11,6 @@ let isOpen = false;
 const LINKS = [
   { href: "/farms", label: "Farms" },
   { href: "/dash", label: "Dash" },
-  { href: "/products", label: "Products" },
-  { href: "/tools", label: "Tools" },
-  { href: "/merechats", label: "Textchat" },
 ];
 
 const TILES = [

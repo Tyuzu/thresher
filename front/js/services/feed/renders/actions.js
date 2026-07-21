@@ -25,7 +25,7 @@ export async function createActions(metadata, isCreator, postElement) {
     if (isLoggedIn) {
         likeButton.addEventListener("click", debounce(async () => {
             try {
-                const result = await toggleLike("post", postId);
+                const result = await toggleLike("feedpost", postId);
                 if (result && typeof result.count === "number") {
                     likeLabel.textContent = result.count;
                     likeButton.classList.toggle("liked", result.liked);
@@ -43,7 +43,7 @@ export async function createActions(metadata, isCreator, postElement) {
     const commentButton = createElement("button", { class: "comment" }, [svgToNode(commentSVG), commentLabel]);
     commentButton.addEventListener("click", () => {
         if (!postElement.commentSectionVisible) {
-            const commentsEl = createCommentsSection("post", postId, user);
+            const commentsEl = createCommentsSection("feedpost", postId, user);
             postElement.appendChild(commentsEl);
             postElement.commentSectionVisible = true;
         }
@@ -72,7 +72,7 @@ export async function createActions(metadata, isCreator, postElement) {
     const reportButton = createElement("button", { class: "report-btn" }, ["Report"]);
     reportButton.addEventListener("click", () => {
         closeDropdown();
-        reportEntity(postId, "post");
+        reportEntity(postId, "feedpost");
     });
     dropdownx.appendChild(reportButton);
 

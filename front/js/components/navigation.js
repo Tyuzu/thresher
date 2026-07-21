@@ -175,7 +175,7 @@ const createNav = () => {
     const toggleLabel = document.createElement("label");
     toggleLabel.className = "navigation__link";
     toggleLabel.setAttribute("for", "more");
-    toggleLabel.setAttribute("aria-hidden", "true");
+    // toggleLabel.setAttribute("aria-hidden", "true");
     toggleLabel.innerText = "More";
 
     toggleLabelWrapper.appendChild(toggleLabel);

@@ -2,7 +2,6 @@
 import { createElement } from "../components/createElement.js";
 import { getRouteState, setRouteState } from "../state/state.js";
 import { makeDraggableScroll } from "../components/dragnav.js";
-import "../../css/ui/createTabs.css";
 
 /**
  * High-order layout helper that handles persisting active tab views via localStorage.

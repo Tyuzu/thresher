@@ -1,0 +1,113 @@
+/* ==========================================================================
+   Footer Component Styles
+   ========================================================================== */
+
+/* Main Outer Container */
+.footer-container {
+  width: 100%;
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-lg) var(--container-padding);
+  color: var(--color-fg);
+  font-family: var(--font-base);
+  transition: background-color var(--transition-medium), border-color var(--transition-medium);
+}
+
+/* Navigation Links Grid/Flex Wrapper */
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-xs) var(--space-md);
+  max-width: var(--max-width);
+  margin: 0 auto var(--space-lg) auto;
+  text-align: center;
+}
+
+/* Individual Footer Links */
+.footer-link {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: color var(--transition-fast);
+}
+
+.footer-link:hover {
+  color: var(--color-accent);
+}
+
+/* ==========================================================================
+   Footer Bottom Bar (Language Select, Copyright, Feedback)
+   ========================================================================== */
+
+.footer-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+}
+
+.footer-bottom p {
+  margin: 0;
+  text-align: center;
+}
+
+/* Language Selector Dropdown */
+.lang-select {
+  width: auto;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-base);
+  color: var(--color-fg);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.lang-select:hover {
+  border-color: var(--color-muted);
+}
+
+.lang-select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* Feedback Button Overrides */
+.feedback-btn {
+  font-size: var(--font-size-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background-color: transparent;
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.feedback-btn:hover {
+  background-color: var(--color-space);
+  border-color: var(--color-muted);
+  color: var(--color-accent);
+}
+
+/* ==========================================================================
+   Responsive Desktop Layout
+   ========================================================================== */
+
+@media (min-width: 640px) {
+  .footer-bottom {
+    flex-direction: row;
+  }
+}

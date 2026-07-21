@@ -1,4 +1,3 @@
-import "../../../css/ui/Owl.css";
 
 const Owl = (eventsArray) => {
     const owlContainer = document.createElement('div');
