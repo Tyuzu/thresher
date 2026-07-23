@@ -1,0 +1,47 @@
+
+/* --- Emerald --- */
+[data-theme="emerald"] {
+  color-scheme: dark;
+
+  --color-bg: #081c15;
+  --color-bg-secondary: #10241d;
+  --color-bg-tertiary: #153528;
+
+  --color-fg: #dcfce7;
+  --color-muted: #9fd8b5;
+  --color-light: #76b693;
+
+  --color-primary: #10b981;
+  --color-primary-hover: #059669;
+  --color-secondary: #34d399;
+  --color-accent: #2dd4bf;
+
+  --color-success: #22c55e;
+  --color-warning: #facc15;
+  --color-danger: #ef4444;
+  --color-info: #67e8f9;
+
+  --color-border: #245c49;
+  --color-border-light: #2f735b;
+  --stroke-svg: #9fd8b5;
+
+  --color-btn-bg: var(--color-primary);
+  --color-btn-fg: #ffffff;
+  --color-btn-hover-bg: var(--color-primary-hover);
+
+  --color-input-bg: #12362b;
+  --color-input-border: #2d6f59;
+  --color-input-focus: var(--color-primary);
+
+  --color-card-bg: #113128;
+  --color-card-hover: #174034;
+
+  --color-link: #34d399;
+  --color-link-hover: #6ee7b7;
+  --color-selection-bg: #10b981;
+  --color-selection-fg: #ffffff;
+
+  --shadow-elev-1: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-elev-2: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-elev-3: 0 0 25px rgba(16, 185, 129, 0.25);
+}

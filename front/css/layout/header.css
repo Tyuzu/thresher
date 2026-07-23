@@ -1,0 +1,318 @@
+/* ==========================================================
+   1. MAIN HEADER CONTAINER
+   ========================================================== */
+
+.main-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 var(--container-padding);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-elev-1);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+/* ==========================================================
+   2. LOGO & BRAND
+   ========================================================== */
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo-link {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+  transition: color var(--transition-fast);
+}
+
+.logo-link:hover {
+  color: var(--color-primary-hover);
+}
+
+/* ==========================================================
+   3. CENTER NAVIGATION (DESKTOP FLOATING PILL / MOBILE BOTTOM BAR)
+   ========================================================== */
+
+.hflexcen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Floating Pill Container (Desktop default) */
+.plypzstp {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: var(--space-xs);
+  background-color: var(--color-bg-tertiary);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-elev-1);
+  transition: all var(--transition-fast);
+}
+
+/* Base Icon Button */
+.logoicon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-circle);
+  color: var(--color-muted);
+  cursor: pointer;
+  position: relative;
+  transition: background-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (hover: hover) {
+  .logoicon:hover {
+    background-color: var(--color-card-hover);
+    color: var(--color-primary);
+    transform: translateY(-1px);
+  }
+}
+
+.logoicon:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.logoicon:active {
+  transform: scale(0.92);
+}
+
+/* ==========================================================
+   4. RIGHT-SIDE ACTIONS & USER MENU
+   ========================================================== */
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* Generic Iconic Button (e.g., Theme Toggle) */
+.iconic-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  color: var(--color-fg);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-light);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.iconic-button:hover {
+  background-color: var(--color-card-hover);
+  border-color: var(--color-border);
+}
+
+/* User Profile Image Toggle */
+.user-area {
+  display: flex;
+  align-items: center;
+}
+
+.profile-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-circle);
+  padding: 2px;
+  border: 2px solid var(--color-border-light);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.profile-toggle:hover,
+.profile-toggle:focus-visible {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.profile-pic {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-circle);
+  object-fit: cover;
+}
+
+/* Dynamic SVG Color Inheritance */
+svg.clrful {
+  stroke: currentColor;
+  transition: stroke var(--transition-fast);
+  stroke-width: 1.4;
+}
+
+/* ==========================================================
+   5. DROPDOWNS & MENUS
+   ========================================================== */
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-toggle {
+  background-color: var(--color-btn-bg);
+  color: var(--color-btn-fg);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.menu-toggle:hover {
+  background-color: var(--color-btn-hover-bg);
+}
+
+/* Dropdown Flyout Panel */
+.menu-content,
+.profile-menu {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  right: 0;
+  min-width: 190px;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-elev-2);
+  padding: var(--space-xs) 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity var(--transition-fast),
+    transform var(--transition-fast),
+    visibility var(--transition-fast);
+  z-index: 1010;
+}
+
+/* Dropdown Open Trigger State */
+.dropdown:hover .menu-content,
+.dropdown:focus-within .menu-content,
+.dropdown:hover .profile-menu,
+.dropdown:focus-within .profile-menu,
+.menu-content.active,
+.profile-menu.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Dropdown Links & Logout Action */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.menu-item:hover {
+  background-color: var(--color-card-hover);
+  color: var(--color-primary);
+}
+
+.menu-item.logout {
+  color: var(--color-danger);
+  border-top: 1px solid var(--color-border-light);
+  margin-top: var(--space-xs);
+  padding-top: var(--space-sm);
+}
+
+.menu-item.logout:hover {
+  background-color: var(--color-card-hover);
+  color: var(--color-danger);
+}
+
+/* ==========================================================
+   6. RESPONSIVE / MOBILE NATIVE APP BOTTOM BAR (<= 768px)
+   ========================================================== */
+
+@media (max-width: 768px) {
+
+  /* Fix central icons to bottom app bar */
+  .hflexcen {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    width: 100%;
+    background-color: var(--color-bg-secondary);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--color-border-light);
+    box-shadow: 0 -4px 16px var(--shadow-elev-2);
+    /* Respect iPhone Home Bar / Android Navigation Bar */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .plypzstp {
+    width: 100%;
+    max-width: 500px;
+    height: 56px;
+    padding: 0 var(--space-sm);
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    justify-content: space-around;
+  }
+
+  .logoicon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+  }
+
+  /* Compact header on mobile screens */
+  .main-header {
+    height: 56px;
+  }
+
+  /* Prevent content clipping behind fixed bottom bar */
+  body {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+}

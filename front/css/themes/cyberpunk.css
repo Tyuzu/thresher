@@ -1,0 +1,51 @@
+
+
+/* --- Cyberpunk --- */
+[data-theme="cyberpunk"] {
+  color-scheme: dark;
+
+  --font-heading: "Orbitron", sans-serif;
+  --font-body: "Rajdhani", sans-serif;
+
+  --color-bg: #08080d;
+  --color-bg-secondary: #12121b;
+  --color-bg-tertiary: #1b1b29;
+
+  --color-fg: #f7f7ff;
+  --color-muted: #b9b9d8;
+  --color-light: #8686a5;
+
+  --color-primary: #ff00ff;
+  --color-primary-hover: #ff4cff;
+  --color-secondary: #00ffff;
+  --color-accent: #ffe600;
+
+  --color-success: #00ff9d;
+  --color-warning: #ffe600;
+  --color-danger: #ff4d6d;
+  --color-info: #00d4ff;
+
+  --color-border: #5f3cff;
+  --color-border-light: #744dff;
+  --stroke-svg: #00ffff;
+
+  --color-btn-bg: var(--color-primary);
+  --color-btn-fg: #000000;
+  --color-btn-hover-bg: var(--color-primary-hover);
+
+  --color-input-bg: #161622;
+  --color-input-border: #5f3cff;
+  --color-input-focus: var(--color-primary);
+
+  --color-card-bg: #11111a;
+  --color-card-hover: #181826;
+
+  --color-link: #00ffff;
+  --color-link-hover: #8afcff;
+  --color-selection-bg: #ff00ff;
+  --color-selection-fg: #000000;
+
+  --shadow-elev-1: 0 0 5px rgba(255, 0, 255, 0.2);
+  --shadow-elev-2: 0 0 12px rgba(0, 255, 255, 0.3);
+  --shadow-elev-3: 0 0 20px rgba(255, 0, 255, 0.5);
+}

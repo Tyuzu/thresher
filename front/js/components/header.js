@@ -7,7 +7,8 @@ import { resolveImagePath, EntityType, PictureType } from "../utils/imagePaths.j
 import Imagex from "./base/Imagex.js";
 import { sticky } from "./sticky.js";
 import Button from "./base/Button.js";
-const themes = ["light", "solarized", "dimmed", "dark", "emerald", "cyberpunk"];
+
+const themes = ["light", "solarized", "midnight", "nord"];
 let currentThemeIndex = 0;
 
 function applyTheme(theme) {
@@ -20,11 +21,11 @@ function loadTheme() {
   
   if (saved && themes.includes(saved)) {
     applyTheme(saved);
-  } else {
+  /*} else {
     // Default to OS preference if no saved theme exists
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const defaultTheme = prefersDark ? "dark" : "light";
-    applyTheme(defaultTheme);
+    applyTheme(defaultTheme);*/
   }
 }
 

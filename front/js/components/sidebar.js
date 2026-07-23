@@ -1,16 +1,14 @@
+import Modal from "./ui/Modal.mjs";
 import { createElement } from "../components/createElement.js";
 import { navigate } from "../routes/index.js";
 
-let controlCenter = null;
-let isOpen = false;
-
 /* ---------------------------------- */
-/* Config */
+/* Config                             */
 /* ---------------------------------- */
 
 const LINKS = [
   { href: "/farms", label: "Farms" },
-  { href: "/dash", label: "Dash" },
+  { href: "/dash", label: "Dash" }
 ];
 
 const TILES = [
@@ -18,44 +16,13 @@ const TILES = [
 ];
 
 /* ---------------------------------- */
-/* Build */
+/* State                              */
 /* ---------------------------------- */
 
-function buildControlCenter() {
-  if (controlCenter) {
-return;
-}
-
-  const personalHub = buildPersonalHub();
-  const liveTiles = buildTiles();
-  const navGrid = buildNavGrid();
-
-  const scrollArea = createElement("div", { class: "cc-scroll" }, [
-    createElement("div", { class: "cc-handle" }),
-    personalHub,
-    liveTiles,
-    navGrid
-  ]);
-
-  const closeBtn = createElement(
-    "button",
-    { class: "cc-close", type: "button", "aria-label": "Close" },
-    ["✕"]
-  );
-
-  controlCenter = createElement("div", { class: "control-center hidden" }, [
-    closeBtn,
-    scrollArea
-  ]);
-
-  document.getElementById("app").appendChild(controlCenter);
-
-  attachEventDelegation();
-  attachGestureHandling();
-}
+let activeControlCenter = null;
 
 /* ---------------------------------- */
-/* Sections */
+/* Component Builders                 */
 /* ---------------------------------- */
 
 function buildPersonalHub() {
@@ -104,124 +71,116 @@ function buildNavGrid() {
   return createElement("div", { class: "cc-nav-grid" }, buttons);
 }
 
+function buildControlCenterContent() {
+  const handle = createElement("div", { class: "cc-handle" });
+  const personalHub = buildPersonalHub();
+  const liveTiles = buildTiles();
+  const navGrid = buildNavGrid();
+
+  return createElement("div", { class: "cc-scroll" }, [
+    handle,
+    personalHub,
+    liveTiles,
+    navGrid
+  ]);
+}
+
 /* ---------------------------------- */
-/* Event Handling (Delegated) */
+/* Event & Gesture Delegation          */
 /* ---------------------------------- */
 
-function attachEventDelegation() {
-  controlCenter.addEventListener("click", e => {
+function attachHandlers(dialog, closeFn) {
+  // Delegate click navigation & custom actions
+  dialog.addEventListener("click", e => {
     const navTarget = e.target.closest("[data-nav]");
     if (navTarget) {
       navigate(navTarget.dataset.nav);
-      closeControlCenter();
+      closeFn();
       return;
     }
 
     const actionTarget = e.target.closest("[data-action]");
     if (actionTarget?.dataset.action === "logout") {
       handleLogout();
+      closeFn();
       return;
     }
-
-    if (e.target.closest(".cc-close")) {
-      closeControlCenter();
-    }
   });
-}
 
-function handleLogout() {
-  // Replace with real logout logic
-}
-
-/* ---------------------------------- */
-/* Gesture Handling (Pointer Events) */
-/* ---------------------------------- */
-
-function attachGestureHandling() {
+  // Drag-to-dismiss gesture (Pointer Events)
   let startY = 0;
   let currentY = 0;
-  let dragging = false;
+  let isDragging = false;
 
-  controlCenter.addEventListener("pointerdown", e => {
-    dragging = true;
+  dialog.addEventListener("pointerdown", e => {
+    // Only capture drag on header/handle area or background, avoiding input elements
+    if (e.target.closest("button, a, input, select, textarea")) return;
+    
+    isDragging = true;
     startY = e.clientY;
+    dialog.style.transition = "none";
   });
 
-  controlCenter.addEventListener("pointermove", e => {
-    if (!dragging) {
-return;
-}
+  dialog.addEventListener("pointermove", e => {
+    if (!isDragging) return;
 
     currentY = e.clientY;
     const diff = Math.max(0, currentY - startY);
 
     if (diff > 0) {
-      controlCenter.style.transform = `translateY(${diff}px)`;
+      dialog.style.transform = `translateY(${diff}px)`;
     }
   });
 
-  controlCenter.addEventListener("pointerup", () => {
-    if (!dragging) {
-return;
-}
+  const endDrag = () => {
+    if (!isDragging) return;
+    isDragging = false;
 
-    dragging = false;
+    dialog.style.transition = "";
     const diff = currentY - startY;
 
     if (diff > 100) {
-closeControlCenter();
-} else {
-controlCenter.style.transform = "";
-}
-  });
+      closeFn();
+    } else {
+      dialog.style.transform = "";
+    }
+  };
 
-  controlCenter.addEventListener("pointercancel", () => {
-    dragging = false;
-    controlCenter.style.transform = "";
-  });
+  dialog.addEventListener("pointerup", endDrag);
+  dialog.addEventListener("pointercancel", endDrag);
+}
+
+function handleLogout() {
+  // Add authentication/logout logic here
+  console.log("Logging out...");
 }
 
 /* ---------------------------------- */
-/* Open / Close */
+/* Public API                         */
 /* ---------------------------------- */
 
 export function toggleControlCenter() {
-  buildControlCenter();
-  isOpen ? closeControlCenter() : openControlCenter();
-}
+  if (activeControlCenter) {
+    activeControlCenter.close();
+    return;
+  }
 
-function openControlCenter() {
-  if (isOpen) {
-return;
-}
-
-  isOpen = true;
-  controlCenter.classList.remove("hidden");
-
-  requestAnimationFrame(() => {
-    controlCenter.classList.add("open");
+  const { dialog, close } = Modal({
+    variant: "sheet",
+    size: "medium",
+    showHeader: true,
+    showCloseButton: true,
+    closeOnOverlayClick: true,
+    flushBody: true,
+    content: buildControlCenterContent,
+    onAfterClose: () => {
+      activeControlCenter = null;
+    }
   });
 
-  document.body.style.overflow = "hidden";
+  activeControlCenter = { dialog, close };
+  attachHandlers(dialog, close);
 }
 
-function closeControlCenter() {
-  if (!isOpen) {
-return;
-}
-
-  isOpen = false;
-  controlCenter.classList.remove("open");
-
-  const onTransitionEnd = () => {
-    controlCenter.classList.add("hidden");
-    controlCenter.style.transform = "";
-    controlCenter.removeEventListener("transitionend", onTransitionEnd);
-  };
-
-  controlCenter.addEventListener("transitionend", onTransitionEnd);
-
-  document.body.style.overflow = "";
-}
-
+// Named alias export for backwards compatibility
 export { toggleControlCenter as toggleSidebar };

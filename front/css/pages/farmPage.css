@@ -1,0 +1,364 @@
+/* ==========================================================
+   FARM DETAIL PAGE (.farmpage)
+   ========================================================== */
+
+.farmpage {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--container-padding);
+  font-family: var(--font-body);
+  color: var(--color-fg);
+}
+
+/* Breadcrumbs */
+.farm-header {
+  margin-bottom: var(--space-md);
+}
+
+.breadcrumbs {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.nolink-span {
+  transition: color var(--transition-fast);
+}
+
+.nolink-span:hover {
+  color: var(--color-primary);
+}
+
+/* Main Grid Layout */
+.farm-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+@media (min-width: 1024px) {
+  .farm-layout {
+    grid-template-columns: 1fr 320px;
+  }
+}
+
+/* ==========================================================
+   MAIN CONTENT AREA
+   ========================================================== */
+
+.farm-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.farm-banner {
+  width: 100%;
+  height: 280px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-elev-1);
+}
+
+.farm-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Tab Controls */
+.tabs-container {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-elev-1);
+  overflow: hidden;
+}
+
+.tab-buttons {
+  display: flex;
+  overflow-x: auto;
+  background-color: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border-light);
+  scrollbar-width: none;
+}
+
+.tab-button {
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: background-color var(--transition-fast), 
+              color var(--transition-fast), 
+              border-color var(--transition-fast);
+}
+
+.tab-button:hover {
+  color: var(--color-fg);
+  background-color: var(--color-card-hover);
+}
+
+.tab-button.active {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+  border-bottom-color: var(--color-primary);
+  background-color: var(--color-card-bg);
+}
+
+.tab-contents {
+  padding: var(--space-md);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Farm Details Tab Panel */
+.farm-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.farm-detail h2 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  color: var(--color-fg);
+  margin-bottom: var(--space-xs);
+}
+
+.farm-detail p {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
+  line-height: 1.5;
+}
+
+.farm-detail a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+}
+
+.farm-detail a:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================
+   SIDEBAR (ASIDE)
+   ========================================================== */
+
+.farm-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* Weather Widget */
+.info-widget {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-elev-1);
+}
+
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+.weather-icon {
+  font-size: 1.5rem;
+}
+
+.temperature {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-fg);
+}
+
+.location {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-sm);
+}
+
+.weather-extra {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+  background-color: var(--color-bg-tertiary);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+/* CTA Buttons */
+.cta-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.cta-block button {
+  width: 100%;
+}
+
+/* Summary Cards */
+.crop-summary,
+.crop-distribution {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-elev-1);
+  font-size: var(--font-size-sm);
+}
+
+.crop-summary p,
+.crop-distribution p {
+  margin-top: var(--space-xs);
+  color: var(--color-muted);
+}
+
+/* Operating / Business Hours Widget */
+.availability-widget {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-elev-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.availability-title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-fg);
+}
+
+.availability-status-pill {
+  display: inline-block;
+  align-self: flex-start;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-xs);
+}
+
+.availability-status-pill.is-closed {
+  background-color: var(--color-danger);
+  color: #ffffff;
+}
+
+.availability-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-xs) 0;
+  border-bottom: 1px dashed var(--color-border-light);
+  font-size: var(--font-size-sm);
+}
+
+.availability-row:last-child {
+  border-bottom: none;
+}
+
+.availability-row.availability-today {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+.availability-day {
+  width: 50px;
+}
+
+.availability-times {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.availability-time-pill {
+  background: var(--color-bg-tertiary);
+  padding: 2px var(--space-xs);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+}
+
+.availability-unavailable {
+  color: var(--color-muted);
+  font-size: var(--font-size-xs);
+  font-style: italic;
+}
+
+/* Reviews Block */
+.review-block {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-elev-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.review-block h2 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  color: var(--color-fg);
+}
+
+.review-item {
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+}
+
+.review-date {
+  color: var(--color-muted);
+}
+
+.review-actions {
+  display: flex;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.review-actions button {
+  font-size: var(--font-size-xs);
+  padding: 2px var(--space-xs);
+}

@@ -1,0 +1,290 @@
+/* ==========================================================
+   User Profile Page
+   ========================================================== */
+
+.profilepage {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+.profile-container {
+  width: 100%;
+}
+
+.channel {
+  width: 100%;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+/* Helper Flex Classes */
+.hflex {
+  display: flex;
+  align-items: center;
+}
+
+.vflex {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Banner Section --- */
+.user-banner {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background-color: var(--bg-tertiary);
+}
+
+.user-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.edit-banner-pic {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(4px);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.edit-banner-pic:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* --- Profile Avatar Header --- */
+.profile_area {
+  position: relative;
+  padding: 0 2rem;
+  margin-top: -50px; /* Overlap top banner */
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.profile_area .thumb {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 4px solid var(--card-bg);
+  background-color: var(--bg-tertiary);
+  overflow: hidden;
+  box-shadow: 0 4px 10px var(--shadow);
+}
+
+.profile_area .imgful {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.edit-profile-pic {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: var(--btn-text);
+  border: 2px solid var(--card-bg);
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+
+/* --- Profile Details --- */
+.profile-details {
+  padding: 1rem 2rem 0;
+  position: relative;
+}
+
+.profile-actions {
+  position: absolute;
+  top: 1rem;
+  right: 2rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.profile-actions .btn,
+.logout-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.edit-btn {
+  background-color: var(--primary);
+  color: var(--btn-text);
+  border: none;
+}
+
+.logout-btn {
+  background-color: transparent;
+  color: var(--danger);
+  border: 1px solid var(--border);
+}
+
+.logout-btn:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.profile-details .username {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.profile-info {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* --- Statistics Row --- */
+.statistics {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem 2rem;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  margin-top: 1.25rem;
+}
+
+.statistics p {
+  margin: 0;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.statistics strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+/* --- Main Tabs & Content Section --- */
+.udata-info {
+  padding: 1.5rem 2rem;
+}
+
+/* Tab Headers */
+.main-tab-buttons,
+.content-tab-buttons,
+.subcontent-tab-buttons {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--border-light);
+  margin-bottom: 1.25rem;
+}
+
+.main-tab-button,
+.tab-button {
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.main-tab-button.active,
+.tab-button.active,
+.main-tab-button:hover,
+.tab-button:hover {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* Content Lists (Override Inline JS Styles Dynamically) */
+.content-tab-contents ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.content-tab-contents li > div {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 2px 6px var(--shadow) !important;
+  transition: background-color var(--transition);
+}
+
+.content-tab-contents li > div:hover {
+  background-color: var(--card-hover) !important;
+}
+
+.content-tab-contents a {
+  color: var(--link) !important;
+  font-weight: 600;
+}
+
+.content-tab-contents a:hover {
+  color: var(--link-hover) !important;
+}
+
+/* Load Button */
+#load-user-data {
+  margin: 1.25rem 2rem 0;
+  align-self: flex-start;
+}
+
+/* ==========================================================
+   Responsive Adaptations
+   ========================================================== */
+
+@media (max-width: 768px) {
+  .profile_area {
+    padding: 0 1rem;
+  }
+
+  .profile-details {
+    padding: 1rem 1rem 0;
+  }
+
+  .profile-actions {
+    position: static;
+    margin-top: 1rem;
+  }
+
+  .statistics {
+    padding: 1rem;
+    gap: 1rem;
+    justify-content: space-between;
+  }
+
+  .udata-info {
+    padding: 1rem;
+  }
+
+  .content-tab-contents ul {
+    grid-template-columns: 1fr;
+  }
+}

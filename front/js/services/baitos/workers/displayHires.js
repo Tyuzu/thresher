@@ -38,7 +38,7 @@ export async function displayHireWorkers(isLoggedIn, container) {
   // Create active layout toggle
   let isGridView = localStorage.getItem("workerView") !== "list";
   const toggleViewBtn = Button(
-    isGridView ? "📋 List View" : "grid_view Grid View", 
+    isGridView ? "List View" : "Grid View", 
     "layout-toggle-btn", 
     {
       click: () => {

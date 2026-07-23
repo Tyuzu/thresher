@@ -155,7 +155,7 @@ const createNav = () => {
     toggle.className = "toggle";
     toggle.type = "checkbox";
     toggle.id = "more";
-    toggle.setAttribute("aria-hidden", "true");
+    // toggle.setAttribute("aria-hidden", "true");
     toggle.setAttribute("tabindex", "-1");
 
     const inner = document.createElement("div");

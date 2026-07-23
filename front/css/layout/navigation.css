@@ -1,0 +1,146 @@
+/* ==========================================================
+   Primary / Secondary Sub-Navigation
+   ========================================================== */
+
+/* Main Bar Container */
+.primary-nav {
+  width: 100%;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 90;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.navigation {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Hide the checkbox trigger visually while keeping it accessible to the label */
+.navigation .toggle {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+/* Inner Layout */
+.navigation__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+/* Horizontal Nav List */
+.navigation__list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* Hide scrollbar for Firefox */
+  -ms-overflow-style: none;
+  /* Hide scrollbar for IE/Edge */
+}
+
+.navigation__list::-webkit-scrollbar {
+  display: none;
+  /* Hide scrollbar for Chrome/Safari */
+}
+
+.navigation__item {
+  flex-shrink: 0;
+}
+
+/* Nav Links */
+.navigation__link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 0.8rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--transition), background-color var(--transition);
+}
+
+.navigation__link:hover,
+.navigation__link:focus-visible {
+  color: var(--text);
+  background-color: var(--card-hover);
+}
+
+/* Active State styling (optional helper class) */
+.navigation__link.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* "More" Toggle Button */
+.navigation__toggle {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-left: 0.5rem;
+  background: linear-gradient(to right, transparent, var(--bg-secondary) 30%);
+}
+
+.navigation__toggle .navigation__link {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.navigation__toggle .navigation__link::after {
+  content: " ▾";
+  font-size: 0.75rem;
+  margin-left: 0.35rem;
+  transition: transform var(--transition);
+}
+
+/* ==========================================================
+   Checkbox Hack Logic — "More" Expanded State
+   ========================================================== */
+
+/* Rotate arrow indicator when expanded */
+.navigation .toggle:checked~.navigation__inner .navigation__toggle .navigation__link::after {
+  transform: rotate(180deg);
+}
+
+/* Responsive behavior: Wrap menu items into a multi-row or dropdown layout when checked */
+@media (max-width: 992px) {
+
+  /* Restrain the default list to fit on one row with horizontal scrolling */
+  .navigation__list {
+    flex-wrap: nowrap;
+    max-height: 2.75rem;
+  }
+
+  /* When the #more checkbox is checked, allow wrapping into multi-line view */
+  .navigation .toggle:checked~.navigation__inner .navigation__list {
+    flex-wrap: wrap;
+    max-height: 1000px;
+    /* Expands smoothly */
+    padding-bottom: 0.75rem;
+    overflow-x: visible;
+  }
+
+  .navigation .toggle:checked~.navigation__inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navigation .toggle:checked~.navigation__inner .navigation__toggle {
+    align-self: flex-end;
+    padding-left: 0;
+  }
+}

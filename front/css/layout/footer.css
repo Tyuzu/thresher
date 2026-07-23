@@ -1,0 +1,137 @@
+/* ==========================================================
+   Page Footer
+   ========================================================== */
+
+.pagefooter {
+  width: 100%;
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Footer Links Navigation */
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+}
+
+.footer-link {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+  color: var(--primary);
+  outline: none;
+}
+
+/* Footer Bottom Section */
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.footer-bottom p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+/* Language Dropdown Selector */
+.lang-select {
+  background-color: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.lang-select:hover {
+  border-color: var(--border);
+}
+
+.lang-select:focus {
+  outline: 2px solid var(--input-focus);
+}
+
+/* Feedback Button */
+.footer-bottom .buttonx {
+  background-color: var(--bg-tertiary);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.45rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.footer-bottom .buttonx:hover {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: var(--btn-text);
+}
+
+/* ==========================================================
+   Responsive & Mobile Clearance
+   ========================================================== */
+
+@media (orientation: portrait), (max-width: 768px) {
+  /* Extra bottom padding prevents fixed mobile bottom-nav (.plypzstp) overlap */
+  .footer-container {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  .footer-nav {
+    justify-content: flex-start;
+    gap: 0.75rem 1rem;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .footer-bottom p {
+    order: 3;
+  }
+
+  .lang-select {
+    order: 1;
+    width: 100%;
+  }
+
+  .footer-bottom .buttonx {
+    order: 2;
+    width: 100%;
+  }
+}

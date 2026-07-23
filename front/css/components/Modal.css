@@ -1,0 +1,259 @@
+/* ==========================================================
+   Modal Component Styles
+   ========================================================== */
+
+/* Main Modal Wrapper */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* Semi-Transparent Overlay Backdrop */
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  will-change: opacity;
+}
+
+/* Modal Window Container */
+.modal-dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 2rem);
+  width: 100%;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px var(--shadow-lg, rgba(0, 0, 0, 0.3));
+  color: var(--text);
+  font-family: var(--font-body);
+  outline: none;
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+
+.modal-dialog:focus-visible {
+  outline: 2px solid var(--input-focus);
+}
+
+/* --- Header, Body & Footer Sections --- */
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Close Button */
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0.25rem 0.5rem;
+  margin: -0.25rem -0.5rem -0.25rem auto;
+  border-radius: calc(var(--radius) - 4px);
+  cursor: pointer;
+  transition: color var(--transition), background-color var(--transition);
+}
+
+.modal-close:hover {
+  color: var(--text);
+  background-color: var(--card-hover);
+}
+
+/* Body Content */
+.modal-body {
+  padding: 1.25rem;
+  overflow-y: auto;
+  flex-grow: 1;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Flush body variation (e.g. for media or full edge-to-edge layouts) */
+.modal-body--flush {
+  padding: 0;
+}
+
+/* Footer Container */
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-light);
+  background-color: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+/* ==========================================================
+   Modal Sizing Options
+   ========================================================== */
+
+.modal--small .modal-dialog {
+  max-width: 400px;
+}
+
+.modal--medium .modal-dialog {
+  max-width: 600px;
+}
+
+.modal--large .modal-dialog {
+  max-width: 850px;
+}
+
+.modal--full .modal-dialog {
+  max-width: 95vw;
+  height: 92vh;
+}
+
+/* ==========================================================
+   Modal Variants
+   ========================================================== */
+
+/* 1. Alert Variant (For critical confirmations) */
+.modal--alert .modal-dialog {
+  max-width: 440px;
+  border-top: 4px solid var(--danger);
+}
+
+/* 2. Sheet Variant (Slides in from the bottom edge) */
+.modal--sheet {
+  align-items: flex-end;
+  padding: 0;
+}
+
+.modal--sheet .modal-dialog {
+  max-width: 100vw;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
+}
+
+/* 3. Theater Variant (Dark media consumption mode) */
+.modal--theater .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.92);
+}
+
+.modal--theater .modal-dialog {
+  background-color: #000;
+  border-color: #222;
+  color: #fff;
+  max-width: 90vw;
+}
+
+/* ==========================================================
+   Enter & Exit Animations
+   ========================================================== */
+
+.modal--fade-in .modal-overlay {
+  animation: modalOverlayFadeIn 0.25s ease-out forwards;
+}
+
+.modal--fade-in .modal-dialog {
+  animation: modalDialogScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal--sheet.modal--fade-in .modal-dialog {
+  animation: modalSheetSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal--fade-out .modal-overlay {
+  animation: modalOverlayFadeOut 0.25s ease-in forwards;
+}
+
+.modal--fade-out .modal-dialog {
+  animation: modalDialogScaleOut 0.2s ease-in forwards;
+}
+
+.modal--sheet.modal--fade-out .modal-dialog {
+  animation: modalSheetSlideOut 0.25s ease-in forwards;
+}
+
+/* Keyframe Definitions */
+@keyframes modalOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalOverlayFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes modalDialogScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalDialogScaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+}
+
+@keyframes modalSheetSlideIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes modalSheetSlideOut {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+/* ==========================================================
+   Responsive Adaptation
+   ========================================================== */
+
+@media (max-width: 640px) {
+  .modal {
+    padding: 0.5rem;
+  }
+
+  .modal--large .modal-dialog,
+  .modal--medium .modal-dialog {
+    max-width: 100%;
+  }
+}

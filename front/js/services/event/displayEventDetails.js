@@ -39,11 +39,11 @@ const createDetailItems = (config, data) => {
     config.forEach(({ key, label, tag, classes, formatter }) => {
         let value = data[key];
         if (!value) {
-return;
-}
+            return;
+        }
         if (formatter) {
-value = formatter(value);
-}
+            value = formatter(value);
+        }
         details.appendChild(createElement(tag, { class: classes.join(" ") }, [label ? `${label}: ${value}` : value]));
     });
     return details;
@@ -51,8 +51,8 @@ value = formatter(value);
 
 const createTags = tags => {
     if (!tags?.length) {
-return null;
-}
+        return null;
+    }
     const container = createElement("div", { class: "event-tags" });
     tags.forEach(tag => container.appendChild(createElement("span", { class: 'event-tag' }, [`#${tag}`])));
     return container;
@@ -60,8 +60,8 @@ return null;
 
 const createSocialLinks = links => {
     if (!links) {
-return null;
-}
+        return null;
+    }
     const container = createElement("div", { class: "event-social-links" });
     Object.entries(links).forEach(([platform, url]) => {
         container.appendChild(createElement("a", { href: url, class: "social-link" }, [platform]));
@@ -71,8 +71,8 @@ return null;
 
 const createCustomFields = fields => {
     if (!fields) {
-return null;
-}
+        return null;
+    }
     const container = createElement("div", { class: "event-custom-fields" });
     Object.entries(fields).forEach(([field, value]) => {
         container.appendChild(createElement('p', { class: 'custom-field' }, [`${field}: ${value}`]));
@@ -83,18 +83,18 @@ return null;
 // Save/unsave
 const getSavedEvents = () => {
     try {
- return JSON.parse(localStorage.getItem("saved_events") || "[]"); 
-} catch {
- return []; 
-}
+        return JSON.parse(localStorage.getItem("saved_events") || "[]");
+    } catch {
+        return [];
+    }
 };
 const toggleSaveEvent = id => {
     let saved = getSavedEvents();
     if (saved.includes(id)) {
-saved = saved.filter(eid => eid !== id);
-} else {
-saved.push(id);
-}
+        saved = saved.filter(eid => eid !== id);
+    } else {
+        saved.push(id);
+    }
     localStorage.setItem("saved_events", JSON.stringify(saved));
 };
 
@@ -145,8 +145,8 @@ const createStatusBadge = eventDate => {
 const createCountdown = eventDate => {
     const msLeft = new Date(eventDate).getTime() - Date.now();
     if (msLeft <= 0) {
-return null;
-}
+        return null;
+    }
     const days = Math.floor(msLeft / (1000 * 60 * 60 * 24));
     const hours = Math.floor(msLeft / (1000 * 60 * 60)) % 24;
     return createElement("p", { class: "event-countdown" }, [`Starts in ${days > 0 ? days + " day(s)" : hours + " hour(s)"}`]);
@@ -161,15 +161,15 @@ const createPlaceLink = (placename, placeid) => createElement('p', {}, [
 /** Banner section */
 function createEventBannerSection(eventdata, isCreator) {
     return Bannerx({
-      isCreator : isCreator,
-      bannerkey : eventdata.banner,
-      banneraltkey : `Banner for ${eventdata.name || "Event"}`,
-      bannerentitytype : EntityType.EVENT,
-      stateentitykey : "event",
-      bannerentityid : eventdata.eventid
+        isCreator: isCreator,
+        bannerkey: eventdata.banner,
+        banneraltkey: `Banner for ${eventdata.name || "Event"}`,
+        bannerentitytype: EntityType.EVENT,
+        stateentitykey: "event",
+        bannerentityid: eventdata.eventid
     });
-  }
-  
+}
+
 
 // Info section
 function createInfoSection(eventData, isCreator, isLoggedIn) {
@@ -186,7 +186,7 @@ function createInfoSection(eventData, isCreator, isLoggedIn) {
     const actions = [];
 
     const evanacon = createElement("div", {}, []);
-    
+
     if (isLoggedIn && isCreator) {
         actions.push({ text: '✏ Edit Event', onClick: () => editEvent(isLoggedIn, eventData.eventid, document.getElementById("editevent")), classes: ['edit-btn', "buttonx"] });
         actions.push({ text: '🗑 Delete Event', onClick: () => deleteEvent(isLoggedIn, eventData.eventid), classes: ['delete-btn', 'buttonx'] });

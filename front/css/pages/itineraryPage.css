@@ -1,0 +1,254 @@
+/* ==========================================================
+   Itinerary Component
+   ========================================================== */
+
+.itinerary-container,
+.itinerary-layout {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  font-family: var(--font-body);
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+/* Base Headings & Meta */
+.itinerary-title {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--text);
+}
+
+.itinerary-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.itinerary-description {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+
+/* Status Badges */
+.status {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: calc(var(--radius) - 4px);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.status.draft {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+/* ==========================================================
+   1. Timeline View (.day-block & .timeline)
+   ========================================================== */
+
+.day-block {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.day-heading {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  margin: 0 0 1.25rem 0;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 0.5rem;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-left: 1rem;
+  border-left: 2px solid var(--border);
+  margin-left: 0.5rem;
+  gap: 1.25rem;
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Bullet Dot on Timeline */
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: calc(-1rem - 5px);
+  top: 0.35rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--card-bg);
+}
+
+.timeline-time {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.timeline-content {
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+/* Transport Connector Tag */
+.timeline-transport {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  font-size: 0.775rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  background-color: var(--bg-secondary);
+  border: 1px dashed var(--border);
+  border-radius: calc(var(--radius) - 4px);
+  color: var(--text-muted);
+  margin: -0.25rem 0;
+  text-transform: capitalize;
+}
+
+/* ==========================================================
+   2. Dual-Pane Layout View (.itinerary-layout)
+   ========================================================== */
+
+.itinerary-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.itinerary-left,
+.itinerary-right {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.itinerary-right {
+  min-height: 400px;
+}
+
+/* Search Form */
+.itinerary-search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.itinerary-search-form input {
+  background-color: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+}
+
+.itinerary-search-form input:focus {
+  outline: 2px solid var(--input-focus);
+}
+
+.itinerary-create-btn {
+  width: 100%;
+  margin-bottom: 1.25rem;
+}
+
+/* Itinerary Sidebar List */
+.itinerary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.itinerary-list-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: calc(var(--radius) - 2px);
+}
+
+.itinerary-list-item strong {
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.itinerary-list-item span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-right: auto;
+}
+
+/* List Item Actions */
+.itinerary-btn {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.775rem;
+}
+
+.itinerary-btn.secondary {
+  background-color: var(--bg-tertiary);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.itinerary-btn.danger {
+  background-color: var(--danger);
+  color: #fff;
+  border: none;
+}
+
+.itinerary-btn.success {
+  background-color: var(--success);
+  color: #fff;
+  border: none;
+}
+
+/* ==========================================================
+   Responsive Adaptations
+   ========================================================== */
+
+@media (max-width: 850px) {
+  .itinerary-layout {
+    grid-template-columns: 1fr;
+  }
+}

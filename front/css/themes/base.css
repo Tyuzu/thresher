@@ -1,0 +1,130 @@
+/* ==========================================================
+   3. Base Global Styling
+   ========================================================== */
+
+html {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  line-height: var(--line-height-normal);
+}
+
+/* Typography Elements */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  line-height: var(--line-height-tight);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-fg);
+  margin-top: 0;
+}
+
+h1 { font-size: var(--font-size-3xl); }
+h2 { font-size: var(--font-size-2xl); }
+h3 { font-size: var(--font-size-xl); }
+h4 { font-size: var(--font-size-lg); }
+
+p {
+  color: var(--color-muted);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-md);
+}
+
+small {
+  font-size: var(--font-size-sm);
+}
+
+a {
+  color: var(--color-link);
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-link-hover);
+}
+
+/* Form Elements */
+button {
+  background: var(--color-btn-bg);
+  color: var(--color-btn-fg);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+button:hover {
+  background: var(--color-btn-hover-bg);
+}
+
+input,
+textarea,
+select {
+  background: var(--color-input-bg);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid var(--color-input-focus);
+}
+
+/* Container & UI Cards */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+}
+
+.card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-elev-1);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card:hover {
+  background: var(--color-card-hover);
+  box-shadow: var(--shadow-elev-2);
+}
+
+/* SVG Vector Strokes */
+svg path,
+svg circle,
+svg rect {
+  stroke: var(--stroke-svg);
+}
+
+/* Selection */
+::selection {
+  background: var(--color-selection-bg);
+  color: var(--color-selection-fg);
+}
+
+/* Motion Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  html, body, a, button, .card {
+    transition: none !important;
+  }
+}
