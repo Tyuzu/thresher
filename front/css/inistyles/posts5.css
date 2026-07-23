@@ -1,0 +1,198 @@
+/* ==========================================================================
+   1. MAIN PAGE LAYOUT & GRID
+   ========================================================================== */
+
+.posts-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+  max-width: var(--max-width-xl);
+  margin: 0 auto;
+  padding: var(--space-md);
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  background-color: var(--color-bg);
+  box-sizing: border-box;
+}
+
+.posts-page *,
+.posts-page *::before,
+.posts-page *::after {
+  box-sizing: inherit;
+}
+
+/* Two-column layout on desktop screens */
+@media (min-width: 768px) {
+  .posts-page {
+    grid-template-columns: 1fr 300px;
+  }
+}
+
+/* Page Headings */
+.posts-main h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  margin: 0 0 var(--space-md) 0;
+  color: var(--color-fg);
+}
+
+.posts-aside h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  margin: 0 0 var(--space-md) 0;
+  color: var(--color-fg);
+}
+
+/* ==========================================================================
+   2. POSTS FEED & CARDS
+   ========================================================================== */
+
+.posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.posts-list a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.post-card {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: transform var(--transition-fast), 
+              box-shadow var(--transition-fast), 
+              border-color var(--transition-fast);
+}
+
+.posts-list a:hover .post-card,
+.posts-list a:focus-visible .post-card {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elev-2);
+  border-color: var(--color-border);
+  background-color: var(--color-card-hover);
+}
+
+.post-card img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-xs);
+  display: block;
+  background-color: var(--color-bg-tertiary);
+}
+
+.post-info {
+  padding: var(--space-md);
+}
+
+.post-info h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  margin: 0 0 var(--space-xs) 0;
+  color: var(--color-fg);
+}
+
+.post-info p {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  line-height: var(--line-height-normal);
+  margin: 0 0 var(--space-xxs) 0;
+}
+
+.post-info p:last-child {
+  margin-bottom: 0;
+}
+
+.post-info strong {
+  color: var(--color-fg);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ==========================================================================
+   3. ADVERTISEMENT SLOTS
+   ========================================================================== */
+
+.advert {
+  margin-bottom: var(--space-md);
+}
+
+.ad-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-secondary);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  text-align: center;
+  transition: background-color var(--transition-fast);
+}
+
+.ad-fallback-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: var(--font-weight-medium);
+}
+
+/* ==========================================================================
+   4. ASIDE ACTIONS & BUTTONS
+   ========================================================================== */
+
+.posts-aside {
+  display: flex;
+  flex-direction: column;
+}
+
+#posts-create-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-btn-bg);
+  color: var(--color-btn-fg);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color var(--transition-fast), 
+              transform var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+
+.buttonx:hover,
+#posts-create-btn:hover {
+  background-color: var(--color-btn-hover-bg);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-elev-1);
+}
+
+.buttonx:active,
+#posts-create-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.buttonx:disabled,
+#posts-create-btn:disabled {
+  background-color: var(--color-btn-disabled-bg);
+  color: var(--color-btn-disabled-fg);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

@@ -1,0 +1,242 @@
+/* ==========================================================================
+   Control Center Sheet & Internal Component Styles
+   ========================================================================== */
+
+/* --- Modal Sheet Container Adjustments --- */
+.modal-sheet,
+dialog[data-variant="sheet"] {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid var(--color-border);
+  border-top-left-radius: var(--radius-lg, 20px);
+  border-top-right-radius: var(--radius-lg, 20px);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
+  touch-action: pan-y; /* Smooth pointer scrolling */
+}
+
+/* --- Scrollable Body (.cc-scroll) --- */
+.cc-scroll {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md, 20px);
+  width: 100%;
+  max-height: 82vh;
+  padding: var(--space-xs, 8px) var(--container-padding, 16px) var(--space-xl, 36px);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.cc-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Grab Handle Indicator */
+.cc-handle {
+  flex-shrink: 0;
+  width: 42px;
+  height: 5px;
+  margin-top: 4px;
+  margin-bottom: 6px;
+  border-radius: var(--radius-circle, 999px);
+  background-color: var(--color-border);
+  opacity: 0.7;
+  cursor: grab;
+}
+
+.cc-handle:active {
+  cursor: grabbing;
+}
+
+/* --- Personal Hub Section (.cc-personal-hub) --- */
+.cc-personal-hub {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+}
+
+/* User Avatar with subtle inner shadow & ring */
+.cc-avatar {
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--space-xs, 8px);
+  border-radius: var(--radius-circle, 50%);
+  background-color: var(--color-bg-secondary);
+  border: 2px solid var(--color-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  /* Default placeholder SVG background */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 36px;
+}
+
+.cc-profile-name {
+  font-size: var(--font-size-base, 1rem);
+  font-weight: var(--font-weight-bold, 600);
+  color: var(--color-fg);
+  margin-bottom: var(--space-xs, 10px);
+  letter-spacing: -0.01em;
+}
+
+.cc-btn-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs, 8px);
+}
+
+.cc-small-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm, 8px);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-fg);
+  font-size: var(--font-size-xs, 0.8rem);
+  font-weight: var(--font-weight-medium, 500);
+  cursor: pointer;
+  user-select: none;
+  transition: 
+    background-color var(--transition-fast), 
+    border-color var(--transition-fast),
+    transform var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.cc-small-btn:hover {
+  background-color: var(--color-card-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.cc-small-btn:active {
+  transform: scale(0.96);
+}
+
+.cc-small-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* --- Live Tiles Grid (.cc-tiles) --- */
+.cc-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--space-xs, 10px);
+  width: 100%;
+  max-width: var(--max-width, 540px);
+}
+
+.cc-live-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-sm, 12px) var(--space-sm, 14px);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 12px);
+  transition: 
+    background-color var(--transition-fast), 
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.cc-live-tile:hover {
+  background-color: var(--color-card-hover);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  transform: translateY(-1px);
+}
+
+.cc-tile-label {
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-fg-muted, var(--color-fg));
+  opacity: 0.75;
+  margin-bottom: 2px;
+}
+
+.cc-tile-value {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-bold, 600);
+  color: var(--color-fg);
+}
+
+/* --- Navigation Grid (.cc-nav-grid) --- */
+.cc-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: var(--space-xs, 10px);
+  width: 100%;
+  max-width: var(--max-width, 540px);
+}
+
+.cc-nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: var(--space-xs, 10px) var(--space-xs, 8px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 10px);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-fg);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  cursor: pointer;
+  user-select: none;
+  transition: 
+    background-color var(--transition-fast), 
+    border-color var(--transition-fast),
+    transform var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.cc-nav-link:hover {
+  background-color: var(--color-card-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.cc-nav-link:active {
+  transform: scale(0.95);
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.cc-nav-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* --- Tablet / Desktop Modal Centering --- */
+@media (min-width: 768px) {
+  .modal-sheet,
+  dialog[data-variant="sheet"] {
+    top: auto;
+    bottom: var(--space-lg, 24px);
+    left: 50%;
+    width: 100%;
+    max-width: 560px;
+    border-radius: var(--radius-lg, 20px);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+  }
+
+  .cc-scroll {
+    max-height: 70vh;
+    padding-top: 12px;
+  }
+}

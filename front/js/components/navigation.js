@@ -155,14 +155,12 @@ const createNav = () => {
     toggle.className = "toggle";
     toggle.type = "checkbox";
     toggle.id = "more";
-    // toggle.setAttribute("aria-hidden", "true");
     toggle.setAttribute("tabindex", "-1");
 
     const inner = document.createElement("div");
     inner.className = "navigation__inner";
 
     const ul = document.createElement("ul");
-    nav.className = "navigation";
     ul.className = "navigation__list horizontal";
 
     navItems.forEach(({ href, label }) => ul.appendChild(createNavItem(href, label)));
@@ -175,7 +173,6 @@ const createNav = () => {
     const toggleLabel = document.createElement("label");
     toggleLabel.className = "navigation__link";
     toggleLabel.setAttribute("for", "more");
-    // toggleLabel.setAttribute("aria-hidden", "true");
     toggleLabel.innerText = "More";
 
     toggleLabelWrapper.appendChild(toggleLabel);

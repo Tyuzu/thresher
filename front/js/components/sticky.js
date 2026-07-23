@@ -27,34 +27,33 @@ function updateNav(container) {
   // Sidebar Menu Button
   fragment.appendChild(
     createIconButton({
-      classSuffix: "pause",
+      classSuffix: "menu",
       svgMarkup: menuSVG,
       onClick: toggleSidebar,
-      label: ""
+      label: "Open menu"
     })
   );
 
   // Search Button
   fragment.appendChild(
     createIconButton({
-      classSuffix: "dld",
+      classSuffix: "search",
       svgMarkup: searchSVG,
       onClick: () => navigate("/search"),
-      label: ""
+      label: "Search"
     })
   );
 
   if (isLoggedIn) {
     // Messages/Chats Button
     const chatBtn = createIconButton({
-      classSuffix: "play",
+      classSuffix: "stickychat",
       svgMarkup: chatSVG,
       onClick: () => navigate("/newchats"),
-      label: ""
+      label: "Chats"
     });
 
     if (unreadMessages > 0) {
-      chatBtn.style.position = "relative";
       chatBtn.appendChild(createBadge(unreadMessages));
     }
     fragment.appendChild(chatBtn);
@@ -62,23 +61,22 @@ function updateNav(container) {
     // Cart Button
     fragment.appendChild(
       createIconButton({
-        classSuffix: "edit",
+        classSuffix: "cart",
         svgMarkup: cartSVG,
         onClick: () => navigate("/cart"),
-        label: ""
+        label: "Shopping cart"
       })
     );
 
     // Notifications Button
     const notifBtn = createIconButton({
-      classSuffix: "stop",
+      classSuffix: "notif",
       svgMarkup: notifSVG,
       onClick: openNotificationsModal,
-      label: ""
+      label: "Notifications"
     });
 
     if (unreadNotifications > 0) {
-      notifBtn.style.position = "relative";
       notifBtn.appendChild(createBadge(unreadNotifications));
     }
     fragment.appendChild(notifBtn);
@@ -89,7 +87,7 @@ function updateNav(container) {
 }
 
 /**
- * Sticky Navigation Component
+ * Sticky Controls Component
  */
 export function Sticky(divs) {
   const container = createElement("div", {
@@ -114,7 +112,6 @@ export function Sticky(divs) {
   const unsubNotifications = subscribe("unreadNotifications", scheduleUpdate);
 
   // Setup observer directly on the container's parent when it mounts
-  // to avoid subtree-scanning the entire document.body
   const observer = new MutationObserver(() => {
     if (!document.body.contains(container)) {
       unsubToken?.();
@@ -125,10 +122,10 @@ export function Sticky(divs) {
     }
   });
 
-  // Observe the document body but without subtree scanning for improved layout performance
+  // Observe the document body for cleanup
   observer.observe(document.body, {
     childList: true,
-    subtree: false // Changed to false to avoid scanning deep DOM hierarchies
+    subtree: false
   });
 
   return container;

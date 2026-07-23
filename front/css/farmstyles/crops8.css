@@ -1,0 +1,164 @@
+/* --- Base Layout & Page Structure --- */
+.cropspage {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-md);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+}
+
+.cropspage h2 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  margin-bottom: var(--space-md);
+  color: var(--color-fg);
+}
+
+.catalogue-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 1024px) {
+  .catalogue-layout {
+    grid-template-columns: 1fr 280px;
+  }
+}
+
+.catalogue-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* --- Controls (Search & Sort) --- */
+.top-controls {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.search-box,
+.sort-box {
+  background-color: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
+  transition: border-color var(--transition-fast);
+}
+
+.search-box {
+  flex: 1;
+}
+
+.search-box:focus,
+.sort-box:focus {
+  outline: none;
+  border-color: var(--color-input-focus);
+}
+
+/* --- Tabs --- */
+.tabs {
+  display: flex;
+  gap: var(--space-xs);
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: var(--space-xs);
+}
+
+.tab-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+/* --- Crop Cards Grid --- */
+.crop-card {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.crop-card:hover {
+  background-color: var(--color-card-hover);
+  transform: translateY(-2px);
+}
+
+.crop-card-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background-color: var(--color-bg-tertiary);
+}
+
+.nimgcon {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: var(--space-xs);
+}
+
+.nimgcon h4 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+  text-transform: capitalize;
+  color: var(--color-fg);
+}
+
+.crop-info {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.season-indicator {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  margin: var(--space-xs) 0;
+}
+
+.season-indicator.off-season {
+  color: var(--color-danger);
+}
+
+/* --- Sidebar Actions --- */
+.catalogue-aside {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  height: fit-content;
+}
+
+.catalogue-aside h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  color: var(--color-fg);
+}
+
+.cta-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Specific Sidebar Buttons Layout */
+.cta-list .action-btn {
+  width: 100%;
+}

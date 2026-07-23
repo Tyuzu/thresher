@@ -1,0 +1,603 @@
+/* ==========================================================================
+   1. GLOBAL LAYOUT & CONTAINER
+   ========================================================================== */
+
+.tumblr-layout {
+  max-width: var(--max-width-sm);
+  margin: 0 auto;
+  padding: var(--space-md);
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  background-color: var(--color-bg);
+  box-sizing: border-box;
+}
+
+.tumblr-layout *,
+.tumblr-layout *::before,
+.tumblr-layout *::after {
+  box-sizing: inherit;
+}
+
+/* Helper Utilities */
+.hflex {
+  display: flex;
+  align-items: center;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Base Buttons & Links Reset */
+.tumblr-layout button {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+.tumblr-layout a {
+  color: var(--color-link);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.tumblr-layout a:hover {
+  color: var(--color-link-hover);
+}
+
+/* ==========================================================================
+   2. TUMBLR FORM (POST CREATION)
+   ========================================================================== */
+
+.tumblr-form {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elev-1);
+  margin-bottom: var(--space-lg);
+  overflow: hidden;
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tumblr-form:focus-within {
+  box-shadow: var(--shadow-elev-2);
+  border-color: var(--color-border);
+}
+
+/* Tab Header */
+.tab-header {
+  display: flex;
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.tab-button {
+  flex: 1;
+  padding: var(--space-md) var(--space-xs);
+  border-bottom: 3px solid transparent;
+  outline: none;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tab-button:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.tab-button.active,
+.tab-button[aria-selected="true"] {
+  background-color: var(--color-card-bg);
+  border-bottom-color: var(--color-primary);
+}
+
+.logoicon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  color: var(--color-muted);
+  pointer-events: none;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.tab-button:hover .logoicon {
+  color: var(--color-fg);
+}
+
+.tab-button.active .logoicon,
+.tab-button[aria-selected="true"] .logoicon {
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.icon-wrapper svg.clrfill {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.button-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.02em;
+}
+
+/* Panel & Inputs */
+.panel-wrapper {
+  padding: var(--space-md);
+}
+
+.tab-panel {
+  animation: fadeIn var(--transition-fast) ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--space-md);
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  margin-bottom: var(--space-xs);
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-group textarea {
+  min-height: 90px;
+  line-height: var(--line-height-normal);
+  resize: vertical;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+  outline: none;
+  background-color: var(--color-card-bg);
+  border-color: var(--color-input-focus);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.form-error {
+  color: var(--color-error) !important;
+  font-size: var(--font-size-xs) !important;
+  margin-top: var(--space-xs) !important;
+}
+
+/* File Previews & Media Inputs */
+.file-input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  background-color: var(--color-bg-secondary);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.file-input:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-bg-tertiary);
+}
+
+.file-preview {
+  margin-bottom: var(--space-md);
+}
+
+.preview-audio,
+.preview-video {
+  width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.publish-btn {
+  display: block;
+  width: calc(100% - (var(--space-md) * 2));
+  margin: 0 var(--space-md) var(--space-md) var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-btn-bg);
+  color: var(--color-btn-fg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.publish-btn:hover:not(:disabled) {
+  background-color: var(--color-btn-hover-bg);
+  transform: translateY(-1px);
+}
+
+.publish-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.publish-btn:disabled {
+  background-color: var(--color-btn-disabled-bg);
+  color: var(--color-btn-disabled-fg);
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   3. FEED & POST CARDS
+   ========================================================================== */
+
+.tumblr-feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.feed-item {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elev-1);
+  overflow: hidden;
+  transition: box-shadow var(--transition-fast);
+}
+
+.feed-item:hover {
+  box-shadow: var(--shadow-elev-2);
+}
+
+/* Post Header */
+.post-header {
+  padding: var(--space-md);
+  gap: var(--space-md);
+}
+
+.user-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.profile-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-circle);
+  object-fit: cover;
+  background-color: var(--color-bg-tertiary);
+}
+
+.user-time {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.username {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
+}
+
+.timestamp {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+}
+
+/* Post Media Content */
+.post-media {
+  width: 100%;
+}
+
+.post-media p {
+  padding: 0 var(--space-md) var(--space-sm) var(--space-md);
+  margin: 0;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-fg);
+}
+
+.preview_image_wrap__Q29V8 {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.PostPreviewImageView_image_item__dzD2P {
+  width: 100%;
+}
+
+.post-image {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+  display: block;
+}
+
+.video-error {
+  padding: var(--space-md);
+  margin: 0 var(--space-md);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+/* Post Titles & Meta (Tags) */
+.post-meta {
+  padding: var(--space-sm) var(--space-md);
+}
+
+.post-title {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.tag {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+}
+
+.tag::before {
+  content: "#";
+}
+
+.tag:hover {
+  color: var(--color-link);
+}
+
+/* Post Actions Bar */
+.post-actions {
+  display: flex;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--color-bg-tertiary);
+  gap: var(--space-md);
+}
+
+.post-actions button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  transition: color var(--transition-fast);
+}
+
+.post-actions button:hover {
+  color: var(--color-fg);
+}
+
+.post-actions button.like:hover {
+  color: var(--color-danger);
+}
+
+.post-actions button.like:hover svg {
+  stroke: var(--color-danger);
+}
+
+.clrful {
+  stroke: var(--stroke-svg);
+  transition: stroke var(--transition-fast);
+}
+
+/* Dropdown Menu */
+.more-wrapper {
+  position: relative;
+  margin-left: auto;
+}
+
+.dropxdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-xs));
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-elev-2);
+  min-width: 120px;
+  z-index: 10;
+  padding: var(--space-xs) 0;
+}
+
+.dropxdown button {
+  display: block;
+  width: 100%;
+  padding: var(--space-xs) var(--space-md);
+  text-align: left;
+  font-size: var(--font-size-xs);
+  color: var(--color-fg);
+}
+
+.dropxdown button:hover {
+  background-color: var(--color-bg-secondary);
+}
+
+.dropxdown .delete-btn {
+  color: var(--color-danger);
+}
+
+/* ==========================================================================
+   4. COMMENTS SECTION
+   ========================================================================== */
+
+.comments-section {
+  padding: var(--space-md);
+  background-color: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.comment-sort {
+  margin-bottom: var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--color-input-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-fg);
+}
+
+.comment-form {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.comment-input {
+  flex: 1;
+  padding: var(--space-sm);
+  background-color: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  resize: none;
+  height: 38px;
+}
+
+.comment-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.comment-form button[type="submit"] {
+  padding: 0 var(--space-md);
+  background-color: var(--color-primary);
+  color: var(--color-btn-fg);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  transition: background-color var(--transition-fast);
+}
+
+.comment-form button[type="submit"]:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.comment {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-circle);
+  object-fit: cover;
+}
+
+.comment-right {
+  flex: 1;
+  background-color: var(--color-card-bg);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xxs);
+}
+
+.comment-username {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-xs);
+}
+
+.comment-timestamp {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+}
+
+.comment-body p {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+.comment-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.buttonx {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+.buttonx:hover {
+  color: var(--color-primary);
+}
+
+.load-more-comments {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-md);
+  padding: var(--space-xs);
+  text-align: center;
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.load-more-comments:hover {
+  text-decoration: underline;
+}

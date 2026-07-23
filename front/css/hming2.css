@@ -1,0 +1,248 @@
+/* =========================
+   LAYOUT
+========================= */
+
+.hyperlocal-home.two-column {
+  display: flex;
+  gap: 2rem;
+}
+
+.main-content {
+  flex: 3;
+  border-radius: 12px;
+}
+
+.homesidebar {
+  flex: 1;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .hyperlocal-home.two-column {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .homesidebar {
+    padding: 1rem;
+  }
+}
+
+/* =========================
+   SHARED BLOCKS
+========================= */
+
+.hero-jumbotron,
+.navbox,
+.advert {
+  text-align: center;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* =========================
+   HERO
+========================= */
+
+.hero-jumbotron h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.hero-jumbotron p {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.btn-primary {
+  background-color: #0078d4;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #005a9e;
+}
+
+/* =========================
+   NAV GRID
+========================= */
+
+.nav-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.nav-icon {
+  flex: 1 1 80px;
+  max-width: 80px;
+  padding: 0.5rem;
+  border-radius: 10px;
+  border: 1px solid #aaa;
+  text-align: center;
+  cursor: pointer;
+
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+/* scalable stagger (no hardcoding 10 selectors) */
+.nav-grid .nav-icon {
+  animation-delay: calc(var(--i, 0) * 0.08s);
+}
+
+.nav-icon span {
+  display: block;
+}
+
+.nav-icon:hover {
+  transform: scale(1.05);
+  background-color: #e6f0ff;
+}
+
+/* =========================
+   NAV TOGGLE
+========================= */
+
+.toggle-nav {
+  margin-top: 1rem;
+  padding: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.toggle-nav:hover {
+  color: #005a9e;
+}
+
+.expanded-nav {
+  display: none;
+}
+
+.expanded-nav.is-visible {
+  display: flex;
+}
+
+/* =========================
+   ANIMATION
+========================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   AUTH FORMS
+========================= */
+
+.auth-forms {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .auth-forms {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+/* =========================
+   INFO WIDGET
+========================= */
+
+.info-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.95rem;
+}
+
+/* =========================
+   SEARCH
+========================= */
+
+.search-bar input {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* =========================
+   CARDS
+========================= */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.image-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.image-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.card-info {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-info h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.card-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.card-link {
+  margin-top: 8px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  background: #0056b3;
+  color: #fff;
+  cursor: pointer;
+  border: none;
+}
+
+.card-link:hover {
+  background: #005fcc;
+}

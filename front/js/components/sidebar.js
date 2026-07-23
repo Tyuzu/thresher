@@ -27,17 +27,17 @@ let activeControlCenter = null;
 
 function buildPersonalHub() {
   return createElement("div", { class: "cc-personal-hub" }, [
-    createElement("div", { class: "cc-avatar" }),
+    createElement("div", { class: "cc-avatar", role: "img", "aria-label": "User Avatar" }),
     createElement("div", { class: "cc-profile-name" }, ["Guest User"]),
     createElement("div", { class: "cc-btn-row" }, [
       createElement(
         "button",
-        { class: "cc-small-btn", "data-nav": "/profile" },
+        { class: "cc-small-btn", type: "button", "data-nav": "/profile" },
         ["Edit Profile"]
       ),
       createElement(
         "button",
-        { class: "cc-small-btn", "data-action": "logout" },
+        { class: "cc-small-btn", type: "button", "data-action": "logout" },
         ["Logout"]
       )
     ])
@@ -46,7 +46,7 @@ function buildPersonalHub() {
 
 function buildTiles() {
   const tiles = TILES.map(tile =>
-    createElement("div", { class: "cc-live-tile" }, [
+    createElement("div", { class: "cc-live-tile", role: "region", "aria-label": tile.label }, [
       createElement("div", { class: "cc-tile-label" }, [tile.label]),
       createElement("div", { class: "cc-tile-value" }, [tile.value])
     ])
@@ -68,11 +68,11 @@ function buildNavGrid() {
     )
   );
 
-  return createElement("div", { class: "cc-nav-grid" }, buttons);
+  return createElement("div", { class: "cc-nav-grid", role: "navigation" }, buttons);
 }
 
 function buildControlCenterContent() {
-  const handle = createElement("div", { class: "cc-handle" });
+  const handle = createElement("div", { class: "cc-handle", "aria-hidden": "true" });
   const personalHub = buildPersonalHub();
   const liveTiles = buildTiles();
   const navGrid = buildNavGrid();
@@ -86,7 +86,7 @@ function buildControlCenterContent() {
 }
 
 /* ---------------------------------- */
-/* Event & Gesture Delegation          */
+/* Event & Gesture Delegation         */
 /* ---------------------------------- */
 
 function attachHandlers(dialog, closeFn) {
@@ -107,21 +107,31 @@ function attachHandlers(dialog, closeFn) {
     }
   });
 
-  // Drag-to-dismiss gesture (Pointer Events)
+  /* --- Drag-to-dismiss Gesture --- */
   let startY = 0;
   let currentY = 0;
   let isDragging = false;
 
-  dialog.addEventListener("pointerdown", e => {
-    // Only capture drag on header/handle area or background, avoiding input elements
-    if (e.target.closest("button, a, input, select, textarea")) return;
-    
+  const onPointerDown = e => {
+    // Avoid initiating drag on interactive elements or if inner area is scrolled down
+    const isInteractive = e.target.closest("button, a, input, select, textarea");
+    const scrollContainer = dialog.querySelector(".cc-scroll");
+    const isScrolled = scrollContainer && scrollContainer.scrollTop > 0;
+
+    if (isInteractive || isScrolled) return;
+
     isDragging = true;
     startY = e.clientY;
+    currentY = e.clientY;
     dialog.style.transition = "none";
-  });
 
-  dialog.addEventListener("pointermove", e => {
+    // Capture pointer to ensure smooth drag even if cursor leaves bounds
+    if (dialog.setPointerCapture) {
+      dialog.setPointerCapture(e.pointerId);
+    }
+  };
+
+  const onPointerMove = e => {
     if (!isDragging) return;
 
     currentY = e.clientY;
@@ -130,15 +140,20 @@ function attachHandlers(dialog, closeFn) {
     if (diff > 0) {
       dialog.style.transform = `translateY(${diff}px)`;
     }
-  });
+  };
 
-  const endDrag = () => {
+  const endDrag = e => {
     if (!isDragging) return;
     isDragging = false;
 
-    dialog.style.transition = "";
+    if (dialog.releasePointerCapture && e.pointerId) {
+      try { dialog.releasePointerCapture(e.pointerId); } catch (_) {}
+    }
+
+    dialog.style.transition = "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)";
     const diff = currentY - startY;
 
+    // Dismiss threshold (100px)
     if (diff > 100) {
       closeFn();
     } else {
@@ -146,13 +161,15 @@ function attachHandlers(dialog, closeFn) {
     }
   };
 
+  dialog.addEventListener("pointerdown", onPointerDown);
+  dialog.addEventListener("pointermove", onPointerMove);
   dialog.addEventListener("pointerup", endDrag);
   dialog.addEventListener("pointercancel", endDrag);
 }
 
 function handleLogout() {
-  // Add authentication/logout logic here
-  console.log("Logging out...");
+  console.log("Logging out user...");
+  // Connect your auth provider logout logic here
 }
 
 /* ---------------------------------- */
@@ -168,12 +185,16 @@ export function toggleControlCenter() {
   const { dialog, close } = Modal({
     variant: "sheet",
     size: "medium",
-    showHeader: true,
+    showHeader: false,
     showCloseButton: true,
     closeOnOverlayClick: true,
     flushBody: true,
     content: buildControlCenterContent,
     onAfterClose: () => {
+      if (dialog) {
+        dialog.style.transform = "";
+        dialog.style.transition = "";
+      }
       activeControlCenter = null;
     }
   });
@@ -182,5 +203,5 @@ export function toggleControlCenter() {
   attachHandlers(dialog, close);
 }
 
-// Named alias export for backwards compatibility
+// Backwards compatibility alias
 export { toggleControlCenter as toggleSidebar };

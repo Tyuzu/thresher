@@ -1,0 +1,182 @@
+/* --- Recipes Page Container & Main Layout --- */
+.recipes-page {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-md);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 1024px) {
+  .recipes-page {
+    grid-template-columns: 1fr 280px;
+  }
+}
+
+.recipes-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.recipes-main h1 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  margin: 0;
+}
+
+.recipe-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* --- Recipe Cards Grid --- */
+.recipe-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-md);
+}
+
+.recipe-card {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.recipe-card:hover {
+  background-color: var(--color-card-hover);
+  transform: translateY(-2px);
+}
+
+.recipe-card .thumbnail {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-tertiary);
+  margin-bottom: var(--space-xs);
+}
+
+.recipe-card h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+  color: var(--color-fg);
+}
+
+.recipe-card p {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin: 0;
+}
+
+/* Tags */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.tag {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-fg);
+  font-size: var(--font-size-xs);
+  padding: var(--space-xxs) var(--space-sm);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+}
+
+/* --- Aside Sidebar --- */
+.recipes-aside {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.recipes-aside h2 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+}
+
+.recipes-aside .buttonx {
+  width: 100%;
+}
+
+/* --- Advertisement Slots --- */
+.advert {
+  background-color: var(--color-bg-secondary);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  text-align: center;
+}
+
+.ad-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+}
+
+.ad-fallback-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* --- Buttons --- */
+.buttonx {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.buttonx.primary {
+  background-color: var(--color-btn-bg);
+  color: var(--color-btn-fg);
+}
+
+.buttonx.primary:hover {
+  background-color: var(--color-btn-hover-bg);
+}
+
+.buttonx.secondary {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-fg);
+  border-color: var(--color-border);
+}
+
+.buttonx.secondary:hover {
+  background-color: var(--color-border-light);
+}
+
+.recipe-card .buttonx {
+  margin-top: auto; /* Pushes the button to the bottom of the card */
+}

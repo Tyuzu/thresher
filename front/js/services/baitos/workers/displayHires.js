@@ -10,8 +10,10 @@ export async function displayHireWorkers(isLoggedIn, container) {
 
   // ---------- LAYOUT ----------
   const layout = createElement("div", { class: "workers-page" });
-  const aside = createElement("aside", { class: "workers-aside" });
-  const main = createElement("div", { class: "workers-main" });
+  const main = createElement("main", { class: "workers-main" });
+  const aside = createElement("aside", { class: "workers-aside", "aria-label": "Page actions" });
+  
+  // Semantic order: primary main content first, complementary aside second
   layout.append(main, aside);
   container.append(layout);
 
@@ -28,17 +30,22 @@ export async function displayHireWorkers(isLoggedIn, container) {
   main.append(createElement("h1", {}, ["Find Skilled Workers"]));
 
   // ---------- FILTERS & VIEW TOGGLE ----------
-  const filterContainer = createElement("div", { class: "workers-filters" });
+  const filterContainer = createElement("section", { 
+    class: "workers-filters", 
+    "aria-label": "Search and view options" 
+  });
+  
   const searchInput = createElement("input", { 
-    type: "text", 
+    type: "search", 
     placeholder: "Search by name, skills, or roles...", 
-    class: "sort-box" 
+    class: "sort-box",
+    "aria-label": "Search by name, skills, or roles"
   });
   
   // Create active layout toggle
   let isGridView = localStorage.getItem("workerView") !== "list";
   const toggleViewBtn = Button(
-    isGridView ? "List View" : "Grid View", 
+    isGridView ? "📋 List View" : "🎛️ Grid View", 
     "layout-toggle-btn", 
     {
       click: () => {
@@ -66,8 +73,11 @@ export async function displayHireWorkers(isLoggedIn, container) {
     console.error("Failed to load workers", err);
   }
 
-  // ---------- LIST ----------
-  const list = createElement("div", { class: "workers-list" });
+  // ---------- LIST SECTION ----------
+  const list = createElement("section", { 
+    class: "workers-list", 
+    "aria-label": "Workers list" 
+  });
   main.append(list);
 
   let currentPage = 1;
@@ -83,7 +93,7 @@ export async function displayHireWorkers(isLoggedIn, container) {
     const paged = paginate(filtered, currentPage);
 
     if (!paged.length) {
-      list.append(createElement("p", { class: "no-results" }, ["No workers found."]));
+      list.append(createElement("p", { class: "no-results", role: "status" }, ["No workers found."]));
       return;
     }
 
@@ -99,18 +109,27 @@ export async function displayHireWorkers(isLoggedIn, container) {
     // ---------- PAGINATION ----------
     const totalPages = Math.ceil(filtered.length / pageSize);
     if (totalPages > 1) {
-      const pager = createElement("div", { class: "workers-pager" });
+      const pager = createElement("nav", { 
+        class: "workers-pager", 
+        "aria-label": "Pagination" 
+      });
 
       if (currentPage > 1) {
-        pager.append(Button("Prev", "", { click: () => {
-          currentPage--; renderWorkers(filtered); 
-        } }, "buttonx secondary"));
+        pager.append(Button("Prev", "", { 
+          click: () => {
+            currentPage--; 
+            renderWorkers(filtered); 
+          } 
+        }, "buttonx secondary"));
       }
 
       if (currentPage < totalPages) {
-        pager.append(Button("Next", "", { click: () => {
-          currentPage++; renderWorkers(filtered); 
-        } }, "buttonx secondary"));
+        pager.append(Button("Next", "", { 
+          click: () => {
+            currentPage++; 
+            renderWorkers(filtered); 
+          } 
+        }, "buttonx secondary"));
       }
 
       list.append(pager);

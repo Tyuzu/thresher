@@ -1,0 +1,248 @@
+/* ==========================================================================
+   1. MAIN PAGE LAYOUT & CONTAINER
+   ========================================================================== */
+
+.baitos-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+  max-width: var(--max-width-xl);
+  margin: 0 auto;
+  padding: var(--space-md);
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  background-color: var(--color-bg);
+  box-sizing: border-box;
+}
+
+.baitos-page *,
+.baitos-page *::before,
+.baitos-page *::after {
+  box-sizing: inherit;
+}
+
+/* Two-column layout on desktop */
+@media (min-width: 768px) {
+  .baitos-page {
+    grid-template-columns: 1fr 280px;
+  }
+}
+
+.baitos-main h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  margin: 0 0 var(--space-md) 0;
+  color: var(--color-fg);
+}
+
+/* ==========================================================================
+   2. FILTERS & SEARCH
+   ========================================================================== */
+
+.baitos-filters {
+  margin-bottom: var(--space-md);
+}
+
+.sort-box {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-md);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  transition: border-color var(--transition-fast), 
+              box-shadow var(--transition-fast), 
+              background-color var(--transition-fast);
+}
+
+.sort-box:focus {
+  outline: none;
+  background-color: var(--color-card-bg);
+  border-color: var(--color-input-focus);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* ==========================================================================
+   3. BAITO (JOB) LIST & CARDS
+   ========================================================================== */
+
+.baitos-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.baito-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: transform var(--transition-fast), 
+              box-shadow var(--transition-fast), 
+              border-color var(--transition-fast);
+}
+
+.baito-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elev-2);
+  border-color: var(--color-border);
+}
+
+@media (min-width: 520px) {
+  .baito-card {
+    flex-direction: row;
+  }
+}
+
+.baito-card-img {
+  width: 100%;
+  flex-shrink: 0;
+  background-color: var(--color-bg-tertiary);
+}
+
+@media (min-width: 520px) {
+  .baito-card-img {
+    width: 160px;
+  }
+}
+
+.baito-banner-thumb {
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  max-height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+.baito-card-content {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-md);
+  flex: 1;
+}
+
+.baito-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  margin: 0 0 var(--space-xs) 0;
+  color: var(--color-fg);
+}
+
+.baito-company,
+.baito-meta,
+.baito-loc-time {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  line-height: var(--line-height-normal);
+  margin: 0 0 var(--space-xxs) 0;
+}
+
+.baito-company {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+}
+
+.baito-meta {
+  color: var(--color-fg);
+}
+
+.baito-type-shift {
+  margin: 0;
+}
+
+.baito-loc-time {
+  font-size: var(--font-size-xs);
+  color: var(--color-light);
+  margin-top: var(--space-xs);
+}
+
+/* Card Action Buttons */
+.baito-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.baito-actions .buttonx {
+  flex: 1;
+}
+
+/* ==========================================================================
+   4. ASIDE ACTIONS & CONTROLS
+   ========================================================================== */
+
+.baitos-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.baitos-aside h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  margin: 0 0 var(--space-xs) 0;
+  color: var(--color-fg);
+}
+
+
+/* Language Dropdown Selector */
+#lang-toggle {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  margin-top: var(--space-xs);
+  background-color: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-md);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+#lang-toggle:focus {
+  outline: none;
+  border-color: var(--color-input-focus);
+}
+
+/* ==========================================================================
+   5. ADVERTISEMENT SLOTS
+   ========================================================================== */
+
+.advert {
+  margin-bottom: var(--space-md);
+}
+
+.baitos-aside .advert {
+  margin-top: var(--space-sm);
+  margin-bottom: 0;
+}
+
+.ad-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-secondary);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  text-align: center;
+}
+
+.ad-fallback-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: var(--font-weight-medium);
+}

@@ -1,137 +1,167 @@
-/* ==========================================================
-   Page Footer
-   ========================================================== */
+/* ==========================================================================
+   Footer Component (.pagefooter)
+   ========================================================================== */
 
+/* Outer Shell */
 .pagefooter {
   width: 100%;
-  background-color: var(--bg-secondary);
-  border-top: 1px solid var(--border);
-  color: var(--text-muted);
-  font-family: var(--font-body);
-  transition: background-color var(--transition), border-color var(--transition);
+  margin-top: var(--space-xl, 4rem);
+  padding-bottom: var(--space-lg, 2rem);
+  background-color: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+  transition: background-color var(--transition-fast);
 }
 
+/* Container Wrapper */
 .footer-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2.5rem 1.5rem 2rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: var(--space-md, 1.5rem);
+  max-width: var(--max-width, 1200px);
+  margin: 0 auto;
+  padding: var(--space-md, 1.5rem) var(--container-padding, var(--space-sm));
 }
 
-/* Footer Links Navigation */
+/* Navigation Link Grid/Row */
 .footer-nav {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   align-items: center;
-  gap: 0.75rem 1.5rem;
+  justify-content: center;
+  gap: var(--space-xs, 0.5rem) var(--space-md, 1.25rem);
 }
 
 .footer-link {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-fg-muted, var(--color-fg));
   text-decoration: none;
-  transition: color var(--transition);
+  opacity: 0.85;
+  transition: 
+    color var(--transition-fast), 
+    opacity var(--transition-fast);
 }
 
-.footer-link:hover,
+.footer-link:hover {
+  opacity: 1;
+  color: var(--color-primary);
+}
+
 .footer-link:focus-visible {
-  color: var(--primary);
-  outline: none;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs, 2px);
 }
 
-/* Footer Bottom Section */
+/* Bottom Divider Section */
 .footer-bottom {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-light);
+  flex-wrap: wrap;
+  gap: var(--space-sm, 1rem);
+  padding-top: var(--space-md, 1.25rem);
+  border-top: 1px solid var(--color-border);
 }
 
 .footer-bottom p {
   margin: 0;
-  font-size: 0.85rem;
-  color: var(--text-light);
+  font-size: var(--font-size-xs, 0.8rem);
+  color: var(--color-fg-muted, var(--color-fg));
+  opacity: 0.75;
 }
 
 /* Language Dropdown Selector */
 .lang-select {
-  background-color: var(--input-bg);
-  color: var(--text);
-  border: 1px solid var(--input-border);
-  border-radius: var(--radius);
-  padding: 0.4rem 0.75rem;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
+  padding: var(--space-xs, 0.35rem) var(--space-md, 1.8rem) var(--space-xs, 0.35rem) var(--space-sm, 0.75rem);
+  font-size: var(--font-size-xs, 0.8rem);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+  background-color: var(--color-bg-secondary, var(--color-bg));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm, 6px);
   cursor: pointer;
-  transition: border-color var(--transition), background-color var(--transition);
+  appearance: none;
+  -webkit-appearance: none;
+  /* Custom SVG caret arrow */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
+  transition: 
+    border-color var(--transition-fast), 
+    background-color var(--transition-fast);
 }
 
 .lang-select:hover {
-  border-color: var(--border);
+  border-color: var(--color-primary);
+  background-color: var(--color-card-hover);
 }
 
-.lang-select:focus {
-  outline: 2px solid var(--input-focus);
+.lang-select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
-/* Feedback Button */
-.footer-bottom .buttonx {
-  background-color: var(--bg-tertiary);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.45rem 1rem;
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  font-weight: 500;
+.lang-select option {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+}
+
+/* Feedback / Secondary Button */
+.button.buttonx {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xs, 0.4rem) var(--space-sm, 0.85rem);
+  font-size: var(--font-size-xs, 0.8rem);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-fg);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm, 6px);
   cursor: pointer;
-  transition: background-color var(--transition), border-color var(--transition), color var(--transition);
+  transition: 
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
-.footer-bottom .buttonx:hover {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: var(--btn-text);
+.button.buttonx:hover {
+  background-color: var(--color-card-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
-/* ==========================================================
-   Responsive & Mobile Clearance
-   ========================================================== */
+.button.buttonx:active {
+  transform: scale(0.96);
+}
 
-@media (orientation: portrait), (max-width: 768px) {
-  /* Extra bottom padding prevents fixed mobile bottom-nav (.plypzstp) overlap */
-  .footer-container {
-    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
-  }
-
-  .footer-nav {
-    justify-content: flex-start;
-    gap: 0.75rem 1rem;
-  }
-
+/* --- Mobile Responsive Layout --- */
+@media (max-width: 768px) {
   .footer-bottom {
     flex-direction: column;
-    align-items: flex-start;
+    justify-content: center;
+    text-align: center;
+    gap: var(--space-sm, 1rem);
   }
 
   .footer-bottom p {
-    order: 3;
+    order: 3; /* Puts copyright at the very bottom */
   }
 
   .lang-select {
     order: 1;
     width: 100%;
+    max-width: 200px;
   }
 
-  .footer-bottom .buttonx {
+  .button.buttonx {
     order: 2;
     width: 100%;
+    max-width: 200px;
   }
 }

@@ -1,4 +1,3 @@
-// import { apiFetch } from "../../api/api";
 import { createElement } from "../../components/createElement";
 import { v4 as uuidv4 } from "https://jspm.dev/uuid";
 
@@ -9,27 +8,37 @@ export function createEl(tag, attrs = {}, children = []) {
   return createElement(tag, attrs, children);
 }
 
-export function createTabButton(label, onClick) {
+export function createTabButton(id, panelId, content, onClick) {
   const btn = createEl("button", {
+    id,
+    type: "button",
     class: ["tab-button"],
     role: "tab",
-    // dataset: { tab: label },
+    ariaControls: panelId,
     ariaSelected: "false"
-  }, [label]);
+  }, [content]);
   btn.addEventListener("click", onClick);
   return btn;
 }
 
-export function createPanel(id, children) {
-  return createEl("div", { id, class: ["tab-panel"], role: "tabpanel", style: "display: none;" }, children);
+export function createPanel(id, tabId, children) {
+  return createEl("div", {
+    id,
+    class: ["tab-panel"],
+    role: "tabpanel",
+    ariaLabelledby: tabId,
+    style: "display: none;"
+  }, children);
 }
 
 export function createFileInput(type, multiple) {
   return createEl("input", {
+    id: `file-input-${type}`,
+    name: `file_${type}`,
     type: "file",
     class: ["file-input"],
     accept: `${type}/*`,
-    multiple: multiple || undefined
+    multiple: multiple ? true : undefined
   });
 }
 
@@ -42,31 +51,29 @@ export function renderPreviewList(files, container, type, input, onChange) {
   const fileArr = Array.from(files);
 
   fileArr.forEach((file, index) => {
-    if (!file.type.startsWith(type)) {
-return;
-}
+    if (!file.type.startsWith(type)) return;
+
     const reader = new FileReader();
     reader.onload = e => {
       const src = e.target.result;
       let mediaEl;
+
       if (type === "image") {
-        mediaEl = createEl("img", { src, class: ["preview-image"] });
+        mediaEl = createEl("img", { src, alt: file.name || "Image Preview", class: ["preview-image"] });
       } else if (type === "video") {
         mediaEl = createEl("video", { src, controls: true, class: ["preview-video"] });
       } else {
         mediaEl = createEl("audio", { src, controls: true, class: ["preview-audio"] });
       }
 
-      const removeBtn = createEl("button", { class: ["remove-btn"] }, ["✖"]);
+      const removeBtn = createEl("button", { type: "button", class: ["remove-btn"], ariaLabel: "Remove file" }, ["✖"]);
       removeBtn.addEventListener("click", () => {
         fileArr.splice(index, 1);
         const dt = new DataTransfer();
         fileArr.forEach(f => dt.items.add(f));
         input.files = dt.files;
         renderPreviewList(fileArr, container, type, input, onChange);
-        if (onChange) {
-onChange();
-}
+        if (onChange) onChange();
       });
 
       const wrapper = createEl("div", { class: ["preview-wrapper"] }, [mediaEl, removeBtn]);
@@ -77,7 +84,5 @@ onChange();
 }
 
 export async function getCSRFToken() {
-  // const res = await apiFetch("/csrf");
-  // return res?.csrf_token || "";
   return uuidv4();
 }
