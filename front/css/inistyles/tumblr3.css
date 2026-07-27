@@ -427,6 +427,7 @@
 
 .clrful {
   stroke: var(--stroke-svg);
+  stroke-width: 2;
   transition: stroke var(--transition-fast);
 }
 
@@ -579,7 +580,6 @@
 
 .buttonx {
   font-size: var(--font-size-xs);
-  color: var(--color-muted);
   font-weight: var(--font-weight-medium);
 }
 

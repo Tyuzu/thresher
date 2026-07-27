@@ -5,7 +5,7 @@
 /* Main Container: Floating Glass Bar */
 #primary-nav.primary-nav {
   position: sticky;
-  top: var(--space-xs, 8px);
+  top: 0;
   z-index: 90;
   /*width: calc(100% - (var(--space-sm, 12px) * 2));*/
   width: 100%;
