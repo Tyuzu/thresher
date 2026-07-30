@@ -106,7 +106,7 @@ export function createProfileSection(userId) {
 iconSpan.innerHTML = icon;
 }
 
-    const link = createElement("a", { class: "menu-item", href }, [iconSpan, label]);
+    const link = createElement("a", { class: "profile-menu-item", href }, [iconSpan, label]);
     link.addEventListener("click", (e) => {
       e.preventDefault();
       navigate(href);
@@ -116,7 +116,7 @@ iconSpan.innerHTML = icon;
   });
 
   // Logout button
-  const logoutBtn = createElement("button", { class: "menu-item logout" }, []);
+  const logoutBtn = createElement("button", { class: "profile-menu-item logout" }, []);
   logoutBtn.innerHTML = logoutSVG;
   logoutBtn.append(createElement("span", {}, ["Logout"]));
   logoutBtn.addEventListener("click", logout);

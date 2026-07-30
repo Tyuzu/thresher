@@ -6,8 +6,8 @@
 #primary-nav.primary-nav {
   position: sticky;
   top: 0;
-  z-index: 90;
-  /*width: calc(100% - (var(--space-sm, 12px) * 2));*/
+  /*z-index: 90;
+  width: calc(100% - (var(--space-sm, 12px) * 2));*/
   width: 100%;
   max-width: var(--max-width, 1200px);
   margin: 0 auto;

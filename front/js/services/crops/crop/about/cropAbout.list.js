@@ -6,23 +6,29 @@ export async function displayCropList(container) {
     container.textContent = "";
 
     const crops = await getAllCropAbouts();
+    const safeCrops = Array.isArray(crops) ? crops : [];
 
     const list = createElement(
         "div",
         { class: "crop-list" },
-        crops.map(crop =>
-            createElement(
+        safeCrops.map(crop => {
+            if (!crop) return null;
+
+            return createElement(
                 "div",
                 { class: "crop-card" },
                 [
-                    createElement("h3", {}, [crop.commonName]),
-                    createElement("p", {}, [crop.scientificName]),
+                    createElement("h3", {}, [crop.commonName || "Unnamed Crop"]),
+                    createElement("p", {}, [crop.scientificName || ""]),
 
                     createElement(
                         "button",
                         {
-                            onclick: () =>
-                                displayCropForm(container, crop)
+                            type: "button",
+                            class: "btn btn-small btn-secondary",
+                            events: {
+                                click: () => displayCropForm(container, crop)
+                            }
                         },
                         ["Edit"]
                     ),
@@ -30,26 +36,32 @@ export async function displayCropList(container) {
                     createElement(
                         "button",
                         {
-                            onclick: async () => {
-                                if (!confirm("Delete crop?")) {
-                                    return;
-                                }
+                            type: "button",
+                            class: "btn btn-small btn-danger",
+                            events: {
+                                click: async () => {
+                                    if (!confirm("Delete crop?")) {
+                                        return;
+                                    }
 
-                                await deleteCropAbout(crop.id);
-                                displayCropList(container);
+                                    await deleteCropAbout(crop.id);
+                                    displayCropList(container);
+                                }
                             }
                         },
                         ["Delete"]
                     )
                 ]
-            )
-        )
+            );
+        }).filter(Boolean)
     );
 
     container.appendChild(list);
 }
 
 export function createAdminActions(crop, container) {
+    if (!crop) return null;
+
     return createElement(
         "section",
         { class: "crop-admin-actions" },
@@ -57,8 +69,11 @@ export function createAdminActions(crop, container) {
             createElement(
                 "button",
                 {
-                    onclick: () =>
-                        displayCropForm(container, crop)
+                    type: "button",
+                    class: "btn btn-secondary",
+                    events: {
+                        click: () => displayCropForm(container, crop)
+                    }
                 },
                 ["Edit Crop"]
             ),
@@ -66,13 +81,17 @@ export function createAdminActions(crop, container) {
             createElement(
                 "button",
                 {
-                    onclick: async () => {
-                        if (!confirm("Delete crop?")) {
-                            return;
-                        }
+                    type: "button",
+                    class: "btn btn-danger",
+                    events: {
+                        click: async () => {
+                            if (!confirm("Delete crop?")) {
+                                return;
+                            }
 
-                        await deleteCropAbout(crop.id);
-                        location.reload();
+                            await deleteCropAbout(crop.id);
+                            location.reload();
+                        }
                     }
                 },
                 ["Delete Crop"]

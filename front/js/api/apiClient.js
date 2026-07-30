@@ -17,7 +17,7 @@ import { silentLogout } from "../services/auth/authService.js";
 import { refreshToken, isTokenNearExpiry } from "./authManager.js";
 
 /* =========================
-   CORE FETCH
+    CORE FETCH
 ========================= */
 
 async function apixFetch(endpoint, method = "GET", body = null, options = {}, retry = false) {
@@ -25,16 +25,18 @@ async function apixFetch(endpoint, method = "GET", body = null, options = {}, re
         const token = getState("token");
         const nearExpiry = token && isTokenNearExpiry(token);
 
+        // 1. Proactive Refresh if access token is near expiry
         if (nearExpiry && !retry) {
             const ok = await refreshToken();
             if (!ok) {
-                return { success: false, error: "Unauthorized" };
+                silentLogout();
+                throw new Error("Unauthorized");
             }
         }
 
         const fetchOptions = {
             method,
-            credentials: options.credentials ?? "include",
+            credentials: options.credentials ?? "include", // Essential for HttpOnly refresh cookie transmission
             headers: {},
             signal: options.signal
         };
@@ -54,18 +56,12 @@ async function apixFetch(endpoint, method = "GET", body = null, options = {}, re
 
         const res = await fetch(endpoint, fetchOptions);
 
-        // if (res.status === 401 && !retry && !nearExpiry) {
-        //     const refreshed = await refreshToken();
-        //     if (refreshed) {
-        //         return apixFetch(endpoint, method, body, options, true);
-        //     }
-        //     return { success: false, error: "Unauthorized" };
-        // }
-
-        if (res.status === 401 && !retry && !nearExpiry) {
+        // 2. Handle 401 Unauthorized (Expired Access Token or Invalid Session)
+        if (res.status === 401 && !retry) {
             const refreshed = await refreshToken();
 
             if (refreshed) {
+                // Retry the original request once with the new access token
                 return apixFetch(
                     endpoint,
                     method,
@@ -75,6 +71,8 @@ async function apixFetch(endpoint, method = "GET", body = null, options = {}, re
                 );
             }
 
+            // Refresh failed (cookie expired, missing, or invalidated by backend) -> log out
+            silentLogout();
             throw new Error("Unauthorized");
         }
 
@@ -89,13 +87,6 @@ async function apixFetch(endpoint, method = "GET", body = null, options = {}, re
             return { success: false, error: "Invalid JSON response" };
         }
 
-        // if (!res.ok) {
-        //     return {
-        //         success: false,
-        //         error: data?.message || `HTTP ${res.status}`,
-        //         status: res.status
-        //     };
-        // }
         if (!res.ok) {
             throw new Error(
                 data?.error ||
@@ -106,30 +97,26 @@ async function apixFetch(endpoint, method = "GET", body = null, options = {}, re
 
         return data ?? { success: true };
 
-        // } catch (err) {
-        //     return {
-        //         success: false,
-        //         error: err?.message || "Network failure"
-        //     };
-        // }
     } catch (err) {
         throw err;
     }
 }
 
 /* =========================
-   PUBLIC API
+    PUBLIC API
 ========================= */
 
-export function apiFetch(endpoint, method = "GET", body = null, options = {}) {
-    return apixFetch(`${API_URL}${endpoint}`, method, body, options).catch(err => {
+export async function apiFetch(endpoint, method = "GET", body = null, options = {}) {
+    try {
+        return await apixFetch(`${API_URL}${endpoint}`, method, body, options);
+    } catch (err) {
         if (err?.message === "Unauthorized") {
             silentLogout();
         } else {
             Notify(err?.message || "Network error", { type: "error" });
         }
         throw err;
-    });
+    }
 }
 
 export const liveFetch = (e, m, b, o) => apixFetch(`${LIVE_URL}${e}`, m, b, o);

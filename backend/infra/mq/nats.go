@@ -2,9 +2,12 @@ package mq
 
 import (
 	"context"
+	"errors"
 
 	"github.com/nats-io/nats.go"
 )
+
+var ErrJetStreamNotInitialized = errors.New("jetstream context is not initialized")
 
 type JetStreamMQ struct {
 	js nats.JetStreamContext
@@ -29,6 +32,10 @@ func (j *JetStreamMQ) Publish(
 	subject string,
 	data []byte,
 ) error {
+	if j.js == nil {
+		return ErrJetStreamNotInitialized
+	}
+
 	msg := &nats.Msg{
 		Subject: subject,
 		Data:    data,
@@ -39,8 +46,12 @@ func (j *JetStreamMQ) Publish(
 }
 
 func (j *JetStreamMQ) Ping(ctx context.Context) error {
-	// perform a lightweight publish to a transient subject used for health checks
-	_, err := j.js.PublishMsg(&nats.Msg{Subject: "health.check", Data: []byte("ping")}, nats.Context(ctx))
+	if j.js == nil {
+		return ErrJetStreamNotInitialized
+	}
+
+	// Fetching JetStream account info is a non-mutating check on JS health
+	_, err := j.js.AccountInfo(nats.Context(ctx))
 	return err
 }
 
@@ -49,6 +60,9 @@ func (j *JetStreamMQ) Subscribe(
 	subject string,
 	handler MessageHandler,
 ) (Subscription, error) {
+	if j.js == nil {
+		return nil, ErrJetStreamNotInitialized
+	}
 
 	sub, err := j.js.Subscribe(
 		subject,
@@ -58,7 +72,8 @@ func (j *JetStreamMQ) Subscribe(
 				Data:    msg.Data,
 			}
 
-			if err := handler(ctx, m); err != nil {
+			// Context for message execution isolated from subscription lifecycle
+			if err := handler(context.Background(), m); err != nil {
 				_ = msg.Nak()
 				return
 			}
@@ -89,6 +104,9 @@ func (j *JetStreamMQ) QueueSubscribe(
 	queue string,
 	handler MessageHandler,
 ) (Subscription, error) {
+	if j.js == nil {
+		return nil, ErrJetStreamNotInitialized
+	}
 
 	sub, err := j.js.QueueSubscribe(
 		subject,
@@ -99,7 +117,7 @@ func (j *JetStreamMQ) QueueSubscribe(
 				Data:    msg.Data,
 			}
 
-			if err := handler(ctx, m); err != nil {
+			if err := handler(context.Background(), m); err != nil {
 				_ = msg.Nak()
 				return
 			}

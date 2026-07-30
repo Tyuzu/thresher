@@ -145,7 +145,7 @@ async function login(event) {
 }
 
 /* =========================
-   TOKEN REFRESH
+   TOKEN REFRESH (Updated)
 ========================= */
 async function refreshAccessToken() {
     try {
@@ -157,8 +157,9 @@ async function refreshAccessToken() {
         }
         throw new Error("No token returned");
     } catch (err) {
+        // Trigger silent logout when refresh fails due to missing auth cookie
         silentLogout();
-        throw err;
+        return null;
     }
 }
 

@@ -26,7 +26,7 @@ export async function displayCart(content, isLoggedIn) {
     return;
   }
 
-  // FIXED: Maintain a dynamically up-to-date registry mapping categories to their active item states
+  // Maintain a dynamically up-to-date registry mapping categories to their active item states
   const groupedRegistry = groupCartByCategory(serverCart);
   const categories = Object.keys(groupedRegistry).filter(
     cat => Array.isArray(groupedRegistry[cat]) && groupedRegistry[cat].length
@@ -37,14 +37,20 @@ export async function displayCart(content, isLoggedIn) {
     return;
   }
 
-  container.replaceChildren(
-    createElement(
-      "button",
-      { class: "back-button", onclick: (e) => { e.preventDefault(); history.back(); } },
-      ["← Back"]
-    ),
-    createElement("h2", {}, ["Your Cart"])
-  );
+  const backButton = createElement("button", {
+    type: "button",
+    class: "back-button",
+    events: {
+      click: (e) => {
+        e.preventDefault();
+        history.back();
+      }
+    }
+  }, ["← Back"]);
+
+  const titleHeader = createElement("h2", {}, ["Your Cart"]);
+
+  container.replaceChildren(backButton, titleHeader);
 
   const sectionTotals = {};
   const grandTotalText = createElement("h3", { class: "grand-total" });
@@ -65,7 +71,7 @@ export async function displayCart(content, isLoggedIn) {
     "checkout-all-btn",
     {
       click: () => {
-        // FIXED: Extract fresh items from the current registry state instead of stale closures
+        // Extract fresh items from the current registry state instead of stale closures
         const allItems = Object.values(groupedRegistry).flat().filter(Boolean);
         
         // Remove zero-quantity or deleted item records before proceeding
@@ -112,7 +118,6 @@ export async function displayCart(content, isLoggedIn) {
 function groupCartByCategory(cartData) {
   if (!cartData || typeof cartData !== "object") return {};
 
-  // FIXED: Defensively handle both flat array payloads and categorized object structures safely
   let rawItems = [];
   if (Array.isArray(cartData)) {
     rawItems = cartData;
@@ -131,7 +136,7 @@ function groupCartByCategory(cartData) {
   });
 
   const grouped = {};
-  // FIXED: Safeguard against prototype pollution using explicit Object.keys looping arrays
+  // Safeguard against prototype pollution using explicit Object.keys looping arrays
   Object.keys(byCategory).forEach(cat => {
     const map = {};
     byCategory[cat].forEach(it => {

@@ -145,7 +145,7 @@
 }
 
 /* --- Buttons --- */
-.buttonx {
+/*.buttonx {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -156,7 +156,7 @@
   cursor: pointer;
   border: 1px solid transparent;
   transition: background-color var(--transition-fast), border-color var(--transition-fast);
-}
+}*/
 
 .buttonx.primary {
   background-color: var(--color-btn-bg);

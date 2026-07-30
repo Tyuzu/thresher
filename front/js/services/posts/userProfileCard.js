@@ -7,96 +7,99 @@ import Imagex from "../../components/base/Imagex.js";
 import { EntityType } from "../../utils/imagePaths.js";
 // import { fetchUserMeta } from "../../utils/usersMeta.js";
 
-export async function userProfileCard(profile = {
+export async function userProfileCard(
+  profile = {
     username: "Anonymous",
     bio: "This user hasn't added a bio yet.",
     avatarUrl: "default-avatar.png",
     postCount: 0,
     isFollowing: false,
-    entityType: EntityType.USER,    // "user" | "post"
-    entityId: null,        // userId or postId
-    entityName: "Anonymous" // username or post title
-}) {
-    const card = createElement("div", { class: "user-profile-card" });
-    // const userx =  await fetchUserMeta([profile.username]);
-    // profile.username = userx[profile.username]?.username || "Anonymous"
-    const avatar = Imagex({
-        src: profile.avatarUrl,
-        alt: `${profile.username}'s avatar`,
-        classes: "avatar",
-        loading: "lazy"
-    });
+    entityType: EntityType.USER, // "user" | "post"
+    entityId: null, // userId or postId
+    entityName: "Anonymous", // username or post title
+  }
+) {
+  const card = createElement("div", { class: "user-profile-card" });
+  // const userx =  await fetchUserMeta([profile.username]);
+  // profile.username = userx[profile.username]?.username || "Anonymous"
+  const avatar = Imagex({
+    src: profile.avatarUrl,
+    alt: `${profile.username}'s avatar`,
+    classes: "avatar",
+    loading: "lazy",
+  });
 
-    const name = createElement("h3", {}, [profile.username]);
-    const bio = createElement("p", { class: "bio" }, [profile.bio]);
+  const name = createElement("h3", {}, [profile.username]);
+  const bio = createElement("p", { class: "bio" }, [profile.bio]);
 
-    const elements = [avatar, name, bio];
+  const elements = [avatar, name, bio];
 
-    const currentUser = getState("user");
+  const currentUser = getState("user");
 
-    // Funding button (only if not the logged-in user)
-    if (profile.username !== currentUser) {
-        const fundButton = Button(
-          "Fund",
-          "fund-btn",
-          {
-            click: async () => {
-              if (!profile.entityId) {
-                alert("Funding not available.");
-                return;
-              }
-      
-              try {
-                // Map entity types to valid fundable types
-                let fundableType = profile.entityType;
-                if (fundableType === EntityType.BLOGPOST) {
-                  fundableType = "creator";
-                } else if (!fundableType || fundableType === EntityType.USER) {
-                  fundableType = EntityType.ARTIST;
-                }
+  // Funding button (only if not the logged-in user)
+  if (profile.username !== currentUser) {
+    const fundButton = Button(
+      "Fund",
+      "fund-btn",
+      {
+        click: async () => {
+          if (!profile.entityId) {
+            alert("Funding not available.");
+            return;
+          }
 
-                const result = await payViaStripe({
-                  paymentType: "funding",
-                  entityType: fundableType,
-                  entityId: profile.entityId
-                });
-      
-                if (result && result.success === true) {
-                  alert("Funding successful.");
-                } else {
-                }
-              } catch (err) {
-                console.error("Funding failed:", err);
-              }
+          try {
+            // Map entity types to valid fundable types
+            let fundableType = profile.entityType;
+            if (fundableType === EntityType.BLOGPOST) {
+              fundableType = "creator";
+            } else if (!fundableType || fundableType === EntityType.USER) {
+              fundableType = EntityType.ARTIST;
             }
-          },
-          "buttonx"
-        );
-      
-        const count = createElement("p", { class: "post-count" }, [
-          `Posts: ${profile.postCount}`
-        ]);
-      
-        elements.push(count, fundButton);
-      
-        if (profile.entityType === EntityType.USER) {
-          const followBtn = createElement(
-            "button",
-            {
-              class: "btn btn-outline",
-              onclick: () => {
-                profile.isFollowing = !profile.isFollowing;
-                followBtn.textContent = profile.isFollowing ? "Unfollow" : "Follow";
-              }
-            },
-            [profile.isFollowing ? "Unfollow" : "Follow"]
-          );
-      
-          elements.push(followBtn);
-        }
-      }
-      
 
-    card.append(...elements);
-    return card;
+            const result = await payViaStripe({
+              paymentType: "funding",
+              entityType: fundableType,
+              entityId: profile.entityId,
+            });
+
+            if (result && result.success === true) {
+              alert("Funding successful.");
+            } else {
+            }
+          } catch (err) {
+            console.error("Funding failed:", err);
+          }
+        },
+      },
+      "buttonx"
+    );
+
+    const count = createElement("p", { class: "post-count" }, [
+      `Posts: ${profile.postCount}`,
+    ]);
+
+    elements.push(count, fundButton);
+
+    if (profile.entityType === EntityType.USER) {
+      const followBtn = createElement(
+        "button",
+        {
+          class: "btn btn-outline",
+          events: {
+            click: () => {
+              profile.isFollowing = !profile.isFollowing;
+              followBtn.textContent = profile.isFollowing ? "Unfollow" : "Follow";
+            },
+          },
+        },
+        [profile.isFollowing ? "Unfollow" : "Follow"]
+      );
+
+      elements.push(followBtn);
+    }
+  }
+
+  card.append(...elements);
+  return card;
 }

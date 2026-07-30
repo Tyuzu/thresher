@@ -46,25 +46,21 @@ func New(cfg *config.Config) (*Deps, error) {
 	redisPassword := env("REDIS_PASSWORD", "")
 	redisDB := 0
 
-	rclient := NewRedis(redisAddr, redisPassword, redisDB)
+	rclient, err := NewRedis(redisAddr, redisPassword, redisDB)
+	if err != nil {
+		return nil, err
+	}
 	cacheLayer := cache.NewRedisCache(rclient)
 
 	/* -------- NATS JetStream (optional) -------- */
 
-	var mqLayer mq.MQ = mq.NewStreamMQ()
+	var mqLayer mq.MQ = mq.NewJetStreamMQ(nil)
 	var nc *nats.Conn
 
 	natsURL := env("NATS_URL", "")
 	if natsURL != "" {
-		// attempt to connect to NATS
-		conn, err := nats.Connect(natsURL)
+		conn, js, err := NewJetStream(natsURL)
 		if err != nil {
-			return nil, err
-		}
-
-		js, err := conn.JetStream()
-		if err != nil {
-			_ = conn.Drain()
 			return nil, err
 		}
 
@@ -119,27 +115,37 @@ func NewMongo(uri string, dbName string) (*mongo.Client, *mongo.Database, error)
 
 /* -------------------- Redis -------------------- */
 
-func NewRedis(addr string, password string, dbIndex int) *redis.Client {
-	return redis.NewClient(&redis.Options{
+func NewRedis(addr string, password string, dbIndex int) (*redis.Client, error) {
+	client := redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: password,
 		DB:       dbIndex,
 	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := client.Ping(ctx).Err(); err != nil {
+		_ = client.Close()
+		return nil, err
+	}
+
+	return client, nil
 }
 
 /* -------------------- NATS -------------------- */
 
-// func NewJetStream(url string) (*nats.Conn, nats.JetStreamContext, error) {
-// 	nc, err := nats.Connect(url)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
+func NewJetStream(url string) (*nats.Conn, nats.JetStreamContext, error) {
+	nc, err := nats.Connect(url)
+	if err != nil {
+		return nil, nil, err
+	}
 
-// 	js, err := nc.JetStream()
-// 	if err != nil {
-// 		_ = nc.Drain()
-// 		return nil, nil, err
-// 	}
+	js, err := nc.JetStream()
+	if err != nil {
+		_ = nc.Drain()
+		return nil, nil, err
+	}
 
-// 	return nc, js, nil
-// }
+	return nc, js, nil
+}

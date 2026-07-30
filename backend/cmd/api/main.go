@@ -15,75 +15,95 @@ import (
 	"naevis/middleware"
 	"naevis/newchat"
 	"naevis/routes"
-
 	"naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
-
 	"github.com/rs/cors"
 )
 
 func main() {
+	// =====================
+	// Logger
+	// =====================
+
 	if err := logger.Init(); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to init logger: %v\n", err)
 		os.Exit(1)
 	}
-	defer func() { _ = logger.Sync() }()
+
+	defer func() {
+		_ = logger.Sync()
+	}()
+
+	// =====================
+	// Configuration
+	// =====================
 
 	cfg, err := config.InitConfig()
 	if err != nil {
 		logger.L.Sugar().Fatalw("config validation failed", "error", err)
 	}
 
+	// =====================
+	// Infrastructure
+	// =====================
+
 	app, err := infra.New(cfg)
 	if err != nil {
-		logger.L.Sugar().Fatalw("Failed to initialize infrastructure", "error", err)
+		logger.L.Sugar().Fatalw("failed to initialize infrastructure", "error", err)
 	}
 
 	// =====================
 	// Rate limiter
 	// =====================
-	rateLimiter := middleware.NewRateLimiter(
-		1,
-		12,
-		10*time.Minute,
-		10000,
-	)
+
+	rateLimiter := middleware.NewRateLimiter(1, 12, 10*time.Minute, 10000)
 
 	// =====================
 	// Chat hub
 	// =====================
+
 	hub := newchat.NewHub()
 	go hub.Run()
 
 	mehub := mechat.NewHub()
 
 	// =====================
-	// Router & middleware
+	// Router
 	// =====================
+
 	router := routes.SetupRouter(app, rateLimiter)
 
+	// =====================
 	// Additional routes
+	// =====================
+
 	routes.AddNewChatRoutes(router, hub, app, rateLimiter)
 	routes.AddMeChatRoutes(router, mehub, app, rateLimiter)
 	routes.AddStaticRoutes(router)
 
-	// Register readiness probe
+	// =====================
+	// Readiness probe
+	// =====================
+
 	router.GET("/ready", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		// basic checks: DB ping and Redis ping via cache interface
 		ctx := r.Context()
+		// Database
 		if err := app.DB.Ping(ctx); err != nil {
 			http.Error(w, "db_unavailable", http.StatusServiceUnavailable)
 			return
 		}
 
-		// check redis via cache.Exists
-		if ok, err := app.Cache.Exists(ctx, "__health_check__"); err != nil || !ok {
+		// Cache / Redis
+		if ok, err := app.Cache.Exists(
+			ctx,
+			"__health_check__",
+		); err != nil || !ok {
 			http.Error(w, "cache_unavailable", http.StatusServiceUnavailable)
 			return
 		}
 
-		// check MQ
+		// Message queue
 		if app.MQ != nil {
 			if err := app.MQ.Ping(ctx); err != nil {
 				http.Error(w, "mq_unavailable", http.StatusServiceUnavailable)
@@ -93,29 +113,70 @@ func main() {
 
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
-	})
+	},
+	)
+
+	// =====================
+	// Middleware
+	// =====================
 
 	innerHandler := middleware.LoggingMiddleware(
 		middleware.SecurityHeaders(router),
 	)
 
-	// Hardened CORS settings
+	// =====================
+	// CORS
+	// =====================
+
 	corsOpts := cors.Options{
-		AllowedOrigins:   cfg.AllowedOrigins,
-		AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization", "Idempotency-Key", "X-Requested-With", "Accept", "Origin"},
+		AllowedOrigins: cfg.AllowedOrigins,
+		AllowedMethods: []string{
+			"HEAD",
+			"GET",
+			"POST",
+			"PUT",
+			"PATCH",
+			"DELETE",
+			"OPTIONS",
+		},
+		AllowedHeaders: []string{
+			"Content-Type",
+			"Authorization",
+			"Idempotency-Key",
+			"X-Requested-With",
+			"Accept",
+			"Origin",
+		},
 		AllowCredentials: cfg.AllowCredentials,
 		MaxAge:           300,
 	}
 
 	corsHandler := cors.New(corsOpts).Handler(innerHandler)
 
+	// =====================
+	// HTTP multiplexer
+	// =====================
+
 	mux := http.NewServeMux()
+
 	mux.Handle("/", corsHandler)
 
 	// =====================
-	// HTTP server
+	// HTTP SERVER
 	// =====================
+	//
+	// This server uses HTTP ONLY.
+	//
+	// No TLS.
+	// No certificates.
+	// No ListenAndServeTLS().
+	//
+	// cfg.HTTPPort should be:
+	//
+	// :80
+	//
+	// =====================
+
 	server := &http.Server{
 		Addr:              cfg.HTTPPort,
 		Handler:           mux,
@@ -125,30 +186,28 @@ func main() {
 		ReadHeaderTimeout: 2 * time.Second,
 	}
 
+	// =====================
+	// Start HTTP server
+	// =====================
+
 	go func() {
-		logger.L.Sugar().Infow("API server listening", "addr", cfg.HTTPPort)
+		logger.L.Sugar().Infow("API server listening", "addr", cfg.HTTPPort, "protocol", "http")
 
-		var err error
-
-		// Fall back to standard HTTP if we are terminating TLS upstream or if paths are empty
-		if !cfg.TerminateTLSAtLB && cfg.TLSCertPath != "" && cfg.TLSKeyPath != "" {
-			logger.L.Sugar().Infow("Starting server with internal TLS configurations")
-			err = server.ListenAndServeTLS(cfg.TLSCertPath, cfg.TLSKeyPath)
-		} else {
-			logger.L.Sugar().Infow("Starting server on standard HTTP (TLS terminated externally)")
-			err = server.ListenAndServe()
-		}
+		err := server.ListenAndServe()
 
 		if err != nil && err != http.ErrServerClosed {
-			logger.L.Sugar().Fatalw("Server error", "error", err)
+			logger.L.Sugar().Fatalw("HTTP server error", "error", err)
 		}
 	}()
 
 	// =====================
 	// Graceful shutdown
 	// =====================
+
 	sigCh := make(chan os.Signal, 1)
+
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+
 	<-sigCh
 
 	logger.L.Sugar().Infow("Shutting down server")
@@ -156,17 +215,19 @@ func main() {
 	// Stop rate limiter
 	rateLimiter.Stop()
 
-	// Stop hubs
+	// Stop chat hub
 	hub.Stop()
 
+	// Shutdown HTTP server
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
 		logger.L.Sugar().Fatalw("Graceful shutdown failed", "error", err)
 	}
 
-	// drain and close NATS connection if present
+	// Drain and close NATS
 	if app.NatsConn != nil {
 		_ = app.NatsConn.Drain()
 		app.NatsConn.Close()

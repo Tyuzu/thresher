@@ -1,4 +1,5 @@
 // tabs.js
+import "../../css/ui/createTabs.css";
 import { createElement } from "../components/createElement.js";
 import { getRouteState, setRouteState } from "../state/state.js";
 import { makeDraggableScroll } from "../components/dragnav.js";

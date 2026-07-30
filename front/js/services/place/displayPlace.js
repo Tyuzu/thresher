@@ -23,7 +23,6 @@ import {
 import { displayPlaceJobs } from "../jobs/jobs.js";
 import Notify from "../../components/ui/Notify.mjs";
 import { displayBooking } from "../booking/booking.js";
-import Button from "../../components/base/Button.js";
 import { displayPlacesMap } from "./placeRemap.js";
 
 /**
@@ -86,18 +85,22 @@ function createPlaceHeader(placeId, placeData, isCreator) {
   const bookmarkBtn = createElement("button", {
     title: "Bookmark this place",
     class: "action-icon-btn",
-    onclick: () => {
-      toggleBookmark(placeId);
-      bookmarkBtn.textContent = getBookmarks().includes(placeId) ? "★" : "☆";
+    events: {
+      click: () => {
+        toggleBookmark(placeId);
+        bookmarkBtn.textContent = getBookmarks().includes(placeId) ? "★" : "☆";
+      }
     }
   }, [bookmarked ? "★" : "☆"]);
 
   const shareBtn = createElement("button", {
     title: "Share",
     class: "action-icon-btn",
-    onclick: () => {
-      navigator.clipboard.writeText(location.href);
-      Notify("Link copied to clipboard", { type: "success", duration: 3000, dismissible: true });
+    events: {
+      click: () => {
+        navigator.clipboard.writeText(location.href);
+        Notify("Link copied to clipboard", { type: "success", duration: 3000, dismissible: true });
+      }
     }
   }, ["🔗"]);
 
@@ -130,13 +133,17 @@ function renderPlaceDetailsSection(editSection, placeData, isCreator, isLoggedIn
     contentContainer.appendChild(editSection);
 
     const maparea = createElement("div", { class: "place-map-container" });
-    const mapButton = Button("Show Map", "showMapBtn", {
-      click: () => {
-        const mapElement = displayPlacesMap();
-        maparea.appendChild(mapElement);
-        mapButton.remove();
+    const mapButton = createElement("button", {
+      id: "showMapBtn",
+      class: "buttonx secondary",
+      events: {
+        click: () => {
+          const mapElement = displayPlacesMap();
+          maparea.appendChild(mapElement);
+          mapButton.remove();
+        }
       }
-    }, "buttonx secondary");
+    }, ["Show Map"]);
 
     contentContainer.appendChild(mapButton);
     contentContainer.appendChild(maparea);
@@ -152,20 +159,29 @@ function renderBookingSection(editSection, placeId, placeData, isCreator) {
   const bookingContainer = createElement("div", { id: "place-booking" });
   editSection.appendChild(bookingContainer);
 
-  const bookButton = Button("View Bookings", "booking-btn", {
-    click: () => {
-      displayBooking(
-        {
-          entityType: "place",
-          entityId: placeId,
-          entityCategory: placeData.category,
-          userId: getState("user") || "guest",
-          isAdmin: isCreator
-        },
-        bookingContainer
-      );
+  const bookButton = createElement("button", {
+    id: "booking-btn",
+    class: "buttonx primary",
+    style: {
+      marginTop: "16px",
+      padding: "8px 16px",
+      cursor: "pointer"
+    },
+    events: {
+      click: () => {
+        displayBooking(
+          {
+            entityType: "place",
+            entityId: placeId,
+            entityCategory: placeData.category,
+            userId: getState("user") || "guest",
+            isAdmin: isCreator
+          },
+          bookingContainer
+        );
+      }
     }
-  }, "buttonx primary", { "margin-top": "16px", "padding": "8px 16px", "cursor": "pointer" });
+  }, ["View Bookings"]);
   
   bookingContainer.appendChild(bookButton);
 }

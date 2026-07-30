@@ -1,4 +1,4 @@
-import { createElement } from "../components/createElement";
+import { createElement } from "../components/createElement.js";
 
 /**
  * Creates an accessible custom icon button.
@@ -16,45 +16,51 @@ export function createIconButton({ classSuffix, svgMarkup, onClick, label = "", 
   // Defensive validation for class strings
   const suffix = classSuffix ? ` ${classSuffix}` : "";
   
-  const button = createElement("div", { 
-    class: `logoicon${suffix}`.trim(), 
-    id: id || undefined, // Drop attribute if value is blank
-    role: "button",
-    "aria-label": ariaLabel || label || "Icon Button",
-    "tabindex": "0" // Kept lowercase for strict HTML parsing safety
-  });
-
   // Render SVG safely wrapped in an isolated layout element
   const iconSpan = createElement("span", { class: "icon-wrapper" });
   if (svgMarkup) {
     iconSpan.innerHTML = svgMarkup;
   }
-  button.appendChild(iconSpan);
 
-  // Append text label if provided
-  if (label) {
-    const textSpan = createElement("span", { class: "button-label" }, [label]);
-    button.appendChild(textSpan);
-  }
+  // Create text label node if label exists
+  const textSpan = label 
+    ? createElement("span", { class: "button-label" }, [label]) 
+    : null;
 
-  // Interactivity setup
+  // Prepare event listeners if callback provided
+  let clickHandler = null;
+  let keyHandler = null;
+  const events = {};
+
   if (typeof onClick === "function") {
-    const clickHandler = (e) => { 
+    clickHandler = (e) => { 
       e.preventDefault(); 
       onClick(e); // Pass the event object upstream
     };
 
-    const keyHandler = (e) => {
+    keyHandler = (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         onClick(e); // Pass the event object upstream
       }
     };
 
-    button.addEventListener("click", clickHandler);
-    button.addEventListener("keydown", keyHandler);
+    events.click = clickHandler;
+    events.keydown = keyHandler;
+  }
 
-    // Clean reference layer to handle manual element dismounts
+  // Construct button using createElement specification
+  const button = createElement("div", { 
+    class: `logoicon${suffix}`.trim(), 
+    id: id || undefined, // Dropped attribute if blank
+    role: "button",
+    "aria-label": ariaLabel || label || "Icon Button",
+    tabindex: "0",
+    events
+  }, [iconSpan, textSpan]);
+
+  // Attach clean reference layer to handle manual element dismounts
+  if (clickHandler && keyHandler) {
     button.cleanup = () => {
       button.removeEventListener("click", clickHandler);
       button.removeEventListener("keydown", keyHandler);

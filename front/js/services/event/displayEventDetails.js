@@ -5,21 +5,17 @@ import { deleteEvent } from "./eventService.js";
 import { viewEventAnalytics } from "./eventAnalytics.js";
 import { reportEntity } from "../reporting/reporting.js";
 import { EntityType } from "../../utils/imagePaths.js";
-// import { updateImageWithCrop } from "../../utils/bannerEditor.js";
 import { starEmptySVG, starFilledSVG } from "../../components/svgs.js";
 import { createIconButton } from "../../utils/svgIconButton.js";
 import { hireVendors } from "../jobs/vendors/vendors.js";
-// import Imagex from "../../components/base/Imagex.js";
 import Bannerx from "../../components/base/Bannerx.js";
 import Datex from "../../components/base/Datex.js";
-
 
 // Config for displaying event details
 const fieldConfig = [
     { key: 'title', tag: 'h1', classes: ['event-title'] },
     { key: 'status', tag: 'p', classes: ['event-status'] },
     { key: 'date', tag: 'p', classes: ['event-date'], formatter: d => Datex(d) },
-    // { key: 'date', tag: 'p', classes: ['event-date'], formatter: d => new Date(d).toLocaleString() },
     { key: 'description', tag: 'p', classes: ['event-description'] },
 ];
 
@@ -88,6 +84,7 @@ const getSavedEvents = () => {
         return [];
     }
 };
+
 const toggleSaveEvent = id => {
     let saved = getSavedEvents();
     if (saved.includes(id)) {
@@ -107,15 +104,22 @@ const createSaveButton = eventid => {
         svgMarkup: starEmptySVG,
         classSuffix: ""
     });
-    const icon = createElement("span", {
-        title: "Save Event"
-    }, [getSavedEvents().includes(eventid) ? fillStar : emptyStar]);
 
-    icon.addEventListener("click", () => {
-        toggleSaveEvent(eventid);
-        const nowSaved = getSavedEvents().includes(eventid);
-        icon.replaceChildren(nowSaved ? fillStar : emptyStar);
-    });
+    const icon = createElement(
+        "span",
+        {
+            title: "Save Event",
+            events: {
+                click: () => {
+                    toggleSaveEvent(eventid);
+                    const nowSaved = getSavedEvents().includes(eventid);
+                    icon.replaceChildren(nowSaved ? fillStar : emptyStar);
+                }
+            }
+        },
+        [getSavedEvents().includes(eventid) ? fillStar : emptyStar]
+    );
+
     return icon;
 };
 
@@ -157,7 +161,6 @@ const createPlaceLink = (placename, placeid) => createElement('p', {}, [
     createElement('a', { href: `/place/${placeid}` }, [createElement('strong', {}, [`Place: ${placename}`])])
 ]);
 
-
 /** Banner section */
 function createEventBannerSection(eventdata, isCreator) {
     return Bannerx({
@@ -169,7 +172,6 @@ function createEventBannerSection(eventdata, isCreator) {
         bannerentityid: eventdata.eventid
     });
 }
-
 
 // Info section
 function createInfoSection(eventData, isCreator, isLoggedIn) {
@@ -184,14 +186,15 @@ function createInfoSection(eventData, isCreator, isLoggedIn) {
     topRow.append(detailBlock, statusBadge, saveBtn);
 
     const actions = [];
-
     const evanacon = createElement("div", {}, []);
 
     if (isLoggedIn && isCreator) {
         actions.push({ text: '✏ Edit Event', onClick: () => editEvent(isLoggedIn, eventData.eventid, document.getElementById("editevent")), classes: ['edit-btn', "buttonx"] });
         actions.push({ text: '🗑 Delete Event', onClick: () => deleteEvent(isLoggedIn, eventData.eventid), classes: ['delete-btn', 'buttonx'] });
         actions.push({ text: '📊 View Analytics', onClick: () => viewEventAnalytics(evanacon, isLoggedIn, eventData.eventid), classes: ['analytics-btn', "buttonx"] });
-    } if (isLoggedIn) {
+    }
+    
+    if (isLoggedIn) {
         actions.push({ text: 'Hire Vendors', onClick: () => hireVendors(evanacon, isCreator, isLoggedIn, eventData.eventid), classes: ['analytics-btn', "buttonx"] });
     } else if (isLoggedIn) {
         actions.push({ text: 'Report Event', onClick: () => reportEntity(eventData.eventid, 'event') });
@@ -221,7 +224,6 @@ export async function displayEventDetails(content, eventData, isCreator, isLogge
     const wrapper = createElement("div", { class: `event-wrapper ${getEventColorClass(eventData.category)}` });
     const card = createElement("div", { class: "eventx-card hvflex" });
 
-    // card.append(createBannerSection(eventData, isCreator));
     card.append(createEventBannerSection(eventData, isCreator));
     card.append(createInfoSection(eventData, isCreator, isLoggedIn));
 

@@ -10,7 +10,6 @@ import { apiFetch } from "../../../api/api.js";
 export function renderRefundRequestForm(order, onClose, onSubmit) {
   if (!order) return createElement("div", {}, ["Missing order details."]);
 
-  // FIXED: Maintain local node reference pointers directly to bypass document.getElementById collisions
   const textareaEl = createElement("textarea", {
     class: "form-input",
     placeholder: "Please explain why you want to refund this order...",
@@ -22,27 +21,27 @@ export function renderRefundRequestForm(order, onClose, onSubmit) {
   const submitBtn = createElement("button", {
     class: "btn btn-primary",
     type: "button",
+    events: {
+      click: async () => {
+        const reason = textareaEl.value.trim();
+        if (!reason || reason.length < 10) {
+          alert("Please provide at least 10 characters explaining the reason");
+          return;
+        }
+
+        submitBtn.disabled = true;
+        const oldText = submitBtn.textContent;
+        submitBtn.textContent = "Submitting...";
+
+        try {
+          await onSubmit(reason);
+        } catch (err) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = oldText;
+        }
+      },
+    },
   }, ["Submit Refund Request"]);
-
-  // Set event listener explicitly using the direct element reference
-  submitBtn.addEventListener("click", async () => {
-    const reason = textareaEl.value.trim();
-    if (!reason || reason.length < 10) {
-      alert("Please provide at least 10 characters explaining the reason");
-      return;
-    }
-    
-    submitBtn.disabled = true;
-    const oldText = submitBtn.textContent;
-    submitBtn.textContent = "Submitting...";
-
-    try {
-      await onSubmit(reason);
-    } catch (err) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = oldText;
-    }
-  });
 
   return createElement("div", { class: "refund-request-form" }, [
     createElement("div", { class: "form-header" }, [
@@ -50,7 +49,7 @@ export function renderRefundRequestForm(order, onClose, onSubmit) {
       createElement("button", {
         class: "close-btn",
         type: "button",
-        onclick: onClose,
+        events: { click: onClose },
       }, ["✕"]),
     ]),
 
@@ -83,7 +82,7 @@ export function renderRefundRequestForm(order, onClose, onSubmit) {
       createElement("button", {
         class: "btn btn-secondary",
         type: "button",
-        onclick: onClose,
+        events: { click: onClose },
       }, ["Cancel"]),
       submitBtn,
     ]),
@@ -138,10 +137,8 @@ export function canRefundOrder(order) {
 
   const isCompleted = order.status === "completed" || order.status === "delivered";
   
-  // FIXED: A completed or already refunded state must prevent further requests
   const hasNoPriorRefundRequests = !order.refundStatus || order.refundStatus === "none";
   
-  // Optional check: enforce a standard 30-day time window restriction
   const withinWindow = order.createdAt 
     ? (Date.now() - new Date(order.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 
     : true;

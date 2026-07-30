@@ -1,109 +1,265 @@
+/* ==========================================================================
+   PLACE PAGE MAIN CONTAINER
+   ========================================================================== */
+
 .placepage {
-  max-width: 700px;
-  margin: auto;
-  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-md);
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  background-color: var(--color-bg);
 }
+
+/* Flex helper used in markup */
+.vflex {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.hvflex {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* ==========================================================================
+   HEADER SECTION & ACTIONS
+   ========================================================================== */
 
 .place-header {
-  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: var(--space-md);
 }
 
-.place-header h1 {
-  font-size: 1.5rem;
+.place-header-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.place-header-row h1 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
   margin: 0;
 }
 
-.place-header span {
-  margin-left: 8px;
-  padding: 2px 6px;
-  background: #008327;
-  color: #fff;
-  font-size: 0.8rem;
-  border-radius: 4px;
+/* Owner Badge */
+.owner-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xxs) var(--space-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-full);
 }
 
-.place-header button {
-  font-size: 20px;
-  cursor: pointer;
-  border: none;
-  background: none;
-}
-
-.place-header button[title="Share"] {
-  font-size: 16px;
-}
-
-.detail-section {
+/* Action Icon Buttons */
+.place-header-actions {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-left: auto;
 }
 
-.placedetails h1 {
-  font-size: 1.3rem;
-  margin-bottom: 8px;
+.action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-circle);
+  color: var(--color-fg);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
-.placedetails p {
-  margin: 4px 0;
-  font-size: 0.95rem;
+.action-icon-btn:hover {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-muted);
 }
+
+/* ==========================================================================
+   BANNER & MEDIA
+   ========================================================================== */
 
 .place-banner {
   position: relative;
-  aspect-ratio: 7/3;
   width: 100%;
-  object-fit: cover;
+  height: 260px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--color-bg-tertiary);
 }
 
-#place-banner-img {
+.place-banner img {
   width: 100%;
   height: 100%;
-  max-height: 300px;
   object-fit: cover;
-  border-radius: 8px;
-  aspect-ratio: 7/3;
+  display: block;
 }
 
+.edit-banner-pic:hover {
+  background: var(--color-bg);
+}
+
+/* ==========================================================================
+   PLACE DETAILS SECTION & CONTROLS
+   ========================================================================== */
+
+.placedetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-card);
+}
+
+.placedetails h1 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--space-xs) 0;
+}
+
+.placedetails p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--color-muted);
+}
+
+.placedetails p strong {
+  color: var(--color-fg);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Creator Control Buttons Container */
+.creator-controls-group {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* Button UI Components */
+.button, .buttonx {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: 
+    background-color var(--transition-fast), 
+    border-color var(--transition-fast), 
+    color var(--transition-fast);
+}
+
+.button.primary, .buttonx.primary {
+  background-color: var(--color-btn-bg);
+  color: var(--color-btn-fg);
+}
+
+.button.primary:hover, .buttonx.primary:hover {
+  background-color: var(--color-btn-hover-bg);
+}
+
+.button.secondary, .buttonx.secondary {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-fg);
+  border-color: var(--color-border);
+}
+
+.button.secondary:hover, .buttonx.secondary:hover {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-muted);
+}
 
 .delete-btn {
-  background-color: #dc3545;
-  color: #fff;
+  background-color: transparent;
+  color: var(--color-danger);
+  border-color: var(--color-danger);
 }
 
-@media (max-width: 600px) {
-  .place-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .place-header>div {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-
-  /* 
-  .hvflex {
-    flex-direction: column;
-    align-items: stretch;
-  } */
-
-  #place-banner-img {
-    max-height: 150px;
-  }
+.delete-btn:hover {
+  background-color: var(--color-danger);
+  color: #ffffff;
 }
 
-.event-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background: var(--color-bg);
-  right: 0;
-  border: 1px solid var(--color-fg);
-  padding: 20px;
-  z-index: 1000;
-  overflow-y: auto;
-  max-height: 100vh;
+/* ==========================================================================
+   MAP CONTAINER & TOGGLE
+   ========================================================================== */
+
+#showMapBtn {
+  align-self: flex-start;
+}
+
+.place-map-container {
+  width: 100%;
+  min-height: 250px;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  display: none; /* Display managed via JS */
+}
+
+.place-map-container.active {
+  display: block;
+}
+
+/* ==========================================================================
+   PLACE INFO TAB PANEL
+   ========================================================================== */
+
+.place-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+}
+
+.place-info p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+
+.place-info p strong {
+  display: block;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-light);
+  margin-bottom: var(--space-xxs);
+}
+
+.place-info p span {
+  color: var(--color-fg);
+  font-weight: var(--font-weight-medium);
 }

@@ -15,7 +15,6 @@ export function renderRefundRequests(refunds, onStateMutated) {
     safeRefunds.length === 0
       ? createElement("p", { class: "empty-message" }, ["No refund requests"])
       : createElement("div", { class: "refund-list" }, 
-          // FIXED: Filter out falsy short-circuits ahead of node attachment maps
           safeRefunds.map(refund => renderRefundCard(refund, onStateMutated)).filter(Boolean)
         ),
   ]);
@@ -35,7 +34,6 @@ function renderRefundCard(refund, onStateMutated) {
     ? "N/A" 
     : createdDate.toLocaleDateString() + " " + createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // Pre-compile sub-components explicitly to handle structural cleanups clean
   const childrenNodes = [
     createElement("div", { class: "refund-header" }, [
       createElement("div", { class: "header-left" }, [
@@ -63,7 +61,6 @@ function renderRefundCard(refund, onStateMutated) {
     ])
   ];
 
-  // Append conditional metadata without polluting layout templates with raw booleans
   if (refund.order_type) {
     childrenNodes[1].appendChild(
       createElement("p", {}, [
@@ -73,29 +70,33 @@ function renderRefundCard(refund, onStateMutated) {
     );
   }
 
-  // Handle active operational action states 
   if (currentStatus === "pending") {
     childrenNodes[1].appendChild(
       createElement("div", { class: "refund-actions" }, [
         createElement("button", {
           class: "btn btn-success btn-sm",
-          onclick: (e) => {
-            e.preventDefault();
-            handleApproveRefund(refund.id, onStateMutated);
+          type: "button",
+          events: {
+            click: (e) => {
+              e.preventDefault();
+              handleApproveRefund(refund.id, onStateMutated);
+            },
           },
         }, ["Approve"]),
         createElement("button", {
           class: "btn btn-danger btn-sm",
-          onclick: (e) => {
-            e.preventDefault();
-            handleRejectRefund(refund.id, onStateMutated);
+          type: "button",
+          events: {
+            click: (e) => {
+              e.preventDefault();
+              handleRejectRefund(refund.id, onStateMutated);
+            },
           },
         }, ["Reject"]),
       ])
     );
   }
 
-  // Handle post-review logging readouts
   if ((currentStatus === "approved" || currentStatus === "rejected" || currentStatus === "completed") && refund.review_notes) {
     const reviewBlock = createElement("div", { class: "review-section" }, [
       createElement("p", {}, [
@@ -141,7 +142,8 @@ export function renderOrderRefundSection(order, onRefundClick) {
     sectionChildren.push(
       createElement("button", {
         class: "btn btn-warning btn-sm",
-        onclick: onRefundClick,
+        type: "button",
+        events: { click: onRefundClick },
       }, ["Request Refund"])
     );
   } else {
@@ -168,7 +170,6 @@ async function handleApproveRefund(refundId, onStateMutated) {
     });
     alert("Refund approved successfully");
     
-    // FIXED: Run application state recovery calls cleanly instead of breaking tab layout execution frames
     if (typeof onStateMutated === "function") {
       onStateMutated();
     } else {
@@ -215,7 +216,6 @@ function shouldShowRefundOption(order) {
   
   const isCompleted = ["completed", "delivered"].includes((order.status || "").toLowerCase());
   
-  // FIXED: Block additional actions once processing begins
   const hasNoPriorRefundRequests = !order.refundStatus || order.refundStatus === "none";
   
   return isCompleted && hasNoPriorRefundRequests;

@@ -1,16 +1,19 @@
 import { dispatchZoomBoxEvent } from "../../utils/eventDispatcher.js";
 import Imagex from "../base/Imagex.js";
+import { createElement } from "../components/createElement.js";
 
 /* =========================
    Basic UI Creation Functions
    ========================= */
 
 export const createOverlay = () => {
-    const el = document.createElement("div");
-    el.className = "zoombox-overlay";
-    el.style.opacity = "0";
-    el.style.transition = "opacity 0.3s ease";
-    return el;
+    return createElement("div", {
+        class: "zoombox-overlay",
+        style: {
+            opacity: "0",
+            transition: "opacity 0.3s ease"
+        }
+    });
 };
 
 export const createImageElement = (src) => {
@@ -29,14 +32,16 @@ export const createImageElement = (src) => {
 };
 
 export function createVideoElement(src) {
-    const video = document.createElement("video");
-    video.src = src;
-    video.controls = true;
-    video.autoplay = true;
-    video.style.maxWidth = "90%";
-    video.style.maxHeight = "90%";
-    video.style.borderRadius = "6px";
-    return video;
+    return createElement("video", {
+        src,
+        controls: true,
+        autoplay: true,
+        style: {
+            maxWidth: "90%",
+            maxHeight: "90%",
+            borderRadius: "6px"
+        }
+    });
 }
 
 export const applyDarkMode = (el) => {
@@ -88,8 +93,7 @@ export const showZoomIndicator = (container, zoomLevel) => {
     if (!container) return;
     let indicator = container.querySelector(".zoombox-zoom-indicator");
     if (!indicator) {
-        indicator = document.createElement("div");
-        indicator.className = "zoombox-zoom-indicator";
+        indicator = createElement("div", { class: "zoombox-zoom-indicator" });
         container.appendChild(indicator);
     }
     indicator.textContent = `${Math.round(zoomLevel * 100)}%`;
@@ -102,19 +106,23 @@ export const showZoomIndicator = (container, zoomLevel) => {
 
 export const showZoomLimitFeedback = (container, limitType) => {
     if (!container) return;
-    const feedback = document.createElement("div");
-    feedback.className = "zoombox-zoom-limit-feedback";
-    feedback.style.position = "absolute";
-    feedback.style.top = "50%";
-    feedback.style.left = "50%";
-    feedback.style.transform = "translate(-50%, -50%)";
-    feedback.style.padding = "10px 20px";
-    feedback.style.background = "rgba(255,0,0,0.7)";
-    feedback.style.color = "#fff";
-    feedback.style.borderRadius = "5px";
-    feedback.style.fontSize = "16px";
-    feedback.textContent =
-        limitType === "min" ? "Minimum Zoom Reached" : "Maximum Zoom Reached";
+    const text = limitType === "min" ? "Minimum Zoom Reached" : "Maximum Zoom Reached";
+    
+    const feedback = createElement("div", {
+        class: "zoombox-zoom-limit-feedback",
+        style: {
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            padding: "10px 20px",
+            background: "rgba(255,0,0,0.7)",
+            color: "#fff",
+            borderRadius: "5px",
+            fontSize: "16px"
+        }
+    }, [text]);
+
     container.appendChild(feedback);
     setTimeout(() => feedback.remove(), 1000);
 };
@@ -306,73 +314,81 @@ export const handleTouchEnd = (e, state) => {
    ========================= */
 
 export const createNavigationButtons = (images, img, state, preload, update, renderMedia) => {
-    const prev = document.createElement("button");
-    prev.className = "zoombox-prev-btn";
-    prev.textContent = "⮘";
-    prev.onclick = () => {
-        state.currentIndex = (state.currentIndex - 1 + images.length) % images.length;
-        resetTransformState(state);
-        renderMedia(state.currentIndex);
-    };
+    const prev = createElement("button", {
+        class: "zoombox-prev-btn",
+        events: {
+            click: () => {
+                state.currentIndex = (state.currentIndex - 1 + images.length) % images.length;
+                resetTransformState(state);
+                renderMedia(state.currentIndex);
+            }
+        }
+    }, ["⮘"]);
 
-    const next = document.createElement("button");
-    next.className = "zoombox-next-btn";
-    next.textContent = "⮚";
-    next.onclick = () => {
-        state.currentIndex = (state.currentIndex + 1) % images.length;
-        resetTransformState(state);
-        renderMedia(state.currentIndex);
-    };
+    const next = createElement("button", {
+        class: "zoombox-next-btn",
+        events: {
+            click: () => {
+                state.currentIndex = (state.currentIndex + 1) % images.length;
+                resetTransformState(state);
+                renderMedia(state.currentIndex);
+            }
+        }
+    }, ["⮚"]);
 
     return [prev, next];
 };
 
 export const createCloseButton = (closeFn) => {
-    const btn = document.createElement("button");
-    btn.className = "zoombox-close-btn";
-    btn.textContent = "✖";
-    btn.onclick = () => {
-        closeFn();
-    };
-    return btn;
+    return createElement("button", {
+        class: "zoombox-close-btn",
+        events: {
+            click: () => {
+                closeFn();
+            }
+        }
+    }, ["✖"]);
 };
 
 export const createZoomButtons = (img, state, container) => {
     if (img) img._stateRef = state; // Keep track of state for touch events
 
-    const zoomContainer = document.createElement("div");
-    zoomContainer.className = "zoombox-zoom-buttons";
-    zoomContainer.style.position = "absolute";
-    zoomContainer.style.bottom = "8vh";
-    zoomContainer.style.right = "20px";
-    zoomContainer.style.display = "flex";
-    zoomContainer.style.flexDirection = "column";
-    zoomContainer.style.gap = "5px";
-    zoomContainer.style.zIndex = "10";
+    const zoomInBtn = createElement("button", {
+        events: {
+            click: () => {
+                smoothZoom({
+                    deltaY: -1,
+                    clientX: window.innerWidth / 2,
+                    clientY: window.innerHeight / 2
+                }, img, state, container);
+            }
+        }
+    }, ["+"]);
 
-    const zoomInBtn = document.createElement("button");
-    zoomInBtn.textContent = "+";
-    zoomInBtn.onclick = () => {
-        smoothZoom({
-            deltaY: -1,
-            clientX: window.innerWidth / 2,
-            clientY: window.innerHeight / 2
-        }, img, state, container);
-    };
+    const zoomOutBtn = createElement("button", {
+        events: {
+            click: () => {
+                smoothZoom({
+                    deltaY: 1,
+                    clientX: window.innerWidth / 2,
+                    clientY: window.innerHeight / 2
+                }, img, state, container);
+            }
+        }
+    }, ["–"]);
 
-    const zoomOutBtn = document.createElement("button");
-    zoomOutBtn.textContent = "–";
-    zoomOutBtn.onclick = () => {
-        smoothZoom({
-            deltaY: 1,
-            clientX: window.innerWidth / 2,
-            clientY: window.innerHeight / 2
-        }, img, state, container);
-    };
-
-    zoomContainer.appendChild(zoomInBtn);
-    zoomContainer.appendChild(zoomOutBtn);
-    return zoomContainer;
+    return createElement("div", {
+        class: "zoombox-zoom-buttons",
+        style: {
+            position: "absolute",
+            bottom: "8vh",
+            right: "20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "5px",
+            zIndex: "10"
+        }
+    }, [zoomInBtn, zoomOutBtn]);
 };
 
 /* =========================

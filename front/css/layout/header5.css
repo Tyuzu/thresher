@@ -117,7 +117,7 @@
 }
 
 /* --- Dropdown Menu Items --- */
-.menu-item {
+.profile-menu-item {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
@@ -133,17 +133,17 @@
   transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
-.menu-item:hover {
+.profile-menu-item:hover {
   background-color: var(--color-card-hover);
   color: var(--color-primary);
 }
 
-.menu-item svg {
+.profile-menu-item svg {
   stroke: var(--stroke-svg);
   transition: stroke var(--transition-fast);
 }
 
-.menu-item:hover svg {
+.profile-menu-item:hover svg {
   stroke: var(--color-primary);
 }
 

@@ -4,18 +4,18 @@ import { API_URL, setState, getState } from "../state/state.js";
 import { silentLogout } from "../services/auth/authService.js";
 
 /* =========================
-   CONSTANTS
+    CONSTANTS
 ========================= */
 
-const REFRESH_BUFFER_MS = 2 * 60 * 1000;
-const REFRESH_LOCK_TTL = 10_000;
+const REFRESH_BUFFER_MS = 2 * 60 * 1000; // 2 minutes buffer
+const REFRESH_LOCK_TTL = 10_000; // 10 seconds lock TTL
 
 /* =========================
-   MULTI TAB
+    MULTI-TAB MANAGEMENT
 ========================= */
 
 const TAB_ID =
-    (typeof crypto !== "undefined" && crypto.randomUUID)
+    typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
         : generateUUID();
 
@@ -23,13 +23,13 @@ const REFRESH_LOCK_KEY = "__refresh_lock__";
 const AUTH_CHANNEL = new BroadcastChannel("auth_channel");
 
 /* =========================
-   HELPERS
+    HELPERS
 ========================= */
 
 export function generateUUID() {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
-        const r = Math.random() * 16 | 0;
-        const v = c === "x" ? r : (r & 0x3 | 0x8);
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
         return v.toString(16);
     });
 }
@@ -37,9 +37,7 @@ export function generateUUID() {
 export function parseJwt(token) {
     try {
         const payload = token?.split(".")[1];
-        if (!payload) {
-            return null;
-        }
+        if (!payload) return null;
 
         const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
         const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
@@ -52,15 +50,13 @@ export function parseJwt(token) {
 
 export function isTokenNearExpiry(token, bufferMs = REFRESH_BUFFER_MS) {
     const payload = parseJwt(token);
-    if (!payload?.exp) {
-        return false;
-    }
+    if (!payload?.exp) return false;
 
     return Date.now() > payload.exp * 1000 - bufferMs;
 }
 
 /* =========================
-   LOCK
+    LOCK MANAGEMENT
 ========================= */
 
 function acquireRefreshLock() {
@@ -90,36 +86,33 @@ function acquireRefreshLock() {
 function releaseRefreshLock() {
     try {
         const raw = localStorage.getItem(REFRESH_LOCK_KEY);
-        if (!raw) {
-            return;
-        }
+        if (!raw) return;
 
         const { owner } = JSON.parse(raw);
         if (owner === TAB_ID) {
             localStorage.removeItem(REFRESH_LOCK_KEY);
         }
-    } catch { }
+    } catch {}
 }
 
 /* =========================
-   REFRESH
+    TOKEN REFRESH LOGIC
 ========================= */
 
 let refreshPromise = null;
 
 export async function refreshToken() {
+    // Return existing in-flight promise if a refresh is already underway
     if (refreshPromise) {
         return refreshPromise;
     }
 
     refreshPromise = (async () => {
-
+        // If another tab holds the lock, wait for broadcast response or lock expiration
         if (!acquireRefreshLock()) {
-            return new Promise(resolve => {
+            return new Promise((resolve) => {
                 const handler = (e) => {
-                    if (!e?.data) {
-                        return;
-                    }
+                    if (!e?.data) return;
 
                     if (e.data.type === "TOKEN_REFRESHED") {
                         AUTH_CHANNEL.removeEventListener("message", handler);
@@ -149,7 +142,7 @@ export async function refreshToken() {
 
             const res = await fetch(`${API_URL}/auth/refresh`, {
                 method: "POST",
-                credentials: "include", // CRITICAL
+                credentials: "include", // Essential for HttpOnly cookie transmission
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -159,22 +152,17 @@ export async function refreshToken() {
             clearTimeout(timeoutId);
 
             if (!res.ok) {
-                // 🚨 IMPORTANT: do NOT logout immediately on refresh failure
-                // only logout if no cookie exists anymore (handled later)
+                // If backend actively returns 401/403, the session is invalid
                 return false;
             }
 
             const data = await res.json().catch(() => null);
             const token = data?.data?.token;
 
-            if (!token) {
-                return false;
-            }
+            if (!token) return false;
 
             const parsed = parseJwt(token);
-            if (!parsed) {
-                return false;
-            }
+            if (!parsed) return false;
 
             const userId =
                 parsed.userId ||
@@ -182,27 +170,29 @@ export async function refreshToken() {
                 parsed.sub ||
                 "";
 
-            setState({
-                token,
-                user: userId,
-                userId,
-                username: parsed.username || "",
-                role: parsed.role || []
-            }, true);
+            // Update app state with newly minted access token
+            setState(
+                {
+                    token,
+                    user: userId,
+                    userId,
+                    username: parsed.username || "",
+                    role: parsed.role || []
+                },
+                true
+            );
 
+            // Notify other tabs that token refresh succeeded
             AUTH_CHANNEL.postMessage({ type: "TOKEN_REFRESHED" });
 
             return true;
-
         } catch (err) {
             if (err.name === "AbortError") {
-                silentLogout();
-                return false;
+                console.warn("[Auth] Token refresh timed out.");
+            } else {
+                console.error("[Auth] Token refresh request failed:", err);
             }
-
-            console.error("Refresh failed:", err);
             return false;
-
         } finally {
             releaseRefreshLock();
             refreshPromise = null;
@@ -213,7 +203,7 @@ export async function refreshToken() {
 }
 
 /* =========================
-   BACKGROUND
+    BACKGROUND SCHEDULER
 ========================= */
 
 let refreshTimer = null;
@@ -224,25 +214,28 @@ export function scheduleBackgroundRefresh() {
     }
 
     const token = getState("token");
-    const payload = parseJwt(token);
+    if (!token) return;
 
-    if (!payload?.exp) {
-        return;
-    }
+    const payload = parseJwt(token);
+    if (!payload?.exp) return;
 
     const delay = payload.exp * 1000 - REFRESH_BUFFER_MS - Date.now();
 
     if (delay <= 0) {
-        refreshToken().catch(() => { });
+        refreshToken().catch(() => {});
         return;
     }
 
     refreshTimer = setTimeout(() => {
-        refreshToken().catch(() => { });
+        refreshToken().catch(() => {});
     }, delay);
 }
 
-AUTH_CHANNEL.addEventListener("message", e => {
+/* =========================
+    EVENT LISTENERS
+========================= */
+
+AUTH_CHANNEL.addEventListener("message", (e) => {
     if (e.data?.type === "TOKEN_REFRESHED") {
         scheduleBackgroundRefresh();
     }
@@ -254,14 +247,18 @@ AUTH_CHANNEL.addEventListener("message", e => {
     }
 });
 
-/* =========================
-   INIT
-========================= */
-
 document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
-        scheduleBackgroundRefresh();
+        const token = getState("token");
+        if (token && isTokenNearExpiry(token)) {
+            refreshToken().then((ok) => {
+                if (!ok) silentLogout();
+            });
+        } else {
+            scheduleBackgroundRefresh();
+        }
     }
 });
 
+// Initial boot schedule
 scheduleBackgroundRefresh();

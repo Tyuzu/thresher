@@ -8,11 +8,9 @@ import { createIconButton } from "../utils/svgIconButton.js";
 
 // Create a badge element securely
 function createBadge(count) {
-  const badge = createElement("span", {
+  return createElement("span", {
     class: "nav-badge"
-  });
-  badge.textContent = count > 99 ? "99+" : String(count);
-  return badge;
+  }, [count > 99 ? "99+" : String(count)]);
 }
 
 // Update navbar cleanly using document fragments instead of innerHTML wipes
