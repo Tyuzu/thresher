@@ -1,19 +1,8 @@
 import { createElement } from "../../components/createElement.js";
 import { Imagex } from "../../components/base/Imagex.js";
 import { apiFetch, SRC_URL } from "../../api/api.js";
-import {
-    smoothZoom,
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd,
-    updateTransform,
-    resetTransformState
-} from "../../components/ui/zoomboxHelpers.js";
-import {
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp,
-} from "./mouseEvents.js";
+import { smoothZoom, handleTouchStart, handleTouchMove, handleTouchEnd, updateTransform, resetTransformState } from "../../components/ui/zoomboxHelpers.js";
+import { handlePointerDown, handlePointerMove, handlePointerUp } from "./pointerEvents.js";
 
 export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     container.innerHTML = "";
@@ -59,9 +48,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     /* =========================================================
        UI Shell & Layout Setup
        ========================================================= */
-
     const mapWrapper = createElement("div", { class: "gta-map-wrapper" });
-
     const entitySelector = createElement("select", {
         class: "gta-map-selector",
         events: {
@@ -78,19 +65,15 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         createElement("option", { value: "cp", selected: state.activeEntity === "cp" }, ["Cayo Perico"]),
         createElement("option", { value: "sa", selected: state.activeEntity === "sa" }, ["San Andreas"])
     ]);
-
     const floorSelectorBar = createElement("div", { class: "gta-floor-selector hidden" });
-
     const shareBtn = createElement("button", {
         class: "gta-btn-share",
         events: { click: () => copyPermalinkToClipboard() }
     }, ["🔗 Share Link"]);
-
     const fullScreenBtn = createElement("button", {
         class: "gta-btn-fullscreen",
         events: { click: () => toggleFullscreen() }
     }, ["⛶"]);
-
     const measureBtn = createElement("button", {
         class: "gta-btn-measure",
         events: {
@@ -102,7 +85,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             }
         }
     }, ["📏 Ruler"]);
-
     const zoomControls = createElement("div", { class: "gta-zoom-controls" }, [
         shareBtn,
         measureBtn,
@@ -135,16 +117,13 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             }
         }, ["Reset"])
     ]);
-
     const categoryFilterBar = createElement("div", { class: "gta-category-filters" });
-
     const mapHeader = createElement("div", { class: "gta-map-header" }, [
         createElement("h3", { class: "gta-map-title" }, ["GTA Map Explorer"]),
         categoryFilterBar,
         createElement("div", { class: "gta-map-header-actions" }, [entitySelector, zoomControls])
     ]);
 
-    // Added viewBox="0 0 100 100" to allow direct percentage scaling inside SVGs
     const svgTerritoryLayer = createElement("svg", { class: "gta-map-territories-svg", viewBox: "0 0 100 100", preserveAspectRatio: "none" });
     const svgRouteLayer = createElement("svg", { class: "gta-map-routes-svg", viewBox: "0 0 100 100", preserveAspectRatio: "none" });
     const svgMeasureLayer = createElement("svg", { class: "gta-map-measure-svg", viewBox: "0 0 100 100", preserveAspectRatio: "none" });
@@ -167,22 +146,15 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         draggable: false
     });
 
+    mapImage.onload = () => {
+        updateRadarView();
+    };
+
     const transformLayer = createElement("div", { class: "gta-map-transform-layer" }, [
-        mapImage,
-        svgTerritoryLayer,
-        lockedAreasOverlay,
-        svgRouteLayer,
-        svgMeasureLayer,
-        markersOverlay
-    ]);
+        mapImage, svgTerritoryLayer, lockedAreasOverlay, svgRouteLayer, svgMeasureLayer, markersOverlay]);
 
     const mapViewport = createElement("div", { class: "gta-map-viewport" }, [
-        transformLayer,
-        floorSelectorBar,
-        missionHudPanel,
-        coordsOverlay,
-        radarContainer
-    ]);
+        transformLayer, floorSelectorBar, missionHudPanel, coordsOverlay, radarContainer]);
 
     mapWrapper.appendChild(mapHeader);
     mapWrapper.appendChild(mapViewport);
@@ -396,6 +368,17 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
 
         ctx.clearRect(0, 0, w, h);
 
+        const primaryPlayer = Array.from(state.liveEntities.values())[0] || {
+            position: { x: 50, y: 50 },
+            heading: 0
+        };
+
+        const px = primaryPlayer.position ? primaryPlayer.position.x : 50;
+        const py = primaryPlayer.position ? primaryPlayer.position.y : 50;
+        const heading = primaryPlayer.heading || 0;
+
+        const mapScale = 3.5;
+
         ctx.save();
         ctx.beginPath();
         ctx.arc(cx, cy, cx - 2, 0, Math.PI * 2);
@@ -404,56 +387,74 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         ctx.fillStyle = "#0c1017";
         ctx.fillRect(0, 0, w, h);
 
-        ctx.strokeStyle = "rgba(34, 197, 94, 0.25)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(cx, cy, 35, 0, Math.PI * 2);
-        ctx.arc(cx, cy, 60, 0, Math.PI * 2);
-        ctx.moveTo(cx, 0); ctx.lineTo(cx, h);
-        ctx.moveTo(0, cy); ctx.lineTo(w, cy);
-        ctx.stroke();
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate((-heading * Math.PI) / 180);
 
-        let primaryPlayer = Array.from(state.liveEntities.values())[0] || { position: { x: 50, y: 50 }, heading: 0 };
-        const px = primaryPlayer.position ? primaryPlayer.position.x : 50;
-        const py = primaryPlayer.position ? primaryPlayer.position.y : 50;
+        if (mapImage && mapImage.complete && mapImage.naturalWidth !== 0) {
+            const mapDrawWidth = w * mapScale;
+            const mapDrawHeight = h * mapScale;
+
+            const imgX = -(px / 100) * mapDrawWidth;
+            const imgY = -(py / 100) * mapDrawHeight;
+
+            ctx.drawImage(mapImage, imgX, imgY, mapDrawWidth, mapDrawHeight);
+        }
 
         (state.locations || []).forEach((loc) => {
-            const dx = (loc.x - px) * 2.5;
-            const dy = (loc.y - py) * 2.5;
-            const dist = Math.hypot(dx, dy);
+            if (state.currentFloor !== null && loc.floorLevel !== state.currentFloor) return;
 
-            if (dist < cx - 5) {
+            const mapDrawWidth = w * mapScale;
+            const mapDrawHeight = h * mapScale;
+
+            const relX = ((loc.x - px) / 100) * mapDrawWidth;
+            const relY = ((loc.y - py) / 100) * mapDrawHeight;
+
+            if (Math.hypot(relX, relY) < cx - 8) {
                 ctx.fillStyle = "#3b82f6";
                 ctx.beginPath();
-                ctx.arc(cx + dx, cy + dy, 3, 0, Math.PI * 2);
+                ctx.arc(relX, relY, 3.5, 0, Math.PI * 2);
                 ctx.fill();
             }
         });
 
         state.liveEntities.forEach((entity) => {
+            if (entity === primaryPlayer) return;
+
             const ex = entity.position ? entity.position.x : 50;
             const ey = entity.position ? entity.position.y : 50;
-            const dx = (ex - px) * 2.5;
-            const dy = (ey - py) * 2.5;
-            const dist = Math.hypot(dx, dy);
 
-            if (dist < cx - 5) {
-                ctx.fillStyle = entity.type === "vehicle" ? "#eab308" : "#22c55e";
+            const mapDrawWidth = w * mapScale;
+            const mapDrawHeight = h * mapScale;
+
+            const relX = ((ex - px) / 100) * mapDrawWidth;
+            const relY = ((ey - py) / 100) * mapDrawHeight;
+
+            if (Math.hypot(relX, relY) < cx - 8) {
+                ctx.fillStyle = entity.type === "vehicle" ? "#eab308" : "#ef4444";
                 ctx.beginPath();
-                ctx.arc(cx + dx, cy + dy, 4, 0, Math.PI * 2);
+                ctx.arc(relX, relY, 4, 0, Math.PI * 2);
                 ctx.fill();
             }
         });
 
+        ctx.restore();
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 35, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 60, 0, Math.PI * 2);
+        ctx.stroke();
+
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(((primaryPlayer.heading || 0) * Math.PI) / 180);
         ctx.fillStyle = "#22c55e";
         ctx.beginPath();
-        ctx.moveTo(0, -7);
-        ctx.lineTo(5, 7);
+        ctx.moveTo(0, -8);
+        ctx.lineTo(6, 7);
         ctx.lineTo(0, 4);
-        ctx.lineTo(-5, 7);
+        ctx.lineTo(-6, 7);
         ctx.closePath();
         ctx.fill();
         ctx.restore();
@@ -461,7 +462,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         ctx.restore();
 
         ctx.strokeStyle = "#22c55e";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(cx, cy, cx - 2, 0, Math.PI * 2);
         ctx.stroke();
@@ -531,18 +532,15 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         (territories || []).forEach((t) => {
             const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
             const pointsString = (t.polygonPoints || t.points || []).map((p) => `${p.x},${p.y}`).join(" ");
-
             polygon.setAttribute("points", pointsString);
             polygon.setAttribute("fill", t.color || "rgba(239, 68, 68, 0.35)");
             polygon.setAttribute("stroke", "rgba(255, 255, 255, 0.6)");
             polygon.setAttribute("stroke-width", "0.5");
             polygon.setAttribute("class", "gta-territory-polygon");
-
             polygon.addEventListener("click", (e) => {
                 e.stopPropagation();
                 showTerritoryDetails(t);
             });
-
             svgTerritoryLayer.appendChild(polygon);
         });
     }
@@ -553,11 +551,9 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             class: "gta-details-close",
             events: { click: () => detailsPanel.classList.add("hidden") }
         }, ["✕"]);
-
         const title = createElement("h4", { class: "gta-details-title" }, [`Turf: ${territory.gangName || territory.name}`]);
         const owner = createElement("p", { class: "gta-details-desc" }, [`Controlled by: ${territory.gangName || territory.owner}`]);
         const control = createElement("p", { class: "gta-details-desc" }, [`Control Level: ${territory.controlPct}%`]);
-
         detailsPanel.appendChild(closeBtn);
         detailsPanel.appendChild(title);
         detailsPanel.appendChild(owner);
@@ -566,24 +562,22 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     }
 
     /* =========================================================
-       Mouse / Touch Event Delegations
+       Pointer & Touch Event Delegations
        ========================================================= */
-
-    mapViewport.addEventListener("mousemove", (e) => {
+    mapViewport.addEventListener("pointermove", (e) => {
         const rect = transformLayer.getBoundingClientRect();
         const xPercent = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
         const yPercent = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
-
         state.cursorCoords = { x: xPercent, y: yPercent };
         coordsOverlay.textContent = `X: ${xPercent.toFixed(2)} | Y: ${yPercent.toFixed(2)}`;
 
         if (state.isDragging) {
-            handleMouseMove(e, state, transformLayer);
+            handlePointerMove(e, state, transformLayer);
             applyTransform();
         }
     });
 
-    mapViewport.addEventListener("mousedown", (e) => {
+    mapViewport.addEventListener("pointerdown", (e) => {
         if (e.target.closest(".gta-marker") || e.target.closest(".gta-locked-area")) return;
 
         if (state.isMeasuring) {
@@ -593,12 +587,18 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             return;
         }
 
-        handleMouseDown(e, state, transformLayer);
+        handlePointerDown(e, state, transformLayer);
     });
 
-    window.addEventListener("mouseup", (e) => {
+    mapViewport.addEventListener("pointerup", (e) => {
         if (state.isDragging) {
-            handleMouseUp(e, state);
+            handlePointerUp(e, state, transformLayer);
+        }
+    });
+
+    mapViewport.addEventListener("pointercancel", (e) => {
+        if (state.isDragging) {
+            handlePointerUp(e, state, transformLayer);
         }
     });
 
@@ -617,7 +617,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
 
     mapViewport.addEventListener("dblclick", (e) => {
         if (e.target.closest(".gta-marker") || state.isMeasuring) return;
-
         state.customWaypoint = { x: state.cursorCoords.x, y: state.cursorCoords.y };
         renderAllMarkers();
         renderRoutePaths();
@@ -629,14 +628,12 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
 
     function renderAllMarkers() {
         markersOverlay.innerHTML = "";
-
         const filteredLocations = (state.locations || []).filter((loc) => {
             if (state.currentFloor !== null) {
                 if (loc.floorLevel !== state.currentFloor) return false;
             } else {
                 if (loc.floorLevel !== undefined && loc.floorLevel !== null) return false;
             }
-
             if (state.activeCategories.has("all")) return true;
             return state.activeCategories.has(loc.category);
         });
@@ -646,7 +643,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         state.liveEntities.forEach((entity) => {
             if (state.currentFloor !== null && entity.floor !== state.currentFloor) return;
             if (state.currentFloor === null && entity.floor && entity.floor !== 0) return;
-
             const entityIcon = entity.type === "vehicle" ? "🚗" : "👤";
             const liveMarker = createElement("div", {
                 class: `gta-marker gta-marker-live gta-marker-${entity.type || "player"}`,
@@ -686,7 +682,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         const iconElement = loc.iconUrl
             ? Imagex({ src: loc.iconUrl, fallback: "/assets/icon-192.png", class: "gta-marker-img-icon", alt: loc.name })
             : createElement("span", { class: "gta-marker-icon" }, [loc.icon || "📍"]);
-
         const marker = createElement("div", {
             class: `gta-marker gta-marker-${loc.category || "default"}`,
             style: { left: `${loc.x}%`, top: `${loc.y}%` },
@@ -700,23 +695,19 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             iconElement,
             createElement("span", { class: "gta-marker-label" }, [loc.name])
         ]);
-
         if (loc.liveEvent && loc.liveEvent.isLive) {
             const badge = createElement("span", { class: "gta-event-badge" }, [`${loc.liveEvent.remainingSecs}s`]);
             marker.appendChild(badge);
         }
-
         markersOverlay.appendChild(marker);
     }
 
     function renderRoutePaths() {
         svgRouteLayer.innerHTML = "";
         if (!state.activeMission) return;
-
         const { from, to } = state.activeMission;
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         const d = `M ${from.x} ${from.y} Q ${(from.x + to.x) / 2} ${(from.y + to.y) / 2 - 10}, ${to.x} ${to.y}`;
-
         path.setAttribute("d", d);
         path.setAttribute("class", "gta-route-line gta-route-animated");
         svgRouteLayer.appendChild(path);
@@ -728,14 +719,11 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             class: "gta-details-close",
             events: { click: () => detailsPanel.classList.add("hidden") }
         }, ["✕"]);
-
         const title = createElement("h4", { class: "gta-details-title" }, [loc.name]);
         const desc = createElement("p", { class: "gta-details-desc" }, [loc.description || "No description available."]);
-
         detailsPanel.appendChild(closeBtn);
         detailsPanel.appendChild(title);
         detailsPanel.appendChild(desc);
-
         if (loc.details) {
             if (loc.details.address) {
                 detailsPanel.appendChild(createElement("p", { class: "gta-details-info" }, [`Address: ${loc.details.address}`]));
@@ -769,39 +757,25 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             state.locations = mapData?.locations || [];
             state.territories = mapData?.territories || [];
             state.floors = mapData?.floors || [];
-            state.baseMapImageSrc = mapData?.map?.image || `${SRC_URL || ""}/assets/maps/loc/${state.activeEntity}_map.jpg`;
+            state.baseMapImageSrc = mapData?.map?.image || `${SRC_URL || ""}/assets/maps/${state.activeEntity}_map.png`;
+
+            mapImage.src = state.baseMapImageSrc;
 
             renderCategoryFilters(mapData?.categories);
             renderFloorSelector();
-
-            const newMapImage = Imagex({
-                src: state.baseMapImageSrc,
-                fallback: mapData?.map?.fallbackImage || "/assets/maps/loc/fallback_map.png",
-                class: "gta-map-image",
-                alt: mapData?.title || "GTA Map",
-                draggable: false
-            });
-
-            transformLayer.replaceChild(newMapImage, mapImage);
-            mapImage = newMapImage;
-
             renderTerritoryHeatmaps(state.territories);
             renderAllMarkers();
-            renderRoutePaths();
 
             if (mapData?.permalink) {
                 applyPermalinkFocus(mapData.permalink);
-            } else {
-                applyTransform();
             }
-
-            initLiveTrackingWS();
-
         } catch (err) {
             console.error("Failed to load map data:", err);
-            markersOverlay.innerHTML = `<div class="gta-map-error">Error fetching map features.</div>`;
         }
     }
 
+    // Initialize Map and Realtime Connections
     await loadMapData();
+    initLiveTrackingWS();
+    applyTransform();
 }

@@ -5,30 +5,30 @@ import {
     updateTransform,
     resetTransformState
 } from "../../components/ui/zoomboxHelpers.js";
-import {dispatchZoomBoxEvent} from "../../utils/eventDispatcher.js";
+import { dispatchZoomBoxEvent } from "../../utils/eventDispatcher.js";
 
 /**
- * Standalone mouse move handler for panning zoomed images
- * @param {MouseEvent} e - Browser mousemove event
+ * Standalone pointer move handler for panning zoomed images
+ * @param {PointerEvent} e - Browser pointermove event
  * @param {Object} state - The ZoomBox transform state object
  * @param {HTMLElement} img - Target image element
  */
-export function handleMouseMove(e, state, img) {
+export function handlePointerMove(e, state, img) {
     if (!state || !state.isDragging || state.zoomLevel <= 1 || !img) return;
     
     e.preventDefault();
 
-    // Calculate delta relative to last mouse position
+    // Calculate delta relative to last pointer position
     const currentX = e.clientX;
     const currentY = e.clientY;
 
-    if (state.lastMouseX !== undefined && state.lastMouseY !== undefined) {
-        state.velocityX = currentX - state.lastMouseX;
-        state.velocityY = currentY - state.lastMouseY;
+    if (state.lastPointerX !== undefined && state.lastPointerY !== undefined) {
+        state.velocityX = currentX - state.lastPointerX;
+        state.velocityY = currentY - state.lastPointerY;
     }
 
-    state.lastMouseX = currentX;
-    state.lastMouseY = currentY;
+    state.lastPointerX = currentX;
+    state.lastPointerY = currentY;
 
     // Update pan position based on start offsets
     state.panX = currentX - state.startX;
@@ -51,20 +51,25 @@ export function handleMouseMove(e, state, img) {
 }
 
 /**
- * Ends dragging state and triggers smooth inertia animation.
- * @param {MouseEvent} e - Browser mouseup event
+ * Ends dragging state, releases pointer capture, and triggers smooth inertia animation.
+ * @param {PointerEvent} e - Browser pointerup/pointercancel event
  * @param {Object} state - The ZoomBox transform state object
  * @param {HTMLElement} img - Target image element
  */
-export function handleMouseUp(e, state, img) {
+export function handlePointerUp(e, state, img) {
     if (!state || !state.isDragging || !img) return;
+
+    // Release pointer capture if active target holds it
+    if (e.target && typeof e.target.releasePointerCapture === "function" && e.target.hasPointerCapture(e.pointerId)) {
+        e.target.releasePointerCapture(e.pointerId);
+    }
 
     state.isDragging = false;
     img.style.cursor = state.zoomLevel > 1 ? "grab" : "auto";
 
     // Clean up temporary tracking markers
-    delete state.lastMouseX;
-    delete state.lastMouseY;
+    delete state.lastPointerX;
+    delete state.lastPointerY;
 
     // Inertia physics loop
     const animateInertia = () => {
@@ -107,16 +112,21 @@ export function handleMouseUp(e, state, img) {
 }
 
 /**
- * Initiates the dragging state and tracks initial mouse coordinates.
- * @param {MouseEvent} e - Browser mousedown event
+ * Initiates dragging state and captures pointer interactions.
+ * @param {PointerEvent} e - Browser pointerdown event
  * @param {Object} state - The ZoomBox transform state object
  * @param {HTMLElement} img - Target image element
  */
-export function handleMouseDown(e, state, img) {
+export function handlePointerDown(e, state, img) {
     if (!state || state.zoomLevel <= 1 || !img) return;
 
-    // Prevent native image drag behavior
+    // Prevent native drag behaviors
     e.preventDefault();
+
+    // Capture pointer so drag events stay attached even outside the viewport
+    if (e.target && typeof e.target.setPointerCapture === "function") {
+        e.target.setPointerCapture(e.pointerId);
+    }
 
     state.isDragging = true;
     
@@ -124,11 +134,11 @@ export function handleMouseDown(e, state, img) {
     state.startX = e.clientX - (state.panX || 0);
     state.startY = e.clientY - (state.panY || 0);
 
-    // Initialize velocity and last tracking points for momentum/inertia calculations
+    // Initialize velocity and tracking points for momentum/inertia calculations
     state.velocityX = 0;
     state.velocityY = 0;
-    state.lastMouseX = e.clientX;
-    state.lastMouseY = e.clientY;
+    state.lastPointerX = e.clientX;
+    state.lastPointerY = e.clientY;
 
     img.style.cursor = "grabbing";
 
