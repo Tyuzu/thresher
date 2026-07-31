@@ -12,6 +12,7 @@
   --gta-accent-gold: #f1e05a;
   --gta-accent-intel: #a371f7;
   --gta-accent-shop: #58a6ff;
+  --gta-accent-danger: #ef4444;
   --gta-text-main: #f0f6fc;
   --gta-text-muted: #8b949e;
   --gta-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -45,6 +46,14 @@
   color: var(--gta-text-main);
 }
 
+/* Fullscreen Mode Adjustments */
+.gta-map-wrapper:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  border: none;
+}
+
 /* ==========================================================================
    Header Bar & Controls
    ========================================================================== */
@@ -57,6 +66,8 @@
   background: var(--gta-bg-surface);
   border-bottom: 1px solid var(--gta-border-color);
   z-index: 20;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .gta-map-title {
@@ -124,7 +135,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .gta-zoom-controls button:last-child {
@@ -138,6 +149,55 @@
 
 .gta-zoom-controls button:active {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+.gta-btn-measure.active {
+  background-color: rgba(63, 185, 80, 0.2) !important;
+  color: var(--gta-accent) !important;
+  border-color: var(--gta-accent) !important;
+}
+
+/* ==========================================================================
+   FEATURE 1: Category Filter Chips Bar
+   ========================================================================== */
+
+.gta-category-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0;
+  scrollbar-width: none;
+}
+
+.gta-category-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.gta-filter-chip {
+  background-color: var(--gta-bg-primary);
+  color: var(--gta-text-muted);
+  border: 1px solid var(--gta-border-color);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.gta-filter-chip:hover {
+  color: var(--gta-text-main);
+  background-color: var(--gta-bg-surface-hover);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.gta-filter-chip.active {
+  background-color: rgba(63, 185, 80, 0.15);
+  color: var(--gta-accent);
+  border-color: var(--gta-accent);
+  box-shadow: 0 0 10px var(--gta-accent-glow);
 }
 
 /* ==========================================================================
@@ -165,6 +225,7 @@
   height: 100%;
   transform-origin: 0 0;
   will-change: transform;
+  backface-visibility: hidden;
 }
 
 .gta-map-image {
@@ -184,29 +245,213 @@
 }
 
 /* ==========================================================================
-   Interactive Location Markers
+   FEATURE 2: Minimap / Radar View
    ========================================================================== */
+
+.gta-radar-container {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 0 2px var(--gta-border-color);
+  background-color: var(--gta-bg-primary);
+  overflow: hidden;
+  z-index: 25;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.gta-radar-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+}
+
+/* Hide Radar when details card overlaps on smaller screens */
+@media (max-width: 768px) {
+  .gta-radar-container {
+    width: 110px;
+    height: 110px;
+    bottom: 12px;
+    right: 12px;
+  }
+}
+
+/* ==========================================================================
+   FEATURE 3: Measurement Ruler Tool Layer
+   ========================================================================== */
+
+.gta-map-measure-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.gta-measure-line {
+  stroke: var(--gta-accent);
+  stroke-width: 2.5px;
+  stroke-dasharray: 6;
+  animation: dashMove 20s linear infinite;
+}
+
+.gta-measure-node {
+  fill: var(--gta-accent);
+  stroke: #ffffff;
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 6px var(--gta-accent));
+}
+
+.gta-measure-text {
+  fill: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--gta-font);
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--gta-bg-primary);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+@keyframes dashMove {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+/* ==========================================================================
+   FEATURE 4: Gang / Crew Territory Heatmaps
+   ========================================================================== */
+
+.gta-map-territories-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.gta-territory-polygon {
+  pointer-events: auto;
+  cursor: pointer;
+  transition: fill-opacity 0.2s ease, stroke-width 0.2s ease;
+}
+
+.gta-territory-polygon:hover {
+  fill-opacity: 0.65;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+/* ==========================================================================
+   FEATURE 5: Live Events & World Bosses System
+   ========================================================================== */
+
+.gta-marker-live-event {
+  border-left: 3px solid var(--gta-accent-danger) !important;
+  background: rgba(30, 15, 20, 0.9) !important;
+  animation: eventPulse 2s infinite ease-in-out;
+}
+
+.gta-event-timer {
+  background-color: var(--gta-accent-danger);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+@keyframes eventPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+/* ==========================================================================
+   FEATURE 6: Coordinate Overlay Badge
+   ========================================================================== */
+
+.gta-coords-overlay {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(11, 14, 20, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--gta-border-color);
+  border-radius: var(--gta-radius-sm);
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: monospace;
+  color: var(--gta-text-muted);
+  z-index: 20;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   Interactive Location Markers & SVG Overlay Routes
+   ========================================================================== */
+
+.gta-map-routes-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.gta-route-line {
+  fill: none;
+  stroke: var(--gta-accent);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-dasharray: 8 6;
+}
+
+.gta-route-animated {
+  animation: dashMove 15s linear infinite;
+}
 
 .gta-marker {
   position: absolute;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(var(--gta-marker-scale, 1));
   pointer-events: auto;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(22, 27, 34, 0.85);
+  background: rgba(22, 27, 34, 0.88);
   backdrop-filter: blur(6px);
   border: 1px solid var(--gta-border-color);
   border-radius: 20px;
   padding: 4px 10px 4px 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   z-index: 5;
 }
 
 .gta-marker:hover {
-  transform: translate(-50%, -50%) scale(1.12);
+  transform: translate(-50%, -50%) scale(calc(var(--gta-marker-scale, 1) * 1.15));
   z-index: 15;
   border-color: #ffffff;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
@@ -227,8 +472,8 @@
   color: var(--gta-text-main);
 }
 
-/* Category-specific Accents */
-.gta-marker-property {
+/* Marker Category Accents */
+.gta-marker-property, .gta-marker-heists {
   border-left: 3px solid var(--gta-accent-gold);
 }
 
@@ -236,13 +481,85 @@
   border-left: 3px solid var(--gta-accent-intel);
 }
 
-.gta-marker-shop {
+.gta-marker-shops {
   border-left: 3px solid var(--gta-accent-shop);
 }
 
+.gta-marker-player {
+  background: rgba(34, 197, 94, 0.25) !important;
+  border-color: var(--gta-accent) !important;
+  padding: 6px !important;
+  border-radius: 50% !important;
+}
+
+.gta-marker-player .gta-marker-icon {
+  color: var(--gta-accent);
+  font-size: 0.9rem;
+}
+
+.gta-marker-waypoint {
+  border-left: 3px solid #eab308;
+}
+
 /* ==========================================================================
-   Details Floating Card (Glassmorphism)
+   Mission HUD & Location Floating Cards
    ========================================================================== */
+
+.gta-mission-hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(11, 14, 20, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--gta-border-color);
+  border-left: 4px solid var(--gta-accent);
+  border-radius: var(--gta-radius-sm);
+  padding: 12px 16px;
+  z-index: 25;
+  box-shadow: var(--gta-shadow);
+}
+
+.gta-mission-hud.hidden {
+  display: none;
+}
+
+.gta-hud-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--gta-text-main);
+  margin-bottom: 4px;
+}
+
+.gta-hud-reward {
+  font-size: 0.8rem;
+  color: var(--gta-accent);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.gta-btn-cancel-mission, .gta-btn-mission-start {
+  background-color: var(--gta-bg-surface-hover);
+  color: var(--gta-text-main);
+  border: 1px solid var(--gta-border-color);
+  border-radius: var(--gta-radius-sm);
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.gta-btn-mission-start {
+  background-color: var(--gta-accent);
+  color: #000000;
+  border: none;
+  margin-top: 12px;
+}
+
+.gta-btn-mission-start:hover {
+  filter: brightness(1.1);
+}
 
 .gta-map-details {
   position: absolute;
@@ -298,55 +615,6 @@
   color: var(--gta-text-muted);
 }
 
-/* Keyframe Animations */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Enable Hardware Acceleration for Canvas */
-.gta-map-transform-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  transform-origin: 0 0;
-  will-change: transform;
-  backface-visibility: hidden;
-}
-
-/* Dynamic Counter-Scaled Markers */
-.gta-marker {
-  position: absolute;
-  transform: translate(-50%, -50%) scale(var(--gta-marker-scale, 1));
-  pointer-events: auto;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(22, 27, 34, 0.88);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--gta-border-color);
-  border-radius: 20px;
-  padding: 4px 10px 4px 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  z-index: 5;
-}
-
-.gta-marker:hover {
-  transform: translate(-50%, -50%) scale(calc(var(--gta-marker-scale, 1) * 1.15));
-  z-index: 15;
-  border-color: #ffffff;
-}
-
 /* Restricted/Locked Area Overlays */
 .gta-map-locked-areas {
   position: absolute;
@@ -383,4 +651,16 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: #fca5a5;
+}
+
+/* Keyframe Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

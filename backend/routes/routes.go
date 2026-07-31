@@ -585,10 +585,16 @@ func AddArtistRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mi
 	router.DELETE("/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.DeleteArtistEvent(app))))
 }
 
-// AddMapRoutes registers map and progression endpoints
+// AddMapRoutes registers all map endpoints including WebSocket tracking
 func AddMapRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	// Unified Map Endpoint (matches JS: apiFetch('/gta/map?entity=ls&auth=true'))
+	// Unified Map Endpoint with Permalinks & Floor Multi-layers
 	router.GET("/api/v1/gta/map", rateLimiter.Limit(maps.GetGtaMap))
+
+	// Distance measurement route
+	router.GET("/api/v1/gta/map/distance", rateLimiter.Limit(maps.CalculateDistance))
+
+	// Real-Time WebSocket Player & Vehicle Tracking
+	router.GET("/api/v1/gta/map/ws", maps.HandleLiveTrackingWS)
 
 	// Player progression routes
 	router.POST("/api/v1/player/progress", rateLimiter.Limit(maps.UpdatePlayerProgress))
