@@ -3,18 +3,21 @@ import { Imagex } from "../../components/base/Imagex.js";
 import { apiFetch, SRC_URL } from "../../api/api.js";
 import {
     smoothZoom,
-    handleMouseDown,
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,
     updateTransform,
     resetTransformState
 } from "../../components/ui/zoomboxHelpers.js";
+import {
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+} from "./mouseEvents.js";
 
 export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     container.innerHTML = "";
 
-    // Parse URL query parameters for permalink / deep-link support
     const urlParams = new URLSearchParams(window.location.search);
     const initialMarker = urlParams.get("marker");
     const initialX = urlParams.get("x") ? parseFloat(urlParams.get("x")) : null;
@@ -33,26 +36,24 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         startY: 0,
         activeEntity: urlParams.get("entity") || entity,
 
-        // Floor / Interior Layer State
         floors: [],
-        currentFloor: initialFloor, // null = exterior map, integer = floor level
+        currentFloor: initialFloor,
 
-        // Map Data & Category State
         locations: [],
         activeCategories: new Set(["all"]),
-        liveEntities: new Map(), // Real-time tracked entities (players, vehicles)
+        liveEntities: new Map(),
         customWaypoint: null,
         activeMission: null,
         deliveryMissions: [],
         territories: [],
         liveEvents: [],
 
-        // Feature States
         isMeasuring: false,
         measurePoints: [],
         cursorCoords: { x: 0, y: 0 },
         timerIntervals: [],
-        wsConnection: null
+        wsConnection: null,
+        reconnectTimer: null
     };
 
     /* =========================================================
@@ -61,7 +62,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
 
     const mapWrapper = createElement("div", { class: "gta-map-wrapper" });
 
-    // Entity Dropdown
     const entitySelector = createElement("select", {
         class: "gta-map-selector",
         events: {
@@ -79,18 +79,13 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         createElement("option", { value: "sa", selected: state.activeEntity === "sa" }, ["San Andreas"])
     ]);
 
-    // Floor Selector Container
     const floorSelectorBar = createElement("div", { class: "gta-floor-selector hidden" });
 
-    // Share / Permalink Button
     const shareBtn = createElement("button", {
         class: "gta-btn-share",
-        events: {
-            click: () => copyPermalinkToClipboard()
-        }
+        events: { click: () => copyPermalinkToClipboard() }
     }, ["🔗 Share Link"]);
 
-    // Zoom & Screen Controls
     const fullScreenBtn = createElement("button", {
         class: "gta-btn-fullscreen",
         events: { click: () => toggleFullscreen() }
@@ -141,7 +136,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         }, ["Reset"])
     ]);
 
-    // Category Filter Bar
     const categoryFilterBar = createElement("div", { class: "gta-category-filters" });
 
     const mapHeader = createElement("div", { class: "gta-map-header" }, [
@@ -150,19 +144,17 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         createElement("div", { class: "gta-map-header-actions" }, [entitySelector, zoomControls])
     ]);
 
-    // Overlays & Layers
-    const svgTerritoryLayer = createElement("svg", { class: "gta-map-territories-svg" });
-    const svgRouteLayer = createElement("svg", { class: "gta-map-routes-svg" });
-    const svgMeasureLayer = createElement("svg", { class: "gta-map-measure-svg" });
+    // Added viewBox="0 0 100 100" to allow direct percentage scaling inside SVGs
+    const svgTerritoryLayer = createElement("svg", { class: "gta-map-territories-svg", viewBox: "0 0 100 100", preserveAspectRatio: "none" });
+    const svgRouteLayer = createElement("svg", { class: "gta-map-routes-svg", viewBox: "0 0 100 100", preserveAspectRatio: "none" });
+    const svgMeasureLayer = createElement("svg", { class: "gta-map-measure-svg", viewBox: "0 0 100 100", preserveAspectRatio: "none" });
+
     const markersOverlay = createElement("div", { class: "gta-map-markers" });
     const lockedAreasOverlay = createElement("div", { class: "gta-map-locked-areas" });
     const detailsPanel = createElement("div", { class: "gta-map-details hidden" });
     const missionHudPanel = createElement("div", { class: "gta-mission-hud hidden" });
-
-    // Coordinate Overlay Badge
     const coordsOverlay = createElement("div", { class: "gta-coords-overlay" }, ["X: 0.00 | Y: 0.00"]);
 
-    // Minimap / Radar Container
     const radarContainer = createElement("div", { class: "gta-radar-container" });
     const radarCanvas = createElement("canvas", { class: "gta-radar-canvas", width: "150", height: "150" });
     radarContainer.appendChild(radarCanvas);
@@ -217,7 +209,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     }
 
     /* =========================================================
-       Feature 1: Multi-Floor & Interior Maps UI
+       Multi-Floor & Interior Maps UI
        ========================================================= */
 
     function renderFloorSelector() {
@@ -229,21 +221,16 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
 
         floorSelectorBar.classList.remove("hidden");
 
-        // Ground/Main exterior option
         const mainBtn = createElement("button", {
             class: `gta-floor-btn ${state.currentFloor === null ? "active" : ""}`,
-            events: {
-                click: () => switchFloor(null)
-            }
+            events: { click: () => switchFloor(null) }
         }, ["Exterior"]);
         floorSelectorBar.appendChild(mainBtn);
 
         state.floors.forEach((f) => {
             const btn = createElement("button", {
                 class: `gta-floor-btn ${state.currentFloor === f.level ? "active" : ""}`,
-                events: {
-                    click: () => switchFloor(f.level)
-                }
+                events: { click: () => switchFloor(f.level) }
             }, [f.name || `Floor ${f.level}`]);
             floorSelectorBar.appendChild(btn);
         });
@@ -254,7 +241,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         renderFloorSelector();
 
         if (floorLevel === null) {
-            // Restore default entity map
             mapImage.src = state.baseMapImageSrc;
         } else {
             const selectedFloor = state.floors.find((f) => f.level === floorLevel);
@@ -267,12 +253,15 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     }
 
     /* =========================================================
-       Feature 2: Real-Time Player & Vehicle Tracking (WebSocket)
+       Real-Time Tracking (WebSocket)
        ========================================================= */
 
     function initLiveTrackingWS() {
         if (state.wsConnection) {
             state.wsConnection.close();
+        }
+        if (state.reconnectTimer) {
+            clearTimeout(state.reconnectTimer);
         }
 
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -298,8 +287,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         };
 
         ws.onclose = () => {
-            // Auto-reconnect after 5 seconds if connection drops
-            setTimeout(() => {
+            state.reconnectTimer = setTimeout(() => {
                 if (document.body.contains(mapWrapper)) {
                     initLiveTrackingWS();
                 }
@@ -310,7 +298,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     }
 
     /* =========================================================
-       Feature 3: Deep-Linking & Permalinks
+       Deep-Linking & Permalinks
        ========================================================= */
 
     function copyPermalinkToClipboard() {
@@ -355,7 +343,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     }
 
     /* =========================================================
-       Feature 4: Category Filtering System
+       Category Filtering System
        ========================================================= */
 
     function renderCategoryFilters(serverCategories) {
@@ -396,7 +384,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     }
 
     /* =========================================================
-       Feature 5: Minimap / Radar View
+       Minimap / Radar View
        ========================================================= */
 
     function updateRadarView() {
@@ -416,7 +404,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         ctx.fillStyle = "#0c1017";
         ctx.fillRect(0, 0, w, h);
 
-        // Radar Sweep Ring Overlays
         ctx.strokeStyle = "rgba(34, 197, 94, 0.25)";
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -426,12 +413,10 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         ctx.moveTo(0, cy); ctx.lineTo(w, cy);
         ctx.stroke();
 
-        // Find primary active player for radar center
         let primaryPlayer = Array.from(state.liveEntities.values())[0] || { position: { x: 50, y: 50 }, heading: 0 };
         const px = primaryPlayer.position ? primaryPlayer.position.x : 50;
         const py = primaryPlayer.position ? primaryPlayer.position.y : 50;
 
-        // Render nearby location markers on radar
         (state.locations || []).forEach((loc) => {
             const dx = (loc.x - px) * 2.5;
             const dy = (loc.y - py) * 2.5;
@@ -445,7 +430,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             }
         });
 
-        // Render live tracked entities on radar
         state.liveEntities.forEach((entity) => {
             const ex = entity.position ? entity.position.x : 50;
             const ey = entity.position ? entity.position.y : 50;
@@ -461,7 +445,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             }
         });
 
-        // Center Arrow
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(((primaryPlayer.heading || 0) * Math.PI) / 180);
@@ -485,7 +468,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     }
 
     /* =========================================================
-       Feature 6: Measurement Tool Logic
+       Measurement Tool Logic
        ========================================================= */
 
     async function renderMeasurementLayer() {
@@ -495,44 +478,43 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         const [p1, p2] = state.measurePoints;
 
         const circle1 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        circle1.setAttribute("cx", `${p1.x}%`);
-        circle1.setAttribute("cy", `${p1.y}%`);
-        circle1.setAttribute("r", "5");
+        circle1.setAttribute("cx", p1.x);
+        circle1.setAttribute("cy", p1.y);
+        circle1.setAttribute("r", "1.5");
         circle1.setAttribute("class", "gta-measure-node");
         svgMeasureLayer.appendChild(circle1);
 
         if (p2) {
             const circle2 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            circle2.setAttribute("cx", `${p2.x}%`);
-            circle2.setAttribute("cy", `${p2.y}%`);
-            circle2.setAttribute("r", "5");
+            circle2.setAttribute("cx", p2.x);
+            circle2.setAttribute("cy", p2.y);
+            circle2.setAttribute("r", "1.5");
             circle2.setAttribute("class", "gta-measure-node");
             svgMeasureLayer.appendChild(circle2);
 
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", `${p1.x}%`);
-            line.setAttribute("y1", `${p1.y}%`);
-            line.setAttribute("x2", `${p2.x}%`);
-            line.setAttribute("y2", `${p2.y}%`);
+            line.setAttribute("x1", p1.x);
+            line.setAttribute("y1", p1.y);
+            line.setAttribute("x2", p2.x);
+            line.setAttribute("y2", p2.y);
             line.setAttribute("class", "gta-measure-line");
             svgMeasureLayer.appendChild(line);
 
-            // Fetch precise distance calculation from backend API
             try {
                 const res = await apiFetch(`/gta/map/distance?x1=${p1.x}&y1=${p1.y}&x2=${p2.x}&y2=${p2.y}`);
                 const data = res?.data || res;
 
                 const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                text.setAttribute("x", `${(p1.x + p2.x) / 2}%`);
-                text.setAttribute("y", `${(p1.y + p2.y) / 2 - 2}%`);
+                text.setAttribute("x", (p1.x + p2.x) / 2);
+                text.setAttribute("y", (p1.y + p2.y) / 2 - 2);
                 text.setAttribute("class", "gta-measure-text");
                 text.textContent = `${data.distanceMeters}m (${data.estimatedTravel} travel)`;
                 svgMeasureLayer.appendChild(text);
             } catch (err) {
                 const fallbackDist = Math.round(Math.hypot(p2.x - p1.x, p2.y - p1.y) * 50);
                 const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                text.setAttribute("x", `${(p1.x + p2.x) / 2}%`);
-                text.setAttribute("y", `${(p1.y + p2.y) / 2 - 2}%`);
+                text.setAttribute("x", (p1.x + p2.x) / 2);
+                text.setAttribute("y", (p1.y + p2.y) / 2 - 2);
                 text.setAttribute("class", "gta-measure-text");
                 text.textContent = `~${fallbackDist}m`;
                 svgMeasureLayer.appendChild(text);
@@ -541,7 +523,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     }
 
     /* =========================================================
-       Feature 7: Territory Heatmaps & Interactions
+       Territory Heatmaps & Interactions
        ========================================================= */
 
     function renderTerritoryHeatmaps(territories) {
@@ -553,7 +535,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             polygon.setAttribute("points", pointsString);
             polygon.setAttribute("fill", t.color || "rgba(239, 68, 68, 0.35)");
             polygon.setAttribute("stroke", "rgba(255, 255, 255, 0.6)");
-            polygon.setAttribute("stroke-width", "1.5");
+            polygon.setAttribute("stroke-width", "0.5");
             polygon.setAttribute("class", "gta-territory-polygon");
 
             polygon.addEventListener("click", (e) => {
@@ -584,7 +566,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     }
 
     /* =========================================================
-       Feature 8: Mouse Coordinate Tracking & Event Delegation
+       Mouse / Touch Event Delegations
        ========================================================= */
 
     mapViewport.addEventListener("mousemove", (e) => {
@@ -594,6 +576,11 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
 
         state.cursorCoords = { x: xPercent, y: yPercent };
         coordsOverlay.textContent = `X: ${xPercent.toFixed(2)} | Y: ${yPercent.toFixed(2)}`;
+
+        if (state.isDragging) {
+            handleMouseMove(e, state, transformLayer);
+            applyTransform();
+        }
     });
 
     mapViewport.addEventListener("mousedown", (e) => {
@@ -607,6 +594,12 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
         }
 
         handleMouseDown(e, state, transformLayer);
+    });
+
+    window.addEventListener("mouseup", (e) => {
+        if (state.isDragging) {
+            handleMouseUp(e, state);
+        }
     });
 
     mapViewport.addEventListener("touchstart", (e) => handleTouchStart(e, state, transformLayer), { passive: false });
@@ -637,7 +630,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
     function renderAllMarkers() {
         markersOverlay.innerHTML = "";
 
-        // 1. Filter Location Markers based on active categories and current interior floor
         const filteredLocations = (state.locations || []).filter((loc) => {
             if (state.currentFloor !== null) {
                 if (loc.floorLevel !== state.currentFloor) return false;
@@ -651,9 +643,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
 
         filteredLocations.forEach(renderSingleMarker);
 
-        // 2. Render WebSocket Tracked Live Entities (Players/Vehicles)
         state.liveEntities.forEach((entity) => {
-            // Check if entity is on current floor
             if (state.currentFloor !== null && entity.floor !== state.currentFloor) return;
             if (state.currentFloor === null && entity.floor && entity.floor !== 0) return;
 
@@ -672,7 +662,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             markersOverlay.appendChild(liveMarker);
         });
 
-        // 3. Custom Waypoint
         if (state.customWaypoint) {
             const waypointEl = createElement("div", {
                 class: "gta-marker gta-marker-waypoint",
@@ -712,7 +701,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             createElement("span", { class: "gta-marker-label" }, [loc.name])
         ]);
 
-        // Live Event Badge attachment
         if (loc.liveEvent && loc.liveEvent.isLive) {
             const badge = createElement("span", { class: "gta-event-badge" }, [`${loc.liveEvent.remainingSecs}s`]);
             marker.appendChild(badge);
@@ -727,7 +715,7 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
 
         const { from, to } = state.activeMission;
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        const d = `M ${from.x}% ${from.y}% Q ${(from.x + to.x) / 2}% ${(from.y + to.y) / 2 - 10}, ${to.x}% ${to.y}%`;
+        const d = `M ${from.x} ${from.y} Q ${(from.x + to.x) / 2} ${(from.y + to.y) / 2 - 10}, ${to.x} ${to.y}`;
 
         path.setAttribute("d", d);
         path.setAttribute("class", "gta-route-line gta-route-animated");
@@ -771,7 +759,6 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             svgRouteLayer.innerHTML = "";
             detailsPanel.classList.add("hidden");
 
-            // Build query params including initial URL flags
             let endpoint = `/gta/map?entity=${state.activeEntity}&auth=${isLoggedIn}`;
             if (initialMarker) endpoint += `&marker=${initialMarker}`;
             if (initialX !== null && initialY !== null) endpoint += `&x=${initialX}&y=${initialY}`;
@@ -802,14 +789,12 @@ export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
             renderAllMarkers();
             renderRoutePaths();
 
-            // Handle Permalinks / Focus Points
             if (mapData?.permalink) {
                 applyPermalinkFocus(mapData.permalink);
             } else {
                 applyTransform();
             }
 
-            // Start WebSocket Live Tracking
             initLiveTrackingWS();
 
         } catch (err) {

@@ -24,7 +24,7 @@ export const createImageElement = (src, stateRef) => {
     img.style.transformOrigin = "50% 50%";
     img._stateRef = stateRef;
 
-    // Attach touch listeners using function hoisting safely
+    // Attach passive touch listeners where possible
     img.addEventListener("touchstart", (e) => handleTouchStart(e, img._stateRef, img), { passive: false });
     img.addEventListener("touchmove", (e) => handleTouchMove(e, img._stateRef, img), { passive: false });
     img.addEventListener("touchend", (e) => handleTouchEnd(e, img._stateRef));
@@ -111,6 +111,11 @@ export const showZoomIndicator = (container, zoomLevel) => {
 
 export const showZoomLimitFeedback = (container, limitType) => {
     if (!container) return;
+    
+    // Prevent duplicate toasts from stacking up
+    let existing = container.querySelector(".zoombox-zoom-limit-feedback");
+    if (existing) existing.remove();
+
     const text = limitType === "min" ? "Minimum Zoom Reached" : "Maximum Zoom Reached";
     
     const feedback = createElement("div", {
@@ -164,6 +169,7 @@ export const smoothZoom = (event, img, state, container) => {
     state.panX = (state.panX || 0) - offsetX * (zoomFactor - 1);
     state.panY = (state.panY || 0) - offsetY * (zoomFactor - 1);
 
+    // Pan bounding logic
     const viewWidth = window.innerWidth;
     const viewHeight = window.innerHeight;
     const imgWidth = (img.offsetWidth || rect.width) * state.zoomLevel;
@@ -194,15 +200,20 @@ export function handleMouseDown(e, state, img) {
     state.velocityY = 0;
     img.style.cursor = "grabbing";
 
+    let lastX = e.clientX;
+    let lastY = e.clientY;
+
     const onMove = (moveEvent) => {
         if (!state.isDragging) return;
         moveEvent.preventDefault();
-        const dx = moveEvent.clientX - state.startX;
-        const dy = moveEvent.clientY - state.startY;
-        state.velocityX = dx - (state.panX || 0);
-        state.velocityY = dy - (state.panY || 0);
-        state.panX = dx;
-        state.panY = dy;
+        
+        state.velocityX = moveEvent.clientX - lastX;
+        state.velocityY = moveEvent.clientY - lastY;
+        lastX = moveEvent.clientX;
+        lastY = moveEvent.clientY;
+
+        state.panX = moveEvent.clientX - state.startX;
+        state.panY = moveEvent.clientY - state.startY;
         updateTransform(img, state);
     };
 
@@ -217,14 +228,15 @@ export function handleMouseDown(e, state, img) {
             const viewHeight = window.innerHeight;
             const imgWidth = img.offsetWidth * state.zoomLevel;
             const imgHeight = img.offsetHeight * state.zoomLevel;
-            const maxPanX = (imgWidth - viewWidth) / 2;
-            const maxPanY = (imgHeight - viewHeight) / 2;
+            const maxPanX = Math.max(0, (imgWidth - viewWidth) / 2);
+            const maxPanY = Math.max(0, (imgHeight - viewHeight) / 2);
 
-            state.panX += (state.velocityX || 0) * 0.95;
-            state.panY += (state.velocityY || 0) * 0.95;
+            state.panX += (state.velocityX || 0);
+            state.panY += (state.velocityY || 0);
 
-            if (Math.abs(state.panX) > maxPanX) state.velocityX *= 0.8;
-            if (Math.abs(state.panY) > maxPanY) state.velocityY *= 0.8;
+            // Fixed: Clamp pan inside bounds during inertia
+            state.panX = Math.min(maxPanX, Math.max(-maxPanX, state.panX));
+            state.panY = Math.min(maxPanY, Math.max(-maxPanY, state.panY));
 
             state.velocityX *= 0.9;
             state.velocityY *= 0.9;
@@ -282,13 +294,12 @@ export function handleTouchMove(e, state, img) {
         const scaleFactor = newDistance / state.initialPinchDistance;
         state.zoomLevel = Math.max(1, Math.min(3, state.initialZoom * scaleFactor));
 
-        const rect = img.getBoundingClientRect();
-        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
-        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
         const zoomFactor = state.zoomLevel / prevZoom;
+        const viewCenterX = window.innerWidth / 2;
+        const viewCenterY = window.innerHeight / 2;
 
-        state.panX = (state.panX || 0) - (midX - (state.panX || 0)) * (zoomFactor - 1);
-        state.panY = (state.panY || 0) - (midY - (state.panY || 0)) * (zoomFactor - 1);
+        state.panX = (state.panX || 0) - (viewCenterX - (state.panX || 0)) * (zoomFactor - 1);
+        state.panY = (state.panY || 0) - (viewCenterY - (state.panY || 0)) * (zoomFactor - 1);
 
         updateTransform(img, state);
         showZoomIndicator(container, state.zoomLevel);
@@ -313,6 +324,7 @@ export function handleTouchEnd(e, state) {
 export const createNavigationButtons = (images, state, renderMedia) => {
     const prev = createElement("button", {
         class: "zoombox-prev-btn",
+        "aria-label": "Previous image",
         events: {
             click: () => {
                 state.currentIndex = (state.currentIndex - 1 + images.length) % images.length;
@@ -324,6 +336,7 @@ export const createNavigationButtons = (images, state, renderMedia) => {
 
     const next = createElement("button", {
         class: "zoombox-next-btn",
+        "aria-label": "Next image",
         events: {
             click: () => {
                 state.currentIndex = (state.currentIndex + 1) % images.length;
@@ -339,6 +352,7 @@ export const createNavigationButtons = (images, state, renderMedia) => {
 export const createCloseButton = (closeFn) => {
     return createElement("button", {
         class: "zoombox-close-btn",
+        "aria-label": "Close modal",
         events: {
             click: () => closeFn()
         }
@@ -349,6 +363,7 @@ export const createZoomButtons = (img, state, container) => {
     if (img) img._stateRef = state;
 
     const zoomInBtn = createElement("button", {
+        "aria-label": "Zoom in",
         events: {
             click: () => {
                 smoothZoom({
@@ -361,6 +376,7 @@ export const createZoomButtons = (img, state, container) => {
     }, ["+"]);
 
     const zoomOutBtn = createElement("button", {
+        "aria-label": "Zoom out",
         events: {
             click: () => {
                 smoothZoom({
@@ -414,6 +430,7 @@ export const handleKeyboard = (e, images, img, state, container, closeFn, render
             renderMedia(state.currentIndex);
             break;
         case "+":
+        case "=":
             smoothZoom({
                 deltaY: -1,
                 clientX: window.innerWidth / 2,
@@ -421,6 +438,7 @@ export const handleKeyboard = (e, images, img, state, container, closeFn, render
             }, img, state, container);
             break;
         case "-":
+        case "_":
             smoothZoom({
                 deltaY: 1,
                 clientX: window.innerWidth / 2,
@@ -428,11 +446,13 @@ export const handleKeyboard = (e, images, img, state, container, closeFn, render
             }, img, state, container);
             break;
         case "r":
+        case "R":
             state.angle = ((state.angle || 0) + 90) % 360;
             updateTransform(img, state);
             dispatchZoomBoxEvent("rotate", { angle: state.angle });
             break;
         case "h":
+        case "H":
             state.flip = !state.flip;
             updateTransform(img, state);
             dispatchZoomBoxEvent("flip", { flip: state.flip });
