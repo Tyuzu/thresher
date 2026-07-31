@@ -16,18 +16,19 @@ export const createOverlay = () => {
     });
 };
 
-export const createImageElement = (src) => {
+export const createImageElement = (src, stateRef) => {
     const img = Imagex({ src });
     img.alt = "ZoomBox Image";
-    img.style.transition = "transform 0.2s ease-out";
+    img.style.transition = "transform 0.15s ease-out";
     img.style.willChange = "transform";
     img.style.transformOrigin = "50% 50%";
-    
-    // Wire up touch listeners directly during creation
+    img._stateRef = stateRef;
+
+    // Attach touch listeners using function hoisting safely
     img.addEventListener("touchstart", (e) => handleTouchStart(e, img._stateRef, img), { passive: false });
     img.addEventListener("touchmove", (e) => handleTouchMove(e, img._stateRef, img), { passive: false });
-    img.addEventListener("touchend", (e) => handleTouchEnd(e, img._stateRef, img));
-    
+    img.addEventListener("touchend", (e) => handleTouchEnd(e, img._stateRef));
+
     return img;
 };
 
@@ -45,7 +46,7 @@ export function createVideoElement(src) {
 }
 
 export const applyDarkMode = (el) => {
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
         el.classList.add("dark-mode");
     }
 };
@@ -55,7 +56,7 @@ export const preloadImages = (images, index) => {
     const preloadIndexes = [
         index,
         (index + 1) % images.length,
-        (index - 1 + images.length) % images.length,
+        (index - 1 + images.length) % images.length
     ];
     preloadIndexes.forEach((i) => {
         const img = new Image();
@@ -68,19 +69,22 @@ export const preloadImages = (images, index) => {
    ========================= */
 
 export const updateTransform = (img, state) => {
-    if (!img) return;
+    if (!img || !state) return;
     img.style.transformOrigin = "50% 50%";
-    const transformStr = [
+    
+    const transforms = [
         `translate(${state.panX || 0}px, ${state.panY || 0}px)`,
-        `scale(${state.zoomLevel || 1})`,
         `rotate(${state.angle || 0}deg)`,
         state.flip ? "scaleX(-1)" : "",
-    ].join(" ");
-    img.style.transform = transformStr;
+        `scale(${state.zoomLevel || 1})`
+    ].filter(Boolean).join(" ");
+
+    img.style.transform = transforms;
     updateCursor(img, state);
 };
 
 export const updateCursor = (img, state) => {
+    if (!img) return;
     if (state.zoomLevel > 1) {
         img.style.cursor = state.isDragging ? "grabbing" : "grab";
     } else {
@@ -98,6 +102,7 @@ export const showZoomIndicator = (container, zoomLevel) => {
     }
     indicator.textContent = `${Math.round(zoomLevel * 100)}%`;
     indicator.style.opacity = "1";
+    
     clearTimeout(zoomIndicatorTimeout);
     zoomIndicatorTimeout = setTimeout(() => {
         indicator.style.opacity = "0";
@@ -116,10 +121,13 @@ export const showZoomLimitFeedback = (container, limitType) => {
             left: "50%",
             transform: "translate(-50%, -50%)",
             padding: "10px 20px",
-            background: "rgba(255,0,0,0.7)",
+            background: "rgba(220, 38, 38, 0.85)",
             color: "#fff",
-            borderRadius: "5px",
-            fontSize: "16px"
+            borderRadius: "6px",
+            fontSize: "14px",
+            fontWeight: "bold",
+            pointerEvents: "none",
+            zIndex: "100"
         }
     }, [text]);
 
@@ -128,18 +136,18 @@ export const showZoomLimitFeedback = (container, limitType) => {
 };
 
 export const smoothZoom = (event, img, state, container) => {
-    if (!img) return;
+    if (!img || !state) return;
     if (event.preventDefault) event.preventDefault();
 
     const naturalW = img.naturalWidth || img.width || 800;
     const naturalH = img.naturalHeight || img.height || 600;
     const prevZoom = state.zoomLevel || 1;
 
-    state.zoomLevel *= event.deltaY > 0 ? 0.9 : 1.1;
+    let targetZoom = state.zoomLevel * (event.deltaY > 0 ? 0.9 : 1.1);
     const maxZoom = Math.max(naturalW / (img.width || 1), naturalH / (img.height || 1), 16);
-    const clampedZoom = Math.max(1, Math.min(state.zoomLevel, maxZoom));
+    const clampedZoom = Math.max(1, Math.min(targetZoom, maxZoom));
 
-    if (clampedZoom !== state.zoomLevel) {
+    if (clampedZoom !== targetZoom) {
         showZoomLimitFeedback(container, clampedZoom === 1 ? "min" : "max");
     }
     state.zoomLevel = clampedZoom;
@@ -163,17 +171,8 @@ export const smoothZoom = (event, img, state, container) => {
     const maxPanX = Math.max(0, (imgWidth - viewWidth) / 2);
     const maxPanY = Math.max(0, (imgHeight - viewHeight) / 2);
 
-    if (imgWidth <= viewWidth) {
-        state.panX = 0;
-    } else {
-        state.panX = Math.min(maxPanX, Math.max(-maxPanX, state.panX));
-    }
-
-    if (imgHeight <= viewHeight) {
-        state.panY = 0;
-    } else {
-        state.panY = Math.min(maxPanY, Math.max(-maxPanY, state.panY));
-    }
+    state.panX = imgWidth <= viewWidth ? 0 : Math.min(maxPanX, Math.max(-maxPanX, state.panX));
+    state.panY = imgHeight <= viewHeight ? 0 : Math.min(maxPanY, Math.max(-maxPanY, state.panY));
 
     updateTransform(img, state);
     showZoomIndicator(container, state.zoomLevel);
@@ -184,8 +183,8 @@ export const smoothZoom = (event, img, state, container) => {
    Mouse & Touch Handling
    ========================= */
 
-export const handleMouseDown = (e, state, img) => {
-    if (state.zoomLevel <= 1) return;
+export function handleMouseDown(e, state, img) {
+    if (!state || state.zoomLevel <= 1) return;
     e.preventDefault();
 
     state.isDragging = true;
@@ -213,7 +212,7 @@ export const handleMouseDown = (e, state, img) => {
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("mouseup", onUp);
 
-        const animate = () => {
+        const animateInertia = () => {
             const viewWidth = window.innerWidth;
             const viewHeight = window.innerHeight;
             const imgWidth = img.offsetWidth * state.zoomLevel;
@@ -232,22 +231,19 @@ export const handleMouseDown = (e, state, img) => {
             updateTransform(img, state);
 
             if (Math.abs(state.velocityX) > 0.1 || Math.abs(state.velocityY) > 0.1) {
-                requestAnimationFrame(animate);
+                requestAnimationFrame(animateInertia);
             } else {
-                dispatchZoomBoxEvent("pan-end", {
-                    panX: state.panX,
-                    panY: state.panY,
-                });
+                dispatchZoomBoxEvent("pan-end", { panX: state.panX, panY: state.panY });
             }
         };
-        animate();
+        requestAnimationFrame(animateInertia);
     };
 
     document.addEventListener("mousemove", onMove);
     document.addEventListener("mouseup", onUp);
-};
+}
 
-export const handleTouchStart = (e, state, img) => {
+export function handleTouchStart(e, state, img) {
     if (!state) return;
     if (e.touches.length === 2) {
         state.initialPinchDistance = Math.hypot(
@@ -271,11 +267,12 @@ export const handleTouchStart = (e, state, img) => {
         state.startX = e.touches[0].clientX - (state.panX || 0);
         state.startY = e.touches[0].clientY - (state.panY || 0);
     }
-};
+}
 
-export const handleTouchMove = (e, state, img) => {
-    if (!state) return;
-    const container = document.getElementById("zoombox");
+export function handleTouchMove(e, state, img) {
+    if (!state || !img) return;
+    const container = img.closest(".gta-map-viewport") || img.parentElement;
+
     if (e.touches.length === 2 && state.initialPinchDistance) {
         const newDistance = Math.hypot(
             e.touches[0].clientX - e.touches[1].clientX,
@@ -297,9 +294,9 @@ export const handleTouchMove = (e, state, img) => {
         showZoomIndicator(container, state.zoomLevel);
         dispatchZoomBoxEvent("zoom", { level: state.zoomLevel });
     }
-};
+}
 
-export const handleTouchEnd = (e, state) => {
+export function handleTouchEnd(e, state) {
     if (!state) return;
     if (e.touches.length < 2) {
         state.initialPinchDistance = null;
@@ -307,13 +304,13 @@ export const handleTouchEnd = (e, state) => {
     if (!e.touches.length) {
         state.isDragging = false;
     }
-};
+}
 
 /* =========================
    Navigation & Control Buttons
    ========================= */
 
-export const createNavigationButtons = (images, img, state, preload, update, renderMedia) => {
+export const createNavigationButtons = (images, state, renderMedia) => {
     const prev = createElement("button", {
         class: "zoombox-prev-btn",
         events: {
@@ -343,15 +340,13 @@ export const createCloseButton = (closeFn) => {
     return createElement("button", {
         class: "zoombox-close-btn",
         events: {
-            click: () => {
-                closeFn();
-            }
+            click: () => closeFn()
         }
     }, ["✖"]);
 };
 
 export const createZoomButtons = (img, state, container) => {
-    if (img) img._stateRef = state; // Keep track of state for touch events
+    if (img) img._stateRef = state;
 
     const zoomInBtn = createElement("button", {
         events: {
@@ -395,7 +390,8 @@ export const createZoomButtons = (img, state, container) => {
    Utility Functions
    ========================= */
 
-const resetTransformState = (state) => {
+export const resetTransformState = (state) => {
+    if (!state) return;
     state.zoomLevel = 1;
     state.panX = 0;
     state.panY = 0;
@@ -403,9 +399,9 @@ const resetTransformState = (state) => {
     state.flip = false;
 };
 
-export const handleKeyboard = (e, images, img, state, preload, update, close, renderMedia) => {
-    const container = document.getElementById("zoombox");
-    
+export const handleKeyboard = (e, images, img, state, container, closeFn, renderMedia) => {
+    if (!state) return;
+
     switch (e.key) {
         case "ArrowRight":
             state.currentIndex = (state.currentIndex + 1) % images.length;
@@ -433,16 +429,16 @@ export const handleKeyboard = (e, images, img, state, preload, update, close, re
             break;
         case "r":
             state.angle = ((state.angle || 0) + 90) % 360;
-            update(img, state);
+            updateTransform(img, state);
             dispatchZoomBoxEvent("rotate", { angle: state.angle });
             break;
         case "h":
             state.flip = !state.flip;
-            update(img, state);
+            updateTransform(img, state);
             dispatchZoomBoxEvent("flip", { flip: state.flip });
             break;
         case "Escape":
-            close();
+            closeFn();
             break;
     }
 };

@@ -585,13 +585,12 @@ func AddArtistRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mi
 	router.DELETE("/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.DeleteArtistEvent(app))))
 }
 
-// AddMapRoutes binds routes to the provided router and rate limiter
+// AddMapRoutes registers map and progression endpoints
 func AddMapRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	// entity-specific endpoints
-	router.GET("/api/v1/maps/config/:entity", rateLimiter.Limit(maps.GetMapConfig))
-	router.GET("/api/v1/maps/markers/:entity", rateLimiter.Limit(maps.GetMapMarkers))
+	// Unified Map Endpoint (matches JS: apiFetch('/gta/map?entity=ls&auth=true'))
+	router.GET("/api/v1/gta/map", rateLimiter.Limit(maps.GetGtaMap))
 
-	// player progression endpoints
+	// Player progression routes
 	router.POST("/api/v1/player/progress", rateLimiter.Limit(maps.UpdatePlayerProgress))
 	router.GET("/api/v1/player/progress", rateLimiter.Limit(maps.GetPlayerProgress))
 }

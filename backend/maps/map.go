@@ -1,240 +1,331 @@
 package maps
 
 import (
-	"naevis/utils"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
 
-	// adjust to real import path for your rate limiter
+	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-// Marker represents a single map marker
-type Marker struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Type string `json:"type"`
-	X    int    `json:"x"` // pixel X on native map grid (0..mapWidth)
-	Y    int    `json:"y"` // pixel Y on native map grid (0..mapHeight)
+// --- Domain Structs ---
+
+type MapDimensions struct {
+	Width  int `json:"width"`
+	Height int `json:"height"`
 }
 
-// LockedArea represents a blocked/unlocked zone
+type MapAsset struct {
+	Image         string        `json:"image"`
+	FallbackImage string        `json:"fallbackImage"`
+	Dimensions    MapDimensions `json:"dimensions"`
+}
+
+type LocationDetails struct {
+	Address   string `json:"address,omitempty"`
+	Price     int    `json:"price,omitempty"`
+	IntelData string `json:"intelData,omitempty"`
+}
+
+type LocationMarker struct {
+	ID          string          `json:"id"`
+	Name        string          `json:"name"`
+	Category    string          `json:"category"`
+	X           float64         `json:"x"`
+	Y           float64         `json:"y"`
+	Icon        string          `json:"icon,omitempty"`
+	IconURL     string          `json:"iconUrl,omitempty"`
+	Description string          `json:"description"`
+	MembersOnly bool            `json:"membersOnly"`
+	Details     LocationDetails `json:"details,omitempty"`
+}
+
 type LockedArea struct {
-	ID        string `json:"id"`
-	Label     string `json:"label"`
-	X         int    `json:"x"`
-	Y         int    `json:"y"`
-	Width     int    `json:"width"`
-	Height    int    `json:"height"`
-	Condition string `json:"condition"` // e.g. "mission>=5"
-	DependsOn string `json:"dependsOn"` // e.g. "ls"
+	ID        string  `json:"id"`
+	Label     string  `json:"label"`
+	X         float64 `json:"x"`
+	Y         float64 `json:"y"`
+	Width     float64 `json:"width"`
+	Height    float64 `json:"height"`
+	Condition string  `json:"condition"`
+	DependsOn string  `json:"dependsOn"`
 }
 
-// MapConfig includes map setup for a particular entity
 type MapConfig struct {
 	Entity      string       `json:"entity"`
-	MapImage    string       `json:"mapImage"`
-	MapWidth    int          `json:"mapWidth"`
-	MapHeight   int          `json:"mapHeight"`
+	Title       string       `json:"title"`
+	Map         MapAsset     `json:"map"`
 	LockedAreas []LockedArea `json:"lockedAreas"`
 }
 
-// --- Player progress (thread-safe) ---
-var (
-	playerMissionsMu sync.Mutex
-	// missions completed per entity (fake store; replace with DB)
-	playerMissionsCompleted = map[string]int{
-		"ls": 3, // sample starting values; change as needed
-		"sf": 0,
-		"lv": 0,
-	}
+type MapResponseData struct {
+	Entity         string           `json:"entity"`
+	Title          string           `json:"title"`
+	Map            MapAsset         `json:"map"`
+	Locations      []LocationMarker `json:"locations"`
+	LockedAreas    []LockedArea     `json:"lockedAreas,omitempty"`
+	PlayerProgress map[string]int   `json:"playerProgress"`
+}
+
+type APIResponse struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   string      `json:"error,omitempty"`
+}
+
+// --- Thread-Safe Store ---
+
+type MapStore struct {
+	mu                      sync.RWMutex
+	playerMissionsCompleted map[string]int
+	configs                 map[string]MapConfig
+	markers                 map[string][]LocationMarker
+}
+
+const (
+	nativeMapWidth  = 4096
+	nativeMapHeight = 4096
 )
 
-// --- Static configs & markers (native 1200x600 coordinates) ---
-const nativeMapWidth = 1200
-const nativeMapHeight = 600
-
-var mapConfigs = map[string]MapConfig{
-	"ls": {
-		Entity:    "ls",
-		MapImage:  "/assets/ls-map.jpg",
-		MapWidth:  nativeMapWidth,
-		MapHeight: nativeMapHeight,
-		LockedAreas: []LockedArea{
-			{ID: "sf", Label: "San Fierro (Locked)", X: 300, Y: 100, Width: 200, Height: 150, Condition: "mission>=5", DependsOn: "ls"},
-			{ID: "lv_hint", Label: "Las Venturas access locked (see SF)", X: 850, Y: 50, Width: 200, Height: 120, Condition: "", DependsOn: "sf"},
-		},
-	},
-	"sf": {
-		Entity:    "sf",
-		MapImage:  "/assets/sf-map.jpg",
-		MapWidth:  nativeMapWidth,
-		MapHeight: nativeMapHeight,
-		LockedAreas: []LockedArea{
-			{ID: "lv", Label: "Las Venturas (Locked)", X: 600, Y: 200, Width: 220, Height: 160, Condition: "mission>=10", DependsOn: "sf"},
-		},
-	},
-	"lv": {
-		Entity:      "lv",
-		MapImage:    "/assets/lv-map.jpg",
-		MapWidth:    nativeMapWidth,
-		MapHeight:   nativeMapHeight,
-		LockedAreas: []LockedArea{},
-	},
+func pxToPct(px int, total int) float64 {
+	return (float64(px) / float64(total)) * 100.0
 }
 
-var mapMarkers = map[string][]Marker{
-	"ls": {
-		{ID: "m1", Name: "CJ's House", Type: "house", X: 120, Y: 140},
-		{ID: "m2", Name: "Big Smoke Mission", Type: "mission", X: 250, Y: 200},
-		{ID: "m3", Name: "Gun Shop", Type: "shop", X: 400, Y: 300},
-		{ID: "m4", Name: "Rival Gang", Type: "enemy", X: 350, Y: 250},
-	},
-	"sf": {
-		{ID: "m5", Name: "Garage", Type: "shop", X: 150, Y: 200},
-		{ID: "m6", Name: "Woozie Mission", Type: "mission", X: 300, Y: 250},
-	},
-	"lv": {
-		{ID: "m7", Name: "Casino", Type: "shop", X: 200, Y: 180},
-		{ID: "m8", Name: "Heist Mission", Type: "mission", X: 350, Y: 260},
-	},
+func NewMapStore() *MapStore {
+	return &MapStore{
+		playerMissionsCompleted: map[string]int{
+			"ls": 3,
+			"sf": 0,
+			"lv": 0,
+			"cp": 1,
+		},
+		configs: map[string]MapConfig{
+			"ls": {
+				Entity: "ls",
+				Title:  "Los Santos & Blaine County",
+				Map: MapAsset{
+					Image:         "/assets/maps/loc/ls_map.jpg",
+					FallbackImage: "/assets/maps/loc/fallback_map.png",
+					Dimensions:    MapDimensions{Width: nativeMapWidth, Height: nativeMapHeight},
+				},
+				LockedAreas: []LockedArea{
+					{ID: "sf", Label: "San Fierro (Locked)", X: pxToPct(1024, nativeMapWidth), Y: pxToPct(341, nativeMapHeight), Width: pxToPct(682, nativeMapWidth), Height: pxToPct(512, nativeMapHeight), Condition: "mission>=5", DependsOn: "ls"},
+				},
+			},
+			"cp": {
+				Entity: "cp",
+				Title:  "Cayo Perico Island",
+				Map: MapAsset{
+					Image:         "/assets/maps/loc/cp_map.jpg",
+					FallbackImage: "/assets/maps/loc/fallback_map.png",
+					Dimensions:    MapDimensions{Width: nativeMapWidth, Height: nativeMapHeight},
+				},
+				LockedAreas: []LockedArea{},
+			},
+			"sa": {
+				Entity: "sa",
+				Title:  "San Andreas State",
+				Map: MapAsset{
+					Image:         "/assets/maps/loc/sa_map.jpg",
+					FallbackImage: "/assets/maps/loc/fallback_map.png",
+					Dimensions:    MapDimensions{Width: nativeMapWidth, Height: nativeMapHeight},
+				},
+				LockedAreas: []LockedArea{},
+			},
+		},
+		markers: map[string][]LocationMarker{
+			"ls": {
+				{
+					ID:          "m1",
+					Name:        "Maze Bank Tower",
+					Category:    "property",
+					X:           pxToPct(1986, nativeMapWidth),
+					Y:           pxToPct(2551, nativeMapHeight),
+					Icon:        "🏢",
+					IconURL:     "/assets/maps/legends/cafe_food.png",
+					Description: "Executive office building located in Pillbox Hill.",
+					MembersOnly: false,
+					Details:     LocationDetails{Address: "Pillbox Hill, Downtown Los Santos", Price: 4000000},
+				},
+				{
+					ID:          "m2",
+					Name:        "FIB Building Secret Cache",
+					Category:    "intel",
+					X:           pxToPct(2097, nativeMapWidth),
+					Y:           pxToPct(2461, nativeMapHeight),
+					Icon:        "🔒",
+					IconURL:     "/assets/maps/legends/safe_house.png",
+					Description: "Confidential intel cache.",
+					MembersOnly: true,
+					Details:     LocationDetails{IntelData: "Encrypted heist plans stored on floor 47."},
+				},
+				{
+					ID:          "m3",
+					Name:        "Ammu-Nation",
+					Category:    "shop",
+					X:           pxToPct(1638, nativeMapWidth),
+					Y:           pxToPct(1228, nativeMapHeight),
+					Icon:        "🔫",
+					IconURL:     "/assets/maps/legends/petrol_pump.png",
+					Description: "Firearms and armor retailer.",
+					MembersOnly: false,
+				},
+			},
+			"cp": {
+				{
+					ID:          "m4",
+					Name:        "El Rubio's Compound",
+					Category:    "mission",
+					X:           pxToPct(2048, nativeMapWidth),
+					Y:           pxToPct(3072, nativeMapHeight),
+					Icon:        "🏰",
+					Description: "Main compound area for the Cayo Perico Heist.",
+					MembersOnly: true,
+					Details:     LocationDetails{IntelData: "Drainage pipe compound entry open."},
+				},
+			},
+		},
+	}
 }
+
+var DefaultStore = NewMapStore()
 
 // --- Handlers ---
 
-// GetMapConfig returns entity-specific map config with active locks filtered by player's progress.
-// The response includes a snapshot of player progress under "playerProgress".
-func GetMapConfig(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	entity := ps.ByName("entity")
-	cfg, ok := mapConfigs[entity]
+func GetGtaMap(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	entity := r.URL.Query().Get("entity")
+	if entity == "" {
+		entity = "ls"
+	}
+
+	isAuthenticated := r.URL.Query().Get("auth") == "true"
+
+	DefaultStore.mu.RLock()
+	cfg, ok := DefaultStore.configs[entity]
 	if !ok {
-		http.Error(w, "entity not found", http.StatusNotFound)
+		DefaultStore.mu.RUnlock()
+		utils.RespondWithJSON(w, http.StatusNotFound, APIResponse{Success: false, Error: fmt.Sprintf("entity '%s' not found", entity)})
 		return
 	}
 
-	// get snapshot of player progress
-	playerMissionsMu.Lock()
-	progressCopy := make(map[string]int, len(playerMissionsCompleted))
-	for k, v := range playerMissionsCompleted {
+	progressCopy := make(map[string]int, len(DefaultStore.playerMissionsCompleted))
+	for k, v := range DefaultStore.playerMissionsCompleted {
 		progressCopy[k] = v
 	}
-	playerMissionsMu.Unlock()
 
-	// filter locked areas
+	rawMarkers := DefaultStore.markers[entity]
+	DefaultStore.mu.RUnlock()
+
+	// Filter locks
 	var activeLocks []LockedArea
 	for _, area := range cfg.LockedAreas {
 		if !isUnlockedForEntity(area, progressCopy, entity) {
 			activeLocks = append(activeLocks, area)
 		}
 	}
-	cfg.LockedAreas = activeLocks
 
-	// response with config + progress snapshot
-	resp := struct {
-		Config         MapConfig      `json:"config"`
-		PlayerProgress map[string]int `json:"playerProgress"`
-	}{
-		Config:         cfg,
-		PlayerProgress: progressCopy,
+	// Process markers (Sanitize sensitive data if unauthorized)
+	processedMarkers := make([]LocationMarker, 0, len(rawMarkers))
+	for _, marker := range rawMarkers {
+		m := marker
+		if m.MembersOnly && !isAuthenticated {
+			m.Details.IntelData = ""
+		}
+		processedMarkers = append(processedMarkers, m)
 	}
 
-	utils.RespondWithJSON(w, http.StatusOK, resp)
+	utils.RespondWithJSON(w, http.StatusOK, APIResponse{
+		Success: true,
+		Data: MapResponseData{
+			Entity:         cfg.Entity,
+			Title:          cfg.Title,
+			Map:            cfg.Map,
+			Locations:      processedMarkers,
+			LockedAreas:    activeLocks,
+			PlayerProgress: progressCopy,
+		},
+	})
 }
 
-// GetMapMarkers returns markers for the entity (native pixel coords)
-func GetMapMarkers(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	entity := ps.ByName("entity")
-	markers, ok := mapMarkers[entity]
-	if !ok {
-		http.Error(w, "entity not found", http.StatusNotFound)
-		return
-	}
-	utils.RespondWithJSON(w, http.StatusOK, markers)
-}
-
-// UpdatePlayerProgress increments the missions completed for an entity
-// POST /api/v1/player/progress?entity=ls
 func UpdatePlayerProgress(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// read entity from query param (default to "ls")
 	entity := r.URL.Query().Get("entity")
 	if entity == "" {
 		entity = "ls"
 	}
-	// validate entity exists
-	if _, ok := mapConfigs[entity]; !ok {
-		http.Error(w, "entity not found", http.StatusBadRequest)
+
+	DefaultStore.mu.Lock()
+	defer DefaultStore.mu.Unlock()
+
+	if _, ok := DefaultStore.configs[entity]; !ok {
+		utils.RespondWithJSON(w, http.StatusBadRequest, APIResponse{Success: false, Error: "invalid entity"})
 		return
 	}
 
-	// increment progress safely
-	playerMissionsMu.Lock()
-	playerMissionsCompleted[entity]++
-	newVal := playerMissionsCompleted[entity]
-	playerMissionsMu.Unlock()
+	DefaultStore.playerMissionsCompleted[entity]++
+	newVal := DefaultStore.playerMissionsCompleted[entity]
 
-	utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{"entity": entity, "missionsCompleted": newVal})
+	utils.RespondWithJSON(w, http.StatusOK, APIResponse{
+		Success: true,
+		Data: map[string]interface{}{
+			"entity":            entity,
+			"missionsCompleted": newVal,
+		},
+	})
 }
 
-// GetPlayerProgress returns player progress. If ?entity= is provided, return that entity's count,
-// otherwise return the whole progress map.
 func GetPlayerProgress(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	entity := r.URL.Query().Get("entity")
 
-	playerMissionsMu.Lock()
-	defer playerMissionsMu.Unlock()
+	DefaultStore.mu.RLock()
+	defer DefaultStore.mu.RUnlock()
 
 	if entity != "" {
-		if _, ok := playerMissionsCompleted[entity]; !ok {
-			http.Error(w, "entity not found", http.StatusBadRequest)
+		val, ok := DefaultStore.playerMissionsCompleted[entity]
+		if !ok {
+			utils.RespondWithJSON(w, http.StatusBadRequest, APIResponse{Success: false, Error: "invalid entity"})
 			return
 		}
-		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{"entity": entity, "missionsCompleted": playerMissionsCompleted[entity]})
+		utils.RespondWithJSON(w, http.StatusOK, APIResponse{
+			Success: true,
+			Data: map[string]interface{}{
+				"entity":            entity,
+				"missionsCompleted": val,
+			},
+		})
 		return
 	}
 
-	// return full snapshot
-	copyMap := make(map[string]int, len(playerMissionsCompleted))
-	for k, v := range playerMissionsCompleted {
-		copyMap[k] = v
+	progressCopy := make(map[string]int, len(DefaultStore.playerMissionsCompleted))
+	for k, v := range DefaultStore.playerMissionsCompleted {
+		progressCopy[k] = v
 	}
-	utils.RespondWithJSON(w, http.StatusOK, copyMap)
+
+	utils.RespondWithJSON(w, http.StatusOK, APIResponse{Success: true, Data: progressCopy})
 }
 
-// --- Helpers ---
-
-// isUnlockedForEntity checks dependency and condition for a locked area relative to an entity and progress map.
 func isUnlockedForEntity(area LockedArea, progress map[string]int, currentEntity string) bool {
 	checkEntity := area.DependsOn
 	if checkEntity == "" {
 		checkEntity = currentEntity
 	}
 
-	// If checkEntity not in progress map assume 0
 	val := progress[checkEntity]
 
-	// If area depends on another entity but that entity has zero progress -> locked
 	if area.DependsOn != "" && progress[area.DependsOn] == 0 {
 		return false
 	}
 
-	// Condition parsing: support "mission>=N"
 	if strings.HasPrefix(area.Condition, "mission>=") {
 		nStr := strings.TrimPrefix(area.Condition, "mission>=")
 		if n, err := strconv.Atoi(nStr); err == nil {
 			return val >= n
 		}
-		// treat parse error as locked
 		return false
 	}
 
-	// no condition implies unlocked as long as dependency satisfied
 	return true
 }

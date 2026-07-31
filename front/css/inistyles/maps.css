@@ -1,172 +1,386 @@
-/* Main content layout */
+/* ==========================================================================
+   GTA Map Components & Layout Engine
+   ========================================================================== */
+
+:root {
+  --gta-bg-primary: #0b0e14;
+  --gta-bg-surface: #161b22;
+  --gta-bg-surface-hover: #21262d;
+  --gta-border-color: rgba(255, 255, 255, 0.1);
+  --gta-accent: #3fb950;
+  --gta-accent-glow: rgba(63, 185, 80, 0.25);
+  --gta-accent-gold: #f1e05a;
+  --gta-accent-intel: #a371f7;
+  --gta-accent-shop: #58a6ff;
+  --gta-text-main: #f0f6fc;
+  --gta-text-muted: #8b949e;
+  --gta-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --gta-radius-sm: 6px;
+  --gta-radius-md: 10px;
+  --gta-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* Outer Container Frame */
 .mapcon {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+/* Main Map Wrapper */
+.gta-map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 680px;
+  background-color: var(--gta-bg-primary);
+  border: 1px solid var(--gta-border-color);
+  border-radius: var(--gta-radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--gta-shadow);
+  font-family: var(--gta-font);
+  color: var(--gta-text-main);
+}
+
+/* ==========================================================================
+   Header Bar & Controls
+   ========================================================================== */
+
+.gta-map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--gta-bg-surface);
+  border-bottom: 1px solid var(--gta-border-color);
+  z-index: 20;
+}
+
+.gta-map-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--gta-text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gta-map-title::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: var(--gta-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--gta-accent);
+}
+
+.gta-map-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Custom Dropdown Select */
+.gta-map-selector {
+  background-color: var(--gta-bg-primary);
+  color: var(--gta-text-main);
+  border: 1px solid var(--gta-border-color);
+  border-radius: var(--gta-radius-sm);
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.gta-map-selector:hover,
+.gta-map-selector:focus {
+  border-color: var(--gta-text-muted);
+  background-color: var(--gta-bg-surface-hover);
+}
+
+/* Zoom Toolbar */
+.gta-zoom-controls {
+  display: flex;
+  background-color: var(--gta-bg-primary);
+  border: 1px solid var(--gta-border-color);
+  border-radius: var(--gta-radius-sm);
+  overflow: hidden;
+}
+
+.gta-zoom-controls button {
+  background: transparent;
+  color: var(--gta-text-main);
+  border: none;
+  border-right: 1px solid var(--gta-border-color);
+  padding: 6px 14px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.gta-zoom-controls button:last-child {
+  border-right: none;
+}
+
+.gta-zoom-controls button:hover {
+  background-color: var(--gta-bg-surface-hover);
+  color: #ffffff;
+}
+
+.gta-zoom-controls button:active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   Viewport & Transformable Canvas
+   ========================================================================== */
+
+.gta-map-viewport {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  background-color: #06080b;
+}
+
+.gta-map-viewport.dragging {
+  cursor: grabbing;
+}
+
+.gta-map-transform-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.gta-map-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.gta-map-markers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Interactive Location Markers
+   ========================================================================== */
+
+.gta-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(22, 27, 34, 0.85);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--gta-border-color);
+  border-radius: 20px;
+  padding: 4px 10px 4px 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s ease, box-shadow 0.2s ease;
+  z-index: 5;
+}
+
+.gta-marker:hover {
+  transform: translate(-50%, -50%) scale(1.12);
+  z-index: 15;
+  border-color: #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
+}
+
+.gta-marker-img-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.gta-marker-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--gta-text-main);
+}
+
+/* Category-specific Accents */
+.gta-marker-property {
+  border-left: 3px solid var(--gta-accent-gold);
+}
+
+.gta-marker-intel {
+  border-left: 3px solid var(--gta-accent-intel);
+}
+
+.gta-marker-shop {
+  border-left: 3px solid var(--gta-accent-shop);
+}
+
+/* ==========================================================================
+   Details Floating Card (Glassmorphism)
+   ========================================================================== */
+
+.gta-map-details {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  background: rgba(11, 14, 20, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--gta-border-color);
+  border-radius: var(--gta-radius-md);
+  padding: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  z-index: 30;
+  animation: slideInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gta-map-details.hidden {
+  display: none;
+}
+
+.gta-details-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: var(--gta-text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.gta-details-close:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.gta-details-title {
+  margin: 0 0 8px 0;
+  padding-right: 24px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gta-text-main);
+}
+
+.gta-details-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--gta-text-muted);
+}
+
+/* Keyframe Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
   }
-  
-  /* Map container */
-  #custom-map-container {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    background-color: #f0f0f0;
-    cursor: grab;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  /* Map wrapper and image */
-  #map-wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-  }
-  
-  #map-inner {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-  
-  /* Marker layer */
-  #marker-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-  }
-  
-  .marker {
-    position: absolute;
-    width: 32px;
-    height: 32px;
-    background-image: url('/spritesheet.png'); /* Replace with actual sprite sheet */
-    background-size: cover;
-    pointer-events: auto;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-  }
-  
-  .marker:hover {
-    transform: scale(1.2);
-    z-index: 10;
-  }
-  
-  .marker-label {
-    position: absolute;
-    top: 36px;
-    left: -10px;
-    background: rgba(0, 0, 0, 0.7);
-    color: #fff;
-    padding: 2px 6px;
-    font-size: 12px;
-    border-radius: 4px;
-    white-space: nowrap;
-  }
-  
-  /* Legend styles */
-  #legend {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: #fff;
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  
-  #legend button {
-    background: #eee;
-    border: none;
-    padding: 6px 10px;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 14px;
-  }
-  
-  #legend button:hover {
-    background: #ddd;
-  }
-  
-  /* Zoom controls */
-  #zoom-controls {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  #zoom-controls button {
-    background: #fff;
-    border: 1px solid #ccc;
-    font-size: 18px;
-    padding: 6px;
-    margin-bottom: 4px;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  
-  #zoom-controls button:hover {
-    background: #f0f0f0;
-  }
-  
-  /* Minimap */
-  #minimap {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    width: 150px;
-    height: auto;
-    border: 1px solid #ccc;
-    background: #fff;
-    overflow: hidden;
-    border-radius: 4px;
-  }
-  
-  #minimap img {
-    width: 100%;
-    height: auto;
-  }
-  
-  #minimap-viewport {
-    position: absolute;
-    border: 2px solid red;
-    box-sizing: border-box;
-  }
-  
-  /* Info panel */
-  #marker-info-panel {
-    position: absolute;
-    top: 80px;
-    right: 20px;
-    width: 250px;
-    background: #fff;
-    border: 1px solid #ccc;
-    padding: 12px;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    display: none;
-  }
-  
-  
-  #marker-info-panel p {
-    font-size: 14px;
-    color: #333;
-  }
-  
-  #close-info-panel {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    background: transparent;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-  }
-  
+}
+
+/* Enable Hardware Acceleration for Canvas */
+.gta-map-transform-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Dynamic Counter-Scaled Markers */
+.gta-marker {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(var(--gta-marker-scale, 1));
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(22, 27, 34, 0.88);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--gta-border-color);
+  border-radius: 20px;
+  padding: 4px 10px 4px 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  z-index: 5;
+}
+
+.gta-marker:hover {
+  transform: translate(-50%, -50%) scale(calc(var(--gta-marker-scale, 1) * 1.15));
+  z-index: 15;
+  border-color: #ffffff;
+}
+
+/* Restricted/Locked Area Overlays */
+.gta-map-locked-areas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.gta-locked-area {
+  position: absolute;
+  background: rgba(239, 68, 68, 0.18);
+  border: 2px dashed rgba(239, 68, 68, 0.6);
+  border-radius: var(--gta-radius-sm);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.gta-locked-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(11, 14, 20, 0.85);
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.gta-locked-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fca5a5;
+}

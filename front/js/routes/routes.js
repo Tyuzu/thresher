@@ -28,7 +28,6 @@ export const staticRoutes = {
   "/vendors": { moduleImport: () => import("../pages/vendors/vendors.js"), functionName: "Vendors" },
 
   "/map": { moduleImport: () => import("../pages/gtamap/mapgta.js"), functionName: "MapGTA" },
-  "/remap": { moduleImport: () => import("../pages/remap/mapremap.js"), functionName: "MapRemap" },
   "/places": { moduleImport: () => import("../pages/places/places.js"), functionName: "Places" },
   "/create-place": { moduleImport: () => import("../pages/places/createPlace.js"), functionName: "CreatePlace", protected: true },
 

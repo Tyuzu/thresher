@@ -1,5 +1,5 @@
-import { createElement } from "../../components/createElement";
-import { displayGtaMap } from "../../services/GTAmap/gtamap";
+import { createElement } from "../../components/createElement.js";
+import { displayGtaMap } from "../../services/GTAmap/gtamap.js";
 
 async function MapGTA(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

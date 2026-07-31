@@ -1,333 +1,426 @@
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
-import Imagex from "../../components/base/Imagex.js";
+import { Imagex } from "../../components/base/Imagex.js";
+import { apiFetch, SRC_URL } from "../../api/api.js";
+import {
+    smoothZoom,
+    handleMouseDown,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    updateTransform,
+    resetTransformState,
+    showZoomIndicator
+} from "../../components/ui/zoomboxHelpers.js";
 
 /**
- * Display a GTA-style map with pan/zoom, locked areas, and marker interaction.
- *
- * @param {HTMLElement} container
- * @param {boolean} isLoggedIn
- * @param {string} entity - entity id ("ls","sf","lv") - optional, defaults to "ls"
+ * Enhanced Interactive GTA Map with delivery missions, routes, custom waypoints, and player tracking.
+ * Refactored using ZoomBox helpers.
  */
 export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
-  // 1. Cleanup previous map state & event listeners to prevent memory leaks
-  if (container.__gtaMapCleanup) {
-    container.__gtaMapCleanup();
-  }
+    container.innerHTML = "";
 
-  // Ensure container has relative positioning for absolute overlays
-  container.style.position = "relative";
-  container.innerHTML = "";
+    // Unified state compatible with ZoomBox helper functions
+    const state = {
+        zoomLevel: 1,
+        panX: 0,
+        panY: 0,
+        angle: 0,
+        flip: false,
+        isDragging: false,
+        startX: 0,
+        startY: 0,
+        activeEntity: entity,
 
-  // 2. Fetch Data
-  let config = {};
-  let markers = [];
-  try {
-    const [configRes, markersRes] = await Promise.all([
-      apiFetch(`/maps/config/${encodeURIComponent(entity)}`),
-      apiFetch(`/maps/markers/${encodeURIComponent(entity)}`)
+        // GTA Features State
+        playerPos: { x: 50, y: 50 }, // Center default
+        customWaypoint: null,
+        activeMission: null,
+        deliveryMissions: []
+    };
+
+    // UI Construction
+    const mapWrapper = createElement("div", { class: "gta-map-wrapper" });
+
+    const entitySelector = createElement("select", {
+        class: "gta-map-selector",
+        events: {
+            change: async (e) => {
+                state.activeEntity = e.target.value;
+                resetTransformState(state);
+                applyTransform();
+                await loadMapData();
+            }
+        }
+    }, [
+        createElement("option", { value: "ls", selected: state.activeEntity === "ls" }, ["Los Santos"]),
+        createElement("option", { value: "cp", selected: state.activeEntity === "cp" }, ["Cayo Perico"]),
+        createElement("option", { value: "sa", selected: state.activeEntity === "sa" }, ["San Andreas"])
     ]);
-    config = configRes;
-    markers = markersRes;
-  } catch (err) {
-    console.error("Failed to load map data, falling back:", err);
-    config = { mapImage: "/assets/gta-map.jpg", mapWidth: 1200, mapHeight: 600, entity };
-    markers = [];
-  }
 
-  const mapWidth = config.mapWidth || 1200;
-  const mapHeight = config.mapHeight || 600;
-  const mapImageUrl = config.mapImage || "/assets/gta-map.jpg";
+    const zoomControls = createElement("div", { class: "gta-zoom-controls" }, [
+        createElement("button", {
+            class: "gta-btn-zoom-in",
+            events: {
+                click: () => {
+                    smoothZoom({
+                        deltaY: -1,
+                        clientX: mapViewport.clientWidth / 2,
+                        clientY: mapViewport.clientHeight / 2
+                    }, mapImage, state, mapViewport);
+                    applyTransform();
+                }
+            }
+        }, ["+"]),
+        createElement("button", {
+            class: "gta-btn-zoom-out",
+            events: {
+                click: () => {
+                    smoothZoom({
+                        deltaY: 1,
+                        clientX: mapViewport.clientWidth / 2,
+                        clientY: mapViewport.clientHeight / 2
+                    }, mapImage, state, mapViewport);
+                    applyTransform();
+                }
+            }
+        }, ["−"]),
+        createElement("button", {
+            class: "gta-btn-zoom-reset",
+            events: {
+                click: () => {
+                    resetTransformState(state);
+                    applyTransform();
+                }
+            }
+        }, ["Reset"])
+    ]);
 
-  let viewportWidth = Math.max(300, window.innerWidth);
-  let viewportHeight = Math.max(200, Math.round(window.innerHeight * 0.9));
+    const mapHeader = createElement("div", { class: "gta-map-header" }, [
+        createElement("h3", { class: "gta-map-title" }, ["GTA Map Explorer"]),
+        createElement("div", { class: "gta-map-header-actions" }, [entitySelector, zoomControls])
+    ]);
 
-  // 3. UI Controls
-  const advanceBtn = createElement(
-    "button",
-    { id: "advance-btn", style: "position:relative;margin-bottom:8px;padding:6px 12px;cursor:pointer;z-index:40;" },
-    ["▶ Advance Mission"]
-  );
+    // Overlays
+    const svgRouteLayer = createElement("svg", { class: "gta-map-routes-svg" });
+    const markersOverlay = createElement("div", { class: "gta-map-markers" });
+    const lockedAreasOverlay = createElement("div", { class: "gta-map-locked-areas" });
+    const detailsPanel = createElement("div", { class: "gta-map-details hidden" });
+    const missionHudPanel = createElement("div", { class: "gta-mission-hud hidden" });
 
-  advanceBtn.addEventListener("click", async () => {
-    try {
-      await apiFetch(`/player/progress?entity=${encodeURIComponent(entity)}`, "POST");
-      displayGtaMap(container, isLoggedIn, entity);
-    } catch (err) {
-      console.error("Failed to advance mission:", err);
-    }
-  });
-
-  const mapContainer = createElement("div", {
-    id: "map-container",
-    style: `position:relative;overflow:hidden;width:${viewportWidth}px;height:${viewportHeight}px;border:2px solid #333;cursor:grab;background:#000;touch-action:none;`,
-  });
-
-  const mapInner = Imagex({
-    id: "map-inner",
-    src: mapImageUrl,
-    width: String(mapWidth),
-    height: String(mapHeight),
-    style: `display:block;width:${mapWidth}px;height:${mapHeight}px;user-drag:none;pointer-events:none;`,
-  });
-
-  const markerLayer = createElement("div", {
-    id: "marker-layer",
-    style: `position:absolute;left:0;top:0;width:${mapWidth}px;height:${mapHeight}px;pointer-events:none;`,
-  });
-
-  const lockedLayer = createElement("div", {
-    id: "locked-layer",
-    style: `position:absolute;left:0;top:0;width:${mapWidth}px;height:${mapHeight}px;pointer-events:none;`,
-  });
-
-  const mapWrapper = createElement("div", {
-    id: "map-wrapper",
-    style: `position:absolute;left:0;top:0;width:${mapWidth}px;height:${mapHeight}px;transform-origin:0 0;will-change:transform;`,
-  }, [mapInner, markerLayer, lockedLayer]);
-
-  mapContainer.appendChild(mapWrapper);
-
-  // Overlays
-  const legend = createElement("div", {
-    id: "legend",
-    style: "position:absolute;top:10px;left:10px;background:rgba(34,34,34,0.9);color:#fff;padding:8px;display:none;z-index:50;font-size:13px;border-radius:4px;",
-  }, [
-    createElement("div", {}, ["🏠 Safehouse"]),
-    createElement("div", {}, ["⭐ Mission"]),
-    createElement("div", {}, ["💲 Shop"]),
-    createElement("div", {}, ["💀 Enemy"]),
-  ]);
-
-  const zoomInBtn = createElement("button", { style: "width:32px;height:32px;cursor:pointer;font-weight:bold;" }, ["+"]);
-  const zoomOutBtn = createElement("button", { style: "width:32px;height:32px;cursor:pointer;font-weight:bold;" }, ["−"]);
-
-  const zoomControls = createElement("div", {
-    id: "zoom-controls",
-    style: "position:absolute;top:10px;right:10px;z-index:50;display:flex;flex-direction:column;gap:6px;",
-  }, [zoomInBtn, zoomOutBtn]);
-
-  const minimapImage = Imagex({
-    src: mapImageUrl,
-    style: "width:100%;height:100%;object-fit:cover;display:block;",
-  });
-
-  const minimapViewport = createElement("div", {
-    id: "minimap-viewport",
-    style: "position:absolute;border:2px solid red;pointer-events:none;box-sizing:border-box;",
-  });
-
-  const minimap = createElement("div", {
-    id: "minimap",
-    style: `position:absolute;bottom:10px;right:10px;width:120px;height:120px;border:2px solid #333;overflow:hidden;z-index:50;background:#000;border-radius:4px;`,
-  }, [minimapImage, minimapViewport]);
-
-  const infoTitle = createElement("h3", { style: "margin:0 0 6px 0;font-size:16px;" }, ["Info"]);
-  const infoContent = createElement("p", { style: "margin:0 0 8px 0;font-size:13px;" }, ["Click a marker to see details"]);
-  const closeBtn = createElement("button", { style: "float:right;cursor:pointer;" }, ["✕"]);
-
-  const infoPanel = createElement("div", {
-    id: "info-panel",
-    style: "position:absolute;bottom:10px;left:10px;width:240px;background:#fff;color:#000;border:1px solid #333;padding:10px;display:none;z-index:60;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,0.3);",
-  }, [closeBtn, infoTitle, infoContent]);
-
-  closeBtn.addEventListener("click", () => {
-    infoPanel.style.display = "none";
-  });
-
-  // Assemble Map Structure
-  mapContainer.appendChild(legend);
-  mapContainer.appendChild(zoomControls);
-  mapContainer.appendChild(minimap);
-  mapContainer.appendChild(infoPanel);
-
-  container.appendChild(advanceBtn);
-  container.appendChild(mapContainer);
-
-  // 4. Render Markers
-  const emojiMap = { house: "🏠", mission: "⭐", shop: "💲", enemy: "💀" };
-
-  markers.forEach((marker) => {
-    const el = createElement("div", {
-      class: "marker",
-      style: `
-        position:absolute;
-        left:${marker.x}px;
-        top:${marker.y}px;
-        font-size:22px;
-        cursor:pointer;
-        pointer-events:auto;
-        z-index:5;
-        transform:translate(-50%,-50%);
-        user-select:none;
-      `,
-      title: marker.name,
-    }, [emojiMap[marker.type] || "❓"]);
-
-    el.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      infoTitle.textContent = marker.name;
-      infoContent.textContent = `Type: ${marker.type}`;
-      infoPanel.style.display = "block";
+    let mapImage = Imagex({
+        src: "",
+        fallback: "/assets/maps/loc/fallback_map.png",
+        class: "gta-map-image",
+        alt: "GTA Map",
+        draggable: false
     });
 
-    markerLayer.appendChild(el);
-  });
+    const transformLayer = createElement("div", { class: "gta-map-transform-layer" }, [
+        mapImage,
+        lockedAreasOverlay,
+        svgRouteLayer,
+        markersOverlay
+    ]);
 
-  // 5. Render Locked Areas (Granular overlapping logic)
-  const lockedAreas = Array.isArray(config.lockedAreas) ? config.lockedAreas : [];
-  if (lockedAreas.length > 0) {
-    lockedLayer.style.pointerEvents = "auto";
-    
-    lockedAreas.forEach((area) => {
-      // Check if THIS specific area overlaps a marker
-      const isOverlapping = markers.some(
-        (mk) => mk.x >= area.x && mk.x <= area.x + area.width && mk.y >= area.y && mk.y <= area.y + area.height
-      );
+    const mapViewport = createElement("div", { class: "gta-map-viewport" }, [
+        transformLayer,
+        missionHudPanel
+    ]);
 
-      if (isOverlapping) {
-        console.warn(`Skipping locked area "${area.label}" due to marker overlap.`);
-        return; // Skip rendering this specific locked area
-      }
+    mapWrapper.appendChild(mapHeader);
+    mapWrapper.appendChild(mapViewport);
+    mapWrapper.appendChild(detailsPanel);
+    container.appendChild(mapWrapper);
 
-      const lockInfoNodes = [];
-      if (area.dependsOn) lockInfoNodes.push(createElement("div", {}, [`Requires: ${String(area.dependsOn).toUpperCase()}`]));
-      if (area.condition) lockInfoNodes.push(createElement("div", {}, [String(area.condition)]));
+    // Apply transformation updates using ZoomBox Helper
+    function applyTransform() {
+        updateTransform(transformLayer, state);
 
-      const lockedDiv = createElement("div", {
-        class: "locked-area",
-        style: `
-          position:absolute;
-          left:${area.x}px;
-          top:${area.y}px;
-          width:${area.width}px;
-          height:${area.height}px;
-          background:rgba(0,0,0,0.55);
-          color:#fff;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-          font-size:12px;
-          text-align:center;
-          pointer-events:auto;
-          z-index:10;
-          padding:4px;
-          box-sizing:border-box;
-        `,
-      }, [createElement("div", { style: "font-weight:bold;" }, [`🚫 ${area.label}`]), ...lockInfoNodes]);
-
-      lockedLayer.appendChild(lockedDiv);
-    });
-  }
-
-  // 6. Viewport State & Math Dynamics
-  let isDragging = false;
-  let startX = 0;
-  let startY = 0;
-  let mapX = Math.round((viewportWidth - mapWidth) / 2);
-  let mapY = Math.round((viewportHeight - mapHeight) / 2);
-  let zoom = 1;
-
-  function applyTransform() {
-    mapWrapper.style.transform = `translate3d(${mapX}px, ${mapY}px, 0px) scale(${zoom})`;
-    updateMinimap();
-  }
-
-  function updateMinimap() {
-    const visibleWidth = viewportWidth / zoom;
-    const visibleHeight = viewportHeight / zoom;
-    const minimapScale = minimap.offsetWidth / mapWidth;
-
-    minimapViewport.style.width = `${Math.min(minimap.offsetWidth, visibleWidth * minimapScale)}px`;
-    minimapViewport.style.height = `${Math.min(minimap.offsetHeight, visibleHeight * minimapScale)}px`;
-    minimapViewport.style.left = `${Math.max(0, -mapX * minimapScale)}px`;
-    minimapViewport.style.top = `${Math.max(0, -mapY * minimapScale)}px`;
-  }
-
-  function zoomAtPoint(factor, focalX, focalY) {
-    const newZoom = Math.min(Math.max(0.5, zoom * factor), 4.0);
-    const scaleRatio = newZoom / zoom;
-
-    // Adjust position around focal point (center of viewport)
-    mapX = focalX - (focalX - mapX) * scaleRatio;
-    mapY = focalY - (focalY - mapY) * scaleRatio;
-    zoom = newZoom;
-
-    applyTransform();
-  }
-
-  // 7. Event Listeners with Pointer Capture
-  const onPointerDown = (e) => {
-    if (e.target.closest("#zoom-controls, #info-panel, #legend, button")) return;
-    isDragging = true;
-    startX = e.clientX - mapX;
-    startY = e.clientY - mapY;
-    mapContainer.style.cursor = "grabbing";
-    mapContainer.setPointerCapture(e.pointerId);
-  };
-
-  const onPointerMove = (e) => {
-    if (!isDragging) return;
-    mapX = e.clientX - startX;
-    mapY = e.clientY - startY;
-    applyTransform();
-  };
-
-  const onPointerUp = (e) => {
-    if (!isDragging) return;
-    isDragging = false;
-    mapContainer.style.cursor = "grab";
-    try { mapContainer.releasePointerCapture(e.pointerId); } catch (_) {}
-  };
-
-  const onWheel = (e) => {
-    e.preventDefault();
-    const rect = mapContainer.getBoundingClientRect();
-    const focalX = e.clientX - rect.left;
-    const focalY = e.clientY - rect.top;
-    const factor = e.deltaY < 0 ? 1.15 : 0.85;
-    zoomAtPoint(factor, focalX, focalY);
-  };
-
-  const onKeyDown = (ev) => {
-    if (ev.key && ev.key.toLowerCase() === "l") {
-      legend.style.display = legend.style.display === "none" ? "block" : "none";
+        // Adjust marker proportions relative to current zoom level
+        const counterScale = Math.max(0.6, 1 / Math.sqrt(state.zoomLevel || 1));
+        markersOverlay.style.setProperty("--gta-marker-scale", counterScale);
     }
-  };
 
-  const onResize = () => {
-    viewportWidth = Math.max(300, window.innerWidth);
-    viewportHeight = Math.max(200, Math.round(window.innerHeight * 0.9));
-    mapContainer.style.width = `${viewportWidth}px`;
-    mapContainer.style.height = `${viewportHeight}px`;
-    applyTransform();
-  };
+    /* =========================================================
+       Event Delegation & Gesture Handling via ZoomBox Helpers
+       ========================================================= */
 
-  // Attach event listeners
-  mapContainer.addEventListener("pointerdown", onPointerDown);
-  mapContainer.addEventListener("pointermove", onPointerMove);
-  mapContainer.addEventListener("pointerup", onPointerUp);
-  mapContainer.addEventListener("pointercancel", onPointerUp);
-  mapContainer.addEventListener("wheel", onWheel, { passive: false });
+    // Mouse Dragging via ZoomBox Helper
+    mapViewport.addEventListener("mousedown", (e) => {
+        if (e.target.closest(".gta-marker") || e.target.closest(".gta-locked-area")) return;
+        handleMouseDown(e, state, transformLayer);
+    });
 
-  zoomInBtn.addEventListener("click", () => zoomAtPoint(1.2, viewportWidth / 2, viewportHeight / 2));
-  zoomOutBtn.addEventListener("click", () => zoomAtPoint(0.8, viewportWidth / 2, viewportHeight / 2));
+    // Touch Support via ZoomBox Helpers
+    mapViewport.addEventListener("touchstart", (e) => handleTouchStart(e, state, transformLayer), { passive: false });
+    mapViewport.addEventListener("touchmove", (e) => {
+        handleTouchMove(e, state, transformLayer);
+        applyTransform();
+    }, { passive: false });
+    mapViewport.addEventListener("touchend", (e) => handleTouchEnd(e, state));
 
-  window.addEventListener("keydown", onKeyDown);
-  window.addEventListener("resize", onResize);
+    // Mouse Wheel Zooming via ZoomBox Helper
+    mapViewport.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        smoothZoom(e, transformLayer, state, mapViewport);
+        applyTransform();
+    }, { passive: false });
 
-  // 8. Register Cleanup Handler
-  container.__gtaMapCleanup = () => {
-    mapContainer.removeEventListener("pointerdown", onPointerDown);
-    mapContainer.removeEventListener("pointermove", onPointerMove);
-    mapContainer.removeEventListener("pointerup", onPointerUp);
-    mapContainer.removeEventListener("pointercancel", onPointerUp);
-    mapContainer.removeEventListener("wheel", onWheel);
-    window.removeEventListener("keydown", onKeyDown);
-    window.removeEventListener("resize", onResize);
-  };
+    // Custom GTA Double-Click Waypoint Placement
+    mapViewport.addEventListener("dblclick", (e) => {
+        if (e.target.closest(".gta-marker")) return;
 
-  // Initial Draw
-  applyTransform();
+        const rect = transformLayer.getBoundingClientRect();
+        const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+        const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+
+        if (xPercent >= 0 && xPercent <= 100 && yPercent >= 0 && yPercent <= 100) {
+            state.customWaypoint = { x: xPercent, y: yPercent };
+            renderAllMarkers();
+            renderRoutePaths();
+        }
+    });
+
+    /* =========================================================
+       Mission & Route System Features
+       ========================================================= */
+
+    function renderRoutePaths() {
+        svgRouteLayer.innerHTML = "";
+        if (!state.activeMission) return;
+
+        const { from, to } = state.activeMission;
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const d = `M ${from.x}% ${from.y}% Q ${(from.x + to.x) / 2}% ${(from.y + to.y) / 2 - 10}, ${to.x}% ${to.y}%`;
+
+        path.setAttribute("d", d);
+        path.setAttribute("class", "gta-route-line gta-route-animated");
+        svgRouteLayer.appendChild(path);
+    }
+
+    function renderAllMarkers() {
+        markersOverlay.innerHTML = "";
+
+        // 1. Render Location Markers
+        (state.locations || []).forEach(renderSingleMarker);
+
+        // 2. Render Player Marker
+        if (state.playerPos) {
+            const playerEl = createElement("div", {
+                class: "gta-marker gta-marker-player",
+                style: { left: `${state.playerPos.x}%`, top: `${state.playerPos.y}%` }
+            }, [
+                createElement("span", { class: "gta-marker-icon" }, ["▲"])
+            ]);
+            markersOverlay.appendChild(playerEl);
+        }
+
+        // 3. Render Custom Waypoint Marker
+        if (state.customWaypoint) {
+            const waypointEl = createElement("div", {
+                class: "gta-marker gta-marker-waypoint",
+                style: { left: `${state.customWaypoint.x}%`, top: `${state.customWaypoint.y}%` },
+                events: {
+                    click: (e) => {
+                        e.stopPropagation();
+                        state.customWaypoint = null;
+                        renderAllMarkers();
+                        renderRoutePaths();
+                    }
+                }
+            }, [
+                createElement("span", { class: "gta-marker-icon" }, ["🈁"]),
+                createElement("span", { class: "gta-marker-label" }, ["Waypoint (Click to remove)"])
+            ]);
+            markersOverlay.appendChild(waypointEl);
+        }
+
+        // 4. Render Delivery Mission Markers
+        if (state.activeMission) {
+            const { from, to } = state.activeMission;
+
+            const pickupEl = createElement("div", {
+                class: "gta-marker gta-marker-delivery-from",
+                style: { left: `${from.x}%`, top: `${from.y}%` }
+            }, [
+                createElement("span", { class: "gta-marker-icon" }, ["📦"]),
+                createElement("span", { class: "gta-marker-label" }, ["Pickup Point"])
+            ]);
+
+            const dropEl = createElement("div", {
+                class: "gta-marker gta-marker-delivery-to",
+                style: { left: `${to.x}%`, top: `${to.y}%` }
+            }, [
+                createElement("span", { class: "gta-marker-icon" }, ["🏁"]),
+                createElement("span", { class: "gta-marker-label" }, ["Delivery Target"])
+            ]);
+
+            markersOverlay.appendChild(pickupEl);
+            markersOverlay.appendChild(dropEl);
+        }
+    }
+
+    function renderSingleMarker(loc) {
+        const iconElement = loc.iconUrl
+            ? Imagex({ src: loc.iconUrl, fallback: "/assets/icon-192.png", class: "gta-marker-img-icon", alt: loc.name })
+            : createElement("span", { class: "gta-marker-icon" }, [loc.icon || "📍"]);
+
+        const marker = createElement("div", {
+            class: `gta-marker gta-marker-${loc.category || "default"}`,
+            style: { left: `${loc.x}%`, top: `${loc.y}%` },
+            dataset: { id: loc.id },
+            events: {
+                click: (e) => {
+                    e.stopPropagation();
+                    showLocationDetails(loc);
+                }
+            }
+        }, [
+            iconElement,
+            createElement("span", { class: "gta-marker-label" }, [loc.name])
+        ]);
+
+        markersOverlay.appendChild(marker);
+    }
+
+    function updateMissionHUD() {
+        if (!state.activeMission) {
+            missionHudPanel.classList.add("hidden");
+            return;
+        }
+
+        const m = state.activeMission;
+        missionHudPanel.innerHTML = "";
+
+        const title = createElement("div", { class: "gta-hud-title" }, [`Delivery: ${m.title}`]);
+        const reward = createElement("div", { class: "gta-hud-reward" }, [`Reward: $${m.reward}`]);
+        const cancelBtn = createElement("button", {
+            class: "gta-btn-cancel-mission",
+            events: {
+                click: () => {
+                    state.activeMission = null;
+                    updateMissionHUD();
+                    renderAllMarkers();
+                    renderRoutePaths();
+                }
+            }
+        }, ["Cancel Mission"]);
+
+        missionHudPanel.appendChild(title);
+        missionHudPanel.appendChild(reward);
+        missionHudPanel.appendChild(cancelBtn);
+        missionHudPanel.classList.remove("hidden");
+    }
+
+    function showLocationDetails(loc) {
+        detailsPanel.innerHTML = "";
+
+        const closeBtn = createElement("button", {
+            class: "gta-details-close",
+            events: { click: () => detailsPanel.classList.add("hidden") }
+        }, ["✕"]);
+
+        const title = createElement("h4", { class: "gta-details-title" }, [loc.name]);
+        const desc = createElement("p", { class: "gta-details-desc" }, [loc.description || "No description available."]);
+
+        detailsPanel.appendChild(closeBtn);
+        detailsPanel.appendChild(title);
+        detailsPanel.appendChild(desc);
+
+        if (loc.mission) {
+            const startMissionBtn = createElement("button", {
+                class: "gta-btn-mission-start",
+                events: {
+                    click: () => {
+                        state.activeMission = {
+                            id: loc.mission.id,
+                            title: loc.mission.title,
+                            reward: loc.mission.reward,
+                            from: { x: loc.x, y: loc.y },
+                            to: loc.mission.target
+                        };
+                        detailsPanel.classList.add("hidden");
+                        updateMissionHUD();
+                        renderAllMarkers();
+                        renderRoutePaths();
+                    }
+                }
+            }, [`Start Delivery ($${loc.mission.reward})`]);
+
+            detailsPanel.appendChild(startMissionBtn);
+        }
+
+        if (isLoggedIn && loc.membersOnly && loc.details?.intelData) {
+            detailsPanel.appendChild(
+                createElement("div", { class: "gta-details-secret" }, [
+                    `🔒 Exclusive Intel: ${loc.details.intelData}`
+                ])
+            );
+        }
+
+        detailsPanel.classList.remove("hidden");
+    }
+
+    /* =========================================================
+       API & Data Fetching
+       ========================================================= */
+
+    async function loadMapData() {
+        try {
+            markersOverlay.innerHTML = "";
+            lockedAreasOverlay.innerHTML = "";
+            svgRouteLayer.innerHTML = "";
+            detailsPanel.classList.add("hidden");
+
+            const response = await apiFetch(`/gta/map?entity=${state.activeEntity}&auth=${isLoggedIn}`);
+            const mapData = response?.data || response;
+
+            state.locations = mapData?.locations || [];
+            state.deliveryMissions = mapData?.deliveryMissions || [];
+            state.playerPos = mapData?.playerPos || { x: 50, y: 50 };
+
+            const newMapImage = Imagex({
+                src: mapData?.map?.image || `${SRC_URL || ""}/assets/maps/loc/${state.activeEntity}_map.jpg`,
+                fallback: mapData?.map?.fallbackImage || "/assets/maps/loc/fallback_map.png",
+                class: "gta-map-image",
+                alt: mapData?.title || "GTA Map",
+                draggable: false
+            });
+
+            transformLayer.replaceChild(newMapImage, mapImage);
+            mapImage = newMapImage;
+
+            renderLockedAreas(mapData?.lockedAreas || []);
+            renderAllMarkers();
+            renderRoutePaths();
+            updateMissionHUD();
+            applyTransform();
+        } catch (err) {
+            console.error("Failed to load map data:", err);
+            markersOverlay.innerHTML = `<div class="gta-map-error">Error fetching map features.</div>`;
+        }
+    }
+
+    function renderLockedAreas(areas) {
+        lockedAreasOverlay.innerHTML = "";
+        areas.forEach((area) => {
+            const lockedEl = createElement("div", {
+                class: "gta-locked-area",
+                style: {
+                    left: `${area.x}%`,
+                    top: `${area.y}%`,
+                    width: `${area.width}%`,
+                    height: `${area.height}%`
+                }
+            }, [
+                createElement("div", { class: "gta-locked-content" }, [
+                    createElement("span", { class: "gta-locked-icon" }, ["🔒"]),
+                    createElement("span", { class: "gta-locked-label" }, [area.label])
+                ])
+            ]);
+            lockedAreasOverlay.appendChild(lockedEl);
+        });
+    }
+
+    await loadMapData();
 }
