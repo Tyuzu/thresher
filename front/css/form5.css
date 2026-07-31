@@ -5,13 +5,10 @@
   box-shadow: var(--shadow-elev-2);
   max-width: 600px;
   margin: 0 auto;
-  font-family: var(--font-body);
   color: var(--color-fg);
 }
 
 .crop-edit-form h2 {
-  font-size: var(--font-size-xl);
-  font-family: var(--font-heading);
   margin-bottom: var(--space-md);
   text-align: center;
 }

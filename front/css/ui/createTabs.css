@@ -8,7 +8,6 @@
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  font-family: var(--font-body);
   color: var(--color-fg);
 }
 
@@ -125,8 +124,6 @@
    ========================================================================== */
 
 .tab-content h2 {
-  font-family: var(--font-heading);
-  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-heading);
   color: var(--color-fg);
@@ -147,8 +144,6 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-sm) var(--space-md);
-  font-family: var(--font-body);
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   border-radius: var(--radius-md);
   border: 1px solid transparent;

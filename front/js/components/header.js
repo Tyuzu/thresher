@@ -57,7 +57,7 @@ function createDropdownMenu(id, labelText, items) {
   const menu = createElement("div", { class: "menu-content", "aria-label": labelText }, []);
 
   items.forEach(({ href, text }) => {
-    const link = createElement("a", { class: "menu-item", href: `${text}` }, [text]);
+    const link = createElement("a", { class: "profile-menu-item", href: `${text}` }, [text]);
     link.addEventListener("click", (e) => {
       e.preventDefault();
       navigate(href);

@@ -1,13 +1,7 @@
-// latlong.js
 import { clamp } from "./utilities.js";
 
-/* ---------- Initialize Map Position ---------- */
 /**
- * Center map on current location if available, otherwise center entire map.
- * @param {object} state
- * @param {object} mapOptions
- * @param {Function} latToYFn
- * @param {Function} lonToXFn
+ * Center map on current location if available, otherwise center in viewport.
  */
 export function initPosition(state, mapOptions, latToYFn, lonToXFn) {
   const mapW = mapOptions.mapWidth || 0;
@@ -27,13 +21,8 @@ export function initPosition(state, mapOptions, latToYFn, lonToXFn) {
   }
 }
 
-/* ---------- Latitude → Y ---------- */
 /**
  * Convert latitude to Y pixel coordinate.
- * Supports "linear" and "mercator" projections.
- * @param {number} lat
- * @param {object} mapOptions
- * @returns {number}
  */
 export function latToY(lat, mapOptions) {
   const bounds = mapOptions.mapBounds || {};
@@ -44,30 +33,26 @@ export function latToY(lat, mapOptions) {
 
   if (projection === "mercator") {
     const safeLat = clamp(lat, -85.05112878, 85.05112878);
-    const rad = safeLat * Math.PI / 180;
+    const rad = (safeLat * Math.PI) / 180;
     const y = Math.log(Math.tan(Math.PI / 4 + rad / 2));
 
-    const minRad = clamp(minLat, -85.05112878, 85.05112878) * Math.PI / 180;
-    const maxRad = clamp(maxLat, -85.05112878, 85.05112878) * Math.PI / 180;
+    const minRad = (clamp(minLat, -85.05112878, 85.05112878) * Math.PI) / 180;
+    const maxRad = (clamp(maxLat, -85.05112878, 85.05112878) * Math.PI) / 180;
 
     const yMin = Math.log(Math.tan(Math.PI / 4 + minRad / 2));
     const yMax = Math.log(Math.tan(Math.PI / 4 + maxRad / 2));
     const denom = yMax - yMin || 1;
 
-    return mapHeight * (yMax - y) / denom;
+    return (mapHeight * (yMax - y)) / denom;
   }
 
   // Linear projection
   const denom = maxLat - minLat || 1;
-  return mapHeight * (maxLat - lat) / denom;
+  return (mapHeight * (maxLat - lat)) / denom;
 }
 
-/* ---------- Longitude → X ---------- */
 /**
  * Convert longitude to X pixel coordinate.
- * @param {number} lon
- * @param {object} mapOptions
- * @returns {number}
  */
 export function lonToX(lon, mapOptions) {
   const bounds = mapOptions.mapBounds || {};
@@ -76,5 +61,5 @@ export function lonToX(lon, mapOptions) {
   const mapWidth = mapOptions.mapWidth || 0;
 
   const denom = maxLon - minLon || 1;
-  return mapWidth * (lon - minLon) / denom;
+  return (mapWidth * (lon - minLon)) / denom;
 }

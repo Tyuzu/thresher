@@ -20,7 +20,6 @@
   /* Default position */
   left: 50%;
   transform: translateX(-50%);
-  font-family: 'Courier New', Courier, monospace;
   color: #fff;
   background: rgba(0, 0, 0, 0.6);
   padding: 5px 10px;
@@ -193,7 +192,6 @@
 }
 
 .time-display {
-  font-family: monospace;
   font-size: 13px;
   color: white;
   padding: 0 10px;

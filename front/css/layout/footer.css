@@ -69,7 +69,6 @@
 
 .footer-bottom p {
   margin: 0;
-  font-size: var(--font-size-xs, 0.8rem);
   color: var(--color-fg-muted, var(--color-fg));
   opacity: 0.75;
 }

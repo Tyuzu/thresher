@@ -3,7 +3,6 @@
   flex-direction: row;
   height: calc(94vh);
   background-color: var(--color-surface);
-  font-family: var(--font-body);
 }
 
 .chat-topbar {

@@ -21,9 +21,7 @@
 }
 
 .logo-link {
-  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  font-family: var(--font-heading);
   color: var(--color-fg);
   text-decoration: none;
   transition: color var(--transition-fast);
@@ -101,7 +99,7 @@
   position: absolute;
   top: calc(100% + var(--space-xs));
   right: 0;
-  min-width: 180px;
+  min-width: 140px;
   padding: var(--space-xs) 0;
   background-color: var(--color-card-bg);
   border: 1px solid var(--color-border);
@@ -195,7 +193,8 @@
 }
 
 .logout:hover {
-  background-color: rgba(220, 38, 38, 0.08); /* Soft red hover tint */
+  background-color: rgba(220, 38, 38, 0.08);
+  /* Soft red hover tint */
   color: var(--color-danger);
 }
 

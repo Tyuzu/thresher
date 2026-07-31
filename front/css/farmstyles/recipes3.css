@@ -4,7 +4,6 @@
   margin: 0 auto;
   padding: var(--space-md);
   color: var(--color-fg);
-  font-family: var(--font-body);
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-lg);
@@ -23,8 +22,6 @@
 }
 
 .recipes-main h1 {
-  font-family: var(--font-heading);
-  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-heading);
   margin: 0;
@@ -142,39 +139,6 @@
   color: var(--color-light);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-/* --- Buttons --- */
-/*.buttonx {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
-}*/
-
-.buttonx.primary {
-  background-color: var(--color-btn-bg);
-  color: var(--color-btn-fg);
-}
-
-.buttonx.primary:hover {
-  background-color: var(--color-btn-hover-bg);
-}
-
-.buttonx.secondary {
-  background-color: var(--color-bg-tertiary);
-  color: var(--color-fg);
-  border-color: var(--color-border);
-}
-
-.buttonx.secondary:hover {
-  background-color: var(--color-border-light);
 }
 
 .recipe-card .buttonx {

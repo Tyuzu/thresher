@@ -6,7 +6,6 @@
   max-width: var(--max-width-sm);
   margin: 0 auto;
   padding: var(--space-md);
-  font-family: var(--font-body);
   color: var(--color-fg);
   background-color: var(--color-bg);
   box-sizing: border-box;
@@ -30,7 +29,6 @@
 
 /* Base Buttons & Links Reset */
 .tumblr-layout button {
-  font-family: var(--font-body);
   cursor: pointer;
   border: none;
   background: none;
@@ -127,7 +125,6 @@
 }
 
 .button-label {
-  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   letter-spacing: 0.02em;
 }
@@ -163,7 +160,6 @@
 }
 
 .form-group label {
-  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -179,8 +175,6 @@
   border: 1px solid var(--color-input-border);
   border-radius: var(--radius-sm);
   color: var(--color-fg);
-  font-family: var(--font-body);
-  font-size: var(--font-size-base);
   transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
@@ -200,7 +194,6 @@
 
 .form-error {
   color: var(--color-error) !important;
-  font-size: var(--font-size-xs) !important;
   margin-top: var(--space-xs) !important;
 }
 
@@ -209,7 +202,6 @@
   width: 100%;
   padding: var(--space-sm) var(--space-md);
   margin-bottom: var(--space-md);
-  font-size: var(--font-size-sm);
   color: var(--color-muted);
   background-color: var(--color-bg-secondary);
   border: 1px dashed var(--color-border);
@@ -241,7 +233,6 @@
   background-color: var(--color-btn-bg);
   color: var(--color-btn-fg);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   text-align: center;
   transition: background-color var(--transition-fast), transform var(--transition-fast);
@@ -312,12 +303,10 @@
 
 .username {
   font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-sm);
   color: var(--color-fg);
 }
 
 .timestamp {
-  font-size: var(--font-size-xs);
   color: var(--color-muted);
 }
 
@@ -329,7 +318,6 @@
 .post-media p {
   padding: 0 var(--space-md) var(--space-sm) var(--space-md);
   margin: 0;
-  font-size: var(--font-size-base);
   line-height: var(--line-height-base);
   color: var(--color-fg);
 }
@@ -359,7 +347,6 @@
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-sm);
   color: var(--color-muted);
-  font-size: var(--font-size-sm);
   text-align: center;
 }
 
@@ -370,7 +357,6 @@
 
 .post-title {
   margin: 0 0 var(--space-xs) 0;
-  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-heading);
 }
@@ -382,7 +368,6 @@
 }
 
 .tag {
-  font-size: var(--font-size-xs);
   color: var(--color-muted);
 }
 
@@ -408,7 +393,6 @@
   align-items: center;
   gap: var(--space-xs);
   color: var(--color-muted);
-  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   transition: color var(--transition-fast);
 }
@@ -455,7 +439,6 @@
   width: 100%;
   padding: var(--space-xs) var(--space-md);
   text-align: left;
-  font-size: var(--font-size-xs);
   color: var(--color-fg);
 }
 
@@ -483,7 +466,6 @@
   background-color: var(--color-input-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
   color: var(--color-fg);
 }
 
@@ -499,8 +481,6 @@
   background-color: var(--color-input-bg);
   border: 1px solid var(--color-input-border);
   border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: var(--font-size-sm);
   resize: none;
   height: 38px;
 }
@@ -515,7 +495,6 @@
   background-color: var(--color-primary);
   color: var(--color-btn-fg);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   transition: background-color var(--transition-fast);
 }
@@ -559,17 +538,14 @@
 
 .comment-username {
   font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-xs);
 }
 
 .comment-timestamp {
-  font-size: 0.7rem;
   color: var(--color-muted);
 }
 
 .comment-body p {
   margin: 0 0 var(--space-xs) 0;
-  font-size: var(--font-size-sm);
   line-height: var(--line-height-normal);
 }
 
@@ -578,14 +554,6 @@
   gap: var(--space-sm);
 }
 
-.buttonx {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-}
-
-.buttonx:hover {
-  color: var(--color-primary);
-}
 
 .load-more-comments {
   display: block;
@@ -594,7 +562,6 @@
   padding: var(--space-xs);
   text-align: center;
   color: var(--color-primary);
-  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
 }
 

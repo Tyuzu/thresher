@@ -1,8 +1,6 @@
 .recipepage {
   max-width: 640px;
   margin: 0 auto;
-  /* padding: var(--container-padding); */
-  font-family: var(--font-body);
   line-height: var(--line-height-base);
 }
 

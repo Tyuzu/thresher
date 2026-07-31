@@ -21,15 +21,7 @@ function makeButton(className, text) {
     "button",
     {
       type: "button",
-      class: className,
-      style: `
-        padding:8px 12px;
-        border:0;
-        border-radius:6px;
-        background:#2a2a2a;
-        color:#fff;
-        cursor:pointer;
-      `
+      class: `btn-control ${className}`.trim()
     },
     [text]
   );
@@ -46,31 +38,17 @@ function createAdjustmentControl({
   const cfg = CONTROL_CONFIG[key];
 
   const root = createElement("div", {
-    class: `adjustment-group adjustment-${key}`,
-    style: `
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      padding:10px;
-      border-radius:8px;
-      background:rgba(255,255,255,.06);
-      box-sizing:border-box;
-    `
+    class: `adjustment-group adjustment-${key}`
   });
 
   const header = createElement("div", {
-    style: `
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:8px;
-    `
+    class: "adjustment-header"
   });
 
   const title = createElement(
     "strong",
     {
-      style: "font-size:14px"
+      class: "adjustment-title"
     },
     [label]
   );
@@ -78,7 +56,7 @@ function createAdjustmentControl({
   const valueLabel = createElement(
     "span",
     {
-      style: "font-size:13px;opacity:.85"
+      class: "adjustment-value"
     },
     [formatControlValue(key, adjustments[key])]
   );
@@ -86,22 +64,15 @@ function createAdjustmentControl({
   header.append(title, valueLabel);
 
   const row = createElement("div", {
-    style: `
-      display:flex;
-      align-items:center;
-      gap:8px;
-    `
+    class: "adjustment-row"
   });
 
   let minusButton = null;
   let plusButton = null;
 
   if (showStepButtons) {
-    minusButton = makeButton(`btn-${key}-minus`, "－");
-    plusButton = makeButton(`btn-${key}-plus`, "＋");
-
-    minusButton.style.minWidth = "40px";
-    plusButton.style.minWidth = "40px";
+    minusButton = makeButton(`btn-${key}-minus btn-step`, "－");
+    plusButton = makeButton(`btn-${key}-plus btn-step`, "＋");
 
     row.appendChild(minusButton);
   }
@@ -112,7 +83,7 @@ function createAdjustmentControl({
     max: cfg.max,
     step: cfg.step,
     value: adjustments[key],
-    style: "width:100%;"
+    class: "range-input"
   });
 
   row.appendChild(input);
@@ -159,21 +130,14 @@ function createAdjustmentControl({
 
 function createPresetRow(stage) {
   const row = createElement("div", {
-    style: `
-      display:flex;
-      flex-wrap:wrap;
-      justify-content:center;
-      gap:8px;
-    `
+    class: "preset-row"
   });
 
   Object.keys(PRESETS).forEach((name) => {
     const button = makeButton(
-      `preset-${name}`,
+      `preset-${name} btn-preset`,
       name.charAt(0).toUpperCase() + name.slice(1)
     );
-
-    button.style.background = "#1f3a5f";
 
     button.addEventListener("click", () => {
       applyPreset(name, stage);
@@ -187,13 +151,7 @@ function createPresetRow(stage) {
 
 function createToolbar() {
   const toolbar = createElement("div", {
-    style: `
-      display:flex;
-      flex-wrap:wrap;
-      justify-content:center;
-      align-items:center;
-      gap:8px;
-    `
+    class: "controls-toolbar"
   });
 
   const buttons = {
@@ -222,31 +180,14 @@ function createToolbar() {
 
 export function createControls(stage) {
   const panel = createElement("div", {
-    style: `
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      width:min(95vw,1200px);
-      margin-top:12px;
-      color:#fff;
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      box-sizing:border-box;
-    `
+    class: "controls-panel"
   });
 
   const { toolbar, buttons } = createToolbar();
-
   const presets = createPresetRow(stage);
 
   const grid = createElement("div", {
-    style: `
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-      gap:10px;
-      width:100%;
-      overflow-y:scroll;
-      max-height:30vh;
-    `
+    class: "adjustment-grid"
   });
 
   grid.append(

@@ -116,9 +116,7 @@
    Buttons
 ========================================== */
 
-.hire-btn,
-.btn-primary,
-.btn-secondary {
+.hire-btn{
     cursor: pointer;
     border: none;
     border-radius: 10px;
@@ -131,15 +129,11 @@
         transform 0.2s ease;
 }
 
-.hire-btn:hover,
-.btn-primary:hover,
-.btn-secondary:hover {
+.hire-btn:hover {
     transform: translateY(-1px);
 }
 
-.hire-btn:disabled,
-.btn-primary:disabled,
-.btn-secondary:disabled {
+.hire-btn:disabled {
     cursor: not-allowed;
     opacity: 0.65;
 }
@@ -151,14 +145,6 @@
 
 .hire-btn.hired {
     opacity: 0.75;
-}
-
-.btn-primary {
-    padding: 0.85rem 1.25rem;
-}
-
-.btn-secondary {
-    padding: 0.85rem 1.25rem;
 }
 
 /* ==========================================

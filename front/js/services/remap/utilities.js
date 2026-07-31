@@ -1,34 +1,18 @@
-// utilities.js
-
-/* ---------- Numeric Utilities ---------- */
-
 /**
  * Clamp a number between min and max.
- * Automatically fixes swapped bounds.
- * @param {number} v - value to clamp
- * @param {number} min - minimum bound
- * @param {number} max - maximum bound
- * @returns {number}
  */
 export function clamp(v, min, max) {
-  if (min > max) {
-[min, max] = [max, min];
+  let low = min;
+  let high = max;
+  if (low > high) [low, high] = [high, low];
+  return v < low ? low : v > high ? high : v;
 }
-  return v < min ? min : v > max ? max : v;
-}
-
-/* ---------- Transform Utilities ---------- */
 
 /**
- * Update map transform (position + zoom).
- * @param {object} state - shared map state
- * @param {object} mapOptions - map configuration
- * @param {HTMLElement} mapWrapper - map wrapper element
+ * Update map container transform (position + zoom).
  */
 export function updateMapTransform(state, mapOptions, mapWrapper) {
-  if (!mapWrapper || !mapOptions) {
-return;
-}
+  if (!mapWrapper || !mapOptions) return;
 
   const { mapWidth = 0, mapHeight = 0 } = mapOptions;
   const { viewportWidth, viewportHeight, zoom } = state;
@@ -39,24 +23,19 @@ return;
   state.mapX = clamp(state.mapX, Math.min(minX, 0), 0);
   state.mapY = clamp(state.mapY, Math.min(minY, 0), 0);
 
-  // Use requestAnimationFrame for smoother updates
-  requestAnimationFrame(() => {
-    mapWrapper.style.transform =
-      `translate(${Math.round(state.mapX)}px, ${Math.round(state.mapY)}px) scale(${zoom})`;
-  });
+  if (!state.transformRaf) {
+    state.transformRaf = requestAnimationFrame(() => {
+      mapWrapper.style.transform = `translate(${Math.round(state.mapX)}px, ${Math.round(state.mapY)}px) scale(${zoom})`;
+      state.transformRaf = null;
+    });
+  }
 }
 
 /**
- * Update minimap viewport rectangle.
- * @param {object} state - shared map state
- * @param {object} mapOptions - map configuration
- * @param {HTMLElement} minimap - minimap container
- * @param {HTMLElement} minimapViewport - viewport rectangle element
+ * Update minimap viewport indicator rectangle.
  */
 export function updateMinimapViewport(state, mapOptions, minimap, minimapViewport) {
-  if (!minimap || !minimapViewport) {
-return;
-}
+  if (!minimap || !minimapViewport) return;
 
   const { mapWidth = 0 } = mapOptions;
   const { viewportWidth, viewportHeight, zoom } = state;
@@ -81,64 +60,46 @@ return;
 }
 
 /**
- * Update both map transform and minimap viewport.
+ * Update main transform and minimap in lockstep.
  */
 export function updateTransformAll(state, mapOptions, mapWrapper, minimap, minimapViewport) {
   updateMapTransform(state, mapOptions, mapWrapper);
   updateMinimapViewport(state, mapOptions, minimap, minimapViewport);
 }
 
-/* ---------- Event Utilities ---------- */
-
 /**
- * Safely add an event listener and track it for later removal.
- * @param {object} state - shared map state (stores listeners)
- * @param {EventTarget} target - target element
- * @param {string} event - event type
- * @param {Function} fn - listener function
- * @param {object|boolean} [opts={}] - options or capture flag
+ * Safely attach an event listener and record it in `state.listeners`.
  */
 export function addListener(state, target, event, fn, opts = {}) {
-  if (!target || typeof fn !== "function") {
-return;
-}
+  if (!target || typeof fn !== "function") return;
 
   target.addEventListener(event, fn, opts);
   if (!Array.isArray(state.listeners)) {
-state.listeners = [];
-}
+    state.listeners = [];
+  }
   state.listeners.push({ target, event, fn, opts });
 }
 
 /**
- * Remove all tracked listeners (called during destroy).
- * @param {object} state - shared map state
+ * Remove all tracked listeners from `state.listeners`.
  */
 export function removeAllListeners(state) {
-  if (!state?.listeners) {
-return;
-}
+  if (!state?.listeners) return;
   for (const { target, event, fn, opts } of state.listeners) {
     try {
       target.removeEventListener(event, fn, opts);
     } catch (_) {
-      // ignore errors
+      // ignore
     }
   }
   state.listeners.length = 0;
 }
 
 /**
- * Remove a specific listener.
- * @param {object} state - shared map state
- * @param {EventTarget} target - target element
- * @param {string} event - event type
- * @param {Function} fn - listener function
+ * Remove a specific tracked event listener.
  */
 export function removeListener(state, target, event, fn) {
-  if (!state?.listeners) {
-return;
-}
+  if (!state?.listeners) return;
   state.listeners = state.listeners.filter((rec) => {
     if (rec.target === target && rec.event === event && rec.fn === fn) {
       try {

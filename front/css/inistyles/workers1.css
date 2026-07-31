@@ -9,7 +9,6 @@
   max-width: var(--max-width-xl);
   margin: 0 auto;
   padding: var(--space-md);
-  font-family: var(--font-body);
   color: var(--color-fg);
   background-color: var(--color-bg);
   box-sizing: border-box;
@@ -53,8 +52,6 @@
   border: 1px solid var(--color-input-border);
   border-radius: var(--radius-md);
   color: var(--color-fg);
-  font-family: var(--font-body);
-  font-size: var(--font-size-base);
   transition: border-color var(--transition-fast), 
               box-shadow var(--transition-fast), 
               background-color var(--transition-fast);
@@ -185,7 +182,6 @@
 /* Badges */
 .badge {
   display: inline-block;
-  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   padding: var(--space-xxs) var(--space-sm);
   border-radius: var(--radius-full);
@@ -218,51 +214,6 @@
   color: var(--color-fg);
 }
 
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: var(--space-sm) var(--space-md);
-  background-color: var(--color-btn-bg);
-  color: var(--color-btn-fg);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  font-family: var(--font-body);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  text-align: center;
-  cursor: pointer;
-  transition: background-color var(--transition-fast), 
-              border-color var(--transition-fast),
-              color var(--transition-fast),
-              transform var(--transition-fast);
-}
-
-.buttonx:hover,
-.btn:hover {
-  background-color: var(--color-btn-hover-bg);
-  transform: translateY(-1px);
-}
-
-.buttonx:active,
-.btn:active {
-  transform: translateY(0);
-}
-
-.buttonx.secondary,
-.btn-secondary {
-  background-color: var(--color-bg-secondary);
-  color: var(--color-fg);
-  border-color: var(--color-border);
-}
-
-.buttonx.secondary:hover,
-.btn-secondary:hover {
-  background-color: var(--color-bg-tertiary);
-  border-color: var(--color-secondary);
-}
 
 /* Pager Controls */
 .workers-pager {

@@ -1,38 +1,36 @@
-// gtaMap.js
 import { createElement } from "../../components/createElement.js";
 import { apiFetch } from "../../api/api.js";
 import Imagex from "../../components/base/Imagex.js";
 
 /**
- * Display a GTA-style map: fetches config + markers for an entity and renders a responsive viewport
- * (100vw x 90vh) over a native map grid (defaults to 1200x600). Locked areas may be shown unless
- * they overlap markers (then skipped).
+ * Display a GTA-style map with pan/zoom, locked areas, and marker interaction.
  *
  * @param {HTMLElement} container
  * @param {boolean} isLoggedIn
  * @param {string} entity - entity id ("ls","sf","lv") - optional, defaults to "ls"
  */
 export async function displayGtaMap(container, isLoggedIn, entity = "ls") {
-  // remove previous children
-  while (container.firstChild) {
-container.removeChild(container.firstChild);
-}
-
-  // remove previous resize listener if present to avoid duplicates
-  if (container.__gtaMapResizeHandler) {
-    window.removeEventListener("resize", container.__gtaMapResizeHandler);
-    delete container.__gtaMapResizeHandler;
+  // 1. Cleanup previous map state & event listeners to prevent memory leaks
+  if (container.__gtaMapCleanup) {
+    container.__gtaMapCleanup();
   }
 
-  // fetch config + markers (backend endpoints are entity-specific)
+  // Ensure container has relative positioning for absolute overlays
+  container.style.position = "relative";
+  container.innerHTML = "";
+
+  // 2. Fetch Data
   let config = {};
   let markers = [];
   try {
-    config = await apiFetch(`/maps/config/${encodeURIComponent(entity)}`);
-    markers = await apiFetch(`/maps/markers/${encodeURIComponent(entity)}`);
+    const [configRes, markersRes] = await Promise.all([
+      apiFetch(`/maps/config/${encodeURIComponent(entity)}`),
+      apiFetch(`/maps/markers/${encodeURIComponent(entity)}`)
+    ]);
+    config = configRes;
+    markers = markersRes;
   } catch (err) {
-    console.error("Failed to load map data:", err);
-    // fallback minimal config so UI still renders
+    console.error("Failed to load map data, falling back:", err);
     config = { mapImage: "/assets/gta-map.jpg", mapWidth: 1200, mapHeight: 600, entity };
     markers = [];
   }
@@ -41,38 +39,31 @@ container.removeChild(container.firstChild);
   const mapHeight = config.mapHeight || 600;
   const mapImageUrl = config.mapImage || "/assets/gta-map.jpg";
 
-  // viewport uses full width and 90% of viewport height
-  let viewportWidth = Math.max(300, window.innerWidth); // guard minimum
+  let viewportWidth = Math.max(300, window.innerWidth);
   let viewportHeight = Math.max(200, Math.round(window.innerHeight * 0.9));
 
-  // Advance mission button
+  // 3. UI Controls
   const advanceBtn = createElement(
     "button",
-    { id: "advance-btn", style: "margin-bottom:8px;padding:6px 12px;cursor:pointer;z-index:40;" },
+    { id: "advance-btn", style: "position:relative;margin-bottom:8px;padding:6px 12px;cursor:pointer;z-index:40;" },
     ["▶ Advance Mission"]
   );
+
   advanceBtn.addEventListener("click", async () => {
     try {
       await apiFetch(`/player/progress?entity=${encodeURIComponent(entity)}`, "POST");
-      // refetch and rerender (function fetches again internally)
       displayGtaMap(container, isLoggedIn, entity);
     } catch (err) {
       console.error("Failed to advance mission:", err);
     }
   });
 
-  // Map container (responsive viewport)
-  const mapContainer = createElement(
-    "div",
-    {
-      id: "map-container",
-      style: `position:relative;overflow:hidden;width:${viewportWidth}px;height:${viewportHeight}px;border:2px solid #333;cursor:grab;background:#000;`,
-    },
-    []
-  );
+  const mapContainer = createElement("div", {
+    id: "map-container",
+    style: `position:relative;overflow:hidden;width:${viewportWidth}px;height:${viewportHeight}px;border:2px solid #333;cursor:grab;background:#000;touch-action:none;`,
+  });
 
-  // Map image with native pixel size so marker coordinates align
-  const mapInner = Imagex( {
+  const mapInner = Imagex({
     id: "map-inner",
     src: mapImageUrl,
     width: String(mapWidth),
@@ -80,26 +71,27 @@ container.removeChild(container.firstChild);
     style: `display:block;width:${mapWidth}px;height:${mapHeight}px;user-drag:none;pointer-events:none;`,
   });
 
-  // Layers sized at native map dimensions; wrapper is transformed for pan/zoom
   const markerLayer = createElement("div", {
     id: "marker-layer",
     style: `position:absolute;left:0;top:0;width:${mapWidth}px;height:${mapHeight}px;pointer-events:none;`,
   });
+
   const lockedLayer = createElement("div", {
     id: "locked-layer",
     style: `position:absolute;left:0;top:0;width:${mapWidth}px;height:${mapHeight}px;pointer-events:none;`,
   });
+
   const mapWrapper = createElement("div", {
     id: "map-wrapper",
-    style: `position:absolute;left:0;top:0;width:${mapWidth}px;height:${mapHeight}px;transform-origin:0 0;`,
+    style: `position:absolute;left:0;top:0;width:${mapWidth}px;height:${mapHeight}px;transform-origin:0 0;will-change:transform;`,
   }, [mapInner, markerLayer, lockedLayer]);
 
   mapContainer.appendChild(mapWrapper);
 
-  // Legend (toggled with L)
+  // Overlays
   const legend = createElement("div", {
     id: "legend",
-    style: "position:absolute;top:10px;left:10px;background:#222;color:#fff;padding:8px;display:none;z-index:50;font-size:13px;",
+    style: "position:absolute;top:10px;left:10px;background:rgba(34,34,34,0.9);color:#fff;padding:8px;display:none;z-index:50;font-size:13px;border-radius:4px;",
   }, [
     createElement("div", {}, ["🏠 Safehouse"]),
     createElement("div", {}, ["⭐ Mission"]),
@@ -107,53 +99,54 @@ container.removeChild(container.firstChild);
     createElement("div", {}, ["💀 Enemy"]),
   ]);
 
-  // Zoom controls
+  const zoomInBtn = createElement("button", { style: "width:32px;height:32px;cursor:pointer;font-weight:bold;" }, ["+"]);
+  const zoomOutBtn = createElement("button", { style: "width:32px;height:32px;cursor:pointer;font-weight:bold;" }, ["−"]);
+
   const zoomControls = createElement("div", {
     id: "zoom-controls",
     style: "position:absolute;top:10px;right:10px;z-index:50;display:flex;flex-direction:column;gap:6px;",
-  }, [
-    createElement("button", {}, ["+"]),
-    createElement("button", {}, ["−"]),
-  ]);
+  }, [zoomInBtn, zoomOutBtn]);
 
-  // Minimap / radar
-  const minimapImage = Imagex( {
+  const minimapImage = Imagex({
     src: mapImageUrl,
     style: "width:100%;height:100%;object-fit:cover;display:block;",
   });
+
   const minimapViewport = createElement("div", {
     id: "minimap-viewport",
-    style: "position:absolute;border:2px solid red;pointer-events:none;width:40px;height:40px;",
+    style: "position:absolute;border:2px solid red;pointer-events:none;box-sizing:border-box;",
   });
+
   const minimap = createElement("div", {
     id: "minimap",
-    style: `position:absolute;bottom:10px;right:10px;width:120px;height:120px;border:2px solid #333;overflow:hidden;z-index:50;background:#000;`,
+    style: `position:absolute;bottom:10px;right:10px;width:120px;height:120px;border:2px solid #333;overflow:hidden;z-index:50;background:#000;border-radius:4px;`,
   }, [minimapImage, minimapViewport]);
 
-  // Info panel
-  const infoTitle = createElement("h3", {}, ["Info"]);
-  const infoContent = createElement("p", {}, ["Click a marker to see details"]);
-  const closeBtn = createElement("button", {}, ["Close"]);
+  const infoTitle = createElement("h3", { style: "margin:0 0 6px 0;font-size:16px;" }, ["Info"]);
+  const infoContent = createElement("p", { style: "margin:0 0 8px 0;font-size:13px;" }, ["Click a marker to see details"]);
+  const closeBtn = createElement("button", { style: "float:right;cursor:pointer;" }, ["✕"]);
+
   const infoPanel = createElement("div", {
     id: "info-panel",
-    style: "position:absolute;bottom:10px;left:10px;width:260px;background:#fff;border:1px solid #333;padding:10px;display:none;z-index:60;",
+    style: "position:absolute;bottom:10px;left:10px;width:240px;background:#fff;color:#000;border:1px solid #333;padding:10px;display:none;z-index:60;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,0.3);",
   }, [closeBtn, infoTitle, infoContent]);
+
   closeBtn.addEventListener("click", () => {
     infoPanel.style.display = "none";
   });
 
-  // Assemble UI
+  // Assemble Map Structure
+  mapContainer.appendChild(legend);
+  mapContainer.appendChild(zoomControls);
+  mapContainer.appendChild(minimap);
+  mapContainer.appendChild(infoPanel);
+
   container.appendChild(advanceBtn);
   container.appendChild(mapContainer);
-  container.appendChild(legend);
-  container.appendChild(zoomControls);
-  container.appendChild(minimap);
-  container.appendChild(infoPanel);
 
-  // Emoji map for marker types
+  // 4. Render Markers
   const emojiMap = { house: "🏠", mission: "⭐", shop: "💲", enemy: "💀" };
 
-  // Create markers (enable pointer events for each marker element)
   markers.forEach((marker) => {
     const el = createElement("div", {
       class: "marker",
@@ -169,51 +162,37 @@ container.removeChild(container.firstChild);
         user-select:none;
       `,
       title: marker.name,
-    }, [ emojiMap[marker.type] || "❓" ]);
+    }, [emojiMap[marker.type] || "❓"]);
 
     el.addEventListener("click", (ev) => {
       ev.stopPropagation();
-      // update infoPanel title/content by replacing children (no textContent)
-      while (infoTitle.firstChild) {
-infoTitle.removeChild(infoTitle.firstChild);
-}
-      while (infoContent.firstChild) {
-infoContent.removeChild(infoContent.firstChild);
-}
-      infoTitle.appendChild(createElement("span", {}, [marker.name]));
-      infoContent.appendChild(createElement("span", {}, [`Type: ${marker.type}`]));
+      infoTitle.textContent = marker.name;
+      infoContent.textContent = `Type: ${marker.type}`;
       infoPanel.style.display = "block";
     });
 
     markerLayer.appendChild(el);
   });
 
-  // Locked areas: skip if any locked area covers any marker (to preserve marker visibility)
+  // 5. Render Locked Areas (Granular overlapping logic)
   const lockedAreas = Array.isArray(config.lockedAreas) ? config.lockedAreas : [];
-  let skipLocks = false;
-  if (lockedAreas.length > 0 && markers.length > 0) {
-    outer:
-    for (const area of lockedAreas) {
-      for (const mk of markers) {
-        if (mk.x >= area.x && mk.x <= area.x + area.width && mk.y >= area.y && mk.y <= area.y + area.height) {
-          skipLocks = true;
-          console.warn("Locked areas overlap markers — skipping lock overlays to keep markers visible.");
-          break outer;
-        }
-      }
-    }
-  }
-
-  if (!skipLocks && lockedAreas.length > 0) {
+  if (lockedAreas.length > 0) {
     lockedLayer.style.pointerEvents = "auto";
+    
     lockedAreas.forEach((area) => {
+      // Check if THIS specific area overlaps a marker
+      const isOverlapping = markers.some(
+        (mk) => mk.x >= area.x && mk.x <= area.x + area.width && mk.y >= area.y && mk.y <= area.y + area.height
+      );
+
+      if (isOverlapping) {
+        console.warn(`Skipping locked area "${area.label}" due to marker overlap.`);
+        return; // Skip rendering this specific locked area
+      }
+
       const lockInfoNodes = [];
-      if (area.dependsOn) {
-lockInfoNodes.push(createElement("div", {}, [`Requires: ${String(area.dependsOn).toUpperCase()}`]));
-}
-      if (area.condition) {
-lockInfoNodes.push(createElement("div", {}, [String(area.condition)]));
-}
+      if (area.dependsOn) lockInfoNodes.push(createElement("div", {}, [`Requires: ${String(area.dependsOn).toUpperCase()}`]));
+      if (area.condition) lockInfoNodes.push(createElement("div", {}, [String(area.condition)]));
 
       const lockedDiv = createElement("div", {
         class: "locked-area",
@@ -223,34 +202,35 @@ lockInfoNodes.push(createElement("div", {}, [String(area.condition)]));
           top:${area.y}px;
           width:${area.width}px;
           height:${area.height}px;
-          background:rgba(0,0,0,0.45);
-          color:white;
+          background:rgba(0,0,0,0.55);
+          color:#fff;
           display:flex;
           flex-direction:column;
           align-items:center;
           justify-content:center;
-          font-size:13px;
+          font-size:12px;
           text-align:center;
           pointer-events:auto;
           z-index:10;
-          padding:6px;
+          padding:4px;
+          box-sizing:border-box;
         `,
-      }, [ createElement("div", {}, [`🚫 ${area.label}`]), ...lockInfoNodes ]);
+      }, [createElement("div", { style: "font-weight:bold;" }, [`🚫 ${area.label}`]), ...lockInfoNodes]);
 
       lockedLayer.appendChild(lockedDiv);
     });
-  } else {
-    lockedLayer.style.pointerEvents = "none";
   }
 
-  // Pan & zoom initial values (center the native map inside the viewport)
-  let isDragging = false, startX = 0, startY = 0;
-  let mapX = Math.round((viewportWidth - mapWidth) / 2), mapY = Math.round((viewportHeight - mapHeight) / 2);
+  // 6. Viewport State & Math Dynamics
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+  let mapX = Math.round((viewportWidth - mapWidth) / 2);
+  let mapY = Math.round((viewportHeight - mapHeight) / 2);
   let zoom = 1;
-  const zoomStep = 0.1;
 
   function applyTransform() {
-    mapWrapper.style.transform = `translate(${mapX}px, ${mapY}px) scale(${zoom})`;
+    mapWrapper.style.transform = `translate3d(${mapX}px, ${mapY}px, 0px) scale(${zoom})`;
     updateMinimap();
   }
 
@@ -258,68 +238,96 @@ lockInfoNodes.push(createElement("div", {}, [String(area.condition)]));
     const visibleWidth = viewportWidth / zoom;
     const visibleHeight = viewportHeight / zoom;
     const minimapScale = minimap.offsetWidth / mapWidth;
-    minimapViewport.style.width = `${visibleWidth * minimapScale}px`;
-    minimapViewport.style.height = `${visibleHeight * minimapScale}px`;
-    minimapViewport.style.left = `${-mapX * minimapScale}px`;
-    minimapViewport.style.top = `${-mapY * minimapScale}px`;
+
+    minimapViewport.style.width = `${Math.min(minimap.offsetWidth, visibleWidth * minimapScale)}px`;
+    minimapViewport.style.height = `${Math.min(minimap.offsetHeight, visibleHeight * minimapScale)}px`;
+    minimapViewport.style.left = `${Math.max(0, -mapX * minimapScale)}px`;
+    minimapViewport.style.top = `${Math.max(0, -mapY * minimapScale)}px`;
   }
 
-  // mousedown / move / up
-  mapContainer.addEventListener("mousedown", (e) => {
-    isDragging = true;
-    startX = e.clientX;
-    startY = e.clientY;
-    mapContainer.style.cursor = "grabbing";
-  });
+  function zoomAtPoint(factor, focalX, focalY) {
+    const newZoom = Math.min(Math.max(0.5, zoom * factor), 4.0);
+    const scaleRatio = newZoom / zoom;
 
-  document.addEventListener("mousemove", (e) => {
-    if (!isDragging) {
-return;
-}
-    mapX += e.clientX - startX;
-    mapY += e.clientY - startY;
-    startX = e.clientX;
-    startY = e.clientY;
+    // Adjust position around focal point (center of viewport)
+    mapX = focalX - (focalX - mapX) * scaleRatio;
+    mapY = focalY - (focalY - mapY) * scaleRatio;
+    zoom = newZoom;
+
     applyTransform();
-  });
+  }
 
-  document.addEventListener("mouseup", () => {
-    isDragging = false;
-    mapContainer.style.cursor = "grab";
-  });
+  // 7. Event Listeners with Pointer Capture
+  const onPointerDown = (e) => {
+    if (e.target.closest("#zoom-controls, #info-panel, #legend, button")) return;
+    isDragging = true;
+    startX = e.clientX - mapX;
+    startY = e.clientY - mapY;
+    mapContainer.style.cursor = "grabbing";
+    mapContainer.setPointerCapture(e.pointerId);
+  };
 
-  // zoom buttons
-  const [zoomInBtn, zoomOutBtn] = zoomControls.querySelectorAll("button");
-  zoomInBtn.addEventListener("click", () => {
- zoom += zoomStep; applyTransform(); 
-});
-  zoomOutBtn.addEventListener("click", () => {
- zoom = Math.max(0.5, zoom - zoomStep); applyTransform(); 
-});
-
-  // Legend toggle with L
-  document.addEventListener("keydown", (ev) => {
-    if (ev.key && ev.key.toLowerCase() === "l") {
-      legend.style.display = legend.style.display === "none" ? "block" : "none";
-    }
-  });
-
-  // responsive resize handler
-  const resizeHandler = () => {
-    viewportWidth = Math.max(300, window.innerWidth);
-    viewportHeight = Math.max(200, Math.round(window.innerHeight * 0.9));
-    // update mapContainer size
-    mapContainer.style.width = `${viewportWidth}px`;
-    mapContainer.style.height = `${viewportHeight}px`;
-    // keep map centered relative to new viewport by biasing mapX/Y if map smaller/larger
-    // (preserve previous mapX/Y as much as possible; keep consistent)
+  const onPointerMove = (e) => {
+    if (!isDragging) return;
+    mapX = e.clientX - startX;
+    mapY = e.clientY - startY;
     applyTransform();
   };
 
-  // attach resize handler safely to avoid duplicates
-  window.addEventListener("resize", resizeHandler);
-  container.__gtaMapResizeHandler = resizeHandler;
+  const onPointerUp = (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    mapContainer.style.cursor = "grab";
+    try { mapContainer.releasePointerCapture(e.pointerId); } catch (_) {}
+  };
 
-  // initial transform
+  const onWheel = (e) => {
+    e.preventDefault();
+    const rect = mapContainer.getBoundingClientRect();
+    const focalX = e.clientX - rect.left;
+    const focalY = e.clientY - rect.top;
+    const factor = e.deltaY < 0 ? 1.15 : 0.85;
+    zoomAtPoint(factor, focalX, focalY);
+  };
+
+  const onKeyDown = (ev) => {
+    if (ev.key && ev.key.toLowerCase() === "l") {
+      legend.style.display = legend.style.display === "none" ? "block" : "none";
+    }
+  };
+
+  const onResize = () => {
+    viewportWidth = Math.max(300, window.innerWidth);
+    viewportHeight = Math.max(200, Math.round(window.innerHeight * 0.9));
+    mapContainer.style.width = `${viewportWidth}px`;
+    mapContainer.style.height = `${viewportHeight}px`;
+    applyTransform();
+  };
+
+  // Attach event listeners
+  mapContainer.addEventListener("pointerdown", onPointerDown);
+  mapContainer.addEventListener("pointermove", onPointerMove);
+  mapContainer.addEventListener("pointerup", onPointerUp);
+  mapContainer.addEventListener("pointercancel", onPointerUp);
+  mapContainer.addEventListener("wheel", onWheel, { passive: false });
+
+  zoomInBtn.addEventListener("click", () => zoomAtPoint(1.2, viewportWidth / 2, viewportHeight / 2));
+  zoomOutBtn.addEventListener("click", () => zoomAtPoint(0.8, viewportWidth / 2, viewportHeight / 2));
+
+  window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("resize", onResize);
+
+  // 8. Register Cleanup Handler
+  container.__gtaMapCleanup = () => {
+    mapContainer.removeEventListener("pointerdown", onPointerDown);
+    mapContainer.removeEventListener("pointermove", onPointerMove);
+    mapContainer.removeEventListener("pointerup", onPointerUp);
+    mapContainer.removeEventListener("pointercancel", onPointerUp);
+    mapContainer.removeEventListener("wheel", onWheel);
+    window.removeEventListener("keydown", onKeyDown);
+    window.removeEventListener("resize", onResize);
+  };
+
+  // Initial Draw
   applyTransform();
 }

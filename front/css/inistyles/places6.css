@@ -4,7 +4,6 @@
   margin: 0 auto;
   padding: var(--space-md);
   color: var(--color-fg);
-  font-family: var(--font-body);
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-lg);
@@ -23,7 +22,6 @@
 }
 
 .places-main h1 {
-  font-family: var(--font-heading);
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-heading);

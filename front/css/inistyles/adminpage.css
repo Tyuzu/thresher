@@ -145,7 +145,6 @@
   .entity-section {
     border: 1px solid #ccc;
     padding: 1rem;
-    font-family: monospace;
     font-size: 0.75rem;
     border-radius: 4px;
     overflow-x: auto;

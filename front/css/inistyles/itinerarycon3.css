@@ -4,7 +4,6 @@
     /* padding: var(--container-padding); */
     background-color: var(--color-bg);
     color: var(--color-fg);
-    font-family: var(--font-body);
   }
   
   .itinerary-meta {
@@ -39,8 +38,6 @@
   }
   
   .day-header {
-    font-size: var(--font-size-lg);
-    font-family: var(--font-heading);
     margin-bottom: var(--space-md);
     color: var(--color-accent);
   }
@@ -66,9 +63,7 @@
   }
   
   .visit-location {
-    font-size: var(--font-size-base);
     font-weight: bold;
-    font-family: var(--font-heading);
   }
   
   .visit-time {

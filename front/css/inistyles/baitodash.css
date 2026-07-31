@@ -58,33 +58,6 @@
     margin-top: 10px;
   }
   
-  .btn {
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    border: none;
-    transition: background 0.3s ease;
-  }
-  
-  .btn-secondary {
-    background: #0077cc;
-    color: white;
-  }
-  
-  .btn-secondary:hover {
-    background: #005fa3;
-  }
-  
-  .btn-danger {
-    background: #ff4d4f;
-    color: white;
-  }
-  
-  .btn-danger:hover {
-    background: #d9363e;
-  }
-  
   /* Posted Baitos Section */
   /* .main-content {
     max-width: 900px;

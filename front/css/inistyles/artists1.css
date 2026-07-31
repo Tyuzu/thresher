@@ -23,7 +23,6 @@
 
 .artists-main h1,
 .artists-aside h3 {
-  font-family: var(--font-heading);
   font-size: var(--font-size-xl);
   margin-bottom: var(--space-md);
 }

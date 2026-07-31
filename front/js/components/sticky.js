@@ -19,6 +19,13 @@ function updateNav(container) {
   const unreadMessages = getState("unreadMessages") || 0;
   const unreadNotifications = getState("unreadNotifications") || 0;
 
+  // State snapshot key to prevent redundant DOM wipes on identical updates
+  const nextStateKey = `${isLoggedIn}-${unreadMessages}-${unreadNotifications}`;
+  if (container.dataset.stateKey === nextStateKey) {
+    return;
+  }
+  container.dataset.stateKey = nextStateKey;
+
   // Create a fragment to bundle DOM mutations off-screen
   const fragment = document.createDocumentFragment();
 
@@ -109,21 +116,24 @@ export function Sticky(divs) {
   const unsubMessages = subscribe("unreadMessages", scheduleUpdate);
   const unsubNotifications = subscribe("unreadNotifications", scheduleUpdate);
 
-  // Setup observer directly on the container's parent when it mounts
+  // Setup observer directly on the document body to handle unmounting cleanup
   const observer = new MutationObserver(() => {
-    if (!document.body.contains(container)) {
-      unsubToken?.();
-      unsubMessages?.();
-      unsubNotifications?.();
-      cancelAnimationFrame(renderTimeout);
-      observer.disconnect();
-    }
+    // Wrap in microtask to ensure component isn't mid-mount
+    Promise.resolve().then(() => {
+      if (!document.body.contains(container)) {
+        unsubToken?.();
+        unsubMessages?.();
+        unsubNotifications?.();
+        cancelAnimationFrame(renderTimeout);
+        observer.disconnect();
+      }
+    });
   });
 
-  // Observe the document body for cleanup
+  // Observe subtree mutations so nested containers trigger cleanups properly
   observer.observe(document.body, {
     childList: true,
-    subtree: false
+    subtree: true
   });
 
   return container;

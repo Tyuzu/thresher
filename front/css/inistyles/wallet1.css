@@ -7,7 +7,6 @@
   margin: 0 auto;
   /* background-color: var(--color-bg); */
   color: var(--color-fg);
-  font-family: var(--font-body);
 }
 
 .wallet-left-col {
@@ -35,7 +34,6 @@
 
 .wallet-section-title {
   font-size: var(--font-size-lg);
-  font-family: var(--font-heading);
   margin-bottom: var(--space-sm);
   color: var(--color-accent);
 }
@@ -112,13 +110,11 @@
 
 .txn-accounts,
 .txn-extra {
-  font-size: var(--font-size-sm);
   color: var(--color-fg);
   margin-bottom: var(--space-xs);
 }
 
 .txn-badge {
-  font-size: var(--font-size-xs);
   padding: var(--space-xxs) var(--space-sm);
   border-radius: var(--radius-sm);
   background-color: var(--color-success);

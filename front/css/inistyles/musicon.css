@@ -90,8 +90,6 @@
   
   /* === Music Section === */
   .music-section h3 {
-    font-family: var(--font-heading);
-    font-size: var(--font-size-lg);
     margin-top: var(--space-lg);
     margin-bottom: var(--space-sm);
   }

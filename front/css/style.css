@@ -9,7 +9,6 @@
 
 /* Page-Level Styles */
 @import url(profilexx.css);
-@import url(modpage.css);
 @import url(search.css);
 @import url(settings.css);
 @import url(udata.css);
@@ -17,6 +16,7 @@
 @import url(newchat2.css);
 @import url(mapcon.css);
 @import url(misc.css);
+@import url(filters.css);
 
 
 /* Feature Bundles */

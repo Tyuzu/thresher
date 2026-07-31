@@ -1,6 +1,6 @@
 import { dispatchZoomBoxEvent } from "../../utils/eventDispatcher.js";
 import Imagex from "../base/Imagex.js";
-import { createElement } from "../components/createElement.js";
+import { createElement } from "../createElement.js";
 
 /* =========================
    Basic UI Creation Functions

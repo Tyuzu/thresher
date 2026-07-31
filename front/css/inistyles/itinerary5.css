@@ -8,12 +8,9 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-elev-1);
   color: var(--color-fg);
-  font-family: var(--font-body);
 }
 
 .itinerary-title {
-  font-family: var(--font-heading);
-  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   margin: 0 0 var(--space-xs) 0;
   color: var(--color-fg);
@@ -113,7 +110,6 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-lg);
-  font-family: var(--font-body);
 }
 
 @media (min-width: 1024px) {

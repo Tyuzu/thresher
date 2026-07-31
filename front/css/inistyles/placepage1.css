@@ -10,7 +10,6 @@
   max-width: var(--max-width);
   margin: 0 auto;
   padding: var(--space-md);
-  font-family: var(--font-body);
   color: var(--color-fg);
   background-color: var(--color-bg);
 }
@@ -48,8 +47,6 @@
 }
 
 .place-header-row h1 {
-  font-family: var(--font-heading);
-  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-tight);
   margin: 0;
@@ -160,13 +157,11 @@
 }
 
 /* Button UI Components */
-.button, .buttonx {
+.buttonx {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-sm) var(--space-md);
-  font-family: var(--font-body);
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   border-radius: var(--radius-md);
   border: 1px solid transparent;
@@ -177,22 +172,22 @@
     color var(--transition-fast);
 }
 
-.button.primary, .buttonx.primary {
+.buttonx.primary {
   background-color: var(--color-btn-bg);
   color: var(--color-btn-fg);
 }
 
-.button.primary:hover, .buttonx.primary:hover {
+.buttonx.primary:hover {
   background-color: var(--color-btn-hover-bg);
 }
 
-.button.secondary, .buttonx.secondary {
+.buttonx.secondary {
   background-color: var(--color-bg-secondary);
   color: var(--color-fg);
   border-color: var(--color-border);
 }
 
-.button.secondary:hover, .buttonx.secondary:hover {
+.buttonx.secondary:hover {
   background-color: var(--color-bg-tertiary);
   border-color: var(--color-muted);
 }
