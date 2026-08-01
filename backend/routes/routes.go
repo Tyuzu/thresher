@@ -2,7 +2,7 @@ package routes
 
 import (
 	"naevis/artists"
-	"naevis/authnew"
+	"naevis/auth"
 	"naevis/autocomplete"
 	"naevis/baito"
 	"naevis/beats"
@@ -221,19 +221,19 @@ func AddAuthRoutes(router *httprouter.Router, app *infra.Deps, limiter *middlewa
 	authmid := middleware.Authenticate(app)
 
 	// router.HandlerFunc accepts standard http.HandlerFunc directly!
-	router.HandlerFunc(http.MethodPost, "/api/v1/auth/register", limiter.Limit(authnew.Register(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/auth/login", limiter.Limit(authnew.Login(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/register", limiter.Limit(auth.Register(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/login", limiter.Limit(auth.Login(app)))
 
 	// Refresh should NOT use aggressive limiter
-	router.HandlerFunc(http.MethodPost, "/api/v1/auth/refresh", authnew.RefreshToken(app))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/refresh", auth.RefreshToken(app))
 
 	// Logout routes
-	router.HandlerFunc(http.MethodPost, "/api/v1/auth/logout", authnew.LogoutUser(app))
-	router.HandlerFunc(http.MethodPost, "/api/v1/auth/logout-all", authmid(authnew.LogoutAllSessions(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/logout", auth.LogoutUser(app))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/logout-all", authmid(auth.LogoutAllSessions(app)))
 
 	// OTP routes
-	router.HandlerFunc(http.MethodPost, "/api/v1/auth/verify-otp", limiter.Limit(authnew.VerifyOTPHandler(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/auth/request-otp", limiter.Limit(authnew.RequestOTPHandler(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/verify-otp", limiter.Limit(auth.VerifyOTPHandler(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/request-otp", limiter.Limit(auth.RequestOTPHandler(app)))
 }
 
 // func AddAuthRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {

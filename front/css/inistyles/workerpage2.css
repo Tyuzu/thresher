@@ -117,34 +117,6 @@
   margin-bottom: 24px;
 }
 
-button.primary {
-  background: #007BFF;
-  color: #fff;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-button.secondary {
-  background: #f0f0f0;
-  color: #333;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-button.danger {
-  background: #dc3545;
-  color: #fff;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
 /* ---------------- Creator Section ---------------- */
 .creator-section {
   margin-top: 32px;

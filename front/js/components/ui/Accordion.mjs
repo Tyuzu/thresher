@@ -1,4 +1,4 @@
-
+import "../../../css/ui/Accordion.css";
 const Accordion = (sections = []) => {
   const container = document.createElement("div");
   container.className = "accordion";

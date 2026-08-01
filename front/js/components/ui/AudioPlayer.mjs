@@ -1,3 +1,4 @@
+import "../../../css/ui/AudioPlayer.css";
 import Imagex from "../base/Imagex";
 
 function AudioPlayer(audioSrc) {

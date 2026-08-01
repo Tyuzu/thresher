@@ -1,3 +1,4 @@
+import "../../../css/ui/EventTimeline.css";
 const EventTimeline = (events = []) => {
     const container = document.createElement('div');
     container.className = 'event-timeline';

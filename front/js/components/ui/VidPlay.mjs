@@ -1,3 +1,4 @@
+import "../../../css/ui/VidPlay.css";
 import { generateVideoPlayer } from "./vidpopHelpers";
 
 const VidPlay = (videoSrc, poster, qualities, subtitles, videoid) => {

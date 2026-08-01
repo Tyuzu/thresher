@@ -1,3 +1,4 @@
+import "../../../css/ui/FAB.css";
 import { createNavItem } from "../navigation.js";
 import { makeDraggable } from "./fabHelpers/makeDraggable.js";
 

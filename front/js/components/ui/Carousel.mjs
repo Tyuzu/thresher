@@ -1,3 +1,4 @@
+import "../../../css/ui/Carousel.css";
 import Imagex from "../base/Imagex";
 import { playSVG } from "../svgs";
 

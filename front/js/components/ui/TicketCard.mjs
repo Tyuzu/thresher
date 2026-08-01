@@ -1,3 +1,4 @@
+import "../../../css/ui/TicketCard1.css";
 import { applyButtonColors } from "../../utils/lumicolor.js";
 import Button from "../base/Button.js";
 

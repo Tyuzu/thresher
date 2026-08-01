@@ -1,3 +1,4 @@
+import "../../../css/ui/MultiView.css";
 import { SRC_URL } from "../../api/api.js";
 
 const MultiView = (images) => {

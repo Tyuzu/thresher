@@ -1,3 +1,4 @@
+import "../../../css/ui/InputField.css";
 const InputField = ({ label, type = 'text', placeholder, onInput }) => {
     const container = document.createElement('div');
     container.className = 'input-field';

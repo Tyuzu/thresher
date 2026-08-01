@@ -21,6 +21,7 @@
 }
 
 .logo-link {
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-fg);
   text-decoration: none;

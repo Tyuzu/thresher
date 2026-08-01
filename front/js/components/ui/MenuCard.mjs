@@ -1,4 +1,4 @@
-
+import "../../../css/ui/MenuCard.css";
 // Updated MenuCard component
 const MenuCard = ({ name, price, discount = 0, image, stock, onBuy, onEdit, onDelete, isCreator, isLoggedIn }) => {
     const card = document.createElement('div');

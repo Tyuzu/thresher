@@ -1,3 +1,4 @@
+import "../../../css/ui/MerchCard.css";
 import { createElement } from "../createElement.js";
 import Sightbox from "./Sightbox_zoom.mjs";
 

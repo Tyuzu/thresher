@@ -1,3 +1,4 @@
+import "../../../css/ui/Notify.css";
 import { getState, setState } from "../../state/state.js";
 import { playSoundAlert } from "../../services/notifications/soundAlerts.js";
 

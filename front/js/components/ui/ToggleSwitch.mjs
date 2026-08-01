@@ -1,3 +1,4 @@
+import "../../../css/ui/ToggleSwitch.css";
 
 const ToggleSwitch = (onToggle, { checked = false, id = "", label = "" } = {}) => {
   const toggle = document.createElement("label");
