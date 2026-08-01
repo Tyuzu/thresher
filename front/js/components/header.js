@@ -8,7 +8,25 @@ import Imagex from "./base/Imagex.js";
 import { sticky } from "./sticky.js";
 import Button from "./base/Button.js";
 
-const themes = ["light", "solarized", "midnight", "nord"];
+// Expanded theme list matching CSS data-theme attributes
+const themes = [
+  "light",
+  "dark",
+  "dimmed",
+  "solarized",
+  "nord",
+  "midnight",
+  "emerald",
+  "dracula",
+  "catppuccin",
+  "gruvbox",
+  "tokyo-night",
+  "cyberpunk",
+  "latte",
+  "rose-pine",
+  "high-contrast"
+];
+
 let currentThemeIndex = 0;
 
 function applyTheme(theme) {
@@ -18,21 +36,21 @@ function applyTheme(theme) {
 
 function loadTheme() {
   const saved = localStorage.getItem("theme");
-  
+
   if (saved && themes.includes(saved)) {
     applyTheme(saved);
-  /*} else {
-    // Default to OS preference if no saved theme exists
+  } else {
+    // Fall back to OS preference if no theme is saved in local storage
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const defaultTheme = prefersDark ? "dark" : "light";
-    applyTheme(defaultTheme);*/
+    applyTheme(defaultTheme);
   }
 }
 
 function toggleTheme() {
   currentThemeIndex = (currentThemeIndex + 1) % themes.length;
   const theme = themes[currentThemeIndex];
-  
+
   applyTheme(theme);
   localStorage.setItem("theme", theme);
 }
@@ -43,11 +61,11 @@ function createIconButton(svg, href, onClick) {
 
   const anchor = createElement("div", { class: "iconic-button" }, [icon]);
   if (href) {
-anchor.href = href;
-}
+    anchor.href = href;
+  }
   if (onClick) {
-anchor.addEventListener("click", onClick);
-}
+    anchor.addEventListener("click", onClick);
+  }
 
   return anchor;
 }
@@ -71,15 +89,13 @@ function createDropdownMenu(id, labelText, items) {
     menu.classList.toggle("open");
   });
 
-  return createElement("div", { class: "dropdown" }, [toggle, menu]);
+  return createElement("div", { class: "header-content-dropdown" }, [toggle, menu]);
 }
 
 export function createProfileSection(userId) {
-  // Get user object from state
   const user = getState("user") || {};
   const username = user.username || "Profile";
 
-  // Profile picture
   const img = Imagex({
     src: resolveImagePath(EntityType.USER, PictureType.THUMB, `${userId}.jpg`),
     alt: username,
@@ -88,11 +104,10 @@ export function createProfileSection(userId) {
 
   const toggle = createElement("div", { class: "profile-toggle", tabIndex: 0 }, [img]);
 
-  // Menu links
   const links = [
     { href: "/profile", text: username, icon: profileSVG },
     { href: "/my-orders", text: "My Orders", icon: shopBagSVG },
-    ...(isAdmin() ? [{ href: "/admin", text: "Admin", icon: adminSVG }] : []),
+    ...(isAdmin() ? [{ href: "/admin", text: "Admin", icon: settingsSVG }] : []),
     { href: "/wallet", text: "Wallet", icon: cardSVG },
     { href: "/settings", text: "Settings", icon: settingsSVG }
   ];
@@ -103,8 +118,8 @@ export function createProfileSection(userId) {
     const label = createElement("span", {}, [text]);
     const iconSpan = createElement("span", {}, []);
     if (icon) {
-iconSpan.innerHTML = icon;
-}
+      iconSpan.innerHTML = icon;
+    }
 
     const link = createElement("a", { class: "profile-menu-item", href }, [iconSpan, label]);
     link.addEventListener("click", (e) => {
@@ -115,14 +130,12 @@ iconSpan.innerHTML = icon;
     menu.append(link);
   });
 
-  // Logout button
   const logoutBtn = createElement("button", { class: "profile-menu-item logout" }, []);
   logoutBtn.innerHTML = logoutSVG;
   logoutBtn.append(createElement("span", {}, ["Logout"]));
   logoutBtn.addEventListener("click", logout);
   menu.append(logoutBtn);
 
-  // Toggle menu open/close
   toggle.addEventListener("click", (e) => {
     e.stopPropagation();
     menu.classList.toggle("open");
@@ -140,63 +153,6 @@ iconSpan.innerHTML = icon;
   return createElement("div", { class: "dropdown" }, [toggle, menu]);
 }
 
-// export function createProfileSection(userId) {
-//   const username = getState("username");
-//   const img = Imagex({
-//     src: resolveImagePath(EntityType.USER, PictureType.THUMB, `${userId}.jpg`),
-//     alt: "Profile",
-//     classes: "profile-pic"
-//   });
-
-//   const toggle = createElement("div", { class: "profile-toggle", tabIndex: 0 }, [img]);
-
-//   const links = [
-//     { href: "/profile", text: username, icon: profileSVG },
-//     { href: "/my-orders", text: "My Orders", icon: shopBagSVG },
-//     ...(isAdmin() ? [{ href: "/admin", text: "Admin" }] : []),
-//     { href: "/wallet", text: "Wallet", icon: cardSVG },
-//     { href: "/settings", text: "Settings", icon: settingsSVG }
-//   ];
-
-//   const menu = createElement("div", { class: "profile-menu" }, []);
-
-//   links.forEach(({ href, text, icon }) => {
-//     const label = createElement("span", {}, [text]);
-//     const iconSpan = createElement("span", {}, []);
-//     if (icon) iconSpan.innerHTML = icon;
-
-//     const link = createElement("a", { class: "menu-item", href }, [iconSpan, label]);
-//     link.addEventListener("click", (e) => {
-//       e.preventDefault();
-//       navigate(href);
-//     });
-
-//     menu.append(link);
-//   });
-
-//   const logoutBtn = createElement("button", { class: "menu-item logout" }, []);
-//   logoutBtn.innerHTML = logoutSVG;
-//   logoutBtn.append(createElement("span", {}, ["Logout"]));
-//   logoutBtn.addEventListener("click", logout);
-//   menu.append(logoutBtn);
-
-//   toggle.addEventListener("click", (e) => {
-//     e.stopPropagation();
-//     menu.classList.toggle("open");
-//   });
-
-//   toggle.addEventListener("keydown", (e) => {
-//     if (e.key === "Enter" || e.key === " ") {
-//       e.preventDefault();
-//       menu.classList.toggle("open");
-//     }
-//   });
-
-//   document.addEventListener("click", () => menu.classList.remove("open"));
-
-//   return createElement("div", { class: "dropdown" }, [toggle, menu]);
-// }
-
 function renderUserSection() {
   const container = createElement("div", { class: "user-area" }, []);
 
@@ -210,7 +166,6 @@ function renderUserSection() {
     } else {
       const loginBtn = Button("Login", "login-button", {
         click: () => {
-          // storeRedirect();
           navigate("/login");
         }
       }, "login-btn", { border: "none", cursor: "pointer" });
@@ -228,7 +183,6 @@ function renderUserSection() {
 
 function buildNav() {
   const nav = createElement("div", { class: "header-content" }, []);
-
   const token = getState("token");
 
   if (token) {
@@ -267,8 +221,8 @@ function enableNavAutoUpdate(navRef) {
 function createHeader() {
   const header = document.getElementById("pageheader");
   if (!header || header.hasChildNodes()) {
-return;
-}
+    return;
+  }
 
   header.className = "main-header";
 
@@ -291,7 +245,6 @@ return;
   header.append(logo, sky, nav);
 
   enableNavAutoUpdate(nav);
-
   loadTheme();
 }
 

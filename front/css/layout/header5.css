@@ -3,10 +3,13 @@
    ========================================================================== */
 
 .main-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-xs) var(--container-padding);
+  padding: var(--space-xxs) var(--container-padding);
   background-color: var(--color-bg);
   border-bottom: 1px solid var(--color-border);
   transition: background-color var(--transition-fast), border-color var(--transition-fast);
@@ -39,8 +42,9 @@
   gap: var(--space-sm);
 }
 
-.header-content .dropdown {
+.header-content-dropdown {
   position: relative;
+  display: flex;
 }
 
 /* --- Iconic Buttons --- */
@@ -154,6 +158,10 @@
   border: none;
   padding: 0;
   cursor: pointer;
+}
+
+.user-area {
+  display: flex;
 }
 
 .profile-pic {

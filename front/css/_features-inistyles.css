@@ -23,12 +23,13 @@
 @import url(inistyles/postpage6_new.css);
 @import url(inistyles/posts5.css);
 @import url(inistyles/shop2.css);
-@import url(inistyles/tumblr3.css);
+/*@import url(inistyles/tumblr3.css);*/
 @import url(inistyles/wallet1.css);
-@import url(inistyles/workerpage2.css);
+@import url(inistyles/workerpage3.css);
 @import url(inistyles/workers1.css);
 @import url(inistyles/authpage.css);
 @import url(inistyles/adminpage.css);
+@import url(inistyles/social.css);
 
 /* Commented out (unused) - can be deleted:
  * @import url(inistyles/merechat1.css);

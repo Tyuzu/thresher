@@ -4,67 +4,77 @@
 
 /* Main Container: Floating Glass Bar */
 #primary-nav.primary-nav {
-  /*position: sticky;
-  top: 0;
+  position: relative;
   z-index: 90;
-  width: calc(100% - (var(--space-sm, 12px) * 2));*/
   width: 100%;
   max-width: var(--max-width, 1200px);
   margin: 0 auto;
+  padding: 0 var(--space-xs, 8px);
 }
 
-/* Hidden State Checkbox */
+/* Hidden Toggle Checkbox */
 #primary-nav .toggle {
   position: absolute;
-  z-index: -1;
-  opacity: 0;
-  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-/* Glass Inner Bar */
+/* Glass Inner Container */
 .navigation__inner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-sm, 12px);
-  background: var(--color-bg);
+  gap: var(--space-xs, 8px);
   padding: 6px;
-  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  background-color: color-mix(in srgb, var(--color-bg, #ffffff) 80%, transparent);
   /*backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg, 16px);*/
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.1));
+  border-radius: var(--radius-lg, 16px);
   box-shadow: 
     0 4px 20px -2px rgba(0, 0, 0, 0.05),
     0 1px 3px rgba(0, 0, 0, 0.02);
   transition: 
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast),
-    border-radius var(--transition-medium);
+    border-color var(--transition-fast, 0.2s ease),
+    box-shadow var(--transition-fast, 0.2s ease),
+    border-radius var(--transition-medium, 0.3s ease);*/
 }
 
 .navigation__inner:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
+  border-color: color-mix(in srgb, var(--color-primary, #0066ff) 30%, var(--color-border, rgba(0, 0, 0, 0.1)));
+  box-shadow: 
+    0 6px 24px -2px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
-/* --- Scrollable List Container --- */
+/* --- Scrollable Nav List --- */
 .navigation__list.horizontal {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  /*gap: 6px;*/
+  gap: 4px;
   width: 100%;
+  padding: 0;
+  margin: 0;
   list-style: none;
   overflow-x: auto;
   scroll-behavior: smooth;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .navigation__list.horizontal::-webkit-scrollbar {
   display: none;
 }
 
-/* Navigation Link Items */
+/* Items & Links */
 .navigation__item {
   flex: 0 0 auto;
 }
@@ -78,38 +88,51 @@
   border-radius: var(--radius-sm, 10px);
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-medium, 500);
+  line-height: 1.4;
   letter-spacing: -0.01em;
-  color: var(--color-fg);
+  color: var(--color-fg, #1a1a1a);
   text-decoration: none;
   white-space: nowrap;
   background: transparent;
   cursor: pointer;
+  user-select: none;
   transition: 
-    color var(--transition-fast),
-    background-color var(--transition-fast),
-    transform var(--transition-fast);
+    color var(--transition-fast, 0.2s ease),
+    background-color var(--transition-fast, 0.2s ease),
+    transform var(--transition-fast, 0.2s ease),
+    box-shadow var(--transition-fast, 0.2s ease);
 }
 
-/* Hover State - Soft lift & tint */
+/* States: Hover, Focus, Active */
 .navigation__link:hover {
-  color: var(--color-primary);
-  background-color: var(--color-card-hover);
+  color: var(--color-primary, #0066ff);
+  background-color: var(--color-card-hover, rgba(0, 0, 0, 0.04));
   transform: translateY(-1px);
+}
+
+.navigation__link:focus-visible {
+  outline: 2px solid var(--color-primary, #0066ff);
+  outline-offset: 2px;
 }
 
 .navigation__link:active {
   transform: translateY(0) scale(0.97);
 }
 
-/* Active State - Glowing Pill Indicator */
+/* Active Page Pill Indicator */
 .navigation__link.active {
-  color: #ffffff;
+  color: var(--color-bg, #ffffff);
   font-weight: var(--font-weight-bold, 600);
-  background-color: var(--color-primary);
-  box-shadow: 0 2px 10px color-mix(in srgb, var(--color-primary) 40%, transparent);
+  background-color: var(--color-primary, #0066ff);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--color-primary, #0066ff) 40%, transparent);
 }
 
-/* --- Morphing "More" Toggle Switch --- */
+.navigation__link.active:hover {
+  color: var(--color-primary-fg, #ffffff);
+  background-color: color-mix(in srgb, var(--color-primary, #0066ff) 90%, #000000);
+}
+
+/* --- "More" Toggle Trigger --- */
 .navigation__toggle {
   flex-shrink: 0;
   margin-left: auto;
@@ -117,12 +140,16 @@
 
 .navigation__toggle .navigation__link {
   padding-right: 32px;
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.08));
   font-weight: var(--font-weight-bold, 600);
 }
 
-/* Animated Chevron Icon via CSS Mask */
+.navigation__toggle .navigation__link:hover {
+  border-color: color-mix(in srgb, var(--color-primary, #0066ff) 40%, transparent);
+}
+
+/* Animated Masked Chevron Icon */
 .navigation__toggle .navigation__link::after {
   content: "";
   position: absolute;
@@ -134,14 +161,16 @@
   mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') center/contain no-repeat;
   -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') center/contain no-repeat;
   transform: translateY(-50%) rotate(0deg);
-  transition: transform var(--transition-fast) cubic-bezier(0.4, 0, 0.2, 1), background-color var(--transition-fast);
+  transition: 
+    transform var(--transition-fast, 0.2s) cubic-bezier(0.4, 0, 0.2, 1), 
+    background-color var(--transition-fast, 0.2s);
 }
 
 .navigation__toggle .navigation__link:hover::after {
-  background-color: var(--color-primary);
+  background-color: var(--color-primary, #0066ff);
 }
 
-/* --- Expanded Wrap Drawer State --- */
+/* --- Expanded Drawer State --- */
 .toggle:checked ~ .navigation__inner {
   border-radius: var(--radius-md, 14px);
   box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.12);
@@ -155,10 +184,9 @@
 
 .toggle:checked ~ .navigation__inner .navigation__toggle .navigation__link::after {
   transform: translateY(-50%) rotate(180deg);
-  background-color: var(--color-primary);
+  background-color: var(--color-primary, #0066ff);
 }
 
-/* Fade-in effect for wrapping links when opened */
 .toggle:checked ~ .navigation__inner .navigation__item {
   animation: navItemFade 0.25s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
@@ -174,43 +202,15 @@
   }
 }
 
-/* --- Responsive Mobile Floating Drawer --- */
-/*@media (max-width: 767px) {
-  #primary-nav.primary-nav {
-    width: calc(100% - 16px);
-  }
-
+/* --- Mobile Adaptive Layout --- */
+@media (max-width: 640px) {
   .navigation__inner {
-    flex-direction: column;
-    align-items: stretch;
     padding: 8px;
   }
 
-  .navigation__toggle {
-    width: 100%;
-    order: -1;
-  }
-
   .navigation__toggle .navigation__link {
-    width: 100%;
-    justify-content: center;
+    padding-left: 10px;
+    padding-right: 28px;
+    font-size: var(--font-size-xs, 0.8125rem);
   }
-
-  .navigation__list.horizontal {
-    display: none;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
-    padding-top: 8px;
-  }
-
-  .navigation__list.horizontal .navigation__link {
-    width: 100%;
-    justify-content: flex-start;
-    padding: 8px 12px;
-  }
-
-  .toggle:checked ~ .navigation__inner .navigation__list.horizontal {
-    display: flex;
-  }
-}*/
+}

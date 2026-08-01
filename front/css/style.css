@@ -1,10 +1,10 @@
 /* Core/Foundation Styles (load first) */
-@import url(theme1.css);
+@import url(theme2.css);
 @import url(base.css);
 /* Layout Components */
-@import url(./layout/sticky3.css);
+@import url(./layout/sticky5.css);
 @import url(./layout/header5.css);
-@import url(./layout/navwave.css);
+@import url(./layout/navi.css);
 @import url(./layout/footer.css);
 
 /* Page-Level Styles */

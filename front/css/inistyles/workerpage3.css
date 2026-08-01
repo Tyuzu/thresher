@@ -1,0 +1,224 @@
+/* ==========================================================================
+   Worker Profile Component Styles
+   ========================================================================== */
+
+/* Page Outer Container */
+.worker-profile-page {
+  width: 100%;
+  max-width: var(--max-width, 1200px);
+  margin: 0 auto;
+  padding: var(--space-md, 16px);
+  color: var(--color-fg, #1a1a1a);
+}
+
+/* Parent Layout: Main Content + Sidebar */
+.worker-profile-layout {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-lg, 24px);
+  align-items: flex-start;
+}
+
+/* Main Column */
+.worker-profile-main {
+  flex: 1;
+  min-width: 0; /* Prevents flex items from overflowing */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md, 16px);
+}
+
+/* Card Surface Base */
+.card,
+.profile-section {
+  background-color: var(--color-bg-surface, var(--color-card-bg, #ffffff));
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.08));
+  border-radius: var(--radius-lg, 16px);
+  padding: var(--space-lg, 20px);
+  box-shadow: 
+    0 4px 16px -2px rgba(0, 0, 0, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: border-color var(--transition-fast, 0.2s ease);
+}
+
+/* Section Headings */
+.profile-section h3,
+.worker-documents h3,
+.creator-section h3 {
+  margin: 0 0 var(--space-sm, 12px) 0;
+  font-size: var(--font-size-md, 1.125rem);
+  font-weight: var(--font-weight-bold, 600);
+  color: var(--color-fg, #1a1a1a);
+}
+
+/* ---------------- Header Section ---------------- */
+.worker-profile-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md, 20px);
+}
+
+.worker-profile-photo {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--color-bg-surface, #ffffff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.worker-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.worker-header-content h2 {
+  font-size: var(--font-size-xl, 1.75rem);
+  font-weight: var(--font-weight-bold, 700);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.next-availability {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-fg-muted, #666666);
+}
+
+.next-availability.none {
+  opacity: 0.75;
+  font-style: italic;
+}
+
+.worker-header-actions {
+  margin-top: 6px;
+}
+
+/* ---------------- Detail Rows & Lists ---------------- */
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm, 0.9375rem);
+  color: var(--color-fg, #333333);
+  padding: 6px 0;
+}
+
+.detail-row + .detail-row {
+  border-top: 1px solid var(--color-border-subtle, rgba(0, 0, 0, 0.04));
+}
+
+/* ---------------- Documents & Lists ---------------- */
+.worker-documents ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.worker-documents li {
+  margin-bottom: 8px;
+}
+
+.worker-documents a {
+  color: var(--color-primary, #0066ff);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.worker-documents a:hover {
+  text-decoration: underline;
+}
+
+/* ---------------- Sidebar / Aside Panel ---------------- */
+.worker-profile-aside {
+  width: 280px;
+  flex-shrink: 0;
+  position: sticky;
+  top: var(--space-md, 20px);
+  background-color: var(--color-bg-surface, var(--color-card-bg, #ffffff));
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.08));
+  border-radius: var(--radius-lg, 16px);
+  padding: var(--space-lg, 20px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 12px);
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.04);
+}
+
+.worker-profile-aside h3 {
+  margin: 0 0 4px 0;
+  font-size: var(--font-size-md, 1.125rem);
+}
+
+.worker-profile-aside ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------------- Buttons & Action Triggers ---------------- */
+
+
+.button.primary,
+.btn-primary {
+  background-color: var(--color-primary, #0066ff);
+  color: var(--color-primary-fg, #ffffff);
+}
+
+.button.primary:hover,
+.btn-primary:hover {
+  background-color: color-mix(in srgb, var(--color-primary, #0066ff) 90%, #000000);
+  transform: translateY(-1px);
+}
+
+.button.secondary {
+  background-color: var(--color-bg-secondary, rgba(0, 0, 0, 0.04));
+  color: var(--color-fg, #1a1a1a);
+  border-color: var(--color-border, rgba(0, 0, 0, 0.08));
+}
+
+.button.secondary:hover {
+  background-color: var(--color-card-hover, rgba(0, 0, 0, 0.08));
+}
+
+.button:active,
+.btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ---------------- Bookings & States ---------------- */
+.booking-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 12px);
+}
+
+.empty-state {
+  padding: var(--space-md, 16px);
+  text-align: center;
+  color: var(--color-fg-muted, #777777);
+  background: var(--color-bg-secondary, rgba(0, 0, 0, 0.02));
+  border-radius: var(--radius-md, 10px);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+/* ---------------- Mobile Responsive Drawer ---------------- */
+@media screen and (max-width: 768px) {
+  .worker-profile-layout {
+    flex-direction: column;
+  }
+
+  .worker-profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .worker-profile-aside {
+    width: 100%;
+    position: static;
+  }
+}

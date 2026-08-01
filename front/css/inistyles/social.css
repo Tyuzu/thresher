@@ -1,0 +1,450 @@
+/* ==========================================================================
+   Base & Reset
+   ========================================================================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    background-color: var(--color-bg-secondary);
+    color: var(--color-fg);
+    line-height: var(--line-height-base);
+}
+
+a {
+    color: var(--color-link);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: var(--color-link-hover);
+}
+
+/* ==========================================================================
+   Layout Wrapper
+   ========================================================================== */
+.tumblr-layout {
+    max-width: var(--max-width-md);
+    margin: 0 auto;
+    padding: var(--container-padding);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+/* ==========================================================================
+   Post Creation Form
+   ========================================================================== */
+.tumblr-form {
+    background-color: var(--color-card-bg);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--color-border-light);
+    overflow: hidden;
+}
+
+/* Form Tabs */
+.tab-header {
+    display: flex;
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.tab-button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: var(--space-md);
+    cursor: pointer;
+    color: var(--color-muted);
+    transition: all var(--transition-fast);
+}
+
+.tab-button:hover,
+.tab-button[ariaselected="true"] {
+    background-color: var(--color-bg);
+    color: var(--color-primary);
+}
+
+.tab-button[ariaselected="true"] {
+    border-bottom: 2px solid var(--color-primary);
+}
+
+.logoicon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    outline: none;
+}
+
+.icon-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.icon-wrapper svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--color-bg);
+    stroke-width: 2;
+}
+
+.button-label {
+    display: none;
+    /*  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);*/
+}
+
+/* Form Panels & Inputs */
+.panel-wrapper {
+    padding: var(--space-md);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-muted);
+}
+
+input[type="text"],
+input[type="file"],
+textarea {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-body);
+    font-size: var(--font-size-base);
+    color: var(--color-fg);
+    background-color: var(--color-input-bg);
+    border: 1px solid var(--color-input-border);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+input:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--color-input-focus);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    /* Soft primary glow */
+}
+
+.file-preview {
+    margin-bottom: var(--space-md);
+}
+
+/* Form Actions */
+.publish-btn {
+    background-color: var(--color-btn-bg);
+    color: var(--color-btn-fg);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    padding: var(--space-sm) var(--space-lg);
+    border: none;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    margin: 0 var(--space-md) var(--space-md) auto;
+    /* Push to right */
+    transition: background-color var(--transition-fast);
+}
+
+.publish-btn:hover:not(:disabled) {
+    background-color: var(--color-btn-hover-bg);
+}
+
+.publish-btn:disabled {
+    background-color: var(--color-btn-disabled-bg);
+    color: var(--color-btn-disabled-fg);
+    cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Feed & Posts
+   ========================================================================== */
+.tumblr-feed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.feed-item {
+    background-color: var(--color-card-bg);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-elev-1);
+    border: 1px solid var(--color-border-light);
+    overflow: hidden;
+    transition: box-shadow var(--transition-medium);
+}
+
+.feed-item:hover {
+    box-shadow: var(--shadow-card);
+}
+
+/* Post Header */
+.post-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+}
+
+.profile-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-circle);
+    object-fit: cover;
+    background-color: var(--color-bg-tertiary);
+}
+
+.user-time {
+    display: flex;
+    flex-direction: column;
+}
+
+.username {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
+    color: var(--color-fg);
+}
+
+.timestamp {
+    font-size: var(--font-size-xs);
+    color: var(--color-muted);
+}
+
+/* Post Content/Media */
+.post-media {
+    padding: 0 var(--space-md) var(--space-md);
+    font-size: var(--font-size-base);
+}
+
+.post-media p {
+    margin: 0 0 var(--space-sm);
+}
+
+.post-media p:last-child {
+    margin-bottom: 0;
+}
+
+.post-media ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.post-image {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    display: block;
+}
+
+.video-error {
+    padding: var(--space-xl) var(--space-md);
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-muted);
+    text-align: center;
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--color-border);
+    font-size: var(--font-size-sm);
+}
+
+/* Post Meta (Title & Tags) */
+.post-meta {
+    padding: 0 var(--space-md) var(--space-md);
+}
+
+.post-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    margin: 0 0 var(--space-xs);
+    line-height: var(--line-height-heading);
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+
+.tag {
+    font-size: var(--font-size-sm);
+    color: var(--color-muted);
+}
+
+.tag::before {
+    content: '#';
+    opacity: 0.7;
+}
+
+.tag:hover {
+    color: var(--color-primary);
+}
+
+/* Post Actions (Like, Comment, More) */
+.post-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border-top: 1px solid var(--color-border-light);
+    background-color: var(--color-surface);
+}
+
+.post-actions button {
+    background: transparent;
+    border: none;
+    padding: var(--space-xs);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.post-actions button:hover {
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-fg);
+}
+
+.post-actions button svg {
+    stroke: currentColor;
+    fill: none;
+}
+
+.more-wrapper {
+    margin-left: auto;
+    /* Pushes the menu to the far right */
+    position: relative;
+}
+
+.dropxdown {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: var(--space-xs);
+    background-color: var(--color-card-bg);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-elev-2);
+    padding: var(--space-xs) 0;
+    min-width: 120px;
+    z-index: 10;
+}
+
+.dropxdown.hidden {
+    display: none;
+}
+
+.dropxdown button {
+    width: 100%;
+    border-radius: 0;
+    padding: var(--space-sm) var(--space-md);
+    justify-content: flex-start;
+}
+
+.dropxdown .delete-btn {
+    color: var(--color-danger);
+}
+
+/* ==========================================================================
+   Video Player Component Overrides
+   ========================================================================== */
+.video-container {
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: #000;
+    /* Standard video background */
+}
+
+.video-player {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.videocon {
+    position: relative;
+}
+
+/* Video Controls Overlay */
+.vcon {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--space-sm) var(--space-md);
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+}
+
+.hflex-sb {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hflex {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+/* Video Control Buttons */
+.bonw {
+    color: #ffffff !important;
+    cursor: pointer;
+    padding: var(--space-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bonw svg {
+    stroke: #ffffff;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.quality-selector {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-sm);
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-base);
+    cursor: pointer;
+    outline: none;
+}
+
+.quality-selector option {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+}
