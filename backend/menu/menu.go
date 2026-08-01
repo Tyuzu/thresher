@@ -12,15 +12,13 @@ import (
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // CreateMenu creates a new menu item
-func CreateMenu(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func CreateMenu(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		placeID := ps.ByName("placeid")
+		placeID := utils.GetParam(r, "placeid")
 		if placeID == "" {
 			http.Error(w, "Place ID is required", http.StatusBadRequest)
 			return
@@ -82,11 +80,11 @@ func CreateMenu(app *infra.Deps) httprouter.Handle {
 }
 
 // EditMenu edits an existing menu item
-func EditMenu(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func EditMenu(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		placeID := ps.ByName("placeid")
-		menuID := ps.ByName("menuid")
+		placeID := utils.GetParam(r, "placeid")
+		menuID := utils.GetParam(r, "menuid")
 
 		var menu models.Menu
 		if err := json.NewDecoder(r.Body).Decode(&menu); err != nil {
@@ -136,15 +134,15 @@ func EditMenu(app *infra.Deps) httprouter.Handle {
 }
 
 // DeleteMenu deletes a menu item
-func DeleteMenu(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteMenu(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		dels.DeleteMenu(app) // keeps your existing deletion logic
 
 		// Optionally, fully interface-driven version:
 		/*
 				ctx := r.Context()
-				placeID := ps.ByName("placeid")
-				menuID := ps.ByName("menuid")
+				placeID := utils.GetParam(r,"placeid")
+				menuID := utils.GetParam(r,"menuid")
 
 				if err := app.DB.DeleteOne(ctx, "menu", map[string]string{"placeid": placeID, "menuid": menuID}); err != nil {
 					http.Error(w, fmt.Sprintf("Failed to delete menu: %v", err), http.StatusInternalServerError)

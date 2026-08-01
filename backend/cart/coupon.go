@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/config/mqevent"
@@ -98,8 +97,8 @@ func validateCouponServer(ctx context.Context, code string, subtotal int64, app 
 
 /* ───────────────────────── Validate Coupon ───────────────────────── */
 
-func ValidateCouponHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func ValidateCouponHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 

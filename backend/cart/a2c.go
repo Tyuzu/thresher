@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
-
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
@@ -17,8 +15,8 @@ import (
 
 /* ───────────────────────── Add To Cart ───────────────────────── */
 
-func AddToCart(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func AddToCart(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 

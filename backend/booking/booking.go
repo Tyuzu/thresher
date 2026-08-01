@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/config/mqevent"
@@ -18,8 +17,8 @@ import (
 
 // ---------- Bookings ----------
 
-func CreateBooking(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateBooking(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var p models.Booking
 		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 			http.Error(w, "invalid payload", http.StatusBadRequest)
@@ -200,9 +199,9 @@ func CreateBooking(app *infra.Deps) httprouter.Handle {
 
 // ---------- Booking status ----------
 
-func UpdateBookingStatus(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		bookingID := ps.ByName("id")
+func UpdateBookingStatus(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		bookingID := utils.GetParam(r, "id")
 		if bookingID == "" {
 			http.Error(w, "missing id", http.StatusBadRequest)
 			return
@@ -246,9 +245,9 @@ func UpdateBookingStatus(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func CancelBooking(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		bookingID := ps.ByName("id")
+func CancelBooking(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		bookingID := utils.GetParam(r, "id")
 		if bookingID == "" {
 			http.Error(w, "missing id", http.StatusBadRequest)
 			return
@@ -283,8 +282,8 @@ func CancelBooking(app *infra.Deps) httprouter.Handle {
 
 // ---------- Date capacity ----------
 
-func SetDateCapacity(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func SetDateCapacity(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var p models.DateCap
 		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 			http.Error(w, "invalid payload", http.StatusBadRequest)

@@ -13,13 +13,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // UpdateVendorHandler updates vendor information.
-func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateVendorHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -29,7 +28,7 @@ func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		vendorID := strings.TrimSpace(ps.ByName("vendorID"))
+		vendorID := strings.TrimSpace(utils.GetParam(r, "vendorID"))
 		if vendorID == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Vendor ID is required")
 			return
@@ -126,8 +125,8 @@ func UpdateVendorHandler(app *infra.Deps) httprouter.Handle {
 }
 
 // UpdateVendorStatusHandler updates the status of a vendor hiring record.
-func UpdateVendorStatusHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateVendorStatusHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -137,7 +136,7 @@ func UpdateVendorStatusHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		hiringID := strings.TrimSpace(ps.ByName("hiringID"))
+		hiringID := strings.TrimSpace(utils.GetParam(r, "hiringID"))
 		if hiringID == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Hiring ID is required")
 			return

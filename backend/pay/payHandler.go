@@ -11,11 +11,9 @@ import (
 	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
-
-	"github.com/julienschmidt/httprouter"
 )
 
-func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromRequest(r)
 
@@ -42,7 +40,7 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request, _ httproute
 	// Validate allowed methods globally or forward to CashOnDelivery handler if req.Method == "cod"
 	if req.Method == "cod" {
 		// Route or handle through CashOnDelivery logic contextually
-		p.CashOnDelivery(w, r, nil)
+		p.CashOnDelivery(w, r)
 		return
 	}
 

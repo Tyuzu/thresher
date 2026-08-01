@@ -10,8 +10,6 @@ import (
 	"naevis/utils"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // ---------- Utility ----------
@@ -20,8 +18,8 @@ func genID() string {
 }
 
 // ---------- Tier handlers ----------
-func CreateTier(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateTier(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		var tier models.Tier
 		if err := json.NewDecoder(r.Body).Decode(&tier); err != nil {
@@ -48,9 +46,9 @@ func CreateTier(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteTier(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		tierId := ps.ByName("id")
+func DeleteTier(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tierId := utils.GetParam(r, "id")
 		if tierId == "" {
 			http.Error(w, "missing id", http.StatusBadRequest)
 			return
@@ -68,8 +66,8 @@ func DeleteTier(app *infra.Deps) httprouter.Handle {
 }
 
 // ---------- Slots ----------
-func CreateSlot(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateSlot(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var s models.Slot
 		if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
 			http.Error(w, "invalid payload", http.StatusBadRequest)
@@ -105,9 +103,9 @@ func CreateSlot(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteSlot(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		slotId := ps.ByName("id")
+func DeleteSlot(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		slotId := utils.GetParam(r, "id")
 		if slotId == "" {
 			http.Error(w, "missing id", http.StatusBadRequest)
 			return
@@ -126,9 +124,9 @@ func DeleteSlot(app *infra.Deps) httprouter.Handle {
 }
 
 // ---------- GenerateSlotsFromTier ----------
-func GenerateSlotsFromTier(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		tierId := ps.ByName("id")
+func GenerateSlotsFromTier(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tierId := utils.GetParam(r, "id")
 		if tierId == "" {
 			http.Error(w, "missing id", http.StatusBadRequest)
 			return

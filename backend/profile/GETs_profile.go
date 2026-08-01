@@ -9,16 +9,14 @@ import (
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 /* -------------------------------------------------------
    Get Own Profile
 ------------------------------------------------------- */
 
-func GetProfile(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetProfile(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		requestingUserID := utils.GetUserIDFromRequest(r)
 
@@ -53,8 +51,8 @@ func GetProfile(app *infra.Deps) httprouter.Handle {
    Get Another User's Profile
 ------------------------------------------------------- */
 
-func GetUserProfile(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetUserProfile(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		claims, err := validateJWT(r)
@@ -63,7 +61,7 @@ func GetUserProfile(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		username := ps.ByName("username")
+		username := utils.GetParam(r, "username")
 
 		user, err := findUser(ctx, map[string]any{"username": username}, app.DB)
 		if err != nil || user == nil {

@@ -3,7 +3,6 @@ package beats
 import (
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/infra"
@@ -12,21 +11,21 @@ import (
 )
 
 // GET /api/v1/subscribes/:type/:id
-func DoesSubscribeEntity(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DoesSubscribeEntity(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		currentUserID := utils.GetUserIDFromRequest(r)
 		if currentUserID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		entityID := ps.ByName("id")
+		entityID := utils.GetParam(r, "id")
 		if entityID == "" {
 			http.Error(w, "Entity ID required", http.StatusBadRequest)
 			return
 		}
 
-		entityType := ps.ByName("type")
+		entityType := utils.GetParam(r, "type")
 
 		switch entityType {
 		case "user", "artist", "feedpost":
@@ -60,9 +59,9 @@ func DoesSubscribeEntity(app *infra.Deps) httprouter.Handle {
 }
 
 // GET /api/v1/subscribers/:id
-func GetSubscribers(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		targetUserID := ps.ByName("id")
+func GetSubscribers(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		targetUserID := utils.GetParam(r, "id")
 		if targetUserID == "" {
 			http.Error(w, "Target user ID required", http.StatusBadRequest)
 			return

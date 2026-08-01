@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/phpdave11/gofpdf"
 	"github.com/skip2/go-qrcode"
 )
@@ -33,9 +32,9 @@ func GenerateQRPayload(eventID, ticketID, uniqueCode string) string {
 }
 
 // PrintTicket generates a PDF ticket with QR code
-func PrintTicket(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventID := ps.ByName("eventid")
+func PrintTicket(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventID := utils.GetParam(r, "eventid")
 		uniqueCode := r.URL.Query().Get("uniqueCode")
 
 		tokenString := r.Header.Get("Authorization")

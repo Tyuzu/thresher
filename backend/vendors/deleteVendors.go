@@ -11,13 +11,11 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // DeleteVendorHandler soft-deletes a vendor profile.
-func DeleteVendorHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteVendorHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -27,7 +25,7 @@ func DeleteVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		vendorID := strings.TrimSpace(ps.ByName("vendorID"))
+		vendorID := strings.TrimSpace(utils.GetParam(r, "vendorID"))
 		if vendorID == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Vendor ID is required")
 			return
@@ -58,8 +56,8 @@ func DeleteVendorHandler(app *infra.Deps) httprouter.Handle {
 }
 
 // RemoveVendorHandler removes a vendor from an event.
-func RemoveVendorHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func RemoveVendorHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -69,8 +67,8 @@ func RemoveVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		eventID := strings.TrimSpace(ps.ByName("eventID"))
-		vendorID := strings.TrimSpace(ps.ByName("vendorID"))
+		eventID := strings.TrimSpace(utils.GetParam(r, "eventID"))
+		vendorID := strings.TrimSpace(utils.GetParam(r, "vendorID"))
 		if eventID == "" || vendorID == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Event ID and Vendor ID are required")
 			return

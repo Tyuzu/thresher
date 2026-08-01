@@ -2,24 +2,24 @@ package middleware
 
 import (
 	"context"
-	log "naevis/utils/logger"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/gorilla/websocket"
+
 	"naevis/config"
 	"naevis/infra"
 	"naevis/utils"
-
-	"github.com/gorilla/websocket"
-	"github.com/julienschmidt/httprouter"
+	log "naevis/utils/logger"
 )
 
-func Authenticate(app *infra.Deps) func(httprouter.Handle) httprouter.Handle {
-	return func(next httprouter.Handle) httprouter.Handle {
-		return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// Authenticate returns a standard middleware for HTTP handlers
+func Authenticate(app *infra.Deps) func(http.HandlerFunc) http.HandlerFunc {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
 			if websocket.IsWebSocketUpgrade(r) {
-				next(w, r, ps)
+				next(w, r)
 				return
 			}
 
@@ -44,7 +44,7 @@ func Authenticate(app *infra.Deps) func(httprouter.Handle) httprouter.Handle {
 			ctx := context.WithValue(r.Context(), config.UserIDKey, claims.UserID)
 			ctx = context.WithValue(ctx, config.RoleKey, claims.Role)
 
-			next(w, r.WithContext(ctx), ps)
+			next(w, r.WithContext(ctx))
 		}
 	}
 }
@@ -55,8 +55,8 @@ OptionalAuth Middleware
 ============================================================
 */
 
-func OptionalAuth(next httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func OptionalAuth(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := utils.ExtractBearerToken(r.Header.Get("Authorization"))
 		if tokenString != "" {
 			if claims, err := utils.ParseToken(tokenString); err == nil {
@@ -65,7 +65,7 @@ func OptionalAuth(next httprouter.Handle) httprouter.Handle {
 				r = r.WithContext(ctx)
 			}
 		}
-		next(w, r, ps)
+		next(w, r)
 	}
 }
 
@@ -75,13 +75,13 @@ RequireRoles Middleware
 ============================================================
 */
 
-func RequireRoles(allowedRoles ...string) func(httprouter.Handle) httprouter.Handle {
+func RequireRoles(allowedRoles ...string) func(http.HandlerFunc) http.HandlerFunc {
 	for i, role := range allowedRoles {
 		allowedRoles[i] = strings.ToLower(role)
 	}
 
-	return func(next httprouter.Handle) httprouter.Handle {
-		return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
 			raw := r.Context().Value(config.RoleKey)
 
 			log.Printf("RoleKey value: %#v", raw)
@@ -102,7 +102,7 @@ func RequireRoles(allowedRoles ...string) func(httprouter.Handle) httprouter.Han
 				for _, allowed := range allowedRoles {
 					if role == allowed {
 						log.Printf("role match: %s", role)
-						next(w, r, ps)
+						next(w, r)
 						return
 					}
 				}
@@ -113,31 +113,3 @@ func RequireRoles(allowedRoles ...string) func(httprouter.Handle) httprouter.Han
 		}
 	}
 }
-
-// func AuthenticateWS(next func(*websocket.Conn, *http.Request)) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		token := r.URL.Query().Get("token")
-// 		if token == "" {
-// 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-// 			return
-// 		}
-
-// 		claims, err := utils.ParseToken(token)
-// 		if err != nil || time.Now().After(claims.ExpiresAt.Time) {
-// 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-// 			return
-// 		}
-
-// 		ctx := context.WithValue(r.Context(), config.UserIDKey, claims.UserID)
-// 		ctx = context.WithValue(ctx, config.RoleKey, claims.Role)
-
-// 		r = r.WithContext(ctx)
-
-// 		conn, err := upgrader.Upgrade(w, r, nil)
-// 		if err != nil {
-// 			return
-// 		}
-
-// 		next(conn, r)
-// 	}
-// }

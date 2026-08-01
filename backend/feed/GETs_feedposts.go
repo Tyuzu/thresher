@@ -12,14 +12,13 @@ import (
 
 	"naevis/infra/db"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // GetPost returns a single post enriched with like count
-func GetPost(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		id := ps.ByName("postid")
+func GetPost(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := utils.GetParam(r, "postid")
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
@@ -48,8 +47,8 @@ func GetPost(app *infra.Deps) httprouter.Handle {
 }
 
 // GetPosts returns a list of posts with usernames populated from Cache
-func GetPosts(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetPosts(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 

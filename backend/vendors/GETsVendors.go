@@ -9,13 +9,11 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // GetVendorsHandler retrieves all available vendors.
-func GetVendorsHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetVendorsHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -40,12 +38,12 @@ func GetVendorsHandler(app *infra.Deps) httprouter.Handle {
 }
 
 // GetVendorHandler retrieves a single vendor by ID.
-func GetVendorHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetVendorHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		vendorID := strings.TrimSpace(ps.ByName("vendorID"))
+		vendorID := strings.TrimSpace(utils.GetParam(r, "vendorID"))
 		if vendorID == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Vendor ID is required")
 			return
@@ -65,8 +63,8 @@ func GetVendorHandler(app *infra.Deps) httprouter.Handle {
 }
 
 // GetMyVendorHandler retrieves the current user's active vendor profile.
-func GetMyVendorHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetMyVendorHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -90,12 +88,12 @@ func GetMyVendorHandler(app *infra.Deps) httprouter.Handle {
 }
 
 // GetEventVendorsHandler retrieves all vendors hired for an event.
-func GetEventVendorsHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetEventVendorsHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		eventID := strings.TrimSpace(ps.ByName("eventID"))
+		eventID := strings.TrimSpace(utils.GetParam(r, "eventID"))
 		if eventID == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Event ID is required")
 			return
@@ -119,8 +117,8 @@ func GetEventVendorsHandler(app *infra.Deps) httprouter.Handle {
 }
 
 // GetMyVendorRequestsHandler retrieves hiring requests for the current vendor.
-func GetMyVendorRequestsHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetMyVendorRequestsHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 

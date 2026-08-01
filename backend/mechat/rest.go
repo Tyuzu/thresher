@@ -15,7 +15,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -23,8 +22,8 @@ import (
 // ================= CHATS =================
 //
 
-func StartNewChat(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func StartNewChat(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := getUser(r)
 
@@ -87,12 +86,12 @@ func StartNewChat(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetChatMessages(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetChatMessages(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := utils.GetUserIDFromRequest(r)
 
-		chatID := strings.TrimSpace(ps.ByName("chatid"))
+		chatID := strings.TrimSpace(utils.GetParam(r, "chatid"))
 		if chatID == "" {
 			writeErr(w, 400, "missing chat id")
 			return
@@ -146,12 +145,12 @@ func GetChatMessages(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetChatByID(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetChatByID(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := utils.GetUserIDFromRequest(r)
 
-		chatID := ps.ByName("chatid")
+		chatID := utils.GetParam(r, "chatid")
 		var chat models.Chat
 
 		if err := app.DB.FindOne(ctx, MereChatCollection, map[string]any{
@@ -166,8 +165,8 @@ func GetChatByID(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetUserChats(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetUserChats(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := utils.GetUserIDFromRequest(r)
 
@@ -211,11 +210,11 @@ func GetUserChats(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func UploadAttachment(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UploadAttachment(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := utils.GetUserIDFromRequest(r)
-		chatID := ps.ByName("chatid")
+		chatID := utils.GetParam(r, "chatid")
 
 		mediaID := r.FormValue("mediaid")
 		savedName := r.FormValue("savedname")

@@ -14,7 +14,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -30,8 +29,8 @@ var (
    1. HANDLERS (HTTP LAYER)
 ============================================================ */
 
-func Register(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func Register(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 

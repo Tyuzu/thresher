@@ -11,7 +11,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -109,8 +108,8 @@ func insertAnalyticsEvents(
 
 // -------------------- Log Activities --------------------
 
-func LogActivities(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func LogActivities(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			utils.RespondWithError(w, http.StatusUnauthorized, "unauthorized")
@@ -143,8 +142,8 @@ func LogActivities(app *infra.Deps) httprouter.Handle {
 
 // -------------------- Activity Feed --------------------
 
-func GetActivityFeed(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetActivityFeed(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			utils.RespondWithError(w, http.StatusUnauthorized, "unauthorized")
@@ -180,8 +179,8 @@ func GetActivityFeed(app *infra.Deps) httprouter.Handle {
 
 // -------------------- Analytics --------------------
 
-func HandleAnalyticsEvent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func HandleAnalyticsEvent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var payload struct {
 			Events []map[string]any `json:"events"`
 		}

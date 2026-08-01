@@ -10,20 +10,11 @@ import (
 	"naevis/infra"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-type ModeratorApplication struct {
-	ID        string    `bson:"id" json:"id"`
-	UserID    string    `bson:"userId" json:"userId"`
-	Reason    string    `bson:"reason" json:"reason"`
-	Status    string    `bson:"status" json:"status"` // pending, approved, rejected
-	CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
-}
-
-func ApplyModerator(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func ApplyModerator(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		var payload struct {

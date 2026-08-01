@@ -11,7 +11,6 @@ import (
 	"naevis/infra"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -355,8 +354,8 @@ func applyPatch(target *UserSettings, key string, value any) {
    Handlers
 ------------------------- */
 
-func GetSettings(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetSettings(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		userID, ok := getUserID(r)
@@ -384,14 +383,14 @@ func GetSettings(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetSettingsSchema(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetSettingsSchema(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithJSON(w, http.StatusOK, settingsSchema)
 	}
 }
 
-func UpdateSettings(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func UpdateSettings(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		userID, ok := getUserID(r)
@@ -476,8 +475,8 @@ func UpdateSettings(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func ResetSettings(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func ResetSettings(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		userID, ok := getUserID(r)
@@ -506,8 +505,8 @@ func ResetSettings(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func InitUserSettings(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func InitUserSettings(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		userID, ok := getUserID(r)

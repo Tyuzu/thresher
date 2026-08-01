@@ -9,14 +9,22 @@ import (
 	"naevis/infra"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+type ModeratorApplication struct {
+	ID        string    `json:"id" bson:"id"`
+	UserID    string    `json:"user_id" bson:"user_id"`
+	Reason    string    `json:"reason" bson:"reason"`
+	Status    string    `json:"status" bson:"status"`
+	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+}
+
 // ---------------------- List Moderator Applications ----------------------
 // Optional query param: ?status=pending|approved|rejected
-func ListModeratorApplications(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func ListModeratorApplications(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		status := r.URL.Query().Get("status")
@@ -34,7 +42,9 @@ func ListModeratorApplications(app *infra.Deps) httprouter.Handle {
 			&applications,
 		)
 		if err != nil {
-			http.Error(w, `{"error":"Failed to fetch applications"}`, http.StatusInternalServerError)
+			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{
+				"error": "Failed to fetch applications",
+			})
 			return
 		}
 
@@ -43,13 +53,15 @@ func ListModeratorApplications(app *infra.Deps) httprouter.Handle {
 }
 
 // ---------------------- Approve Moderator Application ----------------------
-func ApproveModerator(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func ApproveModerator(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		id := ps.ByName("id")
+		id := utils.GetParam(r, "id")
 		if id == "" {
-			http.Error(w, `{"error":"Invalid ID"}`, http.StatusBadRequest)
+			utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{
+				"error": "Invalid or missing application ID",
+			})
 			return
 		}
 
@@ -65,27 +77,34 @@ func ApproveModerator(app *infra.Deps) httprouter.Handle {
 			},
 		)
 		if err != nil {
-			http.Error(w, `{"error":"Application not found"}`, http.StatusNotFound)
+			utils.RespondWithJSON(w, http.StatusNotFound, map[string]string{
+				"error": "Application not found or update failed",
+			})
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.ApprovedModeratorRoleRequestPayload{})
-		app.MQ.Publish(ctx, mqevent.ApprovedModeratorRoleRequestEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.ApprovedModeratorRoleRequestPayload{
+			ApplicationID: id,
+			ApprovedAt:    time.Now().UTC(),
+		})
+		_ = app.MQ.Publish(ctx, mqevent.ApprovedModeratorRoleRequestEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
-			"message": "Application approved",
+			"message": "Application approved successfully",
 		})
 	}
 }
 
 // ---------------------- Reject Moderator Application ----------------------
-func RejectModerator(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func RejectModerator(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		id := ps.ByName("id")
+		id := utils.GetParam(r, "id")
 		if id == "" {
-			http.Error(w, `{"error":"Invalid ID"}`, http.StatusBadRequest)
+			utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{
+				"error": "Invalid or missing application ID",
+			})
 			return
 		}
 
@@ -101,15 +120,20 @@ func RejectModerator(app *infra.Deps) httprouter.Handle {
 			},
 		)
 		if err != nil {
-			http.Error(w, `{"error":"Application not found"}`, http.StatusNotFound)
+			utils.RespondWithJSON(w, http.StatusNotFound, map[string]string{
+				"error": "Application not found or update failed",
+			})
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.RejectedModeratorRoleRequestPayload{})
-		app.MQ.Publish(ctx, mqevent.RejectedModeratorRoleRequestEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.RejectedModeratorRoleRequestPayload{
+			ApplicationID: id,
+			RejectedAt:    time.Now().UTC(),
+		})
+		_ = app.MQ.Publish(ctx, mqevent.RejectedModeratorRoleRequestEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
-			"message": "Application rejected",
+			"message": "Application rejected successfully",
 		})
 	}
 }

@@ -2,31 +2,39 @@ package filemgr
 
 import (
 	"encoding/json"
+	"net/http"
+	"strings"
+
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/utils"
 	log "naevis/utils/logger"
-	"net/http"
-	"strings"
-
-	"github.com/julienschmidt/httprouter"
 )
 
-func FiledropHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func FiledropHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
 		if err := validateUploadRequest(w, r); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		r.Body = http.MaxBytesReader(nil, r.Body, maxUploadBytes)
+		// FIX 1: Pass 'w' (http.ResponseWriter) to MaxBytesReader instead of 'nil' to prevent runtime panic
+		r.Body = http.MaxBytesReader(w, r.Body, maxUploadBytes)
+
 		if err := r.ParseMultipartForm(maxUploadBytes); err != nil { // #nosec G120
 			utils.RespondWithError(w, http.StatusBadRequest, "failed to parse multipart form: "+err.Error())
 			return
 		}
+
+		// FIX 2: Always clean up temporary files created on disk by ParseMultipartForm
 		if r.MultipartForm != nil {
-			defer r.MultipartForm.RemoveAll()
+			defer func() {
+				if err := r.MultipartForm.RemoveAll(); err != nil {
+					log.Printf("[Filedrop] failed to remove multipart temp files: %v", err)
+				}
+			}()
 		}
 
 		entityType := strings.ToLower(strings.TrimSpace(r.FormValue("entityType")))
@@ -38,6 +46,7 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 			utils.RespondWithError(w, http.StatusBadRequest, "entityType is required")
 			return
 		}
+
 		if _, ok := validEntities[entityType]; !ok {
 			utils.RespondWithError(w, http.StatusBadRequest, "invalid entityType")
 			return
@@ -86,9 +95,21 @@ func FiledropHandler(app *infra.Deps) httprouter.Handle {
 			}
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.FileCreatedPayload{})
-		if err := app.MQ.Publish(ctx, mqevent.FileCreatedEvent, mqpayload); err != nil { // #nosec G104
-			log.Printf("Failed to publish FileCreatedEvent: %v", err)
+		// FIX 3: Populate MQ event payload with actual metadata instead of an empty struct
+		payload := mqevent.FileCreatedPayload{
+			UserID:     userid,
+			EntityType: entityType,
+			EntityID:   entityId,
+			Count:      len(attachments),
+		}
+
+		mqpayload, err := json.Marshal(payload)
+		if err != nil {
+			log.Printf("[Filedrop] failed to marshal FileCreatedEvent payload: %v", err)
+		} else {
+			if err := app.MQ.Publish(ctx, mqevent.FileCreatedEvent, mqpayload); err != nil { // #nosec G104
+				log.Printf("[Filedrop] Failed to publish FileCreatedEvent: %v", err)
+			}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, convertToAttachments(attachments))

@@ -2,7 +2,7 @@ package routes
 
 import (
 	"naevis/artists"
-	"naevis/auth"
+	"naevis/authnew"
 	"naevis/autocomplete"
 	"naevis/baito"
 	"naevis/beats"
@@ -45,6 +45,7 @@ import (
 	"naevis/userdata/metadata"
 	"naevis/utils"
 	"naevis/vendors"
+	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -56,116 +57,116 @@ import (
 func AddActivityRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	// If activity log/feed is user-specific, keep auth
 	authmidware := middleware.Authenticate(app)
-	router.POST("/api/v1/activity/log", rateLimiter.Limit(authmidware(activity.LogActivities(app))))
-	router.GET("/api/v1/activity/get", authmidware(activity.GetActivityFeed(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/activity/log", rateLimiter.Limit(authmidware(activity.LogActivities(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/activity/get", authmidware(activity.GetActivityFeed(app)))
 
 	// Public analytics/telemetry ingestion
-	router.POST("/api/v1/scitylana/event", activity.HandleAnalyticsEvent(app))
+	router.HandlerFunc(http.MethodPost, "/api/v1/scitylana/event", activity.HandleAnalyticsEvent(app))
 }
 
 func AddJobRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
-	router.GET("/api/v1/jobs/:entitytype/:entityid", rateLimiter.Limit(jobs.GetJobsRelatedTOEntity(app)))
-	router.POST("/api/v1/jobs/:entitytype/:entityid", rateLimiter.Limit(authmidware(jobs.CreateBaitoForEntity(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/jobs/:entitytype/:entityid", rateLimiter.Limit(jobs.GetJobsRelatedTOEntity(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/jobs/:entitytype/:entityid", rateLimiter.Limit(authmidware(jobs.CreateBaitoForEntity(app))))
 }
 
 func AddBaitoRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Create / update jobs → require auth
-	router.POST("/api/v1/baitos/baito", rateLimiter.Limit(authmidware(baito.CreateBaito(app))))
-	router.PUT("/api/v1/baitos/baito/:baitoid", rateLimiter.Limit(authmidware(baito.UpdateBaito(app))))
-	router.DELETE("/api/v1/baitos/baito/:baitoid", rateLimiter.Limit(authmidware(baito.DeleteBaito(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/baitos/baito", rateLimiter.Limit(authmidware(baito.CreateBaito(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/baitos/baito/:baitoid", rateLimiter.Limit(authmidware(baito.UpdateBaito(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/baitos/baito/:baitoid", rateLimiter.Limit(authmidware(baito.DeleteBaito(app))))
 
 	// Public job browsing
-	router.GET("/api/v1/baitos/latest", rateLimiter.Limit(baito.GetLatestBaitos(app)))
-	router.GET("/api/v1/baitos/related", rateLimiter.Limit(baito.GetRelatedBaitos(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/latest", rateLimiter.Limit(baito.GetLatestBaitos(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/related", rateLimiter.Limit(baito.GetRelatedBaitos(app)))
 
-	router.GET("/api/v1/baitos/baito/:baitoid", rateLimiter.Limit(baito.GetBaitoByID(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/baito/:baitoid", rateLimiter.Limit(baito.GetBaitoByID(app)))
 
 	// Owner-specific views → require auth
-	router.GET("/api/v1/baitos/mine", authmidware(baito.GetMyBaitos(app)))
-	router.GET("/api/v1/baitos/baito/:baitoid/applicants", authmidware(baito.GetBaitoApplicants(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/mine", authmidware(baito.GetMyBaitos(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/baito/:baitoid/applicants", authmidware(baito.GetBaitoApplicants(app)))
 
 	// Part-timer actions → require auth
-	router.POST("/api/v1/baitos/baito/:baitoid/apply", authmidware(baito.ApplyToBaito(app)))
-	router.GET("/api/v1/baitos/applications", authmidware(baito.GetMyApplications(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/baitos/baito/:baitoid/apply", authmidware(baito.ApplyToBaito(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/applications", authmidware(baito.GetMyApplications(app)))
 
 	// Profile creation → require auth
-	router.POST("/api/v1/baitos/profile", authmidware(baito.CreateWorkerProfile(app)))
-	router.PATCH("/api/v1/baitos/profile/:workerId", authmidware(baito.UpdateWorkerProfile(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/baitos/profile", authmidware(baito.CreateWorkerProfile(app)))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/baitos/profile/:workerId", authmidware(baito.UpdateWorkerProfile(app)))
 
 	// Worker directory (probably private) → require auth
-	router.GET("/api/v1/baitos/workers", rateLimiter.Limit(baito.GetWorkers(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/workers", rateLimiter.Limit(baito.GetWorkers(app)))
 
-	router.GET("/api/v1/baitos/workers/skills", rateLimiter.Limit(baito.GetWorkerSkills(app)))
-	router.GET("/api/v1/baitos/worker/:workerId", rateLimiter.Limit(baito.GetWorkerById(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/workers/skills", rateLimiter.Limit(baito.GetWorkerSkills(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/worker/:workerId", rateLimiter.Limit(baito.GetWorkerById(app)))
 }
 
 func AddBeatRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// User must be logged in to like/unlike
-	router.PUT("/api/v1/likes/:entitytype/like/:entityid", rateLimiter.Limit(authmidware(beats.ToggleLike(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/likes/:entitytype/like/:entityid", rateLimiter.Limit(authmidware(beats.ToggleLike(app))))
 
 	// Get users who liked a post/beat
-	router.GET("/api/v1/likes/:entitytype/users/:entityid", rateLimiter.Limit(authmidware(beats.GetLikers(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/users/:entityid", rateLimiter.Limit(authmidware(beats.GetLikers(app))))
 
 	// Batch check user likes
-	router.POST("/api/v1/likes/:entitytype/batch/users", rateLimiter.Limit(authmidware(beats.BatchUserLikes(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/likes/:entitytype/batch/users", rateLimiter.Limit(authmidware(beats.BatchUserLikes(app))))
 
 	// Like count is public
-	router.GET("/api/v1/likes/:entitytype/count/:entityid", rateLimiter.Limit(beats.GetLikeCount(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/count/:entityid", rateLimiter.Limit(beats.GetLikeCount(app)))
 
 	// Follows
-	router.PUT("/api/v1/follows/:id", rateLimiter.Limit(authmidware(beats.ToggleFollow(app))))
-	router.DELETE("/api/v1/follows/:id", rateLimiter.Limit(authmidware(beats.ToggleUnFollow(app))))
-	router.GET("/api/v1/follows/:id/status", rateLimiter.Limit(authmidware(beats.DoesFollow(app))))
-	router.GET("/api/v1/followers/:id", rateLimiter.Limit(beats.GetFollowers(app)))
-	router.GET("/api/v1/following/:id", rateLimiter.Limit(beats.GetFollowing(app)))
+	router.HandlerFunc(http.MethodPut, "/api/v1/follows/:id", rateLimiter.Limit(authmidware(beats.ToggleFollow(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/follows/:id", rateLimiter.Limit(authmidware(beats.ToggleUnFollow(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/follows/:id/status", rateLimiter.Limit(authmidware(beats.DoesFollow(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/followers/:id", rateLimiter.Limit(beats.GetFollowers(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/following/:id", rateLimiter.Limit(beats.GetFollowing(app)))
 
 	// Subscribes / Follows
-	router.PUT("/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.SubscribeEntity(app))))
-	router.DELETE("/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.UnsubscribeEntity(app))))
-	router.GET("/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.DoesSubscribeEntity(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.SubscribeEntity(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.UnsubscribeEntity(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.DoesSubscribeEntity(app))))
 
 	// Get all subscribers of a user/artist
-	router.GET("/api/v1/subscribers/:id", rateLimiter.Limit(beats.GetSubscribers(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/subscribers/:id", rateLimiter.Limit(beats.GetSubscribers(app)))
 
 }
 
 func AddRecipeRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
-	router.GET("/api/v1/recipes/tags", rateLimiter.Limit(recipes.GetRecipeTags(app)))         // Public
-	router.GET("/api/v1/recipes", middleware.OptionalAuth(recipes.GetRecipes(app)))           // Public/optional
-	router.GET("/api/v1/recipes/recipe/:id", middleware.OptionalAuth(recipes.GetRecipe(app))) // Public/optional
+	router.HandlerFunc(http.MethodGet, "/api/v1/recipes/tags", rateLimiter.Limit(recipes.GetRecipeTags(app)))         // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/recipes", middleware.OptionalAuth(recipes.GetRecipes(app)))           // Public/optional
+	router.HandlerFunc(http.MethodGet, "/api/v1/recipes/recipe/:id", middleware.OptionalAuth(recipes.GetRecipe(app))) // Public/optional
 
 	// Modifications require auth
-	router.POST("/api/v1/recipes", authmidware(recipes.CreateRecipe(app)))
-	router.PUT("/api/v1/recipes/recipe/:id", authmidware(recipes.UpdateRecipe(app)))
-	router.DELETE("/api/v1/recipes/recipe/:id", authmidware(recipes.DeleteRecipe(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/recipes", authmidware(recipes.CreateRecipe(app)))
+	router.HandlerFunc(http.MethodPut, "/api/v1/recipes/recipe/:id", authmidware(recipes.UpdateRecipe(app)))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/recipes/recipe/:id", authmidware(recipes.DeleteRecipe(app)))
 }
 
 func AddHomeRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	// router.GET("/api/v1/home/:apiRoute", middleware.OptionalAuth(home.GetHomeContent)) // Public/optional
-	router.GET("/api/v1/homecards", middleware.OptionalAuth(home.HomeCardsHandler(app))) // Public/optional
+	// router.HandlerFunc(http.MethodGet,"/api/v1/home/:apiRoute", middleware.OptionalAuth(home.GetHomeContent)) // Public/optional
+	router.HandlerFunc(http.MethodGet, "/api/v1/homecards", middleware.OptionalAuth(home.HomeCardsHandler(app))) // Public/optional
 }
 
 func AddProductRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	router.GET("/api/v1/products/:entityType/:entityId", middleware.OptionalAuth(products.GetProductDetails(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/products/:entityType/:entityId", middleware.OptionalAuth(products.GetProductDetails(app)))
 }
 
 // Routes registration
 func AddNoticesRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// CREATE
-	router.POST("/api/v1/notices/:entitytype/:entityid", rateLimiter.Limit(authmidware(notices.CreateNotice(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/notices/:entitytype/:entityid", rateLimiter.Limit(authmidware(notices.CreateNotice(app))))
 
 	// READ
-	router.GET("/api/v1/notices/:entitytype/:entityid", notices.GetNotices(app))
-	router.GET("/api/v1/notices/:entitytype/:entityid/:noticeid", notices.GetNotice(app))
+	router.HandlerFunc(http.MethodGet, "/api/v1/notices/:entitytype/:entityid", notices.GetNotices(app))
+	router.HandlerFunc(http.MethodGet, "/api/v1/notices/:entitytype/:entityid/:noticeid", notices.GetNotice(app))
 
 	// UPDATE + DELETE
-	router.PUT("/api/v1/notices/:entitytype/:entityid/:noticeid", rateLimiter.Limit(authmidware(notices.UpdateNotice(app))))
-	router.DELETE("/api/v1/notices/:entitytype/:entityid/:noticeid", rateLimiter.Limit(authmidware(notices.DeleteNotice(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/notices/:entitytype/:entityid/:noticeid", rateLimiter.Limit(authmidware(notices.UpdateNotice(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/notices/:entitytype/:entityid/:noticeid", rateLimiter.Limit(authmidware(notices.DeleteNotice(app))))
 }
 
 // // Notifications routes
@@ -173,266 +174,269 @@ func AddNoticesRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *m
 // 	authmidware := middleware.Authenticate(app)
 
 // 	// Create notification
-// 	router.POST("/api/v1/notifs", rateLimiter.Limit(authmidware(notifications.CreateNotification(app))))
+// 	router.HandlerFunc(http.MethodPost,"/api/v1/notifs", rateLimiter.Limit(authmidware(notifications.CreateNotification(app))))
 
 // 	// Bulk create notifications
-// 	router.POST("/api/v1/notifs/bulk", rateLimiter.Limit(authmidware(notifications.BulkCreateNotifications(app))))
+// 	router.HandlerFunc(http.MethodPost,"/api/v1/notifs/bulk", rateLimiter.Limit(authmidware(notifications.BulkCreateNotifications(app))))
 
 // 	// Get user notifications
-// 	router.GET("/api/v1/notifs/user/:userid", notifications.GetUserNotifications(app))
+// 	router.HandlerFunc(http.MethodGet,"/api/v1/notifs/user/:userid", notifications.GetUserNotifications(app))
 
 // 	// Get unread count
-// 	router.GET("/api/v1/notifs/user/:userid/unread", notifications.GetUnreadCount(app))
+// 	router.HandlerFunc(http.MethodGet,"/api/v1/notifs/user/:userid/unread", notifications.GetUnreadCount(app))
 
 // 	// Mark notification as read
-// 	router.PUT("/api/v1/notifs/notif/:notificationid/read", rateLimiter.Limit(authmidware(notifications.MarkAsRead(app))))
+// 	router.HandlerFunc(http.MethodPut,"/api/v1/notifs/notif/:notificationid/read", rateLimiter.Limit(authmidware(notifications.MarkAsRead(app))))
 
 // 	// Mark all as read
-// 	router.PUT("/api/v1/notifs/user/:userid/read-all", rateLimiter.Limit(authmidware(notifications.MarkAllAsRead(app))))
+// 	router.HandlerFunc(http.MethodPut,"/api/v1/notifs/user/:userid/read-all", rateLimiter.Limit(authmidware(notifications.MarkAllAsRead(app))))
 
 // 	// Delete notification
-// 	router.DELETE("/api/v1/notifs/notif/:notificationid", rateLimiter.Limit(authmidware(notifications.DeleteNotification(app))))
+// 	router.HandlerFunc(http.MethodDelete,"/api/v1/notifs/notif/:notificationid", rateLimiter.Limit(authmidware(notifications.DeleteNotification(app))))
 
 // 	// Clear all notifications
-// 	router.DELETE("/api/v1/notifs/user/:userid", rateLimiter.Limit(authmidware(notifications.ClearAllNotifications(app))))
+// 	router.HandlerFunc(http.MethodDelete,"/api/v1/notifs/user/:userid", rateLimiter.Limit(authmidware(notifications.ClearAllNotifications(app))))
 
 // 	// Notification preferences
-// 	router.GET("/api/v1/notifs/user/:userid/preferences", authmidware(notifications.GetPreferences(app)))
-// 	router.PUT("/api/v1/notifs/user/:userid/preferences", rateLimiter.Limit(authmidware(notifications.UpdatePreferences(app))))
+// 	router.HandlerFunc(http.MethodGet,"/api/v1/notifs/user/:userid/preferences", authmidware(notifications.GetPreferences(app)))
+// 	router.HandlerFunc(http.MethodPut,"/api/v1/notifs/user/:userid/preferences", rateLimiter.Limit(authmidware(notifications.UpdatePreferences(app))))
 // }
 
 func AddCommentsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Create comment
-	router.POST("/api/v1/comments/:entitytype/:entityid", rateLimiter.Limit(authmidware(comments.CreateComment(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/comments/:entitytype/:entityid", rateLimiter.Limit(authmidware(comments.CreateComment(app))))
 
 	// Get comments for an entity (supports pagination/sorting via query params)
-	router.GET("/api/v1/comments/:entitytype/:entityid", comments.GetComments(app)) // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/comments/:entitytype/:entityid", comments.GetComments(app)) // Public
 
-	router.GET("/api/v1/comments/:entitytype/:entityid/:commentid", comments.GetComment(app))
+	router.HandlerFunc(http.MethodGet, "/api/v1/comments/:entitytype/:entityid/:commentid", comments.GetComment(app))
 
 	// Update & Delete
-	router.PUT("/api/v1/comments/:entitytype/:entityid/:commentid", rateLimiter.Limit(authmidware(comments.UpdateComment(app))))
-	router.DELETE("/api/v1/comments/:entitytype/:entityid/:commentid", rateLimiter.Limit(authmidware(comments.DeleteComment(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/comments/:entitytype/:entityid/:commentid", rateLimiter.Limit(authmidware(comments.UpdateComment(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/comments/:entitytype/:entityid/:commentid", rateLimiter.Limit(authmidware(comments.DeleteComment(app))))
 }
 
 func AddAuthRoutes(router *httprouter.Router, app *infra.Deps, limiter *middleware.RateLimiter) {
 	authmid := middleware.Authenticate(app)
-	router.POST("/api/v1/auth/register", limiter.Limit(auth.Register(app)))
-	router.POST("/api/v1/auth/login", limiter.Limit(auth.Login(app)))
+
+	// router.HandlerFunc accepts standard http.HandlerFunc directly!
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/register", limiter.Limit(authnew.Register(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/login", limiter.Limit(authnew.Login(app)))
 
 	// Refresh should NOT use aggressive limiter
-	router.POST("/api/v1/auth/refresh", auth.RefreshToken(app))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/refresh", authnew.RefreshToken(app))
 
-	// Logout does NOT need Authenticate middleware
-	router.POST("/api/v1/auth/logout", auth.LogoutUser(app))
-	router.POST("/api/v1/auth/logout-all", authmid(auth.LogoutAllSessions(app)))
+	// Logout routes
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/logout", authnew.LogoutUser(app))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/logout-all", authmid(authnew.LogoutAllSessions(app)))
 
-	router.POST("/api/v1/auth/verify-otp", limiter.Limit(auth.VerifyOTPHandler(app)))
-	router.POST("/api/v1/auth/request-otp", limiter.Limit(auth.RequestOTPHandler(app)))
+	// OTP routes
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/verify-otp", limiter.Limit(authnew.VerifyOTPHandler(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/request-otp", limiter.Limit(authnew.RequestOTPHandler(app)))
 }
 
 // func AddAuthRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 // 	// Public routes
-// 	router.POST("/api/v1/auth/register", rateLimiter.Limit(auth.Register))
-// 	router.POST("/api/v1/auth/login", rateLimiter.Limit(auth.Login))
-// 	router.POST("/api/v1/auth/refresh", rateLimiter.Limit(auth.RefreshToken))
-// 	router.POST("/api/v1/auth/verify-otp", rateLimiter.Limit(auth.VerifyOTPHandler))
-// 	router.POST("/api/v1/auth/request-otp", rateLimiter.Limit(auth.RequestOTPHandler))
+// 	router.HandlerFunc(http.MethodPost,"/api/v1/auth/register", rateLimiter.Limit(auth.Register))
+// 	router.HandlerFunc(http.MethodPost,"/api/v1/auth/login", rateLimiter.Limit(auth.Login))
+// 	router.HandlerFunc(http.MethodPost,"/api/v1/auth/refresh", rateLimiter.Limit(auth.RefreshToken))
+// 	router.HandlerFunc(http.MethodPost,"/api/v1/auth/verify-otp", rateLimiter.Limit(auth.VerifyOTPHandler))
+// 	router.HandlerFunc(http.MethodPost,"/api/v1/auth/request-otp", rateLimiter.Limit(auth.RequestOTPHandler))
 
 // 	// Protected routes
-// 	router.POST("/api/v1/auth/logout", authmidware(auth.LogoutUser))
+// 	router.HandlerFunc(http.MethodPost,"/api/v1/auth/logout", authmidware(auth.LogoutUser))
 // }
 
 func AddBookingRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// existing routes
-	router.GET("/api/v1/bookings/slots", rateLimiter.Limit(authmidware(booking.ListSlots(app))))
-	router.POST("/api/v1/bookings/slots", rateLimiter.Limit(authmidware(booking.CreateSlot(app))))
-	router.DELETE("/api/v1/bookings/slots/:id", rateLimiter.Limit(authmidware(booking.DeleteSlot(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/bookings/slots", rateLimiter.Limit(authmidware(booking.ListSlots(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/bookings/slots", rateLimiter.Limit(authmidware(booking.CreateSlot(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/bookings/slots/:id", rateLimiter.Limit(authmidware(booking.DeleteSlot(app))))
 
-	router.GET("/api/v1/bookings/bookings", rateLimiter.Limit(authmidware(booking.ListBookings(app))))
-	router.POST("/api/v1/bookings/bookings", rateLimiter.Limit(authmidware(booking.CreateBooking(app))))
-	router.PUT("/api/v1/bookings/bookings/:id/status", rateLimiter.Limit(authmidware(booking.UpdateBookingStatus(app))))
-	router.DELETE("/api/v1/bookings/bookings/:id", rateLimiter.Limit(authmidware(booking.CancelBooking(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/bookings/bookings", rateLimiter.Limit(authmidware(booking.ListBookings(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/bookings/bookings", rateLimiter.Limit(authmidware(booking.CreateBooking(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/bookings/bookings/:id/status", rateLimiter.Limit(authmidware(booking.UpdateBookingStatus(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/bookings/bookings/:id", rateLimiter.Limit(authmidware(booking.CancelBooking(app))))
 
-	router.GET("/api/v1/bookings/date-capacity", rateLimiter.Limit(authmidware(booking.GetDateCapacity(app))))
-	router.POST("/api/v1/bookings/date-capacity", rateLimiter.Limit(authmidware(booking.SetDateCapacity(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/bookings/date-capacity", rateLimiter.Limit(authmidware(booking.GetDateCapacity(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/bookings/date-capacity", rateLimiter.Limit(authmidware(booking.SetDateCapacity(app))))
 
 	// NEW: pricing tiers
-	router.GET("/api/v1/bookings/tiers", rateLimiter.Limit(authmidware(booking.ListTiers(app))))
-	router.POST("/api/v1/bookings/tiers", rateLimiter.Limit(authmidware(booking.CreateTier(app))))
-	router.DELETE("/api/v1/bookings/tiers/:id", rateLimiter.Limit(authmidware(booking.DeleteTier(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/bookings/tiers", rateLimiter.Limit(authmidware(booking.ListTiers(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/bookings/tiers", rateLimiter.Limit(authmidware(booking.CreateTier(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/bookings/tiers/:id", rateLimiter.Limit(authmidware(booking.DeleteTier(app))))
 
 	// NEW: auto slot generation from tier
-	router.POST("/api/v1/bookings/tiers/:id/generate-slots", rateLimiter.Limit(authmidware(booking.GenerateSlotsFromTier(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/bookings/tiers/:id/generate-slots", rateLimiter.Limit(authmidware(booking.GenerateSlotsFromTier(app))))
 }
 
 func AddEventsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
-	router.GET("/api/v1/events/events", rateLimiter.Limit(events.GetEvents(app)))            // Public
-	router.GET("/api/v1/events/events/count", rateLimiter.Limit(events.GetEventsCount(app))) // Public
-	router.POST("/api/v1/events/event", authmidware(events.CreateEvent(app)))
-	router.GET("/api/v1/events/event/:eventid", events.GetEvent(app)) // Public
-	router.PUT("/api/v1/events/event/:eventid", authmidware(events.EditEvent(app)))
-	router.DELETE("/api/v1/events/event/:eventid", authmidware(events.DeleteEvent(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/events/events", rateLimiter.Limit(events.GetEvents(app)))            // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/events/events/count", rateLimiter.Limit(events.GetEventsCount(app))) // Public
+	router.HandlerFunc(http.MethodPost, "/api/v1/events/event", authmidware(events.CreateEvent(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/events/event/:eventid", events.GetEvent(app)) // Public
+	router.HandlerFunc(http.MethodPut, "/api/v1/events/event/:eventid", authmidware(events.EditEvent(app)))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/events/event/:eventid", authmidware(events.DeleteEvent(app)))
 
 	// Should probably require auth if restricted
-	router.POST("/api/v1/events/event/:eventid/faqs", authmidware(events.AddFAQs(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/events/event/:eventid/faqs", authmidware(events.AddFAQs(app)))
 }
 
 func AddCartRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Cart operations
-	router.POST("/api/v1/cart", rateLimiter.Limit(authmidware(cart.AddToCart(app))))
-	router.GET("/api/v1/cart", authmidware(cart.GetCart(app)))
-	router.POST("/api/v1/cart/update", rateLimiter.Limit(authmidware(cart.UpdateCart(app))))
-	router.DELETE("/api/v1/cart/item", rateLimiter.Limit(authmidware(cart.RemoveFromCart(app))))
-	router.DELETE("/api/v1/cart", rateLimiter.Limit(authmidware(cart.ClearCart(app))))
-	router.PATCH("/api/v1/cart/item", rateLimiter.Limit(authmidware(cart.UpdateItemQuantity(app))))
-	router.POST("/api/v1/cart/checkout", rateLimiter.Limit(authmidware(cart.InitiateCheckout(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/cart", rateLimiter.Limit(authmidware(cart.AddToCart(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/cart", authmidware(cart.GetCart(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/cart/update", rateLimiter.Limit(authmidware(cart.UpdateCart(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/cart/item", rateLimiter.Limit(authmidware(cart.RemoveFromCart(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/cart", rateLimiter.Limit(authmidware(cart.ClearCart(app))))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/cart/item", rateLimiter.Limit(authmidware(cart.UpdateItemQuantity(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/cart/checkout", rateLimiter.Limit(authmidware(cart.InitiateCheckout(app))))
 
 	// Checkout session creation
-	router.POST("/api/v1/checkout/session", rateLimiter.Limit(authmidware(cart.CreateCheckoutSession(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/checkout/session", rateLimiter.Limit(authmidware(cart.CreateCheckoutSession(app))))
 
 	// Order placement
-	router.POST("/api/v1/order", rateLimiter.Limit(authmidware(cart.PlaceOrder(app))))
-	router.GET("/api/v1/order/mine", authmidware(cart.GetMyOrders(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/order", rateLimiter.Limit(authmidware(cart.PlaceOrder(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/order/mine", authmidware(cart.GetMyOrders(app)))
 
-	router.POST("/api/v1/coupon/validate", rateLimiter.Limit(authmidware(cart.ValidateCouponHandler(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/coupon/validate", rateLimiter.Limit(authmidware(cart.ValidateCouponHandler(app))))
 
 }
 
 func RegisterFarmRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// 🌾 Farm CRUD
-	router.POST("/api/v1/farms", rateLimiter.Limit(authmidware(farms.CreateFarm(app))))
-	router.GET("/api/v1/farms", farms.GetPaginatedFarms(app)) // Public
-	router.GET("/api/v1/farms/farm/:id", middleware.OptionalAuth(farms.GetFarm(app)))
-	router.PUT("/api/v1/farms/farm/:id", rateLimiter.Limit(authmidware(farms.EditFarm(app))))
-	router.DELETE("/api/v1/farms/farm/:id", rateLimiter.Limit(authmidware(farms.DeleteFarm(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farms", rateLimiter.Limit(authmidware(farms.CreateFarm(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/farms", farms.GetPaginatedFarms(app)) // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/farms/farm/:id", middleware.OptionalAuth(farms.GetFarm(app)))
+	router.HandlerFunc(http.MethodPut, "/api/v1/farms/farm/:id", rateLimiter.Limit(authmidware(farms.EditFarm(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/farms/farm/:id", rateLimiter.Limit(authmidware(farms.DeleteFarm(app))))
 
 	// 🌱 Crops (within farm)
-	router.POST("/api/v1/farms/farm/:id/crops", rateLimiter.Limit(authmidware(farms.AddCrop(app))))
-	router.PUT("/api/v1/farms/farm/:id/crops/:cropid", rateLimiter.Limit(authmidware(farms.EditCrop(app))))
-	router.DELETE("/api/v1/farms/farm/:id/crops/:cropid", rateLimiter.Limit(authmidware(farms.DeleteCrop(app))))
-	router.PUT("/api/v1/farms/farm/:id/crops/:cropid/buy", rateLimiter.Limit(authmidware(farms.BuyCrop(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farms/farm/:id/crops", rateLimiter.Limit(authmidware(farms.AddCrop(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/farms/farm/:id/crops/:cropid", rateLimiter.Limit(authmidware(farms.EditCrop(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/farms/farm/:id/crops/:cropid", rateLimiter.Limit(authmidware(farms.DeleteCrop(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/farms/farm/:id/crops/:cropid/buy", rateLimiter.Limit(authmidware(farms.BuyCrop(app))))
 
 	// 📊 Dashboard
-	router.GET("/api/v1/dash/farms", authmidware(farms.GetFarmDash(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/dash/farms", authmidware(farms.GetFarmDash(app)))
 
 	// 📦 Farm Orders
-	router.GET("/api/v1/orders/mine", authmidware(farms.GetMyFarmOrders(app)))
-	router.GET("/api/v1/orders/incoming", authmidware(farms.GetIncomingFarmOrders(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/orders/mine", authmidware(farms.GetMyFarmOrders(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/orders/incoming", authmidware(farms.GetIncomingFarmOrders(app)))
 
-	router.POST("/api/v1/farmorders/order/:id/accept", rateLimiter.Limit(authmidware(farms.AcceptOrder(app))))
-	router.POST("/api/v1/farmorders/order/:id/reject", rateLimiter.Limit(authmidware(farms.RejectOrder(app))))
-	router.POST("/api/v1/farmorders/order/:id/deliver", rateLimiter.Limit(authmidware(farms.MarkOrderDelivered(app))))
-	router.POST("/api/v1/farmorders/order/:id/markpaid", rateLimiter.Limit(authmidware(farms.MarkOrderPaid(app))))
-	router.GET("/api/v1/farmorders/order/:id/receipt", authmidware(farms.DownloadReceipt(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/accept", rateLimiter.Limit(authmidware(farms.AcceptOrder(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/reject", rateLimiter.Limit(authmidware(farms.RejectOrder(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/deliver", rateLimiter.Limit(authmidware(farms.MarkOrderDelivered(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/markpaid", rateLimiter.Limit(authmidware(farms.MarkOrderPaid(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/farmorders/order/:id/receipt", authmidware(farms.DownloadReceipt(app)))
 	// Bulk actions
-	router.POST("/api/v1/farmorders/bulk/accept", rateLimiter.Limit(authmidware(farms.BulkAcceptOrders(app))))
-	router.POST("/api/v1/farmorders/bulk/reject", rateLimiter.Limit(authmidware(farms.BulkRejectOrders(app))))
-	router.POST("/api/v1/farmorders/bulk/deliver", rateLimiter.Limit(authmidware(farms.BulkMarkOrdersDelivered(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/accept", rateLimiter.Limit(authmidware(farms.BulkAcceptOrders(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/reject", rateLimiter.Limit(authmidware(farms.BulkRejectOrders(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/deliver", rateLimiter.Limit(authmidware(farms.BulkMarkOrdersDelivered(app))))
 
 	// 🌾 Crop catalogue & type browsing
-	router.GET("/api/v1/crops", farms.GetFilteredCrops(app))                 // Public
-	router.GET("/api/v1/crops/catalogue", farms.GetCropCatalogue(app))       // Public
-	router.GET("/api/v1/crops/precatalogue", farms.GetPreCropCatalogue(app)) // Public
-	router.GET("/api/v1/crops/types", farms.GetCropTypes(app))               // Public
-	router.GET("/api/v1/crops/crop/:cropname", middleware.OptionalAuth(farms.GetCropTypeFarms(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops", farms.GetFilteredCrops(app))                 // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops/catalogue", farms.GetCropCatalogue(app))       // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops/precatalogue", farms.GetPreCropCatalogue(app)) // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops/types", farms.GetCropTypes(app))               // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops/crop/:cropname", middleware.OptionalAuth(farms.GetCropTypeFarms(app)))
 
 	// Crop Wiki
-	router.GET("/api/v1/crops/about", rateLimiter.Limit(farms.GetAllCropAboutsHandler(app)))
-	router.POST("/api/v1/crops/about", rateLimiter.Limit(farms.CreateCropAboutHandler(app)))
-	router.GET("/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.GetCropAboutHandler(app)))
-	router.DELETE("/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.DeleteCropAboutHandler(app)))
-	router.PUT("/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.UpdateCropAboutHandler(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops/about", rateLimiter.Limit(farms.GetAllCropAboutsHandler(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/crops/about", rateLimiter.Limit(farms.CreateCropAboutHandler(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.GetCropAboutHandler(app)))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.DeleteCropAboutHandler(app)))
+	router.HandlerFunc(http.MethodPut, "/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.UpdateCropAboutHandler(app)))
 
 	// 🛒 Items, Products, Tools
 	// -- GET
-	router.GET("/api/v1/farm/items", farms.GetItems(app))                     // Public
-	router.GET("/api/v1/farm/items/categories", farms.GetItemCategories(app)) // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/farm/items", farms.GetItems(app))                     // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/farm/items/categories", farms.GetItemCategories(app)) // Public
 
 	// -- Products (CRUD)
-	router.POST("/api/v1/farm/product", rateLimiter.Limit(authmidware(farms.CreateProduct(app))))
-	router.PUT("/api/v1/farm/product/:id", rateLimiter.Limit(authmidware(farms.UpdateProduct(app))))
-	router.DELETE("/api/v1/farm/product/:id", rateLimiter.Limit(authmidware(farms.DeleteProduct(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farm/product", rateLimiter.Limit(authmidware(farms.CreateProduct(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/farm/product/:id", rateLimiter.Limit(authmidware(farms.UpdateProduct(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/farm/product/:id", rateLimiter.Limit(authmidware(farms.DeleteProduct(app))))
 
 	// -- Tools (CRUD)
-	router.POST("/api/v1/farm/tool", rateLimiter.Limit(authmidware(farms.CreateTool(app))))
-	router.PUT("/api/v1/farm/tool/:id", rateLimiter.Limit(authmidware(farms.UpdateTool(app))))
-	router.DELETE("/api/v1/farm/tool/:id", rateLimiter.Limit(authmidware(farms.DeleteTool(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farm/tool", rateLimiter.Limit(authmidware(farms.CreateTool(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/farm/tool/:id", rateLimiter.Limit(authmidware(farms.UpdateTool(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/farm/tool/:id", rateLimiter.Limit(authmidware(farms.DeleteTool(app))))
 
 	// 🖼 Upload
-	// router.POST("/api/v1/upload/images", rateLimiter.Limit(authmidware(utils.UploadImages)))
+	// router.HandlerFunc(http.MethodPost,"/api/v1/upload/images", rateLimiter.Limit(authmidware(utils.UploadImages)))
 
 	// Weather
-	router.GET("/api/v1/weather", farms.GetWeather(app))
-	router.GET("/api/v1/farms/my", authmidware(farms.GetMyFarms(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/weather", farms.GetWeather(app))
+	router.HandlerFunc(http.MethodGet, "/api/v1/farms/my", authmidware(farms.GetMyFarms(app)))
 }
 
 func AddMerchRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Create merch
-	router.POST("/api/v1/merch/:entityType/:eventid", rateLimiter.Limit(authmidware(merch.CreateMerch(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/merch/:entityType/:eventid", rateLimiter.Limit(authmidware(merch.CreateMerch(app))))
 
 	// Buy merch
-	router.POST("/api/v1/merch/:entityType/:eventid/:merchid/buy", rateLimiter.Limit(authmidware(merch.BuyMerch(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/merch/:entityType/:eventid/:merchid/buy", rateLimiter.Limit(authmidware(merch.BuyMerch(app))))
 
 	// Public view
-	router.GET("/api/v1/merch/:entityType/:eventid", merch.GetMerchs(app))
-	router.GET("/api/v1/merch/:entityType/:eventid/:merchid", merch.GetMerch(app))
-	router.GET("/api/v1/merch/:entityType", merch.GetMerchPage(app))
+	router.HandlerFunc(http.MethodGet, "/api/v1/merch/:entityType/:eventid", merch.GetMerchs(app))
+	router.HandlerFunc(http.MethodGet, "/api/v1/merch/:entityType/:eventid/:merchid", merch.GetMerch(app))
+	router.HandlerFunc(http.MethodGet, "/api/v1/merch/:entityType", merch.GetMerchPage(app))
 
 	// Edit/Delete
-	router.PUT("/api/v1/merch/:entityType/:eventid/:merchid", rateLimiter.Limit(authmidware(merch.EditMerch(app))))
-	router.DELETE("/api/v1/merch/:entityType/:eventid/:merchid", rateLimiter.Limit(authmidware(merch.DeleteMerch(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/merch/:entityType/:eventid/:merchid", rateLimiter.Limit(authmidware(merch.EditMerch(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/merch/:entityType/:eventid/:merchid", rateLimiter.Limit(authmidware(merch.DeleteMerch(app))))
 
 	// Payment flows
-	router.POST("/api/v1/merch/:entityType/:eventid/:merchid/payment-session", rateLimiter.Limit(authmidware(merch.CreateMerchPaymentSession(app))))
-	router.POST("/api/v1/merch/:entityType/:eventid/:merchid/confirm-purchase", rateLimiter.Limit(authmidware(merch.ConfirmMerchPurchase(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/merch/:entityType/:eventid/:merchid/payment-session", rateLimiter.Limit(authmidware(merch.CreateMerchPaymentSession(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/merch/:entityType/:eventid/:merchid/confirm-purchase", rateLimiter.Limit(authmidware(merch.ConfirmMerchPurchase(app))))
 }
 
 func AddTicketRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Ticket CRUD
-	router.POST("/api/v1/ticket/event/:eventid", rateLimiter.Limit(authmidware(tickets.CreateTicket(app))))
-	router.GET("/api/v1/ticket/event/:eventid", rateLimiter.Limit(tickets.GetTickets(app)))
-	router.GET("/api/v1/ticket/event/:eventid/:ticketid", rateLimiter.Limit(tickets.GetTicket(app)))
-	router.PUT("/api/v1/ticket/event/:eventid/:ticketid", rateLimiter.Limit(authmidware(tickets.EditTicket(app))))
-	router.DELETE("/api/v1/ticket/event/:eventid/:ticketid", rateLimiter.Limit(authmidware(tickets.DeleteTicket(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/event/:eventid", rateLimiter.Limit(authmidware(tickets.CreateTicket(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/event/:eventid", rateLimiter.Limit(tickets.GetTickets(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/event/:eventid/:ticketid", rateLimiter.Limit(tickets.GetTicket(app)))
+	router.HandlerFunc(http.MethodPut, "/api/v1/ticket/event/:eventid/:ticketid", rateLimiter.Limit(authmidware(tickets.EditTicket(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/ticket/event/:eventid/:ticketid", rateLimiter.Limit(authmidware(tickets.DeleteTicket(app))))
 
 	// Buying
-	router.POST("/api/v1/ticket/event/:eventid/:ticketid/buy", rateLimiter.Limit(authmidware(tickets.BuyTicket(app))))
-	router.POST("/api/v1/tickets/book", rateLimiter.Limit(authmidware(tickets.BuysTicket(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/event/:eventid/:ticketid/buy", rateLimiter.Limit(authmidware(tickets.BuyTicket(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/tickets/book", rateLimiter.Limit(authmidware(tickets.BuysTicket(app))))
 
 	// Payment flows
-	router.POST("/api/v1/ticket/event/:eventid/:ticketid/payment-session", rateLimiter.Limit(authmidware(tickets.CreateTicketPaymentSession(app))))
-	router.POST("/api/v1/ticket/event/:eventid/:ticketid/confirm-purchase", rateLimiter.Limit(authmidware(tickets.ConfirmTicketPurchase(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/event/:eventid/:ticketid/payment-session", rateLimiter.Limit(authmidware(tickets.CreateTicketPaymentSession(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/event/:eventid/:ticketid/confirm-purchase", rateLimiter.Limit(authmidware(tickets.ConfirmTicketPurchase(app))))
 
 	// Verification/printing
-	router.GET("/api/v1/ticket/verify/:eventid", rateLimiter.Limit(authmidware(tickets.VerifyTicket(app))))
-	router.GET("/api/v1/ticket/print/:eventid", rateLimiter.Limit(authmidware(tickets.PrintTicket(app))))
-	router.POST("/api/v1/ticket/transfer/:eventid", rateLimiter.Limit(authmidware(tickets.TransferTicket(app))))
-	router.POST("/api/v1/ticket/cancel/:eventid", rateLimiter.Limit(authmidware(tickets.CancelTicket(app))))
-	router.GET("/api/v1/ticket/mytickets/:eventid", rateLimiter.Limit(authmidware(tickets.ListMyTickets(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/verify/:eventid", rateLimiter.Limit(authmidware(tickets.VerifyTicket(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/print/:eventid", rateLimiter.Limit(authmidware(tickets.PrintTicket(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/transfer/:eventid", rateLimiter.Limit(authmidware(tickets.TransferTicket(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/cancel/:eventid", rateLimiter.Limit(authmidware(tickets.CancelTicket(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/mytickets/:eventid", rateLimiter.Limit(authmidware(tickets.ListMyTickets(app))))
 
 	// Event updates
-	router.GET("/api/v1/events/event/:eventid/updates", rateLimiter.Limit(tickets.EventUpdates(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/events/event/:eventid/updates", rateLimiter.Limit(tickets.EventUpdates(app)))
 
 	// Seats
-	router.GET("/api/v1/seats/:eventid/available-seats", rateLimiter.Limit(tickets.GetAvailableSeats(app)))
-	router.POST("/api/v1/seats/:eventid/lock-seats", rateLimiter.Limit(authmidware(tickets.LockSeats(app))))
-	router.POST("/api/v1/seats/:eventid/unlock-seats", rateLimiter.Limit(authmidware(tickets.UnlockSeats(app))))
-	router.POST("/api/v1/seats/:eventid/ticket/:ticketid/confirm-purchase", rateLimiter.Limit(authmidware(tickets.ConfirmSeatPurchase(app))))
-	router.GET("/api/v1/ticket/event/:eventid/:ticketid/seats", rateLimiter.Limit(tickets.GetTicketSeats(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/seats/:eventid/available-seats", rateLimiter.Limit(tickets.GetAvailableSeats(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/seats/:eventid/lock-seats", rateLimiter.Limit(authmidware(tickets.LockSeats(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/seats/:eventid/unlock-seats", rateLimiter.Limit(authmidware(tickets.UnlockSeats(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/seats/:eventid/ticket/:ticketid/confirm-purchase", rateLimiter.Limit(authmidware(tickets.ConfirmSeatPurchase(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/event/:eventid/:ticketid/seats", rateLimiter.Limit(tickets.GetTicketSeats(app)))
 }
 
 func AddSuggestionsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
-	router.GET("/api/v1/suggestions/places/nearby", rateLimiter.Limit(suggestions.GetNearbyPlaces(app)))
-	router.GET("/api/v1/suggestions/follow", rateLimiter.Limit(authmidware(suggestions.SuggestFollowers(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/suggestions/places/nearby", rateLimiter.Limit(suggestions.GetNearbyPlaces(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/suggestions/follow", rateLimiter.Limit(authmidware(suggestions.SuggestFollowers(app))))
 }
 
 func AddAutocompleteRoutes(
@@ -440,12 +444,12 @@ func AddAutocompleteRoutes(
 	app *infra.Deps,
 	rateLimiter *middleware.RateLimiter,
 ) {
-	router.GET(
+	router.HandlerFunc(http.MethodGet,
 		"/api/v1/ac/places",
 		rateLimiter.Limit(autocomplete.AutocompletePlaces(app)),
 	)
 
-	router.GET(
+	router.HandlerFunc(http.MethodGet,
 		"/api/v1/ac/users",
 		rateLimiter.Limit(autocomplete.AutocompleteUsers(app)),
 	)
@@ -454,195 +458,195 @@ func AddAutocompleteRoutes(
 func AddReviewsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Public view, but rate-limited
-	router.GET("/api/v1/reviews/:entityType/:entityId", rateLimiter.Limit(reviews.GetReviews(app)))
-	router.GET("/api/v1/reviews/:entityType/:entityId/:reviewId", rateLimiter.Limit(reviews.GetReview(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/reviews/:entityType/:entityId", rateLimiter.Limit(reviews.GetReviews(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/reviews/:entityType/:entityId/:reviewId", rateLimiter.Limit(reviews.GetReview(app)))
 
 	// Authenticated actions
-	router.POST("/api/v1/reviews/:entityType/:entityId", rateLimiter.Limit(authmidware(reviews.AddReview(app))))
-	router.PUT("/api/v1/reviews/:entityType/:entityId/:reviewId", rateLimiter.Limit(authmidware(reviews.EditReview(app))))
-	router.DELETE("/api/v1/reviews/:entityType/:entityId/:reviewId", rateLimiter.Limit(authmidware(reviews.DeleteReview(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/reviews/:entityType/:entityId", rateLimiter.Limit(authmidware(reviews.AddReview(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/reviews/:entityType/:entityId/:reviewId", rateLimiter.Limit(authmidware(reviews.EditReview(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/reviews/:entityType/:entityId/:reviewId", rateLimiter.Limit(authmidware(reviews.DeleteReview(app))))
 }
 
 func AddMediaRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Public view, but rate-limited
-	router.GET("/api/v1/media/:entitytype/:entityid/:id", rateLimiter.Limit(media.GetMedia(app)))
-	router.GET("/api/v1/media/:entitytype/:entityid", rateLimiter.Limit(media.GetMedias(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/media/:entitytype/:entityid/:id", rateLimiter.Limit(media.GetMedia(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/media/:entitytype/:entityid", rateLimiter.Limit(media.GetMedias(app)))
 
 	// Authenticated actions
-	router.POST("/api/v1/media/:entitytype/:entityid", rateLimiter.Limit(authmidware(media.AddMedia(app))))
-	router.PUT("/api/v1/media/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(media.EditMedia(app))))
-	router.DELETE("/api/v1/media/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(media.DeleteMedia(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/media/:entitytype/:entityid", rateLimiter.Limit(authmidware(media.AddMedia(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/media/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(media.EditMedia(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/media/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(media.DeleteMedia(app))))
 }
 
 func AddFanmadeRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
-	router.GET("/api/v1/fanmade/:entitytype/:entityid/:id", rateLimiter.Limit(fanmade.GetMedia(app)))
-	router.GET("/api/v1/fanmade/:entitytype/:entityid", rateLimiter.Limit(fanmade.GetMedias(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/fanmade/:entitytype/:entityid/:id", rateLimiter.Limit(fanmade.GetMedia(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/fanmade/:entitytype/:entityid", rateLimiter.Limit(fanmade.GetMedias(app)))
 
-	router.POST("/api/v1/fanmade/:entitytype/:entityid", rateLimiter.Limit(authmidware(fanmade.AddMedia(app))))
-	router.PUT("/api/v1/fanmade/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(fanmade.EditMedia(app))))
-	router.DELETE("/api/v1/fanmade/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(fanmade.DeleteMedia(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/fanmade/:entitytype/:entityid", rateLimiter.Limit(authmidware(fanmade.AddMedia(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/fanmade/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(fanmade.EditMedia(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/fanmade/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(fanmade.DeleteMedia(app))))
 }
 
 func AddPostRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Public read
-	router.GET("/api/v1/posts/post/:id", rateLimiter.Limit(posts.GetPost(app)))
-	router.GET("/api/v1/posts", rateLimiter.Limit(posts.GetAllPosts(app)))
-	// router.POST("/api/v1/posts/upload", rateLimiter.Limit(posts.UploadImage))
+	router.HandlerFunc(http.MethodGet, "/api/v1/posts/post/:id", rateLimiter.Limit(posts.GetPost(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/posts", rateLimiter.Limit(posts.GetAllPosts(app)))
+	// router.HandlerFunc(http.MethodPost,"/api/v1/posts/upload", rateLimiter.Limit(posts.UploadImage))
 
 	// Authenticated write
-	router.POST("/api/v1/posts/post", rateLimiter.Limit(authmidware(posts.CreatePost(app))))
-	router.PATCH("/api/v1/posts/post/:id", rateLimiter.Limit(authmidware(posts.UpdatePost(app))))
-	router.DELETE("/api/v1/posts/post/:id", rateLimiter.Limit(authmidware(posts.DeletePost(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/posts/post", rateLimiter.Limit(authmidware(posts.CreatePost(app))))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/posts/post/:id", rateLimiter.Limit(authmidware(posts.UpdatePost(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/posts/post/:id", rateLimiter.Limit(authmidware(posts.DeletePost(app))))
 
-	router.GET("/api/v1/posts/post/:id/related", rateLimiter.Limit(authmidware(posts.GetRelatedPosts(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/posts/post/:id/related", rateLimiter.Limit(authmidware(posts.GetRelatedPosts(app))))
 
 }
 
 func AddPlaceRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Public
-	router.GET("/api/v1/places/places", rateLimiter.Limit(places.GetPlaces(app)))
-	router.GET("/api/v1/places/place/:placeid", rateLimiter.Limit(places.GetPlace(app)))
-	router.GET("/api/v1/places/place-details", rateLimiter.Limit(places.GetPlaceQ(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/places/places", rateLimiter.Limit(places.GetPlaces(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/places/place/:placeid", rateLimiter.Limit(places.GetPlace(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/places/place-details", rateLimiter.Limit(places.GetPlaceQ(app)))
 
 	// Authenticated place management
-	router.POST("/api/v1/places/place", rateLimiter.Limit(authmidware(places.CreatePlace(app))))
-	router.PUT("/api/v1/places/place/:placeid", rateLimiter.Limit(authmidware(places.EditPlace(app))))
-	router.DELETE("/api/v1/places/place/:placeid", rateLimiter.Limit(authmidware(places.DeletePlace(app))))
-	router.PUT("/api/v1/places/place/:placeid/info", rateLimiter.Limit(authmidware(places.UpdatePlaceInfo(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/places/place", rateLimiter.Limit(authmidware(places.CreatePlace(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/places/place/:placeid", rateLimiter.Limit(authmidware(places.EditPlace(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/places/place/:placeid", rateLimiter.Limit(authmidware(places.DeletePlace(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/places/place/:placeid/info", rateLimiter.Limit(authmidware(places.UpdatePlaceInfo(app))))
 
 	// Menus (public view + auth for changes)
-	router.GET("/api/v1/places/menu/:placeid", rateLimiter.Limit(menu.GetMenus(app)))
-	router.GET("/api/v1/places/menu/:placeid/:menuid/stock", rateLimiter.Limit(menu.GetStock(app)))
-	router.GET("/api/v1/places/menu/:placeid/:menuid", rateLimiter.Limit(menu.GetMenu(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/places/menu/:placeid", rateLimiter.Limit(menu.GetMenus(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/places/menu/:placeid/:menuid/stock", rateLimiter.Limit(menu.GetStock(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/places/menu/:placeid/:menuid", rateLimiter.Limit(menu.GetMenu(app)))
 
-	router.POST("/api/v1/places/menu/:placeid", rateLimiter.Limit(authmidware(menu.CreateMenu(app))))
-	router.PUT("/api/v1/places/menu/:placeid/:menuid", rateLimiter.Limit(authmidware(menu.EditMenu(app))))
-	router.DELETE("/api/v1/places/menu/:placeid/:menuid", rateLimiter.Limit(authmidware(menu.DeleteMenu(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/places/menu/:placeid", rateLimiter.Limit(authmidware(menu.CreateMenu(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/places/menu/:placeid/:menuid", rateLimiter.Limit(authmidware(menu.EditMenu(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/places/menu/:placeid/:menuid", rateLimiter.Limit(authmidware(menu.DeleteMenu(app))))
 
 	// Buying & payment flows
-	router.POST("/api/v1/places/menu/:placeid/:menuid/buy", rateLimiter.Limit(authmidware(menu.BuyMenu(app))))
-	router.POST("/api/v1/places/menu/:placeid/:menuid/payment-session", rateLimiter.Limit(authmidware(menu.CreateMenuPaymentSession(app))))
-	router.POST("/api/v1/places/menu/:placeid/:menuid/confirm-purchase", rateLimiter.Limit(authmidware(menu.ConfirmMenuPurchase(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/places/menu/:placeid/:menuid/buy", rateLimiter.Limit(authmidware(menu.BuyMenu(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/places/menu/:placeid/:menuid/payment-session", rateLimiter.Limit(authmidware(menu.CreateMenuPaymentSession(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/places/menu/:placeid/:menuid/confirm-purchase", rateLimiter.Limit(authmidware(menu.ConfirmMenuPurchase(app))))
 }
 
 func AddProfileRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Own profile
-	router.GET("/api/v1/profile/profile", rateLimiter.Limit(authmidware(profile.GetProfile(app))))
-	router.PUT("/api/v1/profile/edit", rateLimiter.Limit(authmidware(profile.EditProfile(app))))
-	router.DELETE("/api/v1/profile/delete", rateLimiter.Limit(authmidware(profile.DeleteProfile(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/profile/profile", rateLimiter.Limit(authmidware(profile.GetProfile(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/profile/edit", rateLimiter.Limit(authmidware(profile.EditProfile(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/profile/delete", rateLimiter.Limit(authmidware(profile.DeleteProfile(app))))
 
 	// Public profile viewing
-	router.GET("/api/v1/user/:username", rateLimiter.Limit(profile.GetUserProfile(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/user/:username", rateLimiter.Limit(profile.GetUserProfile(app)))
 
 	// Other user data (requires auth to see private info)
-	router.GET("/api/v1/user/:username/data", rateLimiter.Limit(authmidware(userdata.GetUserProfileData(app))))
-	router.GET("/api/v1/user/:username/udata", rateLimiter.Limit(authmidware(userdata.GetOtherUserProfileData(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/user/:username/data", rateLimiter.Limit(authmidware(userdata.GetUserProfileData(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/user/:username/udata", rateLimiter.Limit(authmidware(userdata.GetOtherUserProfileData(app))))
 
 }
 
 func AddArtistRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Public read
-	router.GET("/api/v1/artists", rateLimiter.Limit(artists.GetAllArtists(app)))
-	router.GET("/api/v1/artists/:id", rateLimiter.Limit(artists.GetArtistByID(app)))
-	router.GET("/api/v1/events/event/:eventid/artists", rateLimiter.Limit(artists.GetArtistsByEvent(app)))
-	router.GET("/api/v1/artists/:id/songs", rateLimiter.Limit(artists.GetArtistsSongs(app)))
-	router.GET("/api/v1/artists/:id/albums", rateLimiter.Limit(artists.GetArtistsAlbums(app)))
-	router.GET("/api/v1/artists/:id/posts", rateLimiter.Limit(artists.GetArtistsPosts(app)))
-	router.GET("/api/v1/artists/:id/merch", rateLimiter.Limit(artists.GetArtistsMerch(app)))
-	router.GET("/api/v1/artists/:id/events", rateLimiter.Limit(artists.GetArtistEvents(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/artists", rateLimiter.Limit(artists.GetAllArtists(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id", rateLimiter.Limit(artists.GetArtistByID(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/events/event/:eventid/artists", rateLimiter.Limit(artists.GetArtistsByEvent(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/songs", rateLimiter.Limit(artists.GetArtistsSongs(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/albums", rateLimiter.Limit(artists.GetArtistsAlbums(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/posts", rateLimiter.Limit(artists.GetArtistsPosts(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/merch", rateLimiter.Limit(artists.GetArtistsMerch(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/events", rateLimiter.Limit(artists.GetArtistEvents(app)))
 
 	// Authenticated write
-	router.POST("/api/v1/artists", rateLimiter.Limit(authmidware(artists.CreateArtist(app))))
-	router.PUT("/api/v1/artists/:id", rateLimiter.Limit(authmidware(artists.UpdateArtist(app))))
-	router.DELETE("/api/v1/artists/:id", rateLimiter.Limit(authmidware(artists.DeleteArtistByID(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/artists", rateLimiter.Limit(authmidware(artists.CreateArtist(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id", rateLimiter.Limit(authmidware(artists.UpdateArtist(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/artists/:id", rateLimiter.Limit(authmidware(artists.DeleteArtistByID(app))))
 
 	// OLD (bulk update) – optional to keep
-	// router.PUT("/api/v1/artists/:id/members", rateLimiter.Limit(authmidware(artists.UpdateArtistMembers)))
+	// router.HandlerFunc(http.MethodPut,"/api/v1/artists/:id/members", rateLimiter.Limit(authmidware(artists.UpdateArtistMembers)))
 
 	// NEW — per-member endpoints
-	router.POST("/api/v1/artists/:id/members",
+	router.HandlerFunc(http.MethodPost, "/api/v1/artists/:id/members",
 		rateLimiter.Limit(authmidware(artists.AddArtistMember(app))))
 
-	router.PUT("/api/v1/artists/:id/members/:memberId",
+	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id/members/:memberId",
 		rateLimiter.Limit(authmidware(artists.UpdateArtistMember(app))))
 
-	router.DELETE("/api/v1/artists/:id/members/:memberId",
+	router.HandlerFunc(http.MethodDelete, "/api/v1/artists/:id/members/:memberId",
 		rateLimiter.Limit(authmidware(artists.DeleteArtistMember(app))))
 
-	router.POST("/api/v1/artists/:id/songs", rateLimiter.Limit(authmidware(artists.PostNewSong(app))))
-	router.PUT("/api/v1/artists/:id/songs/:songId/edit", rateLimiter.Limit(authmidware(artists.EditSong(app))))
-	router.DELETE("/api/v1/artists/:id/songs/:songId", rateLimiter.Limit(authmidware(artists.DeleteSong(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/artists/:id/songs", rateLimiter.Limit(authmidware(artists.PostNewSong(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id/songs/:songId/edit", rateLimiter.Limit(authmidware(artists.EditSong(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/artists/:id/songs/:songId", rateLimiter.Limit(authmidware(artists.DeleteSong(app))))
 
-	router.PUT("/api/v1/artists/:id/events/addtoevent", rateLimiter.Limit(authmidware(artists.AddArtistToEvent(app))))
-	router.POST("/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.CreateArtistEvent(app))))
-	router.PUT("/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.UpdateArtistEvent(app))))
-	router.DELETE("/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.DeleteArtistEvent(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id/events/addtoevent", rateLimiter.Limit(authmidware(artists.AddArtistToEvent(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.CreateArtistEvent(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.UpdateArtistEvent(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.DeleteArtistEvent(app))))
 }
 
 // AddMapRoutes registers all map endpoints including WebSocket tracking
 func AddMapRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	// Unified Map Endpoint with Permalinks & Floor Multi-layers
-	router.GET("/api/v1/gta/map", rateLimiter.Limit(maps.GetGtaMap))
+	router.HandlerFunc(http.MethodGet, "/api/v1/gta/map", rateLimiter.Limit(maps.GetGtaMap))
 
 	// Distance measurement route
-	router.GET("/api/v1/gta/map/distance", rateLimiter.Limit(maps.CalculateDistance))
+	router.HandlerFunc(http.MethodGet, "/api/v1/gta/map/distance", rateLimiter.Limit(maps.CalculateDistance))
 
 	// Real-Time WebSocket Player & Vehicle Tracking
-	router.GET("/api/v1/gta/map/ws", maps.HandleLiveTrackingWS)
+	router.HandlerFunc(http.MethodGet, "/api/v1/gta/map/ws", maps.HandleLiveTrackingWS)
 
 	// Player progression routes
-	router.POST("/api/v1/player/progress", rateLimiter.Limit(maps.UpdatePlayerProgress))
-	router.GET("/api/v1/player/progress", rateLimiter.Limit(maps.GetPlayerProgress))
+	router.HandlerFunc(http.MethodPost, "/api/v1/player/progress", rateLimiter.Limit(maps.UpdatePlayerProgress))
+	router.HandlerFunc(http.MethodGet, "/api/v1/player/progress", rateLimiter.Limit(maps.GetPlayerProgress))
 }
 
 func AddItineraryRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Public
-	router.GET("/api/v1/itineraries", rateLimiter.Limit(itinerary.GetItineraries(app)))
-	router.GET("/api/v1/itineraries/all/:id", rateLimiter.Limit(itinerary.GetItinerary(app)))
-	router.GET("/api/v1/itineraries/search", rateLimiter.Limit(itinerary.SearchItineraries(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/itineraries", rateLimiter.Limit(itinerary.GetItineraries(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/itineraries/all/:id", rateLimiter.Limit(itinerary.GetItinerary(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/itineraries/search", rateLimiter.Limit(itinerary.SearchItineraries(app)))
 
 	// Authenticated write
-	router.POST("/api/v1/itineraries", rateLimiter.Limit(authmidware(itinerary.CreateItinerary(app))))
-	router.PUT("/api/v1/itineraries/:id", rateLimiter.Limit(authmidware(itinerary.UpdateItinerary(app))))
-	router.DELETE("/api/v1/itineraries/:id", rateLimiter.Limit(authmidware(itinerary.DeleteItinerary(app))))
-	router.POST("/api/v1/itineraries/:id/fork", rateLimiter.Limit(authmidware(itinerary.ForkItinerary(app))))
-	router.PUT("/api/v1/itineraries/:id/publish", rateLimiter.Limit(authmidware(itinerary.PublishItinerary(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/itineraries", rateLimiter.Limit(authmidware(itinerary.CreateItinerary(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/itineraries/:id", rateLimiter.Limit(authmidware(itinerary.UpdateItinerary(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/itineraries/:id", rateLimiter.Limit(authmidware(itinerary.DeleteItinerary(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/itineraries/:id/fork", rateLimiter.Limit(authmidware(itinerary.ForkItinerary(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/itineraries/:id/publish", rateLimiter.Limit(authmidware(itinerary.PublishItinerary(app))))
 }
 
 func AddUtilityRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
-	router.GET("/api/v1/csrf", rateLimiter.Limit(authmidware(utils.CSRF)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/csrf", rateLimiter.Limit(authmidware(utils.CSRF)))
 }
 
 func AddFeedRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Public viewing
-	router.GET("/api/v1/feed/post/:postid", rateLimiter.Limit(feed.GetPost(app)))
-	router.POST("/api/v1/feed/feed/metadata", rateLimiter.Limit(feed.GetPostsMetadata(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/feed/post/:postid", rateLimiter.Limit(feed.GetPost(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/feed/feed/metadata", rateLimiter.Limit(feed.GetPostsMetadata(app)))
 
 	// Authenticated feed actions
-	router.GET("/api/v1/feed/feed", rateLimiter.Limit(authmidware(feed.GetPosts(app))))
-	router.GET("/api/v1/feed/media/:entityType/:entityId", rateLimiter.Limit(authmidware(feed.GetPosts(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/feed/feed", rateLimiter.Limit(authmidware(feed.GetPosts(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/feed/media/:entityType/:entityId", rateLimiter.Limit(authmidware(feed.GetPosts(app))))
 
-	router.POST("/api/v1/feed/post", rateLimiter.Limit(authmidware(feed.CreateFeedPost(app))))
-	router.DELETE("/api/v1/feed/post/:postid", rateLimiter.Limit(authmidware(feed.DeletePost(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/feed/post", rateLimiter.Limit(authmidware(feed.CreateFeedPost(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/feed/post/:postid", rateLimiter.Limit(authmidware(feed.DeletePost(app))))
 
 	// NEW
-	router.PATCH("/api/v1/feed/post/:postid", rateLimiter.Limit(authmidware(feed.EditPost(app))))
-	// router.POST("/api/v1/feed/post/:postid/subtitles/:lang", rateLimiter.Limit(authmidware(filedrop.UploadSubtitle)))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/feed/post/:postid", rateLimiter.Limit(authmidware(feed.EditPost(app))))
+	// router.HandlerFunc(http.MethodPost,"/api/v1/feed/post/:postid/subtitles/:lang", rateLimiter.Limit(authmidware(filedrop.UploadSubtitle)))
 }
 
 //	func AddSettingsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-//		router.GET("/api/v1/settings/init/:userid", rateLimiter.Limit(authmidware(settings.InitUserSettings(app))))
-//		router.GET("/api/v1/settings/all", rateLimiter.Limit(authmidware(settings.GetUserSettings(app))))
-//		router.PUT("/api/v1/settings/setting/:type", rateLimiter.Limit(authmidware(settings.UpdateUserSetting(app))))
+//		router.HandlerFunc(http.MethodGet,"/api/v1/settings/init/:userid", rateLimiter.Limit(authmidware(settings.InitUserSettings(app))))
+//		router.HandlerFunc(http.MethodGet,"/api/v1/settings/all", rateLimiter.Limit(authmidware(settings.GetUserSettings(app))))
+//		router.HandlerFunc(http.MethodPut,"/api/v1/settings/setting/:type", rateLimiter.Limit(authmidware(settings.UpdateUserSetting(app))))
 //	}
 func AddSettingsRoutes(
 	router *httprouter.Router,
@@ -651,108 +655,108 @@ func AddSettingsRoutes(
 ) {
 	authmidware := middleware.Authenticate(app)
 
-	router.GET("/api/v1/settings", rateLimiter.Limit(authmidware(settings.GetSettings(app))))
-	router.GET("/api/v1/settings/schema", rateLimiter.Limit(authmidware(settings.GetSettingsSchema(app))))
-	router.PATCH("/api/v1/settings", rateLimiter.Limit(authmidware(settings.UpdateSettings(app))))
-	router.POST("/api/v1/settings/reset", rateLimiter.Limit(authmidware(settings.ResetSettings(app))))
-	router.POST("/api/v1/settings/init", rateLimiter.Limit(authmidware(settings.InitUserSettings(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/settings", rateLimiter.Limit(authmidware(settings.GetSettings(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/settings/schema", rateLimiter.Limit(authmidware(settings.GetSettingsSchema(app))))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/settings", rateLimiter.Limit(authmidware(settings.UpdateSettings(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/settings/reset", rateLimiter.Limit(authmidware(settings.ResetSettings(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/settings/init", rateLimiter.Limit(authmidware(settings.InitUserSettings(app))))
 
-	// router.GET(
+	// router.HandlerFunc(http.MethodGet,
 	// 	"/api/v1/settings/init/:userid",
 	// 	rateLimiter.Limit(authmidware(settings.InitUserSettings(app))),
 	// )
 
-	// router.GET(
+	// router.HandlerFunc(http.MethodGet,
 	// 	"/api/v1/settings/all",
 	// 	rateLimiter.Limit(authmidware(settings.GetUserSettings(app))),
 	// )
 
-	// router.PUT(
+	// router.HandlerFunc(http.MethodPut,
 	// 	"/api/v1/settings/setting/:type",
 	// 	rateLimiter.Limit(authmidware(settings.UpdateUserSetting(app))),
 	// )
 }
 
 func AddAdsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	router.GET("/api/v1/sda/sda", rateLimiter.Limit(middleware.OptionalAuth(ads.GetAds)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/sda/sda", rateLimiter.Limit(middleware.OptionalAuth(ads.GetAds)))
 }
 
 func AddHashtagRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	router.GET("/api/v1/hashtags/hashtag/:tag", hashtags.GetHashtagPosts)
-	router.GET("/api/v1/hashtags/hashtag/:tag/top", hashtags.GetTopHashtagPosts)
-	router.GET("/api/v1/hashtags/hashtag/:tag/latest", hashtags.GetLatestHashtagPosts)
-	router.GET("/api/v1/hashtags/hashtag/:tag/people", hashtags.GetHashtagPeople)
-	router.GET("/api/v1/hashtags/hashtags/trending", hashtags.GetTrendingHashtags)
+	router.HandlerFunc(http.MethodGet, "/api/v1/hashtags/hashtag/:tag", hashtags.GetHashtagPosts)
+	router.HandlerFunc(http.MethodGet, "/api/v1/hashtags/hashtag/:tag/top", hashtags.GetTopHashtagPosts)
+	router.HandlerFunc(http.MethodGet, "/api/v1/hashtags/hashtag/:tag/latest", hashtags.GetLatestHashtagPosts)
+	router.HandlerFunc(http.MethodGet, "/api/v1/hashtags/hashtag/:tag/people", hashtags.GetHashtagPeople)
+	router.HandlerFunc(http.MethodGet, "/api/v1/hashtags/hashtags/trending", hashtags.GetTrendingHashtags)
 
-	// router.GET("/api/v1/hashtags/hashtag/:tag", hashtags.GetHashtagPosts)
-	// router.GET("/api/v1/hashtags/hashtags/trending", hashtags.GetTrendingHashtags)
+	// router.HandlerFunc(http.MethodGet,"/api/v1/hashtags/hashtag/:tag", hashtags.GetHashtagPosts)
+	// router.HandlerFunc(http.MethodGet,"/api/v1/hashtags/hashtags/trending", hashtags.GetTrendingHashtags)
 }
 
 func AddAnalyticsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	// Example: /api/v1/antics/events/123 or /api/v1/analytics/places/456
-	router.GET("/api/v1/antics/:entityType/:entityId", rateLimiter.Limit(analytics.GetEntityAnalytics))
+	router.HandlerFunc(http.MethodGet, "/api/v1/antics/:entityType/:entityId", rateLimiter.Limit(analytics.GetEntityAnalytics))
 }
 
 func AddMiscRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	router.GET("/api/v1/users/meta", rateLimiter.Limit(metadata.GetUsersMeta(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/users/meta", rateLimiter.Limit(metadata.GetUsersMeta(app)))
 
-	// router.POST("/api/v1/check-file", rateLimiter.Limit(filecheck.CheckFileExists))
-	// router.POST("/api/v1/upload", rateLimiter.Limit(filecheck.UploadFile))
-	// router.POST("/api/v1/feed/remhash", rateLimiter.Limit(filecheck.RemoveUserFile))
-	// router.GET("/resize/:folder/*filename", cdn.ServeStatic)
+	// router.HandlerFunc(http.MethodPost,"/api/v1/check-file", rateLimiter.Limit(filecheck.CheckFileExists))
+	// router.HandlerFunc(http.MethodPost,"/api/v1/upload", rateLimiter.Limit(filecheck.UploadFile))
+	// router.HandlerFunc(http.MethodPost,"/api/v1/feed/remhash", rateLimiter.Limit(filecheck.RemoveUserFile))
+	// router.HandlerFunc(http.MethodGet,"/resize/:folder/*filename", cdn.ServeStatic)
 
 }
 
 func AddStripeRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
-	router.POST("/api/v1/stripe/create-payment-intent", rateLimiter.Limit(authmidware(stripe.CreatePaymentIntent(app))))
-	router.POST("/api/v1/stripe/payment-success", rateLimiter.Limit(authmidware(stripe.PaymentSuccess(app))))
-	router.POST("/api/v1/stripe/webhook", rateLimiter.Limit(authmidware(stripe.StripeWebhook(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/stripe/create-payment-intent", rateLimiter.Limit(authmidware(stripe.CreatePaymentIntent(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/stripe/payment-success", rateLimiter.Limit(authmidware(stripe.PaymentSuccess(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/stripe/webhook", rateLimiter.Limit(authmidware(stripe.StripeWebhook(app))))
 }
 
 func AddMusicRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 
 	// --------------------------- PLAYLISTS ---------------------------
-	router.GET(
+	router.HandlerFunc(http.MethodGet,
 		"/api/v1/musicon/user/playlists",
 		rateLimiter.Limit(authmidware(musicon.GetUserPlaylists(app))),
 	)
 
-	router.GET(
+	router.HandlerFunc(http.MethodGet,
 		"/api/v1/musicon/user/liked",
 		rateLimiter.Limit(authmidware(musicon.GetUserLikes(app))),
 	)
 
-	router.POST(
+	router.HandlerFunc(http.MethodPost,
 		"/api/v1/musicon/playlists",
 		rateLimiter.Limit(authmidware(musicon.CreatePlaylist(app))),
 	)
 
-	router.DELETE(
+	router.HandlerFunc(http.MethodDelete,
 		"/api/v1/musicon/playlists/:playlistid",
 		rateLimiter.Limit(authmidware(musicon.DeletePlaylist(app))),
 	)
 
 	// Add / Remove songs to playlist
-	router.POST(
+	router.HandlerFunc(http.MethodPost,
 		"/api/v1/musicon/playlists/:playlistid/songs",
 		rateLimiter.Limit(authmidware(musicon.AddSongToPlaylist(app))),
 	)
 
-	router.DELETE(
+	router.HandlerFunc(http.MethodDelete,
 		"/api/v1/musicon/playlists/:playlistid/songs/:songid",
 		rateLimiter.Limit(authmidware(musicon.RemoveSongFromPlaylist(app))),
 	)
 
 	// Playlist details
-	router.GET(
+	router.HandlerFunc(http.MethodGet,
 		"/api/v1/musicon/playlists/:playlistid/songs",
 		rateLimiter.Limit(authmidware(musicon.GetPlaylistSongs(app))),
 	)
 
 	// Rename / Update playlist info
-	router.PATCH(
+	router.HandlerFunc(http.MethodPatch,
 		"/api/v1/musicon/playlists/:playlistid",
 		rateLimiter.Limit(authmidware(musicon.UpdatePlaylistInfo(app))),
 	)
@@ -760,46 +764,46 @@ func AddMusicRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mid
 	// --------------------------- LIKES ---------------------------
 
 	// Like song (idempotent)
-	router.POST(
+	router.HandlerFunc(http.MethodPost,
 		"/api/v1/musicon/user/liked/:songid",
 		rateLimiter.Limit(authmidware(musicon.LikeSong(app))),
 	)
 
 	// Unlike song (idempotent)
-	router.DELETE(
+	router.HandlerFunc(http.MethodDelete,
 		"/api/v1/musicon/user/liked/:songid",
 		rateLimiter.Limit(authmidware(musicon.UnlikeSong(app))),
 	)
 
 	// --------------------------- ARTISTS ---------------------------
-	router.GET(
+	router.HandlerFunc(http.MethodGet,
 		"/api/v1/musicon/artists/:artistid/songs",
 		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetArtistsSongs(app))),
 	)
 
 	// --------------------------- ALBUMS ---------------------------
-	router.GET(
+	router.HandlerFunc(http.MethodGet,
 		"/api/v1/musicon/albums",
 		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetAlbums(app))),
 	)
 
-	router.GET(
+	router.HandlerFunc(http.MethodGet,
 		"/api/v1/musicon/albums/:albumid/songs",
 		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetAlbumSongs(app))),
 	)
 
-	router.GET(
+	router.HandlerFunc(http.MethodGet,
 		"/api/v1/musicon/recommended/albums",
 		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendedAlbums(app))),
 	)
 
 	// --------------------------- SONGS & RECOMMENDATIONS ---------------------------
-	router.GET(
+	router.HandlerFunc(http.MethodGet,
 		"/api/v1/musicon/recommended",
 		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendedSongs(app))),
 	)
 
-	router.GET(
+	router.HandlerFunc(http.MethodGet,
 		"/api/v1/musicon/recommendations",
 		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendations(app))),
 	)
@@ -808,36 +812,36 @@ func AddMusicRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mid
 /* func AddMusicRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	--------------------------- PLAYLISTS ---------------------------
-	router.GET("/api/v1/musicon/user/playlists", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetUserPlaylists(app))))
-	router.GET("/api/v1/musicon/user/liked", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetUserLikes(app))))
-	router.POST("/api/v1/musicon/playlists", rateLimiter.Limit(authmidware(musicon.CreatePlaylist(app))))
-	router.DELETE("/api/v1/musicon/playlists/:playlistid", rateLimiter.Limit(authmidware(musicon.DeletePlaylist(app))))
+	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/user/playlists", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetUserPlaylists(app))))
+	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/user/liked", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetUserLikes(app))))
+	router.HandlerFunc(http.MethodPost,"/api/v1/musicon/playlists", rateLimiter.Limit(authmidware(musicon.CreatePlaylist(app))))
+	router.HandlerFunc(http.MethodDelete,"/api/v1/musicon/playlists/:playlistid", rateLimiter.Limit(authmidware(musicon.DeletePlaylist(app))))
 
 	Add / Remove songs to playlist
-	router.POST("/api/v1/musicon/playlists/:playlistid/songs/:songid", rateLimiter.Limit(authmidware(musicon.AddSongToPlaylist)))
-	router.POST("/api/v1/musicon/playlists/:playlistid/songs", rateLimiter.Limit(authmidware(musicon.AddSongToPlaylist(app))))
-	router.POST("/api/v1/musicon/user/liked/:songid", rateLimiter.Limit(middleware.OptionalAuth(musicon.SetUserLikes(app))))
-	router.DELETE("/api/v1/musicon/playlists/:playlistid/songs/:songid", rateLimiter.Limit(authmidware(musicon.RemoveSongFromPlaylist(app))))
+	router.HandlerFunc(http.MethodPost,"/api/v1/musicon/playlists/:playlistid/songs/:songid", rateLimiter.Limit(authmidware(musicon.AddSongToPlaylist)))
+	router.HandlerFunc(http.MethodPost,"/api/v1/musicon/playlists/:playlistid/songs", rateLimiter.Limit(authmidware(musicon.AddSongToPlaylist(app))))
+	router.HandlerFunc(http.MethodPost,"/api/v1/musicon/user/liked/:songid", rateLimiter.Limit(middleware.OptionalAuth(musicon.SetUserLikes(app))))
+	router.HandlerFunc(http.MethodDelete,"/api/v1/musicon/playlists/:playlistid/songs/:songid", rateLimiter.Limit(authmidware(musicon.RemoveSongFromPlaylist(app))))
 
 	Playlist details
-	router.GET("/api/v1/musicon/playlists/:playlistid/songs", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetPlaylistSongs(app))))
+	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/playlists/:playlistid/songs", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetPlaylistSongs(app))))
 
 	Rename / Update playlist info
-	router.PATCH("/api/v1/musicon/playlists/:playlistid", rateLimiter.Limit(authmidware(musicon.UpdatePlaylistInfo(app))))
+	router.HandlerFunc(http.MethodPatch,"/api/v1/musicon/playlists/:playlistid", rateLimiter.Limit(authmidware(musicon.UpdatePlaylistInfo(app))))
 
 	--------------------------- ARTISTS ---------------------------
-	router.GET("/api/v1/musicon/artists/:artistid/songs", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetArtistsSongs(app))))
+	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/artists/:artistid/songs", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetArtistsSongs(app))))
 
 	--------------------------- ALBUMS ---------------------------
-	router.GET("/api/v1/musicon/albums", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetAlbums(app))))
-	router.GET("/api/v1/musicon/albums/:albumid/songs", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetAlbumSongs(app))))
-	router.GET("/api/v1/musicon/recommended/albums", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendedAlbums(app))))
+	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/albums", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetAlbums(app))))
+	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/albums/:albumid/songs", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetAlbumSongs(app))))
+	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/recommended/albums", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendedAlbums(app))))
 
 	--------------------------- SONGS & RECOMMENDATIONS ---------------------------
-	router.GET("/api/v1/musicon/recommended", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendedSongs(app))))
+	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/recommended", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendedSongs(app))))
 
 	Dynamic personalized recommendations
-	router.GET("/api/v1/musicon/recommendations", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendations(app))))
+	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/recommendations", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendations(app))))
 } */
 
 // func AddDiscordRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
@@ -847,51 +851,46 @@ func AddMusicRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mid
 
 func AddMeChatRoutes(router *httprouter.Router, hub *mechat.Hub, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
-	router.GET("/api/v1/merechats/all", authmidware(mechat.GetUserChats(app)))
-	router.POST("/api/v1/merechats/start", authmidware(mechat.StartNewChat(app)))
-	router.GET("/api/v1/merechats/chat/:chatid", authmidware(mechat.GetChatByID(app)))
-	router.GET("/api/v1/merechats/chat/:chatid/messages", authmidware(mechat.GetChatMessages(app)))
-	router.POST("/api/v1/merechats/chat/:chatid/message", authmidware(mechat.SendMessageREST(app)))
-	router.PATCH("/api/v1/merechats/messages/:messageid", authmidware(mechat.EditMessage(app)))
-	router.DELETE("/api/v1/merechats/messages/:messageid", authmidware(mechat.DeleteMessage(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/merechats/all", authmidware(mechat.GetUserChats(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/merechats/start", authmidware(mechat.StartNewChat(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/merechats/chat/:chatid", authmidware(mechat.GetChatByID(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/merechats/chat/:chatid/messages", authmidware(mechat.GetChatMessages(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/merechats/chat/:chatid/message", authmidware(mechat.SendMessageREST(app)))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/merechats/messages/:messageid", authmidware(mechat.EditMessage(app)))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/merechats/messages/:messageid", authmidware(mechat.DeleteMessage(app)))
 
-	router.GET("/ws/merechat", authmidware(
+	router.HandlerFunc(http.MethodGet, "/ws/merechat", authmidware(
 		mechat.HandleWebSocket(app, hub),
 	))
 
-	// // WebSocket also needs auth to ensure only valid users connect
-	// router.GET("/ws/merechat", authmidware(func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// 	mechat.HandleWebSocket(app, hub)
-	// }))
-
-	router.POST("/api/v1/merechats/chat/:chatid/upload", authmidware(mechat.UploadAttachment(app)))
-	router.GET("/api/v1/merechats/chat/:chatid/search", authmidware(mechat.SearchMessages(app)))
-	router.GET("/api/v1/merechats/messages/unread-count", authmidware(mechat.GetUnreadCount(app)))
-	router.POST("/api/v1/merechats/messages/:messageid/read", authmidware(mechat.MarkAsRead(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/merechats/chat/:chatid/upload", authmidware(mechat.UploadAttachment(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/merechats/chat/:chatid/search", authmidware(mechat.SearchMessages(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/merechats/messages/unread-count", authmidware(mechat.GetUnreadCount(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/merechats/messages/:messageid/read", authmidware(mechat.MarkAsRead(app)))
 }
 
 func AddNewChatRoutes(router *httprouter.Router, hub *newchat.Hub, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
-	router.GET("/api/v1/newchats/all", authmidware(newchat.GetUserChats(app)))
-	router.POST("/api/v1/newchats/init", authmidware(newchat.InitChat(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/newchats/all", authmidware(newchat.GetUserChats(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/newchats/init", authmidware(newchat.InitChat(app)))
 
 	// This should likely be protected; token could be in query or header
-	router.GET("/ws/newchat/chat/:room", authmidware(newchat.WebSocketHandler(hub, app)))
+	router.HandlerFunc(http.MethodGet, "/ws/newchat/chat/:room", authmidware(newchat.WebSocketHandler(hub, app)))
 
-	router.POST("/api/v1/newchat/edit", authmidware(newchat.EditMessageHandler(hub, app)))
-	router.POST("/api/v1/newchat/delete", authmidware(newchat.DeleteMessageHandler(hub, app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/newchat/edit", authmidware(newchat.EditMessageHandler(hub, app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/newchat/delete", authmidware(newchat.DeleteMessageHandler(hub, app)))
 
-	// router.GET("/newchat/:room/poll", authmidware(newchat.PollMessagesHandler))
+	// router.HandlerFunc(http.MethodGet,"/newchat/:room/poll", authmidware(newchat.PollMessagesHandler))
 
-	router.POST("/api/v1/newchat/upload", authmidware(newchat.UploadHandler(hub, app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/newchat/upload", authmidware(newchat.UploadHandler(hub, app)))
 
-	router.GET("/api/v1/newchat/chat/:room", authmidware(newchat.GetChat(app)))
-	router.POST("/api/v1/newchat/chat/:room/message", authmidware(newchat.CreateMessage(app)))
-	router.DELETE("/api/v1/newchat/chat/:room/message/:msgid", authmidware(newchat.DeletesMessage(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/newchat/chat/:room", authmidware(newchat.GetChat(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/newchat/chat/:room/message", authmidware(newchat.CreateMessage(app)))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/newchat/chat/:room/message/:msgid", authmidware(newchat.DeletesMessage(app)))
 
 	/**/
 
-	router.PUT("/api/v1/newchat/chat:room/message/:msgid", authmidware(newchat.UpdateMessage(app)))
+	router.HandlerFunc(http.MethodPut, "/api/v1/newchat/chat:room/message/:msgid", authmidware(newchat.UpdateMessage(app)))
 
 }
 
@@ -902,34 +901,34 @@ func AddVendorRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mi
 	authMiddleware := middleware.Authenticate(app)
 
 	// Vendor management
-	router.POST("/api/v1/vendors", rateLimiter.Limit(authMiddleware(vendors.RegisterVendorHandler(app))))
-	router.GET("/api/v1/vendors", rateLimiter.Limit(vendors.GetVendorsHandler(app)))
-	router.GET("/api/v1/vendors/me", rateLimiter.Limit(authMiddleware(vendors.GetMyVendorHandler(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/vendors", rateLimiter.Limit(authMiddleware(vendors.RegisterVendorHandler(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/vendors", rateLimiter.Limit(vendors.GetVendorsHandler(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/vendors/me", rateLimiter.Limit(authMiddleware(vendors.GetMyVendorHandler(app))))
 
 	// Vendor CRUD
-	router.GET("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(vendors.GetVendorHandler(app)))
-	router.PATCH("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.UpdateVendorHandler(app))))
-	router.PUT("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.UpdateVendorHandler(app))))
-	router.DELETE("/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.DeleteVendorHandler(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(vendors.GetVendorHandler(app)))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.UpdateVendorHandler(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.UpdateVendorHandler(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/vendors/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.DeleteVendorHandler(app))))
 
 	// Event vendor hiring
-	router.POST("/api/v1/vendors/events/:eventID/hire", rateLimiter.Limit(authMiddleware(vendors.HireVendorHandler(app))))
-	router.GET("/api/v1/vendors/events/:eventID", rateLimiter.Limit(vendors.GetEventVendorsHandler(app)))
-	router.DELETE("/api/v1/vendors/events/:eventID/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.RemoveVendorHandler(app))))
-	router.PATCH("/api/v1/vendors/hiring/:hiringID/status", rateLimiter.Limit(authMiddleware(vendors.UpdateVendorStatusHandler(app))))
-	router.GET("/api/v1/vendors/me/requests", rateLimiter.Limit(authMiddleware(vendors.GetMyVendorRequestsHandler(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/vendors/events/:eventID/hire", rateLimiter.Limit(authMiddleware(vendors.HireVendorHandler(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/vendors/events/:eventID", rateLimiter.Limit(vendors.GetEventVendorsHandler(app)))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/vendors/events/:eventID/vendor/:vendorID", rateLimiter.Limit(authMiddleware(vendors.RemoveVendorHandler(app))))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/vendors/hiring/:hiringID/status", rateLimiter.Limit(authMiddleware(vendors.UpdateVendorStatusHandler(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/vendors/me/requests", rateLimiter.Limit(authMiddleware(vendors.GetMyVendorRequestsHandler(app))))
 
 	// Vendor availability
-	router.GET("/api/v1/vendors/vendor/:vendorID/availability", rateLimiter.Limit(vendors.ListAvailabilityHandler(app)))
-	router.POST("/api/v1/vendors/vendor/:vendorID/availability", rateLimiter.Limit(authMiddleware(vendors.CreateAvailabilityHandler(app))))
-	router.DELETE("/api/v1/vendors/vendor/:vendorID/availability/:slotID", rateLimiter.Limit(authMiddleware(vendors.DeleteAvailabilityHandler(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/vendors/vendor/:vendorID/availability", rateLimiter.Limit(vendors.ListAvailabilityHandler(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/vendors/vendor/:vendorID/availability", rateLimiter.Limit(authMiddleware(vendors.CreateAvailabilityHandler(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/vendors/vendor/:vendorID/availability/:slotID", rateLimiter.Limit(authMiddleware(vendors.DeleteAvailabilityHandler(app))))
 }
 
 // Search Routes - Public endpoints for search functionality
 func AddSearchRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	// Autocomplete suggestions - public, rate-limited
-	router.GET("/api/v1/ac", rateLimiter.Limit(search.SearchAutocomplete(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/ac", rateLimiter.Limit(search.SearchAutocomplete(app)))
 
 	// Search by entity type - public, rate-limited
-	router.GET("/api/v1/search/:tabId", rateLimiter.Limit(search.SearchByType(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/search/:tabId", rateLimiter.Limit(search.SearchByType(app)))
 }

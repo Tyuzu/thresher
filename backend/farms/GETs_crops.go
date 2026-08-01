@@ -15,7 +15,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -23,8 +22,8 @@ import (
 /* Filtered Crops                                       */
 /* ---------------------------------------------------- */
 
-func GetFilteredCrops(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetFilteredCrops(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -69,8 +68,8 @@ func GetFilteredCrops(app *infra.Deps) httprouter.Handle {
 /* Pre Crop Catalogue (Redis → DB → CSV)                */
 /* ---------------------------------------------------- */
 
-func GetPreCropCatalogue(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetPreCropCatalogue(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
@@ -183,8 +182,8 @@ func GetPreCropCatalogue(app *infra.Deps) httprouter.Handle {
 /* Crop Catalogue (unique by name + catalogueId)        */
 /* ---------------------------------------------------- */
 
-func GetCropCatalogue(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetCropCatalogue(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
@@ -219,8 +218,8 @@ func GetCropCatalogue(app *infra.Deps) httprouter.Handle {
 /* Crop Types (grouped in application layer)             */
 /* ---------------------------------------------------- */
 
-func GetCropTypes(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetCropTypes(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 

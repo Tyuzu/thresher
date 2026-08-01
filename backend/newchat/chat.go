@@ -14,13 +14,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func GetChat(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		chatID := ps.ByName("chatid")
+func GetChat(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		chatID := utils.GetParam(r, "chatid")
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -58,9 +57,9 @@ func GetChat(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func CreateMessage(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		chatID := ps.ByName("chatid")
+func CreateMessage(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		chatID := utils.GetParam(r, "chatid")
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -198,9 +197,9 @@ func buildLastMessagePreview(text, fileType string, replyRef *models.ReplyRef, f
 	return ""
 }
 
-func UpdateMessage(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		msgID := ps.ByName("msgid")
+func UpdateMessage(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		msgID := utils.GetParam(r, "msgid")
 		userID := utils.GetUserIDFromRequest(r)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -234,9 +233,9 @@ func UpdateMessage(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeletesMessage(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		msgID := ps.ByName("msgid")
+func DeletesMessage(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		msgID := utils.GetParam(r, "msgid")
 		userID := utils.GetUserIDFromRequest(r)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -264,8 +263,8 @@ func DeletesMessage(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func InitChat(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func InitChat(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			UserA string `json:"userA"`
 			UserB string `json:"userB"`
@@ -305,8 +304,8 @@ func InitChat(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetUserChats(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetUserChats(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)

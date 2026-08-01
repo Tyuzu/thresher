@@ -12,12 +12,11 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func SuggestFollowers(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func SuggestFollowers(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		currentUserID := r.URL.Query().Get("userid")
 		if currentUserID == "" {
 			http.Error(w, "Missing userid", http.StatusBadRequest)
@@ -92,8 +91,8 @@ func SuggestFollowers(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetNearbyPlaces(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetNearbyPlaces(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 

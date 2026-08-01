@@ -10,8 +10,6 @@ import (
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // normalizeItinerary ensures slices are never nil
@@ -33,8 +31,8 @@ func GetRequestingUserID(_ http.ResponseWriter, r *http.Request) (string, error)
 }
 
 // POST /api/itineraries
-func CreateItinerary(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateItinerary(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var it models.Itinerary
 		if err := json.NewDecoder(r.Body).Decode(&it); err != nil {
 			http.Error(w, "Invalid request payload", http.StatusBadRequest)
@@ -72,15 +70,15 @@ func CreateItinerary(app *infra.Deps) httprouter.Handle {
 }
 
 // PUT /api/itineraries/:id
-func UpdateItinerary(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateItinerary(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := GetRequestingUserID(w, r)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		itineraryID := ps.ByName("id")
+		itineraryID := utils.GetParam(r, "id")
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -128,15 +126,15 @@ func UpdateItinerary(app *infra.Deps) httprouter.Handle {
 }
 
 // DELETE /api/itineraries/:id (soft delete)
-func DeleteItinerary(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteItinerary(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := GetRequestingUserID(w, r)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		itineraryID := ps.ByName("id")
+		itineraryID := utils.GetParam(r, "id")
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -153,15 +151,15 @@ func DeleteItinerary(app *infra.Deps) httprouter.Handle {
 }
 
 // POST /api/itineraries/:id/fork
-func ForkItinerary(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func ForkItinerary(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := GetRequestingUserID(w, r)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		originalID := ps.ByName("id")
+		originalID := utils.GetParam(r, "id")
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -199,15 +197,15 @@ func ForkItinerary(app *infra.Deps) httprouter.Handle {
 }
 
 // PUT /api/itineraries/:id/publish
-func PublishItinerary(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func PublishItinerary(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID, err := GetRequestingUserID(w, r)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		id := ps.ByName("id")
+		id := utils.GetParam(r, "id")
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 

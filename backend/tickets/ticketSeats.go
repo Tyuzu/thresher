@@ -7,14 +7,12 @@ import (
 	"naevis/utils"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // GetAvailableSeats returns the list of available seats for an event
-func GetAvailableSeats(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventID := ps.ByName("eventid")
+func GetAvailableSeats(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventID := utils.GetParam(r, "eventid")
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -49,10 +47,10 @@ func GetAvailableSeats(app *infra.Deps) httprouter.Handle {
 }
 
 // GetTicketSeats returns the seats for a specific ticket
-func GetTicketSeats(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventID := ps.ByName("eventid")
-		ticketID := ps.ByName("ticketid")
+func GetTicketSeats(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventID := utils.GetParam(r, "eventid")
+		ticketID := utils.GetParam(r, "ticketid")
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 

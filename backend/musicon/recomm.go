@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -29,8 +28,8 @@ func sanitizePagination(limit, page int) (int, int) {
 
 // --------------------------- Recommendations ---------------------------
 
-func GetRecommendedSongs(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetRecommendedSongs(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -56,8 +55,8 @@ func GetRecommendedSongs(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetRecommendedAlbums(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetRecommendedAlbums(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -83,8 +82,8 @@ func GetRecommendedAlbums(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetRecommendations(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetRecommendations(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()

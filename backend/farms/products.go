@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -21,14 +20,14 @@ import (
 // Create
 // --------------------------------------------------
 
-func CreateProduct(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateProduct(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		createItem(w, r, "product", app)
 	}
 }
 
-func CreateTool(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateTool(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		createItem(w, r, "tool", app)
 	}
 }
@@ -70,22 +69,21 @@ func createItem(w http.ResponseWriter, r *http.Request, itemType string, app *in
 // Update
 // --------------------------------------------------
 
-func UpdateProduct(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		updateItem(w, r, ps, "product", app)
+func UpdateProduct(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		updateItem(w, r, "product", app)
 	}
 }
 
-func UpdateTool(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		updateItem(w, r, ps, "tool", app)
+func UpdateTool(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		updateItem(w, r, "tool", app)
 	}
 }
 
 func updateItem(
 	w http.ResponseWriter,
 	r *http.Request,
-	ps httprouter.Params,
 	itemType string,
 	app *infra.Deps,
 ) {
@@ -95,7 +93,7 @@ func updateItem(
 		return
 	}
 
-	id := ps.ByName("id")
+	id := utils.GetParam(r, "id")
 	if id == "" {
 		http.Error(w, "Missing id parameter", http.StatusBadRequest)
 		return
@@ -151,23 +149,23 @@ func updateItem(
 // Delete
 // --------------------------------------------------
 
-func DeleteProduct(app *infra.Deps) httprouter.Handle {
+func DeleteProduct(app *infra.Deps) http.HandlerFunc {
 	return deleteItem(app)
 }
 
-func DeleteTool(app *infra.Deps) httprouter.Handle {
+func DeleteTool(app *infra.Deps) http.HandlerFunc {
 	return deleteItem(app)
 }
 
-func deleteItem(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func deleteItem(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		id := ps.ByName("id")
+		id := utils.GetParam(r, "id")
 		if id == "" {
 			http.Error(w, "Missing id parameter", http.StatusBadRequest)
 			return

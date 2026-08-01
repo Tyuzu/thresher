@@ -16,7 +16,6 @@ import (
 	"naevis/userdata"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -25,11 +24,11 @@ func validateEntityType(t string) bool {
 }
 
 // ---------------------- Create Merch ----------------------
-func CreateMerch(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func CreateMerch(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		entityType := ps.ByName("entityType")
-		eventID := ps.ByName("eventid")
+		entityType := utils.GetParam(r, "entityType")
+		eventID := utils.GetParam(r, "eventid")
 
 		if !validateEntityType(entityType) {
 			utils.RespondWithJSON(w, 400, map[string]any{"success": false, "error": "invalid entity type"})
@@ -148,12 +147,12 @@ func CreateMerch(app *infra.Deps) httprouter.Handle {
 }
 
 // ---------------------- Edit Merch ----------------------
-func EditMerch(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func EditMerch(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		entityType := ps.ByName("entityType")
-		eventID := ps.ByName("eventid")
-		merchID := ps.ByName("merchid")
+		entityType := utils.GetParam(r, "entityType")
+		eventID := utils.GetParam(r, "eventid")
+		merchID := utils.GetParam(r, "merchid")
 
 		// SECURITY: Verify user is authenticated
 		userID, ok := r.Context().Value(config.UserIDKey).(string)
@@ -264,12 +263,12 @@ func EditMerch(app *infra.Deps) httprouter.Handle {
 }
 
 // ---------------------- Delete Merch ----------------------
-func DeleteMerch(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteMerch(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		entityType := ps.ByName("entityType")
-		eventID := ps.ByName("eventid")
-		merchID := ps.ByName("merchid")
+		entityType := utils.GetParam(r, "entityType")
+		eventID := utils.GetParam(r, "eventid")
+		merchID := utils.GetParam(r, "merchid")
 
 		// SECURITY: Verify user is authenticated
 		userID, ok := r.Context().Value(config.UserIDKey).(string)
@@ -357,8 +356,8 @@ func DeleteMerch(app *infra.Deps) httprouter.Handle {
 }
 
 // ---------------------- Buy Merch ----------------------
-func BuyMerch(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func BuyMerch(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok || userID == "" {
@@ -377,9 +376,9 @@ func BuyMerch(app *infra.Deps) httprouter.Handle {
 		err := app.DB.WithDB(r.Context(), func(ctx context.Context) error {
 			var merch models.Merch
 			err := app.DB.FindOne(ctx, merchCollection, bson.M{
-				"entity_type": ps.ByName("entityType"),
-				"entity_id":   ps.ByName("eventid"),
-				"merchid":     ps.ByName("merchid"),
+				"entity_type": utils.GetParam(r, "entityType"),
+				"entity_id":   utils.GetParam(r, "eventid"),
+				"merchid":     utils.GetParam(r, "merchid"),
 			}, &merch)
 			if err != nil {
 				return errors.New("merch not found")

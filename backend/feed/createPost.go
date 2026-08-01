@@ -7,13 +7,11 @@ import (
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // POST /api/v1/feed/post
-func CreateFeedPost(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateFeedPost(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		token := r.Header.Get("Authorization")
 		claims, err := utils.ValidateJWT(token)
@@ -47,8 +45,8 @@ func CreateFeedPost(app *infra.Deps) httprouter.Handle {
 }
 
 // PATCH /api/v1/feed/post/:postid
-func EditPost(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func EditPost(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		token := r.Header.Get("Authorization")
 		claims, err := utils.ValidateJWT(token)
@@ -62,7 +60,7 @@ func EditPost(app *infra.Deps) httprouter.Handle {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
-		payload.PostID = ps.ByName("postid")
+		payload.PostID = utils.GetParam(r, "postid")
 
 		post, err := CreateOrEditPost(ctx, claims, payload, ActionEdit, app)
 		if err != nil {

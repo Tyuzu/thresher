@@ -10,12 +10,10 @@ import (
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // CashOnDelivery handles cash-on-delivery payment requests
-func (p *PaymentService) CashOnDelivery(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (p *PaymentService) CashOnDelivery(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromRequest(r)
 

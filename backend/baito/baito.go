@@ -12,17 +12,16 @@ import (
 	"naevis/utils"
 	"naevis/utils/logger"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 /* ------------------ DELETE ------------------ */
 
-func DeleteBaito(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteBaito(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
-		baitoID := ps.ByName("baitoid")
+		baitoID := utils.GetParam(r, "baitoid")
 
 		err := deleteBaitoRecord(ctx, app, baitoID, userID)
 		if err != nil {
@@ -43,8 +42,8 @@ func DeleteBaito(app *infra.Deps) httprouter.Handle {
 
 /* ------------------ APPLY ------------------ */
 
-func ApplyToBaito(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func ApplyToBaito(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		if err := parseMultipartFormWithLimit(r); err != nil {
@@ -60,7 +59,7 @@ func ApplyToBaito(app *infra.Deps) httprouter.Handle {
 		}
 
 		appx := models.BaitoApplication{
-			BaitoID:     ps.ByName("baitoid"),
+			BaitoID:     utils.GetParam(r, "baitoid"),
 			UserID:      utils.GetUserIDFromRequest(r),
 			Username:    utils.GetUsernameFromRequest(r),
 			Pitch:       pitch,
@@ -73,8 +72,8 @@ func ApplyToBaito(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		if err := incrementBaitoApplicationCount(ctx, app, ps.ByName("baitoid")); err != nil {
-			logger.Printf("Failed to update application count for baito %s: %v", ps.ByName("baitoid"), err)
+		if err := incrementBaitoApplicationCount(ctx, app, utils.GetParam(r, "baitoid")); err != nil {
+			logger.Printf("Failed to update application count for baito %s: %v", utils.GetParam(r, "baitoid"), err)
 		}
 
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.AppliedToBaitoEvent, mqevent.AppliedToBaitoPayload{})

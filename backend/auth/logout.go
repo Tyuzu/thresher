@@ -9,16 +9,14 @@ import (
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 /* ============================================================
    LOGOUT
 ============================================================ */
 
-func LogoutUser(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func LogoutUser(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		// CSRF Check
 		if r.Header.Get("X-Refresh-Intent") != "1" {
 			utils.RespondWithError(w, http.StatusForbidden, "CSRF blocked")
@@ -69,8 +67,8 @@ func RevokeSessionAndEmit(ctx context.Context, app *infra.Deps, hashedToken stri
    LOGOUT ALL SESSIONS
 ============================================================ */
 
-func LogoutAllSessions(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func LogoutAllSessions(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)

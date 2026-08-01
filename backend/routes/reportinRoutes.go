@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"net/http"
+
 	"naevis/infra"
 	"naevis/middleware"
 	"naevis/reports"
@@ -9,71 +11,90 @@ import (
 )
 
 func AddReportingRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	router.PUT("/api/v1/report/:id",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.UpdateReport(app),
-			),
-		),
+	// Pre-build common middleware chains
+	authMid := middleware.Authenticate(app)
+	modOnly := middleware.Chain(authMid, middleware.RequireRoles("moderator"))
+	adminOnly := middleware.Chain(authMid, middleware.RequireRoles("admin"))
+
+	// ------------------------------------------------------------
+	// USER / PUBLIC REPORTING & APPEALS
+	// ------------------------------------------------------------
+
+	// Submit a report
+	router.HandlerFunc(
+		http.MethodPost,
+		"/api/v1/report",
+		middleware.Chain(rateLimiter.Limit, authMid)(reports.ReportContent(app)),
 	)
 
-	router.POST("/api/v1/report",
-		rateLimiter.Limit(
-			authmidware(reports.ReportContent(app)),
-		),
+	// Create an appeal
+	router.HandlerFunc(
+		http.MethodPost,
+		"/api/v1/appeals",
+		middleware.Chain(rateLimiter.Limit, authMid)(reports.CreateAppeal(app)),
 	)
 
-	// Public (authenticated) endpoint to create appeals
-	router.POST("/api/v1/appeals",
-		rateLimiter.Limit(
-			authmidware(reports.CreateAppeal(app)),
-		),
+	// Apply to become a moderator
+	router.HandlerFunc(
+		http.MethodPost,
+		"/api/v1/moderator/apply",
+		middleware.Chain(rateLimiter.Limit, authMid)(reports.ApplyModerator(app)),
 	)
 
-	// router.POST("/api/v1/moderator/apply", moderator.ApplyModerator)
-	router.GET("/api/v1/moderator/applications", reports.ListModeratorApplications(app))
-	router.PUT("/api/v1/moderator/approve/:id", reports.ApproveModerator(app))
-	router.PUT("/api/v1/moderator/reject/:id", reports.RejectModerator(app))
+	// ------------------------------------------------------------
+	// MODERATOR / ADMIN ENDPOINTS
+	// ------------------------------------------------------------
 
-	// Moderator-only endpoints
-	router.GET("/api/v1/moderator/reports",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.GetReportsForMod(app),
-			),
-		),
+	// Update report status
+	router.HandlerFunc(
+		http.MethodPut,
+		"/api/v1/report/:id",
+		modOnly(reports.UpdateReport(app)),
 	)
 
-	router.POST("/api/v1/moderator/apply",
-		rateLimiter.Limit(
-			authmidware(reports.ApplyModerator(app)),
-		),
+	// Fetch reports for moderation
+	router.HandlerFunc(
+		http.MethodGet,
+		"/api/v1/moderator/reports",
+		modOnly(reports.GetReportsForMod(app)),
 	)
 
-	// Moderator-only: soft-delete entities
-	router.PUT("/api/v1/moderator/delete/:type/:id",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.SoftDeleteEntity(app),
-			),
-		),
+	// Soft-delete content
+	router.HandlerFunc(
+		http.MethodPut,
+		"/api/v1/moderator/delete/:type/:id",
+		modOnly(reports.SoftDeleteEntity(app)),
 	)
 
-	// Moderator-only: appeals management (list + update)
-	router.GET("/api/v1/moderator/appeals",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.GetAppeals(app),
-			),
-		),
-	)
-	router.PUT("/api/v1/moderator/appeals/:id",
-		authmidware(
-			middleware.RequireRoles("moderator")(
-				reports.UpdateAppeal(app),
-			),
-		),
+	// Manage appeals (list + update)
+	router.HandlerFunc(
+		http.MethodGet,
+		"/api/v1/moderator/appeals",
+		modOnly(reports.GetAppeals(app)),
 	)
 
+	router.HandlerFunc(
+		http.MethodPut,
+		"/api/v1/moderator/appeals/:id",
+		modOnly(reports.UpdateAppeal(app)),
+	)
+
+	// Moderator application review (Secured with Admin role)
+	router.HandlerFunc(
+		http.MethodGet,
+		"/api/v1/moderator/applications",
+		adminOnly(reports.ListModeratorApplications(app)),
+	)
+
+	router.HandlerFunc(
+		http.MethodPut,
+		"/api/v1/moderator/approve/:id",
+		adminOnly(reports.ApproveModerator(app)),
+	)
+
+	router.HandlerFunc(
+		http.MethodPut,
+		"/api/v1/moderator/reject/:id",
+		adminOnly(reports.RejectModerator(app)),
+	)
 }

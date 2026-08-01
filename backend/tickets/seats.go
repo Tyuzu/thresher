@@ -11,14 +11,12 @@ import (
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // LockSeats locks specific seats for a user
-func LockSeats(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventID := ps.ByName("eventid")
+func LockSeats(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventID := utils.GetParam(r, "eventid")
 
 		// SECURITY: Get userID from authenticated request context, not from client
 		userID := utils.GetUserIDFromRequest(r)
@@ -63,9 +61,9 @@ func LockSeats(app *infra.Deps) httprouter.Handle {
 }
 
 // UnlockSeats releases locked seats
-func UnlockSeats(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventID := ps.ByName("eventid")
+func UnlockSeats(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventID := utils.GetParam(r, "eventid")
 
 		// SECURITY: Get userID from authenticated request context, not from client
 		userID := utils.GetUserIDFromRequest(r)
@@ -111,10 +109,10 @@ func UnlockSeats(app *infra.Deps) httprouter.Handle {
 }
 
 // ConfirmSeatPurchase marks locked seats as booked
-func ConfirmSeatPurchase(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventID := ps.ByName("eventid")
-		ticketID := ps.ByName("ticketid")
+func ConfirmSeatPurchase(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventID := utils.GetParam(r, "eventid")
+		ticketID := utils.GetParam(r, "ticketid")
 
 		// SECURITY: Get userID from authenticated request context, not from client
 		userID := utils.GetUserIDFromRequest(r)

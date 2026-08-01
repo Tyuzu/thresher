@@ -15,15 +15,13 @@ import (
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // CreateTicket handles creation of a new ticket
-func CreateTicket(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func CreateTicket(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		eventID := ps.ByName("eventid")
+		eventID := utils.GetParam(r, "eventid")
 		if eventID == "" {
 			http.Error(w, "Invalid event ID", http.StatusBadRequest)
 			return
@@ -108,10 +106,10 @@ func CreateTicket(app *infra.Deps) httprouter.Handle {
 }
 
 // EditTicket updates existing ticket fields
-func EditTicket(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventID := ps.ByName("eventid")
-		ticketID := ps.ByName("ticketid")
+func EditTicket(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventID := utils.GetParam(r, "eventid")
+		ticketID := utils.GetParam(r, "ticketid")
 
 		var input models.Ticket
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -181,17 +179,17 @@ func EditTicket(app *infra.Deps) httprouter.Handle {
 }
 
 // DeleteTicket deletes a ticket via the `dels` package
-func DeleteTicket(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteTicket(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		dels.DeleteTicket(app)
 	}
 }
 
 // BuyTicket purchases a ticket and sets user data
-func BuyTicket(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventID := ps.ByName("eventid")
-		ticketID := ps.ByName("ticketid")
+func BuyTicket(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventID := utils.GetParam(r, "eventid")
+		ticketID := utils.GetParam(r, "ticketid")
 
 		userID, ok := r.Context().Value(config.UserIDKey).(string)
 		if !ok {

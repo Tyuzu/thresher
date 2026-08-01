@@ -9,15 +9,14 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func GetMerch(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		entityType := ps.ByName("entityType")
-		eventID := ps.ByName("eventid")
-		merchID := ps.ByName("merchid")
+func GetMerch(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		entityType := utils.GetParam(r, "entityType")
+		eventID := utils.GetParam(r, "eventid")
+		merchID := utils.GetParam(r, "merchid")
 
 		if !validateEntityType(entityType) {
 			utils.RespondWithJSON(w, http.StatusBadRequest, map[string]any{
@@ -54,10 +53,10 @@ func GetMerch(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetMerchs(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		entityType := ps.ByName("entityType")
-		eventID := ps.ByName("eventid")
+func GetMerchs(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		entityType := utils.GetParam(r, "entityType")
+		eventID := utils.GetParam(r, "eventid")
 
 		if !validateEntityType(entityType) {
 			utils.RespondWithJSON(w, http.StatusBadRequest, map[string]any{
@@ -100,9 +99,9 @@ func GetMerchs(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetMerchPage(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		merchID := ps.ByName("entityType") // route constraint
+func GetMerchPage(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		merchID := utils.GetParam(r, "entityType") // route constraint
 
 		var merch models.Merch
 		err := app.DB.FindOne(

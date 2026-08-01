@@ -8,14 +8,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // --------------------------- Playlist Handlers ---------------------------
 
-func GetUserPlaylists(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetUserPlaylists(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
@@ -44,8 +43,8 @@ func GetUserPlaylists(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func CreatePlaylist(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreatePlaylist(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
@@ -95,8 +94,8 @@ func CreatePlaylist(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeletePlaylist(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeletePlaylist(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
@@ -104,7 +103,7 @@ func DeletePlaylist(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		playlistID := ps.ByName("playlistid")
+		playlistID := utils.GetParam(r, "playlistid")
 
 		// Prevent deletion of special likes playlist
 		if playlistID == "likes_"+userID {
@@ -131,8 +130,8 @@ func DeletePlaylist(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func AddSongToPlaylist(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func AddSongToPlaylist(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
@@ -140,7 +139,7 @@ func AddSongToPlaylist(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		playlistID := ps.ByName("playlistid")
+		playlistID := utils.GetParam(r, "playlistid")
 
 		// Prevent manual modification of likes playlist
 		if playlistID == "likes_"+userID {
@@ -187,8 +186,8 @@ func AddSongToPlaylist(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func RemoveSongFromPlaylist(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func RemoveSongFromPlaylist(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
@@ -196,8 +195,8 @@ func RemoveSongFromPlaylist(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		playlistID := ps.ByName("playlistid")
-		songID := ps.ByName("songid")
+		playlistID := utils.GetParam(r, "playlistid")
+		songID := utils.GetParam(r, "songid")
 
 		// Prevent manual modification of likes playlist
 		if playlistID == "likes_"+userID {
@@ -230,8 +229,8 @@ func RemoveSongFromPlaylist(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func UpdatePlaylistInfo(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdatePlaylistInfo(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
@@ -239,7 +238,7 @@ func UpdatePlaylistInfo(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		playlistID := ps.ByName("playlistid")
+		playlistID := utils.GetParam(r, "playlistid")
 
 		// Prevent editing of likes playlist
 		if playlistID == "likes_"+userID {

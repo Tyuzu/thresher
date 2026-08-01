@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/infra"
@@ -19,12 +18,12 @@ import (
    GET SINGLE COMMENT
 ========================= */
 
-func GetComment(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetComment(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		commentID := ps.ByName("commentid")
+		commentID := utils.GetParam(r, "commentid")
 		if commentID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid comment ID")
 			return
@@ -47,13 +46,13 @@ func GetComment(app *infra.Deps) httprouter.Handle {
 
 =========================
 */
-func GetComments(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetComments(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
 
 		if entityID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Entity ID is required")

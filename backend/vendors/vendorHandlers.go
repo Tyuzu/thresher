@@ -14,8 +14,6 @@ import (
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 func writeJSONError(w http.ResponseWriter, status int, code string, message string) {
@@ -27,8 +25,8 @@ func writeJSONError(w http.ResponseWriter, status int, code string, message stri
 }
 
 // RegisterVendorHandler handles vendor registration.
-func RegisterVendorHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func RegisterVendorHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -98,8 +96,8 @@ func RegisterVendorHandler(app *infra.Deps) httprouter.Handle {
 }
 
 // HireVendorHandler handles hiring a vendor for an event.
-func HireVendorHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func HireVendorHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -109,7 +107,7 @@ func HireVendorHandler(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		eventID := strings.TrimSpace(ps.ByName("eventID"))
+		eventID := strings.TrimSpace(utils.GetParam(r, "eventID"))
 		if eventID == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Event ID is required")
 			return

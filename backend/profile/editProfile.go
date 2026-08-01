@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
 	"golang.org/x/crypto/bcrypt"
 
 	"naevis/config/mqevent"
@@ -20,8 +19,8 @@ import (
    Edit Profile
 ------------------------------------------------------- */
 
-func EditProfile(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func EditProfile(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		// 1. Validate JWT
@@ -66,8 +65,8 @@ func EditProfile(app *infra.Deps) httprouter.Handle {
    Delete Profile
 ------------------------------------------------------- */
 
-func DeleteProfile(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func DeleteProfile(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		claims, err := validateJWT(r)

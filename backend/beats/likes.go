@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/config/mqevent"
@@ -26,8 +25,8 @@ func HowManyLikes(entityType string, entityID string) string {
 }
 
 // ToggleLike handles POST /likes/:entitytype/like/:entityid
-func ToggleLike(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func ToggleLike(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 
@@ -37,8 +36,8 @@ func ToggleLike(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
 
 		filter := bson.M{
 			"user_id":     userID,
@@ -90,8 +89,8 @@ func ToggleLike(app *infra.Deps) httprouter.Handle {
 }
 
 // BatchUserLikes handles POST /likes/:entitytype/batch/users
-func BatchUserLikes(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func BatchUserLikes(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized: user not found", http.StatusUnauthorized)

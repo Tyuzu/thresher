@@ -7,15 +7,13 @@ import (
 	"naevis/utils"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // GetArtistsSongs returns all published songs for an artist.
 // If no songs exist, returns an empty array.
-func GetArtistsSongs(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		artistID := ps.ByName("id")
+func GetArtistsSongs(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		artistID := utils.GetParam(r, "id")
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 

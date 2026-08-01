@@ -14,13 +14,12 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func ListAvailabilityHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		vendorID := ps.ByName("vendorID")
+func ListAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vendorID := utils.GetParam(r, "vendorID")
 		if vendorID == "" {
 			http.Error(w, "vendorID required", http.StatusBadRequest)
 			return
@@ -41,11 +40,11 @@ func ListAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 }
 
 // Create availability slot (vendor sets unavailable dates or recurring availability)
-func CreateAvailabilityHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func CreateAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value(config.UserIDKey).(string)
 
-		vendorID := ps.ByName("vendorID")
+		vendorID := utils.GetParam(r, "vendorID")
 		if vendorID == "" {
 			http.Error(w, "vendorID required", http.StatusBadRequest)
 			return
@@ -105,12 +104,12 @@ func CreateAvailabilityHandler(app *infra.Deps) httprouter.Handle {
 }
 
 // Delete availability slot
-func DeleteAvailabilityHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value(config.UserIDKey).(string)
 
-		vendorID := ps.ByName("vendorID")
-		slotID := ps.ByName("slotID")
+		vendorID := utils.GetParam(r, "vendorID")
+		slotID := utils.GetParam(r, "slotID")
 		if vendorID == "" || slotID == "" {
 			http.Error(w, "missing params", http.StatusBadRequest)
 			return

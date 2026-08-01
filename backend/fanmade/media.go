@@ -13,16 +13,14 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // AddMedia handles uploading media for an entity
-func AddMedia(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func AddMedia(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
 
 		if entityID == "" {
 			http.Error(w, "Entity ID is required", http.StatusBadRequest)

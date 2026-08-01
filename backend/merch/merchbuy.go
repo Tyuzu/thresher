@@ -13,16 +13,15 @@ import (
 	"naevis/userdata"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // POST /merch/event/:eventId/:merchId/payment-session
-func CreateMerchPaymentSession(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func CreateMerchPaymentSession(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		merchID := ps.ByName("merchid")
-		eventID := ps.ByName("eventid")
+		merchID := utils.GetParam(r, "merchid")
+		eventID := utils.GetParam(r, "eventid")
 
 		var body struct {
 			Quantity int `json:"quantity"`
@@ -59,8 +58,8 @@ func CreateMerchPaymentSession(app *infra.Deps) httprouter.Handle {
 }
 
 // POST /merch/event/:eventId/:merchId/confirm-purchase
-func ConfirmMerchPurchase(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func ConfirmMerchPurchase(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		var body struct {
@@ -72,8 +71,8 @@ func ConfirmMerchPurchase(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		eventID := ps.ByName("eventid")
-		merchID := ps.ByName("merchid")
+		eventID := utils.GetParam(r, "eventid")
+		merchID := utils.GetParam(r, "merchid")
 
 		userID, ok := ctx.Value(config.UserIDKey).(string)
 		if !ok || userID == "" {

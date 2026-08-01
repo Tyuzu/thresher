@@ -13,7 +13,6 @@ import (
 	"naevis/utils"
 
 	"github.com/gorilla/websocket"
-	"github.com/julienschmidt/httprouter"
 )
 
 // --- Domain Structs ---
@@ -339,7 +338,7 @@ var DefaultStore = NewMapStore()
 
 // --- Handlers ---
 
-func GetGtaMap(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetGtaMap(w http.ResponseWriter, r *http.Request) {
 	entity := r.URL.Query().Get("entity")
 	if entity == "" {
 		entity = "ls"
@@ -469,7 +468,7 @@ func GetGtaMap(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 // FEATURE: Real-Time Player & Vehicle Tracking WebSocket Handler
-func HandleLiveTrackingWS(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func HandleLiveTrackingWS(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
@@ -510,7 +509,7 @@ func HandleLiveTrackingWS(w http.ResponseWriter, r *http.Request, _ httprouter.P
 }
 
 // FEATURE: Measurement Distance Calculation Endpoint
-func CalculateDistance(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CalculateDistance(w http.ResponseWriter, r *http.Request) {
 	x1Str := r.URL.Query().Get("x1")
 	y1Str := r.URL.Query().Get("y1")
 	x2Str := r.URL.Query().Get("x2")
@@ -551,7 +550,7 @@ func CalculateDistance(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 	})
 }
 
-func UpdatePlayerProgress(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func UpdatePlayerProgress(w http.ResponseWriter, r *http.Request) {
 	entity := r.URL.Query().Get("entity")
 	if entity == "" {
 		entity = "ls"
@@ -577,7 +576,7 @@ func UpdatePlayerProgress(w http.ResponseWriter, r *http.Request, _ httprouter.P
 	})
 }
 
-func GetPlayerProgress(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetPlayerProgress(w http.ResponseWriter, r *http.Request) {
 	entity := r.URL.Query().Get("entity")
 
 	DefaultStore.mu.RLock()

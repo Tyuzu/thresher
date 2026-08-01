@@ -16,7 +16,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -24,8 +23,8 @@ import (
 // Create
 // --------------------------------------------------
 
-func CreateFarm(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateFarm(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		r.Body = http.MaxBytesReader(nil, r.Body, 50<<20)
@@ -145,10 +144,10 @@ func CreateFarm(app *infra.Deps) httprouter.Handle {
 // --------------------------------------------------
 // Edit
 // --------------------------------------------------
-func EditFarm(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func EditFarm(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		farmID := ps.ByName("id")
+		farmID := utils.GetParam(r, "id")
 
 		if farmID == "" {
 			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
@@ -302,10 +301,10 @@ func EditFarm(app *infra.Deps) httprouter.Handle {
 // Delete
 // --------------------------------------------------
 
-func DeleteFarm(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteFarm(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		farmID := ps.ByName("id")
+		farmID := utils.GetParam(r, "id")
 
 		if farmID == "" {
 			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{

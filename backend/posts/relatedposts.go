@@ -9,7 +9,6 @@ import (
 
 	"naevis/infra/db"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -23,8 +22,8 @@ type Post struct {
 	CreatedBy   string    `bson:"createdBy" json:"createdBy"`
 }
 
-func GetRelatedPosts(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetRelatedPosts(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		postID := r.URL.Query().Get("postid")
 		category := r.URL.Query().Get("category")
 		subcategory := r.URL.Query().Get("subcategory")

@@ -9,17 +9,15 @@ import (
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // EditMedia updates media metadata for a media group
-func EditMedia(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func EditMedia(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
-		mediaID := ps.ByName("id")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
+		mediaID := utils.GetParam(r, "id")
 
 		// requestingUserID, ok := ctx.Value(globals.UserIDKey).(string)
 		// if !ok || requestingUserID == "" {

@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/config/mqevent"
@@ -19,8 +18,8 @@ import (
 /* ───────────────────────── Remove From Cart ───────────────────────── */
 
 // RemoveFromCart removes a specific item from the user's cart
-func RemoveFromCart(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func RemoveFromCart(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
@@ -85,8 +84,8 @@ func RemoveFromCart(app *infra.Deps) httprouter.Handle {
 /* ───────────────────────── Clear Cart ───────────────────────── */
 
 // ClearCart removes all items from the user's cart
-func ClearCart(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func ClearCart(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 

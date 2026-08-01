@@ -10,7 +10,6 @@ import (
 	"naevis/utils/logger"
 	log "naevis/utils/logger"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -36,8 +35,8 @@ func respondBaitos(w http.ResponseWriter, baitos []models.BaitosResponse) {
 
 /* -------------------- Handlers -------------------- */
 
-func GetLatestBaitos(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetLatestBaitos(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		baitos, err := findLatestBaitosFromDB(ctx, app, bson.M{}, 20)
@@ -51,8 +50,8 @@ func GetLatestBaitos(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetRelatedBaitos(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetRelatedBaitos(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		category := r.URL.Query().Get("category")
@@ -87,10 +86,10 @@ func GetRelatedBaitos(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetBaitoByID(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetBaitoByID(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		id := ps.ByName("baitoid")
+		id := utils.GetParam(r, "baitoid")
 
 		b, err := findBaitoByIDFromDB(ctx, app, id)
 		if err != nil {
@@ -111,8 +110,8 @@ func GetBaitoByID(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetMyBaitos(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetMyBaitos(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
 
@@ -127,10 +126,10 @@ func GetMyBaitos(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetBaitoApplicants(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetBaitoApplicants(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		baitoID := ps.ByName("baitoid")
+		baitoID := utils.GetParam(r, "baitoid")
 
 		results, err := findBaitoApplicantsFromDB(ctx, app, baitoID)
 		if err != nil {
@@ -143,8 +142,8 @@ func GetBaitoApplicants(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetMyApplications(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetMyApplications(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
 

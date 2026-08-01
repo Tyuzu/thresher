@@ -10,17 +10,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // GetEvent fetches a single event with its tickets, media, and merch
-func GetEvent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetEvent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		eventID := ps.ByName("eventid")
+		eventID := utils.GetParam(r, "eventid")
 		if eventID == "" {
 			http.Error(w, "Missing event ID", http.StatusBadRequest)
 			return
@@ -44,8 +43,8 @@ func GetEvent(app *infra.Deps) httprouter.Handle {
 }
 
 // GetEvents fetches paginated events
-func GetEvents(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetEvents(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -86,8 +85,8 @@ func GetEvents(app *infra.Deps) httprouter.Handle {
 }
 
 // GetEventsCount returns the total count of published events.
-func GetEventsCount(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetEventsCount(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		// Example static count; replace with a real DB query if needed.
 		count := 3
 		utils.RespondWithJSON(w, http.StatusOK, count)

@@ -11,14 +11,12 @@ import (
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // AddFAQs appends a new FAQ to an event
-func AddFAQs(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventID := ps.ByName("eventid")
+func AddFAQs(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventID := utils.GetParam(r, "eventid")
 		if eventID == "" {
 			log.Println("Missing event ID in request")
 			http.Error(w, "Missing event ID", http.StatusBadRequest)

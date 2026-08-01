@@ -12,7 +12,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -51,13 +50,13 @@ func parseNoticeRequest(r *http.Request) (title, content, summary string, errMsg
 }
 
 // --- Create Notice ---
-func CreateNotice(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func CreateNotice(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
 
 		title, content, summary, errMsg, ok := parseNoticeRequest(r)
 		if !ok {
@@ -92,12 +91,12 @@ func CreateNotice(app *infra.Deps) httprouter.Handle {
 }
 
 // --- Update Notice ---
-func UpdateNotice(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateNotice(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		noticeID := strings.TrimSpace(ps.ByName("noticeid"))
+		noticeID := strings.TrimSpace(utils.GetParam(r, "noticeid"))
 		if noticeID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID")
 			return
@@ -164,12 +163,12 @@ func UpdateNotice(app *infra.Deps) httprouter.Handle {
 }
 
 // --- Delete Notice ---
-func DeleteNotice(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteNotice(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		noticeID := strings.TrimSpace(ps.ByName("noticeid"))
+		noticeID := strings.TrimSpace(utils.GetParam(r, "noticeid"))
 		if noticeID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID")
 			return

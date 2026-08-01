@@ -15,13 +15,12 @@ import (
 	"naevis/utils"
 	log "naevis/utils/logger"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func TransferTicket(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventID := ps.ByName("eventid")
+func TransferTicket(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventID := utils.GetParam(r, "eventid")
 		requestingUserId := utils.GetUserIDFromRequest(r)
 
 		type TransferPayload struct {

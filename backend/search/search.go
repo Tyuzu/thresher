@@ -9,14 +9,12 @@ import (
 
 	"naevis/infra"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // SearchAutocomplete handles autocomplete suggestions based on prefix
 // Endpoint: GET /api/v1/ac?prefix={query}
-func SearchAutocomplete(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func SearchAutocomplete(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -38,12 +36,12 @@ func SearchAutocomplete(app *infra.Deps) httprouter.Handle {
 
 // SearchByType handles search for a specific entity type
 // Endpoint: GET /api/v1/search/{tabId}?query={query}
-func SearchByType(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func SearchByType(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		tabId := strings.TrimSpace(ps.ByName("tabId"))
+		tabId := strings.TrimSpace(utils.GetParam(r, "tabId"))
 		query := strings.TrimSpace(r.URL.Query().Get("query"))
 
 		if query == "" {

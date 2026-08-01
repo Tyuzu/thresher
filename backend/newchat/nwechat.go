@@ -14,7 +14,6 @@ import (
 	"naevis/utils"
 
 	"github.com/gorilla/websocket"
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -137,9 +136,9 @@ func (h *Hub) Stop() {
 
 // ------------------------- WebSocket -------------------------
 
-func WebSocketHandler(hub *Hub, app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		room := strings.TrimSpace(ps.ByName("room"))
+func WebSocketHandler(hub *Hub, app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		room := strings.TrimSpace(utils.GetParam(r, "room"))
 		if room == "" {
 			http.Error(w, "room required", http.StatusBadRequest)
 			return

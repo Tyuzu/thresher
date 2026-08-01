@@ -10,14 +10,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func AddArtistMember(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func AddArtistMember(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		artistID := ps.ByName("id")
+		artistID := utils.GetParam(r, "id")
 
 		// Ensure artist exists
 		var artist models.Artist
@@ -66,12 +65,12 @@ func AddArtistMember(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func UpdateArtistMember(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateArtistMember(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		artistID := ps.ByName("id")
-		memberID := ps.ByName("memberId")
+		artistID := utils.GetParam(r, "id")
+		memberID := utils.GetParam(r, "memberId")
 
 		var payload map[string]string
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -112,12 +111,12 @@ func UpdateArtistMember(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteArtistMember(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteArtistMember(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		artistID := ps.ByName("id")
-		memberID := ps.ByName("memberId")
+		artistID := utils.GetParam(r, "id")
+		memberID := utils.GetParam(r, "memberId")
 
 		if err := DeleteArtistMemberDB(ctx, app.DB, artistID, memberID); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete member")

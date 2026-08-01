@@ -12,15 +12,14 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 /* -------------------- Workers -------------------- */
 
-func GetWorkerById(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetWorkerById(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -28,7 +27,7 @@ func GetWorkerById(app *infra.Deps) httprouter.Handle {
 		err := app.DB.FindOne(
 			ctx,
 			BaitoWorkersCollection,
-			bson.M{"baitoWorkerId": ps.ByName("workerId")},
+			bson.M{"baitoWorkerId": utils.GetParam(r, "workerId")},
 			&worker,
 		)
 		if err != nil {
@@ -45,8 +44,8 @@ func GetWorkerById(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetWorkerSkills(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetWorkerSkills(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -80,8 +79,8 @@ func GetWorkerSkills(app *infra.Deps) httprouter.Handle {
 }
 
 // GetWorkers returns a list of workers with optional search and skill filtering.
-func GetWorkers(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetWorkers(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		search := strings.TrimSpace(r.URL.Query().Get("search"))

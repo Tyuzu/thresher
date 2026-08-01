@@ -13,12 +13,11 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func CreateArtist(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateArtist(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		if err := r.ParseMultipartForm(10 << 20); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Failed to parse form data")
@@ -44,10 +43,10 @@ func CreateArtist(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func UpdateArtist(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateArtist(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		idParam := ps.ByName("id")
+		idParam := utils.GetParam(r, "id")
 
 		if err := r.ParseMultipartForm(20 << 20); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Failed to parse form data")
@@ -161,11 +160,11 @@ func parseArtistFormData(r *http.Request, existing *models.Artist) (models.Artis
 	return artist, updateData, filesToDelete, nil
 }
 
-func DeleteArtistByID(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		dels.DeleteArtistByID(app)(w, r, ps)
+func DeleteArtistByID(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		dels.DeleteArtistByID(app)(w, r)
 		// ctx := r.Context()
-		// artistID := ps.ByName("id")
+		// artistID := utils.GetParam(r,"id")
 
 		// if artistID == "" {
 		// 	utils.RespondWithError(w, http.StatusBadRequest, "artistID is required")

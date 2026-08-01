@@ -11,14 +11,13 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func PostNewSong(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func PostNewSong(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		artistID := ps.ByName("id")
+		artistID := utils.GetParam(r, "id")
 
 		var payload struct {
 			Title       string `json:"title"`
@@ -69,11 +68,11 @@ func PostNewSong(app *infra.Deps) httprouter.Handle {
 		utils.RespondWithJSON(w, http.StatusCreated, newSong)
 	}
 }
-func EditSong(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func EditSong(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		artistID := ps.ByName("id")
-		songID := ps.ByName("songId")
+		artistID := utils.GetParam(r, "id")
+		songID := utils.GetParam(r, "songId")
 
 		if songID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "songId is required")
@@ -143,11 +142,11 @@ func EditSong(app *infra.Deps) httprouter.Handle {
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Song updated successfully"})
 	}
 }
-func DeleteSong(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteSong(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		artistID := ps.ByName("id")
-		songID := ps.ByName("songId")
+		artistID := utils.GetParam(r, "id")
+		songID := utils.GetParam(r, "songId")
 
 		if songID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "songId is required")

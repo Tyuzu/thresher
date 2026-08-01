@@ -12,16 +12,15 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // --- Get single recipe ---
 
-func GetRecipe(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetRecipe(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		id := ps.ByName("id")
+		id := utils.GetParam(r, "id")
 
 		var recipe models.Recipe
 		if err := app.DB.FindOne(ctx, recipeCollection, map[string]any{"recipeid": id}, &recipe); err != nil {
@@ -37,8 +36,8 @@ func GetRecipe(app *infra.Deps) httprouter.Handle {
 
 // --- List Recipes ---
 
-func GetRecipes(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetRecipes(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -111,8 +110,8 @@ type recipeTagAgg struct {
 	Tags []string `bson:"tags"`
 }
 
-func GetRecipeTags(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetRecipeTags(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 

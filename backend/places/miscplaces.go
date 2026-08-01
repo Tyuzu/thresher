@@ -11,15 +11,14 @@ import (
 	"naevis/infra"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // UpdatePlaceInfo updates accessibility and amenities for a place
-func UpdatePlaceInfo(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdatePlaceInfo(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		placeID := strings.TrimSpace(ps.ByName("placeid"))
+		placeID := strings.TrimSpace(utils.GetParam(r, "placeid"))
 		if placeID == "" {
 			http.Error(w, "Place ID is required", http.StatusBadRequest)
 			return

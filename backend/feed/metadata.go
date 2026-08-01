@@ -7,12 +7,10 @@ import (
 	"naevis/utils"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
-func GetPostsMetadata(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetPostsMetadata(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 		defer cancel()
 

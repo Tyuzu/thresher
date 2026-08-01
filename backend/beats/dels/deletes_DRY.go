@@ -17,7 +17,6 @@ import (
 	"naevis/userdata"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -32,7 +31,6 @@ type afterDeleteFn func(ctx context.Context, entityID, userID string)
 func deleteByField(
 	w http.ResponseWriter,
 	r *http.Request,
-	ps httprouter.Params,
 	app *infra.Deps,
 	collection string,
 	paramKey string,
@@ -43,7 +41,7 @@ func deleteByField(
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	entityID := ps.ByName(paramKey)
+	entityID := utils.GetParam(r, paramKey)
 	if entityID == "" {
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return
@@ -75,7 +73,6 @@ func deleteByField(
 func softDeleteByField(
 	w http.ResponseWriter,
 	r *http.Request,
-	ps httprouter.Params,
 	app *infra.Deps,
 	collection string,
 	paramKey string,
@@ -87,7 +84,7 @@ func softDeleteByField(
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	entityID := ps.ByName(paramKey)
+	entityID := utils.GetParam(r, paramKey)
 	if entityID == "" {
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return
@@ -120,16 +117,16 @@ func softDeleteByField(
 /* Handlers                                             */
 /* ---------------------------------------------------- */
 
-func DeleteRecipe(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		deleteByField(w, r, ps, app, "recipes", "id", "recipeid", nil, nil)
+func DeleteRecipe(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deleteByField(w, r, app, "recipes", "id", "recipeid", nil, nil)
 	}
 }
 
-func DeleteMessage(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteMessage(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		softDeleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"messages",
 			"messageId",
 			"messageid",
@@ -140,10 +137,10 @@ func DeleteMessage(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeletesMessage(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeletesMessage(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		deleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"messages",
 			"msgid",
 			"messageid",
@@ -175,10 +172,10 @@ func DeletesMessage(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteComment(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteComment(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		deleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"comments",
 			"commentid",
 			"commentid",
@@ -202,10 +199,10 @@ func DeleteComment(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteFarm(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteFarm(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		deleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"farms",
 			"id",
 			"farmid",
@@ -222,10 +219,10 @@ func DeleteFarm(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeletePost(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeletePost(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		deleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"posts",
 			"postid",
 			"postid",
@@ -287,10 +284,10 @@ func RemoveUserFile(ctx context.Context, userID, postID, hash string, app *infra
 	}
 }
 
-func DeleteEvent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteEvent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		deleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"events",
 			"eventid",
 			"eventid",
@@ -314,26 +311,26 @@ func DeleteEvent(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteCrop(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		deleteByField(w, r, ps, app, "crops", "cropid", "cropid", nil, nil)
+func DeleteCrop(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deleteByField(w, r, app, "crops", "cropid", "cropid", nil, nil)
 	}
 }
 
-func DeleteProduct(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		deleteByField(w, r, ps, app, "products", "id", "productid", nil, nil)
+func DeleteProduct(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deleteByField(w, r, app, "products", "id", "productid", nil, nil)
 	}
 }
 
-func DeleteTool(app *infra.Deps) httprouter.Handle {
+func DeleteTool(app *infra.Deps) http.HandlerFunc {
 	return DeleteProduct(app)
 }
 
-func DeleteMerch(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteMerch(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		deleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"merch",
 			"merchid",
 			"merchid",
@@ -345,16 +342,16 @@ func DeleteMerch(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteTicket(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		deleteByField(w, r, ps, app, "tickets", "ticketid", "ticketid", nil, nil)
+func DeleteTicket(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deleteByField(w, r, app, "tickets", "ticketid", "ticketid", nil, nil)
 	}
 }
 
-func DeleteReview(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteReview(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		deleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"reviews",
 			"reviewId",
 			"reviewid",
@@ -377,10 +374,10 @@ func DeleteReview(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteMedia(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteMedia(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		deleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"media",
 			"id",
 			"mediaid",
@@ -392,10 +389,10 @@ func DeleteMedia(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeletePlace(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeletePlace(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		deleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"places",
 			"placeid",
 			"placeid",
@@ -419,10 +416,10 @@ func DeletePlace(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteMenu(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteMenu(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		deleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"menus",
 			"menuid",
 			"menuid",
@@ -434,10 +431,10 @@ func DeleteMenu(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteProfile(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteProfile(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		deleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"users",
 			"id",
 			"userid",
@@ -454,10 +451,10 @@ func DeleteProfile(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteArtistByID(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteArtistByID(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		softDeleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"artists",
 			"id",
 			"artistid",
@@ -468,16 +465,16 @@ func DeleteArtistByID(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteArtistEvent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		deleteByField(w, r, ps, app, "artist_events", "id", "eventid", nil, nil)
+func DeleteArtistEvent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deleteByField(w, r, app, "artist_events", "id", "eventid", nil, nil)
 	}
 }
 
-func DeleteItinerary(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteItinerary(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		softDeleteByField(
-			w, r, ps, app,
+			w, r, app,
 			"itineraries",
 			"id",
 			"itineraryid",

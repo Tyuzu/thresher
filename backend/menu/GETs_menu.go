@@ -10,16 +10,14 @@ import (
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // Fetch a single menu item
-func GetMenu(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetMenu(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		placeID := ps.ByName("placeid")
-		menuID := ps.ByName("menuid")
+		placeID := utils.GetParam(r, "placeid")
+		menuID := utils.GetParam(r, "menuid")
 		cacheKey := fmt.Sprintf("menu:%s:%s", placeID, menuID)
 
 		// Check cache first
@@ -52,10 +50,10 @@ func GetMenu(app *infra.Deps) httprouter.Handle {
 }
 
 // Fetch stock of a single menu
-func GetStock(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		placeID := ps.ByName("placeid")
-		menuID := ps.ByName("menuid")
+func GetStock(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		placeID := utils.GetParam(r, "placeid")
+		menuID := utils.GetParam(r, "menuid")
 
 		var menu models.Menu
 		err := app.DB.FindOne(r.Context(), menuCollection, map[string]string{
@@ -72,14 +70,14 @@ func GetStock(app *infra.Deps) httprouter.Handle {
 }
 
 // Fetch all menus for a place
-func GetMenus(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetMenus(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
 		var menus []models.Menu
 		err := app.DB.FindMany(ctx, menuCollection, map[string]string{
-			"placeid": ps.ByName("placeid"),
+			"placeid": utils.GetParam(r, "placeid"),
 		}, &menus)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch menus")

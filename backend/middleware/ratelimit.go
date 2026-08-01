@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"golang.org/x/time/rate"
 )
 
@@ -38,7 +37,7 @@ func NewRateLimiter(r rate.Limit, b int, cleanupAfter time.Duration, maxEntries 
 		maxEntries:   maxEntries,
 		stopChan:     make(chan struct{}),
 	}
-	// Start single cleanup goroutine instead of one per IP
+	// Start single cleanup goroutine
 	go rl.cleanupLoop()
 	return rl
 }
@@ -96,15 +95,12 @@ func (rl *RateLimiter) getLimiter(ip string) *rate.Limiter {
 }
 
 // extractClientIP tries to determine the client's real IP address.
-// Note: X-Forwarded-For can be spoofed; only trust it if behind a trusted proxy.
 func extractClientIP(r *http.Request) string {
-	// Only use X-Forwarded-For if you control the proxies. Comment out if untrusted.
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		parts := strings.Split(xff, ",")
 		return strings.TrimSpace(parts[0])
 	}
 
-	// Fallback: use RemoteAddr
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr
@@ -112,9 +108,9 @@ func extractClientIP(r *http.Request) string {
 	return ip
 }
 
-// Limit is the httprouter middleware for rate limiting
-func (rl *RateLimiter) Limit(next httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// Limit is the standard middleware for wrapping http.HandlerFunc
+func (rl *RateLimiter) Limit(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ip := extractClientIP(r)
 		limiter := rl.getLimiter(ip)
 
@@ -124,11 +120,11 @@ func (rl *RateLimiter) Limit(next httprouter.Handle) httprouter.Handle {
 			return
 		}
 
-		next(w, r, ps)
+		next(w, r)
 	}
 }
 
-// LimitHandler adapts the Limit middleware for use with http.Handler
+// LimitHandler adapts the Limit middleware for use with standard http.Handler interface
 func (rl *RateLimiter) LimitHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := extractClientIP(r)

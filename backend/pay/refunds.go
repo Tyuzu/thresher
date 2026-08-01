@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -27,8 +26,8 @@ const RefundsCollection = "refunds"
 // var farmOrdersCollection - from payDB.go
 
 /* ───────────────────────── Create Refund Request ───────────────────────── */
-func CreateRefundRequest(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateRefundRequest(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
@@ -151,8 +150,8 @@ func CreateRefundRequest(app *infra.Deps) httprouter.Handle {
 
 /* ───────────────────────── Get User's Refund Requests ───────────────────────── */
 
-func GetMyRefundRequests(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetMyRefundRequests(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
@@ -224,8 +223,8 @@ func GetMyRefundRequests(app *infra.Deps) httprouter.Handle {
 
 /* ───────────────────────── Get Refund Requests (Admin) ───────────────────────── */
 
-func GetAllRefundRequests(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetAllRefundRequests(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
@@ -310,8 +309,8 @@ func GetAllRefundRequests(app *infra.Deps) httprouter.Handle {
 
 /* ───────────────────────── Approve Refund Request ───────────────────────── */
 
-func ApproveRefundRequest(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func ApproveRefundRequest(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 		defer cancel()
 
@@ -321,7 +320,7 @@ func ApproveRefundRequest(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		refundID := ps.ByName("id")
+		refundID := utils.GetParam(r, "id")
 		if refundID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Refund ID required")
 			return
@@ -420,8 +419,8 @@ func ApproveRefundRequest(app *infra.Deps) httprouter.Handle {
 		})
 	}
 }
-func RejectRefundRequest(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func RejectRefundRequest(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
@@ -431,7 +430,7 @@ func RejectRefundRequest(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		refundID := ps.ByName("id")
+		refundID := utils.GetParam(r, "id")
 		if refundID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Refund ID required")
 			return

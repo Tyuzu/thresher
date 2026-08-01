@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
 	"os"
@@ -230,9 +231,9 @@ func parseVTT(filePath string) ([]Subtitle, error) {
 }
 
 func UploadSubtitle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	uniqueID := strings.TrimSpace(ps.ByName("id"))
+	uniqueID := strings.TrimSpace(utils.GetParam(r, "id"))
 	if uniqueID == "" {
-		uniqueID = strings.TrimSpace(ps.ByName("uniqueID"))
+		uniqueID = strings.TrimSpace(utils.GetParam(r, "uniqueID"))
 	}
 	if uniqueID == "" {
 		uniqueID = strings.TrimSpace(r.FormValue("id"))
@@ -245,7 +246,7 @@ func UploadSubtitle(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
-	lang := strings.TrimSpace(ps.ByName("lang"))
+	lang := strings.TrimSpace(utils.GetParam(r, "lang"))
 	if lang == "" {
 		lang = strings.TrimSpace(r.FormValue("lang"))
 	}

@@ -12,7 +12,6 @@ import (
 	"naevis/utils"
 
 	"github.com/gorilla/websocket"
-	"github.com/julienschmidt/httprouter"
 )
 
 //
@@ -61,8 +60,8 @@ const (
 	queueSize    = 256
 )
 
-func HandleWebSocket(app *infra.Deps, hub *Hub) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func HandleWebSocket(app *infra.Deps, hub *Hub) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		raw := r.URL.Query().Get("token")
 		if raw == "" {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)

@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -18,8 +17,8 @@ import (
 // Items
 // --------------------------------------------------
 
-func GetItems(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetItems(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -84,8 +83,8 @@ func GetItems(app *infra.Deps) httprouter.Handle {
 // Item Categories
 // --------------------------------------------------
 
-func GetItemCategories(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetItemCategories(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		itemType := r.URL.Query().Get("type")
 
 		var categories []string

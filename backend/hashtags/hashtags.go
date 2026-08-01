@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // HashtagPost is the shape we return to the frontend grid
@@ -69,8 +67,8 @@ func paginate[T any](items []T, page, limit int) []T {
 }
 
 // GetHashtagPosts returns dummy posts for a hashtag (all types)
-func GetHashtagPosts(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tag := ps.ByName("tag")
+func GetHashtagPosts(w http.ResponseWriter, r *http.Request) {
+	tag := utils.GetParam(r, "tag")
 	if tag == "" {
 		utils.RespondWithError(w, http.StatusBadRequest, "Missing tag parameter")
 		return
@@ -121,18 +119,18 @@ func GetHashtagPosts(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 }
 
 // GetTopHashtagPosts returns dummy "top" posts (sorted by engagement in real app)
-func GetTopHashtagPosts(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	GetHashtagPosts(w, r, ps)
+func GetTopHashtagPosts(w http.ResponseWriter, r *http.Request) {
+	GetHashtagPosts(w, r)
 }
 
 // GetLatestHashtagPosts returns dummy "latest" posts (sorted by timestamp in real app)
-func GetLatestHashtagPosts(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	GetHashtagPosts(w, r, ps)
+func GetLatestHashtagPosts(w http.ResponseWriter, r *http.Request) {
+	GetHashtagPosts(w, r)
 }
 
 // GetHashtagPeople returns dummy people who used the hashtag
-func GetHashtagPeople(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tag := ps.ByName("tag")
+func GetHashtagPeople(w http.ResponseWriter, r *http.Request) {
+	tag := utils.GetParam(r, "tag")
 	if tag == "" {
 		utils.RespondWithError(w, http.StatusBadRequest, "Missing tag parameter")
 		return
@@ -156,7 +154,7 @@ func GetHashtagPeople(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 }
 
 // GetTrendingHashtags returns dummy trending hashtags
-func GetTrendingHashtags(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetTrendingHashtags(w http.ResponseWriter, r *http.Request) {
 	limit := 20
 	if l := r.URL.Query().Get("limit"); l != "" {
 		if v, err := strconv.Atoi(l); err == nil && v > 0 && v <= 100 {

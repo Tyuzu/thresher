@@ -10,11 +10,9 @@ import (
 	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
-
-	"github.com/julienschmidt/httprouter"
 )
 
-func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	senderID := utils.GetUserIDFromRequest(r)
 

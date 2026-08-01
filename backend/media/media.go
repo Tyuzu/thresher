@@ -13,8 +13,6 @@ import (
 	"naevis/models"
 	"naevis/userdata"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 type FilePayload struct {
@@ -22,12 +20,12 @@ type FilePayload struct {
 	Extension string `json:"extension"` // Fixed: Matches frontend response schema "extension"
 }
 
-func AddMedia(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func AddMedia(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
 
 		if entityType == "" || entityID == "" {
 			http.Error(w, "Entity type and ID are required", http.StatusBadRequest)

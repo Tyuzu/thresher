@@ -6,12 +6,10 @@ import (
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
-func GetWeather(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetWeather(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		response := models.WeatherResponse{
 			Location:  "Farm — NYC",

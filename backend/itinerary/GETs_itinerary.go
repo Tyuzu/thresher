@@ -7,14 +7,12 @@ import (
 	"naevis/utils"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // GET /api/itineraries/all/:id
-func GetItinerary(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		itineraryID := ps.ByName("id")
+func GetItinerary(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		itineraryID := utils.GetParam(r, "id")
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -30,8 +28,8 @@ func GetItinerary(app *infra.Deps) httprouter.Handle {
 }
 
 // GET /api/itineraries
-func GetItineraries(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetItineraries(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
@@ -54,8 +52,8 @@ func GetItineraries(app *infra.Deps) httprouter.Handle {
 }
 
 // GET /api/itineraries/search
-func SearchItineraries(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func SearchItineraries(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
 		filter := map[string]any{"deleted": map[string]any{"$ne": true}}

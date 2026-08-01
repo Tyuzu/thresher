@@ -12,7 +12,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -48,8 +47,8 @@ type UpdateReviewPayload struct {
    Add Review
 ------------------------- */
 
-func AddReview(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func AddReview(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userId, ok := getUserID(r.Context())
 		if !ok {
@@ -57,8 +56,8 @@ func AddReview(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		entityType := ps.ByName("entityType")
-		entityId := ps.ByName("entityId")
+		entityType := utils.GetParam(r, "entityType")
+		entityId := utils.GetParam(r, "entityId")
 
 		dupFilter := bson.M{
 			"userid":     userId,
@@ -111,8 +110,8 @@ func AddReview(app *infra.Deps) httprouter.Handle {
    Edit Review
 ------------------------- */
 
-func EditReview(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func EditReview(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userId, ok := getUserID(r.Context())
 		if !ok {
@@ -120,7 +119,7 @@ func EditReview(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		reviewId := ps.ByName("reviewId")
+		reviewId := utils.GetParam(r, "reviewId")
 
 		var existing models.Review
 		if err := app.DB.FindOne(
@@ -186,8 +185,8 @@ func EditReview(app *infra.Deps) httprouter.Handle {
    Delete Review
 ------------------------- */
 
-func DeleteReview(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteReview(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userId, ok := getUserID(r.Context())
 		if !ok {
@@ -195,7 +194,7 @@ func DeleteReview(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		reviewId := ps.ByName("reviewId")
+		reviewId := utils.GetParam(r, "reviewId")
 
 		var review models.Review
 		if err := app.DB.FindOne(

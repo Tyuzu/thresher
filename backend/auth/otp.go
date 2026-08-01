@@ -24,8 +24,6 @@ import (
 	"naevis/myerr"
 	"naevis/utils"
 	"naevis/utils/logger"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 const OTPExpiry = 10 * time.Minute
@@ -34,8 +32,8 @@ const OTPExpiry = 10 * time.Minute
    1. HANDLERS (HTTP LAYER)
 ============================================================ */
 
-func RequestOTPHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func RequestOTPHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -64,8 +62,8 @@ func RequestOTPHandler(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func VerifyOTPHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func VerifyOTPHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 

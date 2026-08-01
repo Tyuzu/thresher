@@ -13,7 +13,6 @@ import (
 	"naevis/utils"
 	"naevis/utils/logger"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -216,8 +215,8 @@ func (r BaitoRequest) BuildUpdate() bson.M {
 	}
 }
 
-func CreateBaito(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateBaito(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		req, err := ParseBaitoRequest(r)
@@ -256,8 +255,8 @@ func CreateBaito(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func UpdateBaito(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateBaito(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		req, err := ParseBaitoRequest(r)
@@ -268,7 +267,7 @@ func UpdateBaito(app *infra.Deps) httprouter.Handle {
 
 		update := req.BuildUpdate()
 
-		err = updateBaitoRecord(ctx, app, ps.ByName("baitoid"), utils.GetUserIDFromRequest(r), update)
+		err = updateBaitoRecord(ctx, app, utils.GetParam(r, "baitoid"), utils.GetUserIDFromRequest(r), update)
 
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
@@ -297,7 +296,7 @@ func UpdateBaito(app *infra.Deps) httprouter.Handle {
 			BaitoID string `json:"baitoid"`
 		}{
 			Message: "Baito updated",
-			BaitoID: ps.ByName("baitoid"),
+			BaitoID: utils.GetParam(r, "baitoid"),
 		})
 	}
 }

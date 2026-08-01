@@ -12,16 +12,14 @@ import (
 	"naevis/infra"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
-
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // --- EditPlace endpoint ---
-func EditPlace(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func EditPlace(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		placeID := strings.TrimSpace(ps.ByName("placeid"))
+		placeID := strings.TrimSpace(utils.GetParam(r, "placeid"))
 		if placeID == "" {
 			http.Error(w, "Place ID is required", http.StatusBadRequest)
 			return
@@ -86,8 +84,8 @@ func EditPlace(app *infra.Deps) httprouter.Handle {
 }
 
 // --- DeletePlace endpoint ---
-func DeletePlace(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeletePlace(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		// Delegate to your dels.DeletePlace logic, which should handle DB + cache
 		dels.DeletePlace(app)
 	}

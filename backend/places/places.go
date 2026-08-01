@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -137,8 +136,8 @@ func parseAndBuildPlace(r *http.Request, mode string) (models.Place, bson.M, err
 }
 
 // --- CreatePlace endpoint ---
-func CreatePlace(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreatePlace(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		place, _, err := parseAndBuildPlace(r, "create")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

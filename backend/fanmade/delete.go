@@ -9,17 +9,15 @@ import (
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // DeleteMedia deletes a single media item if the requesting user is the creator
-func DeleteMedia(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteMedia(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
-		mediaID := ps.ByName("id")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
+		mediaID := utils.GetParam(r, "id")
 
 		requestingUserID, ok := ctx.Value(config.UserIDKey).(string)
 		if !ok || requestingUserID == "" {

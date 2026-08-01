@@ -14,7 +14,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -27,18 +26,6 @@ func stringTrim(s string) string { return strings.TrimSpace(s) }
 func getActorID(r *http.Request) string {
 	return utils.GetUserIDFromRequest(r)
 }
-
-// func utils.RespondWithJSON(w http.ResponseWriter, v interface{}, status int) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	if status > 0 {
-// 		w.WriteHeader(status)
-// 	}
-// 	_ = json.NewEncoder(w).Encode(v)
-// }
-
-// func utils.RespondWithError(w http.ResponseWriter, msg string, status int) {
-// 	utils.RespondWithJSON(w, map[string]string{"error": msg}, status)
-// }
 
 func splitAndTrim(s string) []string {
 	parts := strings.Split(s, ",")
@@ -76,8 +63,8 @@ type UpdateAppealPayload struct {
    1) Submit Report
 ------------------------- */
 
-func ReportContent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func ReportContent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		var payload models.Report
@@ -137,8 +124,8 @@ func ReportContent(app *infra.Deps) httprouter.Handle {
    2) Get Reports
 ------------------------- */
 
-func GetReports(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetReports(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		q := r.URL.Query()
 		filter := bson.M{}
@@ -193,6 +180,10 @@ func GetReports(app *infra.Deps) httprouter.Handle {
 			limit,
 		)
 
+		if reports == nil {
+			reports = []models.Report{}
+		}
+
 		utils.RespondWithJSON(w, http.StatusOK, reports)
 	}
 }
@@ -201,10 +192,10 @@ func GetReports(app *infra.Deps) httprouter.Handle {
    3) Update Report
 ------------------------- */
 
-func UpdateReport(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateReport(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reportID := stringTrim(ps.ByName("id"))
+		reportID := stringTrim(r.PathValue("id"))
 		if reportID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Missing report ID")
 			return
@@ -252,8 +243,8 @@ func UpdateReport(app *infra.Deps) httprouter.Handle {
    Appeals
 ------------------------- */
 
-func CreateAppeal(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateAppeal(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		var payload CreateAppealPayload
@@ -316,10 +307,10 @@ func CreateAppeal(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func UpdateAppeal(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateAppeal(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		appealID := stringTrim(ps.ByName("id"))
+		appealID := stringTrim(r.PathValue("id"))
 		if appealID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Missing appeal ID")
 			return
@@ -426,6 +417,11 @@ func setEntityDeletedFlag(
 		return errors.New("unsupported entity type")
 	}
 
+	deletedAtVal := interface{}("")
+	if deleted {
+		deletedAtVal = now
+	}
+
 	err := app.DB.Update(
 		ctx,
 		collection,
@@ -433,12 +429,7 @@ func setEntityDeletedFlag(
 		bson.M{
 			"deleted":   deleted,
 			"deletedBy": by,
-			"deletedAt": func() interface{} {
-				if deleted {
-					return now
-				}
-				return ""
-			}(),
+			"deletedAt": deletedAtVal,
 		},
 	)
 	if err != nil {
@@ -452,11 +443,11 @@ func setEntityDeletedFlag(
    SoftDeleteEntity
 ------------------------- */
 
-func SoftDeleteEntity(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func SoftDeleteEntity(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		entityType := stringTrim(ps.ByName("type"))
-		idParam := stringTrim(ps.ByName("id"))
+		entityType := stringTrim(r.PathValue("type"))
+		idParam := stringTrim(r.PathValue("id"))
 
 		if entityType == "" || idParam == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Missing type or id")

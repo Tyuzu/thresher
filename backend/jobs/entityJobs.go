@@ -9,18 +9,16 @@ import (
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // ------------------ CREATE ------------------
-func CreateBaitoForEntity(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func CreateBaitoForEntity(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
 
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
 
 		var baito models.Baito
 		if err := json.NewDecoder(r.Body).Decode(&baito); err != nil {

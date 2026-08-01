@@ -13,7 +13,6 @@ import (
 	"naevis/utils"
 	"naevis/utils/logger"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -84,8 +83,8 @@ func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M
 /* -------------------- Handlers -------------------- */
 
 // CreateWorkerProfile handles creating a new worker profile
-func CreateWorkerProfile(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateWorkerProfile(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
 
@@ -141,11 +140,11 @@ func CreateWorkerProfile(app *infra.Deps) httprouter.Handle {
 }
 
 // UpdateWorkerProfile handles updating an existing worker profile
-func UpdateWorkerProfile(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateWorkerProfile(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
-		workerID := ps.ByName("id")
+		workerID := utils.GetParam(r, "id")
 
 		_, update, err := parseWorkerForm(r, true)
 		if err != nil {

@@ -11,14 +11,12 @@ import (
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // EditEvent updates an existing event
-func EditEvent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventID := ps.ByName("eventid")
+func EditEvent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventID := utils.GetParam(r, "eventid")
 		if eventID == "" {
 			http.Error(w, "Missing event ID", http.StatusBadRequest)
 			return
@@ -63,8 +61,8 @@ func EditEvent(app *infra.Deps) httprouter.Handle {
 }
 
 // DeleteEvent deletes an event and its related data
-func DeleteEvent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		dels.DeleteEvent(app)(w, r, ps)
+func DeleteEvent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		dels.DeleteEvent(app)(w, r)
 	}
 }

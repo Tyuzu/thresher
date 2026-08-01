@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/infra"
@@ -13,8 +12,8 @@ import (
 	"naevis/utils"
 )
 
-func ListSlots(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func ListSlots(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		entityType := r.URL.Query().Get("entityType")
 		entityID := r.URL.Query().Get("entityId")
 
@@ -41,8 +40,8 @@ func ListSlots(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func ListBookings(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func ListBookings(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		entityType := r.URL.Query().Get("entityType")
 		entityID := r.URL.Query().Get("entityId")
 		status := r.URL.Query().Get("status")
@@ -73,8 +72,8 @@ func ListBookings(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetDateCapacity(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetDateCapacity(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		entityType := r.URL.Query().Get("entityType")
 		entityID := r.URL.Query().Get("entityId")
 		date := r.URL.Query().Get("date")
@@ -101,8 +100,8 @@ func GetDateCapacity(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func ListTiers(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func ListTiers(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		entityType := r.URL.Query().Get("entityType")
 		entityID := r.URL.Query().Get("entityId")
 

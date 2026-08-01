@@ -3,7 +3,6 @@ package beats
 import (
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/infra"
@@ -12,10 +11,10 @@ import (
 )
 
 // GET /api/v1/follow/:id
-func DoesFollow(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DoesFollow(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
-		followedUserID := ps.ByName("id")
+		followedUserID := utils.GetParam(r, "id")
 
 		if userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -51,8 +50,8 @@ func DoesFollow(app *infra.Deps) httprouter.Handle {
 }
 
 // GET /api/v1/followers
-func GetFollowers(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetFollowers(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -92,8 +91,8 @@ func GetFollowers(app *infra.Deps) httprouter.Handle {
 }
 
 // GET /api/v1/following
-func GetFollowing(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetFollowing(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)

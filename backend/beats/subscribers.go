@@ -3,8 +3,6 @@ package beats
 import (
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
-
 	"naevis/infra"
 	"naevis/userdata"
 	"naevis/utils"
@@ -15,7 +13,6 @@ import (
 func HandleEntitySubscription(
 	w http.ResponseWriter,
 	r *http.Request,
-	ps httprouter.Params,
 	entityType,
 	action string,
 	app *infra.Deps,
@@ -28,7 +25,7 @@ func HandleEntitySubscription(
 		return
 	}
 
-	entityID := ps.ByName("id")
+	entityID := utils.GetParam(r, "id")
 	if entityID == "" {
 		http.Error(w, "Entity ID required", http.StatusBadRequest)
 		return
@@ -52,15 +49,15 @@ func HandleEntitySubscription(
 }
 
 // PUT /api/v1/subscribes/:id
-func SubscribeEntity(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		HandleEntitySubscription(w, r, ps, ps.ByName("type"), "subscribe", app)
+func SubscribeEntity(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		HandleEntitySubscription(w, r, utils.GetParam(r, "type"), "subscribe", app)
 	}
 }
 
 // DELETE /api/v1/subscribes/:id
-func UnsubscribeEntity(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		HandleEntitySubscription(w, r, ps, ps.ByName("type"), "unsubscribe", app)
+func UnsubscribeEntity(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		HandleEntitySubscription(w, r, utils.GetParam(r, "type"), "unsubscribe", app)
 	}
 }

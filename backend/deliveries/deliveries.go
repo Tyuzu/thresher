@@ -10,7 +10,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -32,8 +31,8 @@ type Delivery struct {
 	CreatedAt     time.Time `json:"createdAt" bson:"createdAt"`
 }
 
-func GetMyDeliveries(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetMyDeliveries(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
@@ -58,8 +57,8 @@ func GetMyDeliveries(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetDeliveryByID(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetDeliveryByID(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
@@ -69,7 +68,7 @@ func GetDeliveryByID(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		id := strings.TrimSpace(ps.ByName("deliveryid"))
+		id := strings.TrimSpace(utils.GetParam(r, "deliveryid"))
 		if id == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid delivery id")
 			return

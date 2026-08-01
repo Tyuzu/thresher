@@ -14,16 +14,15 @@ import (
 	"naevis/utils"
 	log "naevis/utils/logger"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func AddCrop(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func AddCrop(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		farmID := ps.ByName("id")
+		farmID := utils.GetParam(r, "id")
 		userID := utils.GetUserIDFromRequest(r)
 
 		if farmID == "" || userID == "" {
@@ -76,12 +75,12 @@ func AddCrop(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func EditCrop(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func EditCrop(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		cropID := ps.ByName("cropid")
+		cropID := utils.GetParam(r, "cropid")
 		if cropID == "" {
 			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{
 				"success": false,
@@ -207,8 +206,8 @@ func parseCropForm(r *http.Request) models.Crop {
 	return crop
 }
 
-func DeleteCrop(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteCrop(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		dels.DeleteCrop(app)
 	}
 }

@@ -10,15 +10,13 @@ import (
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // BuyMenu atomically decreases stock using FindOneAndUpdate
-func BuyMenu(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		placeID := ps.ByName("placeid")
-		menuID := ps.ByName("menuid")
+func BuyMenu(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		placeID := utils.GetParam(r, "placeid")
+		menuID := utils.GetParam(r, "menuid")
 
 		var body struct {
 			Quantity int `json:"quantity"`

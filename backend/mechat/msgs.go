@@ -15,7 +15,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -69,11 +68,11 @@ func updateLastMessage(
 //
 
 // Send message (REST)
-func SendMessageREST(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func SendMessageREST(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := getUser(r)
-		chatID := ps.ByName("chatid")
+		chatID := utils.GetParam(r, "chatid")
 
 		if err := ensureChatAccess(ctx, app, chatID, user); err != nil {
 			writeErr(w, 404, "not found or access denied")
@@ -127,12 +126,12 @@ func SendMessageREST(app *infra.Deps) httprouter.Handle {
 }
 
 // Edit message
-func EditMessage(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func EditMessage(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := getUser(r)
 
-		id := ps.ByName("messageid")
+		id := utils.GetParam(r, "messageid")
 
 		var body struct {
 			Content string `json:"content"`
@@ -175,12 +174,12 @@ func EditMessage(app *infra.Deps) httprouter.Handle {
 }
 
 // Delete message (soft)
-func DeleteMessage(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteMessage(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := getUser(r)
 
-		msgID := ps.ByName("messageid")
+		msgID := utils.GetParam(r, "messageid")
 		if msgID == "" {
 			writeErr(w, 400, "invalid message id")
 			return
@@ -221,12 +220,12 @@ func DeleteMessage(app *infra.Deps) httprouter.Handle {
 // ================= READ STATUS =================
 //
 
-func MarkAsRead(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func MarkAsRead(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := getUser(r)
 
-		id := ps.ByName("messageid")
+		id := utils.GetParam(r, "messageid")
 
 		if err := app.DB.AddToSet(
 			ctx,
@@ -244,8 +243,8 @@ func MarkAsRead(app *infra.Deps) httprouter.Handle {
 }
 
 // Unread count per chat
-func GetUnreadCount(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetUnreadCount(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := getUser(r)
 
@@ -283,11 +282,11 @@ func GetUnreadCount(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func SearchMessages(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func SearchMessages(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := getUser(r)
-		chatID := ps.ByName("chatid")
+		chatID := utils.GetParam(r, "chatid")
 
 		if err := ensureChatAccess(ctx, app, chatID, user); err != nil {
 			writeErr(w, 404, "not found or access denied")

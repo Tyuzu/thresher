@@ -5,8 +5,6 @@ import (
 	"naevis/utils"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // --- Event Analytics ---
@@ -105,9 +103,9 @@ func getProductAnalytics(entityID string) models.Analytics {
 }
 
 // --- Delegator Handler ---
-func GetEntityAnalytics(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	entityType := ps.ByName("entityType")
-	entityID := ps.ByName("entityId")
+func GetEntityAnalytics(w http.ResponseWriter, r *http.Request) {
+	entityType := utils.GetParam(r, "entityType")
+	entityID := utils.GetParam(r, "entityId")
 
 	var analytics models.Analytics
 

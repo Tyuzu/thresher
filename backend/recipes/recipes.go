@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -77,8 +76,8 @@ func normalizeRecipeSlices(r *models.Recipe) {
 
 // --- Create Recipe ---
 
-func CreateRecipe(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateRecipe(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseMultipartForm(10 << 20); err != nil {
 			http.Error(w, "Failed to parse form", http.StatusBadRequest)
 			return
@@ -181,9 +180,9 @@ func CreateRecipe(app *infra.Deps) httprouter.Handle {
 
 // --- Update Recipe ---
 
-func UpdateRecipe(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		id := ps.ByName("id")
+func UpdateRecipe(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := utils.GetParam(r, "id")
 
 		if err := r.ParseMultipartForm(10 << 20); err != nil {
 			http.Error(w, "Failed to parse form", http.StatusBadRequest)
@@ -283,8 +282,8 @@ func UpdateRecipe(app *infra.Deps) httprouter.Handle {
 
 // --- Delete Recipe ---
 
-func DeleteRecipe(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteRecipe(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		dels.DeleteRecipe(app)
 	}
 }

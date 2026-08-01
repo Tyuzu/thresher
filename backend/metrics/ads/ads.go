@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"naevis/models"
 	"net/http"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // Dummy ad data
@@ -37,7 +35,7 @@ var ads = []models.Ad{
 }
 
 // GetAds handles the API request to fetch ads.
-func GetAds(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetAds(w http.ResponseWriter, r *http.Request) {
 	category := r.URL.Query().Get("category")
 
 	var filteredAds []models.Ad

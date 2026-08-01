@@ -15,7 +15,6 @@ import (
 	"naevis/utils"
 	log "naevis/utils/logger"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -82,13 +81,13 @@ func toInt(v any) (int, bool) {
 /* Buy crop                                             */
 /* ---------------------------------------------------- */
 
-func BuyCrop(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func BuyCrop(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		farmID := ps.ByName("farmid")
-		cropID := ps.ByName("cropid")
+		farmID := utils.GetParam(r, "farmid")
+		cropID := utils.GetParam(r, "cropid")
 
 		// Atomic decrement to prevent concurrent overselling.
 		var updatedCrop bson.M
@@ -243,27 +242,27 @@ func updateOrderStatus(
 	)
 }
 
-func AcceptOrder(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		updateOrderStatus(w, r, ps.ByName("id"), "accepted", app)
+func AcceptOrder(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		updateOrderStatus(w, r, utils.GetParam(r, "id"), "accepted", app)
 	}
 }
 
-func RejectOrder(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		updateOrderStatus(w, r, ps.ByName("id"), "rejected", app)
+func RejectOrder(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		updateOrderStatus(w, r, utils.GetParam(r, "id"), "rejected", app)
 	}
 }
 
-func MarkOrderDelivered(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		updateOrderStatus(w, r, ps.ByName("id"), "delivered", app)
+func MarkOrderDelivered(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		updateOrderStatus(w, r, utils.GetParam(r, "id"), "delivered", app)
 	}
 }
 
-func MarkOrderPaid(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		updateOrderStatus(w, r, ps.ByName("id"), "paid", app)
+func MarkOrderPaid(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		updateOrderStatus(w, r, utils.GetParam(r, "id"), "paid", app)
 	}
 }
 
@@ -271,20 +270,20 @@ func MarkOrderPaid(app *infra.Deps) httprouter.Handle {
 /* Bulk order status updates                            */
 /* ---------------------------------------------------- */
 
-func BulkAcceptOrders(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func BulkAcceptOrders(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		bulkUpdateOrders(w, r, "accepted", app)
 	}
 }
 
-func BulkRejectOrders(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func BulkRejectOrders(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		bulkUpdateOrders(w, r, "rejected", app)
 	}
 }
 
-func BulkMarkOrdersDelivered(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func BulkMarkOrdersDelivered(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		bulkUpdateOrders(w, r, "delivered", app)
 	}
 }
@@ -419,12 +418,12 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 /* Download receipt                                     */
 /* ---------------------------------------------------- */
 
-func DownloadReceipt(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DownloadReceipt(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		orderID := ps.ByName("id")
+		orderID := utils.GetParam(r, "id")
 
 		var order models.FarmOrder
 		if err := app.DB.FindOne(ctx, farmOrdersCollection, bson.M{"orderid": orderID}, &order); err != nil {

@@ -2,6 +2,7 @@ package filemgr
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -15,7 +16,6 @@ import (
 	"time"
 
 	"github.com/disintegration/imaging"
-	"github.com/julienschmidt/httprouter"
 )
 
 const (
@@ -38,8 +38,15 @@ var (
 	encSem          = make(chan struct{}, MaxEncoders)
 )
 
-func ProxyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	target, err := normalizeTarget(ps.ByName("url"))
+// ProxyHandler updated to standard http.HandlerFunc signature
+func ProxyHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract raw target URL from route path or query string
+	rawTarget := strings.TrimPrefix(r.URL.Path, "/static/proxy/")
+	if rawTarget == "" || rawTarget == "/static/proxy" {
+		rawTarget = r.URL.Query().Get("url")
+	}
+
+	target, err := normalizeTarget(rawTarget)
 	if err != nil {
 		http.Error(w, "invalid url", http.StatusBadRequest)
 		return
@@ -73,14 +80,11 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 		qParam = 80
 	}
 	format := strings.ToLower(r.URL.Query().Get("format"))
-	if format == "" {
-		format = "jpeg"
-	}
-	if format != "jpeg" && format != "jpg" {
+	if format == "" || (format != "jpeg" && format != "jpg") {
 		format = "jpeg"
 	}
 
-	resp, err := fetch(target)
+	resp, err := fetchWithContext(r.Context(), target)
 	if err != nil {
 		http.Error(w, "fetch failed", http.StatusBadGateway)
 		return
@@ -202,10 +206,16 @@ func isAllowedHost(host string) bool {
 	return true
 }
 
-func fetch(target string) (*http.Response, error) {
+func fetchWithContext(ctx context.Context, target string) (*http.Response, error) {
 	fetchSem <- struct{}{}
 	defer func() { <-fetchSem }()
-	return httpClient.Get(target)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return httpClient.Do(req)
 }
 
 func streamFallback(w http.ResponseWriter, r *http.Request, cachePath, contentType string, head []byte, body io.Reader) {

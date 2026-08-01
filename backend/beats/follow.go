@@ -3,8 +3,6 @@ package beats
 import (
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
-
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
@@ -17,7 +15,6 @@ import (
 func HandleFollowAction(
 	w http.ResponseWriter,
 	r *http.Request,
-	ps httprouter.Params,
 	action string,
 	app *infra.Deps,
 ) {
@@ -29,7 +26,7 @@ func HandleFollowAction(
 		return
 	}
 
-	targetUserID := ps.ByName("id")
+	targetUserID := utils.GetParam(r, "id")
 	if targetUserID == "" {
 		http.Error(w, "Target user ID required", http.StatusBadRequest)
 		return
@@ -53,14 +50,14 @@ func HandleFollowAction(
 	utils.RespondWithJSON(w, http.StatusOK, response)
 }
 
-func ToggleFollow(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		HandleFollowAction(w, r, ps, "follow", app)
+func ToggleFollow(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		HandleFollowAction(w, r, "follow", app)
 	}
 }
 
-func ToggleUnFollow(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		HandleFollowAction(w, r, ps, "unfollow", app)
+func ToggleUnFollow(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		HandleFollowAction(w, r, "unfollow", app)
 	}
 }

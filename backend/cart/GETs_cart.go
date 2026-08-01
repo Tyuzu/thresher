@@ -8,13 +8,11 @@ import (
 
 	"naevis/infra"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // GetCart returns cart items grouped by category
-func GetCart(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetCart(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 

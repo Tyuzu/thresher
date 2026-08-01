@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/infra"
@@ -15,8 +14,8 @@ import (
 )
 
 // GetLikers handles GET /likes/:entitytype/users/:entityid
-func GetLikers(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetLikers(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized: user not found", http.StatusUnauthorized)
@@ -26,8 +25,8 @@ func GetLikers(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
 		if entityType == "" || entityID == "" {
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return
@@ -103,8 +102,8 @@ func GetLikers(app *infra.Deps) httprouter.Handle {
 
 // GetLikeCount handles GET /likes/:entitytype/count/:entityid
 // GetLikeCount handles GET /likes/:entitytype/count/:entityid
-func GetLikeCount(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetLikeCount(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized: user not found", http.StatusUnauthorized)
@@ -114,8 +113,8 @@ func GetLikeCount(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
 		if entityType == "" || entityID == "" {
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return

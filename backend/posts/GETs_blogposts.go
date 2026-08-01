@@ -9,15 +9,14 @@ import (
 
 	"naevis/infra/db"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // --- Get single post ---
-func GetPost(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetPost(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		postID := ps.ByName("id")
+		postID := utils.GetParam(r, "id")
 
 		var post models.BlogPost
 		if err := app.DB.FindOne(ctx, blogPostsCollection, map[string]any{
@@ -33,8 +32,8 @@ func GetPost(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetAllPosts(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetAllPosts(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		query := r.URL.Query()
 

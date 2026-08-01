@@ -7,12 +7,10 @@ import (
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
-
-	"github.com/julienschmidt/httprouter"
 )
 
-func GetArtistsAlbums(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetArtistsAlbums(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		albums := []models.ArtistAlbum{
 			{
 				Title:       "Nightfall",
@@ -38,26 +36,16 @@ func GetArtistsAlbums(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetArtistsPosts(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetArtistsPosts(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
-		ps = append(ps,
-			httprouter.Param{Key: "entityid", Value: ps.ByName("id")},
-			httprouter.Param{Key: "entitytype", Value: "artist"},
-		)
-
-		media.GetMedias(app)(w, r, ps)
+		media.GetMedias(app)(w, r)
 	}
 }
 
-func GetArtistsMerch(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetArtistsMerch(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
-		ps = append(ps,
-			httprouter.Param{Key: "eventid", Value: ps.ByName("id")},
-			httprouter.Param{Key: "entityType", Value: "artist"},
-		)
-
-		merch.GetMerchs(app)(w, r, ps)
+		merch.GetMerchs(app)(w, r)
 	}
 }

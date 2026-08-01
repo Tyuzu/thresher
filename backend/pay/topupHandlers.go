@@ -10,11 +10,9 @@ import (
 	"naevis/metrics/auditlog"
 	"naevis/models"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
-func (p *PaymentService) TopUp(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (p *PaymentService) TopUp(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromRequest(r)
 

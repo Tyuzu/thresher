@@ -9,12 +9,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func LikeSong(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func LikeSong(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
@@ -22,7 +21,7 @@ func LikeSong(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		songID := ps.ByName("songid")
+		songID := utils.GetParam(r, "songid")
 		if songID == "" {
 			respondError(w, http.StatusBadRequest, "Missing song ID")
 			return
@@ -69,8 +68,8 @@ func LikeSong(app *infra.Deps) httprouter.Handle {
 		}, "Song liked successfully")
 	}
 }
-func UnlikeSong(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UnlikeSong(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
@@ -78,7 +77,7 @@ func UnlikeSong(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		songID := ps.ByName("songid")
+		songID := utils.GetParam(r, "songid")
 		if songID == "" {
 			respondError(w, http.StatusBadRequest, "Missing song ID")
 			return
@@ -119,8 +118,8 @@ func UnlikeSong(app *infra.Deps) httprouter.Handle {
 
 // --------------------------- User Likes ---------------------------
 
-func GetUserLikes(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetUserLikes(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {

@@ -13,8 +13,6 @@ import (
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // ------------------------- DB helpers -------------------------
@@ -79,8 +77,8 @@ type editPayload struct {
 	Content string `json:"content"`
 }
 
-func EditMessageHandler(hub *Hub, app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func EditMessageHandler(hub *Hub, app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var payload editPayload
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
@@ -122,8 +120,8 @@ func EditMessageHandler(hub *Hub, app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteMessageHandler(hub *Hub, app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func DeleteMessageHandler(hub *Hub, app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var payload struct {
 			ID string `json:"id"`
 		}
@@ -165,8 +163,8 @@ func DeleteMessageHandler(hub *Hub, app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func UploadHandler(hub *Hub, app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func UploadHandler(hub *Hub, app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)

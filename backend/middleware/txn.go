@@ -1,7 +1,9 @@
 package middleware
 
-import "github.com/julienschmidt/httprouter"
+import (
+	"net/http"
+)
 
-func WithTxn(next httprouter.Handle) httprouter.Handle {
+func WithTxn(next http.HandlerFunc) http.HandlerFunc {
 	return next
 }

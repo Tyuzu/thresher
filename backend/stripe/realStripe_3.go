@@ -15,7 +15,6 @@ import (
 	"naevis/utils/logger"
 
 	"github.com/joho/godotenv"
-	"github.com/julienschmidt/httprouter"
 	"github.com/stripe/stripe-go/v83"
 	"github.com/stripe/stripe-go/v83/paymentintent"
 	"github.com/stripe/stripe-go/v83/webhook"
@@ -87,8 +86,8 @@ type CreatePaymentIntentRequest struct {
 	Description string `json:"description"`
 }
 
-func CreatePaymentIntent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreatePaymentIntent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var req CreatePaymentIntentRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid JSON")
@@ -141,8 +140,8 @@ type PaymentSuccessRequest struct {
 	Amount          int64  `json:"amount"`
 }
 
-func PaymentSuccess(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func PaymentSuccess(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var req PaymentSuccessRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid JSON")
@@ -173,8 +172,8 @@ func PaymentSuccess(app *infra.Deps) httprouter.Handle {
    Stripe Webhook
 ---------------------------------------- */
 
-func StripeWebhook(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func StripeWebhook(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		const MaxBodyBytes = int64(65536)
 		r.Body = http.MaxBytesReader(w, r.Body, MaxBodyBytes)
 

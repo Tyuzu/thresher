@@ -19,7 +19,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -54,7 +53,7 @@ func VerifyWebhookSignature(payload []byte, signature string, secret string) boo
 }
 
 // HandlePaymentWebhook processes incoming payment webhooks
-func (p *PaymentService) HandlePaymentWebhook(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (p *PaymentService) HandlePaymentWebhook(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), webhookTimeoutSeconds*time.Second)
 	defer cancel()
 

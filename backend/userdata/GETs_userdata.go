@@ -9,14 +9,12 @@ import (
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // GetUserProfileData fetches user-specific entity data
-func GetUserProfileData(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		username := ps.ByName("username")
+func GetUserProfileData(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		username := utils.GetParam(r, "username")
 
 		// Validate JWT
 		tokenString := r.Header.Get("Authorization")
@@ -72,9 +70,9 @@ func GetUserProfileData(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetOtherUserProfileData(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		// username := ps.ByName("username") // from /user/{username}/data
+func GetOtherUserProfileData(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// username := utils.GetParam(r,"username") // from /user/{username}/data
 		// entityType := r.URL.Query().Get("entity_type")
 
 		// if entityType != "feedpost" {

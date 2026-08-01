@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/julienschmidt/httprouter"
 )
 
 const (
@@ -191,7 +190,6 @@ func parsePostInput(r *http.Request) (*PostInput, error) {
 func CreateOrUpdatePost(
 	w http.ResponseWriter,
 	r *http.Request,
-	ps httprouter.Params,
 	isEdit bool,
 	app *infra.Deps,
 ) {
@@ -206,7 +204,7 @@ func CreateOrUpdatePost(
 	var postID string
 
 	if isEdit {
-		postID = ps.ByName("id")
+		postID = utils.GetParam(r, "id")
 
 		if postID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Post ID required")
@@ -321,36 +319,33 @@ func CreateOrUpdatePost(
 	})
 }
 
-func CreatePost(app *infra.Deps) httprouter.Handle {
+func CreatePost(app *infra.Deps) http.HandlerFunc {
 	return func(
 		w http.ResponseWriter,
 		r *http.Request,
-		ps httprouter.Params,
 	) {
-		CreateOrUpdatePost(w, r, ps, false, app)
+		CreateOrUpdatePost(w, r, false, app)
 	}
 }
 
-func UpdatePost(app *infra.Deps) httprouter.Handle {
+func UpdatePost(app *infra.Deps) http.HandlerFunc {
 	return func(
 		w http.ResponseWriter,
 		r *http.Request,
-		ps httprouter.Params,
 	) {
-		CreateOrUpdatePost(w, r, ps, true, app)
+		CreateOrUpdatePost(w, r, true, app)
 	}
 }
 
-func DeletePost(app *infra.Deps) httprouter.Handle {
+func DeletePost(app *infra.Deps) http.HandlerFunc {
 	return func(
 		w http.ResponseWriter,
 		r *http.Request,
-		ps httprouter.Params,
 	) {
 		ctx := r.Context()
 
 		userID := utils.GetUserIDFromRequest(r)
-		postID := ps.ByName("id")
+		postID := utils.GetParam(r, "id")
 
 		if postID == "" {
 			utils.RespondWithError(

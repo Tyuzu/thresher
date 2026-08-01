@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -16,13 +15,13 @@ import (
    Get Reviews (list)
 ------------------------- */
 
-func GetReviews(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetReviews(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		entityType := ps.ByName("entityType")
-		entityId := ps.ByName("entityId")
+		entityType := utils.GetParam(r, "entityType")
+		entityId := utils.GetParam(r, "entityId")
 
 		skip, limit := utils.ParsePagination(r, 10, 100)
 
@@ -56,9 +55,9 @@ func GetReviews(app *infra.Deps) httprouter.Handle {
    Get Review (single)
 ------------------------- */
 
-func GetReview(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		reviewId := ps.ByName("reviewId")
+func GetReview(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reviewId := utils.GetParam(r, "reviewId")
 
 		var review models.Review
 		if err := app.DB.FindOne(

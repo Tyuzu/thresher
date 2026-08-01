@@ -3,13 +3,11 @@ package utils
 import (
 	"crypto/rand"
 	"net/http"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // --- CSRF Token Generation ---
 
-func CSRF(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CSRF(w http.ResponseWriter, r *http.Request) {
 	csrf := GenerateRandomString(12)
 	RespondWithJSON(w, http.StatusOK, map[string]any{
 		"ok":         true,

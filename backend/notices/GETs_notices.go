@@ -12,19 +12,17 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
-
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // --- Get notices list (optimized: summary only) ---
-func GetNotices(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetNotices(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
 
 		page := 1
 		limit := 10
@@ -86,12 +84,12 @@ func GetNotices(app *infra.Deps) httprouter.Handle {
 }
 
 // --- Get single notice ---
-func GetNotice(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetNotice(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		noticeID := strings.TrimSpace(ps.ByName("noticeid"))
+		noticeID := strings.TrimSpace(utils.GetParam(r, "noticeid"))
 		if noticeID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID")
 			return

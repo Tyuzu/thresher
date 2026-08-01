@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -36,13 +35,13 @@ func isValidEntityType(t string) bool {
    CREATE
 ========================= */
 
-func CreateComment(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func CreateComment(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
 
 		if !isValidEntityType(entityType) {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid entity type")
@@ -89,12 +88,12 @@ func CreateComment(app *infra.Deps) httprouter.Handle {
    UPDATE
 ========================= */
 
-func UpdateComment(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateComment(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		commentID := ps.ByName("commentid")
+		commentID := utils.GetParam(r, "commentid")
 		if commentID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID")
 			return
@@ -158,12 +157,12 @@ func UpdateComment(app *infra.Deps) httprouter.Handle {
    DELETE
 ========================= */
 
-func DeleteComment(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteComment(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		commentID := ps.ByName("commentid")
+		commentID := utils.GetParam(r, "commentid")
 		if commentID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid ID")
 			return

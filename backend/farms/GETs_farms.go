@@ -12,7 +12,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -20,12 +19,12 @@ import (
 /* Get farms selling a specific crop ID                 */
 /* ---------------------------------------------------- */
 
-func GetCropFarms(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetCropFarms(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
-		cropID := ps.ByName("cropid")
+		cropID := utils.GetParam(r, "cropid")
 		skip, limit := utils.ParsePagination(r, 10, 100)
 		sortBy := r.URL.Query().Get("sortBy")
 		sortOrder := r.URL.Query().Get("sortOrder")
@@ -98,12 +97,12 @@ func GetCropFarms(app *infra.Deps) httprouter.Handle {
 /* Get farms by crop name (case-insensitive)            */
 /* ---------------------------------------------------- */
 
-func GetCropTypeFarms(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetCropTypeFarms(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
-		cropName := ps.ByName("cropname")
+		cropName := utils.GetParam(r, "cropname")
 		if cropName == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Missing crop name parameter")
 			return
@@ -228,10 +227,10 @@ func GetCropTypeFarms(app *infra.Deps) httprouter.Handle {
 /* Get single farm with crops                           */
 /* ---------------------------------------------------- */
 
-func GetFarm(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetFarm(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		id := ps.ByName("id")
+		id := utils.GetParam(r, "id")
 
 		var farm models.Farm
 		if err := app.DB.FindOne(ctx, farmsCollection, bson.M{"farmid": id}, &farm); err != nil {
@@ -258,8 +257,8 @@ func GetFarm(app *infra.Deps) httprouter.Handle {
 /* Paginated farms with lookup                          */
 /* ---------------------------------------------------- */
 
-func GetPaginatedFarms(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetPaginatedFarms(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 

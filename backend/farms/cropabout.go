@@ -12,12 +12,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func CreateCropAboutHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateCropAboutHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -60,15 +59,15 @@ func CreateCropAboutHandler(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetCropAboutHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetCropAboutHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
 		crop, err := GetCropAbout(
 			ctx,
 			app,
-			ps.ByName("cropID"),
+			utils.GetParam(r, "cropID"),
 		)
 
 		if err != nil {
@@ -96,8 +95,8 @@ func GetCropAboutHandler(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetAllCropAboutsHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetAllCropAboutsHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -122,8 +121,8 @@ func GetAllCropAboutsHandler(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func UpdateCropAboutHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateCropAboutHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -141,7 +140,7 @@ func UpdateCropAboutHandler(app *infra.Deps) httprouter.Handle {
 		err := UpdateCropAbout(
 			ctx,
 			app,
-			ps.ByName("cropID"),
+			utils.GetParam(r, "cropID"),
 			&crop,
 		)
 
@@ -163,15 +162,15 @@ func UpdateCropAboutHandler(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func DeleteCropAboutHandler(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DeleteCropAboutHandler(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
 		err := DeleteCropAbout(
 			ctx,
 			app,
-			ps.ByName("cropID"),
+			utils.GetParam(r, "cropID"),
 		)
 
 		if err != nil {

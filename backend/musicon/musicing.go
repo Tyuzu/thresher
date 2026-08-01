@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -73,8 +72,8 @@ func getPaginationParams(r *http.Request) (limit int, page int) {
 
 // --------------------------- Albums & Songs ---------------------------
 
-func GetAlbums(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetAlbums(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -89,10 +88,10 @@ func GetAlbums(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetAlbumSongs(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetAlbumSongs(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
-		albumID := ps.ByName("albumid")
+		albumID := utils.GetParam(r, "albumid")
 
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -113,10 +112,10 @@ func GetAlbumSongs(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func GetPlaylistSongs(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetPlaylistSongs(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
-		playlistID := ps.ByName("playlistid")
+		playlistID := utils.GetParam(r, "playlistid")
 
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -138,10 +137,10 @@ func GetPlaylistSongs(app *infra.Deps) httprouter.Handle {
 }
 
 // --------------------------- Artist Songs ---------------------------
-func GetArtistsSongs(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetArtistsSongs(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
-		artistID := ps.ByName("artistid")
+		artistID := utils.GetParam(r, "artistid")
 		if artistID == "" {
 			respondError(w, http.StatusBadRequest, "Missing artist ID")
 			return

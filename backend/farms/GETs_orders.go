@@ -11,7 +11,6 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -19,8 +18,8 @@ import (
 /* Orders placed BY the current user (buyer)            */
 /* ---------------------------------------------------- */
 
-func GetMyFarmOrders(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetMyFarmOrders(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
@@ -81,8 +80,8 @@ func GetMyFarmOrders(app *infra.Deps) httprouter.Handle {
 /* Orders coming INTO farms owned by the farmer         */
 /* ---------------------------------------------------- */
 
-func GetIncomingFarmOrders(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 

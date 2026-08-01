@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (p *PaymentService) ListTransactions(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (p *PaymentService) ListTransactions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromRequest(r)
 
@@ -48,7 +47,7 @@ func (p *PaymentService) ListTransactions(w http.ResponseWriter, r *http.Request
 	utils.RespondWithJSON(w, http.StatusOK, txns)
 }
 
-func (p *PaymentService) GetBalance(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (p *PaymentService) GetBalance(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromRequest(r)
 

@@ -7,12 +7,10 @@ import (
 	"naevis/utils"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // CreateWallet explicitly provisions an account for an onboarded user
-func (p *PaymentService) CreateWallet(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (p *PaymentService) CreateWallet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromRequest(r)
 

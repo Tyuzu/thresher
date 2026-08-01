@@ -14,8 +14,6 @@ import (
 	log "naevis/utils/logger"
 	"net/http"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 // MenuPurchaseRequest represents the request body for purchasing menus
@@ -32,8 +30,8 @@ type MenuPurchaseResponse struct {
 }
 
 // ConfirmMenuPurchase handles the POST request for confirming the menu purchase
-func ConfirmMenuPurchase(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func ConfirmMenuPurchase(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var request MenuPurchaseRequest
 		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -46,8 +44,8 @@ func ConfirmMenuPurchase(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		request.PlaceId = ps.ByName("placeid")
-		request.MenuID = ps.ByName("menuid")
+		request.PlaceId = utils.GetParam(r, "placeid")
+		request.MenuID = utils.GetParam(r, "menuid")
 
 		buyMenu(w, request, requestingUserID, app)
 	}
@@ -100,11 +98,11 @@ func buyMenu(w http.ResponseWriter, request MenuPurchaseRequest, requestingUserI
 }
 
 // POST /menu/event/:placeId/:menuId/payment-session
-func CreateMenuPaymentSession(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func CreateMenuPaymentSession(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		menuId := ps.ByName("menuid")
-		placeId := ps.ByName("placeid")
+		menuId := utils.GetParam(r, "menuid")
+		placeId := utils.GetParam(r, "placeid")
 
 		// Parse request body for stock
 		var body struct {

@@ -18,7 +18,6 @@ import (
 	"naevis/userdata"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -73,11 +72,11 @@ func CloseUpdatesChannel(eventId string) {
 // Stripe Session
 // ------------------------------------------------------------------
 
-func CreateTicketPaymentSession(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func CreateTicketPaymentSession(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		ticketId := ps.ByName("ticketid")
-		eventId := ps.ByName("eventid")
+		ticketId := utils.GetParam(r, "ticketid")
+		eventId := utils.GetParam(r, "eventid")
 
 		var body struct {
 			Quantity int `json:"quantity"`
@@ -113,9 +112,9 @@ func CreateTicketPaymentSession(app *infra.Deps) httprouter.Handle {
 // SSE Updates
 // ------------------------------------------------------------------
 
-func EventUpdates(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		eventId := ps.ByName("eventId")
+func EventUpdates(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		eventId := utils.GetParam(r, "eventId")
 
 		flusher, ok := w.(http.Flusher)
 		if !ok {
@@ -166,8 +165,8 @@ type TicketPurchaseRequest struct {
 	Quantity int    `json:"quantity"`
 }
 
-func ConfirmTicketPurchase(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func ConfirmTicketPurchase(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var req TicketPurchaseRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -175,8 +174,8 @@ func ConfirmTicketPurchase(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Extract eventid and ticketid from URL parameters
-		req.EventID = ps.ByName("eventid")
-		req.TicketID = ps.ByName("ticketid")
+		req.EventID = utils.GetParam(r, "eventid")
+		req.TicketID = utils.GetParam(r, "ticketid")
 
 		buyTicket(w, r, req, app)
 	}

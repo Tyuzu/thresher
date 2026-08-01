@@ -18,7 +18,6 @@ import (
 	log "naevis/utils/logger"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/julienschmidt/httprouter"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -33,8 +32,8 @@ var (
    1. HANDLERS (HTTP LAYER)
 ============================================================ */
 
-func Login(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func Login(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 

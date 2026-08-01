@@ -7,17 +7,15 @@ import (
 
 	"naevis/infra"
 	"naevis/utils"
-
-	"github.com/julienschmidt/httprouter"
 )
 
-func GetMedia(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetMedia(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		entityType := ps.ByName("entitytype")
-		entityID := ps.ByName("entityid")
-		mediaID := ps.ByName("id")
+		entityType := utils.GetParam(r, "entitytype")
+		entityID := utils.GetParam(r, "entityid")
+		mediaID := utils.GetParam(r, "id")
 
 		media, err := getMediaByID(ctx, app, entityType, entityID, mediaID)
 		if err != nil {
@@ -30,12 +28,12 @@ func GetMedia(app *infra.Deps) httprouter.Handle {
 }
 
 // ---------------------- Get Medias ----------------------
-func GetMedias(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetMedias(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		medias, err := listMediaByEntity(ctx, app, ps.ByName("entitytype"), ps.ByName("entityid"))
+		medias, err := listMediaByEntity(ctx, app, utils.GetParam(r, "entitytype"), utils.GetParam(r, "entityid"))
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve media")
 			return
@@ -46,12 +44,12 @@ func GetMedias(app *infra.Deps) httprouter.Handle {
 }
 
 // ---------------------- Get Media Groups ----------------------
-func GetMediaGroups(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetMediaGroups(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		groups, err := getMediaGroupsByEntity(ctx, app, ps.ByName("entitytype"), ps.ByName("entityid"))
+		groups, err := getMediaGroupsByEntity(ctx, app, utils.GetParam(r, "entitytype"), utils.GetParam(r, "entityid"))
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve media")
 			return

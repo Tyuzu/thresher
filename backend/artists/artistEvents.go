@@ -10,12 +10,11 @@ import (
 	"naevis/utils"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func CreateArtistEvent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		var artistevent models.ArtistEvent
@@ -24,7 +23,7 @@ func CreateArtistEvent(app *infra.Deps) httprouter.Handle {
 			return
 		}
 
-		artistevent.ArtistID = ps.ByName("id")
+		artistevent.ArtistID = utils.GetParam(r, "id")
 
 		artistevent.CreatorID = utils.GetUserIDFromRequest(r)
 		artistevent.EventID = utils.GenerateRandomString(14)
@@ -50,10 +49,10 @@ func CreateArtistEvent(app *infra.Deps) httprouter.Handle {
 }
 
 // Update Artist Event
-func UpdateArtistEvent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateArtistEvent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		artisteventID := ps.ByName("id")
+		artisteventID := utils.GetParam(r, "id")
 
 		var updateData bson.M
 		if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
@@ -74,10 +73,10 @@ func UpdateArtistEvent(app *infra.Deps) httprouter.Handle {
 }
 
 // Delete Artist Event
-func DeleteArtistEvent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		dels.DeleteArtistEvent(app)(w, r, ps)
-		// artisteventID := ps.ByName("id")
+func DeleteArtistEvent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		dels.DeleteArtistEvent(app)(w, r)
+		// artisteventID := utils.GetParam(r,"id")
 
 		// result, err := app.DB.ArtistEventsCollection.DeleteOne(context.TODO(), bson.M{"eventid": artisteventID})
 		// if err != nil || result.DeletedCount == 0 {
@@ -92,8 +91,8 @@ func DeleteArtistEvent(app *infra.Deps) httprouter.Handle {
 	}
 }
 
-func AddArtistToEvent(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		type RequestPayload struct {
 			EventID  string `json:"eventid"`
@@ -107,7 +106,7 @@ func AddArtistToEvent(app *infra.Deps) httprouter.Handle {
 		}
 
 		// Get artist ID from URL parameter if passed
-		payload.ArtistID = ps.ByName("id")
+		payload.ArtistID = utils.GetParam(r, "id")
 
 		// Fetch event details from EventsCollection
 		var event models.Event

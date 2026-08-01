@@ -10,14 +10,12 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"github.com/julienschmidt/httprouter"
-
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // --- Get all places (summary) ---
-func GetPlaces(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetPlaces(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -57,9 +55,9 @@ func GetPlaces(app *infra.Deps) httprouter.Handle {
 }
 
 // --- Get single place by path param ---
-func GetPlace(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		placeID := strings.TrimSpace(ps.ByName("placeid"))
+func GetPlace(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		placeID := strings.TrimSpace(utils.GetParam(r, "placeid"))
 		if placeID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Place ID is required")
 			return
@@ -82,8 +80,8 @@ func GetPlace(app *infra.Deps) httprouter.Handle {
 }
 
 // --- Get single place by query param ---
-func GetPlaceQ(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetPlaceQ(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		placeID := strings.TrimSpace(r.URL.Query().Get("id"))
 		if placeID == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Place ID is required")

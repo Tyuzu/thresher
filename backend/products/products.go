@@ -5,15 +5,13 @@ import (
 	"naevis/models"
 	"naevis/utils"
 	"net/http"
-
-	"github.com/julienschmidt/httprouter"
 )
 
-func GetProductDetails(app *infra.Deps) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetProductDetails(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		entityType := ps.ByName("entityType")
-		entityId := ps.ByName("entityId")
+		entityType := utils.GetParam(r, "entityType")
+		entityId := utils.GetParam(r, "entityId")
 
 		var product models.Product
 
