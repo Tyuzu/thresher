@@ -1,6 +1,8 @@
-import Modal from "./ui/Modal.mjs";
-import { createElement } from "../components/createElement.js";
-import { navigate } from "../routes/index.js";
+import "../../../css/subpages/controlcenter.css";
+import "../../../css/subpages/sidebar.css";
+import Modal from "../ui/Modal.mjs";
+import { createElement } from "../createElement.js";
+import { navigate } from "../../routes/index.js";
 
 /* ---------------------------------- */
 /* Config                             */

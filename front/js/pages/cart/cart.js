@@ -1,3 +1,6 @@
+import "../../../css/farmstyles/cart3.css";
+import "../../../css/farmstyles/checkout.css";
+
 import { displayCart } from "../../services/cart/cartPage.js";
 
 async function Cart(isLoggedIn, contentContainer) {

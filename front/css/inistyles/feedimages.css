@@ -29,14 +29,15 @@
     right: auto;
 }
 
-.DimmedBadgeTextView_badge_text__NQTPZ.DimmedBadgeTextView_-mobile__Yjd3Z.DimmedBadgeTextView_-viewcount__U-UUa:before {
-    background: no-repeat url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAhCAYAAABX5MJvAAAACXBIWXMAACE4AAAhOAFFljFgAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAEOSURBVHgB7ZbtEYIwDECDEzhCR3AERnAENpANYAPZADdwhLoJboAbxPQId7ECAv3wT99dDg7o9ZE0BYBEIuEIIuYULcWdooDYmEnxm45CQSx4QuRsnChuQqaNIsOTaetaIeQMFYRkSkLcK4VMF2y9LEnwfWWVSHsv0S8JS0YHWS9rJcTzhVWiElzZKiHG1RQ9j3cT2SvBYxWL9HPPHCAwWZY96fCiOMI/JOjtj6Zr6FRRPMCFHQvTTF6J9dA5d8kWCRy29rEzjEQNPlgjgcM3RYs9ojEZAV8sSXDqr/i5W+bgmzkJunax6n6GUIx9PqZ3qu5eUz8j0Yi31SL1Lcb6sRn7PXjdN8goSCQSkXgDtzfqzzENrLsAAAAASUVORK5CYII=) 0 0/contain;
-    content: "";
-    display: inline-block;
-    height: 11px;
-    margin: 1px 1px 0 0;
-    vertical-align: top;
-    width: 11px;
+/* View Count Badge Icon */
+.DimmedBadgeTextView_badge_text__NQTPZ.DimmedBadgeTextView_-mobile__Yjd3Z.DimmedBadgeTextView_-viewcount__U-UUa::before {
+  content: "";
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin: 1px 1px 0 0;
+  vertical-align: top;
+  background: no-repeat url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAhCAYAAABX5MJvAAAACXBIWXMAACE4AAAhOAFFljFgAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAEOSURBVHgB7ZbtEYIwDECDEzhCR3AERnAENpANYAPZADdwhLoJboAbxPQId7ECAv3wT99dDg7o9ZE0BYBEIuEIIuYULcWdooDYmEnxm45CQSx4QuRsnChuQqaNIsOTaetaIeQMFYRkSkLcK4VMF2y9LEnwfWWVSHsv0S8JS0YHWS9rJcTzhVWiElzZKiHG1RQ9j3cT2SvBYxWL9HPPHCAwWZY96fCiOMI/JOjtj6Zr6FRRPMCFHQvTTF6J9dA5d8kWCRy29rEzjEQNPlgjgcM3RYs9ojEZAV8sSXDqr/i5W+bgmzkJunax6n6GUIx9PqZ3qu5eUz8j0Yi31SL1Lcb6sRn7PXjdN8goSCQSkXgDtzfqzzENrLsAAAAASUVORK5CYII=") 0 0 / contain;
 }
 
 .DimmedBadgeTextView_badge_text__NQTPZ.DimmedBadgeTextView_-mobile__Yjd3Z.DimmedBadgeTextView_-gif__Oy2fM {

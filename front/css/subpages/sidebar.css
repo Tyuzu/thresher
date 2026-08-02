@@ -94,3 +94,8 @@
   background-color: var(--color-accent);
   /* border-radius: 6px; */
 }
+
+.weather-extra {
+    display: flex;
+    flex-direction: column;
+}

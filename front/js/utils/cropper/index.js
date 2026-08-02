@@ -1,5 +1,6 @@
 // index.js
-
+import "../../../css/inistyles/cropper.css";
+import "../../../css/inistyles/imagecropper1.css";
 import { ensureCropper, getAddedAssets } from "./loader.js";
 import { buildUI, mountOverlay, lockBodyScroll, unlockBodyScroll, resizeStage } from "./ui.js";
 import { createControls } from "./controls.js";

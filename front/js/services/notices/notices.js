@@ -1,3 +1,4 @@
+import "../../../css/subpages/notices1.css";
 import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";

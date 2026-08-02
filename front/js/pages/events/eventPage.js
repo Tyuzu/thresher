@@ -1,3 +1,5 @@
+import "../../../css/inistyles/eventpage4.css";
+import "../../../css/subpages/tickscon.css";
 import { displayEvent } from "../../services/event/eventService.js";
 
 async function Event(isLoggedIn,  eventid, contentContainer) {

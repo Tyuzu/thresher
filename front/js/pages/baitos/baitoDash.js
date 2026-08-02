@@ -1,3 +1,4 @@
+import "../../../css/inistyles/baitodash.css";
 import { displayBaitoDash } from '../../services/baitos/dash/BaitoDash.js';
 
 async function BaitoDash(isLoggedIn, contentContainer) {

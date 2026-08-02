@@ -1,8 +1,9 @@
-import { setLanguage } from "../i18n/i18n.js";
-import { navigate } from "../routes/index.js";
-import { webSiteName } from "../state/state.js";
-import { userFeedbackGlobal } from "../services/reporting/feedback/feedback.js";
-import { createElement } from "../components/createElement.js";
+import "../../../css/layout/footer.css";
+import { setLanguage } from "../../i18n/i18n.js";
+import { navigate } from "../../routes/index.js";
+import { webSiteName } from "../../state/state.js";
+import { userFeedbackGlobal } from "../../services/reporting/feedback/feedback.js";
+import { createElement } from "../createElement.js";
 
 const handleNavigation = (event, href) => {
   event.preventDefault();

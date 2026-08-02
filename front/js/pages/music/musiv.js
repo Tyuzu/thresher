@@ -1,3 +1,4 @@
+import "../../../css/inistyles/musicon.css";
 import { displayMusic } from "../../services/musicon/wuzic.js";
 
 async function Music(isLoggedIn, contentContainer) {

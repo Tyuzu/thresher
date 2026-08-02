@@ -1,3 +1,4 @@
+import "../../../css/subpages/payoptions.css";
 import Modal from "../../components/ui/Modal.mjs";
 import { stripeFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";

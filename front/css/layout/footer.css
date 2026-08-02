@@ -85,14 +85,15 @@
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  /* Custom SVG caret arrow */
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>');
+
+  /* Replaced 'currentColor' with explicit stroke color code (%23666666) since data-URIs don't inherit currentColor */
+  background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23666666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"%3E%3Cpath d="m6 9 6 6 6-6"/%3E%3C/svg%3E');
   background-repeat: no-repeat;
   background-position: right 8px center;
   background-size: 14px;
   transition: 
-    border-color var(--transition-fast), 
-    background-color var(--transition-fast);
+    border-color var(--transition-fast, 0.2s), 
+    background-color var(--transition-fast, 0.2s);
 }
 
 .lang-select:hover {

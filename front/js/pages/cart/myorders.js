@@ -1,3 +1,4 @@
+import "../../../css/farmstyles/myorders.css";
 import { displayMyOrders } from "../../services/cart/myOrdersPage.js";
 
 async function MyOrders(isLoggedIn, contentContainer) {

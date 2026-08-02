@@ -1,3 +1,4 @@
+import "../../../css/farmstyles/cropwiki.css";
 // import { displayAboutCrop } from "../../services/crops/crop/about/cropAboutPage.js";
 import { displayAboutCrop } from "../../services/crops/crop/cropAboutPage.js";
 

@@ -1,3 +1,4 @@
+import "../../../css/inistyles/itinerary5.css";
 import { createItinerary } from "../../services/itinerary/itineraryCreate.js";
 
 async function CreateItinerary(isLoggedIn, contentContainer) {

@@ -1,3 +1,4 @@
+import "../../../css/farmstyles/productpage.css";
 import { displayProduct } from "../../services/product/productPage.js";
 
 async function Product(isLoggedIn, productType, productId, contentContainer) {

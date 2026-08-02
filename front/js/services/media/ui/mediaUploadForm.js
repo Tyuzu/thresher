@@ -1,3 +1,4 @@
+import "../../../../css/subpages/mediaup.css";
 import Modal from "../../../components/ui/Modal.mjs";
 import { Button } from "../../../components/base/Button.js";
 import { createElement } from "../../../components/createElement.js";

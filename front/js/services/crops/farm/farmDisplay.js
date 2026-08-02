@@ -5,13 +5,7 @@ import { navigate } from "../../../routes/index.js";
 import { getState } from "../../../state/state.js";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 import { updateImageWithCrop } from "../../../utils/bannerEditor.js";
-import {
-  renderFarmDetails,
-  renderCropSummary,
-  renderCropEmojiMap,
-  renderCrops,
-  createSortDropdown
-} from "./displayFarmHelpers.js";
+import { renderFarmDetails, renderCropSummary, renderCropEmojiMap, renderCrops, createSortDropdown } from "./displayFarmHelpers.js";
 import { displayReviews } from "../../reviews/displayReviews.js";
 import { farmChat } from "./farmchat.js";
 import Imagex from "../../../components/base/Imagex.js";
@@ -173,7 +167,6 @@ export async function displayFarm(isLoggedIn, farmId, content) {
           tabContainer.append(
             Button("Add Crop", "add-crop-btn", {
               click: async () => {
-                // temporary placeholder while form builds
                 const placeholder = createElement("div", {}, ["Loading..."]);
 
                 const modalRef = Modal({
@@ -183,15 +176,15 @@ export async function displayFarm(isLoggedIn, farmId, content) {
                   closeOnOverlayClick: true
                 });
 
-                // build form and inject close handler
                 const formEl = await createCrop(
                   normalizedFarmId,
                   () => modalRef.close()
                 );
 
-                // replace placeholder with actual form
                 const body = modalRef.dialog.querySelector(".modal-body");
-                body.replaceChildren(formEl);
+                if (body) {
+                  body.replaceChildren(formEl);
+                }
               }
             }, "buttonx")
           );

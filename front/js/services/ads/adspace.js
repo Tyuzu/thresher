@@ -1,4 +1,6 @@
 // src/utils/activityLogger.js
+import "../../../css/subpages/rolling1.css";
+import "../../../css/subpages/sda.css";
 import { createElement } from "../../components/createElement.js";
 import { t } from "../../i18n/i18n.js";
 

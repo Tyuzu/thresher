@@ -1,3 +1,5 @@
+import "../../../../css/subpages/medialist.css";
+import "../../../../css/subpages/media.css";
 import { createElement } from "../../../components/createElement.js";
 import { fetchMedia } from "../api/mediaApi.js";
 import { showMediaUploadForm } from "./mediaUploadForm.js";

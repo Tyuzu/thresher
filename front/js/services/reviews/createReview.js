@@ -1,3 +1,4 @@
+import "../../../css/subpages/reviews.css";
 import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.js";

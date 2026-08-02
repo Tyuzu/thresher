@@ -1,3 +1,4 @@
+import "../../../css/inistyles/authpage.css";
 // pages/auth.js
 import { login, signup } from "../../services/auth/authService.js";
 import { getState, subscribeDeep } from "../../state/state.js";

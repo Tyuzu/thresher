@@ -1,12 +1,13 @@
-import { getState, isAdmin, subscribeDeep, webSiteName } from "../state/state.js";
-import { navigate } from "../routes/index.js";
-import { logout } from "../services/auth/authService.js";
-import { settingsSVG, moonSVG, profileSVG, shopBagSVG, logoutSVG, cardSVG } from "./svgs.js";
-import { createElement } from "../components/createElement.js";
-import { resolveImagePath, EntityType, PictureType } from "../utils/imagePaths.js";
-import Imagex from "./base/Imagex.js";
+import "../../../css/layout/header5.css";
+import { getState, isAdmin, subscribeDeep, webSiteName } from "../../state/state.js";
+import { navigate } from "../../routes/index.js";
+import { logout } from "../../services/auth/authService.js";
+import { settingsSVG, moonSVG, profileSVG, shopBagSVG, logoutSVG, cardSVG } from "../svgs.js";
+import { createElement } from "../createElement.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import Imagex from "../base/Imagex.js";
 import { sticky } from "./sticky.js";
-import Button from "./base/Button.js";
+import Button from "../base/Button.js";
 import { loadTheme, toggleTheme } from "./themeManager.js";
 
 function createIconButton(svg, href, onClick) {

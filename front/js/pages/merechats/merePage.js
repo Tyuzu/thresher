@@ -1,4 +1,4 @@
-
+import "../../../css/inistyles/onechat1.css";
 import { displayOneChat } from "../../services/merechats/onechat";
 
 async function OneChatPage(isLoggedIn,  chatid, contentContainer) {

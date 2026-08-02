@@ -23,29 +23,25 @@ function getCurrentDayKey(date = new Date()) {
   return DAYS[getCurrentDayIndex(date)][0];
 }
 
-const TODAY = getCurrentDayKey();
-
 function formatTime(time) {
-  if (!time) {
-    return "--";
-  }
-
+  if (!time) return "--";
   const [hour, minute] = time.split(":").map(Number);
-
   return timeFormatter.format(new Date(2000, 0, 1, hour, minute));
 }
 
 function parseMinutes(time) {
+  if (!time) return 0;
   const [hour, minute] = time.split(":").map(Number);
-
   return hour * 60 + minute;
 }
 
 function getNextOpening(availability, currentDayIndex) {
+  const safeAvailability = availability || {}; // Safe fallback for null
+
   for (let offset = 1; offset <= 7; offset++) {
     const index = (currentDayIndex + offset) % 7;
     const [key, label] = DAYS[index];
-    const slot = availability[key];
+    const slot = safeAvailability[key];
 
     if (slot?.enabled && slot.from && slot.to) {
       return {
@@ -58,17 +54,17 @@ function getNextOpening(availability, currentDayIndex) {
   return null;
 }
 
-function getStatus(availability = {}) {
-  const now = new Date();
+function getStatus(availability) {
+  const safeAvailability = availability || {}; // Safe fallback for null
 
+  const now = new Date();
   const dayIndex = getCurrentDayIndex(now);
   const dayKey = DAYS[dayIndex][0];
 
-  const slot = availability[dayKey];
+  const slot = safeAvailability[dayKey];
 
   if (!slot?.enabled || !slot.from || !slot.to) {
-    const next = getNextOpening(availability, dayIndex);
-
+    const next = getNextOpening(safeAvailability, dayIndex);
     return {
       open: false,
       text: next
@@ -92,15 +88,14 @@ function getStatus(availability = {}) {
     };
   }
 
-  if (current < start) {
+  if (end >= start && current < start) {
     return {
       open: false,
       text: `Closed • Opens Today ${formatTime(slot.from)}`
     };
   }
 
-  const next = getNextOpening(availability, dayIndex);
-
+  const next = getNextOpening(safeAvailability, dayIndex);
   return {
     open: false,
     text: next
@@ -109,68 +104,48 @@ function getStatus(availability = {}) {
   };
 }
 
-function createAvailabilityRow(key, label, slot) {
+function createAvailabilityRow(key, label, slot, todayKey) {
+  const isToday = key === todayKey;
   const row = createElement("div", {
-    class: `availability-row ${
-      key === TODAY ? "availability-today" : ""
-    }`
+    class: `availability-row ${isToday ? "availability-today" : ""}`
   });
 
   row.append(
-    createElement("div", {
-      class: "availability-day"
-    }, [
-      label
-    ])
+    createElement("div", { class: "availability-day" }, [label])
   );
 
-  const content = createElement("div", {
-    class: "availability-content"
-  });
+  const content = createElement("div", { class: "availability-content" });
 
   if (!slot?.enabled || !slot.from || !slot.to) {
     content.append(
-      createElement("span", {
-        class: "availability-unavailable"
-      }, [
-        "Unavailable"
-      ])
+      createElement("span", { class: "availability-unavailable" }, ["Unavailable"])
     );
   } else {
-    const times = createElement("div", {
-      class: "availability-times"
-    });
+    const times = createElement("div", { class: "availability-times" });
 
     times.append(
       createElement("time", {
         class: "availability-time-pill",
         datetime: slot.from
-      }, [
-        formatTime(slot.from)
-      ]),
-      createElement("span", {
-        class: "availability-separator"
-      }, [
-        "–"
-      ]),
+      }, [formatTime(slot.from)]),
+      createElement("span", { class: "availability-separator" }, ["–"]),
       createElement("time", {
         class: "availability-time-pill",
         datetime: slot.to
-      }, [
-        formatTime(slot.to)
-      ])
+      }, [formatTime(slot.to)])
     );
 
     content.append(times);
   }
 
   row.append(content);
-
   return row;
 }
 
-export function renderAvailabilityWidget(availability = {}) {
-  const status = getStatus(availability);
+export function renderAvailabilityWidget(availability) {
+  const safeAvailability = availability || {}; // Safe fallback for null
+  const status = getStatus(safeAvailability);
+  const todayKey = getCurrentDayKey();
 
   const container = createElement("section", {
     class: "availability-widget"
@@ -181,22 +156,13 @@ export function renderAvailabilityWidget(availability = {}) {
       class: `availability-status-pill ${
         status.open ? "is-open" : "is-closed"
       }`
-    }, [
-      status.text
-    ])
-  );
-
-  container.append(
-    createElement("h4", {
-      class: "availability-title"
-    }, [
-      "Business Hours"
-    ])
+    }, [status.text]),
+    createElement("h4", { class: "availability-title" }, ["Business Hours"])
   );
 
   for (const [key, label] of DAYS) {
     container.append(
-      createAvailabilityRow(key, label, availability[key])
+      createAvailabilityRow(key, label, safeAvailability[key], todayKey)
     );
   }
 

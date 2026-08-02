@@ -1,10 +1,11 @@
-import { createElement } from "./createElement.js";
-import { notifSVG, cartSVG, chatSVG, menuSVG, searchSVG } from "./svgs.js";
-import { navigate } from "../routes/index.js";
-import { getState, subscribe } from "../state/state.js";
-import { openNotificationsModal } from "../services/notifications/notifModal.js";
+import "../../../css/layout/sticky5.css";
+import { createElement } from "../createElement.js";
+import { notifSVG, cartSVG, chatSVG, menuSVG, searchSVG } from "../svgs.js";
+import { navigate } from "../../routes/index.js";
+import { getState, subscribe } from "../../state/state.js";
+import { openNotificationsModal } from "../../services/notifications/notifModal.js";
 import { toggleSidebar } from "./sidebar.js";
-import { createIconButton } from "../utils/svgIconButton.js";
+import { createIconButton } from "../../utils/svgIconButton.js";
 
 // Create a badge element securely
 function createBadge(count) {

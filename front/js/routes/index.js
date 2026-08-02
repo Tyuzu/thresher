@@ -1,8 +1,8 @@
-import { createheader } from "../components/header.js";
-import { createNav, highlightActiveNav } from "../components/navigation.js";
+import { createheader } from "../components/layout/header.js";
+import { createNav, highlightActiveNav } from "../components/layout/navigation.js";
 import { render } from "./router.js";
 import { setState, getRouteState, saveScroll, restoreScroll, subscribe } from "../state/state.js";
-import { Footer } from "../components/footer.js";
+import { Footer } from "../components/layout/footer.js";
 
 const layoutState = {
   isHydrated: false,

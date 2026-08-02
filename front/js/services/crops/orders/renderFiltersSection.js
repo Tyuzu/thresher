@@ -1,3 +1,5 @@
+import "../../../../css/filters.css";
+
 import { createElement } from "../../../components/createElement";
 import Button from "../../../components/base/Button.js";
 

@@ -1,5 +1,5 @@
-import { createElement } from "../components/createElement.js";
-import { makeDraggableScroll } from "./dragnav.js"; // Import your drag-scroll helper
+import { createElement } from "../createElement.js";
+import { makeDraggableScroll } from "../dragnav.js"; // Import your drag-scroll helper
 
 function createMenuItem(itemConfig, onSelect) {
   const { label, callback, href, active } = itemConfig;

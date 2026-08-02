@@ -1,3 +1,4 @@
+import "../../../css/subpages/vendors.css";
 import { hireVendors } from "../../services/jobs/vendors/vendors.js";
 
 async function Vendors(isLoggedIn, contentContainer) {

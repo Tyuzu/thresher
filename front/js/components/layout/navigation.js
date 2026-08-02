@@ -1,4 +1,5 @@
-import { navigate } from "../routes/index.js";
+import "../../../css/layout/navi.css";
+import { navigate } from "../../routes/index.js";
 
 /** Highlight current active link */
 export const highlightActiveNav = (path) => {
