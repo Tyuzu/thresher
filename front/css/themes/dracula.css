@@ -1,0 +1,59 @@
+
+/* --- Dracula Theme --- */
+[data-theme="dracula"] {
+    color-scheme: dark;
+
+    --color-bg: #282a36;
+    --color-bg-secondary: #21222c;
+    --color-bg-tertiary: #343746;
+    --color-surface: #21222c;
+    --color-space: #343746;
+    --color-overlay: rgba(0, 0, 0, 0.7);
+    --color-backdrop: rgba(40, 42, 54, 0.85);
+    --color-highlight: #44475a;
+
+    --color-fg: #f8f8f2;
+    --color-muted: #6272a4;
+    --color-light: #a4b2da;
+
+    --color-primary: #bd93f9;
+    --color-primary-fg: #ffff00;
+    --color-primary-hover: #a272e6;
+    --color-secondary: #ff79c6;
+    --color-accent: #8be9fd;
+
+    --color-success: #50fa7b;
+    --color-warning: #f1fa8c;
+    --color-danger: #ff5555;
+    --color-error: #ff5555;
+    --color-info: #8be9fd;
+
+    --color-border: #44475a;
+    --color-border-light: #52566e;
+    --stroke-svg: #6272a4;
+
+    --color-btn-bg: var(--color-primary);
+    --color-btn-fg: #282a36;
+    --color-btn-hover-bg: var(--color-primary-hover);
+    --color-btn-disabled-bg: #343746;
+    --color-btn-disabled-fg: #6272a4;
+
+    --color-input-bg: #21222c;
+    --color-input-border: #44475a;
+    --color-input-focus: var(--color-primary);
+
+    --color-card-bg: #282a36;
+    --color-card-hover: #343746;
+
+    --color-tooltip-bg: #44475a;
+    --color-tooltip-fg: #f8f8f2;
+
+    --color-link: #8be9fd;
+    --color-link-hover: #50fa7b;
+    --color-selection-bg: #44475a;
+    --color-selection-fg: #f8f8f2;
+
+    --shadow-elev-1: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-elev-2: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-elev-3: 0 12px 32px rgba(189, 147, 249, 0.2);
+}

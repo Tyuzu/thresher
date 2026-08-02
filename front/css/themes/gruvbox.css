@@ -1,0 +1,59 @@
+
+/* --- Gruvbox Dark Theme --- */
+[data-theme="gruvbox"] {
+    color-scheme: dark;
+
+    --color-bg: #282828;
+    --color-bg-secondary: #1d2021;
+    --color-bg-tertiary: #3c3836;
+    --color-surface: #1d2021;
+    --color-space: #3c3836;
+    --color-overlay: rgba(0, 0, 0, 0.7);
+    --color-backdrop: rgba(40, 40, 40, 0.85);
+    --color-highlight: #504945;
+
+    --color-fg: #ebdbb2;
+    --color-muted: #a89984;
+    --color-light: #928374;
+
+    --color-primary: #fe8019;
+    --color-primary-fg: #ffff00;
+    --color-primary-hover: #d65d0e;
+    --color-secondary: #fabd2f;
+    --color-accent: #8ec07c;
+
+    --color-success: #b8bb26;
+    --color-warning: #fabd2f;
+    --color-danger: #fb4934;
+    --color-error: #fb4934;
+    --color-info: #83a598;
+
+    --color-border: #504945;
+    --color-border-light: #665c54;
+    --stroke-svg: #a89984;
+
+    --color-btn-bg: var(--color-primary);
+    --color-btn-fg: #282828;
+    --color-btn-hover-bg: var(--color-primary-hover);
+    --color-btn-disabled-bg: #3c3836;
+    --color-btn-disabled-fg: #928374;
+
+    --color-input-bg: #1d2021;
+    --color-input-border: #504945;
+    --color-input-focus: var(--color-primary);
+
+    --color-card-bg: #32302f;
+    --color-card-hover: #3c3836;
+
+    --color-tooltip-bg: #504945;
+    --color-tooltip-fg: #ebdbb2;
+
+    --color-link: #83a598;
+    --color-link-hover: #8ec07c;
+    --color-selection-bg: #fe8019;
+    --color-selection-fg: #282828;
+
+    --shadow-elev-1: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-elev-2: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-elev-3: 0 12px 32px rgba(0, 0, 0, 0.5);
+}

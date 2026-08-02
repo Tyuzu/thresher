@@ -1027,3 +1027,62 @@
     --shadow-elev-2: 0 4px 12px rgba(0, 0, 0, 0.4);
     --shadow-elev-3: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
+
+/* --- High Contrast Theme --- */
+[data-theme="high-contrast"] {
+    color-scheme: dark;
+
+    --color-bg: #000000;
+    --color-bg-secondary: #0a0a0a;
+    --color-bg-tertiary: #171717;
+    --color-surface: #0a0a0a;
+    --color-space: #171717;
+    --color-overlay: rgba(0, 0, 0, 0.9);
+    --color-backdrop: rgba(0, 0, 0, 0.9);
+    --color-highlight: #ffff00;
+
+    --color-fg: #ffffff;
+    --color-muted: #e5e5e5;
+    --color-light: #a3a3a3;
+
+    --color-primary: #ffff00;
+    --color-primary-fg: #0000ff;
+    --color-primary-hover: #e6e600;
+    --color-secondary: #00ffff;
+    --color-accent: #00ff00;
+
+    --color-success: #00ff00;
+    --color-warning: #ffff00;
+    --color-danger: #ff0000;
+    --color-error: #ff0000;
+    --color-info: #00ffff;
+
+    --color-border: #ffffff;
+    --color-border-light: #ffffff;
+    --stroke-svg: #ffffff;
+
+    --color-btn-bg: #ffff00;
+    --color-btn-fg: #000000;
+    --color-btn-hover-bg: #ffffff;
+    --color-btn-disabled-bg: #404040;
+    --color-btn-disabled-fg: #a3a3a3;
+
+    --color-input-bg: #000000;
+    --color-input-border: #ffffff;
+    --color-input-focus: #ffff00;
+
+    --color-card-bg: #000000;
+    --color-card-hover: #171717;
+
+    --color-tooltip-bg: #ffffff;
+    --color-tooltip-fg: #000000;
+
+    --color-link: #00ffff;
+    --color-link-hover: #ffff00;
+    --color-selection-bg: #ffffff;
+    --color-selection-fg: #000000;
+
+    --shadow-elev-1: 0 0 0 1px #ffffff;
+    --shadow-elev-2: 0 0 0 2px #ffffff;
+    --shadow-elev-3: 0 0 0 3px #ffffff;
+}
