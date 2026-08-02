@@ -172,20 +172,17 @@
               box-shadow var(--transition-fast);
 }
 
-.buttonx:hover,
 #posts-create-btn:hover {
   background-color: var(--color-btn-hover-bg);
   transform: translateY(-1px);
   box-shadow: var(--shadow-elev-1);
 }
 
-.buttonx:active,
 #posts-create-btn:active {
   transform: translateY(0);
   box-shadow: none;
 }
 
-.buttonx:disabled,
 #posts-create-btn:disabled {
   background-color: var(--color-btn-disabled-bg);
   color: var(--color-btn-disabled-fg);

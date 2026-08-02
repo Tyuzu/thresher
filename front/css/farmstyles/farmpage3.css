@@ -132,9 +132,6 @@
   margin: var(--space-xs) 0;
 }
 
-.farmpage .crop-card .buttonx {
-  margin: var(--space-xs);
-}
 
 /* === Crop Edit Form === */
 .farmpage .crop-edit-form {
@@ -196,11 +193,6 @@
   padding: var(--space-md);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-elev-1);
-}
-
-.farmpage .farm-aside .buttonx {
-  margin-bottom: var(--space-sm);
-  width: 100%;
 }
 
 .farmpage .crop-summary,

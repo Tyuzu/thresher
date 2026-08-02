@@ -12,9 +12,9 @@
     --container-padding: var(--space-md);
 
     /* Typography - Font Families */
-    --font-base: 'Inter', sans-serif;
-    --font-heading: 'Inter', sans-serif;
-    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-base: 'Breezesans', sans-serif;
+    --font-heading: 'Breezesans', sans-serif;
+    --font-body: 'Breezesans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'JetBrains Mono', 'Courier New', monospace;
 
     /* Typography - Font Sizes */

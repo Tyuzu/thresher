@@ -129,12 +129,6 @@
   font-size: 1.2rem;
 }
 
-button.buttonx {
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-weight: 500;
-}
-
 /* ---------------- Booking Container ---------------- */
 .booking-container,
 #creator-bookings {

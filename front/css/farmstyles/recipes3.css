@@ -114,10 +114,6 @@
   margin: 0;
 }
 
-.recipes-aside .buttonx {
-  width: 100%;
-}
-
 /* --- Advertisement Slots --- */
 .advert {
   background-color: var(--color-bg-secondary);
@@ -139,8 +135,4 @@
   color: var(--color-light);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-.recipe-card .buttonx {
-  margin-top: auto; /* Pushes the button to the bottom of the card */
 }

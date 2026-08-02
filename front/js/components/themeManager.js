@@ -19,43 +19,49 @@ export const themes = [
 ];
 
 let currentThemeIndex = 0;
-const THEME_LINK_ID = "dynamic-theme-stylesheet";
+const THEME_STYLE_ID = "dynamic-theme-style";
 
-/**
- * Dynamically injects or updates the stylesheet link in <head>
- */
-function loadThemeStylesheet(theme) {
-  let linkElement = document.getElementById(THEME_LINK_ID);
+// Vite glob import: map each theme file relative to this script
+// Make sure this relative path correctly points to your CSS files folder!
+const themeModules = import.meta.glob("../../css/themes/*.css", { query: "?inline" });
 
-  if (!linkElement) {
-    linkElement = document.createElement("link");
-    linkElement.id = THEME_LINK_ID;
-    linkElement.rel = "stylesheet";
-    document.head.appendChild(linkElement);
+async function loadThemeStylesheet(theme) {
+  try {
+    const importPath = `../../css/themes/${theme}.css`;
+    
+    if (!themeModules[importPath]) {
+      console.error(`Theme CSS file not found at path: ${importPath}`);
+      return;
+    }
+
+    // Lazy load the specific theme chunk
+    const module = await themeModules[importPath]();
+    
+    let styleElement = document.getElementById(THEME_STYLE_ID);
+    if (!styleElement) {
+      styleElement = document.createElement("style");
+      styleElement.id = THEME_STYLE_ID;
+      document.head.appendChild(styleElement);
+    }
+
+    styleElement.textContent = module.default || module;
+    document.documentElement.dataset.theme = theme;
+  } catch (err) {
+    console.error(`Failed to load theme: ${theme}`, err);
   }
-
-  // Adjust path according to your actual stylesheet folder structure
-  linkElement.href = `/css/themes/${theme}.css`;
 }
 
 export function applyTheme(theme) {
   if (!themes.includes(theme)) return;
-
-  // Set the data attribute for CSS target selectors
-  document.documentElement.dataset.theme = theme;
   currentThemeIndex = themes.indexOf(theme);
-
-  // Load the corresponding CSS file on demand
   loadThemeStylesheet(theme);
 }
 
 export function loadTheme() {
   const saved = localStorage.getItem("theme");
-
   if (saved && themes.includes(saved)) {
     applyTheme(saved);
   } else {
-    // Fall back to OS preference if no theme is saved in local storage
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const defaultTheme = prefersDark ? "dark" : "light";
     applyTheme(defaultTheme);
@@ -65,7 +71,6 @@ export function loadTheme() {
 export function toggleTheme() {
   currentThemeIndex = (currentThemeIndex + 1) % themes.length;
   const theme = themes[currentThemeIndex];
-
   applyTheme(theme);
   localStorage.setItem("theme", theme);
 }
