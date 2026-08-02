@@ -23,7 +23,7 @@ import {
 import { displayPlaceJobs } from "../jobs/jobs.js";
 import Notify from "../../components/ui/Notify.mjs";
 import { displayBooking } from "../booking/booking.js";
-import { displayPlacesMap } from "./placeRemap.js";
+// import { displayPlacesMap } from "./placeRemap.js";
 
 /**
  * Main entry point to fetch and render a place page
@@ -131,22 +131,22 @@ function renderPlaceDetailsSection(editSection, placeData, isCreator, isLoggedIn
   try {
     renderPlaceDetails(isLoggedIn, editSection, placeData, isCreator);
     contentContainer.appendChild(editSection);
-
-    const maparea = createElement("div", { class: "place-map-container" });
-    const mapButton = createElement("button", {
-      id: "showMapBtn",
-      class: "buttonx secondary",
-      events: {
-        click: () => {
-          const mapElement = displayPlacesMap();
-          maparea.appendChild(mapElement);
-          mapButton.remove();
-        }
-      }
-    }, ["Show Map"]);
-
-    contentContainer.appendChild(mapButton);
-    contentContainer.appendChild(maparea);
+    /*
+        const maparea = createElement("div", { class: "place-map-container" });
+        const mapButton = createElement("button", {
+          id: "showMapBtn",
+          class: "buttonx secondary",
+          events: {
+            click: () => {
+              const mapElement = displayPlacesMap();
+              maparea.appendChild(mapElement);
+              mapButton.remove();
+            }
+          }
+        }, ["Show Map"]);
+    
+        contentContainer.appendChild(mapButton);
+        contentContainer.appendChild(maparea);*/
   } catch (err) {
     console.warn("Failed to render edit section:", err);
   }
@@ -182,7 +182,7 @@ function renderBookingSection(editSection, placeId, placeData, isCreator) {
       }
     }
   }, ["View Bookings"]);
-  
+
   bookingContainer.appendChild(bookButton);
 }
 

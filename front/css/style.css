@@ -1,5 +1,5 @@
 /* Core/Foundation Styles (load first) */
-@import url(theme3.css);
+@import url(theme2.css);
 @import url(base.css);
 /* Layout Components */
 @import url(./layout/sticky5.css);

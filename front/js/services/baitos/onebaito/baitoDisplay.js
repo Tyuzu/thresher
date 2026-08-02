@@ -10,7 +10,6 @@ import { showApplicantsModal } from "../dash/BaitoDash.js";
 import { displayReviews } from "../../reviews/displayReviews.js";
 import Notify from "../../../components/ui/Notify.mjs";
 import { meChat } from "../../mechat/plugnplay.js";
-import { displayGenericMap } from "../../remap/displayGenericMap.js";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 import Imagex from "../../../components/base/Imagex.js";
 import Bannerx from "../../../components/base/Bannerx.js";
@@ -322,32 +321,32 @@ export async function displayBaito(isLoggedIn, baitoid, contentContainer) {
       });
       section.appendChild(mapContainer);
 
-      displayGenericMap(mapContainer, {
-        mapImage: `${SRC_URL}/images/world-map.png`,
-        mapWidth: 1200,
-        mapHeight: 800,
-        mapBounds: { minLat: -90, maxLat: 90, minLon: -180, maxLon: 180 },
-        currentLocation: {
-          lat: baito.coords.lat,
-          lon: baito.coords.lng
-        },
-        markers: [{
-          id: "baito-location",
-          lat: baito.coords.lat,
-          lon: baito.coords.lng,
-          name: baito.location || baito.title,
-          type: "shop",
-          description: `Job: ${baito.title}`
-        }],
-        projection: "mercator",
-        minZoom: 0.5,
-        maxZoom: 5,
-        showLegend: false,
-        theme: "light",
-        onMarkerClick: () => {
-          Notify(`📍 ${baito.location || baito.title}`, { type: "info", duration: 3000 });
-        }
-      });
+      // displayGenericMap(mapContainer, {
+      //   mapImage: `${SRC_URL}/images/world-map.png`,
+      //   mapWidth: 1200,
+      //   mapHeight: 800,
+      //   mapBounds: { minLat: -90, maxLat: 90, minLon: -180, maxLon: 180 },
+      //   currentLocation: {
+      //     lat: baito.coords.lat,
+      //     lon: baito.coords.lng
+      //   },
+      //   markers: [{
+      //     id: "baito-location",
+      //     lat: baito.coords.lat,
+      //     lon: baito.coords.lng,
+      //     name: baito.location || baito.title,
+      //     type: "shop",
+      //     description: `Job: ${baito.title}`
+      //   }],
+      //   projection: "mercator",
+      //   minZoom: 0.5,
+      //   maxZoom: 5,
+      //   showLegend: false,
+      //   theme: "light",
+      //   onMarkerClick: () => {
+      //     Notify(`📍 ${baito.location || baito.title}`, { type: "info", duration: 3000 });
+      //   }
+      // });
     }
 
     // Fetch and append related jobs element cleanly to avoid async DOM layout flashes
