@@ -1,98 +1,46 @@
 /**
  * Environment Configuration
  * Vite + Netlify same-origin API configuration.
- *
- * Production:
- *   Frontend: https://your-site.com
- *   API:      /api/* → Netlify proxy → HTTP EC2
- *
- * Development:
- *   Set VITE_MAIN_URL / VITE_BANNERDROP_URL if the API
- *   is running on a separate origin.
  */
 
-export const webSiteName = "Farmium";
+export const webSiteName = "Chingam";
 
-/**
- * Vite environment variables.
- *
- * Production can leave these empty:
- *
- * VITE_MAIN_URL=
- * VITE_BANNERDROP_URL=
- *
- * This makes API URLs relative to the current website:
- *
- * /api/v1
- * /api/sda
- * /embed
- * /static
- */
+// Normalize base URLs by removing trailing slashes
 const MAIN_URL = (import.meta.env.VITE_MAIN_URL || "").replace(/\/+$/, "");
-
-const BANNERDROP_URL = (
-  import.meta.env.VITE_BANNERDROP_URL || ""
-).replace(/\/+$/, "");
-
+const BANNERDROP_URL = (import.meta.env.VITE_BANNERDROP_URL || "").replace(/\/+$/, "");
 const MODE = import.meta.env.MODE || "development";
 
 /**
- * Build URLs safely.
- *
- * buildURL("", "/api/v1")
- *   => "/api/v1"
- *
- * buildURL("http://localhost:4000", "/api/v1")
- *   => "http://localhost:4000/api/v1"
+ * Safely construct relative or absolute URLs.
  */
 const buildURL = (baseURL, path) => {
-  const normalizedPath = path.startsWith("/")
-    ? path
-    : `/${path}`;
-
-  return baseURL
-    ? `${baseURL}${normalizedPath}`
-    : normalizedPath;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return baseURL ? `${baseURL}${normalizedPath}` : normalizedPath;
 };
 
 /**
- * Build WebSocket base URL.
- *
- * Production with empty VITE_MAIN_URL:
- *
- * https://farmium.com
- *       ↓
- * wss://farmium.com
- *
- * Development:
- *
- * http://localhost:4000
- *       ↓
- * ws://localhost:4000
+ * Safely compute WebSocket URL with SSR & Relative Path fallbacks.
  */
 const getWebSocketURL = () => {
-  // Explicit API URL configured
+  // 1. Explicit full API URL configured (e.g., http://localhost:4000)
   if (MAIN_URL) {
-    const url = new URL(MAIN_URL);
-
-    url.protocol =
-      url.protocol === "https:"
-        ? "wss:"
-        : "ws:";
-
-    return url.toString().replace(/\/+$/, "");
+    try {
+      const url = new URL(MAIN_URL, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+      url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+      return url.toString().replace(/\/+$/, "");
+    } catch {
+      // Fallback for invalid URLs during build
+      return MAIN_URL.replace(/^http/, "ws");
+    }
   }
 
-  // Same-origin production URL
+  // 2. Same-origin browser runtime
   if (typeof window !== "undefined") {
-    const protocol =
-      window.location.protocol === "https:"
-        ? "wss:"
-        : "ws:";
-
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     return `${protocol}//${window.location.host}`;
   }
 
+  // 3. Fallback for Node/SSR environments
   return "";
 };
 
@@ -102,131 +50,34 @@ const WS_URL = getWebSocketURL();
  * Centralized API configuration.
  */
 export const apiConfig = {
-  /*
-   * Base URLs
-   */
+  /* Base URLs */
   MAIN_URL,
   BANNERDROP_URL,
 
-  /*
-   * Main API
-   *
-   * Production:
-   * /api/v1
-   */
-  API_URL: buildURL(
-    MAIN_URL,
-    "/api/v1"
-  ),
+  /* API Endpoints */
+  API_URL: buildURL(MAIN_URL, "/api/v1"),
+  STRIPE_URL: buildURL(MAIN_URL, "/api/v1/stripe"),
+  AD_URL: buildURL(MAIN_URL, "/api/sda"),
+  SEARCH_URL: buildURL(MAIN_URL, "/api/v1"),
+  MERE_URL: buildURL(MAIN_URL, "/api/v1"),
+  MUSIC_URL: buildURL(MAIN_URL, "/api/v1"),
+  LIVE_URL: buildURL(MAIN_URL, "/api/v1"),
+  EMBED_URL: buildURL(MAIN_URL, "/embed"),
 
-  /*
-   * Stripe
-   */
-  STRIPE_URL: buildURL(
-    MAIN_URL,
-    "/api/v1/stripe"
-  ),
-
-  /*
-   * Advertisement / SDA
-   */
-  AD_URL: buildURL(
-    MAIN_URL,
-    "/api/sda"
-  ),
-
-  /*
-   * Search
-   */
-  SEARCH_URL: buildURL(
-    MAIN_URL,
-    "/api/v1"
-  ),
-
-  /*
-   * MERE
-   */
-  MERE_URL: buildURL(
-    MAIN_URL,
-    "/api/v1"
-  ),
-
-  /*
-   * MERE WebSocket
-   */
+  /* WebSockets */
   MERE_WS: WS_URL,
-
-  /*
-   * Chat
-   */
   CHAT_URL: MAIN_URL,
+  CHAT_WS: WS_URL ? `${WS_URL}/ws/newchat/chat` : "",
 
-  /*
-   * Chat WebSocket
-   */
-  CHAT_WS: `${WS_URL}/ws/newchat/chat`,
+  /* Media & Static */
+  SRC_URL: buildURL(BANNERDROP_URL, "/static"),
+  FILEDROP_URL: buildURL(BANNERDROP_URL, "/api/v1/filedrop"),
+  CHATDROP_URL: buildURL(BANNERDROP_URL, "/api/v1/filedrop"),
 
-  /*
-   * Music
-   */
-  MUSIC_URL: buildURL(
-    MAIN_URL,
-    "/api/v1"
-  ),
-
-  /*
-   * Live
-   */
-  LIVE_URL: buildURL(
-    MAIN_URL,
-    "/api/v1"
-  ),
-
-  /*
-   * Embed
-   */
-  EMBED_URL: buildURL(
-    MAIN_URL,
-    "/embed"
-  ),
-
-  /*
-   * Static assets
-   */
-  SRC_URL: buildURL(
-    BANNERDROP_URL,
-    "/static"
-  ),
-
-  /*
-   * Filedrop
-   */
-  FILEDROP_URL: buildURL(
-    BANNERDROP_URL,
-    "/api/v1/filedrop"
-  ),
-
-  /*
-   * Chatdrop
-   */
-  CHATDROP_URL: buildURL(
-    BANNERDROP_URL,
-    "/api/v1/filedrop"
-  ),
-
-  /*
-   * Runtime flags
-   */
-  isDev:
-    MODE === "development" ||
-    MODE === "dev",
-
-  isStaging:
-    MODE === "staging",
-
-  isProduction:
-    MODE === "production",
-
+  /* Mode Flags */
+  isDev: MODE === "development" || MODE === "dev",
+  isStaging: MODE === "staging",
+  isProduction: MODE === "production",
   environment: MODE,
 };
 

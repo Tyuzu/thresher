@@ -1,102 +1,197 @@
-/* Container Layout */
-aside {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1.25rem;
-  background-color: var(--color-bg-secondary, #ffffff);
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: var(--radius-md, 12px);
-  box-shadow: var(--shadow-elev-1, 0 1px 3px rgba(0, 0, 0, 0.05));
-  width: 100%;
-  max-width: 300px; /* Adjust according to your sidebar width */
-  box-sizing: border-box;
+/* ==========================================
+   1. BASE ASIDE LAYOUT & CONTAINERS
+   ========================================== */
+aside[class$="-aside"],
+.catalogue-aside,
+.farm__side {
+    background-color: var(--color-card-bg);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-card);
+    padding: var(--space-md);
+    box-shadow: var(--shadow-elev-1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    box-sizing: border-box;
 }
 
-/* Sidebar Title */
-aside h2 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--color-fg, #111827);
-  letter-spacing: -0.01em;
+aside h2,
+aside h3 {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-fg);
+    margin: 0 0 var(--space-xs) 0;
 }
 
-/* Base Button Styling */
-aside .buttonx {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0.625rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.25rem;
-  border-radius: var(--radius-sm, 8px);
-  cursor: pointer;
-  transition: all var(--transition-fast, 150ms ease-in-out);
-  box-sizing: border-box;
-  text-decoration: none;
-  border: 1px solid transparent;
+aside p {
+    font-size: var(--font-size-sm);
+    color: var(--color-muted);
+    margin: 0 0 var(--space-xs) 0;
 }
 
-aside .buttonx:focus-visible {
-  outline: 2px solid var(--color-primary, #3b82f6);
-  outline-offset: 2px;
+/* Flex wrapper for CTA lists inside simple asides */
+.cta-list,
+.catalogue-aside div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
 }
 
-/* Primary Buttons */
-aside .buttonx.primary {
-  background-color: var(--color-primary, #2563eb);
-  color: var(--color-primary-fg, #ffffff);
-  border-color: transparent;
+/* ==========================================
+   2. BUTTONS & CONTROLS IN ASIDES
+   ========================================== */
+.button.buttonx,
+.farm__button {
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-body);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color var(--transition-fast), 
+                border-color var(--transition-fast), 
+                color var(--transition-fast);
+    box-sizing: border-box;
+    /* Reset manual inline margins */
+    margin-right: 0 !important;
 }
 
-aside .buttonx.primary:hover {
-  background-color: var(--color-primary-hover, #1d4ed8);
+/* Primary Button State (Default) */
+.button.buttonx,
+.button.buttonx.primary {
+    background-color: var(--color-btn-bg);
+    color: var(--color-btn-fg);
 }
 
-aside .buttonx.primary:active {
-  transform: translateY(1px);
+.button.buttonx:hover,
+.button.buttonx.primary:hover {
+    background-color: var(--color-btn-hover-bg);
 }
 
-/* Secondary Buttons */
-aside .buttonx.secondary {
-  color: var(--color-fg, #374151);
-  border-color: var(--color-border, #d1d5db);
+/* Secondary Button State */
+.button.buttonx.secondary {
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-fg);
+    border-color: var(--color-border-light);
 }
 
-aside .buttonx.secondary:hover {
-  background-color: var(--color-bg-hover, #e5e7eb);
-  color: var(--color-fg-bold, #111827);
+.button.buttonx.secondary:hover {
+    background-color: var(--color-card-hover);
+    border-color: var(--color-border);
 }
 
-aside .buttonx.secondary:active {
-  transform: translateY(1px);
+/* Language Toggle Select Dropdown */
+#lang-toggle {
+    width: 100%;
+    padding: var(--space-sm);
+    background-color: var(--color-input-bg);
+    border: 1px solid var(--color-input-border);
+    border-radius: var(--radius-md);
+    color: var(--color-fg);
+    font-family: var(--font-body);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    outline: none;
+    transition: border-color var(--transition-fast);
 }
 
-/* Advertisement Section */
-aside .advert-aside {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px dashed var(--color-border, #e5e7eb);
+#lang-toggle:focus {
+    border-color: var(--color-input-focus);
 }
 
-aside .ad-slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 150px; /* Fallback height while ad loads */
-  border: 1px dashed var(--color-border, #d1d5db);
-  border-radius: var(--radius-sm, 8px);
-  padding: 1rem;
-  text-align: center;
+/* ==========================================
+   3. ADVERTISEMENT SLOTS
+   ========================================== */
+.advert.advert-aside {
+    margin: var(--space-xs) 0;
 }
 
-aside .ad-fallback-text {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-muted, #9ca3af);
-  font-weight: 500;
+.ad-slot {
+    background-color: var(--color-bg-secondary);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ad-fallback-text {
+    font-size: var(--font-size-xs);
+    color: var(--color-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ==========================================
+   4. DETAILED FARM SIDEBAR WIDGETS
+   ========================================== */
+.farm__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.farm__sidebar section {
+    background-color: var(--color-bg-secondary);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    border: 1px solid var(--color-border-light);
+    margin-bottom: var(--space-sm);
+}
+
+.farm__sidebar section:last-child {
+    margin-bottom: 0;
+}
+
+.farm__Cta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* Map Placeholder */
+.farm__map-placeholder {
+    height: 120px;
+    background-color: var(--color-bg-tertiary);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xs);
+    color: var(--color-muted);
+}
+
+/* Featured Farm Card */
+.farm__featured {
+    text-align: center;
+}
+
+.farm__featured-photo {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.farm__featured h4 {
+    font-size: var(--font-size-base);
+    margin: 0 0 var(--space-xxs) 0;
+    color: var(--color-fg);
+}
+
+.farm__featured-rating {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-warning);
 }

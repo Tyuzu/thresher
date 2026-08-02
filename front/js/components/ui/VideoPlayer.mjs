@@ -11,25 +11,37 @@ const ALL_QUALITIES = [1440, 1080, 720, 480, 360, 240, 144];
 // ---- Video Helpers ----
 
 /**
- * Strips supported video file extensions from a source URL.
+ * Strips video file extensions (.mp4, .webm, etc.) from a source URL.
  */
-const getBaseSrc = (src = "") => src.replace(/\.(mp4|webm)$/i, "");
+const getBaseSrc = (src = "") => {
+  if (typeof src !== "string") return "";
+  return src.replace(/\.(mp4|webm|mkv|mov)(\?.*)?$/i, "");
+};
 
 /**
  * Determines the optimal initial source resolution based on localStorage and availability.
  */
-const determineInitialSource = (baseSrc, availableResolutions = []) => {
+const determineInitialSource = (originalSrc, availableResolutions = []) => {
+  if (!originalSrc) {
+    console.warn("Invalid originalSrc provided to VideoPlayer");
+    return "";
+  }
+
   const validQualities = (Array.isArray(availableResolutions) ? availableResolutions : [])
     .filter((r) => typeof r === "number" && !isNaN(r));
 
-  if (!baseSrc || validQualities.length === 0) {
-    if (!baseSrc) console.warn("Invalid baseSrc provided to VideoPlayer");
-    return `${baseSrc || "video"}-360.mp4`;
+  // If no resolution variants exist, return the original uploaded file URL
+  if (validQualities.length === 0) {
+    return originalSrc;
   }
 
+  const baseSrc = getBaseSrc(originalSrc);
   const stored = Number(localStorage.getItem("videoQuality"));
-  const lowestAvailable = Math.min(...validQualities);
-  const targetQuality = validQualities.includes(stored) ? stored : lowestAvailable;
+  
+  // Choose requested resolution if available; default to 360p or lowest available
+  let targetQuality = validQualities.includes(stored) 
+    ? stored 
+    : (validQualities.includes(360) ? 360 : Math.min(...validQualities));
 
   return `${baseSrc}-${targetQuality}.mp4`;
 };
@@ -43,9 +55,12 @@ const createVideoElement = (src, resolutions, poster) => {
   video.preload = "metadata";
   video.setAttribute("playsinline", "");
 
+  const initialSrc = determineInitialSource(src, resolutions);
+  video.src = initialSrc;
+  
+  // Set poster image fallback cleanly
   const baseSrc = getBaseSrc(src);
-  video.src = resolutions?.length ? determineInitialSource(baseSrc, resolutions) : src;
-  video.poster = poster || baseSrc;
+  video.poster = poster || `${baseSrc}-poster.jpg`;
 
   return video;
 };
@@ -72,7 +87,7 @@ const togglePlayOnClick = (video) => {
 
 // ---- Quality Selector ----
 
-export const createQualitySelector = (video, baseSrc, availableResolutions, videoId = "default") => {
+export const createQualitySelector = (video, baseSrc, availableResolutions = [], videoId = "default") => {
   const selector = createElement("select", {
     id: `quality-selector-${videoId}`,
     name: "videoQuality",
@@ -81,7 +96,12 @@ export const createQualitySelector = (video, baseSrc, availableResolutions, vide
   });
 
   const available = ALL_QUALITIES.filter((q) => availableResolutions.includes(q));
-  const stored = Number(localStorage.getItem("videoQuality")) || Math.min(...available);
+  if (available.length === 0) {
+    return { selector: null, qualities: [], cleanup: () => {} };
+  }
+
+  const stored = Number(localStorage.getItem("videoQuality"));
+  const defaultQuality = available.includes(stored) ? stored : (available.includes(360) ? 360 : Math.min(...available));
 
   const fragment = document.createDocumentFragment();
   available.forEach((quality) => {
@@ -89,7 +109,7 @@ export const createQualitySelector = (video, baseSrc, availableResolutions, vide
       "option",
       {
         value: `${baseSrc}-${quality}.mp4`,
-        ...(stored === quality ? { selected: "true" } : {}),
+        ...(defaultQuality === quality ? { selected: "true" } : {}),
       },
       [`${quality}p`]
     );
@@ -101,11 +121,17 @@ export const createQualitySelector = (video, baseSrc, availableResolutions, vide
 
   const switchQuality = (target) => {
     const selectedSrc = target.value;
-    const selectedQuality = parseInt(selectedSrc.split("-").pop().replace(".mp4", ""), 10);
+    
+    // Safely parse resolution number from string (e.g., "...-720.mp4")
+    const match = selectedSrc.match(/-(\d+)\.mp4$/);
+    const selectedQuality = match ? parseInt(match[1], 10) : null;
+
+    if (selectedQuality) {
+      localStorage.setItem("videoQuality", String(selectedQuality));
+    }
+
     const currentTime = video.currentTime;
     const wasPaused = video.paused;
-
-    localStorage.setItem("videoQuality", String(selectedQuality));
 
     if (activeMetadataHandler) {
       video.removeEventListener("loadedmetadata", activeMetadataHandler);
@@ -198,6 +224,7 @@ const VideoPlayer = (
 
   // Helper to update button inner markup reliably
   const updateIconButtonIcon = (button, markup) => {
+    if (!button) return;
     const iconContainer = button.querySelector(".icon-svg-target") || button;
     iconContainer.innerHTML = markup;
   };
@@ -249,9 +276,11 @@ const VideoPlayer = (
   // --- Quality Selector ---
   let availableQualities = [];
   let qualityCleanup = null;
-  if (availableResolutions?.length) {
+  if (Array.isArray(availableResolutions) && availableResolutions.length > 0) {
     const { selector, qualities, cleanup } = createQualitySelector(video, baseSrc, availableResolutions, videoId);
-    controlsl.appendChild(selector);
+    if (selector) {
+      controlsl.appendChild(selector);
+    }
     availableQualities = qualities;
     qualityCleanup = cleanup;
   }

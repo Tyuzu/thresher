@@ -277,6 +277,11 @@ aside h3 {
   background: #7ccaae url(#);
 }
 
+.vflex {
+  display: flex;
+  flex-direction: column;
+}
+
 /**/
 
 /* @media (max-width: 600px) {

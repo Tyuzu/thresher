@@ -9,7 +9,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-xxs) var(--container-padding);
+  padding: var(--space-xxs) var(--space-sm);
   background-color: var(--color-bg);
   border-bottom: 1px solid var(--color-border);
   transition: background-color var(--transition-fast), border-color var(--transition-fast);

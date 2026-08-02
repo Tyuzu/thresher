@@ -1,6 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
-import mkcert from 'vite-plugin-mkcert'
-import { visualizer } from "rollup-plugin-visualizer";
+import mkcert from 'vite-plugin-mkcert';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -16,7 +16,6 @@ export default defineConfig(({ mode }) => {
 
     build: {
       outDir: 'dist',
-
       minify: isProd ? 'terser' : 'esbuild',
       chunkSizeWarningLimit: 400,
       assetsInlineLimit: 4096,
@@ -38,7 +37,7 @@ export default defineConfig(({ mode }) => {
       },
 
       sourcemap: isProd
-        ? (env.ENABLE_SOURCEMAPS ? 'hidden' : false)
+        ? (env.ENABLE_SOURCEMAPS === 'true' ? 'hidden' : false)
         : true,
 
       rollupOptions: {
@@ -46,30 +45,19 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             const lower = id.toLowerCase();
 
-            // -----------------------
-            // Deterministic vendor splitting
-            // -----------------------
+            // Group node_modules into vendor chunks smartly or by group
             if (id.includes('node_modules')) {
-              const parts = id.split('node_modules/')[1];
-              if (parts) {
-                const pkg = parts.split('/')[0];
-                return `vendor-${pkg}`;
-              }
-              return 'vendor';
+              if (lower.includes('hls.js')) return 'vendor-hls';
+              return 'vendor'; // Keeps vendor code bundled reasonably
             }
 
-            // -----------------------
-            // Route-level splitting (high ROI)
-            // -----------------------
+            // Route-level splitting
             if (lower.includes('/js/routes/')) {
               return 'routes';
             }
-
-            // Let Vite handle the rest to avoid over-splitting
           },
 
           experimentalMinChunkSize: 20000,
-
           chunkFileNames: 'js/chunks/[name]-[hash].js',
           entryFileNames: 'js/[name]-[hash].js',
 
@@ -94,7 +82,7 @@ export default defineConfig(({ mode }) => {
         },
 
         treeshake: {
-          moduleSideEffects: false,
+          // Keep moduleSideEffects safely scoped or rely on package.json sideEffects
           propertyReadSideEffects: false,
           tryCatchDeoptimization: false,
         },
@@ -107,12 +95,20 @@ export default defineConfig(({ mode }) => {
 
     server: {
       allowedHosts: ['.trycloudflare.com', 'localhost'],
-      https: true, // Required to enable the HTTPS server
-      '/api/v1': {
-        target: 'https://localhost:4000',
-        //      changeOrigin: true,
-        //      rewrite: (path) => path.replace(/^\/v1/, ''),
-        secure: false, // Set to true if target uses valid SSL
+      https: true,
+      
+      // ✅ FIXED: Proxy properly placed under proxy object
+      proxy: {
+        '/api/v1': {
+          target: 'https://localhost:4000',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/static/uploads': {
+          target: 'https://localhost:4000',
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
 

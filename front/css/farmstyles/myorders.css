@@ -1,52 +1,259 @@
+/* ==========================================================================
+   USER ORDERS PAGE LAYOUT & STYLES
+   ========================================================================== */
 
-  
-  /* 🔍 Filters */
+/* ── Base Container ── */
+.user-orders-page {
+  width: 100%;
+  max-width: var(--max-width-lg, 1100px);
+  margin: 0 auto;
+  padding: var(--space-md, 1rem);
+  box-sizing: border-box;
+}
+
+.user-orders-page h2 {
+  font-size: var(--font-size-xl, 1.5rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-fg, #111827);
+  margin-bottom: var(--space-md, 1rem);
+}
+
+.user-orders-page .error-msg {
+  color: var(--color-danger, #dc2626);
+  background-color: rgba(220, 38, 38, 0.08);
+  padding: var(--space-sm, 0.75rem) var(--space-md, 1rem);
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--color-danger, #dc2626);
+}
+
+/* ── Filters Bar ── */
+.user-orders-page .filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm, 0.75rem);
+  background-color: var(--color-card-bg, #ffffff);
+  border: 1px solid var(--color-border-light, #e5e7eb);
+  padding: var(--space-sm, 0.75rem) var(--space-md, 1rem);
+  border-radius: var(--radius-md, 8px);
+  margin-bottom: var(--space-xs, 0.5rem);
+}
+
+.user-orders-page .filters label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs, 0.375rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-muted, #4b5563);
+}
+
+.user-orders-page .filters select,
+.user-orders-page .filters input[type="date"] {
+  font-family: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+  padding: 0.375rem 0.625rem;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--color-border, #d1d5db);
+  background-color: var(--color-bg, #f9fafb);
+  color: var(--color-fg, #111827);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.user-orders-page .filters select:focus,
+.user-orders-page .filters input[type="date"]:focus {
+  border-color: var(--color-primary, #2563eb);
+}
+
+/* ── Orders Summary Text ── */
+.orders-summary {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-muted, #6b7280);
+  margin-bottom: var(--space-sm, 0.75rem);
+}
+
+/* ── Desktop Orders Table ── */
+.orders-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: var(--color-card-bg, #ffffff);
+  border: 1px solid var(--color-border-light, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  overflow: hidden;
+  margin-bottom: var(--space-md, 1rem);
+}
+
+.orders-table th {
+  background-color: var(--color-bg-secondary, #f3f4f6);
+  color: var(--color-muted, #374151);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-bold, 600);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--space-sm, 0.75rem);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border-light, #e5e7eb);
+}
+
+.orders-table td {
+  padding: var(--space-sm, 0.75rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-fg, #111827);
+  border-bottom: 1px solid var(--color-border-light, #e5e7eb);
+  vertical-align: middle;
+}
+
+.orders-table tr:last-child td {
+  border-bottom: none;
+}
+
+.order-summary-row:hover {
+  background-color: var(--color-card-hover, #f9fafb);
+}
+
+.toggle-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: var(--radius-circle, 50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* Expanded Detail Row & Nested Grid */
+.order-detail-row td {
+  background-color: var(--color-bg-tertiary, #f8fafc);
+  padding: var(--space-md, 1rem);
+}
+
+.order-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-xs, 0.5rem) var(--space-md, 1rem);
+}
+
+.order-detail-grid p {
+  margin: 0;
+  font-size: var(--font-size-xs, 0.8125rem);
+  color: var(--color-muted, #4b5563);
+}
+
+/* Nested Items Table inside Expanded Rows */
+.order-items-table {
+  grid-column: span 2;
+  width: 100%;
+  margin-top: var(--space-sm, 0.75rem);
+  border-collapse: collapse;
+  background-color: var(--color-card-bg, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-sm, 4px);
+}
+
+.order-items-table th {
+  background-color: var(--color-bg-secondary, #edf2f7);
+  font-size: 0.7rem;
+  padding: var(--space-xs, 0.375rem) var(--space-sm, 0.5rem);
+}
+
+.order-items-table td {
+  font-size: var(--font-size-xs, 0.8125rem);
+  padding: var(--space-xs, 0.375rem) var(--space-sm, 0.5rem);
+  border-bottom: 1px solid var(--color-border-light, #edf2f7);
+}
+
+/* ── Mobile Order Cards Layout ── */
+.orders-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md, 1rem);
+  margin-bottom: var(--space-md, 1rem);
+}
+
+.order-card {
+  background-color: var(--color-card-bg, #ffffff);
+  border: 1px solid var(--color-border-light, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-md, 1rem);
+  box-shadow: var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05));
+}
+
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border-light, #e5e7eb);
+  padding-bottom: var(--space-xs, 0.5rem);
+  margin-bottom: var(--space-xs, 0.5rem);
+}
+
+.order-card-header p {
+  font-weight: var(--font-weight-bold, 600);
+  margin: 0;
+}
+
+.order-card p {
+  margin: 0 0 var(--space-xxs, 0.25rem) 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-muted, #4b5563);
+}
+
+.order-card-items {
+  margin-top: var(--space-sm, 0.75rem);
+  padding-top: var(--space-sm, 0.75rem);
+  border-top: 1px dashed var(--color-border, #d1d5db);
+}
+
+.order-card-item {
+  background-color: var(--color-bg-secondary, #f9fafb);
+  border-radius: var(--radius-sm, 4px);
+  padding: var(--space-xs, 0.5rem);
+  margin-top: var(--space-xs, 0.375rem);
+}
+
+.order-card .btn-receipt {
+  margin-top: var(--space-sm, 0.75rem);
+  width: 100%;
+}
+
+/* ── Pagination Controls ── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-md, 1rem);
+  margin-top: var(--space-md, 1rem);
+}
+
+.pagination span {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-muted, #4b5563);
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Responsive adjustments ── */
+@media (max-width: 640px) {
   .user-orders-page .filters {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
-  .user-orders-page .filters label {
-    display: flex;
     flex-direction: column;
-    font-weight: 600;
-  }
-  .user-orders-page .filters select,
-  .user-orders-page .filters input[type="date"],
-  .user-orders-page .filters button {
-    padding: 8px;
-    border: 1px solid #cbd5e0;
-    border-radius: 6px;
-    margin-top: 4px;
+    align-items: stretch;
   }
   
-  /* 📋 Orders Table */
-  .user-orders-page .orders-table {
-    width: 100%;
-    border-collapse: collapse;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  }
-  .user-orders-page .orders-table th,
-  .user-orders-page .orders-table td {
-    padding: 12px;
-    border: 1px solid #e2e8f0;
-    text-align: center;
-  }
-  .user-orders-page .orders-table th {
-    /* background-color: #ebf8ff; */
-    font-weight: bold;
-  }
-  .user-orders-page .orders-table td button {
-    padding: 6px 10px;
-    margin: 2px;
-    background-color: #4299e1;
-    border: none;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  .user-orders-page .orders-table td button:hover {
-    background-color: #2b6cb0;
+  .user-orders-page .filters label {
+    justify-content: space-between;
   }
   
+  .order-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-items-table {
+    grid-column: span 1;
+  }
+}

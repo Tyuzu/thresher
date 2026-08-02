@@ -170,6 +170,7 @@ export function renderCropInterface(container, cropData) {
   updateAllTabs(state);
 
   aside.append(cropAside(cropData));
+
 }
 
 function updateAllTabs(state) {
@@ -204,8 +205,8 @@ function updateTab(category, state) {
     tabs[category] = container;
     const wrapper = document.getElementById("catalogue-container");
     if (wrapper) {
-wrapper.appendChild(container);
-}
+      wrapper.appendChild(container);
+    }
   }
   // Defensive: if container is still falsy, bail out
   if (!container || typeof container.replaceChildren !== "function") {

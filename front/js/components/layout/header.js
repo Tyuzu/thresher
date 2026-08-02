@@ -1,5 +1,6 @@
 import "../../../css/layout/header5.css";
-import { getState, isAdmin, subscribeDeep, webSiteName } from "../../state/state.js";
+import { getState, isAdmin, subscribeDeep } from "../../state/state.js";
+import {webSiteName} from "../../config/env.js";
 import { navigate } from "../../routes/index.js";
 import { logout } from "../../services/auth/authService.js";
 import { settingsSVG, moonSVG, profileSVG, shopBagSVG, logoutSVG, cardSVG } from "../svgs.js";

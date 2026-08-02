@@ -15,25 +15,35 @@ import Datex from "../../../components/base/Datex.js";
  */
 export async function renderPost(posts, postsContainer, metadataMap = {}) {
     try {
-        if (!postsContainer) {
-            throw new Error("postsContainer is required");
+        if (!postsContainer || !(postsContainer instanceof HTMLElement)) {
+            throw new Error("postsContainer must be a valid HTMLElement");
         }
 
-        if (!Array.isArray(posts)) {
-            posts = [posts];
+        if (!posts) {
+            console.warn("renderPost received empty posts parameter");
+            return;
         }
 
-        const isLoggedIn = Boolean(getState("token"));
-        const user = getState("user");
+        const postsList = Array.isArray(posts) ? posts : [posts];
+        
+        let isLoggedIn = false;
+        let user = null;
+        
+        try {
+            isLoggedIn = Boolean(getState("token"));
+            user = getState("user");
+        } catch (stateErr) {
+            console.warn("Failed to retrieve application state:", stateErr);
+        }
 
-        for (const post of posts) {
+        for (const post of postsList) {
             try {
-                if (!post || !post.postid) {
-                    console.warn("Skipping invalid post:", post);
+                if (!post || typeof post !== "object" || !post.postid) {
+                    console.warn("Skipping invalid post structure:", post);
                     continue;
                 }
 
-                const isCreator = isLoggedIn && user === post.userid;
+                const isCreator = isLoggedIn && Boolean(user) && user === post.userid;
 
                 const postElement = createElement("article", {
                     class: "feed-item",
@@ -51,15 +61,20 @@ export async function renderPost(posts, postsContainer, metadataMap = {}) {
                 const media = normalizeMedia(post);
 
                 const renderers = {
-                    image: () => {
-                        if (media.length) {
-                            RenderImagePost(mediaContainer, media);
-                        } else {
-                            fallbackText(mediaContainer, "No image available.");
+                    image: async () => {
+                        try {
+                            if (media.length) {
+                                await RenderImagePost(mediaContainer, media);
+                            } else {
+                                fallbackText(mediaContainer, "No image available.");
+                            }
+                        } catch (err) {
+                            console.error(`Image rendering failed for post ${post.postid}:`, err);
+                            fallbackText(mediaContainer, "Failed to load image post.");
                         }
                     },
 
-                    video: () => {
+                    video: async () => {
                         if (!media.length) {
                             fallbackText(mediaContainer, "No video available.");
                             return;
@@ -69,18 +84,18 @@ export async function renderPost(posts, postsContainer, metadataMap = {}) {
                             class: "video-wrapper"
                         });
 
-                        const videos = media.map(m =>
-                            resolveImagePath(EntityType.FEED, PictureType.VIDEO, m)
-                        );
-
-                        const posterPath = resolveImagePath(
-                            EntityType.FEED,
-                            PictureType.POSTER,
-                            `${post.thumbnail || media[0]}`
-                        );
-
                         try {
-                            RenderVideoPost(
+                            const videos = media.map(m =>
+                                resolveImagePath(EntityType.FEED, PictureType.VIDEO, m)
+                            );
+
+                            const posterPath = resolveImagePath(
+                                EntityType.FEED,
+                                PictureType.POSTER,
+                                `${post.thumbnail || media[0]}`
+                            );
+
+                            await RenderVideoPost(
                                 videoWrapper,
                                 videos,
                                 media,
@@ -89,14 +104,14 @@ export async function renderPost(posts, postsContainer, metadataMap = {}) {
                                 posterPath
                             );
                         } catch (err) {
-                            console.error("RenderVideoPost failed:", err);
+                            console.error(`RenderVideoPost execution failed for post ${post.postid}:`, err);
                             fallbackText(mediaContainer, "Video failed to load.");
                             return;
                         }
 
                         const videoEl = videoWrapper.querySelector("video");
                         if (!videoEl) {
-                            console.warn(`No video element for post ${post.postid}`);
+                            console.warn(`No video element generated for post ${post.postid}`);
                             fallbackText(mediaContainer, "Video unavailable.");
                             return;
                         }
@@ -112,8 +127,8 @@ export async function renderPost(posts, postsContainer, metadataMap = {}) {
                     }
                 };
 
-                const render = renderers[post.type] || renderers.text;
-                render();
+                const renderFn = renderers[post.type] || renderers.text;
+                await renderFn();
 
                 postElement.appendChild(mediaContainer);
 
@@ -128,13 +143,13 @@ export async function renderPost(posts, postsContainer, metadataMap = {}) {
                     );
                 }
 
-                if (Array.isArray(post.tags) && post.tags.length) {
+                if (Array.isArray(post.tags) && post.tags.length > 0) {
                     const tagsContainer = createElement(
                         "div",
                         { class: "tags" },
-                        post.tags.map(tag =>
+                        post.tags.filter(Boolean).map(tag =>
                             createElement("a", {
-                                href: `/hashtag/${tag}`,
+                                href: `/hashtag/${encodeURIComponent(tag)}`,
                                 class: "tag-link"
                             }, [
                                 createElement("span", { class: "tag" }, [tag])
@@ -155,7 +170,13 @@ export async function renderPost(posts, postsContainer, metadataMap = {}) {
                     class: "hvflex-sb post-header-actions"
                 });
 
-                const header = createPostHeader(post);
+                let header;
+                try {
+                    header = createPostHeader(post);
+                } catch (headerErr) {
+                    console.error(`Failed to construct header for post ${post.postid}:`, headerErr);
+                    header = createElement("div", { class: "post-header-fallback" });
+                }
 
                 const metadata = normalizeMetadata(
                     metadataMap[post.postid],
@@ -166,8 +187,8 @@ export async function renderPost(posts, postsContainer, metadataMap = {}) {
                 try {
                     actions = await createActions(metadata, isCreator, postElement);
                 } catch (err) {
-                    console.error("createActions failed:", err);
-                    actions = createElement("div", {}, [""]);
+                    console.error(`createActions failed for post ${post.postid}:`, err);
+                    actions = createElement("div", { class: "post-actions-error" });
                 }
 
                 headerActionsRow.appendChild(header);
@@ -175,44 +196,55 @@ export async function renderPost(posts, postsContainer, metadataMap = {}) {
                 postElement.appendChild(headerActionsRow);
 
                 postsContainer.appendChild(postElement);
-            } catch (err) {
-                console.error("Error rendering post:", post, err);
+            } catch (postErr) {
+                console.error("Critical error while rendering single post item:", post, postErr);
             }
         }
     } catch (err) {
-        console.error("renderPost failed:", err);
+        console.error("renderPost pipeline execution failed:", err);
     }
 }
 
 /* ----------------- HELPERS ----------------- */
 
 function normalizeMedia(post) {
+    if (!post) return [];
     const media = post.media ?? post.media_url ?? [];
-    return Array.isArray(media) ? media : [media];
+    if (Array.isArray(media)) {
+        return media.filter(Boolean);
+    }
+    return media ? [media] : [];
 }
 
 function normalizeMetadata(metadata, postId) {
     return {
         postId,
-        likes: metadata?.likes ?? 0,
-        comments: metadata?.comments ?? 0,
-        likedByUser: metadata?.likedByUser ?? false
+        likes: typeof metadata?.likes === "number" ? metadata.likes : 0,
+        comments: typeof metadata?.comments === "number" ? metadata.comments : 0,
+        likedByUser: Boolean(metadata?.likedByUser)
     };
 }
 
 function safeDate(timestamp) {
+    if (!timestamp) return "";
     try {
-        return timestamp ? Datex(timestamp) : "";
-    } catch {
+        return Datex(timestamp);
+    } catch (err) {
+        console.warn("safeDate conversion failed for timestamp:", timestamp, err);
         return "";
     }
 }
 
 function fallbackText(container, text) {
-    container.appendChild(createElement("p", {}, [text]));
+    if (!container) return;
+    container.appendChild(createElement("p", {}, [text || ""]));
 }
 
 function createDescription(fullText) {
+    if (typeof fullText !== "string") {
+        fullText = String(fullText || "");
+    }
+
     const maxLength = 180;
     const isLong = fullText.length > maxLength;
     const shortText = isLong
@@ -229,13 +261,14 @@ function createDescription(fullText) {
     let expanded = false;
 
     const toggleBtn = createElement("button", {
-        class: "desc-toggle"
+        class: "desc-toggle",
+        type: "button"
     }, ["Show more"]);
 
     toggleBtn.addEventListener("click", () => {
         expanded = !expanded;
-        descText.innerText = expanded ? fullText : shortText;
-        toggleBtn.innerText = expanded ? "Show less" : "Show more";
+        descText.textContent = expanded ? fullText : shortText;
+        toggleBtn.textContent = expanded ? "Show less" : "Show more";
     });
 
     wrapper.appendChild(toggleBtn);

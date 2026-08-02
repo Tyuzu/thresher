@@ -1,7 +1,5 @@
 import { apiConfig } from "../config/env.js";
 
-export const webSiteName = "Farmium";
-
 export const {
   MAIN_URL, EMBED_URL, BANNERDROP_URL, API_URL, STRIPE_URL, AD_URL,
   SEARCH_URL, MERE_URL, MERE_WS, CHAT_URL, CHAT_WS, MUSIC_URL,
