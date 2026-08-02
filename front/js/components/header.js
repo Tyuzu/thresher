@@ -7,53 +7,7 @@ import { resolveImagePath, EntityType, PictureType } from "../utils/imagePaths.j
 import Imagex from "./base/Imagex.js";
 import { sticky } from "./sticky.js";
 import Button from "./base/Button.js";
-
-// Expanded theme list matching CSS data-theme attributes
-const themes = [
-  "light",
-  "dark",
-  "dimmed",
-  "solarized",
-  "nord",
-  "midnight",
-  "emerald",
-  "dracula",
-  "catppuccin",
-  "gruvbox",
-  "tokyo-night",
-  "cyberpunk",
-  "latte",
-  "rose-pine",
-  "high-contrast"
-];
-
-let currentThemeIndex = 0;
-
-function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  currentThemeIndex = themes.indexOf(theme);
-}
-
-function loadTheme() {
-  const saved = localStorage.getItem("theme");
-
-  if (saved && themes.includes(saved)) {
-    applyTheme(saved);
-  } else {
-    // Fall back to OS preference if no theme is saved in local storage
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const defaultTheme = prefersDark ? "dark" : "light";
-    applyTheme(defaultTheme);
-  }
-}
-
-function toggleTheme() {
-  currentThemeIndex = (currentThemeIndex + 1) % themes.length;
-  const theme = themes[currentThemeIndex];
-
-  applyTheme(theme);
-  localStorage.setItem("theme", theme);
-}
+import { loadTheme, toggleTheme } from "./themeManager.js";
 
 function createIconButton(svg, href, onClick) {
   const icon = createElement("span", { class: "icon" }, []);

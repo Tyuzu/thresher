@@ -142,6 +142,7 @@
 }
 
 .profile-menu-item svg {
+  stroke-width: 2;
   stroke: var(--stroke-svg);
   transition: stroke var(--transition-fast);
 }
