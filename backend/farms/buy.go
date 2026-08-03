@@ -98,11 +98,11 @@ func BuyCrop(app *infra.Deps) http.HandlerFunc {
 				"farmid":     farmID,
 				"cropid":     cropID,
 				"quantity":   bson.M{"$gt": 0},
-				"outOfStock": false,
+				"outofstock": false,
 			},
 			bson.M{
 				"$inc": bson.M{"quantity": -1},
-				"$set": bson.M{"updatedAt": time.Now()},
+				"$set": bson.M{"updatedat": time.Now()},
 			},
 			&updatedCrop,
 		)
@@ -121,7 +121,7 @@ func BuyCrop(app *infra.Deps) http.HandlerFunc {
 				ctx,
 				cropsCollection,
 				bson.M{"farmid": farmID, "cropid": cropID},
-				bson.M{"$set": bson.M{"outOfStock": true, "updatedAt": time.Now()}},
+				bson.M{"$set": bson.M{"outofstock": true, "updatedat": time.Now()}},
 			)
 		}
 		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CropBoughtEvent, mqevent.CropBoughtPayload{}); err != nil {
@@ -202,7 +202,7 @@ func updateOrderStatus(
 		ctx,
 		farmOrdersCollection,
 		bson.M{"orderid": orderID},
-		bson.M{"$set": bson.M{"status": newStatus, "updatedAt": time.Now()}},
+		bson.M{"$set": bson.M{"status": newStatus, "updatedat": time.Now()}},
 	)
 	if err != nil {
 		utils.RespondWithJSON(
@@ -320,7 +320,7 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 	}
 
 	var ownedFarms []models.Farm
-	if err := app.DB.FindMany(ctx, farmsCollection, bson.M{"createdBy": userID}, &ownedFarms); err != nil {
+	if err := app.DB.FindMany(ctx, farmsCollection, bson.M{"createdby": userID}, &ownedFarms); err != nil {
 		utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 			"success": false,
 			"message": "Failed to fetch farms",
@@ -368,7 +368,7 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 			ctx,
 			farmOrdersCollection,
 			bson.M{"orderid": orderID},
-			bson.M{"$set": bson.M{"status": newStatus, "updatedAt": time.Now()}},
+			bson.M{"$set": bson.M{"status": newStatus, "updatedat": time.Now()}},
 		); err != nil {
 			response.Failed++
 			errorsList = append(errorsList, fmt.Sprintf("Order %s: update failed", orderID))

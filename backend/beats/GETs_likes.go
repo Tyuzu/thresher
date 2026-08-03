@@ -37,8 +37,8 @@ func GetLikers(app *infra.Deps) http.HandlerFunc {
 			ctx,
 			likesCollection,
 			bson.M{
-				"entity_type": entityType,
-				"entity_id":   entityID,
+				"entitytype": entityType,
+				"entityid":   entityID,
 			},
 			&likes,
 		)
@@ -137,8 +137,8 @@ func GetLikeCount(app *infra.Deps) http.HandlerFunc {
 			ctx,
 			likesCollection,
 			bson.M{
-				"entity_type": entityType,
-				"entity_id":   entityID,
+				"entitytype": entityType,
+				"entityid":   entityID,
 			},
 		)
 		if err != nil {

@@ -8,17 +8,17 @@ import "time"
 
 const (
 	UserRegistered           = "auth.user.registered"
-	UserLoggedIn             = "auth.user.logged_in"
-	UserLoggedOut            = "auth.user.logged_out"
-	UserLoggedOutAllSessions = "auth.user.logged_out_all_sessions"
+	UserLoggedIn             = "auth.user.loggedin"
+	UserLoggedOut            = "auth.user.loggedout"
+	UserLoggedOutAllSessions = "auth.user.loggedoutallsessions"
 
-	PasswordResetRequested = "auth.password_reset.requested"
-	PasswordResetCompleted = "auth.password_reset.completed"
+	PasswordResetRequested = "auth.passwordreset.requested"
+	PasswordResetCompleted = "auth.passwordreset.completed"
 
 	OTPRequested = "auth.otp.requested"
 	OTPVerified  = "auth.otp.verified"
 
-	TokenRefreshed = "auth.token_refreshed"
+	TokenRefreshed = "auth.tokenrefreshed"
 )
 
 /* ============================================================
@@ -26,32 +26,32 @@ const (
 ============================================================ */
 
 type UserRegisteredPayload struct {
-	UserID    string    `json:"user_id"`
+	UserID    string    `json:"userid"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdat"`
 }
 
 type UserLoggedInPayload struct {
-	UserID     string    `json:"user_id"`
+	UserID     string    `json:"userid"`
 	Username   string    `json:"username"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 	IP         string    `json:"ip"`
 }
 
 type UserLoggedOutPayload struct {
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type UserOTPPayload struct {
-	UserID     string    `json:"user_id"`
+	UserID     string    `json:"userid"`
 	OTP        string    `json:"otp"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type TokenRefreshPayload struct {
-	UserID     string    `json:"user_id"`
+	UserID     string    `json:"userid"`
 	OTP        string    `json:"otp"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

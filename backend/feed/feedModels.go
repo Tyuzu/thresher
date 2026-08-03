@@ -35,8 +35,8 @@ type BulkMetadataRequest struct {
 }
 
 type PostMetadata struct {
-	PostID      string `json:"postId"`
+	PostID      string `json:"postid"`
 	Likes       int64  `json:"likes"`
 	Comments    int64  `json:"comments"`
-	LikedByUser bool   `json:"likedByUser"`
+	LikedByUser bool   `json:"likedbyuser"`
 }

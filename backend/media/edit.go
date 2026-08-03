@@ -55,7 +55,7 @@ func EditMedia(app *infra.Deps) http.HandlerFunc {
 
 		// Build update document
 		updateFields := bson.M{
-			"updatedAt": time.Now(),
+			"updatedat": time.Now(),
 		}
 
 		if payload.Caption != nil {

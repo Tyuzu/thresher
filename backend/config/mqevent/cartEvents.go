@@ -24,62 +24,62 @@ type CartItemCreatedPayload struct {
 	UserID     string    `json:"userid"`
 	ProductID  string    `json:"productid"`
 	Quantity   int       `json:"quantity"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CartItemUpdatedPayload struct {
 	CartItemID string    `json:"cartitemid"`
 	UserID     string    `json:"userid"`
 	Quantity   int       `json:"quantity"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CartItemDeletedPayload struct {
 	CartItemID string    `json:"cartitemid"`
 	UserID     string    `json:"userid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type ItemQuantityUpdatedPayload struct {
 	CartItemID string    `json:"cartitemid"`
 	UserID     string    `json:"userid"`
 	Quantity   int       `json:"quantity"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CheckoutInitiatedPayload struct {
 	UserID     string    `json:"userid"`
-	ItemCount  int       `json:"item_count"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ItemCount  int       `json:"itemcount"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CheckoutSessionCreatedPayload struct {
 	CheckoutID string    `json:"checkoutid"`
 	UserID     string    `json:"userid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CheckoutSeccionCreatedPayload = CheckoutSessionCreatedPayload
 
 type CouponValidatedPayload struct {
 	UserID     string    `json:"userid"`
-	CouponCode string    `json:"coupon_code"`
-	OccurredAt time.Time `json:"occurred_at"`
+	CouponCode string    `json:"couponcode"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type OrderPlacedPayload struct {
 	OrderID    string    `json:"orderid"`
 	UserID     string    `json:"userid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type ItemRemovedFromCartPayload struct {
 	CartItemID string    `json:"cartitemid"`
 	UserID     string    `json:"userid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CartClearedPayload struct {
 	UserID     string    `json:"userid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

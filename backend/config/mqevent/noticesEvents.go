@@ -14,15 +14,15 @@ const (
 
 type NoticesCreatedPayload struct {
 	NoticesID  string    `json:"noticesid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type NoticesUpdatedPayload struct {
 	NoticesID  string    `json:"noticesid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type NoticesDeletedPayload struct {
 	NoticesID  string    `json:"noticesid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

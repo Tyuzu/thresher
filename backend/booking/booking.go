@@ -78,9 +78,9 @@ func CreateBooking(app *infra.Deps) http.HandlerFunc {
 
 		// 2. One booking per user per date restriction
 		count, err := CountBookings(ctx, app.DB, bson.M{
-			"entityType": req.EntityType,
-			"entityId":   req.EntityId,
-			"userId":     req.UserId,
+			"entitytype": req.EntityType,
+			"entityid":   req.EntityId,
+			"userid":     req.UserId,
 			"date":       req.Date,
 			"status":     bson.M{"$ne": StatusCancelled},
 		})
@@ -252,9 +252,9 @@ func validateCapacity(ctx context.Context, app *infra.Deps, req *models.Booking)
 
 		var slotBookings []models.Booking
 		err := FindBookings(ctx, app.DB, bson.M{
-			"entityType": req.EntityType,
-			"entityId":   req.EntityId,
-			"slotId":     req.SlotId,
+			"entitytype": req.EntityType,
+			"entityid":   req.EntityId,
+			"slotid":     req.SlotId,
 			"status":     bson.M{"$ne": StatusCancelled},
 		}, &slotBookings)
 		if err != nil {
@@ -278,9 +278,9 @@ func validateCapacity(ctx context.Context, app *infra.Deps, req *models.Booking)
 
 		var tierBookings []models.Booking
 		err := FindBookings(ctx, app.DB, bson.M{
-			"entityType": req.EntityType,
-			"entityId":   req.EntityId,
-			"tierId":     req.TierId,
+			"entitytype": req.EntityType,
+			"entityid":   req.EntityId,
+			"tierid":     req.TierId,
 			"date":       req.Date,
 			"status":     bson.M{"$ne": StatusCancelled},
 		}, &tierBookings)
@@ -302,8 +302,8 @@ func validateCapacity(ctx context.Context, app *infra.Deps, req *models.Booking)
 		if err := FindDateCap(ctx, app.DB, req.EntityType, req.EntityId, req.Date, &dc); err == nil {
 			var dateBookings []models.Booking
 			err := app.DB.FindMany(ctx, bookingsCollection, bson.M{
-				"entityType": req.EntityType,
-				"entityId":   req.EntityId,
+				"entitytype": req.EntityType,
+				"entityid":   req.EntityId,
 				"date":       req.Date,
 				"status":     bson.M{"$ne": StatusCancelled},
 			}, &dateBookings)

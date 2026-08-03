@@ -155,7 +155,7 @@ func UpdateVendor(ctx context.Context, app *infra.Deps, vendorID string, updates
 		updates = bson.M{}
 	}
 
-	updates["updated_at"] = time.Now()
+	updates["updatedat"] = time.Now()
 
 	return app.DB.Update(
 		ctx,
@@ -173,8 +173,8 @@ func DeleteVendor(ctx context.Context, app *infra.Deps, vendorID string) error {
 		bson.M{"vendorid": vendorID},
 		bson.M{
 			"$set": bson.M{
-				"available":  false,
-				"updated_at": time.Now(),
+				"available": false,
+				"updatedat": time.Now(),
 			},
 		},
 	)
@@ -302,8 +302,8 @@ func RemoveVendorFromEvent(ctx context.Context, app *infra.Deps, eventID, vendor
 		},
 		bson.M{
 			"$set": bson.M{
-				"status":     "rejected",
-				"updated_at": time.Now(),
+				"status":    "rejected",
+				"updatedat": time.Now(),
 			},
 		},
 	)
@@ -317,8 +317,8 @@ func UpdateVendorStatus(ctx context.Context, app *infra.Deps, hiringID, status s
 		bson.M{"hiringid": hiringID},
 		bson.M{
 			"$set": bson.M{
-				"status":     status,
-				"updated_at": time.Now(),
+				"status":    status,
+				"updatedat": time.Now(),
 			},
 		},
 	)

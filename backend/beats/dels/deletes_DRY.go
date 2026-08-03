@@ -163,7 +163,7 @@ func DeletesMessage(app *infra.Deps) http.HandlerFunc {
 					ctx,
 					chatsCollection,
 					bson.M{"chatid": msg.ChatID},
-					bson.M{"$set": bson.M{"updatedAt": time.Now()}},
+					bson.M{"$set": bson.M{"updatedat": time.Now()}},
 				)
 				return nil
 			},

@@ -33,7 +33,7 @@ func GetFarmDash(app *infra.Deps) http.HandlerFunc {
 		if err := app.DB.FindOne(
 			ctx,
 			farmsCollection,
-			bson.M{"createdBy": userID},
+			bson.M{"createdy": userID},
 			&farm,
 		); err != nil {
 			utils.RespondWithJSON(w, http.StatusNotFound, utils.M{

@@ -29,7 +29,7 @@ func CreateMenu(app *infra.Deps) http.HandlerFunc {
 			Price    float64 `json:"price"`
 			Discount float64 `json:"discount"`
 			Stock    int     `json:"stock"`
-			MenuPic  string  `json:"menu_pic"`
+			MenuPic  string  `json:"menupic"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)

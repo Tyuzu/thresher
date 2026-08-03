@@ -14,15 +14,15 @@ const (
 
 type ReviewCreatedPayload struct {
 	ReviewID   string    `json:"reviewid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type ReviewUpdatedPayload struct {
 	ReviewID   string    `json:"reviewid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type ReviewDeletedPayload struct {
 	ReviewID   string    `json:"reviewid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

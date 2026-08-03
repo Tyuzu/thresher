@@ -9,8 +9,8 @@ type Analytics struct {
 	Type         string                 `json:"type"` // "event", "place", "product", etc.
 	Metrics      map[string]int         `json:"metrics"`
 	Trend        []int                  `json:"trend"`        // last 7 days of activity
-	TopLocations []string               `json:"topLocations"` // relevant for places
+	TopLocations []string               `json:"toplocations"` // relevant for places
 	Engagement   map[string]interface{} `json:"engagement"`   // e.g., avg time, bounce rate
 	Insights     map[string]string      `json:"insights"`     // textual summaries
-	LastUpdated  time.Time              `json:"lastUpdated"`
+	LastUpdated  time.Time              `json:"lastupdated"`
 }

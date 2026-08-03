@@ -18,7 +18,7 @@ func ApplyModerator(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 
 		var payload struct {
-			UserID string `json:"userId"`
+			UserID string `json:"userid"`
 			Reason string `json:"reason"`
 		}
 
@@ -40,7 +40,7 @@ func ApplyModerator(app *infra.Deps) http.HandlerFunc {
 		err := app.DB.FindOne(
 			ctx,
 			moderatorAppsCollection,
-			bson.M{"userId": payload.UserID},
+			bson.M{"userid": payload.UserID},
 			&existing,
 		)
 		if err == nil {

@@ -15,11 +15,11 @@ import (
 
 type Membership struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	PlaceID     primitive.ObjectID `bson:"placeId,omitempty" json:"placeId"`
+	PlaceID     primitive.ObjectID `bson:"placeid,omitempty" json:"placeid"`
 	Name        string             `bson:"name" json:"name"`
 	Price       float64            `bson:"price" json:"price"`
 	Description string             `bson:"description" json:"description"`
-	CreatedAt   time.Time          `bson:"createdAt" json:"createdAt"`
+	CreatedAt   time.Time          `bson:"createdat" json:"createdat"`
 }
 
 var membershipColl *mongo.Collection // set this from your DB init
@@ -134,7 +134,7 @@ func GetMemberships(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
-	cur, err := membershipColl.Find(r.Context(), bson.M{"placeId": placeID})
+	cur, err := membershipColl.Find(r.Context(), bson.M{"placeid": placeID})
 	if err != nil {
 		http.Error(w, "Failed to fetch memberships", http.StatusInternalServerError)
 		return

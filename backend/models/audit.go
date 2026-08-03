@@ -5,16 +5,16 @@ import "time"
 // AuditLog tracks sensitive operations for compliance and security
 type AuditLog struct {
 	ID         string                 `bson:"_id,omitempty" json:"id"`
-	UserID     string                 `bson:"userId" json:"userId"`
+	UserID     string                 `bson:"userid" json:"userid"`
 	Action     string                 `bson:"action" json:"action"` // e.g., "TICKET_PURCHASE", "MERCH_DELETE", "ORDER_MARK_PAID"
-	EntityType string                 `bson:"entityType" json:"entityType"`
-	EntityID   string                 `bson:"entityId" json:"entityId"`
+	EntityType string                 `bson:"entitytype" json:"entitytype"`
+	EntityID   string                 `bson:"entityid" json:"entityid"`
 	Changes    map[string]interface{} `bson:"changes,omitempty" json:"changes,omitempty"` // What changed
-	IPAddress  string                 `bson:"ipAddress" json:"ipAddress"`
-	UserAgent  string                 `bson:"userAgent" json:"userAgent"`
+	IPAddress  string                 `bson:"ipaddress" json:"ipaddress"`
+	UserAgent  string                 `bson:"useragent" json:"useragent"`
 	Status     string                 `bson:"status" json:"status"`                     // "success", "failed", "attempted"
 	Reason     string                 `bson:"reason,omitempty" json:"reason,omitempty"` // Why it failed
-	CreatedAt  time.Time              `bson:"createdAt" json:"createdAt"`
+	CreatedAt  time.Time              `bson:"createdat" json:"createdat"`
 }
 
 // AuditAction constants for common operations

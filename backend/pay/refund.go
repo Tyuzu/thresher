@@ -17,7 +17,7 @@ func (p *PaymentService) Refund(w http.ResponseWriter, r *http.Request) {
 	userID := utils.GetUserIDFromRequest(r)
 
 	var req struct {
-		TransactionID string `json:"transaction_id"`
+		TransactionID string `json:"transactionid"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.TransactionID == "" {

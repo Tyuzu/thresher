@@ -81,7 +81,7 @@ func SendMessageREST(app *infra.Deps) http.HandlerFunc {
 
 		var body struct {
 			Content  string `json:"content"`
-			ClientID string `json:"clientId,omitempty"`
+			ClientID string `json:"clientid,omitempty"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			writeErr(w, 400, "invalid body")
@@ -113,7 +113,7 @@ func SendMessageREST(app *infra.Deps) http.HandlerFunc {
 
 		resp := struct {
 			*models.Message
-			ClientID string `json:"clientId,omitempty"`
+			ClientID string `json:"clientid,omitempty"`
 		}{msg, body.ClientID}
 
 		mqpayload, _ := json.Marshal(mqevent.ChatMessageSentPayload{})

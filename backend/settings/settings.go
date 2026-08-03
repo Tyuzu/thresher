@@ -19,25 +19,25 @@ import (
 ------------------------- */
 
 type UserSettings struct {
-	UserID string `json:"-" bson:"userID"`
+	UserID string `json:"-" bson:"userid"`
 
 	Theme string `json:"theme" bson:"theme"`
 
 	Notifications      bool `json:"notifications" bson:"notifications"`
-	EmailNotifications bool `json:"email_notifications" bson:"email_notifications"`
-	PushNotifications  bool `json:"push_notifications" bson:"push_notifications"`
+	EmailNotifications bool `json:"emailnotifications" bson:"emailnotifications"`
+	PushNotifications  bool `json:"pushnotifications" bson:"pushnotifications"`
 
-	PrivacyMode       bool   `json:"privacy_mode" bson:"privacy_mode"`
-	ProfileVisibility string `json:"profile_visibility" bson:"profile_visibility"`
+	PrivacyMode       bool   `json:"privacymode" bson:"privacymode"`
+	ProfileVisibility string `json:"profilevisibility" bson:"profilevisibility"`
 
-	AutoLogout     bool `json:"auto_logout" bson:"auto_logout"`
-	SessionTimeout int  `json:"session_timeout" bson:"session_timeout"`
+	AutoLogout     bool `json:"autologout" bson:"autologout"`
+	SessionTimeout int  `json:"sessiontimeout" bson:"sessiontimeout"`
 
 	Language string `json:"language" bson:"language"`
-	TimeZone string `json:"time_zone" bson:"time_zone"`
+	TimeZone string `json:"timezone" bson:"timezone"`
 	Currency string `json:"currency" bson:"currency"`
 
-	DailyReminder string `json:"daily_reminder" bson:"daily_reminder"`
+	DailyReminder string `json:"dailyreminder" bson:"dailyreminder"`
 }
 
 type SettingSchema struct {
@@ -94,28 +94,28 @@ var settingsSchema = []SettingSchema{
 		Category:    "Notifications",
 	},
 	{
-		Type:        "email_notifications",
+		Type:        "emailnotifications",
 		Label:       "Email Notifications",
 		Description: "Receive email notifications",
 		Control:     "toggle",
 		Category:    "Notifications",
 	},
 	{
-		Type:        "push_notifications",
+		Type:        "pushnotifications",
 		Label:       "Push Notifications",
 		Description: "Receive push notifications",
 		Control:     "toggle",
 		Category:    "Notifications",
 	},
 	{
-		Type:        "privacy_mode",
+		Type:        "privacymode",
 		Label:       "Privacy Mode",
 		Description: "Hide sensitive information",
 		Control:     "toggle",
 		Category:    "Privacy",
 	},
 	{
-		Type:        "profile_visibility",
+		Type:        "profilevisibility",
 		Label:       "Profile Visibility",
 		Description: "Who can see your profile",
 		Control:     "select",
@@ -123,14 +123,14 @@ var settingsSchema = []SettingSchema{
 		Options:     []string{"public", "friends", "private"},
 	},
 	{
-		Type:        "auto_logout",
+		Type:        "autologout",
 		Label:       "Auto Logout",
 		Description: "Automatically log out after inactivity",
 		Control:     "toggle",
 		Category:    "Security",
 	},
 	{
-		Type:        "session_timeout",
+		Type:        "sessiontimeout",
 		Label:       "Session Timeout",
 		Description: "Minutes before session expires",
 		Control:     "number",
@@ -145,7 +145,7 @@ var settingsSchema = []SettingSchema{
 		Options:     []string{"english", "spanish", "french"},
 	},
 	{
-		Type:        "time_zone",
+		Type:        "timezone",
 		Label:       "Time Zone",
 		Description: "Select time zone",
 		Control:     "select",
@@ -161,7 +161,7 @@ var settingsSchema = []SettingSchema{
 		Options:     []string{"INR", "USD", "EUR"},
 	},
 	{
-		Type:        "daily_reminder",
+		Type:        "dailyreminder",
 		Label:       "Daily Reminder",
 		Description: "Set daily reminder time",
 		Control:     "time",
@@ -223,31 +223,31 @@ func validateSetting(key string, value any) error {
 			return errors.New("invalid theme")
 		}
 
-	case "notifications", "email_notifications", "push_notifications", "privacy_mode", "auto_logout":
+	case "notifications", "emailnotifications", "pushnotifications", "privacymode", "autologout":
 		if _, ok := boolFromAny(value); !ok {
 			return errors.New(key + " must be a boolean")
 		}
 		return nil
 
-	case "profile_visibility":
+	case "profilevisibility":
 		s, ok := stringFromAny(value)
 		if !ok {
-			return errors.New("profile_visibility must be a string")
+			return errors.New("profilevisibility must be a string")
 		}
 		switch s {
 		case "public", "friends", "private":
 			return nil
 		default:
-			return errors.New("invalid profile_visibility")
+			return errors.New("invalid profilevisibility")
 		}
 
-	case "session_timeout":
+	case "sessiontimeout":
 		n, ok := intFromAny(value)
 		if !ok {
-			return errors.New("session_timeout must be a number")
+			return errors.New("sessiontimeout must be a number")
 		}
 		if n < 1 || n > 1440 {
-			return errors.New("session_timeout must be between 1 and 1440")
+			return errors.New("sessiontimeout must be between 1 and 1440")
 		}
 		return nil
 
@@ -263,16 +263,16 @@ func validateSetting(key string, value any) error {
 			return errors.New("invalid language")
 		}
 
-	case "time_zone":
+	case "timezone":
 		s, ok := stringFromAny(value)
 		if !ok {
-			return errors.New("time_zone must be a string")
+			return errors.New("timezone must be a string")
 		}
 		switch s {
 		case "UTC", "PST", "EST", "IST":
 			return nil
 		default:
-			return errors.New("invalid time_zone")
+			return errors.New("invalid timezone")
 		}
 
 	case "currency":
@@ -287,13 +287,13 @@ func validateSetting(key string, value any) error {
 			return errors.New("invalid currency")
 		}
 
-	case "daily_reminder":
+	case "dailyreminder":
 		s, ok := stringFromAny(value)
 		if !ok {
-			return errors.New("daily_reminder must be a string")
+			return errors.New("dailyreminder must be a string")
 		}
 		if len(s) != 5 || s[2] != ':' {
-			return errors.New("daily_reminder must be in HH:MM format")
+			return errors.New("dailyreminder must be in HH:MM format")
 		}
 		return nil
 	}
@@ -303,19 +303,19 @@ func validateSetting(key string, value any) error {
 
 func settingsToMap(s UserSettings) bson.M {
 	return bson.M{
-		"userID":              s.UserID,
-		"theme":               s.Theme,
-		"notifications":       s.Notifications,
-		"email_notifications": s.EmailNotifications,
-		"push_notifications":  s.PushNotifications,
-		"privacy_mode":        s.PrivacyMode,
-		"profile_visibility":  s.ProfileVisibility,
-		"auto_logout":         s.AutoLogout,
-		"session_timeout":     s.SessionTimeout,
-		"language":            s.Language,
-		"time_zone":           s.TimeZone,
-		"currency":            s.Currency,
-		"daily_reminder":      s.DailyReminder,
+		"userid":             s.UserID,
+		"theme":              s.Theme,
+		"notifications":      s.Notifications,
+		"emailnotifications": s.EmailNotifications,
+		"pushnotifications":  s.PushNotifications,
+		"privacymode":        s.PrivacyMode,
+		"profilevisibility":  s.ProfileVisibility,
+		"autologout":         s.AutoLogout,
+		"sessiontimeout":     s.SessionTimeout,
+		"language":           s.Language,
+		"timezone":           s.TimeZone,
+		"currency":           s.Currency,
+		"dailyreminder":      s.DailyReminder,
 	}
 }
 
@@ -325,27 +325,27 @@ func applyPatch(target *UserSettings, key string, value any) {
 		target.Theme, _ = value.(string)
 	case "notifications":
 		target.Notifications, _ = value.(bool)
-	case "email_notifications":
+	case "emailnotifications":
 		target.EmailNotifications, _ = value.(bool)
-	case "push_notifications":
+	case "pushnotifications":
 		target.PushNotifications, _ = value.(bool)
-	case "privacy_mode":
+	case "privacymode":
 		target.PrivacyMode, _ = value.(bool)
-	case "profile_visibility":
+	case "profilevisibility":
 		target.ProfileVisibility, _ = value.(string)
-	case "auto_logout":
+	case "autologout":
 		target.AutoLogout, _ = value.(bool)
-	case "session_timeout":
+	case "sessiontimeout":
 		if n, ok := intFromAny(value); ok {
 			target.SessionTimeout = n
 		}
 	case "language":
 		target.Language, _ = value.(string)
-	case "time_zone":
+	case "timezone":
 		target.TimeZone, _ = value.(string)
 	case "currency":
 		target.Currency, _ = value.(string)
-	case "daily_reminder":
+	case "dailyreminder":
 		target.DailyReminder, _ = value.(string)
 	}
 }
@@ -410,18 +410,18 @@ func UpdateSettings(app *infra.Deps) http.HandlerFunc {
 		}
 
 		allowed := map[string]bool{
-			"theme":               true,
-			"notifications":       true,
-			"email_notifications": true,
-			"push_notifications":  true,
-			"privacy_mode":        true,
-			"profile_visibility":  true,
-			"auto_logout":         true,
-			"session_timeout":     true,
-			"language":            true,
-			"time_zone":           true,
-			"currency":            true,
-			"daily_reminder":      true,
+			"theme":              true,
+			"notifications":      true,
+			"emailnotifications": true,
+			"pushnotifications":  true,
+			"privacymode":        true,
+			"profilevisibility":  true,
+			"autologout":         true,
+			"sessiontimeout":     true,
+			"language":           true,
+			"timezone":           true,
+			"currency":           true,
+			"dailyreminder":      true,
 		}
 
 		filter := bson.M{"userID": userID}

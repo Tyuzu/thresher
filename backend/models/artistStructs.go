@@ -11,10 +11,10 @@ type ArtistSong struct {
 	Genre       string    `json:"genre" bson:"genre"`
 	Duration    string    `json:"duration" bson:"duration"`
 	Description string    `json:"description,omitempty" bson:"description,omitempty"`
-	AudioURL    string    `json:"audioUrl,omitempty" bson:"audioUrl,omitempty"`
+	AudioURL    string    `json:"audiourl,omitempty" bson:"audiourl,omitempty"`
 	Published   bool      `json:"published" bson:"published"`
 	Plays       int       `json:"plays,omitempty" bson:"plays,omitempty"`
-	UploadedAt  time.Time `json:"uploadedAt" bson:"uploadedAt"`
+	UploadedAt  time.Time `json:"uploadedat" bson:"uploadedat"`
 	Poster      string    `bson:"poster,omitempty" json:"poster,omitempty"`
 	Language    string    `json:"language" bson:"language"`
 	AudioExtn   string    `json:"audioextn" bson:"audioextn"`
@@ -23,7 +23,7 @@ type ArtistSong struct {
 
 type ArtistAlbum struct {
 	Title       string `json:"title"`
-	ReleaseDate string `json:"releaseDate"`
+	ReleaseDate string `json:"releasedate"`
 	Description string `json:"description"`
 	Published   bool   `json:"published"`
 }
@@ -31,7 +31,7 @@ type ArtistAlbum struct {
 type ArtistPost struct {
 	Title     string `json:"title"`
 	Content   string `json:"content"`
-	CreatedAt string `json:"createdAt"`
+	CreatedAt string `json:"createdat"`
 	Published bool   `json:"published"`
 }
 

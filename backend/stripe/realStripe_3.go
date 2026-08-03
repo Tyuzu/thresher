@@ -62,7 +62,7 @@ func updatePaymentStatus(
 	update := bson.M{
 		"paid":            true,
 		"amount":          amount,
-		"paymentIntentId": paymentIntentId,
+		"paymentintentid": paymentIntentId,
 		"paidAt":          time.Now().UTC(),
 	}
 
@@ -81,8 +81,8 @@ func updatePaymentStatus(
 type CreatePaymentIntentRequest struct {
 	Amount      int64  `json:"amount"`
 	Currency    string `json:"currency"`
-	EntityType  string `json:"entityType"`
-	EntityId    string `json:"entityId"`
+	EntityType  string `json:"entitytype"`
+	EntityId    string `json:"entityid"`
 	Description string `json:"description"`
 }
 
@@ -134,9 +134,9 @@ func CreatePaymentIntent(app *infra.Deps) http.HandlerFunc {
 ---------------------------------------- */
 
 type PaymentSuccessRequest struct {
-	EntityType      string `json:"entityType"`
-	EntityId        string `json:"entityId"`
-	PaymentIntentId string `json:"paymentIntentId"`
+	EntityType      string `json:"entitytype"`
+	EntityId        string `json:"entityid"`
+	PaymentIntentId string `json:"paymentintentid"`
 	Amount          int64  `json:"amount"`
 }
 

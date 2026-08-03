@@ -18,7 +18,7 @@ type SearchResult struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	Image       string    `json:"image,omitempty"`
-	CreatedAt   time.Time `json:"createdAt"`
+	CreatedAt   time.Time `json:"createdat"`
 }
 
 // AllSearchResults represents results grouped by entity type
@@ -255,12 +255,12 @@ func SearchByEntity(ctx context.Context, app *infra.Deps, entityType, query stri
 			result.Image = img
 		} else if img, ok := doc["banner"].(string); ok {
 			result.Image = img
-		} else if img, ok := doc["banner_image"].(string); ok {
+		} else if img, ok := doc["bannerimage"].(string); ok {
 			result.Image = img
 		}
 
 		// Get creation timestamp
-		if t, ok := doc["created_at"].(time.Time); ok {
+		if t, ok := doc["createdat"].(time.Time); ok {
 			result.CreatedAt = t
 		} else if t, ok := doc["createdAt"].(time.Time); ok {
 			result.CreatedAt = t

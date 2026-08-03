@@ -16,25 +16,25 @@ const (
 
 type NewchatCreatedPayload struct {
 	NewchatID  string    `json:"newchatid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type NewchatUpdatedPayload struct {
 	NewchatID  string    `json:"newchatid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type NewchatDeletedPayload struct {
 	NewchatID  string    `json:"newchatid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type ChatMessageCreatedPayload struct {
 	NewchatID  string    `json:"newchatid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type FileAddedToChatPayload struct {
 	NewchatID  string    `json:"newchatid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

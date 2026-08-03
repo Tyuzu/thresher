@@ -16,24 +16,24 @@ const (
 type EventCreatedPayload struct {
 	EventID    string    `json:"eventid"`
 	CreatorID  string    `json:"creatorid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type EventUpdatedPayload struct {
 	EventID    string    `json:"eventid"`
 	UpdatedBy  string    `json:"updatedby"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type EventDeletedPayload struct {
 	EventID    string    `json:"eventid"`
 	DeletedBy  string    `json:"deletedby"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type FAQAddedPayload struct {
 	EventID    string    `json:"eventid"`
 	FAQTitle   string    `json:"faqtitle"`
 	CreatedBy  string    `json:"createdby"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

@@ -84,11 +84,11 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 			bson.M{"userid": user.UserID},
 			bson.M{
 				"$set": bson.M{
-					"refresh_token":  nil,
-					"refresh_prev":   nil,
-					"refresh_expiry": nil,
-					"refresh_ua":     nil,
-					"updated_at":     now,
+					"refreshtoken":  nil,
+					"refreshprev":   nil,
+					"refreshexpiry": nil,
+					"refreshua":     nil,
+					"updatedat":     now,
 				},
 			},
 		)
@@ -106,11 +106,11 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 			bson.M{"userid": user.UserID},
 			bson.M{
 				"$set": bson.M{
-					"refresh_token":  nil,
-					"refresh_prev":   nil,
-					"refresh_expiry": nil,
-					"refresh_ua":     nil,
-					"updated_at":     now,
+					"refreshtoken":  nil,
+					"refreshprev":   nil,
+					"refreshexpiry": nil,
+					"refreshua":     nil,
+					"updatedat":     now,
 				},
 			},
 		)

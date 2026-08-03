@@ -29,8 +29,8 @@ func StartNewChat(app *infra.Deps) http.HandlerFunc {
 
 		var body struct {
 			Participants []string `json:"participants"`
-			EntityType   string   `json:"entityType"`
-			EntityId     string   `json:"entityId"`
+			EntityType   string   `json:"entitytype"`
+			EntityId     string   `json:"entityid"`
 		}
 		if json.NewDecoder(r.Body).Decode(&body) != nil {
 			writeErr(w, 400, "invalid body")

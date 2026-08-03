@@ -61,8 +61,8 @@ func AddReview(app *infra.Deps) http.HandlerFunc {
 
 		dupFilter := bson.M{
 			"userid":     userId,
-			"entityType": entityType,
-			"entityId":   entityId,
+			"entitytype": entityType,
+			"entityid":   entityId,
 		}
 
 		var existing models.Review

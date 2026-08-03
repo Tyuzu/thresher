@@ -14,15 +14,15 @@ const (
 
 type UserSettingsUpdatedPayload struct {
 	ReviewID   string    `json:"reviewid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type UserSettingsResetPayload struct {
 	ReviewID   string    `json:"reviewid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type UserSettingsInitiatedPayload struct {
 	ReviewID   string    `json:"reviewid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

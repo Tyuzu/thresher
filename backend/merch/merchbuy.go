@@ -86,8 +86,8 @@ func ConfirmMerchPurchase(app *infra.Deps) http.HandlerFunc {
 			ctx,
 			merchCollection,
 			bson.M{
-				"entity_id": eventID,
-				"merchid":   merchID,
+				"entityid": eventID,
+				"merchid":  merchID,
 			},
 			&currentMerch,
 		); err != nil {
@@ -116,9 +116,9 @@ func ConfirmMerchPurchase(app *infra.Deps) http.HandlerFunc {
 			ctx,
 			merchCollection,
 			bson.M{
-				"entity_id": eventID,
-				"merchid":   merchID,
-				"stock":     bson.M{"$gte": body.Quantity},
+				"entityid": eventID,
+				"merchid":  merchID,
+				"stock":    bson.M{"$gte": body.Quantity},
 			},
 			bson.M{
 				"$inc": bson.M{"stock": -body.Quantity},

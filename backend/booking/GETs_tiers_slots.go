@@ -14,15 +14,15 @@ import (
 
 func ListSlots(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		entityType := r.URL.Query().Get("entityType")
-		entityID := r.URL.Query().Get("entityId")
+		entityType := r.URL.Query().Get("entitytype")
+		entityID := r.URL.Query().Get("entityid")
 
 		filter := bson.M{}
 		if entityType != "" {
-			filter["entityType"] = entityType
+			filter["entitytype"] = entityType
 		}
 		if entityID != "" {
-			filter["entityId"] = entityID
+			filter["entityid"] = entityID
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -42,16 +42,16 @@ func ListSlots(app *infra.Deps) http.HandlerFunc {
 
 func ListBookings(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		entityType := r.URL.Query().Get("entityType")
-		entityID := r.URL.Query().Get("entityId")
+		entityType := r.URL.Query().Get("entitytype")
+		entityID := r.URL.Query().Get("entityid")
 		status := r.URL.Query().Get("status")
 
 		filter := bson.M{}
 		if entityType != "" {
-			filter["entityType"] = entityType
+			filter["entitytype"] = entityType
 		}
 		if entityID != "" {
-			filter["entityId"] = entityID
+			filter["entityid"] = entityID
 		}
 		if status != "" {
 			filter["status"] = status
@@ -102,15 +102,15 @@ func GetDateCapacity(app *infra.Deps) http.HandlerFunc {
 
 func ListTiers(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		entityType := r.URL.Query().Get("entityType")
-		entityID := r.URL.Query().Get("entityId")
+		entityType := r.URL.Query().Get("entitytype")
+		entityID := r.URL.Query().Get("entityid")
 
 		filter := bson.M{}
 		if entityType != "" {
-			filter["entityType"] = entityType
+			filter["entitytype"] = entityType
 		}
 		if entityID != "" {
-			filter["entityId"] = entityID
+			filter["entityid"] = entityID
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

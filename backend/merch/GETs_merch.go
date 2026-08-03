@@ -31,10 +31,10 @@ func GetMerch(app *infra.Deps) http.HandlerFunc {
 			r.Context(),
 			merchCollection,
 			bson.M{
-				"entity_type": entityType,
-				"entity_id":   eventID,
-				"merchid":     merchID,
-				"deletedAt":   bson.M{"$exists": false},
+				"entitytype": entityType,
+				"entityid":   eventID,
+				"merchid":    merchID,
+				"deletedat":  bson.M{"$exists": false},
 			},
 			&merch,
 		)
@@ -74,9 +74,9 @@ func GetMerchs(app *infra.Deps) http.HandlerFunc {
 			ctx,
 			merchCollection,
 			bson.M{
-				"entity_type": entityType,
-				"entity_id":   eventID,
-				"deletedAt":   bson.M{"$exists": false},
+				"entitytype": entityType,
+				"entityid":   eventID,
+				"deletedat":  bson.M{"$exists": false},
 			},
 			&list,
 		)
@@ -109,7 +109,7 @@ func GetMerchPage(app *infra.Deps) http.HandlerFunc {
 			merchCollection,
 			bson.M{
 				"merchid":   merchID,
-				"deletedAt": bson.M{"$exists": false},
+				"deletedat": bson.M{"$exists": false},
 			},
 			&merch,
 		)

@@ -6,7 +6,7 @@ import "time"
 type EventContactInfo struct {
 	Email         string `json:"email" bson:"email"`
 	Phone         string `json:"phone" bson:"phone"`
-	OrganizerName string `json:"organizer_name" bson:"organizer_name"`
+	OrganizerName string `json:"organizername" bson:"organizername"`
 }
 
 // NewsItem represents a single news update for an event
@@ -49,29 +49,29 @@ type Event struct {
 	CreatorID        string      `json:"creatorid" bson:"creatorid"`
 	Tickets          []Ticket    `json:"tickets" bson:"tickets"`
 	Merch            []Merch     `json:"merch" bson:"merch"`
-	StartDateTime    time.Time   `json:"start_date_time" bson:"start_date_time"`
-	EndDateTime      time.Time   `json:"end_date_time" bson:"end_date_time"`
+	StartDateTime    time.Time   `json:"startdatetime" bson:"startdatetime"`
+	EndDateTime      time.Time   `json:"enddatetime" bson:"enddatetime"`
 	Category         string      `json:"category" bson:"category"`
 	Banner           string      `json:"banner" bson:"banner"`
 	SeatingPlanImage string      `json:"seating" bson:"seating"`
 	WebsiteURL       string      `json:"website_url" bson:"website_url"`
 	Status           string      `json:"status" bson:"status"`
 	Tags             []string    `json:"tags" bson:"tags"`
-	CreatedAt        time.Time   `json:"created_at" bson:"created_at"`
-	UpdatedAt        time.Time   `json:"updated_at" bson:"updated_at"`
+	CreatedAt        time.Time   `json:"createdat" bson:"createdat"`
+	UpdatedAt        time.Time   `json:"updatedat" bson:"updatedat"`
 	FAQs             []FAQ       `json:"faqs" bson:"faqs"`
-	OrganizerName    string      `json:"organizer_name" bson:"organizer_name"`
-	OrganizerContact string      `json:"organizer_contact" bson:"organizer_contact"`
+	OrganizerName    string      `json:"organizername" bson:"organizername"`
+	OrganizerContact string      `json:"organizercontact" bson:"organizercontact"`
 	Artists          []string    `json:"artists,omitempty" bson:"artists,omitempty"`
 	Published        string      `json:"published,omitempty" bson:"published,omitempty"`
 	External         bool        `json:"external" bson:"external"`
 	ExternalLink     string      `json:"externallink" bson:"externallink"`
 	// New fields for alignment (CRITICAL FIX)
-	ContactInfo  *EventContactInfo `json:"contactInfo" bson:"contact_info"`
+	ContactInfo  *EventContactInfo `json:"contactinfo" bson:"contactinfo"`
 	News         []NewsItem        `json:"news" bson:"news"`
 	Polls        []Poll            `json:"polls" bson:"polls"`
-	LostFound    []LostFoundItem   `json:"lostfound" bson:"lost_found"`
-	HiredVendors []VendorHiring    `json:"hired_vendors,omitempty" bson:"hired_vendors,omitempty"`
+	LostFound    []LostFoundItem   `json:"lostfound" bson:"lostfound"`
+	HiredVendors []VendorHiring    `json:"hiredvendors,omitempty" bson:"hiredvendors,omitempty"`
 	// Computed fields for frontend filters
 	Prices   []float64 `json:"prices,omitempty" bson:"-"`
 	Currency string    `json:"currency,omitempty" bson:"-"`
@@ -85,22 +85,22 @@ type FAQ struct {
 
 type SocialMediaLinks struct {
 	Title string `json:"title"`
-	Url   string `json:"Url"`
+	Url   string `json:"url"`
 }
 
 type PurchasedTicket struct {
 	EventID      string    `bson:"eventid" json:"eventid"`
 	TicketID     string    `bson:"ticketid" json:"ticketid"`
 	UserID       string    `bson:"userid" json:"userid"`
-	BuyerName    string    `bson:"buyername" json:"buyerName"`
-	UniqueCode   string    `bson:"uniquecode" json:"uniqueCode"`
-	PurchaseDate time.Time `bson:"purchasedate" json:"purchaseDate"`
+	BuyerName    string    `bson:"buyername" json:"buyername"`
+	UniqueCode   string    `bson:"uniquecode" json:"uniquecode"`
+	PurchaseDate time.Time `bson:"purchasedate" json:"purchasedate"`
 	Price        int       `bson:"price" json:"price"`
 
 	// Soft delete fields
 	Canceled       bool       `bson:"canceled" json:"canceled"`
-	CanceledAt     *time.Time `bson:"canceledat,omitempty" json:"canceledAt,omitempty"`
-	CanceledReason string     `bson:"cancelledreason,omitempty" json:"canceledReason,omitempty"`
+	CanceledAt     *time.Time `bson:"canceledat,omitempty" json:"canceledat,omitempty"`
+	CanceledReason string     `bson:"cancelledreason,omitempty" json:"canceledreason,omitempty"`
 	Transferred    bool       `bson:"transferred" json:"transferred"`
-	TransferredTo  string     `bson:"transferredto,omitempty" json:"transferredTo,omitempty"`
+	TransferredTo  string     `bson:"transferredto,omitempty" json:"transferredto,omitempty"`
 }

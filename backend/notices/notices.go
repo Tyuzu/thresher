@@ -127,10 +127,10 @@ func UpdateNotice(app *infra.Deps) http.HandlerFunc {
 		}
 
 		update := bson.M{
-			"title":      title,
-			"content":    content,
-			"summary":    summary,
-			"updated_at": time.Now(),
+			"title":     title,
+			"content":   content,
+			"summary":   summary,
+			"updatedat": time.Now(),
 		}
 
 		// ✅ pass plain fields

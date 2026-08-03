@@ -15,20 +15,20 @@ const (
 
 type MechatCreatedPayload struct {
 	MechatID   string    `json:"mechatid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type MechatUpdatedPayload struct {
 	MechatID   string    `json:"mechatid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type MechatDeletedPayload struct {
 	MechatID   string    `json:"mechatid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type ChatMessageSentPayload struct {
 	MechatID   string    `json:"mechatid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

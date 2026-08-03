@@ -5,28 +5,28 @@ import "time"
 type Place struct {
 	PlaceID           string            `json:"placeid" bson:"placeid"`
 	Name              string            `json:"name" bson:"name"`
-	ShortDesc         string            `json:"short_desc" bson:"short_desc"`
+	ShortDesc         string            `json:"shortdesc" bson:"shortdesc"`
 	Description       string            `json:"description" bson:"description"`
 	Place             string            `json:"place" bson:"place"`
 	Capacity          int               `json:"capacity" bson:"capacity"`
 	Date              time.Time         `json:"date" bson:"date"`
 	Address           string            `json:"address" bson:"address"`
-	CreatedBy         string            `json:"createdBy,omitempty" bson:"createdBy,omitempty"`
-	OrganizerName     string            `json:"organizer_name" bson:"organizer_name"`
-	OrganizerContact  string            `json:"organizer_contact" bson:"organizer_contact"`
+	CreatedBy         string            `json:"createdby,omitempty" bson:"createdby,omitempty"`
+	OrganizerName     string            `json:"organizername" bson:"organizername"`
+	OrganizerContact  string            `json:"organizercontact" bson:"organizercontact"`
 	Category          string            `json:"category" bson:"category"`
 	Banner            string            `json:"banner" bson:"banner"`
-	WebsiteURL        string            `json:"website_url" bson:"website_url"`
+	WebsiteURL        string            `json:"websiteurl" bson:"websiteurl"`
 	Status            string            `json:"status" bson:"status"`
-	AccessibilityInfo string            `json:"accessibility_info" bson:"accessibility_info"`
-	SocialMediaLinks  []string          `json:"social_links" bson:"social_links"`
+	AccessibilityInfo string            `json:"accessibilityinfo" bson:"accessibilityinfo"`
+	SocialMediaLinks  []string          `json:"socialmedialinks" bson:"socialmedialinks"`
 	Tags              []string          `json:"tags" bson:"tags"`
-	CustomFields      map[string]any    `json:"custom_fields" bson:"custom_fields"`
-	CreatedAt         time.Time         `json:"created_at" bson:"created_at"`
-	UpdatedAt         time.Time         `json:"updated_at" bson:"updated_at"`
+	CustomFields      map[string]any    `json:"customfields" bson:"customfields"`
+	CreatedAt         time.Time         `json:"createdat" bson:"createdat"`
+	UpdatedAt         time.Time         `json:"updatedat" bson:"updatedat"`
 	City              string            `json:"city,omitempty" bson:"city,omitempty"`
 	Country           string            `json:"country,omitempty" bson:"country,omitempty"`
-	ZipCode           string            `json:"zipCode,omitempty" bson:"zipCode,omitempty"`
+	ZipCode           string            `json:"zipcode,omitempty" bson:"zipcode,omitempty"`
 	Jobs              string            `json:"jobs,omitempty" bson:"jobs,omitempty"`
 	Location          Coordinates       `json:"location" bson:"location,omitempty"`
 	Phone             string            `json:"phone,omitempty" bson:"phone,omitempty"`
@@ -35,9 +35,9 @@ type Place struct {
 	Distance          float64           `json:"distance,omitempty" bson:"distance,omitempty"`
 	Views             int               `json:"views,omitempty" bson:"views,omitempty"`
 	ReviewCount       int               `json:"reviewcount,omitempty" bson:"reviewcount,omitempty"`
-	SocialLinks       map[string]string `json:"socialLinks,omitempty" bson:"socialLinks,omitempty"`
-	UpdatedBy         string            `json:"updatedBy,omitempty" bson:"updatedBy,omitempty"`
-	DeletedAt         *time.Time        `json:"deletedAt,omitempty" bson:"deletedAt,omitempty"`
+	SocialLinks       map[string]string `json:"sociallinks,omitempty" bson:"sociallLinks,omitempty"`
+	UpdatedBy         string            `json:"updatedby,omitempty" bson:"updatedby,omitempty"`
+	DeletedAt         *time.Time        `json:"deletedat,omitempty" bson:"deletedat,omitempty"`
 	Amenities         []string          `json:"amenities,omitempty" bson:"amenities,omitempty"`
 	Events            []string          `json:"events,omitempty" bson:"events,omitempty"`
 	OperatingHours    []string          `json:"operatinghours,omitempty" bson:"operatinghours,omitempty"`
@@ -58,8 +58,8 @@ type Coordinates struct {
 }
 
 type CheckIn struct {
-	UserID    string    `json:"userId,omitempty" bson:"userId,omitempty"`
-	PlaceID   string    `json:"placeId,omitempty" bson:"placeId,omitempty"`
+	UserID    string    `json:"userid,omitempty" bson:"userid,omitempty"`
+	PlaceID   string    `json:"placeid,omitempty" bson:"placeid,omitempty"`
 	Timestamp time.Time `json:"timestamp,omitempty" bson:"timestamp,omitempty"`
 	Comment   string    `json:"comment,omitempty" bson:"comment,omitempty"`
 	Rating    float64   `json:"rating,omitempty" bson:"rating,omitempty"` // Optional
@@ -67,11 +67,11 @@ type CheckIn struct {
 }
 
 type PlaceVersion struct {
-	PlaceID   string            `json:"placeId,omitempty" bson:"placeId,omitempty"`
+	PlaceID   string            `json:"placeIid,omitempty" bson:"placeid,omitempty"`
 	Version   int               `json:"version,omitempty" bson:"version,omitempty"`
 	Data      Place             `json:"data,omitempty" bson:"data,omitempty"`
-	UpdatedAt time.Time         `json:"updatedAt,omitempty" bson:"updatedAt,omitempty"`
-	UpdatedBy string            `json:"updatedBy,omitempty" bson:"updatedBy,omitempty"`
+	UpdatedAt time.Time         `json:"updatedat,omitempty" bson:"updatedat,omitempty"`
+	UpdatedBy string            `json:"updatedby,omitempty" bson:"updatedby,omitempty"`
 	Changes   map[string]string `json:"changes,omitempty" bson:"changes,omitempty"`
 }
 
@@ -79,7 +79,7 @@ type OperatingHours struct {
 	Day          []string `json:"day,omitempty" bson:"day,omitempty"`
 	OpeningHours []string `json:"opening,omitempty" bson:"opening,omitempty"`
 	ClosingHours []string `json:"closing,omitempty" bson:"closing,omitempty"`
-	TimeZone     string   `json:"timeZone,omitempty" bson:"timeZone,omitempty"`
+	TimeZone     string   `json:"timezone,omitempty" bson:"timezone,omitempty"`
 }
 
 type Tag struct {

@@ -266,8 +266,8 @@ func DeletesMessage(app *infra.Deps) http.HandlerFunc {
 func InitChat(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
-			UserA string `json:"userA"`
-			UserB string `json:"userB"`
+			UserA string `json:"usera"`
+			UserB string `json:"userb"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "Invalid input", http.StatusBadRequest)

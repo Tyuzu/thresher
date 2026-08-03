@@ -145,8 +145,8 @@ func fetchTransactionsByOrderIDs(ctx context.Context, app *infra.Deps, orderIDs 
 
 	var txns []models.Transaction
 	err := app.DB.FindMany(ctx, "transactions", bson.M{
-		"entity_type": "order",
-		"entity_id":   bson.M{"$in": orderIDs},
+		"entitytype": "order",
+		"entityid":   bson.M{"$in": orderIDs},
 	}, &txns)
 	if err != nil {
 		logger.Printf("Warning: failed to fetch transactions: %v", err)

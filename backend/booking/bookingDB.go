@@ -44,11 +44,11 @@ func FindTierByID(ctx context.Context, d db.Database, id string, out *models.Tie
 }
 
 func FindDateCap(ctx context.Context, d db.Database, entityType, entityId, date string, out *models.DateCap) error {
-	return d.FindOne(ctx, dateCapsCollection, bson.M{"entityType": entityType, "entityId": entityId, "date": date}, out)
+	return d.FindOne(ctx, dateCapsCollection, bson.M{"entitytype": entityType, "entityid": entityId, "date": date}, out)
 }
 
 func FindVendorAvailability(ctx context.Context, d db.Database, vendorId string, date string, out any) error {
-	return d.FindMany(ctx, config.Collections.VendorAvailabilityCollection, bson.M{"vendorid": vendorId, "start_date": bson.M{"$lte": date}, "end_date": bson.M{"$gte": date}}, out)
+	return d.FindMany(ctx, config.Collections.VendorAvailabilityCollection, bson.M{"vendorid": vendorId, "startdate": bson.M{"$lte": date}, "enddate": bson.M{"$gte": date}}, out)
 }
 
 func InsertBooking(ctx context.Context, d db.Database, b models.Booking) error {
@@ -60,7 +60,7 @@ func UpdateBookingStatusByID(ctx context.Context, d db.Database, bookingID strin
 }
 
 func UpdateDateCapacity(ctx context.Context, d db.Database, entityType, entityId, date string, payload any) error {
-	return d.UpdateOne(ctx, dateCapsCollection, bson.M{"entityType": entityType, "entityId": entityId, "date": date}, payload)
+	return d.UpdateOne(ctx, dateCapsCollection, bson.M{"entitytype": entityType, "entityid": entityId, "date": date}, payload)
 }
 
 func DeleteSlotByID(ctx context.Context, d db.Database, slotID string) (int64, error) {

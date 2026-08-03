@@ -14,15 +14,15 @@ const (
 
 type JobCreatedPayload struct {
 	JobID      string    `json:"jobid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type JobUpdatedPayload struct {
 	JobID      string    `json:"jobid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type JobDeletedPayload struct {
 	JobID      string    `json:"jobid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

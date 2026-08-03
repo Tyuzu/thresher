@@ -43,8 +43,8 @@ func GetNotices(app *infra.Deps) http.HandlerFunc {
 		}
 
 		filter := bson.M{
-			"entityType": entityType,
-			"entityId":   entityID,
+			"entitytype": entityType,
+			"entityid":   entityID,
 		}
 
 		opts := db.FindManyOptions{
@@ -64,8 +64,8 @@ func GetNotices(app *infra.Deps) http.HandlerFunc {
 			ID        string    `json:"noticeid"`
 			Title     string    `json:"title"`
 			Summary   string    `json:"summary"`
-			CreatedBy string    `json:"createdBy"`
-			CreatedAt time.Time `json:"createdAt"`
+			CreatedBy string    `json:"createdby"`
+			CreatedAt time.Time `json:"createdat"`
 		}
 
 		resp := make([]NoticeSummary, len(notices))

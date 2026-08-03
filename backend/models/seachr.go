@@ -12,7 +12,7 @@ type MEvent struct {
 	Category    string    `json:"category"`
 	Date        time.Time `json:"date"`
 	Description string    `json:"description"`
-	Image       string    `json:"banner_image"`
+	Image       string    `json:"bannerimage"`
 }
 
 // Place struct for MongoDB documents
@@ -23,16 +23,16 @@ type MPlace struct {
 	Category    string `json:"category"`
 	Description string `json:"description"`
 	Image       string `json:"banner"`
-	CreatedAt   string `json:"created_at"`
+	CreatedAt   string `json:"createdat"`
 }
 
 // Index represents the incoming JSON event structure.
 type Index struct {
-	EntityType string `json:"entity_type"`
+	EntityType string `json:"entitytype"`
 	Method     string `json:"method"`
-	EntityId   string `json:"entity_id"`
-	ItemId     string `json:"item_id"`
-	ItemType   string `json:"item_type"`
+	EntityId   string `json:"entityid"`
+	ItemId     string `json:"itemid"`
+	ItemType   string `json:"itemtype"`
 }
 
 // Result represents a single search result.

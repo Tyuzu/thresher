@@ -250,7 +250,7 @@ func probeAudioBitrate(path string) int {
 
 	var result struct {
 		Streams []struct {
-			BitRate json.Number `json:"bit_rate"`
+			BitRate json.Number `json:"bitrate"`
 		} `json:"streams"`
 	}
 	if err := json.Unmarshal([]byte(stdout), &result); err != nil || len(result.Streams) == 0 {

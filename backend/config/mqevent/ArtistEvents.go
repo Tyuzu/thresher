@@ -25,75 +25,75 @@ const (
 )
 
 type ArtistCreatedPayload struct {
-	ArtistID   string    `json:"artist_id"`
-	UserID     string    `json:"user_id"`
-	ArtistName string    `json:"artist_name"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ArtistID   string    `json:"artistid"`
+	UserID     string    `json:"userid"`
+	ArtistName string    `json:"artistname"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type ArtistUpdatedPayload struct {
-	ArtistID   string    `json:"artist_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ArtistID   string    `json:"artistid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type SongCreatedPayload struct {
-	SongID     string    `json:"song_id"`
-	ArtistID   string    `json:"artist_id"`
-	SongTitle  string    `json:"song_title"`
-	OccurredAt time.Time `json:"occurred_at"`
+	SongID     string    `json:"songid"`
+	ArtistID   string    `json:"artistid"`
+	SongTitle  string    `json:"songtitle"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type SongUpdatedPayload struct {
-	SongID     string    `json:"song_id"`
-	ArtistID   string    `json:"artist_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	SongID     string    `json:"songid"`
+	ArtistID   string    `json:"artistid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type SongDeletedPayload struct {
-	SongID     string    `json:"song_id"`
-	ArtistID   string    `json:"artist_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	SongID     string    `json:"songid"`
+	ArtistID   string    `json:"artistid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type ArtistEventCreatePayload struct {
-	ArtistID   string    `json:"artist_id"`
-	UserID     string    `json:"user_id"`
-	ArtistName string    `json:"artist_name"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ArtistID   string    `json:"artistid"`
+	UserID     string    `json:"userid"`
+	ArtistName string    `json:"artistname"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type ArtistEventUpdatePayload struct {
-	ArtistID   string    `json:"artist_id"`
-	UserID     string    `json:"user_id"`
-	ArtistName string    `json:"artist_name"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ArtistID   string    `json:"artistid"`
+	UserID     string    `json:"userid"`
+	ArtistName string    `json:"artistname"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type ArtistAddedToEventPayload struct {
-	ArtistID   string    `json:"artist_id"`
-	UserID     string    `json:"user_id"`
-	ArtistName string    `json:"artist_name"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ArtistID   string    `json:"artistid"`
+	UserID     string    `json:"userid"`
+	ArtistName string    `json:"artistname"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type BandMemberAddedPayload struct {
-	ArtistID   string    `json:"artist_id"`
-	UserID     string    `json:"user_id"`
-	ArtistName string    `json:"artist_name"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ArtistID   string    `json:"artistid"`
+	UserID     string    `json:"userid"`
+	ArtistName string    `json:"artistname"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type BandMemberUpdatedPayload struct {
-	ArtistID   string    `json:"artist_id"`
-	UserID     string    `json:"user_id"`
-	ArtistName string    `json:"artist_name"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ArtistID   string    `json:"artistid"`
+	UserID     string    `json:"userid"`
+	ArtistName string    `json:"artistname"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type BandMemberDeletedPayload struct {
-	ArtistID   string    `json:"artist_id"`
-	UserID     string    `json:"user_id"`
-	ArtistName string    `json:"artist_name"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ArtistID   string    `json:"artistid"`
+	UserID     string    `json:"userid"`
+	ArtistName string    `json:"artistname"`
+	OccurredAt time.Time `json:"occurredat"`
 }

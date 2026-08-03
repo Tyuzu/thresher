@@ -24,7 +24,7 @@ type MapDimensions struct {
 
 type MapAsset struct {
 	Image         string        `json:"image"`
-	FallbackImage string        `json:"fallbackImage"`
+	FallbackImage string        `json:"fallbackimage"`
 	Dimensions    MapDimensions `json:"dimensions"`
 }
 
@@ -39,15 +39,15 @@ type InteriorFloor struct {
 type LocationDetails struct {
 	Address   string `json:"address,omitempty"`
 	Price     int    `json:"price,omitempty"`
-	IntelData string `json:"intelData,omitempty"`
+	IntelData string `json:"inteldata,omitempty"`
 }
 
 type LiveEvent struct {
-	IsLive           bool      `json:"isLive"`
-	EventName        string    `json:"eventName,omitempty"`
-	EndsAt           time.Time `json:"endsAt,omitempty"`
-	RemainingSecs    int64     `json:"remainingSecs,omitempty"`
-	RewardMultiplier float64   `json:"rewardMultiplier,omitempty"`
+	IsLive           bool      `json:"islive"`
+	EventName        string    `json:"eventname,omitempty"`
+	EndsAt           time.Time `json:"endsat,omitempty"`
+	RemainingSecs    int64     `json:"remainingsecs,omitempty"`
+	RewardMultiplier float64   `json:"rewardmultiplier,omitempty"`
 }
 
 type LocationMarker struct {
@@ -56,13 +56,13 @@ type LocationMarker struct {
 	Category    string          `json:"category"`
 	X           float64         `json:"x"`
 	Y           float64         `json:"y"`
-	FloorLevel  *int            `json:"floorLevel,omitempty"` // Floor identifier for interior markers
+	FloorLevel  *int            `json:"floorlevel,omitempty"` // Floor identifier for interior markers
 	Icon        string          `json:"icon,omitempty"`
-	IconURL     string          `json:"iconUrl,omitempty"`
+	IconURL     string          `json:"iconurl,omitempty"`
 	Description string          `json:"description"`
-	MembersOnly bool            `json:"membersOnly"`
+	MembersOnly bool            `json:"membersonly"`
 	Details     LocationDetails `json:"details,omitempty"`
-	LiveEvent   *LiveEvent      `json:"liveEvent,omitempty"`
+	LiveEvent   *LiveEvent      `json:"liveevent,omitempty"`
 }
 
 type LockedArea struct {
@@ -83,10 +83,10 @@ type Point2D struct {
 
 type Territory struct {
 	ID            string    `json:"id"`
-	GangName      string    `json:"gangName"`
+	GangName      string    `json:"gangname"`
 	Color         string    `json:"color"`
-	ControlPct    float64   `json:"controlPct"`
-	PolygonPoints []Point2D `json:"polygonPoints"`
+	ControlPct    float64   `json:"controlpct"`
+	PolygonPoints []Point2D `json:"polygonpoints"`
 }
 
 type CategoryFilter struct {
@@ -100,7 +100,7 @@ type MapConfig struct {
 	Entity      string          `json:"entity"`
 	Title       string          `json:"title"`
 	Map         MapAsset        `json:"map"`
-	LockedAreas []LockedArea    `json:"lockedAreas"`
+	LockedAreas []LockedArea    `json:"lockedareas"`
 	Floors      []InteriorFloor `json:"floors,omitempty"` // Multi-floor configurations
 }
 
@@ -111,20 +111,20 @@ type MapResponseData struct {
 	Categories     []CategoryFilter `json:"categories"`
 	Locations      []LocationMarker `json:"locations"`
 	Territories    []Territory      `json:"territories,omitempty"`
-	LockedAreas    []LockedArea     `json:"lockedAreas,omitempty"`
+	LockedAreas    []LockedArea     `json:"lockedareas,omitempty"`
 	Floors         []InteriorFloor  `json:"floors,omitempty"`
-	PlayerProgress map[string]int   `json:"playerProgress"`
+	PlayerProgress map[string]int   `json:"playerprogress"`
 	Permalink      *PermalinkInfo   `json:"permalink,omitempty"` // Deep-link context
 }
 
 // FEATURE: Deep-Linking & Permalinks Struct
 type PermalinkInfo struct {
 	URL        string  `json:"url"`
-	TargetID   string  `json:"targetId,omitempty"`
+	TargetID   string  `json:"targetid,omitempty"`
 	Entity     string  `json:"entity"`
 	Zoom       int     `json:"zoom"`
-	FocusPoint Point2D `json:"focusPoint"`
-	FloorLevel *int    `json:"floorLevel,omitempty"`
+	FocusPoint Point2D `json:"focuspoint"`
+	FloorLevel *int    `json:"floorlevel,omitempty"`
 }
 
 // FEATURE: Real-Time Player & Vehicle Tracking Structs
@@ -150,9 +150,9 @@ type LiveTrackHub struct {
 }
 
 type MeasureResponse struct {
-	DistanceMeters  float64 `json:"distanceMeters"`
-	DistanceMiles   float64 `json:"distanceMiles"`
-	EstimatedTravel string  `json:"estimatedTravel"`
+	DistanceMeters  float64 `json:"distancemeters"`
+	DistanceMiles   float64 `json:"distancemiles"`
+	EstimatedTravel string  `json:"estimatedtravel"`
 }
 
 type APIResponse struct {

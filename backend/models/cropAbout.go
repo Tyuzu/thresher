@@ -2,18 +2,18 @@ package models
 
 type CropAbout struct {
 	ID                 string             `bson:"id" json:"id"`
-	CommonName         string             `bson:"commonName" json:"commonName"`
-	ScientificName     string             `bson:"scientificName" json:"scientificName"`
+	CommonName         string             `bson:"commonname" json:"commonname"`
+	ScientificName     string             `bson:"scientificname" json:"scientificname"`
 	Image              string             `bson:"image" json:"image"`
-	ImageAlt           string             `bson:"imageAlt" json:"imageAlt"`
+	ImageAlt           string             `bson:"imagealt" json:"imagealt"`
 	Description        string             `bson:"description" json:"description"`
-	NutritionalValues  []NutritionalValue `bson:"nutritionalValues" json:"nutritionalValues"`
-	GrowingConditions  GrowingConditions  `bson:"growingConditions" json:"growingConditions"`
-	PlantingHarvesting string             `bson:"plantingHarvesting" json:"plantingHarvesting"`
-	CareTips           []string           `bson:"careTips" json:"careTips"`
+	NutritionalValues  []NutritionalValue `bson:"nutritionalvalues" json:"nutritionalvalues"`
+	GrowingConditions  GrowingConditions  `bson:"growingconditions" json:"growingconditions"`
+	PlantingHarvesting string             `bson:"plantingharvesting" json:"plantingHarvesting"`
+	CareTips           []string           `bson:"caretips" json:"caretips"`
 	Varieties          []string           `bson:"varieties" json:"varieties"`
 	Usage              string             `bson:"usage" json:"usage"`
-	FunFacts           []string           `bson:"funFacts" json:"funFacts"`
+	FunFacts           []string           `bson:"funfacts" json:"funfacts"`
 }
 
 type NutritionalValue struct {

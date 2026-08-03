@@ -40,9 +40,9 @@ func ToggleLike(app *infra.Deps) http.HandlerFunc {
 		entityID := utils.GetParam(r, "entityid")
 
 		filter := bson.M{
-			"user_id":     userID,
-			"entity_type": entityType,
-			"entity_id":   entityID,
+			"userid":     userID,
+			"entitytype": entityType,
+			"entityid":   entityID,
 		}
 
 		redisKey := redisLikeKey(entityType, entityID)
@@ -121,8 +121,8 @@ func BatchUserLikes(app *infra.Deps) http.HandlerFunc {
 			ctx,
 			likesCollection,
 			bson.M{
-				"user_id":   userID,
-				"entity_id": bson.M{"$in": req.EntityIDs},
+				"userid":   userID,
+				"entityid": bson.M{"$in": req.EntityIDs},
 			},
 			&likes,
 		)

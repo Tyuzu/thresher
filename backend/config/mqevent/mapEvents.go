@@ -14,15 +14,15 @@ const (
 
 type MapCreatedPayload struct {
 	MapID      string    `json:"mapid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type MapUpdatedPayload struct {
 	MapID      string    `json:"mapid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type MapDeletedPayload struct {
 	MapID      string    `json:"mapid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

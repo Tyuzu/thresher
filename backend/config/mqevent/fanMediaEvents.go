@@ -17,7 +17,7 @@ type FanMediaCreatedPayload struct {
 	EntityID   string    `json:"entityid"`
 	EntityType string    `json:"entitytype"`
 	CreatorID  string    `json:"creatorid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type FanMediaUpdatedPayload struct {
@@ -25,7 +25,7 @@ type FanMediaUpdatedPayload struct {
 	EntityID   string    `json:"entityid"`
 	EntityType string    `json:"entitytype"`
 	UpdatedBy  string    `json:"updatedby"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type FanMediaRemovedPayload struct {
@@ -33,5 +33,5 @@ type FanMediaRemovedPayload struct {
 	EntityID   string    `json:"entityid"`
 	EntityType string    `json:"entitytype"`
 	DeletedBy  string    `json:"deletedby"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

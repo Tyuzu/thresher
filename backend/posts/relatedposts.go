@@ -18,8 +18,8 @@ type Post struct {
 	Category    string    `bson:"category" json:"category"`
 	Subcategory string    `bson:"subcategory" json:"subcategory"`
 	Tags        []string  `bson:"tags" json:"tags"`
-	CreatedAt   time.Time `bson:"createdAt" json:"createdAt"`
-	CreatedBy   string    `bson:"createdBy" json:"createdBy"`
+	CreatedAt   time.Time `bson:"createdat" json:"createdat"`
+	CreatedBy   string    `bson:"createdby" json:"createdby"`
 }
 
 func GetRelatedPosts(app *infra.Deps) http.HandlerFunc {

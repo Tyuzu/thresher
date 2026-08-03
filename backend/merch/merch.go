@@ -91,7 +91,7 @@ func CreateMerch(app *infra.Deps) http.HandlerFunc {
 			Price    float64 `json:"price"`
 			Discount float64 `json:"discount"`
 			Stock    int     `json:"stock"`
-			Photo    string  `json:"merch_pic"`
+			Photo    string  `json:"merchpic"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -232,9 +232,9 @@ func EditMerch(app *infra.Deps) http.HandlerFunc {
 			r.Context(),
 			merchCollection,
 			bson.M{
-				"entity_type": entityType,
-				"entity_id":   eventID,
-				"merchid":     merchID,
+				"entitytype": entityType,
+				"entityid":   eventID,
+				"merchid":    merchID,
 			},
 			bson.M{"$set": update},
 		)
@@ -321,13 +321,13 @@ func DeleteMerch(app *infra.Deps) http.HandlerFunc {
 			r.Context(),
 			merchCollection,
 			bson.M{
-				"entity_type": entityType,
-				"entity_id":   eventID,
-				"merchid":     merchID,
-				"deletedAt":   bson.M{"$exists": false}, // Only soft-delete if not already deleted
+				"entitytype": entityType,
+				"entityid":   eventID,
+				"merchid":    merchID,
+				"deletedat":  bson.M{"$exists": false}, // Only soft-delete if not already deleted
 			},
 			bson.M{"$set": bson.M{
-				"deletedAt": now,
+				"deletedat": now,
 				"updatedat": now,
 			}},
 		)
@@ -376,9 +376,9 @@ func BuyMerch(app *infra.Deps) http.HandlerFunc {
 		err := app.DB.WithDB(r.Context(), func(ctx context.Context) error {
 			var merch models.Merch
 			err := app.DB.FindOne(ctx, merchCollection, bson.M{
-				"entity_type": utils.GetParam(r, "entityType"),
-				"entity_id":   utils.GetParam(r, "eventid"),
-				"merchid":     utils.GetParam(r, "merchid"),
+				"entitytype": utils.GetParam(r, "entitytype"),
+				"entityid":   utils.GetParam(r, "eventid"),
+				"merchid":    utils.GetParam(r, "merchid"),
 			}, &merch)
 			if err != nil {
 				return errors.New("merch not found")

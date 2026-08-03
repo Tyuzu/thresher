@@ -92,7 +92,7 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 		if err := app.DB.FindMany(
 			ctx,
 			farmsCollection,
-			bson.M{"createdBy": userID},
+			bson.M{"createdby": userID},
 			&farms,
 		); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
@@ -176,8 +176,8 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 		if len(orderIDs) > 0 {
 			var txns []models.Transaction
 			_ = app.DB.FindMany(ctx, "transactions", bson.M{
-				"entity_type": "order",
-				"entity_id":   bson.M{"$in": orderIDs},
+				"entitytype": "order",
+				"entityid":   bson.M{"$in": orderIDs},
 			}, &txns)
 
 			for _, t := range txns {

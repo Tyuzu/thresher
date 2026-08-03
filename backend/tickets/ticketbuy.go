@@ -160,8 +160,8 @@ func BroadcastTicketUpdate(eventId, ticketId string, remaining int) {
 // ------------------------------------------------------------------
 
 type TicketPurchaseRequest struct {
-	TicketID string `json:"ticketId"`
-	EventID  string `json:"eventId"`
+	TicketID string `json:"ticketid"`
+	EventID  string `json:"eventid"`
 	Quantity int    `json:"quantity"`
 }
 

@@ -32,7 +32,7 @@ func UpdatePlaceInfo(app *infra.Deps) http.HandlerFunc {
 
 		// Fetch existing place (use placeid, NOT _id)
 		var existing struct {
-			CreatedBy string `bson:"createdBy"`
+			CreatedBy string `bson:"createdby"`
 		}
 		if err := app.DB.FindOne(
 			ctx,
@@ -51,7 +51,7 @@ func UpdatePlaceInfo(app *infra.Deps) http.HandlerFunc {
 
 		// Parse JSON payload
 		var payload struct {
-			AccessibilityInfo string   `json:"accessibility_info"`
+			AccessibilityInfo string   `json:"accessibilityinfo"`
 			Amenities         []string `json:"amenities"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -62,7 +62,7 @@ func UpdatePlaceInfo(app *infra.Deps) http.HandlerFunc {
 		update := bson.M{}
 
 		if payload.AccessibilityInfo != "" {
-			update["accessibility_info"] = payload.AccessibilityInfo
+			update["accessibilityinfo"] = payload.AccessibilityInfo
 		}
 
 		if len(payload.Amenities) > 0 {
@@ -88,7 +88,7 @@ func UpdatePlaceInfo(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		update["updated_at"] = time.Now()
+		update["updatedat"] = time.Now()
 		update["updatedBy"] = userID
 
 		// ✅ Pass plain fields (DB layer adds $set)

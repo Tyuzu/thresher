@@ -67,7 +67,7 @@ func GetRecommendedAlbums(app *infra.Deps) http.HandlerFunc {
 		opts := db.FindManyOptions{
 			Limit: limit,
 			Skip:  (page - 1) * limit,
-			Sort:  bson.D{{Key: "release_date", Value: -1}, {Key: "_id", Value: -1}},
+			Sort:  bson.D{{Key: "releasedate", Value: -1}, {Key: "_id", Value: -1}},
 		}
 
 		filter := bson.M{"published": true}
@@ -88,21 +88,21 @@ func GetRecommendations(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		basedOn := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("based_on")))
+		basedOn := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("basedon")))
 
 		filter := bson.M{"published": true}
 		sort := bson.D{{Key: "_id", Value: -1}} // default stable sort
 
 		switch basedOn {
 
-		case "recently_played":
+		case "recentlyplayed":
 			filter["plays"] = bson.M{"$gt": 0}
 			sort = bson.D{{Key: "plays", Value: -1}, {Key: "_id", Value: -1}}
 
-		case "language_en":
+		case "languageen":
 			filter["language"] = "en"
 
-		case "genre_pop":
+		case "genrepop":
 			filter["genre"] = "Pop"
 		}
 

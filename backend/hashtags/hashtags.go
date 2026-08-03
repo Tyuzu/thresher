@@ -12,7 +12,7 @@ import (
 // HashtagPost is the shape we return to the frontend grid
 type HashtagPost struct {
 	PostID      string      `json:"postid"`
-	MediaURL    interface{} `json:"media_url,omitempty"`
+	MediaURL    interface{} `json:"mediaurl,omitempty"`
 	Type        string      `json:"type,omitempty"`
 	Title       string      `json:"title,omitempty"`
 	Description string      `json:"description,omitempty"`
@@ -31,7 +31,7 @@ type TrendingHashtag struct {
 // Person is a simple shape for hashtag "people" tab
 type Person struct {
 	Username    string `json:"username"`
-	DisplayName string `json:"display_name"`
+	DisplayName string `json:"displayname"`
 }
 
 // parse pagination query

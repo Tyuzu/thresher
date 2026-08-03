@@ -16,25 +16,25 @@ const (
 
 type ItineraryCreatedPayload struct {
 	ItineraryID string    `json:"itineraryid"`
-	OccurredAt  time.Time `json:"occurred_at"`
+	OccurredAt  time.Time `json:"occurredat"`
 }
 
 type ItineraryUpdatedPayload struct {
 	ItineraryID string    `json:"itineraryid"`
-	OccurredAt  time.Time `json:"occurred_at"`
+	OccurredAt  time.Time `json:"occurredat"`
 }
 
 type ItineraryRemovedPayload struct {
 	ItineraryID string    `json:"itineraryid"`
-	OccurredAt  time.Time `json:"occurred_at"`
+	OccurredAt  time.Time `json:"occurredat"`
 }
 
 type ItineraryForkedPayload struct {
 	ItineraryID string    `json:"itineraryid"`
-	OccurredAt  time.Time `json:"occurred_at"`
+	OccurredAt  time.Time `json:"occurredat"`
 }
 
 type ItineraryPublishedPayload struct {
 	ItineraryID string    `json:"itineraryid"`
-	OccurredAt  time.Time `json:"occurred_at"`
+	OccurredAt  time.Time `json:"occurredat"`
 }

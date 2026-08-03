@@ -192,15 +192,15 @@ func UpdateRecipe(app *infra.Deps) http.HandlerFunc {
 		updates := bson.M{
 			"title":       r.FormValue("title"),
 			"description": r.FormValue("description"),
-			"cookTime":    r.FormValue("cookTime"),
+			"cooktime":    r.FormValue("cookTime"),
 			"cuisine":     r.FormValue("cuisine"),
 			"dietary":     splitCSV(r.FormValue("dietary")),
-			"portionSize": r.FormValue("portionSize"),
+			"portionsize": r.FormValue("portionSize"),
 			"season":      r.FormValue("season"),
 			"tags":        splitCSV(r.FormValue("tags")),
 			"steps":       splitLines(r.FormValue("steps")),
 			"difficulty":  r.FormValue("difficulty"),
-			"videoUrl":    r.FormValue("videoUrl"),
+			"videourl":    r.FormValue("videoUrl"),
 			"notes":       r.FormValue("notes"),
 		}
 

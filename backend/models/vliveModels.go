@@ -23,9 +23,9 @@ type LiveStream struct {
 	LiveID string `bson:"liveid,omitempty" json:"liveid"`
 
 	// Ownership / scope
-	EntityType string `bson:"entity_type" json:"entityType"`
-	EntityID   string `bson:"entity_id" json:"entityId"`
-	CreatorID  string `bson:"creator_id" json:"creatorId"`
+	EntityType string `bson:"entitytype" json:"entitytype"`
+	EntityID   string `bson:"entityid" json:"entityid"`
+	CreatorID  string `bson:"creatorid" json:"creatorid"`
 
 	// Metadata
 	Title       string   `bson:"title" json:"title"`
@@ -35,34 +35,34 @@ type LiveStream struct {
 	State       string   `bson:"state" json:"state"`
 
 	// Visibility
-	IsPublic bool `bson:"is_public" json:"isPublic"`
+	IsPublic bool `bson:"ispublic" json:"ispublic"`
 	Unlisted bool `bson:"unlisted" json:"unlisted"`
 
 	// Streaming / ingest (NEVER expose)
-	StreamKey string `bson:"stream_key" json:"-"`
-	IngestURL string `bson:"ingest_url" json:"-"`
+	StreamKey string `bson:"streamkey" json:"-"`
+	IngestURL string `bson:"ingesturl" json:"-"`
 
 	// Playback
-	PlaybackURL string `bson:"playback_url,omitempty" json:"playbackUrl,omitempty"`
+	PlaybackURL string `bson:"playbackurl,omitempty" json:"playbackurl,omitempty"`
 
 	// Recording / VOD (internal paths hidden)
-	RecordingPath string `bson:"recording_path,omitempty" json:"-"`
-	VODURL        string `bson:"vod_url,omitempty" json:"vodUrl,omitempty"`
-	VODPublished  bool   `bson:"vod_published" json:"vodPublished"`
+	RecordingPath string `bson:"recordingpath,omitempty" json:"-"`
+	VODURL        string `bson:"vodurl,omitempty" json:"vodurl,omitempty"`
+	VODPublished  bool   `bson:"vodpublished" json:"vodpublished"`
 
 	// Chat
-	ChatEnabled     bool `bson:"chat_enabled" json:"chatEnabled"`
-	SlowModeSeconds int  `bson:"slow_mode_seconds" json:"slowModeSeconds"`
+	ChatEnabled     bool `bson:"chatenabled" json:"chatenabled"`
+	SlowModeSeconds int  `bson:"slowmodeseconds" json:"slowmodeseconds"`
 
 	// Scheduling / timing
-	ScheduledAt time.Time `bson:"scheduled_at,omitempty" json:"scheduledAt,omitempty"`
-	ReadyAt     time.Time `bson:"ready_at,omitempty" json:"readyAt,omitempty"`
-	StartedAt   time.Time `bson:"started_at,omitempty" json:"startedAt,omitempty"`
-	EndedAt     time.Time `bson:"ended_at,omitempty" json:"endedAt,omitempty"`
+	ScheduledAt time.Time `bson:"scheduledat,omitempty" json:"scheduledat,omitempty"`
+	ReadyAt     time.Time `bson:"readyat,omitempty" json:"readyaAt,omitempty"`
+	StartedAt   time.Time `bson:"startedat,omitempty" json:"startedat,omitempty"`
+	EndedAt     time.Time `bson:"endedat,omitempty" json:"endedat,omitempty"`
 
 	// Audit
-	CreatedAt time.Time `bson:"created_at" json:"createdAt"`
-	UpdatedAt time.Time `bson:"updated_at,omitempty" json:"updatedAt,omitempty"` // optional for tracking edits
+	CreatedAt time.Time `bson:"createdat" json:"createdat"`
+	UpdatedAt time.Time `bson:"updatedat,omitempty" json:"updatedat,omitempty"` // optional for tracking edits
 
 	// Runtime-only fields (not persisted)
 	ViewerCount int `bson:"-" json:"viewerCount,omitempty"`

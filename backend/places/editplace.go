@@ -33,7 +33,7 @@ func EditPlace(app *infra.Deps) http.HandlerFunc {
 
 		// Fetch existing place (use placeid)
 		var existing struct {
-			CreatedBy string `bson:"createdBy"`
+			CreatedBy string `bson:"createdby"`
 		}
 		if err := app.DB.FindOne(
 			ctx,

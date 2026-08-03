@@ -168,7 +168,7 @@ func (h *Handler) GetUnreadCount(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	filter := bson.M{"userid": userID, "isRead": false}
+	filter := bson.M{"userid": userID, "isread": false}
 	count, err := h.app.DB.CountDocuments(ctx, notificationsCollection, filter)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to count notifications")
@@ -194,8 +194,8 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request, ps httprout
 	filter := bson.M{"_id": notificationID}
 	update := bson.M{
 		"$set": bson.M{
-			"isRead":    true,
-			"updatedAt": time.Now(),
+			"isread":    true,
+			"updatedat": time.Now(),
 		},
 	}
 
@@ -222,11 +222,11 @@ func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	filter := bson.M{"userid": userID, "isRead": false}
+	filter := bson.M{"userid": userID, "isread": false}
 	update := bson.M{
 		"$set": bson.M{
-			"isRead":    true,
-			"updatedAt": time.Now(),
+			"isread":    true,
+			"updatedat": time.Now(),
 		},
 	}
 

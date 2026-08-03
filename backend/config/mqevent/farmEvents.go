@@ -25,91 +25,91 @@ const (
 )
 
 type FarmCreatedPayload struct {
-	FarmID     string    `json:"farm_id"`
-	UserID     string    `json:"user_id"`
-	FarmName   string    `json:"farm_name"`
+	FarmID     string    `json:"farmid"`
+	UserID     string    `json:"userid"`
+	FarmName   string    `json:"farmname"`
 	Location   string    `json:"location"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type FarmUpdatedPayload struct {
-	FarmID     string    `json:"farm_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	FarmID     string    `json:"farmid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type FarmDeletedPayload struct {
-	FarmID     string    `json:"farm_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	FarmID     string    `json:"farmid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CropCreatedPayload struct {
-	CropID     string    `json:"crop_id"`
-	FarmID     string    `json:"farm_id"`
-	UserID     string    `json:"user_id"`
-	CropName   string    `json:"crop_name"`
-	OccurredAt time.Time `json:"occurred_at"`
+	CropID     string    `json:"cropid"`
+	FarmID     string    `json:"farmid"`
+	UserID     string    `json:"userid"`
+	CropName   string    `json:"cropname"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CropUpdatedPayload struct {
-	CropID     string    `json:"crop_id"`
-	FarmID     string    `json:"farm_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	CropID     string    `json:"cropid"`
+	FarmID     string    `json:"farmid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type FarmProductCreatedPayload struct {
-	ProductID   string    `json:"product_id"`
-	UserID      string    `json:"user_id"`
-	ProductName string    `json:"product_name"`
-	OccurredAt  time.Time `json:"occurred_at"`
+	ProductID   string    `json:"productid"`
+	UserID      string    `json:"userid"`
+	ProductName string    `json:"productname"`
+	OccurredAt  time.Time `json:"occurredat"`
 }
 
 type FarmProductUpdatedPayload struct {
-	ProductID  string    `json:"product_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ProductID  string    `json:"productid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CropBoughtPayload struct {
-	ProductID  string    `json:"product_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ProductID  string    `json:"productid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type OrderStatusUpdatedPayload struct {
-	ProductID  string    `json:"product_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ProductID  string    `json:"productid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type OrdersBulkUpdatedPayload struct {
-	ProductID  string    `json:"product_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ProductID  string    `json:"productid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CropAboutCreatedPayload struct {
-	ProductID  string    `json:"product_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ProductID  string    `json:"productid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CropAboutUpdatedPayload struct {
-	ProductID  string    `json:"product_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ProductID  string    `json:"productid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CropAboutDeletedPayload struct {
-	ProductID  string    `json:"product_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ProductID  string    `json:"productid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type FarmProductDeletedPayload struct {
-	ProductID  string    `json:"product_id"`
-	UserID     string    `json:"user_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ProductID  string    `json:"productid"`
+	UserID     string    `json:"userid"`
+	OccurredAt time.Time `json:"occurredat"`
 }

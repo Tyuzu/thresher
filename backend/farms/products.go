@@ -215,8 +215,8 @@ func parseProductJSON(r *http.Request, itemType string) (models.Product, error) 
 		Price         float64 `json:"price"`
 		Discount      float64 `json:"discount"`
 		Quantity      float64 `json:"quantity"`
-		AvailableFrom string  `json:"availableFrom"`
-		AvailableTo   string  `json:"availableTo"`
+		AvailableFrom string  `json:"availablefrom"`
+		AvailableTo   string  `json:"availableto"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {

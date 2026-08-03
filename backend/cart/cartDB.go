@@ -22,7 +22,7 @@ var (
 
 func getCartItemsFromDB(ctx context.Context, userID string, app *infra.Deps) ([]models.CartItem, error) {
 	var items []models.CartItem
-	err := app.DB.FindMany(ctx, cartCollection, bson.M{"userId": userID}, &items)
+	err := app.DB.FindMany(ctx, cartCollection, bson.M{"userid": userID}, &items)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func getCartItemsFromDB(ctx context.Context, userID string, app *infra.Deps) ([]
 }
 
 func replaceCartItemsInDB(ctx context.Context, userID string, docs []any, app *infra.Deps) error {
-	if _, err := app.DB.Delete(ctx, cartCollection, bson.M{"userId": userID}); err != nil {
+	if _, err := app.DB.Delete(ctx, cartCollection, bson.M{"userid": userID}); err != nil {
 		return err
 	}
 	if len(docs) == 0 {
@@ -46,14 +46,14 @@ func upsertCartItemInDB(ctx context.Context, userID string, item models.CartItem
 		"$inc": bson.M{"quantity": item.Quantity},
 		"$set": bson.M{
 			"price":      item.Price,
-			"itemName":   item.ItemName,
-			"itemType":   item.ItemType,
+			"itemname":   item.ItemName,
+			"itemtype":   item.ItemType,
 			"unit":       item.Unit,
 			"category":   item.Category,
-			"entityId":   item.EntityID,
-			"entityType": item.EntityType,
+			"entityid":   item.EntityID,
+			"entitytype": item.EntityType,
 		},
-		"$setOnInsert": bson.M{"addedAt": item.AddedAt},
+		"$setOnInsert": bson.M{"addedat": item.AddedAt},
 	}
 
 	return app.DB.Upsert(ctx, cartCollection, filter, update)
@@ -89,7 +89,7 @@ func deleteCartItemFromDB(
 }
 
 func clearCartForUser(ctx context.Context, userID string, app *infra.Deps) error {
-	_, err := app.DB.Delete(ctx, cartCollection, bson.M{"userId": userID})
+	_, err := app.DB.Delete(ctx, cartCollection, bson.M{"userid": userID})
 	return err
 }
 
@@ -119,7 +119,7 @@ func getGroupedCart(
 
 func fetchUserOrdersFromDB(ctx context.Context, userID string, app *infra.Deps) ([]models.Order, []models.FarmOrder, error) {
 	regularOrders := make([]models.Order, 0)
-	if err := app.DB.FindMany(ctx, ordersCollection, bson.M{"userId": userID}, &regularOrders); err != nil {
+	if err := app.DB.FindMany(ctx, ordersCollection, bson.M{"userid": userID}, &regularOrders); err != nil {
 		return nil, nil, err
 	}
 
@@ -300,17 +300,17 @@ func lookupMerchandise(ctx context.Context, merchID string, app *infra.Deps) (*I
 
 func buildCartFilter(userID, itemID, category, entityID, entityType string) bson.M {
 	filter := bson.M{
-		"userId": userID,
-		"itemId": itemID,
+		"userid": userID,
+		"itemid": itemID,
 	}
 	if category != "" {
 		filter["category"] = category
 	}
 	if entityID != "" {
-		filter["entityId"] = entityID
+		filter["entityid"] = entityID
 	}
 	if entityType != "" {
-		filter["entityType"] = entityType
+		filter["entitytype"] = entityType
 	}
 	return filter
 }

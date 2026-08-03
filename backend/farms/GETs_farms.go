@@ -284,8 +284,8 @@ func GetPaginatedFarms(app *infra.Deps) http.HandlerFunc {
 			bson.M{"$sort": bson.M{"createdAt": -1}},
 			bson.M{"$lookup": bson.M{
 				"from":         "crops",
-				"localField":   "farmid",
-				"foreignField": "farmid",
+				"localfield":   "farmid",
+				"foreignfield": "farmid",
 				"as":           "crops",
 			}},
 			bson.M{"$skip": skip},

@@ -27,7 +27,7 @@ func GetWorkerById(app *infra.Deps) http.HandlerFunc {
 		err := app.DB.FindOne(
 			ctx,
 			BaitoWorkersCollection,
-			bson.M{"baitoWorkerId": utils.GetParam(r, "workerId")},
+			bson.M{"baitoworkerid": utils.GetParam(r, "workerid")},
 			&worker,
 		)
 		if err != nil {
@@ -54,8 +54,8 @@ func GetWorkerSkills(app *infra.Deps) http.HandlerFunc {
 			to keep the Database interface Mongo-agnostic
 		*/
 		pipeline := mongo.Pipeline{
-			{{Key: "$unwind", Value: "$preferredRoles"}},
-			{{Key: "$group", Value: bson.M{"_id": "$preferredRoles"}}},
+			{{Key: "$unwind", Value: "$preferredroles"}},
+			{{Key: "$group", Value: bson.M{"_id": "$preferredroles"}}},
 			{{Key: "$project", Value: bson.M{"_id": 0, "skill": "$_id"}}},
 		}
 

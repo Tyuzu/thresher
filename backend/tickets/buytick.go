@@ -20,8 +20,8 @@ import (
 func BuysTicket(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		type Request struct {
-			TicketID string `json:"ticketId"`
-			EventID  string `json:"eventId"`
+			TicketID string `json:"ticketid"`
+			EventID  string `json:"eventid"`
 			Quantity int    `json:"quantity"`
 		}
 

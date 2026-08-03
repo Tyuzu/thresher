@@ -18,9 +18,9 @@ func (p *PaymentService) CashOnDelivery(w http.ResponseWriter, r *http.Request) 
 	userID := utils.GetUserIDFromRequest(r)
 
 	var req struct {
-		PaymentType string `json:"paymentType"`
-		EntityType  string `json:"entityType"`
-		EntityID    string `json:"entityId"`
+		PaymentType string `json:"paymenttype"`
+		EntityType  string `json:"entitytype"`
+		EntityID    string `json:"entityid"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "invalid request")

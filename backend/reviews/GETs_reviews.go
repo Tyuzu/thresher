@@ -26,8 +26,8 @@ func GetReviews(app *infra.Deps) http.HandlerFunc {
 		skip, limit := utils.ParsePagination(r, 10, 100)
 
 		filter := bson.M{
-			"entityType": entityType,
-			"entityId":   entityId,
+			"entitytype": entityType,
+			"entityid":   entityId,
 		}
 
 		var reviews []models.Review

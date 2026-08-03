@@ -28,24 +28,24 @@ type BaitosResponse struct {
 	Wage            string     `bson:"wage" json:"wage"`
 	Requirements    string     `bson:"requirements" json:"requirements"`
 	BannerURL       string     `bson:"banner,omitempty" json:"banner,omitempty"`
-	WorkHours       string     `bson:"workHours" json:"workHours"`
+	WorkHours       string     `bson:"workhours" json:"workhours"`
 	Duration        string     `bson:"duration,omitempty" json:"duration,omitempty"`
 	LastDateToApply *time.Time `bson:"lastdate,omitempty" json:"lastdate,omitempty"`
-	CreatedAt       time.Time  `bson:"createdAt" json:"createdAt"`
-	OwnerID         string     `bson:"ownerId" json:"ownerId"`
+	CreatedAt       time.Time  `bson:"createdat" json:"createdat"`
+	OwnerID         string     `bson:"ownerid" json:"ownerid"`
 }
 
 type BaitoWorkersResponse struct {
-	UserID        string   `json:"userId" bson:"userId"`
-	BaitoWorkerId string   `json:"baitoWorkerId" bson:"baitoWorkerId"`
+	UserID        string   `json:"userid" bson:"userid"`
+	BaitoWorkerId string   `json:"baitoworkerid" bson:"baitoworkerid"`
 	Name          string   `json:"name" bson:"name"`
 	Age           int      `json:"age" bson:"age"`
 	Phone         string   `json:"phone" bson:"phone"`
 	Location      string   `json:"location" bson:"location"`
-	Preferred     []string `json:"preferredRoles" bson:"preferredRoles"`
+	Preferred     []string `json:"preferredroles" bson:"preferredroles"`
 	Bio           string   `json:"bio" bson:"bio"`
-	ProfilePic    string   `json:"profilePic" bson:"profilePic"`
-	CreatedAt     int64    `json:"createdAt" bson:"createdAt"`
+	ProfilePic    string   `json:"profilepic" bson:"profilepic"`
+	CreatedAt     int64    `json:"createdat" bson:"createdat"`
 }
 
 // --- BlogPostResponse for list view ---
@@ -55,10 +55,10 @@ type BlogPostResponse struct {
 	Title       string    `bson:"title" json:"title"`
 	Category    string    `bson:"category" json:"category"`
 	Subcategory string    `bson:"subcategory" json:"subcategory"`
-	ReferenceID *string   `bson:"referenceId,omitempty" json:"referenceId,omitempty"`
+	ReferenceID *string   `bson:"referenceid,omitempty" json:"referenceid,omitempty"`
 	Thumb       string    `bson:"thumb" json:"thumb"`
-	CreatedBy   string    `bson:"createdBy" json:"createdBy"`
+	CreatedBy   string    `bson:"createdby" json:"createdby"`
 	Username    string    `bson:"username" json:"username"`
-	CreatedAt   time.Time `bson:"createdAt" json:"createdAt"`
-	UpdatedAt   time.Time `bson:"updatedAt" json:"updatedAt"`
+	CreatedAt   time.Time `bson:"createdat" json:"createdat"`
+	UpdatedAt   time.Time `bson:"updatedat" json:"updatedat"`
 }

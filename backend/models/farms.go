@@ -27,18 +27,18 @@ type Farm struct {
 	Longitude      float64            `bson:"longitude,omitempty"   json:"longitude,omitempty"`
 	Description    string             `bson:"description,omitempty" json:"description,omitempty"`
 	Owner          string             `bson:"owner"                 json:"owner"`
-	ContactInfo    ContactInfo        `bson:"contactInfo,omitempty" json:"contactInfo,omitempty"`
+	ContactInfo    ContactInfo        `bson:"contactinfo,omitempty" json:"contactinfo,omitempty"`
 	Availability   WeeklyAvailability `json:"availability" bson:"availability"`
 	Tags           []string           `bson:"tags,omitempty"        json:"tags,omitempty"`
 	Banner         string             `bson:"banner,omitempty"       json:"photo,omitempty"`
 	Crops          []Crop             `bson:"crops" json:"crops,omitempty"` // loaded via lookup or separate query
 	Media          []string           `bson:"media,omitempty"       json:"media,omitempty"`
-	AvgRating      float64            `bson:"avgRating,omitempty"   json:"avgRating,omitempty"`
-	ReviewCount    int                `bson:"reviewCount,omitempty" json:"reviewCount,omitempty"`
-	FavoritesCount int64              `bson:"favoritesCount,omitempty" json:"favoritesCount,omitempty"`
-	CreatedBy      string             `bson:"createdBy"             json:"createdBy"`
-	CreatedAt      time.Time          `bson:"createdAt"             json:"createdAt"`
-	UpdatedAt      time.Time          `bson:"updatedAt"             json:"updatedAt"`
+	AvgRating      float64            `bson:"avgrating,omitempty"   json:"avgrating,omitempty"`
+	ReviewCount    int                `bson:"reviewcount,omitempty" json:"reviewcount,omitempty"`
+	FavoritesCount int64              `bson:"favoritescount,omitempty" json:"favoritescount,omitempty"`
+	CreatedBy      string             `bson:"createdby"             json:"createdby"`
+	CreatedAt      time.Time          `bson:"createdat"             json:"createdat"`
+	UpdatedAt      time.Time          `bson:"updatedat"             json:"updatedat"`
 	Contact        string             `json:"contact"`
 
 	Social   string `json:"social,omitempty" bson:"social,omitempty"`
@@ -62,18 +62,18 @@ type Crop struct {
 	Category     string       `json:"category,omitempty"`
 	CatalogueId  string       `json:"catalogueid,omitempty"`
 	Featured     bool         `json:"featured,omitempty"`
-	OutOfStock   bool         `json:"outOfStock,omitempty"`
-	HarvestDate  *time.Time   `bson:"harvestDate,omitempty"`
-	PlantedDate  time.Time    `bson:"plantedDate,omitempty"`
-	LastSoldAt   time.Time    `bson:"lastSoldAt,omitempty"`
-	ExpiryDate   *time.Time   `json:"expiryDate,omitempty"`
-	UpdatedAt    time.Time    `json:"updatedAt"`
-	PriceHistory []PricePoint `json:"priceHistory,omitempty"`
-	FieldPlot    string       `json:"fieldPlot,omitempty"`
-	CreatedAt    time.Time    `json:"createdAt"`
+	OutOfStock   bool         `json:"outofstock,omitempty"`
+	HarvestDate  *time.Time   `bson:"harvestdate,omitempty"`
+	PlantedDate  time.Time    `bson:"planteddate,omitempty"`
+	LastSoldAt   time.Time    `bson:"lastsoldat,omitempty"`
+	ExpiryDate   *time.Time   `json:"expirydate,omitempty"`
+	UpdatedAt    time.Time    `json:"updatedat"`
+	PriceHistory []PricePoint `json:"pricehistory,omitempty"`
+	FieldPlot    string       `json:"fieldplot,omitempty"`
+	CreatedAt    time.Time    `json:"createdat"`
 	CreatedBy    string       `json:"createdby"`
 	FarmID       string       `bson:"farmid,omitempty" json:"farmid,omitempty"`
-	FarmName     string       `json:"farmName,omitempty"` // CRITICAL FIX: Add farm name for cart/display
+	FarmName     string       `json:"farmname,omitempty"` // CRITICAL FIX: Add farm name for cart/display
 }
 
 type IncomingOrder struct {
@@ -83,8 +83,8 @@ type IncomingOrder struct {
 	Crop         string `json:"crop"`
 	Qty          int    `json:"qty"`
 	Unit         string `json:"unit"`
-	OrderDate    string `json:"orderDate"`
-	DeliveryDate string `json:"deliveryDate"`
+	OrderDate    string `json:"orderdate"`
+	DeliveryDate string `json:"deliverydate"`
 	Address      string `json:"address"`
 	Payment      string `json:"payment"`
 	Status       string `json:"status"`
@@ -96,8 +96,8 @@ type FarmOrder struct {
 	FarmID          string                `bson:"farmid"         json:"farmid"`
 	CropID          string                `bson:"cropid"         json:"cropid"`
 	Quantity        int                   `bson:"quantity"       json:"quantity"`
-	PriceAtPurchase float64               `bson:"priceAtPurchase" json:"priceAtPurchase"`
-	CreatedAt       time.Time             `bson:"createdAt"       json:"createdAt"`
+	PriceAtPurchase float64               `bson:"priceatpurchase" json:"priceatpurchase"`
+	CreatedAt       time.Time             `bson:"createdat"       json:"createdat"`
 	Status          OrderStatus           `bson:"status"       json:"status"`
 	ApprovedBy      []string              `bson:"approved"       json:"approved"`
 	Items           map[string][]CartItem `json:"items" bson:"items"`
@@ -126,33 +126,33 @@ type CropCatalogueItem struct {
 	Stock      int    `json:"stock"`
 	Unit       string `json:"unit"`
 	Featured   bool   `json:"featured"`
-	PriceRange []int  `json:"priceRange,omitempty"`
+	PriceRange []int  `json:"pricerange,omitempty"`
 }
 
 type CropListing struct {
 	FarmID string `json:"farmid"`
 	CropId string `json:"cropid"`
 
-	FarmName string `json:"farmName"`
+	FarmName string `json:"farmname"`
 	Location string `json:"location"`
 
 	Breed string `json:"breed"`
 
-	PricePerKg     float64 `json:"pricePerKg"`
-	AvailableQtyKg int     `json:"availableQtyKg"`
+	PricePerKg     float64 `json:"priceperkg"`
+	AvailableQtyKg int     `json:"availableqtykg"`
 	Unit           string  `json:"unit"`
 
-	HarvestDate string `json:"harvestDate,omitempty"`
-	PlantedDate string `json:"plantedDate,omitempty"`
-	LastSoldAt  string `json:"lastSoldAt,omitempty"`
+	HarvestDate string `json:"harvestdate,omitempty"`
+	PlantedDate string `json:"planteddate,omitempty"`
+	LastSoldAt  string `json:"lastsoldat,omitempty"`
 
 	Featured   bool `json:"featured"`
-	OutOfStock bool `json:"outOfStock"`
+	OutOfStock bool `json:"outofstock"`
 
-	AvgRating   float64 `json:"avgRating"`
-	ReviewCount int     `json:"reviewCount"`
+	AvgRating   float64 `json:"avgrating"`
+	ReviewCount int     `json:"reviewcount"`
 
-	FavoritesCount int64 `json:"favoritesCount"`
+	FavoritesCount int64 `json:"favoritescount"`
 
 	Availability WeeklyAvailability `json:"availability" bson:"availability"`
 	Phone        string             `json:"phone,omitempty"`
@@ -231,8 +231,8 @@ type Tool struct {
 	Banner        string    `bson:"banner" json:"banner"`
 	Category      string    `bson:"category" json:"category"`
 	SKU           string    `bson:"sku,omitempty" json:"sku,omitempty"`
-	AvailableFrom *SafeTime `bson:"availableFrom,omitempty" json:"availableFrom,omitempty"`
-	AvailableTo   *SafeTime `bson:"availableTo,omitempty" json:"availableTo,omitempty"`
+	AvailableFrom *SafeTime `bson:"availablefrom,omitempty" json:"availablefrom,omitempty"`
+	AvailableTo   *SafeTime `bson:"availableto,omitempty" json:"availableto,omitempty"`
 	Quantity      float64   `bson:"quantity" json:"quantity"`
 	Unit          string    `bson:"unit" json:"unit"`
 	Featured      bool      `bson:"featured" json:"featured"`

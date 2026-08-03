@@ -17,13 +17,13 @@ type Ingredient struct {
 
 type Recipe struct {
 	RecipeId    string       `bson:"recipeid,omitempty" json:"recipeid"`
-	UserID      string       `json:"userId" bson:"userId"`
+	UserID      string       `json:"userid" bson:"userid"`
 	Title       string       `json:"title" bson:"title"`
 	Description string       `json:"description" bson:"description"`
-	CookTime    string       `json:"cookTime" bson:"cookTime"`       // replaced PrepTime
+	CookTime    string       `json:"cooktime" bson:"cooktime"`       // replaced PrepTime
 	Cuisine     string       `json:"cuisine" bson:"cuisine"`         // new
 	Dietary     []string     `json:"dietary" bson:"dietary"`         // new
-	PortionSize string       `json:"portionSize" bson:"portionSize"` // new
+	PortionSize string       `json:"portionsize" bson:"portionsize"` // new
 	Season      string       `json:"season" bson:"season"`           // new
 	Tags        []string     `json:"tags" bson:"tags"`
 	Images      []string     `json:"images" bson:"images"`
@@ -32,8 +32,8 @@ type Recipe struct {
 	Difficulty  string       `json:"difficulty" bson:"difficulty"`
 	Banner      string       `json:"banner" bson:"banner"`
 	Servings    int          `json:"servings" bson:"servings"`
-	VideoURL    string       `json:"videoUrl" bson:"videoUrl"` // new
+	VideoURL    string       `json:"videourl" bson:"videourl"` // new
 	Notes       string       `json:"notes" bson:"notes"`       // new
-	CreatedAt   int64        `json:"createdAt" bson:"createdAt"`
+	CreatedAt   int64        `json:"createdat" bson:"createdat"`
 	Views       int          `json:"views" bson:"views"`
 }

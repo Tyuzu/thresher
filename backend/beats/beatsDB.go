@@ -213,8 +213,8 @@ func incrementRedisOrMongo(
 		ctx,
 		likesCollection,
 		bson.M{
-			"entity_type": entityType,
-			"entity_id":   entityID,
+			"entitytype": entityType,
+			"entityid":   entityID,
 		},
 	)
 	return count

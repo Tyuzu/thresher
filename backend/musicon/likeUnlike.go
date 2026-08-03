@@ -46,7 +46,7 @@ func LikeSong(app *infra.Deps) http.HandlerFunc {
 				"description": "Auto-generated liked songs playlist",
 				"songs":       []string{},
 				"duration":    0,
-				"createdAt":   now,
+				"createdat":   now,
 			},
 			"$addToSet": bson.M{
 				"songs": songID,
@@ -63,8 +63,8 @@ func LikeSong(app *infra.Deps) http.HandlerFunc {
 		}
 
 		respondJSON(w, http.StatusOK, bson.M{
-			"song_id": songID,
-			"liked":   true,
+			"songid": songID,
+			"liked":  true,
 		}, "Song liked successfully")
 	}
 }
@@ -110,8 +110,8 @@ func UnlikeSong(app *infra.Deps) http.HandlerFunc {
 		}
 
 		respondJSON(w, http.StatusOK, bson.M{
-			"song_id": songID,
-			"liked":   false,
+			"songid": songID,
+			"liked":  false,
 		}, "Song unliked successfully")
 	}
 }

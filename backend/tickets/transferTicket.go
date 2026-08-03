@@ -24,7 +24,7 @@ func TransferTicket(app *infra.Deps) http.HandlerFunc {
 		requestingUserId := utils.GetUserIDFromRequest(r)
 
 		type TransferPayload struct {
-			UniqueCode string `json:"uniqueCode"`
+			UniqueCode string `json:"uniquecode"`
 			Recipient  string `json:"recipient"`
 		}
 

@@ -14,15 +14,15 @@ const (
 
 type CommentCreatedPayload struct {
 	CommentID  string    `json:"commentid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CommentUpdatedPayload struct {
 	CommentID  string    `json:"commentid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type CommentDeletedPayload struct {
 	CommentID  string    `json:"commentid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

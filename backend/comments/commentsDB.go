@@ -37,8 +37,8 @@ func findCommentsByEntity(
 	comments *[]models.Comment,
 ) error {
 	filter := bson.M{
-		"entity_type": entityType,
-		"entity_id":   entityID,
+		"entitytype": entityType,
+		"entityid":   entityID,
 	}
 	return database.FindManyWithOptions(ctx, commentsCollection, filter, opts, comments)
 }

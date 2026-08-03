@@ -44,19 +44,19 @@ func splitAndTrim(s string) []string {
 
 type UpdateReportPayload struct {
 	Status      string `json:"status"`
-	ReviewNotes string `json:"reviewNotes,omitempty"`
+	ReviewNotes string `json:"reviewnotes,omitempty"`
 }
 
 type CreateAppealPayload struct {
-	UserID     string `json:"userId"`
-	TargetType string `json:"targetType"`
-	TargetID   string `json:"targetId"`
+	UserID     string `json:"userid"`
+	TargetType string `json:"targettype"`
+	TargetID   string `json:"targetid"`
 	Reason     string `json:"reason"`
 }
 
 type UpdateAppealPayload struct {
 	Status      string `json:"status"`
-	ReviewNotes string `json:"reviewNotes,omitempty"`
+	ReviewNotes string `json:"reviewnotes,omitempty"`
 }
 
 /* -------------------------
@@ -87,9 +87,9 @@ func ReportContent(app *infra.Deps) http.HandlerFunc {
 		}
 
 		filter := bson.M{
-			"reportedBy": payload.ReportedBy,
-			"targetType": payload.TargetType,
-			"targetId":   payload.TargetID,
+			"reportedby": payload.ReportedBy,
+			"targettype": payload.TargetType,
+			"targetid":   payload.TargetID,
 		}
 
 		var existing models.Report
@@ -221,9 +221,9 @@ func UpdateReport(app *infra.Deps) http.HandlerFunc {
 			bson.M{"reportid": reportID},
 			bson.M{
 				"status":      payload.Status,
-				"reviewedBy":  getActorID(r),
-				"reviewNotes": payload.ReviewNotes,
-				"updatedAt":   time.Now().UTC(),
+				"reviewedby":  getActorID(r),
+				"reviewnotes": payload.ReviewNotes,
+				"updatedat":   time.Now().UTC(),
 				"notified":    payload.Status != "resolved",
 			},
 		)
@@ -264,9 +264,9 @@ func CreateAppeal(app *infra.Deps) http.HandlerFunc {
 		}
 
 		filter := bson.M{
-			"userId":     payload.UserID,
-			"targetType": payload.TargetType,
-			"targetId":   payload.TargetID,
+			"userid":     payload.UserID,
+			"targettype": payload.TargetType,
+			"targetid":   payload.TargetID,
 			"status":     bson.M{"$in": []string{"pending", "submitted"}},
 		}
 
@@ -281,15 +281,15 @@ func CreateAppeal(app *infra.Deps) http.HandlerFunc {
 
 		appeal := bson.M{
 			"appealid":    appealID,
-			"userId":      payload.UserID,
-			"targetType":  payload.TargetType,
-			"targetId":    payload.TargetID,
+			"userid":      payload.UserID,
+			"targettype":  payload.TargetType,
+			"targetid":    payload.TargetID,
 			"reason":      payload.Reason,
 			"status":      "pending",
-			"reviewedBy":  "",
-			"reviewNotes": "",
-			"createdAt":   now,
-			"updatedAt":   now,
+			"reviewedby":  "",
+			"reviewnotes": "",
+			"createdat":   now,
+			"updatedat":   now,
 		}
 
 		if err := app.DB.Insert(ctx, appealsCollection, appeal); err != nil {
@@ -342,9 +342,9 @@ func UpdateAppeal(app *infra.Deps) http.HandlerFunc {
 			bson.M{"appealid": appealID},
 			bson.M{
 				"status":      payload.Status,
-				"reviewedBy":  getActorID(r),
-				"reviewNotes": payload.ReviewNotes,
-				"updatedAt":   time.Now().UTC(),
+				"reviewedby":  getActorID(r),
+				"reviewnotes": payload.ReviewNotes,
+				"updatedat":   time.Now().UTC(),
 			},
 		); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update appeal")
@@ -428,8 +428,8 @@ func setEntityDeletedFlag(
 		bson.M{idField: id},
 		bson.M{
 			"deleted":   deleted,
-			"deletedBy": by,
-			"deletedAt": deletedAtVal,
+			"deletedby": by,
+			"deletedat": deletedAtVal,
 		},
 	)
 	if err != nil {

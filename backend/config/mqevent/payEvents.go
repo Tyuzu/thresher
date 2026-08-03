@@ -20,65 +20,65 @@ const (
 )
 
 type RefundRequestedPayload struct {
-	RefundID   string    `json:"refund_id"`
-	OrderID    string    `json:"order_id"`
-	UserID     string    `json:"user_id"`
+	RefundID   string    `json:"refundid"`
+	OrderID    string    `json:"orderid"`
+	UserID     string    `json:"userid"`
 	Reason     string    `json:"reason"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type RefundAcceptedPayload struct {
-	RefundID   string    `json:"refund_id"`
-	OrderID    string    `json:"order_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	RefundID   string    `json:"refundid"`
+	OrderID    string    `json:"orderid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type RefundRejectedPayload struct {
-	RefundID   string    `json:"refund_id"`
-	OrderID    string    `json:"order_id"`
+	RefundID   string    `json:"refundid"`
+	OrderID    string    `json:"orderid"`
 	Reason     string    `json:"reason"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type RefundForcedPayload struct {
-	RefundID   string    `json:"refund_id"`
-	OrderID    string    `json:"order_id"`
-	AdminID    string    `json:"admin_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	RefundID   string    `json:"refundid"`
+	OrderID    string    `json:"orderid"`
+	AdminID    string    `json:"adminid"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type RefundCompletedPayload struct {
-	RefundID    string    `json:"refund_id"`
-	OrderID     string    `json:"order_id"`
-	CompletedAt time.Time `json:"completed_at"`
+	RefundID    string    `json:"refundid"`
+	OrderID     string    `json:"orderid"`
+	CompletedAt time.Time `json:"completedat"`
 }
 
 type CashOnDeliveryProcessedPayload struct {
-	RefundID    string    `json:"refund_id"`
-	OrderID     string    `json:"order_id"`
-	CompletedAt time.Time `json:"completed_at"`
+	RefundID    string    `json:"refundid"`
+	OrderID     string    `json:"orderid"`
+	CompletedAt time.Time `json:"completedat"`
 }
 
 type PaymentDonePayload struct {
-	RefundID    string    `json:"refund_id"`
-	OrderID     string    `json:"order_id"`
-	CompletedAt time.Time `json:"completed_at"`
+	RefundID    string    `json:"refundid"`
+	OrderID     string    `json:"orderid"`
+	CompletedAt time.Time `json:"completedat"`
 }
 
 type TopupDonePayload struct {
-	RefundID    string    `json:"refund_id"`
-	OrderID     string    `json:"order_id"`
-	CompletedAt time.Time `json:"completed_at"`
+	RefundID    string    `json:"refundid"`
+	OrderID     string    `json:"orderid"`
+	CompletedAt time.Time `json:"completedat"`
 }
 
 type MoneyTransferredPayload struct {
-	RefundID    string    `json:"refund_id"`
-	OrderID     string    `json:"order_id"`
-	CompletedAt time.Time `json:"completed_at"`
+	RefundID    string    `json:"refundid"`
+	OrderID     string    `json:"orderid"`
+	CompletedAt time.Time `json:"completedat"`
 }
 
 type PaymentProcessedPayload struct {
-	RefundID    string    `json:"refund_id"`
-	OrderID     string    `json:"order_id"`
-	CompletedAt time.Time `json:"completed_at"`
+	RefundID    string    `json:"refundid"`
+	OrderID     string    `json:"orderid"`
+	CompletedAt time.Time `json:"completedat"`
 }

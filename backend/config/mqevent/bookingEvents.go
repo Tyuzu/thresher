@@ -21,26 +21,26 @@ type BookingCreatedPayload struct {
 	UserID     string    `json:"userid,omitempty"`
 	EntityID   string    `json:"entityid,omitempty"`
 	EntityType string    `json:"entitytype,omitempty"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type BookingUpdatedPayload struct {
 	BookingID  string    `json:"bookingid"`
 	UserID     string    `json:"userid,omitempty"`
 	Status     string    `json:"status,omitempty"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type BookingRemovedPayload struct {
 	BookingID  string    `json:"bookingid"`
 	UserID     string    `json:"userid,omitempty"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type BookingCancelledPayload struct {
 	BookingID  string    `json:"bookingid"`
 	UserID     string    `json:"userid,omitempty"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type DateCapacitySetPayload struct {
@@ -48,14 +48,14 @@ type DateCapacitySetPayload struct {
 	EntityType string    `json:"entitytype"`
 	Date       string    `json:"date"`
 	Capacity   int       `json:"capacity"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type TierCreatedPayload struct {
 	TierID     string    `json:"tierid"`
 	EntityID   string    `json:"entityid"`
 	EntityType string    `json:"entitytype"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type SlotCreatedPayload struct {
@@ -65,5 +65,5 @@ type SlotCreatedPayload struct {
 	EntityType string    `json:"entitytype"`
 	Date       string    `json:"date"`
 	Start      string    `json:"start"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

@@ -48,15 +48,15 @@ func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M
 		set["age"] = age
 		set["phone"] = r.FormValue("phone")
 		set["location"] = r.FormValue("location")
-		set["preferredRoles"] = roles
+		set["preferredroles"] = roles
 		set["bio"] = r.FormValue("bio")
 		set["email"] = r.FormValue("email")
 		set["experience"] = r.FormValue("experience")
 		set["skills"] = r.FormValue("skills")
 		set["availability"] = r.FormValue("availability")
-		set["expectedWage"] = r.FormValue("expected_wage")
+		set["expectedwage"] = r.FormValue("expectedwage")
 		set["languages"] = r.FormValue("languages")
-		set["updatedAt"] = time.Now().Unix()
+		set["updatedat"] = time.Now().Unix()
 	} else {
 		worker = models.BaitoWorker{
 			UserID:        utils.GetUserIDFromRequest(r),

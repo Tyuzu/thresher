@@ -46,7 +46,7 @@ func updateBaitoRecord(ctx context.Context, app *infra.Deps, baitoID, userID str
 }
 
 func findExistingWorkerProfile(ctx context.Context, app *infra.Deps, userID string, result any) error {
-	return app.DB.FindOne(ctx, BaitoWorkersCollection, bson.M{"userId": userID}, result)
+	return app.DB.FindOne(ctx, BaitoWorkersCollection, bson.M{"userid": userID}, result)
 }
 
 func createWorkerProfileRecord(ctx context.Context, app *infra.Deps, worker models.BaitoWorker) error {
@@ -55,8 +55,8 @@ func createWorkerProfileRecord(ctx context.Context, app *infra.Deps, worker mode
 
 func updateWorkerProfileRecord(ctx context.Context, app *infra.Deps, workerID, userID string, update bson.M) error {
 	return app.DB.UpdateOne(ctx, BaitoWorkersCollection, bson.M{
-		"baitoWorkerId": workerID,
-		"userId":        userID,
+		"baitoworkerid": workerID,
+		"userid":        userID,
 	}, update)
 }
 
@@ -65,7 +65,7 @@ func addWorkerRoleToUser(ctx context.Context, app *infra.Deps, userID string) er
 }
 
 func touchUserUpdatedAt(ctx context.Context, app *infra.Deps, userID string) error {
-	return app.DB.UpdateOne(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{"updated_at": time.Now()})
+	return app.DB.UpdateOne(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{"updatedat": time.Now()})
 }
 
 func findLatestBaitosFromDB(ctx context.Context, app *infra.Deps, filter any, limit int) ([]models.BaitosResponse, error) {
@@ -95,7 +95,7 @@ func findBaitoByIDFromDB(ctx context.Context, app *infra.Deps, baitoID string) (
 func findMyBaitosFromDB(ctx context.Context, app *infra.Deps, userID string) ([]models.BaitosResponse, error) {
 	var baitos []models.BaitosResponse
 	err := app.DB.FindManyWithOptions(ctx, BaitoCollection, bson.M{"ownerId": userID}, db.FindManyOptions{
-		Sort: bson.D{{Key: "createdAt", Value: -1}},
+		Sort: bson.D{{Key: "createdat", Value: -1}},
 	}, &baitos)
 	return baitos, err
 }
@@ -111,15 +111,15 @@ func findMyApplicationsFromDB(ctx context.Context, app *infra.Deps, userID strin
 		{{Key: "$match", Value: bson.M{"userid": userID}}},
 		{{Key: "$lookup", Value: bson.M{
 			"from":         BaitoCollection,
-			"localField":   "baitoid",
-			"foreignField": "baitoid",
+			"localfield":   "baitoid",
+			"foreignfield": "baitoid",
 			"as":           "job",
 		}}},
 		{{Key: "$unwind", Value: "$job"}},
 		{{Key: "$project", Value: bson.M{
 			"id":          "$_id",
 			"pitch":       1,
-			"submittedAt": 1,
+			"submittedat": 1,
 			"jobId":       "$job.baitoid",
 			"title":       "$job.title",
 			"location":    "$job.location",

@@ -23,19 +23,19 @@ func GetMyFarms(app *infra.Deps) http.HandlerFunc {
 		pipeline := []any{
 			bson.M{
 				"$match": bson.M{
-					"createdBy": userID,
+					"createdby": userID,
 				},
 			},
 			bson.M{
 				"$sort": bson.M{
-					"createdAt": -1,
+					"createdat": -1,
 				},
 			},
 			bson.M{
 				"$lookup": bson.M{
 					"from":         "crops",
-					"localField":   "farmid",
-					"foreignField": "farmid",
+					"localfield":   "farmid",
+					"foreignfield": "farmid",
 					"as":           "crops",
 				},
 			},
@@ -63,7 +63,7 @@ func GetMyFarms(app *infra.Deps) http.HandlerFunc {
 			ctx,
 			farmsCollection,
 			bson.M{
-				"createdBy": userID,
+				"createdby": userID,
 			},
 		)
 

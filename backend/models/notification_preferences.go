@@ -4,16 +4,16 @@ import "time"
 
 type NotificationPreferences struct {
 	ID     string `bson:"_id" json:"id"`
-	UserID string `bson:"userId" json:"userId"`
+	UserID string `bson:"userid" json:"userid"`
 
-	MentionsEnabled bool `bson:"mentionsEnabled" json:"mentionsEnabled"`
-	FollowsEnabled  bool `bson:"followsEnabled" json:"followsEnabled"`
-	CommentsEnabled bool `bson:"commentsEnabled" json:"commentsEnabled"`
-	LikesEnabled    bool `bson:"likesEnabled" json:"likesEnabled"`
-	MessagesEnabled bool `bson:"messagesEnabled" json:"messagesEnabled"`
+	Mentionsenabled bool `bson:"mentionsenabled" json:"mentionsenabled"`
+	Followsenabled  bool `bson:"followsenabled" json:"followsenabled"`
+	Commentsenabled bool `bson:"commentsenabled" json:"commentsenabled"`
+	Likesenabled    bool `bson:"likesenabled" json:"likesenabled"`
+	Messagesenabled bool `bson:"messagesenabled" json:"messagesenabled"`
 
-	AllEnabled bool `bson:"allEnabled" json:"allEnabled"`
+	Allenabled bool `bson:"allenabled" json:"allenabled"`
 
-	CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
-	UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`
+	CreatedAt time.Time `bson:"createdat" json:"createdat"`
+	UpdatedAt time.Time `bson:"updatedat" json:"updatedat"`
 }

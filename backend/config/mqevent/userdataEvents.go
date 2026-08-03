@@ -14,15 +14,15 @@ const (
 
 type UserdataCreatedPayload struct {
 	UserdataID string    `json:"userdataid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type UserdataUpdatedPayload struct {
 	UserdataID string    `json:"userdataid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type UserdataDeletedPayload struct {
 	UserdataID string    `json:"userdataid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

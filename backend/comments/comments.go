@@ -131,8 +131,8 @@ func UpdateComment(app *infra.Deps) http.HandlerFunc {
 		}
 
 		update := bson.M{"$set": bson.M{
-			"content":    content,
-			"updated_at": time.Now(),
+			"content":   content,
+			"updatedat": time.Now(),
 		}}
 
 		if err := updateCommentContent(ctx, app.DB, commentID, update); err != nil {

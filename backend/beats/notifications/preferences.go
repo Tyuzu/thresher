@@ -71,7 +71,7 @@ func (h *Handler) UpdatePreferences(w http.ResponseWriter, r *http.Request, ps h
 	}
 
 	updates := bson.M{
-		"updatedAt": time.Now(),
+		"updatedat": time.Now(),
 	}
 
 	// If allEnabled is provided, override individual rule fields

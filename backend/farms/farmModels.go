@@ -12,18 +12,18 @@ type OrderDisplay struct {
 	Farm         string `json:"farm"`
 	Contact      string `json:"contact"`
 	Crop         string `json:"crop"`
-	CropID       string `json:"cropId"`
+	CropID       string `json:"cropid"`
 	Qty          int    `json:"qty"`
 	Unit         string `json:"unit"`
-	OrderDate    string `json:"orderDate"`
-	DeliveryDate string `json:"deliveryDate"`
+	OrderDate    string `json:"orderdate"`
+	DeliveryDate string `json:"deliverydate"`
 	Address      string `json:"address"`
 	Payment      string `json:"payment"`
 	Status       string `json:"status"`
 }
 
 type BulkOrdersRequest struct {
-	OrderIDs []string `json:"orderIds"`
+	OrderIDs []string `json:"orderids"`
 }
 
 type BulkOrdersResponse struct {
@@ -42,7 +42,7 @@ type TopCrop struct {
 }
 
 type RecentOrder struct {
-	OrderID string    `json:"orderId"`
+	OrderID string    `json:"orderid"`
 	Status  string    `json:"status"`
 	Total   float64   `json:"total"`
 	Date    time.Time `json:"date"`

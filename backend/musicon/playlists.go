@@ -125,7 +125,7 @@ func DeletePlaylist(app *infra.Deps) http.HandlerFunc {
 		}
 
 		respondJSON(w, http.StatusOK, map[string]string{
-			"playlist_id": playlistID,
+			"playlistid": playlistID,
 		}, "Playlist deleted successfully")
 	}
 }
@@ -180,8 +180,8 @@ func AddSongToPlaylist(app *infra.Deps) http.HandlerFunc {
 		}
 
 		respondJSON(w, http.StatusOK, map[string]string{
-			"playlist_id": playlistID,
-			"song_id":     body.SongID,
+			"playlistid": playlistID,
+			"songid":     body.SongID,
 		}, "Song added to playlist")
 	}
 }
@@ -223,8 +223,8 @@ func RemoveSongFromPlaylist(app *infra.Deps) http.HandlerFunc {
 		}
 
 		respondJSON(w, http.StatusOK, map[string]string{
-			"playlist_id": playlistID,
-			"song_id":     songID,
+			"playlistid": playlistID,
+			"songid":     songID,
 		}, "Song removed from playlist")
 	}
 }
@@ -249,7 +249,7 @@ func UpdatePlaylistInfo(app *infra.Deps) http.HandlerFunc {
 		type Req struct {
 			Name        string `json:"name"`
 			Description string `json:"description"`
-			CoverURL    string `json:"coverUrl"`
+			CoverURL    string `json:"coverurl"`
 		}
 
 		var req Req
@@ -275,8 +275,8 @@ func UpdatePlaylistInfo(app *infra.Deps) http.HandlerFunc {
 			"$set": bson.M{
 				"name":        req.Name,
 				"description": req.Description,
-				"coverUrl":    req.CoverURL,
-				"updatedAt":   time.Now(),
+				"coverurl":    req.CoverURL,
+				"updatedat":   time.Now(),
 			},
 		}
 
@@ -286,7 +286,7 @@ func UpdatePlaylistInfo(app *infra.Deps) http.HandlerFunc {
 		}
 
 		respondJSON(w, http.StatusOK, map[string]string{
-			"playlist_id": playlistID,
+			"playlistid": playlistID,
 		}, "Playlist updated successfully")
 	}
 }

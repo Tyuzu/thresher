@@ -4,11 +4,11 @@ import "time"
 
 type Comment struct {
 	CommentID  string    `json:"commentid" bson:"commentid,omitempty"`
-	EntityType string    `json:"entityType" bson:"entity_type"`
-	EntityID   string    `json:"entityId" bson:"entity_id"`
+	EntityType string    `json:"entitytype" bson:"entitytype"`
+	EntityID   string    `json:"entityid" bson:"entityid"`
 	Content    string    `json:"content" bson:"content"`
-	CreatedBy  string    `json:"createdBy" bson:"created_by"`
-	CreatedAt  time.Time `json:"createdAt" bson:"created_at"`
-	UpdatedAt  time.Time `json:"updatedAt" bson:"updated_at"`
+	CreatedBy  string    `json:"createdby" bson:"createdby"`
+	CreatedAt  time.Time `json:"createdat" bson:"createdat"`
+	UpdatedAt  time.Time `json:"updatedat" bson:"updatedat"`
 	Likes      int       `json:"likes" bson:"likes"`
 }

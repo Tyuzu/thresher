@@ -14,15 +14,15 @@ const (
 
 type DeliveryCreatedPayload struct {
 	DeliveryID string    `json:"deliveryid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type DeliveryUpdatedPayload struct {
 	DeliveryID string    `json:"deliveryid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type DeliveryDeletedPayload struct {
 	DeliveryID string    `json:"deliveryid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

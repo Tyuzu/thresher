@@ -14,15 +14,15 @@ const (
 
 type StreamCreatedPayload struct {
 	VliveID    string    `json:"vliveid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type IngestStartedPayload struct {
 	VliveID    string    `json:"vliveid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type RecordingCompletePayload struct {
 	VliveID    string    `json:"vliveid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

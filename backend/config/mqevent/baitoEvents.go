@@ -19,30 +19,30 @@ const (
 
 type BaitoCreatedPayload struct {
 	BaitoID    string    `json:"baitoid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type BaitoUpdatedPayload struct {
 	BaitoID    string    `json:"baitoid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type BaitoRemovedPayload struct {
 	BaitoID    string    `json:"baitoid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type AppliedToBaitoPayload struct {
 	BaitoID    string    `json:"baitoid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type WorkerProfileCreatedPayload struct {
 	BaitoID    string    `json:"baitoid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type WorkerProfileUpdatedPayload struct {
 	BaitoID    string    `json:"baitoid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

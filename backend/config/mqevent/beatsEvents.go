@@ -17,20 +17,20 @@ const (
 
 type UserFollowedPayload struct {
 	UserID       string    `json:"userid"`
-	TargetUserID string    `json:"target_userid"`
-	OccurredAt   time.Time `json:"occurred_at"`
+	TargetUserID string    `json:"targetuserid"`
+	OccurredAt   time.Time `json:"occurredat"`
 }
 
 type UserLikedPayload struct {
 	UserID     string    `json:"userid"`
 	TargetID   string    `json:"targetid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type UserLikesBatchFlushedPayload struct {
 	UserID     string    `json:"userid"`
 	Count      int       `json:"count"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type OneNotificationCreatedPayload struct {
@@ -42,39 +42,39 @@ type OneNotificationCreatedPayload struct {
 	EntityType     string    `json:"entitytype,omitempty"`
 	EntityID       string    `json:"entityid,omitempty"`
 	RelatedUser    string    `json:"relateduser,omitempty"`
-	OccurredAt     time.Time `json:"occurred_at"`
+	OccurredAt     time.Time `json:"occurredat"`
 }
 
 type BulkNotificationsCreatedPayload struct {
 	Count      int       `json:"count"`
 	UserIDs    []string  `json:"userids"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type OneNotificationReadPayload struct {
 	NotificationID string    `json:"notificationid"`
 	UserID         string    `json:"userid"`
-	OccurredAt     time.Time `json:"occurred_at"`
+	OccurredAt     time.Time `json:"occurredat"`
 }
 
 type AllNotificationsReadPayload struct {
 	UserID     string    `json:"userid"`
 	Count      int       `json:"count"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type NotificationDeletedPayload struct {
 	NotificationID string    `json:"notificationid"`
 	UserID         string    `json:"userid"`
-	OccurredAt     time.Time `json:"occurred_at"`
+	OccurredAt     time.Time `json:"occurredat"`
 }
 
 type AllNotificationsClearedPayload struct {
 	UserID     string    `json:"userid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type NotificationPreferencesUpdatedPayload struct {
 	UserID     string    `json:"userid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

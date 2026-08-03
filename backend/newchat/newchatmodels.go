@@ -42,16 +42,16 @@ type Message struct {
 	ChatID     string           `bson:"chatid"              json:"chatid"`
 	UserID     string           `bson:"sender"              json:"sender"`
 	Text       string           `bson:"text,omitempty" json:"text,omitempty"`
-	FileURL    string           `bson:"fileURL,omitempty" json:"fileURL,omitempty"`
-	FileType   string           `bson:"fileType,omitempty" json:"fileType,omitempty"` // "image" or "video"
-	CreatedAt  time.Time        `bson:"createdAt" json:"createdAt"`
-	ReplyTo    *models.ReplyRef `bson:"replyTo,omitempty" json:"replyTo,omitempty"`
-	SenderName string           `bson:"senderName,omitempty" json:"senderName,omitempty"`
-	AvatarURL  string           `bson:"avatarUrl,omitempty"   json:"avatarUrl,omitempty"`
+	FileURL    string           `bson:"fileurl,omitempty" json:"fileurl,omitempty"`
+	FileType   string           `bson:"filetype,omitempty" json:"filetype,omitempty"` // "image" or "video"
+	CreatedAt  time.Time        `bson:"createdat" json:"createdat"`
+	ReplyTo    *models.ReplyRef `bson:"replyto,omitempty" json:"replyto,omitempty"`
+	SenderName string           `bson:"sendername,omitempty" json:"sendername,omitempty"`
+	AvatarURL  string           `bson:"avatarurl,omitempty"   json:"avatarurl,omitempty"`
 	Media      *models.Media    `bson:"media,omitempty"   json:"media,omitempty"`
-	EditedAt   *time.Time       `bson:"editedAt,omitempty" json:"editedAt,omitempty"`
+	EditedAt   *time.Time       `bson:"editedat,omitempty" json:"editedat,omitempty"`
 	Deleted    bool             `bson:"deleted"           json:"deleted"`
-	ReadBy     []string         `bson:"readBy,omitempty"  json:"readBy,omitempty"`
+	ReadBy     []string         `bson:"readby,omitempty"  json:"readby,omitempty"`
 	Status     string           `bson:"status,omitempty"  json:"status,omitempty"` // e.g. "sent", "read"
 
 	MessageID string       `bson:"messageid" json:"messageid"`
@@ -82,14 +82,3 @@ type broadcastMsg struct {
 	Room string
 	Data []byte
 }
-
-// type searchResult struct {
-// 	Matches []ChatMessage `json:"matches"`
-// }
-
-// type chatMessage struct {
-// 	ID        string `json:"id"`
-// 	Sender    string `json:"sender"`
-// 	Text      string `json:"text"`
-// 	Timestamp string `json:"timestamp"`
-// }

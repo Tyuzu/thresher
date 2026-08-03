@@ -16,12 +16,12 @@ type BlogPost struct {
 	Title       string    `bson:"title" json:"title"`
 	Category    string    `bson:"category" json:"category"`
 	Subcategory string    `bson:"subcategory" json:"subcategory"`
-	ReferenceID *string   `bson:"referenceId,omitempty" json:"referenceId,omitempty"`
+	ReferenceID *string   `bson:"referenceid,omitempty" json:"referenceid,omitempty"`
 	Blocks      []Block   `bson:"blocks" json:"blocks"`
 	Thumb       string    `bson:"thumb" json:"thumb"`
-	CreatedBy   string    `bson:"createdBy" json:"createdBy"`
-	CreatedAt   time.Time `bson:"createdAt" json:"createdAt"`
-	UpdatedAt   time.Time `bson:"updatedAt" json:"updatedAt"`
+	CreatedBy   string    `bson:"createdby" json:"createdby"`
+	CreatedAt   time.Time `bson:"createdat" json:"createdat"`
+	UpdatedAt   time.Time `bson:"updatedat" json:"updatedat"`
 	Hashtags    []string  `bson:"hashtags" json:"hashtags"`
 	Type        string    `json:"type" bson:"type"`
 	Username    string    `json:"username" bson:"username"`

@@ -14,15 +14,15 @@ const (
 
 type RecipeCreatedPayload struct {
 	RecipeID   string    `json:"recipeid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type RecipeUpdatedPayload struct {
 	RecipeID   string    `json:"recipeid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type RecipeDeletedPayload struct {
 	RecipeID   string    `json:"recipeid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

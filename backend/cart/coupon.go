@@ -125,8 +125,8 @@ func ValidateCouponHandler(app *infra.Deps) http.HandlerFunc {
 		code := strings.TrimSpace(strings.ToLower(req.Code))
 		filter := bson.M{
 			"code":       code,
-			"entityId":   req.EntityID,
-			"entityType": strings.ToLower(req.EntityType),
+			"entityid":   req.EntityID,
+			"entitytype": strings.ToLower(req.EntityType),
 			"active":     true,
 		}
 

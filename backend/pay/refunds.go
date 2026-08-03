@@ -38,7 +38,7 @@ func CreateRefundRequest(app *infra.Deps) http.HandlerFunc {
 		}
 
 		var req struct {
-			OrderID string `json:"order_id"`
+			OrderID string `json:"orderid"`
 			Reason  string `json:"reason"`
 		}
 
@@ -65,8 +65,8 @@ func CreateRefundRequest(app *infra.Deps) http.HandlerFunc {
 		// Try regular order first.
 		var regularOrder models.Order
 		err := app.DB.FindOne(ctx, ordersCollection, bson.M{
-			"orderId": req.OrderID,
-			"userId":  userID,
+			"orderid": req.OrderID,
+			"userid":  userID,
 		}, &regularOrder)
 
 		switch {
@@ -105,7 +105,7 @@ func CreateRefundRequest(app *infra.Deps) http.HandlerFunc {
 		var existingRefund models.RefundRequest
 
 		err = app.DB.FindOne(ctx, RefundsCollection, bson.M{
-			"order_id": req.OrderID,
+			"orderid": req.OrderID,
 			"status": bson.M{
 				"$in": []string{"pending", "approved"},
 			},
@@ -179,7 +179,7 @@ func GetMyRefundRequests(app *infra.Deps) http.HandlerFunc {
 
 		// Count total
 		total, err := app.DB.Count(ctx, RefundsCollection, bson.M{
-			"user_id": userID,
+			"userid": userID,
 		})
 		if err != nil {
 			log.Println("Count refund requests error:", err)
@@ -191,14 +191,14 @@ func GetMyRefundRequests(app *infra.Deps) http.HandlerFunc {
 		opts := options.Find().
 			SetSkip(int64(skip)).
 			SetLimit(int64(limit)).
-			SetSort(bson.D{{Key: "created_at", Value: -1}})
+			SetSort(bson.D{{Key: "createdat", Value: -1}})
 
 		// Fetch refunds
 		var refunds []models.RefundRequest
 		err = app.DB.FindMany(
 			ctx,
 			RefundsCollection,
-			bson.M{"user_id": userID},
+			bson.M{"userid": userID},
 			&refunds,
 			opts,
 		)
@@ -236,7 +236,7 @@ func GetAllRefundRequests(app *infra.Deps) http.HandlerFunc {
 
 		// Parse filters
 		status := r.URL.Query().Get("status")
-		orderType := r.URL.Query().Get("order_type")
+		orderType := r.URL.Query().Get("ordertype")
 
 		skip := 0
 		limit := 20
@@ -261,7 +261,7 @@ func GetAllRefundRequests(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if orderType != "" {
-			filter["order_type"] = orderType
+			filter["ordertype"] = orderType
 		}
 
 		// Count total
@@ -276,7 +276,7 @@ func GetAllRefundRequests(app *infra.Deps) http.HandlerFunc {
 		opts := options.Find().
 			SetSkip(int64(skip)).
 			SetLimit(int64(limit)).
-			SetSort(bson.D{{Key: "created_at", Value: -1}})
+			SetSort(bson.D{{Key: "createdat", Value: -1}})
 
 		// Fetch refunds
 		var refunds []models.RefundRequest
@@ -361,8 +361,8 @@ func ApproveRefundRequest(app *infra.Deps) http.HandlerFunc {
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 			Meta: models.Meta{
-				"refund_request_id": refundID,
-				"order_type":        refund.OrderType,
+				"refundrequestid": refundID,
+				"ordertype":       refund.OrderType,
 			},
 		}
 
@@ -379,12 +379,12 @@ func ApproveRefundRequest(app *infra.Deps) http.HandlerFunc {
 			bson.M{"_id": refundID},
 			bson.M{
 				"$set": bson.M{
-					"status":         "approved",
-					"transaction_id": refundTxn.ID,
-					"reviewed_by":    adminID,
-					"reviewed_at":    now,
-					"review_notes":   req.Notes,
-					"updated_at":     now,
+					"status":        "approved",
+					"transactionid": refundTxn.ID,
+					"reviewedby":    adminID,
+					"reviewedat":    now,
+					"reviewnotes":   req.Notes,
+					"updatedat":     now,
 				},
 			},
 		)
@@ -395,11 +395,11 @@ func ApproveRefundRequest(app *infra.Deps) http.HandlerFunc {
 		}
 
 		event := map[string]any{
-			"refund_request_id": refundID,
-			"order_id":          refund.OrderID,
-			"user_id":           refund.UserID,
-			"amount":            refund.Amount,
-			"transaction_id":    refundTxn.ID,
+			"refundrequestid": refundID,
+			"orderid":         refund.OrderID,
+			"userid":          refund.UserID,
+			"amount":          refund.Amount,
+			"transactionid":   refundTxn.ID,
 		}
 
 		payload, _ := json.Marshal(event)
@@ -412,10 +412,10 @@ func ApproveRefundRequest(app *infra.Deps) http.HandlerFunc {
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
-			"id":             refund.ID,
-			"status":         "approved",
-			"transaction_id": refundTxn.ID,
-			"message":        "Refund approved successfully",
+			"id":            refund.ID,
+			"status":        "approved",
+			"transactionid": refundTxn.ID,
+			"message":       "Refund approved successfully",
 		})
 	}
 }
@@ -470,11 +470,11 @@ func RejectRefundRequest(app *infra.Deps) http.HandlerFunc {
 			bson.M{"_id": refundID},
 			bson.M{
 				"$set": bson.M{
-					"status":       "rejected",
-					"reviewed_by":  adminID,
-					"reviewed_at":  now,
-					"review_notes": req.Notes,
-					"updated_at":   now,
+					"status":      "rejected",
+					"reviewedby":  adminID,
+					"reviewedat":  now,
+					"reviewnotes": req.Notes,
+					"updatedat":   now,
 				},
 			},
 		)
@@ -485,10 +485,10 @@ func RejectRefundRequest(app *infra.Deps) http.HandlerFunc {
 		}
 
 		event := map[string]any{
-			"refund_request_id": refundID,
-			"order_id":          refund.OrderID,
-			"user_id":           refund.UserID,
-			"reason":            req.Notes,
+			"refundrequestid": refundID,
+			"orderid":         refund.OrderID,
+			"userid":          refund.UserID,
+			"reason":          req.Notes,
 		}
 
 		payload, _ := json.Marshal(event)

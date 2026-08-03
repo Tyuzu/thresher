@@ -5,15 +5,15 @@ import (
 )
 
 type RefundRequest struct {
-	EventID     string     `bson:"eventid" json:"eventID"`
-	TicketID    string     `bson:"ticketid" json:"ticketID"`
-	UserID      string     `bson:"userid" json:"userID"`
-	UniqueCode  string     `bson:"uniquecode" json:"uniqueCode"`
-	RequestDate time.Time  `bson:"requestdate" json:"requestDate"`
+	EventID     string     `bson:"eventid" json:"eventid"`
+	TicketID    string     `bson:"ticketid" json:"ticketid"`
+	UserID      string     `bson:"userid" json:"userid"`
+	UniqueCode  string     `bson:"uniquecode" json:"uniquecode"`
+	RequestDate time.Time  `bson:"requestdate" json:"requestdate"`
 	Status      string     `bson:"status" json:"status"` // pending, approved, rejected, refunded
 	Amount      int        `bson:"amount" json:"amount,omitempty"`
-	ProcessedAt *time.Time `bson:"processedat,omitempty" json:"processedAt,omitempty"`
-	RefundedAt  *time.Time `bson:"refundedat,omitempty" json:"refundedAt,omitempty"`
+	ProcessedAt *time.Time `bson:"processedat,omitempty" json:"processedat,omitempty"`
+	RefundedAt  *time.Time `bson:"refundedat,omitempty" json:"refundedat,omitempty"`
 }
 
 type Ticket struct {
@@ -24,24 +24,24 @@ type Ticket struct {
 	Currency    string    `json:"currency" bson:"currency"`
 	Color       string    `json:"color" bson:"color"`
 	Quantity    int       `json:"quantity" bson:"quantity"`
-	EntityID    string    `json:"entity_id" bson:"entity_id"`
-	EntityType  string    `json:"entity_type" bson:"entity_type"` // "event" or "place"
+	EntityID    string    `json:"entityid" bson:"entityid"`
+	EntityType  string    `json:"entitytype" bson:"entitytype"` // "event" or "place"
 	Available   int       `json:"available" bson:"available"`
 	Total       int       `json:"total" bson:"total"`
-	CreatedAt   time.Time `json:"created_at" bson:"created_at"`
+	CreatedAt   time.Time `json:"createdat" bson:"createdat"`
 	Description string    `bson:"description,omitempty" json:"description"`
 	Sold        int       `bson:"sold" json:"sold"`
 	SeatStart   int       `bson:"seatstart" json:"seatstart"`
 	SeatEnd     int       `bson:"seatend" json:"seatend"`
 	Seats       []Seat    `bson:"seats" json:"seats"` // 👈 new field
-	UpdatedAt   time.Time `bson:"updated_at" json:"updatedAt"`
+	UpdatedAt   time.Time `bson:"updatedat" json:"updatedat"`
 }
 
 type Seat struct {
 	SeatID     string `json:"id" bson:"_id,omitempty"`
-	EntityID   string `json:"entity_id" bson:"entity_id"`
-	EntityType string `json:"entity_type" bson:"entity_type"` // e.g., "event" or "place"
-	SeatNumber string `json:"seat_number" bson:"seat_number"`
-	UserID     string `json:"user_id" bson:"user_id,omitempty"`
+	EntityID   string `json:"entityid" bson:"entityid"`
+	EntityType string `json:"entitytype" bson:"entitytype"` // e.g., "event" or "place"
+	SeatNumber string `json:"seatnumber" bson:"seatnumber"`
+	UserID     string `json:"userid" bson:"userid,omitempty"`
 	Status     string `json:"status" bson:"status"` // e.g., "booked", "available"
 }

@@ -40,7 +40,7 @@ func AddMedia(app *infra.Deps) http.HandlerFunc {
 
 		var payload struct {
 			Caption     string        `json:"caption"`
-			CaptionLang string        `json:"captionLang"`
+			CaptionLang string        `json:"captionlang"`
 			Files       []FilePayload `json:"files"`
 		}
 

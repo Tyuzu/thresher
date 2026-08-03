@@ -19,7 +19,7 @@ func GetAvailableSeats(app *infra.Deps) http.HandlerFunc {
 		// Structure matches DB document
 		var ticket struct {
 			Seats []struct {
-				SeatID string `bson:"seat_id"`
+				SeatID string `bson:"seatid"`
 				Status string `bson:"status"`
 			} `bson:"seats"`
 		}

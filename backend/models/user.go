@@ -8,34 +8,34 @@ type User struct {
 	Username     string    `json:"username" bson:"username"`
 	Email        string    `json:"email" bson:"email"`
 	Password     string    `json:"-" bson:"password"`
-	PasswordHash string    `json:"password_hash" bson:"password_hash"`
+	PasswordHash string    `json:"passwordhash" bson:"passwordhash"`
 	Role         []string  `json:"role" bson:"role"`
 	Name         string    `json:"name,omitempty" bson:"name,omitempty"`
-	CreatedAt    time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at" bson:"updated_at"`
+	CreatedAt    time.Time `json:"createdat" bson:"createdat"`
+	UpdatedAt    time.Time `json:"updatedat" bson:"updatedat"`
 	Bio          string    `json:"bio,omitempty" bson:"bio,omitempty"`
 	Online       bool      `json:"online"`
-	LastLogin    time.Time `json:"last_login" bson:"last_login"`
+	LastLogin    time.Time `json:"lastlogin" bson:"lastlogin"`
 	Avatar       string    `json:"avatar" bson:"avatar"`
 	Banner       string    `json:"banner" bson:"banner"`
-	ProfileViews int       `json:"profile_views,omitempty" bson:"profile_views,omitempty"`
-	PhoneNumber  string    `json:"phone_number,omitempty" bson:"phone_number,omitempty"`
+	ProfileViews int       `json:"profileviews,omitempty" bson:"profileviews,omitempty"`
+	PhoneNumber  string    `json:"phonenumber,omitempty" bson:"phonenumber,omitempty"`
 	Address      string    `json:"address,omitempty" bson:"address,omitempty"`
 	// DateOfBirth    time.Time         `json:"dob" bson:"dob"`
-	SocialLinks    map[string]string `json:"social_links,omitempty" bson:"social_links,omitempty"`
-	IsVerified     bool              `json:"is_verified" bson:"is_verified"`
-	EmailVerified  bool              `json:"email_verified" bson:"email_verified"`
+	SocialLinks    map[string]string `json:"sociallinks,omitempty" bson:"sociallinks,omitempty"`
+	IsVerified     bool              `json:"isverified" bson:"isverified"`
+	EmailVerified  bool              `json:"emailverified" bson:"emailverified"`
 	FollowersCount int               `json:"followerscount" bson:"followerscount"`
 	FollowingCount int               `json:"followscount" bson:"followscount"`
-	WalletBalance  float64           `bson:"wallet_balance" json:"wallet_balance"`
+	WalletBalance  float64           `bson:"walletbalance" json:"walletbalance"`
 	RefreshToken   string            `json:"-" bson:"refresh_token,omitempty"`
 	RefreshExpiry  time.Time         `json:"-" bson:"refresh_expiry,omitempty"`
-	RefreshUA      string            `bson:"refresh_ua,omitempty"`
-	RefreshIP      string            `bson:"refresh_ip,omitempty"`
-	RefreshPrev    string            `bson:"refresh_prev,omitempty"`
+	RefreshUA      string            `bson:"refreshua,omitempty"`
+	RefreshIP      string            `bson:"refreship,omitempty"`
+	RefreshPrev    string            `bson:"refreshprev,omitempty"`
 	// Vendor fields
-	IsVendor      bool           `json:"is_vendor" bson:"is_vendor"`
-	VendorProfile *VendorProfile `json:"vendor_profile,omitempty" bson:"vendor_profile,omitempty"`
+	IsVendor      bool           `json:"isvendor" bson:"isvendor"`
+	VendorProfile *VendorProfile `json:"vendorprofile,omitempty" bson:"vendorprofile,omitempty"`
 }
 
 // VendorProfile contains vendor-specific information for a user
@@ -44,7 +44,7 @@ type VendorProfile struct {
 	Category    string   `json:"category" bson:"category"`
 	Description string   `json:"description,omitempty" bson:"description,omitempty"`
 	Rating      float64  `json:"rating" bson:"rating"`
-	RatingCount int      `json:"rating_count" bson:"rating_count"`
+	RatingCount int      `json:"ratingcount" bson:"ratingcount"`
 	Portfolio   []string `json:"portfolio,omitempty" bson:"portfolio,omitempty"`
 	Verified    bool     `json:"verified" bson:"verified"`
 }
@@ -56,15 +56,15 @@ type UserProfileResponse struct {
 	Name           string            `json:"name" bson:"name"`
 	Email          string            `json:"email" bson:"email"`
 	Bio            string            `json:"bio,omitempty" bson:"bio,omitempty"`
-	PhoneNumber    string            `json:"phone_number,omitempty" bson:"phone_number,omitempty"`
+	PhoneNumber    string            `json:"phonenumber,omitempty" bson:"phonenumber,omitempty"`
 	Avatar         string            `json:"avatar" bson:"avatar"`
 	Banner         string            `json:"banner" bson:"banner"`
-	IsFollowing    bool              `json:"is_following" bson:"is_following"` // Added here
+	IsFollowing    bool              `json:"isfollowing" bson:"isfollowing"` // Added here
 	FollowersCount int               `json:"followerscount" bson:"followerscount"`
 	FollowingCount int               `json:"followscount" bson:"followscount"`
-	SocialLinks    map[string]string `json:"social_links,omitempty" bson:"social_links,omitempty"`
+	SocialLinks    map[string]string `json:"sociallinks,omitempty" bson:"sociallinks,omitempty"`
 	Online         bool              `json:"online,omitempty"`
-	LastLogin      time.Time         `json:"last_login" bson:"last_login"`
+	LastLogin      time.Time         `json:"lastlogin" bson:"lastlogin"`
 }
 
 type UserFollow struct {

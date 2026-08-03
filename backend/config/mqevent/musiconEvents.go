@@ -14,15 +14,15 @@ const (
 
 type MusiconCreatedPayload struct {
 	MusiconID  string    `json:"musiconid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type MusiconUpdatedPayload struct {
 	MusiconID  string    `json:"musiconid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type MusiconDeletedPayload struct {
 	MusiconID  string    `json:"musiconid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

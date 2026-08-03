@@ -19,16 +19,16 @@ type Delivery struct {
 	Status        string    `json:"status" bson:"status"`
 	Pickup        string    `json:"pickup" bson:"pickup"`
 	Dropoff       string    `json:"dropoff" bson:"dropoff"`
-	PackageName   string    `json:"packageName,omitempty" bson:"packageName,omitempty"`
+	PackageName   string    `json:"packagename,omitempty" bson:"packagename,omitempty"`
 	Weight        string    `json:"weight,omitempty" bson:"weight,omitempty"`
 	Distance      string    `json:"distance,omitempty" bson:"distance,omitempty"`
 	ETA           string    `json:"eta,omitempty" bson:"eta,omitempty"`
 	Reward        int64     `json:"reward,omitempty" bson:"reward,omitempty"`
-	UpdatedAt     string    `json:"updatedAt,omitempty" bson:"updatedAt,omitempty"`
-	CustomerName  string    `json:"customerName,omitempty" bson:"customerName,omitempty"`
-	CustomerPhone string    `json:"customerPhone,omitempty" bson:"customerPhone,omitempty"`
+	UpdatedAt     string    `json:"updatedat,omitempty" bson:"updatedat,omitempty"`
+	CustomerName  string    `json:"customername,omitempty" bson:"customername,omitempty"`
+	CustomerPhone string    `json:"customerphone,omitempty" bson:"customerphone,omitempty"`
 	Notes         string    `json:"notes,omitempty" bson:"notes,omitempty"`
-	CreatedAt     time.Time `json:"createdAt" bson:"createdAt"`
+	CreatedAt     time.Time `json:"createdat" bson:"createdat"`
 }
 
 func GetMyDeliveries(app *infra.Deps) http.HandlerFunc {
@@ -75,7 +75,7 @@ func GetDeliveryByID(app *infra.Deps) http.HandlerFunc {
 		}
 
 		var order models.Order
-		if err := app.DB.FindOne(ctx, "orders", bson.M{"orderId": id, "userId": userID}, &order); err != nil {
+		if err := app.DB.FindOne(ctx, "orders", bson.M{"orderid": id, "userid": userID}, &order); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Delivery not found")
 			return
 		}

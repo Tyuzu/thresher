@@ -16,25 +16,25 @@ const (
 
 type VendorRegisteredPayload struct {
 	VendorID   string    `json:"vendorid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type VendorUpdatedPayload struct {
 	VendorID   string    `json:"vendorid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type VendorDeletedPayload struct {
 	VendorID   string    `json:"vendorid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type VendorHiredPayload struct {
 	VendorID   string    `json:"vendorid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type VendorStatusUpdatedPayload struct {
 	VendorID   string    `json:"vendorid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

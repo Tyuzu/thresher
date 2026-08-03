@@ -11,46 +11,46 @@ type DashboardResponse struct {
 	Customers       CustomerMetrics   `json:"customers"`
 	Alerts          []Alert           `json:"alerts"`
 	Recommendations []string          `json:"recommendations"`
-	TopCrops        []CropPerformance `json:"topCrops"`
-	ActivityFeed    []ActivityItem    `json:"activityFeed"`
+	TopCrops        []CropPerformance `json:"topcrops"`
+	ActivityFeed    []ActivityItem    `json:"activityfeed"`
 }
 
 type DashboardStats struct {
-	HealthScore int `json:"healthScore"`
+	HealthScore int `json:"healthscore"`
 }
 
 type InventoryMetrics struct {
-	TotalCrops      int     `json:"totalCrops"`
-	TotalQuantity   int64   `json:"totalQuantity"`
-	InventoryValue  float64 `json:"inventoryValue"`
-	FeaturedCrops   int     `json:"featuredCrops"`
-	LowStockCount   int     `json:"lowStockCount"`
-	OutOfStockCount int     `json:"outOfStockCount"`
+	TotalCrops      int     `json:"totalcrops"`
+	TotalQuantity   int64   `json:"totalquantity"`
+	InventoryValue  float64 `json:"inventoryvalue"`
+	FeaturedCrops   int     `json:"featuredcrops"`
+	LowStockCount   int     `json:"lowstockcount"`
+	OutOfStockCount int     `json:"outofstockcount"`
 }
 
 type OrderMetrics struct {
-	PendingOrders   int `json:"pendingOrders"`
-	CompletedOrders int `json:"completedOrders"`
-	CancelledOrders int `json:"cancelledOrders"`
-	TodayDeliveries int `json:"todayDeliveries"`
+	PendingOrders   int `json:"pendingorders"`
+	CompletedOrders int `json:"completedorders"`
+	CancelledOrders int `json:"cancelledorders"`
+	TodayDeliveries int `json:"todaydeliveries"`
 }
 
 type RevenueMetrics struct {
-	TodayRevenue    float64 `json:"todayRevenue"`
-	WeeklyRevenue   float64 `json:"weeklyRevenue"`
-	MonthlyRevenue  float64 `json:"monthlyRevenue"`
-	LifetimeRevenue float64 `json:"lifetimeRevenue"`
+	TodayRevenue    float64 `json:"todayrevenue"`
+	WeeklyRevenue   float64 `json:"weeklyrevenue"`
+	MonthlyRevenue  float64 `json:"monthlyrevenue"`
+	LifetimeRevenue float64 `json:"lifetimerevenue"`
 }
 
 type HarvestMetrics struct {
-	ReadyNow        int `json:"readyNow"`
-	Next7Days       int `json:"next7Days"`
-	DelayedHarvests int `json:"delayedHarvests"`
+	ReadyNow        int `json:"readynow"`
+	Next7Days       int `json:"next7days"`
+	DelayedHarvests int `json:"delayedharvests"`
 }
 
 type CustomerMetrics struct {
-	UniqueCustomers int `json:"uniqueCustomers"`
-	RepeatCustomers int `json:"repeatCustomers"`
+	UniqueCustomers int `json:"uniquecustomers"`
+	RepeatCustomers int `json:"repeatcustomers"`
 }
 
 type Alert struct {
@@ -69,5 +69,5 @@ type CropPerformance struct {
 type ActivityItem struct {
 	Type      string    `json:"type"`
 	Message   string    `json:"message"`
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt time.Time `json:"createdat"`
 }

@@ -15,7 +15,7 @@ type EventEnvelope struct {
 	Type      string          `json:"type"`
 	Timestamp int64           `json:"timestamp"`
 	Source    string          `json:"source,omitempty"`
-	TraceID   string          `json:"trace_id,omitempty"`
+	TraceID   string          `json:"traceid,omitempty"`
 	Payload   json.RawMessage `json:"payload"`
 }
 

@@ -14,15 +14,15 @@ const (
 
 type FeedPostCreatedPayload struct {
 	FeedPostID string    `json:"feedpostid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type FeedPostUpdatedPayload struct {
 	FeedPostID string    `json:"feedpostid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type FeedPostDeletedPayload struct {
 	FeedPostID string    `json:"feedpostid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

@@ -35,7 +35,7 @@ func AddMedia(app *infra.Deps) http.HandlerFunc {
 
 		var payload struct {
 			Caption     string                   `json:"caption"`
-			CaptionLang string                   `json:"captionLang"`
+			CaptionLang string                   `json:"captionlang"`
 			Files       []map[string]interface{} `json:"files"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {

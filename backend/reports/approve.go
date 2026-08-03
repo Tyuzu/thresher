@@ -14,11 +14,11 @@ import (
 
 type ModeratorApplication struct {
 	ID        string    `json:"id" bson:"id"`
-	UserID    string    `json:"user_id" bson:"user_id"`
+	UserID    string    `json:"userid" bson:"userid"`
 	Reason    string    `json:"reason" bson:"reason"`
 	Status    string    `json:"status" bson:"status"`
-	CreatedAt time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+	CreatedAt time.Time `json:"createdat" bson:"createdat"`
+	UpdatedAt time.Time `json:"updatedat" bson:"updatedat"`
 }
 
 // ---------------------- List Moderator Applications ----------------------
@@ -72,7 +72,7 @@ func ApproveModerator(app *infra.Deps) http.HandlerFunc {
 			bson.M{
 				"$set": bson.M{
 					"status":    "approved",
-					"updatedAt": time.Now().UTC(),
+					"updatedat": time.Now().UTC(),
 				},
 			},
 		)
@@ -115,7 +115,7 @@ func RejectModerator(app *infra.Deps) http.HandlerFunc {
 			bson.M{
 				"$set": bson.M{
 					"status":    "rejected",
-					"updatedAt": time.Now().UTC(),
+					"updatedat": time.Now().UTC(),
 				},
 			},
 		)

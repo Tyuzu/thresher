@@ -14,15 +14,15 @@ const (
 
 type PlaceCreatedPayload struct {
 	PlacesID   string    `json:"placeid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type PlaceUpdatedPayload struct {
 	PlacesID   string    `json:"placeid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }
 
 type PlaceDeletedPayload struct {
 	PlacesID   string    `json:"placeid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	OccurredAt time.Time `json:"occurredat"`
 }

@@ -31,14 +31,14 @@ const (
 
 // PaymentWebhookPayload represents incoming payment webhook data
 type PaymentWebhookPayload struct {
-	EventID          string                 `json:"eventId"`
-	TransactionID    string                 `json:"transactionId"`
-	OrderID          string                 `json:"orderId"`
-	UserID           string                 `json:"userId"`
+	EventID          string                 `json:"eventid"`
+	TransactionID    string                 `json:"transactionid"`
+	OrderID          string                 `json:"orderid"`
+	UserID           string                 `json:"userid"`
 	Amount           float64                `json:"amount"`
 	Currency         string                 `json:"currency"`
 	Status           string                 `json:"status"` // "success", "failed", "pending"
-	PaymentMethod    string                 `json:"paymentMethod"`
+	PaymentMethod    string                 `json:"paymentmethod"`
 	PaymentTimestamp int64                  `json:"timestamp"`
 	Signature        string                 `json:"signature"`
 	Metadata         map[string]interface{} `json:"metadata,omitempty"`
@@ -103,7 +103,7 @@ func (p *PaymentService) HandlePaymentWebhook(w http.ResponseWriter, r *http.Req
 	// Check if webhook already processed (idempotency)
 	var existingWebhook bson.M
 	if err := p.app.DB.FindOne(ctx, webhookCollection, bson.M{
-		"transactionId": payload.TransactionID,
+		"transactionid": payload.TransactionID,
 	}, &existingWebhook); err == nil {
 		// Webhook already processed, return success
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
@@ -135,12 +135,12 @@ func (p *PaymentService) HandlePaymentWebhook(w http.ResponseWriter, r *http.Req
 
 	// Record successful webhook processing
 	if err := p.app.DB.InsertOne(ctx, webhookCollection, bson.M{
-		"transactionId": payload.TransactionID,
-		"orderId":       payload.OrderID,
-		"userId":        payload.UserID,
+		"transactionid": payload.TransactionID,
+		"orderid":       payload.OrderID,
+		"userid":        payload.UserID,
 		"status":        payload.Status,
 		"amount":        payload.Amount,
-		"processedAt":   time.Now(),
+		"processedat":   time.Now(),
 	}); err != nil {
 		log.Printf("Failed to record webhook: %v", err)
 	}
@@ -173,10 +173,10 @@ func (p *PaymentService) processSuccessfulPayment(ctx context.Context, payload *
 			"userid": payload.UserID,
 		}, bson.M{
 			"$inc": bson.M{
-				"cached_balance": int64(payload.Amount),
+				"cachedbalance": int64(payload.Amount),
 			},
 			"$set": bson.M{
-				"updated_at": time.Now(),
+				"updatedat": time.Now(),
 			},
 		}); err != nil {
 			return err
@@ -188,8 +188,8 @@ func (p *PaymentService) processSuccessfulPayment(ctx context.Context, payload *
 		"_id": payload.TransactionID,
 	}, bson.M{
 		"$set": bson.M{
-			"status":     "success",
-			"updated_at": time.Now(),
+			"status":    "success",
+			"updatedat": time.Now(),
 		},
 	}); err != nil {
 		return err
@@ -204,8 +204,8 @@ func (p *PaymentService) processFailedPayment(ctx context.Context, payload *Paym
 		"_id": payload.TransactionID,
 	}, bson.M{
 		"$set": bson.M{
-			"status":     "failed",
-			"updated_at": time.Now(),
+			"status":    "failed",
+			"updatedat": time.Now(),
 		},
 	}); err != nil {
 		return err

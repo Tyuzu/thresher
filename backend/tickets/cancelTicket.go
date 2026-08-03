@@ -24,7 +24,7 @@ func CancelTicket(app *infra.Deps) http.HandlerFunc {
 		requestingUserID := utils.GetUserIDFromRequest(r)
 
 		type CancelPayload struct {
-			UniqueCode string `json:"uniqueCode"`
+			UniqueCode string `json:"uniquecode"`
 		}
 
 		var payload CancelPayload
