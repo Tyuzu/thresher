@@ -50,7 +50,7 @@
   <script>
     window.updateHeadTag = (selectorOrKey, value, attr = "content") => {
       let el = document.querySelector(selectorOrKey);
-      
+
       if (!el) {
         // Fallback for meta name or property attributes
         el = document.querySelector(`meta[name="${selectorOrKey}"], meta[property="${selectorOrKey}"]`);
@@ -72,7 +72,8 @@
 <body>
   <noscript>
     <div style="padding: 20px; text-align: center; background-color: #f8d7da; color: #721c24;">
-      <p><strong>JavaScript is required.</strong> Please enable JavaScript in your browser settings to access Farmium.</p>
+      <p><strong>JavaScript is required.</strong> Please enable JavaScript in your browser settings to access Farmium.
+      </p>
     </div>
   </noscript>
 
@@ -86,7 +87,7 @@
   </div>
 
   <!-- Polyfills MUST load before any module execution -->
-  <script src="/js/polyfills/safari-polyfill.js"></script>
+  <script type="module" src="/js/polyfills/safari-polyfill.js"></script>
 
   <!-- Main Application Bundle -->
   <script type="module" src="/js/app.js"></script>

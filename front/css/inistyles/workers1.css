@@ -174,11 +174,6 @@
   font-size: var(--font-size-sm);
 }
 
-/* Worker Action Button */
-.worker-details .button {
-  margin-top: var(--space-md);
-}
-
 /* Badges */
 .badge {
   display: inline-block;

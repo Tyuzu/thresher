@@ -3,6 +3,9 @@ import { Button } from "../../components/base/Button.js";
 import { navigate } from "../../routes/index.js";
 import { apiFetch } from "../../api/api.js";
 import { adspace } from "../home/homeHelpers.js";
+import Imagex from "../../components/base/Imagex.js";
+import Datex from "../../components/base/Datex.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import { createMainLayout } from "../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../components/layout/asideLayout.js";
 
@@ -55,4 +58,58 @@ export async function displayPosts(container, isLoggedIn) {
   }
 
   mainElement.append(list);
+}
+
+// ---------- CARD BUILDER ----------
+function createPostCard(post) {
+  const thumb = post.thumb
+    ? resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, post.thumb)
+    : "/default-thumb.png";
+
+  const postThumb = Imagex({
+    src: thumb,
+    alt: post.title || "Post image",
+    loading: "lazy",
+    classes: "",
+    style: "width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:4px;"
+  });
+
+  const postInfo = createElement("div", { class: "post-info" }, [
+    createElement("h3", {}, [post.title || "Untitled"]),
+    createElement("p", {}, [
+      createElement("strong", {}, ["Category: "]),
+      post.category || "-"
+    ]),
+    createElement("p", {}, [
+      createElement("strong", {}, ["Subcategory: "]),
+      post.subcategory || "-"
+    ]),
+    createElement("p", {}, [
+      createElement("strong", {}, ["Posted on: "]),
+      post.createdAt ? Datex(post.createdAt) : "-"
+    ]),
+    createElement("p", {}, [
+      createElement("strong", {}, ["By: "]),
+      post.username || "-"
+    ])
+  ]);
+
+  const card = createElement("div", { class: "post-card" }, [
+    postThumb,
+    postInfo
+  ]);
+
+  return createElement(
+    "a",
+    {
+      href: "#",
+      events: {
+        click: e => {
+          e.preventDefault();
+          navigate(`/post/${encodeURIComponent(post.postid)}`);
+        }
+      }
+    },
+    [card]
+  );
 }

@@ -2,6 +2,8 @@ package artists
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"time"
 
@@ -14,46 +16,83 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+func (p *songPayload) ValidateRequired() error {
+	if p.Title == nil || *p.Title == "" ||
+		p.Genre == nil || *p.Genre == "" ||
+		p.Duration == nil || *p.Duration == "" {
+		return errors.New("missing required fields: title, genre, duration")
+	}
+	return nil
+}
+
+func (p *songPayload) ToBSONUpdate() bson.M {
+	update := bson.M{}
+
+	assignIfPresent := func(field string, val *string) {
+		if val != nil {
+			update[field] = *val
+		}
+	}
+
+	assignIfPresent("title", p.Title)
+	assignIfPresent("genre", p.Genre)
+	assignIfPresent("duration", p.Duration)
+	assignIfPresent("description", p.Description)
+	assignIfPresent("audioUrl", p.Audio)
+	assignIfPresent("poster", p.Poster)
+	assignIfPresent("audioextn", p.AudioExtn)
+	assignIfPresent("posterextn", p.PosterExtn)
+
+	return update
+}
+
+// Helper to decode JSON requests consistently across handlers
+func decodeJSONBody[T any](r *http.Request, target *T) error {
+	defer r.Body.Close()
+	err := json.NewDecoder(r.Body).Decode(target)
+	if errors.Is(err, io.EOF) {
+		return errors.New("request body cannot be empty")
+	}
+	return err
+}
+
 func PostNewSong(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		artistID := utils.GetParam(r, "id")
 
-		var payload struct {
-			Title       string `json:"title"`
-			Genre       string `json:"genre"`
-			Duration    string `json:"duration"`
-			Description string `json:"description"`
-			Audio       string `json:"audio"`
-			Poster      string `json:"poster"`
-			AudioExtn   string `json:"audioextn"`
-			PosterExtn  string `json:"posterextn"`
-		}
-
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		var payload songPayload
+		if err := decodeJSONBody(r, &payload); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid JSON body")
 			return
 		}
 
-		if payload.Title == "" || payload.Genre == "" || payload.Duration == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Missing required fields: title, genre, duration")
+		if err := payload.ValidateRequired(); err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
+		}
+
+		deref := func(s *string) string {
+			if s == nil {
+				return ""
+			}
+			return *s
 		}
 
 		newSong := models.ArtistSong{
 			SongID:      utils.GenerateRandomString(12),
 			ArtistID:    artistID,
-			Title:       payload.Title,
-			Genre:       payload.Genre,
-			Duration:    payload.Duration,
-			Description: payload.Description,
-			AudioURL:    payload.Audio,
-			Poster:      payload.Poster,
+			Title:       deref(payload.Title),
+			Genre:       deref(payload.Genre),
+			Duration:    deref(payload.Duration),
+			Description: deref(payload.Description),
+			AudioURL:    deref(payload.Audio),
+			Poster:      deref(payload.Poster),
 			Published:   true,
 			Plays:       0,
 			UploadedAt:  time.Now(),
-			AudioExtn:   payload.AudioExtn,
-			PosterExtn:  payload.PosterExtn,
+			AudioExtn:   deref(payload.AudioExtn),
+			PosterExtn:  deref(payload.PosterExtn),
 		}
 
 		if err := InsertArtistSong(ctx, app.DB, &newSong); err != nil {
@@ -61,13 +100,15 @@ func PostNewSong(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		/* -------- Publish SongCreated Event -------- */
-
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SongCreatedEvent, mqevent.SongCreatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SongCreatedEvent, mqevent.SongCreatedPayload{
+			SongID:   newSong.SongID,
+			ArtistID: artistID,
+		})
 
 		utils.RespondWithJSON(w, http.StatusCreated, newSong)
 	}
 }
+
 func EditSong(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -79,69 +120,35 @@ func EditSong(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var payload struct {
-			Title       string `json:"title"`
-			Genre       string `json:"genre"`
-			Duration    string `json:"duration"`
-			Description string `json:"description"`
-			Audio       string `json:"audio"`
-			Poster      string `json:"poster"`
-			AudioExtn   string `json:"audioextn"`
-			PosterExtn  string `json:"posterextn"`
-		}
-
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		var payload songPayload
+		if err := decodeJSONBody(r, &payload); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid JSON body")
 			return
 		}
 
-		updateFields := bson.M{}
-		if payload.Title != "" {
-			updateFields["title"] = payload.Title
-		}
-		if payload.Genre != "" {
-			updateFields["genre"] = payload.Genre
-		}
-		if payload.Duration != "" {
-			updateFields["duration"] = payload.Duration
-		}
-		if payload.Description != "" {
-			updateFields["description"] = payload.Description
-		}
-		if payload.Audio != "" {
-			updateFields["audioUrl"] = payload.Audio
-		}
-		if payload.AudioExtn != "" {
-			updateFields["audioextn"] = payload.AudioExtn
-		}
-		if payload.Poster != "" {
-			updateFields["poster"] = payload.Poster
-		}
-		if payload.PosterExtn != "" {
-			updateFields["posterextn"] = payload.PosterExtn
-		}
-
+		updateFields := payload.ToBSONUpdate()
 		if len(updateFields) == 0 {
 			utils.RespondWithError(w, http.StatusBadRequest, "No fields to update")
 			return
 		}
 
 		updateFields["updatedAt"] = time.Now()
-
 		update := bson.M{"$set": updateFields}
 
-		err := UpdateArtistSong(ctx, app.DB, artistID, songID, update)
-		if err != nil {
+		if err := UpdateArtistSong(ctx, app.DB, artistID, songID, update); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update song")
 			return
 		}
 
-		/* -------- Publish SongUpdated Event -------- */
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SongUpdatedEvent, mqevent.SongUpdatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SongUpdatedEvent, mqevent.SongUpdatedPayload{
+			SongID:   songID,
+			ArtistID: artistID,
+		})
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Song updated successfully"})
 	}
 }
+
 func DeleteSong(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -153,13 +160,15 @@ func DeleteSong(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		err := DeleteArtistSong(ctx, app.DB, artistID, songID)
-		if err != nil {
+		if err := DeleteArtistSong(ctx, app.DB, artistID, songID); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete song")
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SongDeletedEvent, mqevent.SongDeletedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SongDeletedEvent, mqevent.SongDeletedPayload{
+			SongID:   songID,
+			ArtistID: artistID,
+		})
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Song deleted successfully"})
 	}

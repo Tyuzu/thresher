@@ -19,13 +19,6 @@ import (
    REFRESH TOKEN (STRICT, COOKIE LIFECYCLE HANDLED IN HANDLER)
 ============================================================ */
 
-// RefreshResult communicates intended cookie side-effects and tokens.
-type RefreshResult struct {
-	AccessToken string
-	NewRefresh  string // non-empty => set this new refresh in cookie
-	ClearCookie bool   // true => clear cookie on response
-}
-
 // RefreshToken handler: reads cookie, delegates logic, and applies cookie changes exactly once.
 func RefreshToken(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

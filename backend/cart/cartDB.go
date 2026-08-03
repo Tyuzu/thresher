@@ -18,6 +18,8 @@ var (
 	ordersCollection     = config.Collections.OrderCollection
 )
 
+/* ───────────────────────── Cart Operations ───────────────────────── */
+
 func getCartItemsFromDB(ctx context.Context, userID string, app *infra.Deps) ([]models.CartItem, error) {
 	var items []models.CartItem
 	err := app.DB.FindMany(ctx, cartCollection, bson.M{"userId": userID}, &items)
@@ -38,13 +40,7 @@ func replaceCartItemsInDB(ctx context.Context, userID string, docs []any, app *i
 }
 
 func upsertCartItemInDB(ctx context.Context, userID string, item models.CartItem, app *infra.Deps) error {
-	filter := bson.M{"userId": userID, "itemId": item.ItemID}
-	if item.EntityID != "" {
-		filter["entityId"] = item.EntityID
-	}
-	if item.EntityType != "" {
-		filter["entityType"] = item.EntityType
-	}
+	filter := buildCartFilter(userID, item.ItemID, "", item.EntityID, item.EntityType)
 
 	update := bson.M{
 		"$inc": bson.M{"quantity": item.Quantity},
@@ -73,14 +69,7 @@ func updateCartItemQuantityInDB(
 	entityType string,
 	app *infra.Deps,
 ) error {
-	filter := bson.M{"userId": userID, "itemId": itemID, "category": category}
-	if entityID != "" {
-		filter["entityId"] = entityID
-	}
-	if entityType != "" {
-		filter["entityType"] = entityType
-	}
-
+	filter := buildCartFilter(userID, itemID, category, entityID, entityType)
 	update := bson.M{"$set": bson.M{"quantity": quantity}}
 	return app.DB.Update(ctx, cartCollection, filter, update)
 }
@@ -94,13 +83,7 @@ func deleteCartItemFromDB(
 	entityType string,
 	app *infra.Deps,
 ) error {
-	filter := bson.M{"userId": userID, "itemId": itemID, "category": category}
-	if entityID != "" {
-		filter["entityId"] = entityID
-	}
-	if entityType != "" {
-		filter["entityType"] = entityType
-	}
+	filter := buildCartFilter(userID, itemID, category, entityID, entityType)
 	_, err := app.DB.Delete(ctx, cartCollection, filter)
 	return err
 }
@@ -132,6 +115,8 @@ func getGroupedCart(
 	return grouped, nil
 }
 
+/* ───────────────────────── Orders Operations ───────────────────────── */
+
 func fetchUserOrdersFromDB(ctx context.Context, userID string, app *infra.Deps) ([]models.Order, []models.FarmOrder, error) {
 	regularOrders := make([]models.Order, 0)
 	if err := app.DB.FindMany(ctx, ordersCollection, bson.M{"userId": userID}, &regularOrders); err != nil {
@@ -146,38 +131,20 @@ func fetchUserOrdersFromDB(ctx context.Context, userID string, app *infra.Deps) 
 	return regularOrders, farmOrders, nil
 }
 
-type ItemDetails struct {
-	Name       string
-	Type       string
-	Category   string
-	Price      float64
-	Discount   float64
-	Unit       string
-	EntityID   string
-	EntityName string
-	EntityType string
-	Available  int
-}
+/* ───────────────────────── Item Resolution ───────────────────────── */
 
 func lookupItemDetails(ctx context.Context, itemID string, app *infra.Deps) (*ItemDetails, error) {
-	crop, err := lookupCrop(ctx, itemID, app)
-	if err == nil && crop != nil {
-		return crop, nil
+	lookups := []func(context.Context, string, *infra.Deps) (*ItemDetails, error){
+		lookupCrop,
+		lookupProduct,
+		lookupMenu,
+		lookupMerchandise,
 	}
 
-	product, err := lookupProduct(ctx, itemID, app)
-	if err == nil && product != nil {
-		return product, nil
-	}
-
-	menu, err := lookupMenu(ctx, itemID, app)
-	if err == nil && menu != nil {
-		return menu, nil
-	}
-
-	merch, err := lookupMerchandise(ctx, itemID, app)
-	if err == nil && merch != nil {
-		return merch, nil
+	for _, lookup := range lookups {
+		if details, err := lookup(ctx, itemID, app); err == nil && details != nil {
+			return details, nil
+		}
 	}
 
 	return nil, errors.New("item not found in any collection")
@@ -185,32 +152,38 @@ func lookupItemDetails(ctx context.Context, itemID string, app *infra.Deps) (*It
 
 func lookupProduct(ctx context.Context, productID string, app *infra.Deps) (*ItemDetails, error) {
 	var product struct {
-		Name     string  `bson:"name"`
-		Type     string  `bson:"type"`
-		Price    float64 `bson:"price"`
-		Discount float64 `bson:"discount"`
-		Unit     string  `bson:"unit"`
-		Quantity int     `bson:"quantity"`
+		ProductID string  `bson:"productid"`
+		Name      string  `bson:"name"`
+		Type      string  `bson:"type"`
+		Category  string  `bson:"category"`
+		Price     float64 `bson:"price"`
+		Discount  float64 `bson:"discount"`
+		Unit      string  `bson:"unit"`
+		Quantity  int     `bson:"quantity"`
+		UserID    string  `bson:"userid"`
 	}
 
-	err := app.DB.FindOne(ctx, "products", bson.M{"productid": productID}, &product)
-	if err != nil {
+	if err := app.DB.FindOne(ctx, "products", bson.M{"productid": productID}, &product); err != nil {
 		return nil, err
 	}
 	if product.Quantity <= 0 {
 		return nil, errors.New("product out of stock")
 	}
 
+	category := product.Category
+	if category == "" {
+		category = "products"
+	}
+
 	return &ItemDetails{
 		Name:       product.Name,
 		Type:       product.Type,
-		Category:   "products",
+		Category:   category,
 		Price:      product.Price,
 		Discount:   product.Discount,
 		Unit:       product.Unit,
-		EntityID:   "",
-		EntityName: "",
-		EntityType: "",
+		EntityID:   product.UserID,
+		EntityType: "vendor",
 		Available:  product.Quantity,
 	}, nil
 }
@@ -219,16 +192,16 @@ func lookupCrop(ctx context.Context, cropID string, app *infra.Deps) (*ItemDetai
 	var crop struct {
 		CropID       string  `bson:"cropid"`
 		Name         string  `bson:"name"`
-		Breed        string  `bson:"breed"`
+		Category     string  `bson:"category"`
 		Price        float64 `bson:"price"`
 		Discount     float64 `bson:"discount"`
 		AvailableQty int     `bson:"quantity"`
+		Unit         string  `bson:"unit"`
 		FarmID       string  `bson:"farmid"`
-		FarmName     string  `bson:"farmName"`
+		FarmName     string  `bson:"farmname"`
 	}
 
-	err := app.DB.FindOne(ctx, "crops", bson.M{"cropid": cropID}, &crop)
-	if err != nil {
+	if err := app.DB.FindOne(ctx, "crops", bson.M{"cropid": cropID}, &crop); err != nil {
 		return nil, err
 	}
 	if crop.AvailableQty <= 0 {
@@ -245,13 +218,18 @@ func lookupCrop(ctx context.Context, cropID string, app *infra.Deps) (*ItemDetai
 		}
 	}
 
+	unit := crop.Unit
+	if unit == "" {
+		unit = "kg"
+	}
+
 	return &ItemDetails{
 		Name:       crop.Name,
-		Type:       crop.Breed,
+		Type:       crop.Category,
 		Category:   "crops",
 		Price:      crop.Price,
 		Discount:   crop.Discount,
-		Unit:       "kg",
+		Unit:       unit,
 		EntityID:   crop.FarmID,
 		EntityName: farmName,
 		EntityType: "farm",
@@ -270,8 +248,7 @@ func lookupMenu(ctx context.Context, menuID string, app *infra.Deps) (*ItemDetai
 		Place    string  `bson:"place"`
 	}
 
-	err := app.DB.FindOne(ctx, "menu", bson.M{"menuid": menuID}, &menu)
-	if err != nil {
+	if err := app.DB.FindOne(ctx, "menu", bson.M{"menuid": menuID}, &menu); err != nil {
 		return nil, err
 	}
 	if menu.Stock <= 0 {
@@ -301,8 +278,7 @@ func lookupMerchandise(ctx context.Context, merchID string, app *infra.Deps) (*I
 		Stock    int     `bson:"stock"`
 	}
 
-	err := app.DB.FindOne(ctx, "merchandise", bson.M{"merchid": merchID}, &merch)
-	if err != nil {
+	if err := app.DB.FindOne(ctx, "merchandise", bson.M{"merchid": merchID}, &merch); err != nil {
 		return nil, err
 	}
 	if merch.Stock <= 0 {
@@ -310,15 +286,31 @@ func lookupMerchandise(ctx context.Context, merchID string, app *infra.Deps) (*I
 	}
 
 	return &ItemDetails{
-		Name:       merch.Name,
-		Type:       "merchandise",
-		Category:   "merchandise",
-		Price:      merch.Price,
-		Discount:   merch.Discount,
-		Unit:       "unit",
-		EntityID:   "",
-		EntityName: "",
-		EntityType: "",
-		Available:  merch.Stock,
+		Name:      merch.Name,
+		Type:      "merchandise",
+		Category:  "merchandise",
+		Price:     merch.Price,
+		Discount:  merch.Discount,
+		Unit:      "unit",
+		Available: merch.Stock,
 	}, nil
+}
+
+/* ───────────────────────── Helper Functions ───────────────────────── */
+
+func buildCartFilter(userID, itemID, category, entityID, entityType string) bson.M {
+	filter := bson.M{
+		"userId": userID,
+		"itemId": itemID,
+	}
+	if category != "" {
+		filter["category"] = category
+	}
+	if entityID != "" {
+		filter["entityId"] = entityID
+	}
+	if entityType != "" {
+		filter["entityType"] = entityType
+	}
+	return filter
 }

@@ -3,26 +3,37 @@ package cart
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"time"
+
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
-	"net/http"
-	"time"
 )
 
+const (
+	initiateTimeout = 5 * time.Second
+	sessionTimeout  = 10 * time.Second
+	deliveryFee     = 2000 // ₹20 in paise
+	taxRate         = 0.05 // 5% tax
+)
+
+/* ───────────────────────── Initiate Checkout ───────────────────────── */
+
+// InitiateCheckout verifies the user's cart state before checkout begins.
 func InitiateCheckout(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-		defer cancel()
-
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), initiateTimeout)
+		defer cancel()
 
 		items, err := getCartItemsFromDB(ctx, userID, app)
 		if err != nil {
@@ -36,7 +47,7 @@ func InitiateCheckout(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CheckoutInitiatedEvent, mqevent.CheckoutInitiatedPayload{}); err != nil {
-			log.Printf("failed to publish checkout initiated event: %v", err)
+			log.Printf("InitiateCheckout: failed to publish event for user %s: %v", userID, err)
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -45,20 +56,21 @@ func InitiateCheckout(app *infra.Deps) http.HandlerFunc {
 		})
 	}
 }
+
+/* ───────────────────────── Create Checkout Session ───────────────────────── */
+
+// CreateCheckoutSession recalculates item pricing, applies discounts, and constructs a checkout session.
 func CreateCheckoutSession(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-		defer cancel()
-
-		var payload struct {
-			Address       string                       `json:"address"`
-			Items         map[string][]models.CartItem `json:"items"`
-			PaymentMethod string                       `json:"paymentMethod"`
-			Coupon        string                       `json:"coupon"`
+		userID := utils.GetUserIDFromRequest(r)
+		if userID == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
 		}
 
+		var payload createSessionPayload
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			http.Error(w, "Invalid request", http.StatusBadRequest)
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
@@ -67,104 +79,116 @@ func CreateCheckoutSession(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		userID := utils.GetUserIDFromRequest(r)
-		if userID == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		// Flatten items from grouped structure
-		var allItems []models.CartItem
-		for _, categoryItems := range payload.Items {
-			allItems = append(allItems, categoryItems...)
-		}
-
+		allItems := flattenCartItems(payload.Items)
 		if len(allItems) == 0 {
 			http.Error(w, "No items provided", http.StatusBadRequest)
 			return
 		}
 
-		var subtotal int64 = 0
-		var itemDiscountTotal int64 = 0
-		var validatedItems []models.CartItem
+		ctx, cancel := context.WithTimeout(r.Context(), sessionTimeout)
+		defer cancel()
 
-		// 🔒 SECURITY: Get prices from database, never trust frontend
-		// Recalculate from source of truth - verify each item
-		for _, item := range allItems {
-			if item.ItemID == "" || item.Quantity <= 0 {
-				continue
-			}
-
-			details, err := lookupItemDetails(ctx, item.ItemID, app)
-			if err != nil {
-				http.Error(w, "Item "+item.ItemID+" not found", http.StatusBadRequest)
-				return
-			}
-
-			// 🔒 Verify quantity is available
-			if item.Quantity > details.Available {
-				http.Error(w, "Insufficient stock for "+details.Name, http.StatusBadRequest)
-				return
-			}
-
-			// 🔒 SECURITY: Use price from database, ignore frontend price
-			price := int64(details.Price * 100)
-			itemDiscount := int64(details.Discount * 100)
-			lineSubtotal := price * int64(item.Quantity)
-			lineDiscount := itemDiscount * int64(item.Quantity)
-			subtotal += lineSubtotal
-			itemDiscountTotal += lineDiscount
-
-			// Include validated items in response with server-calculated prices
-			// 🔒 Use entity info from database, not frontend
-			validatedItems = append(validatedItems, models.CartItem{
-				ItemID:     item.ItemID,
-				ItemName:   details.Name,
-				Quantity:   item.Quantity,
-				Price:      price, // 🔒 Server price, not frontend
-				Category:   details.Category,
-				EntityID:   details.EntityID,   // 🔒 From database
-				EntityType: details.EntityType, // 🔒 From database
-			})
+		validatedItems, subtotal, itemDiscountTotal, err := validateAndPriceItems(ctx, allItems, app)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
-		// 🔒 Apply item-level discounts and coupon (server-side only)
-		discount := itemDiscountTotal
-		if payload.Coupon != "" {
-			couponRes, err := validateCouponServer(ctx, payload.Coupon, subtotal, app)
-			if err != nil {
-				// Don't fail checkout if coupon is invalid - just skip it
-				log.Println("Coupon validation error:", err)
-			} else if couponRes != nil {
-				discount += couponRes.DiscountAmount
-			}
-		}
+		discount := calculateTotalDiscount(ctx, payload.Coupon, subtotal, itemDiscountTotal, app)
+		totalAfterDiscount := max(0, subtotal-discount)
 
-		totalAfterDiscount := subtotal - discount
-		if totalAfterDiscount < 0 {
-			totalAfterDiscount = 0
-		}
-
-		// Charges
-		tax := int64(float64(totalAfterDiscount) * 0.05)
-		delivery := int64(2000) // ₹20
-		total := totalAfterDiscount + tax + delivery
+		tax := int64(float64(totalAfterDiscount) * taxRate)
+		total := totalAfterDiscount + tax + deliveryFee
 
 		session := map[string]any{
 			"items":     validatedItems,
 			"subtotal":  subtotal,
 			"discount":  discount,
 			"tax":       tax,
-			"delivery":  delivery,
+			"delivery":  deliveryFee,
 			"total":     total,
 			"address":   payload.Address,
 			"createdAt": time.Now(),
 		}
 
 		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CheckoutSessionCreatedEvent, mqevent.CheckoutSessionCreatedPayload{}); err != nil {
-			log.Printf("failed to publish checkout session created event: %v", err)
+			log.Printf("CreateCheckoutSession: failed to publish event for user %s: %v", userID, err)
 		}
 
 		utils.RespondWithJSON(w, http.StatusCreated, session)
 	}
+}
+
+/* ───────────────────────── Helper Functions ───────────────────────── */
+
+func flattenCartItems(groupedItems map[string][]models.CartItem) []models.CartItem {
+	totalCapacity := 0
+	for _, items := range groupedItems {
+		totalCapacity += len(items)
+	}
+
+	allItems := make([]models.CartItem, 0, totalCapacity)
+	for _, items := range groupedItems {
+		allItems = append(allItems, items...)
+	}
+	return allItems
+}
+
+func validateAndPriceItems(ctx context.Context, items []models.CartItem, app *infra.Deps) ([]models.CartItem, int64, int64, error) {
+	validatedItems := make([]models.CartItem, 0, len(items))
+	var subtotal, itemDiscountTotal int64
+
+	for _, item := range items {
+		if item.ItemID == "" || item.Quantity <= 0 {
+			continue
+		}
+
+		details, err := lookupItemDetails(ctx, item.ItemID, app)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+
+		if item.Quantity > details.Available {
+			return nil, 0, 0, err
+		}
+
+		// Calculate using database source-of-truth values
+		price := int64(details.Price * 100)
+		itemDiscount := int64(details.Discount * 100)
+		lineSubtotal := price * int64(item.Quantity)
+		lineDiscount := itemDiscount * int64(item.Quantity)
+
+		subtotal += lineSubtotal
+		itemDiscountTotal += lineDiscount
+
+		validatedItems = append(validatedItems, models.CartItem{
+			ItemID:     item.ItemID,
+			ItemName:   details.Name,
+			Quantity:   item.Quantity,
+			Price:      price,
+			Category:   details.Category,
+			EntityID:   details.EntityID,
+			EntityType: details.EntityType,
+		})
+	}
+
+	return validatedItems, subtotal, itemDiscountTotal, nil
+}
+
+func calculateTotalDiscount(ctx context.Context, couponCode string, subtotal, itemDiscountTotal int64, app *infra.Deps) int64 {
+	discount := itemDiscountTotal
+	if couponCode == "" {
+		return discount
+	}
+
+	couponRes, err := validateCouponServer(ctx, couponCode, subtotal, app)
+	if err != nil {
+		log.Printf("calculateTotalDiscount: coupon validation failed: %v", err)
+		return discount
+	}
+
+	if couponRes != nil {
+		discount += couponRes.DiscountAmount
+	}
+	return discount
 }

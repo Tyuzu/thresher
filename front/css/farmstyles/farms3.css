@@ -1,89 +1,174 @@
+/* ==========================================================================
+   Farms Page Component Styles
+   Uses CSS Custom Properties defined in :root
+   ========================================================================== */
+
+/* Page Layout & Container */
 .farmspage {
-  max-width: var(--max-width);
+  width: 100%;
+  max-width: var(--max-width-xl);
   margin: 0 auto;
   padding: var(--container-padding);
-  background-color: var(--color-bg);
+  font-family: var(--font-body);
   color: var(--color-fg);
+  background-color: var(--color-bg);
 }
 
-.farm__layout {
-  display: flex;
-  flex-wrap: wrap;
+.two-column.farm-page {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--space-lg);
 }
 
-.farm__main {
-  flex: 1 1 70%;
+@media (min-width: 1024px) {
+  .two-column.farm-page {
+    grid-template-columns: 1fr 320px;
+  }
 }
 
-.farm__side {
-  flex: 1 1 25%;
+/* Main Content Layout */
+.layout-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
 }
 
+/* Filter Controls Bar */
 .farm__filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-sm);
-  margin-bottom: var(--space-md);
+  padding: var(--space-md);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
 }
 
-.farm__search,
-.farm__location,
-.farm__sort {
-  padding: var(--space-sm);
-  font-size: var(--font-size-base);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-bg);
+.farm__filters input[type="text"],
+.farm__filters select {
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
   color: var(--color-fg);
+  background-color: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition);
 }
 
+.farm__filters input[type="text"]::placeholder {
+  color: var(--color-muted);
+}
+
+.farm__filters input[type="text"]:focus,
+.farm__filters select:focus {
+  outline: none;
+  border-color: var(--color-input-focus);
+}
+
+.farm__search {
+  flex: 1 1 200px;
+}
+
+.farm__location {
+  flex: 1 1 160px;
+}
+
+.farm__sort {
+  cursor: pointer;
+}
+
+.farm__filters label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Cards Grid */
 .farm__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-md);
 }
 
+/* Farm Card */
 .farm__card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-sm);
-  box-shadow: var(--shadow-elev-1);
-  transition: box-shadow var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
 }
 
 .farm__card:hover {
-  box-shadow: var(--shadow-elev-2);
+  background-color: var(--color-card-hover);
+  box-shadow: var(--shadow-elev-3);
+  transform: translateY(-2px);
 }
 
 .farm__image {
-  aspect-ratio: 7/3;
   width: 100%;
-  height: auto;
+  height: 180px;
   object-fit: cover;
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-sm);
+  background-color: var(--color-bg-tertiary);
+}
+
+.farm__header {
+  padding: var(--space-md) var(--space-md) var(--space-xs);
 }
 
 .farm__header h3 {
-  margin-bottom: var(--space-xs);
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  color: var(--color-fg);
 }
 
-.farm__header p {
+.farm__header .farm__location {
+  margin-top: var(--space-xxs);
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+
+.farm__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  padding: 0 var(--space-md);
+}
+
+.farm__meta {
+  padding: var(--space-xs) var(--space-md);
   font-size: var(--font-size-sm);
   color: var(--color-muted);
 }
 
 .farm__meta p {
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--space-xs);
+  margin: var(--space-xxs) 0;
+}
+
+/* Crops Section Inside Card */
+.farm__crops-preview {
+  padding: var(--space-sm) var(--space-md);
+  margin-top: auto;
 }
 
 .farm__crops-preview h4 {
-  font-size: var(--font-size-base);
-  margin-top: var(--space-sm);
-  margin-bottom: var(--space-xs);
+  margin: 0 0 var(--space-xs) 0;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-light);
 }
 
 .crop__list {
@@ -96,78 +181,123 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  background-color: var(--color-space);
-  padding: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
   border-radius: var(--radius-sm);
 }
 
 .crop__image {
-  width: 40px;
-  height: 40px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-xs);
   object-fit: cover;
-  border-radius: var(--radius-sm);
 }
 
-.crop__info {
-  font-size: var(--font-size-sm);
+.crop__info strong {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
 }
 
 .farm__actions {
-  margin-top: var(--space-sm);
+  padding: var(--space-md);
 }
+
 
 .farm__button {
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--font-size-base);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-btn-bg);
-  color: var(--color-btn-fg);
-  border: none;
-  cursor: pointer;
-  transition: background-color var(--transition-fast);
+  width: 100%;
 }
 
-.farm__button:hover {
-  background-color: var(--color-btn-hover-bg);
-}
-
-.farm__sidebar {
-  background-color: var(--color-surface);
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-elev-1);
+/* Sidebar Layout */
+.layout-aside {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
 }
 
-.farm__sidebar section h3 {
-  margin-bottom: var(--space-sm);
+.layout-aside h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
 }
 
-.farm__sidebar section p {
+.layout-aside section {
+  padding: var(--space-md);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+}
+
+.layout-aside section h3 {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-fg);
+}
+
+.layout-aside section p {
+  margin: var(--space-xs) 0;
   font-size: var(--font-size-sm);
-  margin-bottom: var(--space-xs);
+  color: var(--color-muted);
 }
 
+/* CTA Buttons Group */
+.farm__Cta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+
+/* Featured Farm Widget */
 .farm__featured-photo {
   width: 100%;
-  height: auto;
+  height: 140px;
   object-fit: cover;
   border-radius: var(--radius-sm);
   margin-bottom: var(--space-sm);
 }
 
+.farm__featured h4 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.farm__featured-rating {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-warning) !important;
+}
+
+/* Map Placeholder */
 .farm__map-placeholder {
-  background-color: var(--color-space);
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  background-color: var(--color-bg-tertiary);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
   color: var(--color-muted);
 }
 
-/* .farm__Cta {
-  display: flex;
-  flex-direction: column;
-} */
+/* Advertisement Slot */
+.advert-aside {
+  padding: var(--space-sm) !important;
+  text-align: center;
+}
+
+.ad-slot {
+  padding: var(--space-md);
+  background-color: var(--color-bg-tertiary);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.ad-fallback-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-light);
+  text-transform: uppercase;
+}

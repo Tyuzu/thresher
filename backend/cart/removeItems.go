@@ -3,72 +3,61 @@ package cart
 import (
 	"context"
 	"encoding/json"
-	log "naevis/utils/logger"
+	"errors"
 	"net/http"
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/utils"
+	log "naevis/utils/logger"
 )
+
+const defaultTimeout = 10 * time.Second
+
+func (r removeFromCartRequest) validate() error {
+	if r.ItemID == "" || r.Category == "" {
+		return errors.New("itemId and category are required")
+	}
+	return nil
+}
 
 /* ───────────────────────── Remove From Cart ───────────────────────── */
 
-// RemoveFromCart removes a specific item from the user's cart
+// RemoveFromCart removes a specific item from the user's cart.
 func RemoveFromCart(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-		defer cancel()
-
-		var payload struct {
-			ItemID     string `json:"itemId"`
-			Category   string `json:"category"`
-			EntityID   string `json:"entityId,omitempty"`
-			EntityType string `json:"entityType,omitempty"`
-		}
-
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			log.Println("RemoveFromCart decode error:", err)
-			http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
-			return
-		}
-
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		if payload.ItemID == "" || payload.Category == "" {
-			http.Error(w, "ItemID and Category are required", http.StatusBadRequest)
+		var req removeFromCartRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Printf("RemoveFromCart decode error: %v", err)
+			http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
 			return
 		}
 
-		filter := bson.M{
-			"userId":   userID,
-			"itemId":   payload.ItemID,
-			"category": payload.Category,
+		if err := req.validate(); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
-		// Add optional filters if provided
-		if payload.EntityID != "" {
-			filter["entityId"] = payload.EntityID
-		}
-		if payload.EntityType != "" {
-			filter["entityType"] = payload.EntityType
-		}
+		ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
+		defer cancel()
 
-		if err := deleteCartItemFromDB(ctx, userID, payload.ItemID, payload.Category, payload.EntityID, payload.EntityType, app); err != nil {
-			log.Println("RemoveFromCart Delete error:", err)
+		if err := deleteCartItemFromDB(ctx, userID, req.ItemID, req.Category, req.EntityID, req.EntityType, app); err != nil {
+			log.Printf("RemoveFromCart Delete error: %v", err)
 			http.Error(w, "Failed to remove item from cart", http.StatusInternalServerError)
 			return
 		}
 
 		groupedCart, err := getGroupedCart(ctx, userID, "", app)
 		if err != nil {
+			log.Printf("RemoveFromCart fetch updated cart error: %v", err)
 			http.Error(w, "Failed to fetch updated cart", http.StatusInternalServerError)
 			return
 		}
@@ -83,20 +72,20 @@ func RemoveFromCart(app *infra.Deps) http.HandlerFunc {
 
 /* ───────────────────────── Clear Cart ───────────────────────── */
 
-// ClearCart removes all items from the user's cart
+// ClearCart removes all items from the user's cart.
 func ClearCart(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-		defer cancel()
-
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
+		ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
+		defer cancel()
+
 		if err := clearCartForUser(ctx, userID, app); err != nil {
-			log.Println("ClearCart Delete error:", err)
+			log.Printf("ClearCart Delete error: %v", err)
 			http.Error(w, "Failed to clear cart", http.StatusInternalServerError)
 			return
 		}

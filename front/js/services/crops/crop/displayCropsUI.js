@@ -169,6 +169,8 @@ export function renderCropInterface(container, cropData) {
   });
 
   container.appendChild(layout);
+  container.prepend(createElement("h2", {}, ["All Crops"]));
+
 }
 
 function updateAllTabs(state) {

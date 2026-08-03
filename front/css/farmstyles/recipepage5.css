@@ -105,19 +105,6 @@
   transform: scale(1.05);
 }
 
-/* .button {
-  background-color: var(--color-btn-bg);
-  color: var(--color-btn-fg);
-  border: none;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: background-color var(--transition-fast);
-}
-
-.button:hover {
-  background-color: var(--color-btn-hover-bg);
-} */
 
 .steps-section {
   margin-bottom: var(--space-md);

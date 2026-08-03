@@ -3,31 +3,46 @@ package booking
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"slices"
+	"time"
+
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
-	"net/http"
-	"time"
+)
+
+const (
+	dateFormat = "2006-01-02"
+
+	defaultStartTime = "09:00"
+	defaultEndTime   = "17:00"
+
+	defaultTimeout   = 5 * time.Second
+	longBatchTimeout = 10 * time.Second
 )
 
 // ---------- Utility ----------
+
 func genID() string {
 	return utils.GenerateRandomDigitString(22)
 }
 
-// ---------- Tier handlers ----------
+// ---------- Tier Handlers ----------
+
 func CreateTier(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
+		defer cancel()
+
 		var tier models.Tier
 		if err := json.NewDecoder(r.Body).Decode(&tier); err != nil {
 			http.Error(w, "invalid JSON", http.StatusBadRequest)
 			return
 		}
 
-		// basic validation
 		if tier.ID == "" || tier.EntityType == "" || tier.EntityId == "" || tier.Name == "" {
 			http.Error(w, "missing required fields", http.StatusBadRequest)
 			return
@@ -35,7 +50,7 @@ func CreateTier(app *infra.Deps) http.HandlerFunc {
 
 		tier.CreatedAt = time.Now().Unix()
 
-		if err := InsertTier(r.Context(), app.DB, tier); err != nil {
+		if err := InsertTier(ctx, app.DB, tier); err != nil {
 			http.Error(w, "db insert failed", http.StatusInternalServerError)
 			return
 		}
@@ -48,15 +63,16 @@ func CreateTier(app *infra.Deps) http.HandlerFunc {
 
 func DeleteTier(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tierId := utils.GetParam(r, "id")
-		if tierId == "" {
+		tierID := utils.GetParam(r, "id")
+		if tierID == "" {
 			http.Error(w, "missing id", http.StatusBadRequest)
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+		ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
 		defer cancel()
 
-		if _, err := DeleteTierByID(ctx, app.DB, tierId); err != nil {
+		if _, err := DeleteTierByID(ctx, app.DB, tierID); err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return
 		}
@@ -65,32 +81,33 @@ func DeleteTier(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-// ---------- Slots ----------
+// ---------- Slot Handlers ----------
+
 func CreateSlot(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
+		defer cancel()
+
 		var s models.Slot
 		if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
 			http.Error(w, "invalid payload", http.StatusBadRequest)
 			return
 		}
+
 		if s.EntityType == "" || s.EntityId == "" || s.Date == "" || s.Start == "" || s.Capacity <= 0 {
 			http.Error(w, "missing required fields", http.StatusBadRequest)
 			return
 		}
 
 		if s.TierId != "" {
-			ctxTmp, cancelTmp := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancelTmp()
 			var t models.Tier
-			if err := FindTierByID(ctxTmp, app.DB, s.TierId, &t); err == nil {
+			if err := FindTierByID(ctx, app.DB, s.TierId, &t); err == nil {
 				s.TierName = t.Name
 			}
 		}
 
 		s.ID = genID()
 		s.CreatedAt = time.Now().Unix()
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
 
 		if err := InsertSlot(ctx, app.DB, s); err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
@@ -99,102 +116,74 @@ func CreateSlot(app *infra.Deps) http.HandlerFunc {
 
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.SlotCreatedEvent, mqevent.SlotCreatedPayload{})
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{"slot": s})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"slot": s})
 	}
 }
 
 func DeleteSlot(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		slotId := utils.GetParam(r, "id")
-		if slotId == "" {
+		slotID := utils.GetParam(r, "id")
+		if slotID == "" {
 			http.Error(w, "missing id", http.StatusBadRequest)
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+		ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
 		defer cancel()
 
-		if _, err := DeleteSlotByID(ctx, app.DB, slotId); err != nil {
+		if _, err := DeleteSlotByID(ctx, app.DB, slotID); err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return
 		}
-		_ = DeleteBookingsBySlot(ctx, app.DB, slotId)
+		_ = DeleteBookingsBySlot(ctx, app.DB, slotID)
 
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
-// ---------- GenerateSlotsFromTier ----------
+// ---------- Slot Generation ----------
+
+type generateSlotsRequest struct {
+	StartDate string `json:"startdate"`
+	EndDate   string `json:"enddate"`
+}
+
 func GenerateSlotsFromTier(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tierId := utils.GetParam(r, "id")
-		if tierId == "" {
+		tierID := utils.GetParam(r, "id")
+		if tierID == "" {
 			http.Error(w, "missing id", http.StatusBadRequest)
 			return
 		}
 
-		var body struct {
-			StartDate string `json:"startDate"`
-			EndDate   string `json:"endDate"`
-		}
+		var body generateSlotsRequest
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "invalid payload", http.StatusBadRequest)
 			return
 		}
+
 		if body.StartDate == "" || body.EndDate == "" {
 			http.Error(w, "missing date range", http.StatusBadRequest)
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), longBatchTimeout)
 		defer cancel()
 
 		var tier models.Tier
-		if err := FindTierByID(ctx, app.DB, tierId, &tier); err != nil {
+		if err := FindTierByID(ctx, app.DB, tierID, &tier); err != nil {
 			http.Error(w, "tier not found", http.StatusNotFound)
 			return
 		}
 
-		startDate, err1 := time.Parse("2006-01-02", body.StartDate)
-		endDate, err2 := time.Parse("2006-01-02", body.EndDate)
-		if err1 != nil || err2 != nil || startDate.After(endDate) {
+		startDate, errStart := time.Parse(dateFormat, body.StartDate)
+		endDate, errEnd := time.Parse(dateFormat, body.EndDate)
+		if errStart != nil || errEnd != nil || startDate.After(endDate) {
 			http.Error(w, "invalid date range", http.StatusBadRequest)
 			return
 		}
 
-		var slots []models.Slot
-		for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
-			dow := int(d.Weekday())
-			if len(tier.DaysOfWeek) > 0 {
-				allowed := false
-				for _, allowedDay := range tier.DaysOfWeek {
-					if allowedDay == dow {
-						allowed = true
-						break
-					}
-				}
-				if !allowed {
-					continue
-				}
-			}
-
-			start, end := "09:00", "17:00"
-			if len(tier.TimeRange) == 2 {
-				start, end = tier.TimeRange[0], tier.TimeRange[1]
-			}
-
-			slots = append(slots, models.Slot{
-				ID:         genID(),
-				EntityType: tier.EntityType,
-				EntityId:   tier.EntityId,
-				Date:       d.Format("2006-01-02"),
-				Start:      start,
-				End:        end,
-				Capacity:   tier.Capacity,
-				TierId:     tier.ID,
-				TierName:   tier.Name,
-				CreatedAt:  time.Now().Unix(),
-			})
-		}
+		slots := buildSlotsFromTier(tier, startDate, endDate)
 
 		if len(slots) > 0 {
 			docs := make([]any, len(slots))
@@ -207,6 +196,43 @@ func GenerateSlotsFromTier(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{"ok": true, "slots": slots})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
+			"ok":    true,
+			"slots": slots,
+		})
 	}
+}
+
+// ---------- Helper Functions ----------
+
+func buildSlotsFromTier(tier models.Tier, startDate, endDate time.Time) []models.Slot {
+	var slots []models.Slot
+	now := time.Now().Unix()
+
+	startTime, endTime := defaultStartTime, defaultEndTime
+	if len(tier.TimeRange) == 2 {
+		startTime, endTime = tier.TimeRange[0], tier.TimeRange[1]
+	}
+
+	for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
+		dow := int(d.Weekday())
+		if len(tier.DaysOfWeek) > 0 && !slices.Contains(tier.DaysOfWeek, dow) {
+			continue
+		}
+
+		slots = append(slots, models.Slot{
+			ID:         genID(),
+			EntityType: tier.EntityType,
+			EntityId:   tier.EntityId,
+			Date:       d.Format(dateFormat),
+			Start:      startTime,
+			End:        endTime,
+			Capacity:   tier.Capacity,
+			TierId:     tier.ID,
+			TierName:   tier.Name,
+			CreatedAt:  now,
+		})
+	}
+
+	return slots
 }

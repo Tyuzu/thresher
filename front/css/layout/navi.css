@@ -76,9 +76,7 @@
 
 /* Items & Links */
 .navigation__item {
-  flex-shrink: 1;
-  flex-basis: 32%;
-  /*flex: 0 0 auto;*/
+  flex: 0 0 auto;
 }
 
 .navigation__link {

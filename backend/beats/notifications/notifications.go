@@ -28,17 +28,6 @@ func NewHandler(app *infra.Deps) *Handler {
 	return &Handler{app: app}
 }
 
-// CreateRequest represents the incoming request payload for a single notification.
-type CreateRequest struct {
-	UserID      string `json:"userId"`
-	Type        string `json:"type"`
-	Title       string `json:"title"`
-	Message     string `json:"message"`
-	EntityType  string `json:"entityType"`
-	EntityID    string `json:"entityId"`
-	RelatedUser string `json:"relatedUser"`
-}
-
 func (req *CreateRequest) Trim() {
 	req.UserID = strings.TrimSpace(req.UserID)
 	req.Type = strings.TrimSpace(req.Type)

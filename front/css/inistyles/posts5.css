@@ -1,139 +1,57 @@
 /* ==========================================================================
-   1. MAIN PAGE LAYOUT & GRID
+   Posts Page Layout & Component Styles
+   Uses CSS Custom Properties defined in :root
    ========================================================================== */
 
-.posts-page {
+/* Main Container & Page Layout */
+#content.content-main {
+  width: 100%;
+  max-width: var(--max-width-xl);
+  margin: 0 auto;
+  padding: var(--container-padding);
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  background-color: var(--color-bg);
+}
+
+.two-column.posts-page {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-lg);
-  max-width: var(--max-width-xl);
-  margin: 0 auto;
-  padding: var(--space-md);
-  color: var(--color-fg);
-  background-color: var(--color-bg);
-  box-sizing: border-box;
 }
 
-.posts-page *,
-.posts-page *::before,
-.posts-page *::after {
-  box-sizing: inherit;
-}
-
-/* Two-column layout on desktop screens */
-@media (min-width: 768px) {
-  .posts-page {
-    grid-template-columns: 1fr 300px;
+@media (min-width: 1024px) {
+  .two-column.posts-page {
+    grid-template-columns: 1fr 320px;
   }
 }
 
-/* Page Headings */
-.posts-main h1 {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-heading);
-  margin: 0 0 var(--space-md) 0;
-  color: var(--color-fg);
-}
-
-.posts-aside h2 {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-heading);
-  margin: 0 0 var(--space-md) 0;
-  color: var(--color-fg);
-}
-
-/* ==========================================================================
-   2. POSTS FEED & CARDS
-   ========================================================================== */
-
-.posts-list {
+/* Main Content Area */
+.layout-main {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
 }
 
-.posts-list a {
-  text-decoration: none;
-  color: inherit;
-  display: block;
-}
-
-.post-card {
-  background-color: var(--color-card-bg);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-  transition: transform var(--transition-fast), 
-              box-shadow var(--transition-fast), 
-              border-color var(--transition-fast);
-}
-
-.posts-list a:hover .post-card,
-.posts-list a:focus-visible .post-card {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-elev-2);
-  border-color: var(--color-border);
-  background-color: var(--color-card-hover);
-}
-
-.post-card img {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border-radius: var(--radius-xs);
-  display: block;
-  background-color: var(--color-bg-tertiary);
-}
-
-.post-info {
-  padding: var(--space-md);
-}
-
-.post-info h3 {
-  font-size: var(--font-size-lg);
+.layout-main h1 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
   margin: 0 0 var(--space-xs) 0;
   color: var(--color-fg);
 }
 
-.post-info p {
-  font-size: var(--font-size-sm);
-  color: var(--color-muted);
-  line-height: var(--line-height-normal);
-  margin: 0 0 var(--space-xxs) 0;
-}
-
-.post-info p:last-child {
-  margin-bottom: 0;
-}
-
-.post-info strong {
-  color: var(--color-fg);
-  font-weight: var(--font-weight-medium);
-}
-
-/* ==========================================================================
-   3. ADVERTISEMENT SLOTS
-   ========================================================================== */
-
-.advert {
-  margin-bottom: var(--space-md);
+/* In-body Advertisement Slot */
+.advert-inbody {
+  margin-bottom: var(--space-sm);
 }
 
 .ad-slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-bg-secondary);
+  padding: var(--space-md);
+  background-color: var(--color-bg-tertiary);
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-sm);
-  padding: var(--space-md);
   text-align: center;
-  transition: background-color var(--transition-fast);
 }
 
 .ad-fallback-text {
@@ -141,52 +59,102 @@
   color: var(--color-light);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* Posts List Grid */
+.posts-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-md);
+}
+
+.posts-list a {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+}
+
+/* Post Card Item */
+.post-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.post-card:hover {
+  background-color: var(--color-card-hover);
+  box-shadow: var(--shadow-elev-3);
+  transform: translateY(-2px);
+}
+
+.post-card img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 0; /* Reset inline border-radius to align with card corners */
+  background-color: var(--color-bg-tertiary);
+}
+
+.post-info {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-md);
+  flex: 1;
+}
+
+.post-info h3 {
+  margin: 0 0 var(--space-xs) 0;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-fg);
+  line-height: var(--line-height-heading);
+}
+
+.post-info p {
+  margin: var(--space-xxs) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  line-height: var(--line-height-normal);
+}
+
+.post-info p strong {
+  color: var(--color-fg);
   font-weight: var(--font-weight-medium);
 }
 
-/* ==========================================================================
-   4. ASIDE ACTIONS & BUTTONS
-   ========================================================================== */
-
-.posts-aside {
+/* Sidebar Layout */
+.layout-aside {
   display: flex;
   flex-direction: column;
+  gap: var(--space-md);
 }
 
-#posts-create-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: var(--space-sm) var(--space-md);
-  background-color: var(--color-btn-bg);
-  color: var(--color-btn-fg);
-  border: none;
-  border-radius: var(--radius-md);
+.layout-aside h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
-  text-align: center;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background-color var(--transition-fast), 
-              transform var(--transition-fast),
-              box-shadow var(--transition-fast);
+  color: var(--color-fg);
 }
 
-#posts-create-btn:hover {
-  background-color: var(--color-btn-hover-bg);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-elev-1);
+.aside-actions {
+  padding: var(--space-md);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
 }
 
-#posts-create-btn:active {
-  transform: translateY(0);
-  box-shadow: none;
-}
-
-#posts-create-btn:disabled {
-  background-color: var(--color-btn-disabled-bg);
-  color: var(--color-btn-disabled-fg);
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+/* Sidebar Advertisement Block */
+.advert-aside {
+  padding: var(--space-sm);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
 }

@@ -32,3 +32,10 @@ type VerifyOTPInput struct {
 	Email string `json:"email"`
 	OTP   string `json:"otp"`
 }
+
+// RefreshResult communicates intended cookie side-effects and tokens.
+type RefreshResult struct {
+	AccessToken string
+	NewRefresh  string // non-empty => set this new refresh in cookie
+	ClearCookie bool   // true => clear cookie on response
+}

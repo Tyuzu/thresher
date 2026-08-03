@@ -17,17 +17,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// UpdatePreferencesRequest defines incoming payloads with pointer fields to differentiate
-// between an omitted key and an explicit false value in JSON.
-type UpdatePreferencesRequest struct {
-	MentionsEnabled *bool `json:"mentionsEnabled"`
-	FollowsEnabled  *bool `json:"followsEnabled"`
-	CommentsEnabled *bool `json:"commentsEnabled"`
-	LikesEnabled    *bool `json:"likesEnabled"`
-	MessagesEnabled *bool `json:"messagesEnabled"`
-	AllEnabled      *bool `json:"allEnabled"`
-}
-
 // GetPreferences gets notification preferences for a user
 func (h *Handler) GetPreferences(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)

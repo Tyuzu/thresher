@@ -291,10 +291,7 @@ func UpdateBaito(app *infra.Deps) http.HandlerFunc {
 
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BaitoUpdatedEvent, mqevent.BaitoUpdatedPayload{})
 
-		utils.RespondWithJSON(w, http.StatusOK, struct {
-			Message string `json:"message"`
-			BaitoID string `json:"baitoid"`
-		}{
+		utils.RespondWithJSON(w, http.StatusOK, UpdateBaitoResponse{
 			Message: "Baito updated",
 			BaitoID: utils.GetParam(r, "baitoid"),
 		})

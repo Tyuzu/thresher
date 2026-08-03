@@ -1,0 +1,118 @@
+/* ==========================================================================
+   Base Button Component Styles
+   Uses CSS Custom Properties defined in :root
+   ========================================================================== */
+
+.button {
+  /* Layout & Alignment */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  width: fit-content;
+
+  /* Sizing & Typography */
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+
+  /* Colors & Appearance */
+  color: var(--color-btn-fg);
+  background-color: var(--color-btn-bg);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-elev-1);
+
+  /* Interaction & Transitions */
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+/* Hover State */
+.button:hover {
+  background-color: var(--color-btn-hover-bg);
+  box-shadow: var(--shadow-elev-2);
+}
+
+/* Focus & Accessibility State */
+.button:focus {
+  outline: none;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Active / Pressed State */
+.button:active {
+  transform: translateY(1px);
+  box-shadow: var(--shadow-elev-0);
+}
+
+/* Disabled State */
+.button:disabled,
+.button.is-disabled {
+  background-color: var(--color-btn-disabled-bg);
+  color: var(--color-btn-disabled-fg);
+  border-color: transparent;
+  box-shadow: var(--shadow-elev-0);
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
+}
+
+/* ==========================================================================
+   Common Utility Classes & Variant Modifiers
+   ========================================================================== */
+
+/* Full Width Helper Class */
+.button.w-full {
+  width: 100%;
+}
+
+/* Secondary Variant */
+.button.secondary {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-fg);
+  border-color: var(--color-border);
+}
+
+.button.secondary:hover {
+  background-color: var(--color-border-light);
+  border-color: var(--color-border);
+}
+
+/* Outline Variant */
+.button.outline {
+  background-color: transparent;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.button.outline:hover {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+/* Danger / Destructive Variant */
+.button.danger {
+  background-color: var(--color-danger);
+  color: #ffffff;
+}
+
+.button.danger:hover {
+  background-color: #b91c1c;
+}

@@ -7,8 +7,6 @@ export async function displayCrops(content, _isLoggedIn) {
   const contentContainer = createElement("div", { class: "cropspage" });
   content.replaceChildren(contentContainer);
 
-  contentContainer.appendChild(createElement("h2", {}, ["All Crops"]));
-
   const categorized = {};
 
   try {
@@ -25,8 +23,8 @@ export async function displayCrops(content, _isLoggedIn) {
 
     cropTypes.forEach(raw => {
       if (!raw.Name) {
-return;
-}
+        return;
+      }
 
       // 🔑 normalize backend → frontend shape
       const crop = {
@@ -42,8 +40,8 @@ return;
 
       const category = guessCategoryFromName(crop.name);
       if (!categorized[category]) {
-categorized[category] = [];
-}
+        categorized[category] = [];
+      }
       categorized[category].push(crop);
     });
 

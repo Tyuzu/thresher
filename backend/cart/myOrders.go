@@ -2,72 +2,50 @@ package cart
 
 import (
 	"context"
-	"naevis/infra"
-	"naevis/models"
-	"naevis/utils"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"naevis/infra"
+	"naevis/models"
+	"naevis/utils"
 	"naevis/utils/logger"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+const defaultOrdersTimeout = 10 * time.Second
+
 /* ───────────────────────── Get User Orders ───────────────────────── */
+
+// GetMyOrders fetches and unifies regular and farm orders for the authenticated user.
 func GetMyOrders(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-		defer cancel()
-
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		// Parse pagination parameters
-		skip := 0
-		limit := 10
-		if s := r.URL.Query().Get("skip"); s != "" {
-			if parsed, err := strconv.Atoi(s); err == nil && parsed >= 0 {
-				skip = parsed
-			}
-		}
-		if l := r.URL.Query().Get("limit"); l != "" {
-			if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 100 {
-				limit = parsed
-			}
-		}
+		skip := parseQueryInt(r, "skip", 0, 0, 10000)
+		limit := parseQueryInt(r, "limit", 10, 1, 100)
+
+		ctx, cancel := context.WithTimeout(r.Context(), defaultOrdersTimeout)
+		defer cancel()
 
 		regularOrders, farmOrders, err := fetchUserOrdersFromDB(ctx, userID, app)
 		if err != nil {
-			logger.Println("GetMyOrders FindMany error:", err)
+			logger.Printf("GetMyOrders fetch error for user %s: %v", userID, err)
 			http.Error(w, "Failed to fetch orders", http.StatusInternalServerError)
 			return
 		}
 
-		type CombinedOrder struct {
-			OrderID       string                       `bson:"orderId" json:"orderId"`
-			OrderType     string                       `json:"orderType"` // "regular" or "farm"
-			UserID        string                       `bson:"userId" json:"userId"`
-			FarmID        string                       `json:"farmId,omitempty"`
-			Items         map[string][]models.CartItem `bson:"items" json:"items,omitempty"`
-			Address       string                       `bson:"address" json:"address,omitempty"`
-			PaymentMethod string                       `bson:"paymentMethod" json:"paymentMethod,omitempty"`
-			Total         int64                        `bson:"total" json:"total"` // In paise
-			Status        string                       `bson:"status" json:"status"`
-			CreatedAt     time.Time                    `bson:"createdAt" json:"createdAt"`
-			ApprovedBy    []string                     `bson:"approvedBy" json:"approvedBy,omitempty"`
-		}
+		allOrders := make([]combinedOrder, 0, len(regularOrders)+len(farmOrders))
 
-		var allOrders []CombinedOrder
-
-		// Add regular orders
 		for _, order := range regularOrders {
-			allOrders = append(allOrders, CombinedOrder{
+			allOrders = append(allOrders, combinedOrder{
 				OrderID:       order.OrderID,
 				OrderType:     "regular",
 				UserID:        order.UserID,
@@ -81,59 +59,10 @@ func GetMyOrders(app *infra.Deps) http.HandlerFunc {
 			})
 		}
 
-		// 1. Batch collect IDs for Transactions AND Approver Users
-		orderIDs := make([]string, 0, len(farmOrders))
-		approverIDSet := make(map[string]struct{})
-		for _, o := range farmOrders {
-			orderIDs = append(orderIDs, o.OrderID)
-			for _, id := range o.ApprovedBy {
-				if id != "" {
-					approverIDSet[id] = struct{}{}
-				}
-			}
-		}
+		orderIDs, approverIDSet := extractFarmOrderMetadata(farmOrders)
+		txnByOrder := fetchTransactionsByOrderIDs(ctx, app, orderIDs)
+		userNameMap := fetchUserNamesByIDs(ctx, app, approverIDSet)
 
-		// 2. Fetch Transactions in bulk
-		txnByOrder := map[string]models.Transaction{}
-		if len(orderIDs) > 0 {
-			var txns []models.Transaction
-			err := app.DB.FindMany(ctx, "transactions", bson.M{
-				"entity_type": "order",
-				"entity_id":   bson.M{"$in": orderIDs},
-			}, &txns)
-			if err != nil {
-				logger.Println("Warning: failed to fetch transactions:", err)
-			} else {
-				for _, t := range txns {
-					if t.EntityID != "" {
-						txnByOrder[t.EntityID] = t
-					}
-				}
-			}
-		}
-
-		// 3. FIX N+1: Fetch Approver Names in a single bulk query
-		userNameMap := map[string]string{}
-		if len(approverIDSet) > 0 {
-			approverIDs := make([]string, 0, len(approverIDSet))
-			for id := range approverIDSet {
-				approverIDs = append(approverIDs, id)
-			}
-
-			var users []models.User
-			err := app.DB.FindMany(ctx, "users", bson.M{"userid": bson.M{"$in": approverIDs}}, &users)
-			if err != nil {
-				logger.Println("Warning: failed to batch fetch users:", err)
-			} else {
-				for _, u := range users {
-					if u.Name != "" {
-						userNameMap[u.UserID] = u.Name
-					}
-				}
-			}
-		}
-
-		// 4. Map farm orders using the cached user names
 		for _, order := range farmOrders {
 			pm := mapPaymentStatus(order.Status)
 			if txn, ok := txnByOrder[order.OrderID]; ok {
@@ -145,7 +74,6 @@ func GetMyOrders(app *infra.Deps) http.HandlerFunc {
 				if approverID == "" {
 					continue
 				}
-				// Use cache map instead of querying DB inside the loop
 				if name, found := userNameMap[approverID]; found {
 					resolvedApprovedBy = append(resolvedApprovedBy, name)
 				} else {
@@ -153,7 +81,7 @@ func GetMyOrders(app *infra.Deps) http.HandlerFunc {
 				}
 			}
 
-			allOrders = append(allOrders, CombinedOrder{
+			allOrders = append(allOrders, combinedOrder{
 				OrderID:       order.OrderID,
 				OrderType:     "farm",
 				UserID:        order.UserID,
@@ -168,27 +96,19 @@ func GetMyOrders(app *infra.Deps) http.HandlerFunc {
 			})
 		}
 
-		// Sort by creation date (newest first)
+		// Sort newest first
 		sort.Slice(allOrders, func(i, j int) bool {
 			return allOrders[i].CreatedAt.After(allOrders[j].CreatedAt)
 		})
 
-		// Apply pagination on combined results securely
+		// Secure pagination slice
 		total := len(allOrders)
-		start := skip
-		if start > total {
-			start = total
-		}
-		end := start + limit
-		if end > total {
-			end = total
-		}
+		start := min(skip, total)
+		end := min(start+limit, total)
 
 		paginatedOrders := allOrders[start:end]
-
-		// Safeguard to always return an empty array instead of null in JSON response if empty
 		if paginatedOrders == nil {
-			paginatedOrders = []CombinedOrder{}
+			paginatedOrders = []combinedOrder{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -198,6 +118,88 @@ func GetMyOrders(app *infra.Deps) http.HandlerFunc {
 			"limit":  limit,
 		})
 	}
+}
+
+/* ───────────────────────── Helper Functions ───────────────────────── */
+
+func extractFarmOrderMetadata(farmOrders []models.FarmOrder) ([]string, map[string]struct{}) {
+	orderIDs := make([]string, 0, len(farmOrders))
+	approverIDSet := make(map[string]struct{})
+
+	for _, o := range farmOrders {
+		orderIDs = append(orderIDs, o.OrderID)
+		for _, id := range o.ApprovedBy {
+			if id != "" {
+				approverIDSet[id] = struct{}{}
+			}
+		}
+	}
+	return orderIDs, approverIDSet
+}
+
+func fetchTransactionsByOrderIDs(ctx context.Context, app *infra.Deps, orderIDs []string) map[string]models.Transaction {
+	txnMap := make(map[string]models.Transaction)
+	if len(orderIDs) == 0 {
+		return txnMap
+	}
+
+	var txns []models.Transaction
+	err := app.DB.FindMany(ctx, "transactions", bson.M{
+		"entity_type": "order",
+		"entity_id":   bson.M{"$in": orderIDs},
+	}, &txns)
+	if err != nil {
+		logger.Printf("Warning: failed to fetch transactions: %v", err)
+		return txnMap
+	}
+
+	for _, t := range txns {
+		if t.EntityID != "" {
+			txnMap[t.EntityID] = t
+		}
+	}
+	return txnMap
+}
+
+func fetchUserNamesByIDs(ctx context.Context, app *infra.Deps, userIDs map[string]struct{}) map[string]string {
+	nameMap := make(map[string]string)
+	if len(userIDs) == 0 {
+		return nameMap
+	}
+
+	ids := make([]string, 0, len(userIDs))
+	for id := range userIDs {
+		ids = append(ids, id)
+	}
+
+	var users []models.User
+	err := app.DB.FindMany(ctx, "users", bson.M{"userid": bson.M{"$in": ids}}, &users)
+	if err != nil {
+		logger.Printf("Warning: failed to batch fetch users: %v", err)
+		return nameMap
+	}
+
+	for _, u := range users {
+		if u.Name != "" {
+			nameMap[u.UserID] = u.Name
+		}
+	}
+	return nameMap
+}
+
+func parseQueryInt(r *http.Request, key string, defaultVal, minVal, maxVal int) int {
+	str := r.URL.Query().Get(key)
+	if str == "" {
+		return defaultVal
+	}
+	val, err := strconv.Atoi(str)
+	if err != nil || val < minVal {
+		return defaultVal
+	}
+	if val > maxVal {
+		return maxVal
+	}
+	return val
 }
 
 func mapPaymentStatus(status models.OrderStatus) string {
@@ -216,11 +218,11 @@ func mapPaymentStatusFromTxn(txn *models.Transaction, status models.OrderStatus)
 		return mapPaymentStatus(status)
 	}
 
-	if strings.ToLower(txn.Status) == "success" {
+	if strings.EqualFold(txn.Status, "success") {
 		return "paid"
 	}
 
-	if strings.ToLower(txn.Method) == "cod" {
+	if strings.EqualFold(txn.Method, "cod") {
 		return "pending"
 	}
 

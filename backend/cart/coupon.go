@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -17,22 +18,20 @@ import (
 	log "naevis/utils/logger"
 )
 
+const (
+	couponTimeout = 5 * time.Second
+)
+
 /* ───────────────────────── Coupon Models ───────────────────────── */
 
-type Coupon struct {
-	Code       string    `bson:"code" json:"code"`
-	Discount   float64   `bson:"discount" json:"discount"` // % value
-	ExpiresAt  time.Time `bson:"expiresAt" json:"expiresAt"`
-	Active     bool      `bson:"active" json:"active"`
-	EntityID   string    `bson:"entityId" json:"entityId"`
-	EntityType string    `bson:"entityType" json:"entityType"`
-}
-
-type CouponRequest struct {
-	Code       string  `json:"code"`
-	Cart       float64 `json:"cart"`
-	EntityID   string  `json:"entityId"`
-	EntityType string  `json:"entityType"`
+func (r CouponRequest) validate() error {
+	if strings.TrimSpace(r.Code) == "" {
+		return errors.New("coupon code missing")
+	}
+	if strings.TrimSpace(r.EntityID) == "" || strings.TrimSpace(r.EntityType) == "" {
+		return errors.New("entity details required")
+	}
+	return nil
 }
 
 type CouponResponse struct {
@@ -47,21 +46,23 @@ type CouponResult struct {
 	DiscountAmount int64
 }
 
+type dbCoupon struct {
+	Code        string  `bson:"code"`
+	Active      bool    `bson:"active"`
+	ExpiresAt   int64   `bson:"expiresat"`
+	Type        string  `bson:"type"`  // "flat" or "percent"
+	Value       float64 `bson:"value"` // ₹ or %
+	MaxDiscount float64 `bson:"maxdiscount"`
+}
+
 func validateCouponServer(ctx context.Context, code string, subtotal int64, app *infra.Deps) (*CouponResult, error) {
+	code = strings.TrimSpace(strings.ToLower(code))
 	if code == "" {
 		return &CouponResult{DiscountAmount: 0}, nil
 	}
 
-	var coupon struct {
-		Code        string  `bson:"code"`
-		Active      bool    `bson:"active"`
-		ExpiresAt   int64   `bson:"expiresAt"`
-		Type        string  `bson:"type"`  // "flat" or "percent"
-		Value       float64 `bson:"value"` // ₹ or %
-		MaxDiscount float64 `bson:"maxDiscount"`
-	}
-
-	err := app.DB.FindOne(ctx, "coupons", bson.M{"code": code}, &coupon)
+	var coupon dbCoupon
+	err := app.DB.FindOne(ctx, couponCollection, bson.M{"code": code}, &coupon)
 	if err != nil || !coupon.Active {
 		return nil, errors.New("invalid coupon")
 	}
@@ -70,9 +71,8 @@ func validateCouponServer(ctx context.Context, code string, subtotal int64, app 
 		return nil, errors.New("coupon expired")
 	}
 
-	var discount int64 = 0
-
-	switch coupon.Type {
+	var discount int64
+	switch strings.ToLower(coupon.Type) {
 	case "flat":
 		discount = int64(coupon.Value * 100)
 
@@ -86,6 +86,8 @@ func validateCouponServer(ctx context.Context, code string, subtotal int64, app 
 				discount = max
 			}
 		}
+	default:
+		return nil, fmt.Errorf("unsupported coupon type: %s", coupon.Type)
 	}
 
 	if discount > subtotal {
@@ -95,36 +97,32 @@ func validateCouponServer(ctx context.Context, code string, subtotal int64, app 
 	return &CouponResult{DiscountAmount: discount}, nil
 }
 
-/* ───────────────────────── Validate Coupon ───────────────────────── */
+/* ───────────────────────── Validate Coupon Handler ───────────────────────── */
 
+// ValidateCouponHandler checks if a coupon code is applicable for an entity and returns calculated discounts.
 func ValidateCouponHandler(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-		defer cancel()
-
 		var req CouponRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			utils.RespondWithJSON(w, http.StatusBadRequest, CouponResponse{
+				Valid:   false,
+				Message: "Invalid request body",
+			})
 			return
 		}
+
+		if err := req.validate(); err != nil {
+			utils.RespondWithJSON(w, http.StatusBadRequest, CouponResponse{
+				Valid:   false,
+				Message: err.Error(),
+			})
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), couponTimeout)
+		defer cancel()
 
 		code := strings.TrimSpace(strings.ToLower(req.Code))
-		if code == "" {
-			utils.RespondWithJSON(w, http.StatusBadRequest, CouponResponse{
-				Valid:   false,
-				Message: "Coupon code missing",
-			})
-			return
-		}
-
-		if req.EntityID == "" || req.EntityType == "" {
-			utils.RespondWithJSON(w, http.StatusBadRequest, CouponResponse{
-				Valid:   false,
-				Message: "Entity details required",
-			})
-			return
-		}
-
 		filter := bson.M{
 			"code":       code,
 			"entityId":   req.EntityID,
@@ -141,7 +139,7 @@ func ValidateCouponHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if time.Now().After(coupon.ExpiresAt) {
+		if !coupon.ExpiresAt.IsZero() && time.Now().After(coupon.ExpiresAt) {
 			utils.RespondWithJSON(w, http.StatusGone, CouponResponse{
 				Valid:   false,
 				Message: "Coupon expired",
@@ -155,7 +153,7 @@ func ValidateCouponHandler(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CouponValidatedEvent, mqevent.CouponValidatedPayload{}); err != nil {
-			log.Printf("failed to publish coupon validated event: %v", err)
+			log.Printf("ValidateCouponHandler: failed to publish coupon event: %v", err)
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, CouponResponse{

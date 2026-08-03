@@ -94,12 +94,8 @@ func DeleteArtistEvent(app *infra.Deps) http.HandlerFunc {
 func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		type RequestPayload struct {
-			EventID  string `json:"eventid"`
-			ArtistID string `json:"artistid"`
-		}
 
-		var payload RequestPayload
+		var payload ArtistToEventRequestPayload
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, ErrInvalidPayload.Error())
 			return

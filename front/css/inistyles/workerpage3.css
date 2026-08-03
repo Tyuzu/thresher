@@ -160,35 +160,6 @@
   gap: 8px;
 }
 
-/* ---------------- Buttons & Action Triggers ---------------- */
-
-
-.button.primary,
-.btn-primary {
-  background-color: var(--color-primary, #0066ff);
-  color: var(--color-primary-fg, #ffffff);
-}
-
-.button.primary:hover,
-.btn-primary:hover {
-  background-color: color-mix(in srgb, var(--color-primary, #0066ff) 90%, #000000);
-  transform: translateY(-1px);
-}
-
-.button.secondary {
-  background-color: var(--color-bg-secondary, rgba(0, 0, 0, 0.04));
-  color: var(--color-fg, #1a1a1a);
-  border-color: var(--color-border, rgba(0, 0, 0, 0.08));
-}
-
-.button.secondary:hover {
-  background-color: var(--color-card-hover, rgba(0, 0, 0, 0.08));
-}
-
-.button:active,
-.btn:active {
-  transform: translateY(0) scale(0.98);
-}
 
 /* ---------------- Bookings & States ---------------- */
 .booking-container {

@@ -58,10 +58,7 @@ func GetArtistByID(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Response struct: embed artist + subscription info
-		resp := struct {
-			models.Artist
-			IsSubscribed bool `json:"isSubscribed"`
-		}{
+		resp := ArtistByIDResponse{
 			Artist:       artist,
 			IsSubscribed: isSubscribed,
 		}
@@ -69,6 +66,7 @@ func GetArtistByID(app *infra.Deps) http.HandlerFunc {
 		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}
 }
+
 func GetArtistsByEvent(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

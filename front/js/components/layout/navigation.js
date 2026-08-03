@@ -121,19 +121,20 @@ const enableDragDrop = (ul, toggle) => {
 /** Create navigation bar */
 const createNav = () => {
     const defaultNavItems = [
+        /*{ href: "/tools", label: "Tools" },
+        { href: "/products", label: "Products" },*/
+        { href: "/farms", label: "Farms" },
         { href: "/grocery", label: "Grocery" },
-        { href: "/tools", label: "Tools" },
         { href: "/recipes", label: "Recipes" },
-        { href: "/products", label: "Products" },
         { href: "/places", label: "Places" },
-        { href: "/itinerary", label: "Itinerary" },
+        /*{ href: "/itinerary", label: "Itinerary" },*/
         { href: "/events", label: "Events" },
         { href: "/artists", label: "Artists" },
-        { href: "/social", label: "Social" },
+        /*{ href: "/social", label: "Social" },*/
         { href: "/posts", label: "Posts" },
         { href: "/baitos", label: "Baito" },
         { href: "/baitos/hire", label: "Hire" },
-        { href: "/merechats", label: "TextChat" }
+        /*{ href: "/merechats", label: "TextChat" }*/
     ];
 
     const savedOrder = getNavOrder();

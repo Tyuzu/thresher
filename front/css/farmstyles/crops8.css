@@ -1,29 +1,43 @@
-/* --- Base Layout & Page Structure --- */
-.cropspage {
-  max-width: var(--max-width);
+/* ==========================================================================
+   Crops Catalogue Page Layout & Components
+   Uses CSS Custom Properties defined in :root
+   ========================================================================== */
+
+/* Main Container & Layout */
+#content.content-main {
+  width: 100%;
+  max-width: var(--max-width-xl);
   margin: 0 auto;
-  padding: var(--space-md);
+  padding: var(--container-padding);
+  font-family: var(--font-body);
   color: var(--color-fg);
+  background-color: var(--color-bg);
 }
 
 .cropspage h2 {
+  font-family: var(--font-heading);
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-heading);
   margin-bottom: var(--space-md);
-  color: var(--color-fg);
 }
 
-.catalogue-layout {
+.two-column.catalogue-layout {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-lg);
 }
 
 @media (min-width: 1024px) {
-  .catalogue-layout {
-    grid-template-columns: 1fr 280px;
+  .two-column.catalogue-layout {
+    grid-template-columns: 1fr 320px;
   }
+}
+
+/* Main Catalogue Section */
+.layout-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
 }
 
 .catalogue-main {
@@ -32,7 +46,7 @@
   gap: var(--space-md);
 }
 
-/* --- Controls (Search & Sort) --- */
+/* Top Controls: Search & Sort */
 .top-controls {
   display: flex;
   gap: var(--space-sm);
@@ -41,17 +55,22 @@
 
 .search-box,
 .sort-box {
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
   background-color: var(--color-input-bg);
   border: 1px solid var(--color-input-border);
   border-radius: var(--radius-sm);
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--font-size-sm);
-  color: var(--color-fg);
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition);
 }
 
 .search-box {
   flex: 1;
+}
+
+.search-box::placeholder {
+  color: var(--color-muted);
 }
 
 .search-box:focus,
@@ -60,103 +79,145 @@
   border-color: var(--color-input-focus);
 }
 
-/* --- Tabs --- */
+.sort-box {
+  cursor: pointer;
+}
+
+/* Category Filter Tabs */
 .tabs {
   display: flex;
   gap: var(--space-xs);
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 2px solid var(--color-border-light);
   padding-bottom: var(--space-xs);
 }
-
+/* Tab Content & Crop Cards Grid */
 .tab-content {
-  display: flex;
-  flex-wrap: wrap;
   gap: var(--space-md);
-  margin-top: var(--space-md);
+  flex-wrap: wrap;
 }
 
-/* --- Crop Cards Grid --- */
+.tab-content[style*="display: flex"] {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+/* Crop Card Item */
 .crop-card {
+  display: flex;
+  flex-direction: column;
   background-color: var(--color-card-bg);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
   overflow: hidden;
-  width: 100%;
-  max-width: 280px;
-  display: flex;
-  flex-direction: column;
-  transition: transform var(--transition-fast), background-color var(--transition-fast);
+  transition: transform var(--transition), box-shadow var(--transition);
 }
 
 .crop-card:hover {
   background-color: var(--color-card-hover);
+  box-shadow: var(--shadow-elev-3);
   transform: translateY(-2px);
 }
 
 .crop-card-image {
   width: 100%;
-  height: 180px;
+  height: 160px;
   object-fit: cover;
   background-color: var(--color-bg-tertiary);
 }
 
 .nimgcon {
-  padding: var(--space-md);
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: var(--space-xs);
+  padding: var(--space-md);
 }
 
 .nimgcon h4 {
+  margin: 0 0 var(--space-xs) 0;
+  font-family: var(--font-heading);
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  margin: 0;
   text-transform: capitalize;
-  color: var(--color-fg);
 }
 
 .crop-info {
+  margin: 0 0 var(--space-xs) 0;
   font-size: var(--font-size-sm);
   color: var(--color-muted);
-  margin: 0;
 }
 
 .season-indicator {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
-  margin: var(--space-xs) 0;
+  margin: 0 0 var(--space-sm) 0;
 }
 
 .season-indicator.off-season {
   color: var(--color-danger);
 }
 
-/* --- Sidebar Actions --- */
-.catalogue-aside {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  height: fit-content;
+.tag-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
 }
 
-.catalogue-aside h3 {
-  font-size: var(--font-size-lg);
+
+
+/* Sidebar Layout */
+.layout-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.layout-aside h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
-  margin-top: 0;
-  margin-bottom: var(--space-md);
+}
+
+.aside-section {
+  padding: var(--space-md);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+}
+
+.aside-section h3 {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
   color: var(--color-fg);
 }
 
 .cta-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
 }
 
-/* Specific Sidebar Buttons Layout */
-.cta-list .action-btn {
-  width: 100%;
+.promo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.promo-list li {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  line-height: var(--line-height-normal);
+  padding: var(--space-xs) 0;
+  border-bottom: 1px dashed var(--color-border-light);
+}
+
+.promo-list li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }

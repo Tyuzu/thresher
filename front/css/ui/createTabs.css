@@ -138,34 +138,6 @@
   margin-bottom: var(--space-md);
 }
 
-/* Button Component Styles */
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-sm) var(--space-md);
-  font-weight: var(--font-weight-medium);
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
-}
-
-.button.primary {
-  background-color: var(--color-btn-bg);
-  color: var(--color-btn-fg);
-}
-
-.button.primary:hover {
-  background-color: var(--color-btn-hover-bg);
-}
-
-.button:disabled {
-  background-color: var(--color-btn-disabled-bg);
-  color: var(--color-btn-disabled-fg);
-  cursor: not-allowed;
-}
-
 /* Gallery Grid Layout */
 .media-list {
   display: grid;

@@ -151,9 +151,8 @@
   margin: var(--space-xs) 0 var(--space-md) 0;
 }
 
-.btn, 
-.dropdown-item, 
-.button {
+ 
+.dropdown-item {
   font-family: var(--font-base);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
