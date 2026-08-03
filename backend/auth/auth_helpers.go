@@ -60,22 +60,24 @@ func uaHash(r *http.Request) string {
 	sum := sha256.Sum256([]byte(r.UserAgent()))
 	return hex.EncodeToString(sum[:])
 }
+func UAHash(r *http.Request) string {
+	sum := sha256.Sum256([]byte(r.UserAgent()))
+	return hex.EncodeToString(sum[:])
+}
 
-func hashRefreshToken(token string) string {
+func HashRefreshToken(token string) string {
 	mac := hmac.New(sha256.New, config.RefreshTokenSecret)
 	mac.Write([]byte(token))
 	return hex.EncodeToString(mac.Sum(nil))
 }
-
-func generateRefreshToken() (string, error) {
+func GenerateRefreshToken() (string, error) {
 	b := make([]byte, 64)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
 }
-
-func createAccessToken(claims *models.Claims) (string, error) {
+func CreateAccessToken(claims *models.Claims) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return t.SignedString(config.JwtSecret)
 }

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"naevis/baito/repo"
+	bu "naevis/baito/usecase"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
@@ -19,6 +21,10 @@ import (
 
 /* -------------------- Helpers -------------------- */
 
+/* Note: helper functions like `parseMultipartFormWithLimit`, `addWorkerRoleToUser`, and
+   `touchUserUpdatedAt` are defined centrally in `baitoDB.go`. They were removed from
+   this file to avoid duplicate declarations. */
+
 // parseWorkerForm parses form data for create or update
 func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M, error) {
 	var worker models.BaitoWorker
@@ -27,7 +33,9 @@ func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M
 	if err := parseMultipartFormWithLimit(r); err != nil {
 		return worker, update, err
 	}
-	defer r.MultipartForm.RemoveAll()
+	if r.MultipartForm != nil {
+		defer r.MultipartForm.RemoveAll()
+	}
 
 	ageStr := r.FormValue("age")
 	age, _ := strconv.Atoi(ageStr)
@@ -54,15 +62,14 @@ func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M
 		set["experience"] = r.FormValue("experience")
 		set["skills"] = r.FormValue("skills")
 		set["availability"] = r.FormValue("availability")
-		set["expectedwage"] = r.FormValue("expectedwage")
+		set["expectedwage"] = r.FormValue("expected_wage")
 		set["languages"] = r.FormValue("languages")
 		set["updatedat"] = time.Now().Unix()
 	} else {
-
-		genID, _ := utils.GenerateRandomString(12)
+		userID := utils.GetUserIDFromRequest(r)
 		worker = models.BaitoWorker{
-			UserID:        utils.GetUserIDFromRequest(r),
-			BaitoWorkerId: genID,
+			UserID:        userID,
+			BaitoWorkerId: userID,
 			Name:          r.FormValue("name"),
 			Age:           age,
 			Phone:         r.FormValue("phone"),
@@ -86,13 +93,15 @@ func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M
 
 // CreateWorkerProfile handles creating a new worker profile
 func CreateWorkerProfile(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
 
 		// Check if worker profile already exists
-		var existing models.BaitoWorker
-		err := findExistingWorkerProfile(ctx, app, userID, &existing)
+		_, err := uc.FindWorkerByUser(ctx, userID)
 		if err == nil {
 			utils.RespondWithError(w, http.StatusConflict, "Worker profile already exists")
 			return
@@ -119,10 +128,7 @@ func CreateWorkerProfile(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		worker.UserID = userID
-		worker.BaitoWorkerId = userID
-
-		if err = createWorkerProfileRecord(ctx, app, worker); err != nil {
+		if err = uc.CreateWorker(ctx, worker); err != nil {
 			logger.Printf("Insert error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to save worker profile")
 			return
@@ -143,6 +149,9 @@ func CreateWorkerProfile(app *infra.Deps) http.HandlerFunc {
 
 // UpdateWorkerProfile handles updating an existing worker profile
 func UpdateWorkerProfile(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
@@ -153,8 +162,7 @@ func UpdateWorkerProfile(app *infra.Deps) http.HandlerFunc {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid form data")
 			return
 		}
-
-		err = updateWorkerProfileRecord(ctx, app, workerID, userID, update)
+		err = uc.UpdateWorker(ctx, workerID, userID, update)
 		if err != nil {
 			logger.Printf("Update error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update worker profile")

@@ -16,6 +16,9 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -105,7 +108,10 @@ func CreateFarm(app *infra.Deps) http.HandlerFunc {
 			UpdatedAt:    time.Now(),
 		}
 
-		if err := insertFarm(ctx, app.DB, farm); err != nil {
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
+		if err := uc.CreateFarm(ctx, farm); err != nil {
 			log.Printf("Farm creation failed for user %s: %v", requestingUserID, err)
 
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
@@ -166,7 +172,10 @@ func EditFarm(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		farm, err := getFarmByID(ctx, app.DB, farmID)
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
+		farm, err := uc.GetFarmByID(ctx, farmID)
 		if err != nil {
 			utils.RespondWithJSON(w, http.StatusNotFound, utils.M{
 				"success": false,
@@ -270,9 +279,8 @@ func EditFarm(app *infra.Deps) http.HandlerFunc {
 
 		update["updatedAt"] = time.Now()
 
-		if err := updateOwnedFarm(
+		if err := uc.UpdateFarm(
 			ctx,
-			app.DB,
 			farmID,
 			userID,
 			bson.M{
@@ -319,7 +327,10 @@ func DeleteFarm(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if _, err := deleteFarmByID(ctx, app.DB, farmID); err != nil {
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
+		if _, err := uc.DeleteFarm(ctx, farmID); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 			})

@@ -7,6 +7,8 @@ import (
 
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
+	"naevis/events/repo"
+	eu "naevis/events/usecase"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/utils"
@@ -41,13 +43,16 @@ func EditEvent(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := UpdateEvent(ctx, app, eventID, updateFields); err != nil {
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := eu.NewEventUsecase(repoImpl)
+
+		if err := uc.UpdateEvent(ctx, eventID, updateFields); err != nil {
 			log.Printf("Error updating event %s: %v", eventID, err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error updating event")
 			return
 		}
 
-		updatedEvent, err := FindEventByID(ctx, app, eventID)
+		updatedEvent, err := uc.FindEvent(ctx, eventID)
 		if err != nil {
 			log.Printf("Error retrieving updated event %s: %v", eventID, err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error retrieving updated event")

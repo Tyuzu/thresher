@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -24,14 +26,17 @@ func GetCropFarms(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
 		cropID := utils.GetParam(r, "cropid")
 		skip, limit := utils.ParsePagination(r, 10, 100)
 		sortBy := r.URL.Query().Get("sortBy")
 		sortOrder := r.URL.Query().Get("sortOrder")
 		breedFilter := strings.ToLower(r.URL.Query().Get("breed"))
 
-		var crops []models.Crop
-		if err := app.DB.FindMany(ctx, cropsCollection, bson.M{"cropid": cropID}, &crops); err != nil || len(crops) == 0 {
+		crops, err := uc.FindCrops(ctx, bson.M{"cropid": cropID})
+		if err != nil || len(crops) == 0 {
 			utils.RespondWithError(w, http.StatusNotFound, "Crop not found")
 			return
 		}
@@ -44,13 +49,8 @@ func GetCropFarms(app *infra.Deps) http.HandlerFunc {
 			farmIDs = append(farmIDs, c.FarmID)
 		}
 
-		var farms []models.Farm
-		if err := app.DB.FindMany(
-			ctx,
-			farmsCollection,
-			bson.M{"farmid": bson.M{"$in": farmIDs}},
-			&farms,
-		); err != nil {
+		farms, err := uc.FindFarms(ctx, bson.M{"farmid": bson.M{"$in": farmIDs}})
+		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch farms")
 			return
 		}
@@ -102,6 +102,9 @@ func GetCropTypeFarms(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
 		cropName := utils.GetParam(r, "cropname")
 		if cropName == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Missing crop name parameter")
@@ -120,8 +123,8 @@ func GetCropTypeFarms(app *infra.Deps) http.HandlerFunc {
 			},
 		}
 
-		var crops []models.Crop
-		if err := app.DB.FindMany(ctx, cropsCollection, filter, &crops); err != nil || len(crops) == 0 {
+		crops, err := uc.FindCrops(ctx, filter)
+		if err != nil || len(crops) == 0 {
 			utils.RespondWithError(w, http.StatusNotFound, "Crop type not found")
 			return
 		}
@@ -133,13 +136,8 @@ func GetCropTypeFarms(app *infra.Deps) http.HandlerFunc {
 			farmIDs = append(farmIDs, c.FarmID)
 		}
 
-		var farms []models.Farm
-		if err := app.DB.FindMany(
-			ctx,
-			farmsCollection,
-			bson.M{"farmid": bson.M{"$in": farmIDs}},
-			&farms,
-		); err != nil {
+		farms, err := uc.FindFarms(ctx, bson.M{"farmid": bson.M{"$in": farmIDs}})
+		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch farms")
 			return
 		}
@@ -229,11 +227,16 @@ func GetCropTypeFarms(app *infra.Deps) http.HandlerFunc {
 
 func GetFarm(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
 		id := utils.GetParam(r, "id")
 
-		var farm models.Farm
-		if err := app.DB.FindOne(ctx, farmsCollection, bson.M{"farmid": id}, &farm); err != nil {
+		farm, err := uc.GetFarmByID(ctx, id)
+		if err != nil {
 			utils.RespondWithJSON(w, http.StatusNotFound, utils.M{
 				"success": false,
 				"message": "Farm not found",
@@ -241,10 +244,10 @@ func GetFarm(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var crops []models.Crop
-		_ = app.DB.FindMany(ctx, cropsCollection, bson.M{"farmid": id}, &crops)
-
-		farm.Crops = crops
+		crops, err := uc.FindCrops(ctx, bson.M{"farmid": id})
+		if err == nil {
+			farm.Crops = crops
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
@@ -261,6 +264,9 @@ func GetPaginatedFarms(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
+
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
 
 		skip, limit := utils.ParsePagination(r, 10, 100)
 		search := r.URL.Query().Get("search")
@@ -293,12 +299,12 @@ func GetPaginatedFarms(app *infra.Deps) http.HandlerFunc {
 		)
 
 		var farms []models.Farm
-		if err := app.DB.Aggregate(ctx, farmsCollection, pipeline, &farms); err != nil {
+		if err := uc.AggregateFarms(ctx, pipeline, &farms); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error fetching farms")
 			return
 		}
 
-		total, _ := app.DB.CountDocuments(ctx, farmsCollection, bson.M{})
+		total, _ := uc.CountFarms(ctx, bson.M{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,

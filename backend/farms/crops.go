@@ -8,6 +8,8 @@ import (
 
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/models"
@@ -18,6 +20,9 @@ import (
 )
 
 func AddCrop(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -54,7 +59,7 @@ func AddCrop(app *infra.Deps) http.HandlerFunc {
 		crop.FarmID = farmID
 		crop.CreatedBy = userID
 
-		if err := app.DB.InsertOne(ctx, cropsCollection, crop); err != nil {
+		if err := uc.InsertCrop(ctx, crop); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 				"message": "Failed to create crop",
@@ -76,6 +81,9 @@ func AddCrop(app *infra.Deps) http.HandlerFunc {
 }
 
 func EditCrop(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -153,12 +161,7 @@ func EditCrop(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := app.DB.UpdateOne(
-			ctx,
-			cropsCollection,
-			bson.M{"cropid": cropID},
-			bson.M{"$set": update},
-		); err != nil {
+		if err := uc.UpdateCrop(ctx, cropID, bson.M{"$set": update}); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 				"message": "Update failed",
@@ -207,7 +210,24 @@ func parseCropForm(r *http.Request) models.Crop {
 }
 
 func DeleteCrop(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		cropID := utils.GetParam(r, "cropid")
+		if cropID == "" {
+			utils.RespondWithJSON(w, http.StatusBadRequest, utils.M{"success": false, "message": "Invalid crop id"})
+			return
+		}
+
+		if err := uc.DeleteCrop(ctx, cropID); err != nil {
+			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{"success": false, "message": "Delete failed"})
+			return
+		}
+
 		dels.DeleteCrop(app)
 	}
 }

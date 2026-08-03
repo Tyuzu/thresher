@@ -12,6 +12,8 @@ import (
 	"naevis/infra/cache"
 	"naevis/infra/db"
 	"naevis/models"
+	"naevis/profile/repo"
+	pu "naevis/profile/usecase"
 	"naevis/utils"
 )
 
@@ -20,6 +22,9 @@ import (
 ------------------------------------------------------- */
 
 func EditProfile(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := pu.NewProfileUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -37,8 +42,8 @@ func EditProfile(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// 3. Invalidate cached profile
-		_ = InvalidateCachedProfile(ctx, app.Cache, claims.Username)
-		_ = UpdateCachedUsername(ctx, app.Cache, claims.UserID)
+		_ = app.Cache.Del(ctx, "profile:"+claims.Username)
+		_ = app.Cache.Del(ctx, "users:"+claims.UserID)
 
 		// 4. Build updates map
 		updates, err := BuildProfileUpdates(ctx, r, claims, app.Cache)
@@ -47,8 +52,8 @@ func EditProfile(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		// 5. Apply updates in DB
-		if err := ApplyProfileUpdates(ctx, app.DB, claims.UserID, updates); err != nil {
+		// 5. Apply updates in DB via usecase
+		if err := uc.EditProfile(ctx, claims.UserID, updates); err != nil {
 			http.Error(w, "Failed to update profile", http.StatusInternalServerError)
 			return
 		}
@@ -66,6 +71,9 @@ func EditProfile(app *infra.Deps) http.HandlerFunc {
 ------------------------------------------------------- */
 
 func DeleteProfile(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := pu.NewProfileUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -80,7 +88,7 @@ func DeleteProfile(app *infra.Deps) http.HandlerFunc {
 		_ = UpdateCachedUsername(ctx, app.Cache, claims.UserID)
 
 		// Delete user in DB
-		if _, err := DeleteUserByID(ctx, app.DB, claims.UserID); err != nil {
+		if _, err := uc.DeleteProfile(ctx, claims.UserID); err != nil {
 			http.Error(w, "Failed to delete profile", http.StatusInternalServerError)
 			return
 		}

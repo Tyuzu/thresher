@@ -30,9 +30,20 @@ func SafeErrorHandler(handler func(http.ResponseWriter, *http.Request) error) ht
 			// Log detailed error server-side
 			logger.L.Sugar().Errorw("handler_error", "remote", r.RemoteAddr, "method", r.Method, "uri", r.RequestURI, "error", err)
 
-			// Return generic error to client
-			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{
-				"error": "An error occurred processing your request",
+			statusCode := http.StatusInternalServerError
+			message := "An error occurred processing your request"
+
+			if se, ok := err.(*SafeError); ok {
+				if se.StatusCode != 0 {
+					statusCode = se.StatusCode
+				}
+				if se.Message != "" {
+					message = se.Message
+				}
+			}
+
+			utils.RespondWithJSON(w, statusCode, map[string]string{
+				"error": message,
 			})
 		}
 	}

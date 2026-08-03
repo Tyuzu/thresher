@@ -10,17 +10,24 @@ import (
 	"net/http"
 	"strings"
 
+	"naevis/artists/repo"
+	aust "naevis/artists/usecase"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func AddArtistMember(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		artistID := utils.GetParam(r, "id")
 
 		// Ensure artist exists
-		var artist models.Artist
-		if err := FindArtistByID(ctx, app.DB, artistID, &artist); err != nil {
+		if _, err := uc.GetArtistByID(ctx, artistID); err != nil {
+			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
+			return
 		}
 
 		var m models.BandMember
@@ -44,17 +51,7 @@ func AddArtistMember(app *infra.Deps) http.HandlerFunc {
 			m.MemberID, _ = utils.GenerateRandomString(12)
 		}
 
-		// Prevent duplicate by referenced artist
-		if m.ReferenceArtist != "" {
-			for _, existing := range artist.Members {
-				if existing.ReferenceArtist == m.ReferenceArtist {
-					utils.RespondWithError(w, http.StatusConflict, "Referenced artist already added")
-					return
-				}
-			}
-		}
-
-		if err := AddArtistMemberDB(ctx, app.DB, artistID, m); err != nil {
+		if err := uc.AddMember(ctx, artistID, m); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add member")
 			return
 		}
@@ -66,6 +63,9 @@ func AddArtistMember(app *infra.Deps) http.HandlerFunc {
 }
 
 func UpdateArtistMember(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -98,7 +98,7 @@ func UpdateArtistMember(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := UpdateArtistMemberDB(ctx, app.DB, artistID, memberID, bson.M{"$set": updates}); err != nil {
+		if err := uc.UpdateMember(ctx, artistID, memberID, bson.M{"$set": updates}); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update member")
 			return
 		}
@@ -112,13 +112,16 @@ func UpdateArtistMember(app *infra.Deps) http.HandlerFunc {
 }
 
 func DeleteArtistMember(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		artistID := utils.GetParam(r, "id")
 		memberID := utils.GetParam(r, "memberId")
 
-		if err := DeleteArtistMemberDB(ctx, app.DB, artistID, memberID); err != nil {
+		if err := uc.DeleteMember(ctx, artistID, memberID); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete member")
 			return
 		}

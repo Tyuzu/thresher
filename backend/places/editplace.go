@@ -12,7 +12,8 @@ import (
 	"naevis/infra"
 	"naevis/utils"
 
-	"go.mongodb.org/mongo-driver/bson"
+	"naevis/places/repo"
+	pu "naevis/places/usecase"
 )
 
 // --- EditPlace endpoint ---
@@ -31,16 +32,12 @@ func EditPlace(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		// Fetch existing place (use placeid)
-		var existing struct {
-			CreatedBy string `bson:"createdby"`
-		}
-		if err := app.DB.FindOne(
-			ctx,
-			placesCollection,
-			bson.M{"placeid": placeID},
-			&existing,
-		); err != nil {
+		// Fetch existing place via usecase
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := pu.NewPlacesUsecase(repoImpl)
+
+		existing, err := uc.GetPlace(ctx, placeID)
+		if err != nil {
 			http.Error(w, "Place not found", http.StatusNotFound)
 			return
 		}
@@ -65,13 +62,8 @@ func EditPlace(app *infra.Deps) http.HandlerFunc {
 		updateFields["updated_at"] = time.Now()
 		updateFields["updatedBy"] = requestingUserID
 
-		// ✅ Update using placeid and plain fields
-		if err := app.DB.Update(
-			ctx,
-			placesCollection,
-			bson.M{"placeid": placeID},
-			updateFields,
-		); err != nil {
+		// Update via usecase
+		if err := uc.EditPlace(ctx, placeID, updateFields); err != nil {
 			http.Error(w, "Failed to update place", http.StatusInternalServerError)
 			return
 		}

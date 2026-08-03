@@ -16,6 +16,9 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+
+	"naevis/places/repo"
+	pu "naevis/places/usecase"
 )
 
 func parseAndBuildPlace(r *http.Request, mode string) (models.Place, bson.M, error) {
@@ -152,11 +155,14 @@ func CreatePlace(app *infra.Deps) http.HandlerFunc {
 		}
 		place.CreatedBy = requestingUserID
 
-		// Insert using db.Database interface
+		// Use usecase to insert
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := app.DB.Insert(ctx, placesCollection, place); err != nil {
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := pu.NewPlacesUsecase(repoImpl)
+
+		if err := uc.CreatePlace(ctx, place); err != nil {
 			http.Error(w, "Error creating place", http.StatusInternalServerError)
 			return
 		}

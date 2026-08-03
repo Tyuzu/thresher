@@ -2,6 +2,8 @@ package artists
 
 import (
 	"context"
+	"naevis/artists/repo"
+	aust "naevis/artists/usecase"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -12,13 +14,15 @@ import (
 // GetArtistsSongs returns all published songs for an artist.
 // If no songs exist, returns an empty array.
 func GetArtistsSongs(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		artistID := utils.GetParam(r, "id")
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var songs []models.ArtistSong
-		err := FindSongsByArtist(ctx, app.DB, artistID, &songs)
+		songs, err := uc.GetSongs(ctx, artistID)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch songs")
 			return

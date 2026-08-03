@@ -14,6 +14,9 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
+	"naevis/auth/repo"
+	aus "naevis/auth/usecase"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -31,6 +34,9 @@ var (
 
 func Register(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+		uc := aus.NewAuthUsecase(repoImpl, app.MQ)
+
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -40,13 +46,14 @@ func Register(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		user, err := ProcessRegistration(ctx, app, input)
+		userModel, err := BuildUser(input)
 		if err != nil {
-			if errors.Is(err, ErrInvalidCredentials) {
-				utils.RespondWithError(w, http.StatusBadRequest, "Invalid credentials")
-				return
-			}
-			if errors.Is(err, ErrUserAlreadyExists) {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Registration failed")
+			return
+		}
+
+		if err := uc.RegisterUser(ctx, userModel); err != nil {
+			if mongo.IsDuplicateKeyError(err) {
 				utils.RespondWithError(w, http.StatusConflict, "User already exists")
 				return
 			}
@@ -55,8 +62,7 @@ func Register(app *infra.Deps) http.HandlerFunc {
 		}
 
 		utils.RespondWithJSON(w, http.StatusCreated, SignUpResponse{
-			Message: "User registered successfully",
-			UserID:  user.UserID,
+			Message: "User registered successfully", UserID: userModel.UserID,
 		})
 	}
 }

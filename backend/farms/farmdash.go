@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -15,6 +17,9 @@ import (
 )
 
 func GetFarmDash(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
@@ -29,13 +34,8 @@ func GetFarmDash(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var farm models.Farm
-		if err := app.DB.FindOne(
-			ctx,
-			farmsCollection,
-			bson.M{"createdy": userID},
-			&farm,
-		); err != nil {
+		farms, err := uc.FindFarms(ctx, bson.M{"createdby": userID})
+		if err != nil || len(farms) == 0 {
 			utils.RespondWithJSON(w, http.StatusNotFound, utils.M{
 				"success": false,
 				"message": "Farm not found",
@@ -43,13 +43,10 @@ func GetFarmDash(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var crops []models.Crop
-		if err := app.DB.FindMany(
-			ctx,
-			cropsCollection,
-			bson.M{"farmid": farm.FarmID},
-			&crops,
-		); err != nil {
+		farm := farms[0]
+
+		crops, err := uc.FindCrops(ctx, bson.M{"farmid": farm.FarmID})
+		if err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 				"message": "Failed to load crops",
@@ -58,13 +55,7 @@ func GetFarmDash(app *infra.Deps) http.HandlerFunc {
 		}
 
 		var orders []models.FarmOrder
-		_ = app.DB.FindMany(
-			ctx,
-			farmOrdersCollection,
-			bson.M{"farmid": farm.FarmID},
-			&orders,
-		)
-
+		orders, _ = uc.FindFarmOrders(ctx, bson.M{"farmid": farm.FarmID})
 		for i := range crops {
 			crops[i].FarmName = farm.Name
 		}

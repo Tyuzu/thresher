@@ -12,10 +12,16 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
+
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func CreateCropAboutHandler(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -40,7 +46,7 @@ func CreateCropAboutHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := CreateCropAbout(ctx, app, &crop); err != nil {
+		if err := uc.CreateCropAbout(ctx, crop); err != nil {
 			utils.RespondWithError(
 				w,
 				http.StatusInternalServerError,
@@ -60,15 +66,14 @@ func CreateCropAboutHandler(app *infra.Deps) http.HandlerFunc {
 }
 
 func GetCropAboutHandler(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		crop, err := GetCropAbout(
-			ctx,
-			app,
-			utils.GetParam(r, "cropID"),
-		)
+		crop, err := uc.GetCropAbout(ctx, utils.GetParam(r, "cropID"))
 
 		if err != nil {
 			if errors.Is(err, mongo.ErrNoDocuments) {
@@ -96,11 +101,14 @@ func GetCropAboutHandler(app *infra.Deps) http.HandlerFunc {
 }
 
 func GetAllCropAboutsHandler(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		crops, err := GetAllCropAbouts(ctx, app)
+		crops, err := uc.GetAllCropAbouts(ctx)
 		if err != nil {
 			utils.RespondWithError(
 				w,
@@ -122,6 +130,9 @@ func GetAllCropAboutsHandler(app *infra.Deps) http.HandlerFunc {
 }
 
 func UpdateCropAboutHandler(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -137,14 +148,7 @@ func UpdateCropAboutHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		err := UpdateCropAbout(
-			ctx,
-			app,
-			utils.GetParam(r, "cropID"),
-			&crop,
-		)
-
-		if err != nil {
+		if err := uc.UpdateCropAbout(ctx, utils.GetParam(r, "cropID"), crop); err != nil {
 			utils.RespondWithError(
 				w,
 				http.StatusInternalServerError,
@@ -163,17 +167,14 @@ func UpdateCropAboutHandler(app *infra.Deps) http.HandlerFunc {
 }
 
 func DeleteCropAboutHandler(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		err := DeleteCropAbout(
-			ctx,
-			app,
-			utils.GetParam(r, "cropID"),
-		)
-
-		if err != nil {
+		if err := uc.DeleteCropAbout(ctx, utils.GetParam(r, "cropID")); err != nil {
 			utils.RespondWithError(
 				w,
 				http.StatusInternalServerError,

@@ -12,18 +12,24 @@ import (
 	"naevis/utils"
 	"naevis/utils/logger"
 
+	"naevis/baito/repo"
+	bu "naevis/baito/usecase"
+
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 /* ------------------ DELETE ------------------ */
 
 func DeleteBaito(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
 		baitoID := utils.GetParam(r, "baitoid")
 
-		err := deleteBaitoRecord(ctx, app, baitoID, userID)
+		err := uc.DeleteBaito(ctx, baitoID, userID)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
 				utils.RespondWithError(w, http.StatusForbidden, "Baito not found or unauthorized")
@@ -43,6 +49,9 @@ func DeleteBaito(app *infra.Deps) http.HandlerFunc {
 /* ------------------ APPLY ------------------ */
 
 func ApplyToBaito(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -66,7 +75,7 @@ func ApplyToBaito(app *infra.Deps) http.HandlerFunc {
 			SubmittedAt: time.Now(),
 		}
 
-		if err := saveBaitoApplication(ctx, app, appx); err != nil {
+		if err := uc.SaveApplication(ctx, appx); err != nil {
 			logger.Printf("Insert error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to save application")
 			return

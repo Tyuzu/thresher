@@ -18,6 +18,8 @@ import (
 	"strings"
 	"time"
 
+	"naevis/auth/repo"
+	aus "naevis/auth/usecase"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
@@ -33,6 +35,9 @@ const OTPExpiry = 10 * time.Minute
 ============================================================ */
 
 func RequestOTPHandler(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := aus.NewAuthUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -46,8 +51,7 @@ func RequestOTPHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		err := ProcessOTPRequest(ctx, app, input.Email)
-		if err != nil {
+		if err := uc.ProcessOTPRequest(ctx, input.Email); err != nil {
 			if errors.Is(err, myerr.ErrInvalidEmail) {
 				utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
 				return
@@ -56,13 +60,14 @@ func RequestOTPHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
-			"message": "OTP sent if the email exists",
-		})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "OTP sent if the email exists"})
 	}
 }
 
 func VerifyOTPHandler(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := aus.NewAuthUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -76,8 +81,7 @@ func VerifyOTPHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		err := ProcessOTPVerification(ctx, app, input.Email, input.OTP)
-		if err != nil {
+		if err := uc.ProcessOTPVerification(ctx, input.Email, input.OTP); err != nil {
 			if errors.Is(err, myerr.ErrInvalidEmail) {
 				utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
 				return
@@ -90,9 +94,7 @@ func VerifyOTPHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
-			"message": "User verified successfully",
-		})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "User verified successfully"})
 	}
 }
 

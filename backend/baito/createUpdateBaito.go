@@ -13,6 +13,9 @@ import (
 	"naevis/utils"
 	"naevis/utils/logger"
 
+	"naevis/baito/repo"
+	bu "naevis/baito/usecase"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -217,6 +220,9 @@ func (r BaitoRequest) BuildUpdate() bson.M {
 }
 
 func CreateBaito(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -235,7 +241,7 @@ func CreateBaito(app *infra.Deps) http.HandlerFunc {
 			utils.GetUserIDFromRequest(r),
 		)
 
-		if err := createBaitoRecord(ctx, app, baito); err != nil {
+		if err := uc.CreateBaito(ctx, baito); err != nil {
 			logger.Printf("Insert error: %v", err)
 
 			utils.RespondWithError(
@@ -257,6 +263,9 @@ func CreateBaito(app *infra.Deps) http.HandlerFunc {
 }
 
 func UpdateBaito(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -268,7 +277,7 @@ func UpdateBaito(app *infra.Deps) http.HandlerFunc {
 
 		update := req.BuildUpdate()
 
-		err = updateBaitoRecord(ctx, app, utils.GetParam(r, "baitoid"), utils.GetUserIDFromRequest(r), update)
+		err = uc.UpdateBaito(ctx, utils.GetParam(r, "baitoid"), utils.GetUserIDFromRequest(r), update)
 
 		if err != nil {
 			if err == mongo.ErrNoDocuments {

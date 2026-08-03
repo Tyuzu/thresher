@@ -14,6 +14,9 @@ import (
 	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
+
+	"naevis/events/repo"
+	eu "naevis/events/usecase"
 )
 
 // GetEvent fetches a single event with its tickets, media, and merch.
@@ -28,7 +31,15 @@ func GetEvent(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		event, err := AggregateEvent(ctx, app, eventID)
+		// prefer usecase find; fallback to legacy aggregate if not implemented
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := eu.NewEventUsecase(repoImpl)
+
+		event, err := uc.FindEvent(ctx, eventID)
+		if err != nil {
+			// fallback to legacy aggregate
+			event, err = AggregateEvent(ctx, app, eventID)
+		}
 		if err != nil {
 			if errors.Is(err, mongo.ErrNoDocuments) {
 				utils.RespondWithError(w, http.StatusNotFound, "Event not found")

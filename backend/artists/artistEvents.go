@@ -10,10 +10,16 @@ import (
 	"naevis/utils"
 	"net/http"
 
+	"naevis/artists/repo"
+	aust "naevis/artists/usecase"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -28,8 +34,7 @@ func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
 		artistevent.CreatorID = utils.GetUserIDFromRequest(r)
 		artistevent.EventID, _ = utils.GenerateRandomString(14)
 
-		err := InsertArtistEvent(ctx, app.DB, &artistevent)
-		if err != nil {
+		if err := uc.CreateArtistEvent(ctx, &artistevent); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, ErrDatabase.Error())
 			return
 		}
@@ -41,7 +46,7 @@ func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
 
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventCreatedEvent, mqevent.ArtistEventCreatePayload{})
 
-		utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"message": "ArtistEvent created successfully",
 			"id":      artistevent.EventID,
 		})
@@ -50,6 +55,9 @@ func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
 
 // Update Artist Event
 func UpdateArtistEvent(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		artisteventID := utils.GetParam(r, "id")
@@ -60,7 +68,7 @@ func UpdateArtistEvent(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		err := UpdateArtistEventByID(ctx, app.DB, artisteventID, updateData)
+		err := uc.UpdateArtistEvent(ctx, artisteventID, updateData)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "ArtistEvent not found or update failed")
 			return
@@ -92,6 +100,9 @@ func DeleteArtistEvent(app *infra.Deps) http.HandlerFunc {
 }
 
 func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -106,16 +117,14 @@ func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
 
 		// Fetch event details from EventsCollection
 		var event models.Event
-		err := FindEventByID(ctx, app.DB, payload.EventID, &event)
-		if err != nil {
+		if err := FindEventByID(ctx, app.DB, payload.EventID, &event); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Event not found")
 			return
 		}
 
 		// Check if ArtistEvent already exists
 		var existing []models.ArtistEvent
-		err = FindArtistEventsByEventAndArtist(ctx, app.DB, payload.EventID, payload.ArtistID, &existing)
-		if err != nil {
+		if err := FindArtistEventsByEventAndArtist(ctx, app.DB, payload.EventID, payload.ArtistID, &existing); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error checking for existing artist event")
 			return
 		}
@@ -137,8 +146,7 @@ func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
 			TicketURL: event.WebsiteURL,
 		}
 
-		err = AddArtistToEventDB(ctx, app.DB, artistEvent)
-		if err != nil {
+		if err := uc.AddArtistToEvent(ctx, artistEvent); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add artist to artist events")
 			return
 		}

@@ -22,6 +22,13 @@ type Config struct {
 	TLSKeyPath            string
 	AllowCredentials      bool
 	TerminateTLSAtLB      bool // Added to support external TLS termination
+
+	MongoURI      string
+	MongoDB       string
+	RedisAddr     string
+	RedisPassword string
+	RedisDB       int
+	NATSURL       string
 }
 
 // InitConfig loads environment variables and performs basic validation.
@@ -59,6 +66,35 @@ func InitConfig() (*Config, error) {
 		}
 	}
 
+	mongoURI := os.Getenv("MONGO_URI")
+	if mongoURI == "" {
+		mongoURI = "mongodb://localhost:27017"
+	}
+
+	mongoDB := os.Getenv("MONGO_DB")
+	if mongoDB == "" {
+		mongoDB = "eventdb"
+	}
+
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = os.Getenv("REDIS_URL")
+	}
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+
+	redisPassword := os.Getenv("REDIS_PASSWORD")
+
+	redisDB := 0
+	if v := os.Getenv("REDIS_DB"); v != "" {
+		if db, err := strconv.Atoi(v); err == nil {
+			redisDB = db
+		}
+	}
+
+	natsURL := os.Getenv("NATS_URL")
+
 	cfg := &Config{
 		Env:                   env,
 		HTTPPort:              port,
@@ -71,6 +107,12 @@ func InitConfig() (*Config, error) {
 		TLSKeyPath:            os.Getenv("TLS_KEY_PATH"),
 		AllowCredentials:      allowCreds,
 		TerminateTLSAtLB:      terminateTLSAtLB,
+		MongoURI:              mongoURI,
+		MongoDB:               mongoDB,
+		RedisAddr:             redisAddr,
+		RedisPassword:         redisPassword,
+		RedisDB:               redisDB,
+		NATSURL:               natsURL,
 	}
 
 	// Basic validation
@@ -80,11 +122,11 @@ func InitConfig() (*Config, error) {
 
 	if cfg.Env == "production" {
 		// ensure essential services are configured in production
-		if os.Getenv("MONGO_URI") == "" {
+		if cfg.MongoURI == "" {
 			return nil, fmt.Errorf("MONGO_URI must be set in production")
 		}
-		if os.Getenv("REDIS_URL") == "" {
-			return nil, fmt.Errorf("REDIS_URL must be set in production")
+		if cfg.RedisAddr == "" {
+			return nil, fmt.Errorf("REDIS_ADDR or REDIS_URL must be set in production")
 		}
 
 		// Only enforce internal TLS if we aren't terminating it upstream at a load balancer

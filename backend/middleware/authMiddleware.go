@@ -6,23 +6,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/websocket"
-
 	"naevis/config"
 	"naevis/infra"
 	"naevis/utils"
-	log "naevis/utils/logger"
 )
 
 // Authenticate returns a standard middleware for HTTP handlers
 func Authenticate(app *infra.Deps) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			if websocket.IsWebSocketUpgrade(r) {
-				next(w, r)
-				return
-			}
-
 			tokenString := utils.ExtractBearerToken(r.Header.Get("Authorization"))
 			if tokenString == "" {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -84,31 +76,33 @@ func RequireRoles(allowedRoles ...string) func(http.HandlerFunc) http.HandlerFun
 		return func(w http.ResponseWriter, r *http.Request) {
 			raw := r.Context().Value(config.RoleKey)
 
-			log.Printf("RoleKey value: %#v", raw)
-
-			roles, ok := raw.([]string)
-			if !ok || len(roles) == 0 {
-				log.Printf("roles assertion failed: %#v", raw)
+			var roles []string
+			switch v := raw.(type) {
+			case []string:
+				roles = v
+			case string:
+				roles = []string{v}
+			default:
 				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
 			}
 
-			log.Printf("user roles: %v", roles)
-			log.Printf("allowed roles: %v", allowedRoles)
+			if len(roles) == 0 {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			}
 
 			for _, role := range roles {
 				role = strings.ToLower(role)
 
 				for _, allowed := range allowedRoles {
 					if role == allowed {
-						log.Printf("role match: %s", role)
 						next(w, r)
 						return
 					}
 				}
 			}
 
-			log.Printf("no matching role found")
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		}
 	}

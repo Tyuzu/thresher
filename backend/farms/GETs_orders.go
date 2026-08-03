@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -39,13 +41,11 @@ func GetMyFarmOrders(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		var orders []models.FarmOrder
-		if err := app.DB.FindMany(
-			ctx,
-			farmOrdersCollection,
-			bson.M{"userid": userID},
-			&orders,
-		); err != nil {
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
+		orders, err := uc.FindFarmOrders(ctx, bson.M{"userid": userID})
+		if err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 				"message": "Failed to fetch orders",
@@ -88,13 +88,12 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 		userID := utils.GetUserIDFromRequest(r)
 
 		// 1. Fetch farms owned by this user
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
 		var farms []models.Farm
-		if err := app.DB.FindMany(
-			ctx,
-			farmsCollection,
-			bson.M{"createdby": userID},
-			&farms,
-		); err != nil {
+		farms, err := uc.FindFarms(ctx, bson.M{"createdby": userID})
+		if err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 				"message": "Failed to fetch farms",
@@ -102,9 +101,12 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		// Cache farms in a lookup map by ID
+		farmMap := make(map[string]models.Farm)
 		farmIDs := make([]string, 0, len(farms))
 		for _, f := range farms {
 			farmIDs = append(farmIDs, f.FarmID)
+			farmMap[f.FarmID] = f
 		}
 
 		if len(farmIDs) == 0 {
@@ -134,8 +136,7 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 			if t, err := time.Parse("2006-01-02", dateTo); err == nil {
 				// Add one day to include all orders on that date
 				t = t.Add(24 * time.Hour)
-				if dateFrom := r.URL.Query().Get("dateFrom"); dateFrom != "" {
-					// If there's already a $gte, we need to use $lte
+				if _, ok := filter["createdat"]; ok {
 					if existingDateFilter, ok := filter["createdat"].(bson.M); ok {
 						existingDateFilter["$lte"] = t
 						filter["createdat"] = existingDateFilter
@@ -146,14 +147,10 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		// 2. Fetch orders for those farms
+		// 3. Fetch orders for those farms
 		var orders []models.FarmOrder
-		if err := app.DB.FindMany(
-			ctx,
-			farmOrdersCollection,
-			filter,
-			&orders,
-		); err != nil {
+		orders, err = uc.FindFarmOrders(ctx, filter)
+		if err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 				"message": "Failed to fetch orders",
@@ -161,7 +158,7 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		// 3. Build frontend-friendly response and apply client-side filters
+		// 4. Build frontend-friendly response and apply client-side filters
 		displayOrders := make([]OrderDisplay, 0, len(orders))
 		cropFilter := r.URL.Query().Get("crop")
 		paymentFilter := r.URL.Query().Get("payment")
@@ -175,28 +172,28 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 		txnByOrder := map[string]models.Transaction{}
 		if len(orderIDs) > 0 {
 			var txns []models.Transaction
-			_ = app.DB.FindMany(ctx, "transactions", bson.M{
+			txns, _ = uc.FindTransactions(ctx, bson.M{
 				"entitytype": "order",
 				"entityid":   bson.M{"$in": orderIDs},
-			}, &txns)
-
+			})
 			for _, t := range txns {
 				if t.EntityID != "" {
 					txnByOrder[t.EntityID] = t
 				}
 			}
 		}
-		for _, o := range orders {
-			user := fetchUserByID(ctx, o.UserID, app)
-			crop := fetchCropByID(ctx, o.CropID, app)
-			farm := fetchFarmByID(ctx, o.FarmID, app)
 
-			// Client-side filtering for crop (since we filter by crop name)
+		for _, o := range orders {
+			user, _ := uc.GetUserByID(ctx, o.UserID)
+			crop, _ := uc.GetCropByID(ctx, o.CropID)
+			farm := farmMap[o.FarmID]
+
+			// Client-side filtering for crop
 			if cropFilter != "" && crop.Name != cropFilter {
 				continue
 			}
 
-			// Client-side filtering for payment status (prefer transaction-derived status)
+			// Client-side filtering for payment status
 			var paymentStatus string
 			if txn, ok := txnByOrder[o.OrderID]; ok {
 				paymentStatus = derivePaymentStatusFromTxn(&txn, o.Status)
@@ -223,6 +220,7 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 				Status:       string(o.Status),
 			})
 		}
+
 		utils.RespondWithJSON(w, http.StatusOK, utils.M{
 			"success": true,
 			"orders":  displayOrders,
@@ -238,46 +236,6 @@ func firstNonEmpty(vals ...string) string {
 		}
 	}
 	return ""
-}
-
-func fetchFarmByID(ctx context.Context, id string, app *infra.Deps) models.Farm {
-	var farm models.Farm
-
-	if id == "" {
-		return farm
-	}
-
-	err := app.DB.FindOne(
-		ctx,
-		farmsCollection,
-		bson.M{"farmid": id},
-		&farm,
-	)
-	if err != nil {
-		return models.Farm{}
-	}
-
-	return farm
-}
-
-func fetchUserByID(ctx context.Context, id string, app *infra.Deps) models.User {
-	var user models.User
-
-	if id == "" {
-		return user
-	}
-
-	err := app.DB.FindOne(
-		ctx,
-		usersCollection,
-		bson.M{"userid": id},
-		&user,
-	)
-	if err != nil {
-		return models.User{}
-	}
-
-	return user
 }
 
 func derivePaymentStatus(status models.OrderStatus) string {
@@ -311,24 +269,4 @@ func derivePaymentStatusFromTxn(txn *models.Transaction, status models.OrderStat
 
 	// Fallback to order-based derivation
 	return derivePaymentStatus(status)
-}
-
-func fetchCropByID(ctx context.Context, id string, app *infra.Deps) models.Crop {
-	var crop models.Crop
-
-	if id == "" {
-		return crop
-	}
-
-	err := app.DB.FindOne(
-		ctx,
-		cropsCollection,
-		bson.M{"cropid": id},
-		&crop,
-	)
-	if err != nil {
-		return models.Crop{}
-	}
-
-	return crop
 }

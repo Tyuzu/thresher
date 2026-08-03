@@ -10,15 +10,14 @@ import (
 	"strings"
 	"time"
 
+	"naevis/auth/repo"
+	aus "naevis/auth/usecase"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
-
-	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // Named domain errors for exact error type assertions at the HTTP Layer
@@ -33,6 +32,9 @@ var (
 ============================================================ */
 
 func Login(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := aus.NewAuthUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -57,7 +59,7 @@ func Login(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// 2. Run Authentication and Session Creation via Service Layer orchestrators
-		accessToken, refreshToken, userID, err := AuthenticateAndCreateSession(ctx, app, creds, uaHashStr, ipPrefixStr)
+		accessToken, refreshToken, userID, err := uc.AuthenticateAndCreateSession(ctx, creds.Username, creds.Password, uaHashStr, ipPrefixStr)
 		if err != nil {
 			// Track failure and update brute-force count checks
 			IncrementRateLimitCounter(ctx, app, failKey)
@@ -86,60 +88,7 @@ func Login(app *infra.Deps) http.HandlerFunc {
 }
 
 /* ============================================================
-   2. SERVICES (BUSINESS LAYER)
-============================================================ */
-
-func AuthenticateAndCreateSession(ctx context.Context, app *infra.Deps, creds LoginRequest, uaHash string, ipPrefix string) (string, string, string, error) {
-	// 1. Fetch record entity safely from storage
-	user, err := GetUserByUsername(ctx, app, creds.Username)
-	if err != nil {
-		return "", "", "", ErrAuthInvalidCredentials
-	}
-
-	// 2. Verify password hashes match
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password)); err != nil {
-		return "", "", "", ErrAuthInvalidCredentials
-	}
-
-	// 3. Produce security claim payloads
-	claims := &models.Claims{
-		UserID:   user.UserID,
-		Username: user.Username,
-		Role:     user.Role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(AccessTokenTTL)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	accessToken, err := createAccessToken(claims)
-	if err != nil {
-		return "", "", "", ErrTokenGeneration
-	}
-
-	refreshToken, err := generateRefreshToken()
-	if err != nil {
-		return "", "", "", ErrTokenGeneration
-	}
-
-	// 4. Record new system state updates down to storage repositories
-	err = PersistUserSession(
-		ctx,
-		app,
-		user.UserID,
-		hashRefreshToken(refreshToken),
-		uaHash,
-		ipPrefix,
-	)
-	if err != nil {
-		return "", "", "", ErrSessionPersistence
-	}
-
-	return accessToken, refreshToken, user.UserID, nil
-}
-
-/* ============================================================
-   3. REPOSITORIES (DATA ACCESS / CACHE LAYER)
+   2/3. REPOSITORIES & HELPERS (DATA ACCESS / CACHE LAYER)
 ============================================================ */
 
 func CheckRateLimitLockout(ctx context.Context, app *infra.Deps, failKey string) bool {
@@ -177,8 +126,4 @@ func ClearRateLimitCounter(ctx context.Context, app *infra.Deps, failKey string)
 
 func GetUserByUsername(ctx context.Context, app *infra.Deps, username string) (models.User, error) {
 	return FindUserByUsername(ctx, app, username)
-}
-
-func PersistUserSession(ctx context.Context, app *infra.Deps, userID, hashedRefreshToken, uaHash, ipPrefix string) error {
-	return UpdateUserSession(ctx, app, userID, hashedRefreshToken, uaHash, ipPrefix)
 }

@@ -3,11 +3,10 @@ package profile
 import (
 	"encoding/json"
 	"net/http"
-	"slices"
-	"time"
 
 	"naevis/infra"
-	"naevis/models"
+	"naevis/profile/repo"
+	pu "naevis/profile/usecase"
 	"naevis/utils"
 )
 
@@ -16,23 +15,24 @@ import (
 ------------------------------------------------------- */
 
 func GetProfile(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := pu.NewProfileUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		requestingUserID := utils.GetUserIDFromRequest(r)
 
-		user, err := findUser(ctx, map[string]any{"userid": requestingUserID}, app.DB)
-		if err != nil || user == nil {
+		user, err := uc.GetOwnProfile(ctx, requestingUserID)
+		if err != nil || user.UserID == "" {
 			http.Error(w, "User not found", http.StatusNotFound)
 			return
 		}
 
-		userFollow, err := GetUserFollowData(ctx, user.UserID, app.DB)
-		if err == nil && userFollow.UserID != "" {
-			user.FollowersCount = len(userFollow.Followers)
-			user.FollowingCount = len(userFollow.Follows)
-		}
-
-		user.Online, _ = isOnline(ctx, user.UserID, app.Cache)
+		// Populate follow counts and online via repo/usecase
+		userFollow, _ := repoImpl.GetUserFollowData(ctx, user.UserID)
+		user.FollowersCount = len(userFollow.Followers)
+		user.FollowingCount = len(userFollow.Follows)
+		user.Online, _ = repoImpl.IsOnline(ctx, user.UserID)
 
 		profileJSON, err := json.Marshal(user)
 		if err != nil {
@@ -41,7 +41,7 @@ func GetProfile(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Best-effort cache write (5 min TTL)
-		_ = CacheProfile(ctx, app.Cache, user.Username, string(profileJSON), 5*time.Minute)
+		_ = repoImpl.CacheProfile(ctx, user.Username, string(profileJSON), int64(5*60))
 
 		utils.RespondWithJSON(w, http.StatusOK, user)
 	}
@@ -52,6 +52,9 @@ func GetProfile(app *infra.Deps) http.HandlerFunc {
 ------------------------------------------------------- */
 
 func GetUserProfile(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := pu.NewProfileUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -63,34 +66,10 @@ func GetUserProfile(app *infra.Deps) http.HandlerFunc {
 
 		username := utils.GetParam(r, "username")
 
-		user, err := findUser(ctx, map[string]any{"username": username}, app.DB)
-		if err != nil || user == nil {
+		_, response, err := uc.GetUserProfile(ctx, username, claims.UserID)
+		if err != nil {
 			http.Error(w, "User not found", http.StatusNotFound)
 			return
-		}
-
-		userFollow, _ := GetUserFollowData(ctx, user.UserID, app.DB)
-
-		isFollowing := false
-		if userFollow.UserID != "" {
-			isFollowing = slices.Contains(userFollow.Followers, claims.UserID)
-		}
-
-		online, _ := isOnline(ctx, user.UserID, app.Cache)
-
-		response := models.UserProfileResponse{
-			UserID:         user.UserID,
-			Username:       user.Username,
-			Email:          user.Email,
-			Name:           user.Name,
-			Bio:            user.Bio,
-			Avatar:         user.Avatar,
-			Banner:         user.Banner,
-			FollowersCount: len(userFollow.Followers),
-			FollowingCount: len(userFollow.Follows),
-			IsFollowing:    isFollowing,
-			Online:         online,
-			LastLogin:      user.LastLogin,
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, response)

@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/auth/repo"
+	aus "naevis/auth/usecase"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
@@ -16,6 +18,9 @@ import (
 ============================================================ */
 
 func LogoutUser(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := aus.NewAuthUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		// CSRF Check
 		if r.Header.Get("X-Refresh-Intent") != "1" {
@@ -34,7 +39,7 @@ func LogoutUser(app *infra.Deps) http.HandlerFunc {
 
 		// Handoff logic & event publishing down to the service layer
 		if tokenStr != "" {
-			_ = ProcessSingleLogout(ctx, app, tokenStr)
+			_ = uc.ProcessSingleLogout(ctx, tokenStr)
 		}
 
 		clearRefreshCookie(w)
@@ -48,9 +53,10 @@ func LogoutUser(app *infra.Deps) http.HandlerFunc {
 
 // ProcessSingleLogout wraps token transformation and calls downstream side effects
 func ProcessSingleLogout(ctx context.Context, app *infra.Deps, rawRefreshToken string) error {
-	hashedToken := hashRefreshToken(rawRefreshToken)
-
-	return RevokeSessionAndEmit(ctx, app, hashedToken)
+	// kept for compatibility; delegate to usecase
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := aus.NewAuthUsecase(repoImpl, app.MQ)
+	return uc.ProcessSingleLogout(ctx, rawRefreshToken)
 }
 
 // RevokeSessionAndEmit deletes a single session via token hash and publishes the broker event
@@ -68,6 +74,9 @@ func RevokeSessionAndEmit(ctx context.Context, app *infra.Deps, hashedToken stri
 ============================================================ */
 
 func LogoutAllSessions(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := aus.NewAuthUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -86,7 +95,7 @@ func LogoutAllSessions(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		// Handoff to service layer to clear DB sessions and fire MQ events
-		if err := ProcessGlobalLogout(ctx, app, claims.UserID); err != nil {
+		if err := uc.ProcessGlobalLogout(ctx, claims.UserID); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Logout failed")
 			return
 		}
@@ -101,7 +110,9 @@ func LogoutAllSessions(app *infra.Deps) http.HandlerFunc {
 
 // ProcessGlobalLogout handles multi-device session revocation orchestration
 func ProcessGlobalLogout(ctx context.Context, app *infra.Deps, userID string) error {
-	return RevokeAllSessionsAndEmit(ctx, app, userID)
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := aus.NewAuthUsecase(repoImpl, app.MQ)
+	return uc.ProcessGlobalLogout(ctx, userID)
 }
 
 // RevokeAllSessionsAndEmit clears the user's sessions globally from storage and fires a system-wide event

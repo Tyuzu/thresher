@@ -8,17 +8,22 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/artists/repo"
+	aust "naevis/artists/usecase"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // Artist Events
 func GetArtistEvents(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var artistevents []models.ArtistEvent
-		err := FindArtistEvents(ctx, app.DB, utils.GetParam(r, "id"), &artistevents)
+		artistevents, err := uc.GetArtistEvents(ctx, utils.GetParam(r, "id"))
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch artist events")
 			return
@@ -32,13 +37,16 @@ func GetArtistEvents(app *infra.Deps) http.HandlerFunc {
 	}
 }
 func GetArtistByID(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		artistId := utils.GetParam(r, "id")
-		var artist models.Artist
 
 		// Fetch artist info
-		if err := FindArtistByID(ctx, app.DB, artistId, &artist); err != nil {
+		artist, err := uc.GetArtistByID(ctx, artistId)
+		if err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
 			return
 		}
@@ -51,8 +59,7 @@ func GetArtistByID(app *infra.Deps) http.HandlerFunc {
 		if currentUserID != "" {
 			// Check if the user has subscribed to this artist
 			var subscribers []bson.M
-			err := FindSubscribersForArtist(ctx, app.DB, currentUserID, artistId, &subscribers)
-			if err == nil && len(subscribers) > 0 {
+			if err := FindSubscribersForArtist(ctx, app.DB, currentUserID, artistId, &subscribers); err == nil && len(subscribers) > 0 {
 				isSubscribed = true
 			}
 		}
@@ -68,12 +75,14 @@ func GetArtistByID(app *infra.Deps) http.HandlerFunc {
 }
 
 func GetArtistsByEvent(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		eventID := utils.GetParam(r, "eventid")
 
-		var artists []models.Artist
-		err := FindArtistsByEventID(ctx, app.DB, eventID, &artists)
+		artists, err := uc.GetArtistsByEvent(ctx, eventID)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error fetching artists")
 			return
@@ -89,12 +98,14 @@ func GetArtistsByEvent(app *infra.Deps) http.HandlerFunc {
 
 // All Artists
 func GetAllArtists(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var artists []models.Artist
-		err := FindAllArtists(ctx, app.DB, &artists)
+		artists, err := uc.GetAllArtists(ctx)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error fetching artists")
 			return

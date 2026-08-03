@@ -94,6 +94,7 @@ export function renderCropCard(crop, mode = "catalogue") {
 export function renderCropInterface(container, cropData) {
   const mainContent = createElement("div", { class: "catalogue-main" });
 
+  mainContent.prepend(createElement("h2", {}, ["All Crops"]));
   const searchBox = createElement("input", {
     type: "text",
     name: "search",
@@ -169,7 +170,6 @@ export function renderCropInterface(container, cropData) {
   });
 
   container.appendChild(layout);
-  container.prepend(createElement("h2", {}, ["All Crops"]));
 
 }
 

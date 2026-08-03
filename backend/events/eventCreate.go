@@ -14,6 +14,9 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"naevis/events/repo"
+	eu "naevis/events/usecase"
 )
 
 // CreateEvent handles creating a new event
@@ -48,7 +51,11 @@ func CreateEvent(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := InsertEvent(ctx, app, event); err != nil {
+		// Use usecase to insert event (repo may delegate to existing DB helpers)
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := eu.NewEventUsecase(repoImpl)
+
+		if err := uc.CreateEvent(ctx, event); err != nil {
 			log.Printf("DB insert error: %v", err)
 			http.Error(w, "Error saving event", http.StatusInternalServerError)
 			return

@@ -10,7 +10,8 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"go.mongodb.org/mongo-driver/bson"
+	"naevis/places/repo"
+	pu "naevis/places/usecase"
 )
 
 // --- Get all places (summary) ---
@@ -19,8 +20,11 @@ func GetPlaces(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var places []models.Place
-		if err := app.DB.FindMany(ctx, placesCollection, bson.M{}, &places); err != nil {
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := pu.NewPlacesUsecase(repoImpl)
+
+		places, err := uc.ListPlaces(ctx, map[string]any{})
+		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch places")
 			return
 		}
@@ -56,6 +60,9 @@ func GetPlaces(app *infra.Deps) http.HandlerFunc {
 
 // --- Get single place by path param ---
 func GetPlace(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := pu.NewPlacesUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		placeID := strings.TrimSpace(utils.GetParam(r, "placeid"))
 		if placeID == "" {
@@ -63,24 +70,20 @@ func GetPlace(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var place models.Place
-		if err := app.DB.FindOne(
-			r.Context(),
-			placesCollection,
-			bson.M{"placeid": placeID},
-			&place,
-		); err != nil {
-
+		place, err := uc.GetPlace(r.Context(), placeID)
+		if err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Place not found")
 			return
 		}
-
 		utils.RespondWithJSON(w, http.StatusOK, place)
 	}
 }
 
 // --- Get single place by query param ---
 func GetPlaceQ(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := pu.NewPlacesUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		placeID := strings.TrimSpace(r.URL.Query().Get("id"))
 		if placeID == "" {
@@ -88,18 +91,11 @@ func GetPlaceQ(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var place models.Place
-		if err := app.DB.FindOne(
-			r.Context(),
-			placesCollection,
-			bson.M{"placeid": placeID},
-			&place,
-		); err != nil {
-
+		place, err := uc.GetPlace(r.Context(), placeID)
+		if err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Place not found")
 			return
 		}
-
 		utils.RespondWithJSON(w, http.StatusOK, place)
 	}
 }

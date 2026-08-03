@@ -95,9 +95,12 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	innerHandler := middleware.LoggingMiddleware(
+	securityConfig := routes.InitializeSecurityMiddleware()
+	innerHandler := routes.ApplyDefaultSecurityMiddleware(
 		middleware.SecurityHeaders(router),
+		securityConfig,
 	)
+	innerHandler = middleware.LoggingMiddleware(innerHandler)
 
 	// Hardened CORS settings
 	corsOpts := cors.Options{
@@ -166,10 +169,8 @@ func main() {
 		logger.L.Sugar().Fatalw("Graceful shutdown failed", "error", err)
 	}
 
-	// drain and close NATS connection if present
-	if app.NatsConn != nil {
-		_ = app.NatsConn.Drain()
-		app.NatsConn.Close()
+	if closeErr := app.Close(ctx); closeErr != nil {
+		logger.L.Sugar().Errorw("failed to close infra resources", "error", closeErr)
 	}
 
 	logger.L.Sugar().Infow("Server stopped successfully")

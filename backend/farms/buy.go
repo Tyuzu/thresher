@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"naevis/config/mqevent"
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/metrics/auditlog"
@@ -82,6 +84,9 @@ func toInt(v any) (int, bool) {
 /* ---------------------------------------------------- */
 
 func BuyCrop(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -90,22 +95,7 @@ func BuyCrop(app *infra.Deps) http.HandlerFunc {
 		cropID := utils.GetParam(r, "cropid")
 
 		// Atomic decrement to prevent concurrent overselling.
-		var updatedCrop bson.M
-		err := app.DB.FindOneAndUpdate(
-			ctx,
-			cropsCollection,
-			bson.M{
-				"farmid":     farmID,
-				"cropid":     cropID,
-				"quantity":   bson.M{"$gt": 0},
-				"outofstock": false,
-			},
-			bson.M{
-				"$inc": bson.M{"quantity": -1},
-				"$set": bson.M{"updatedat": time.Now()},
-			},
-			&updatedCrop,
-		)
+		updatedCrop, err := uc.DecrementCropQuantity(ctx, farmID, cropID)
 
 		if err != nil {
 			utils.RespondWithJSON(
@@ -117,12 +107,9 @@ func BuyCrop(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if quantity, ok := toInt(updatedCrop["quantity"]); ok && quantity == 0 {
-			_ = app.DB.UpdateOne(
-				ctx,
-				cropsCollection,
-				bson.M{"farmid": farmID, "cropid": cropID},
-				bson.M{"$set": bson.M{"outofstock": true, "updatedat": time.Now()}},
-			)
+			if err := uc.UpdateCrop(ctx, cropID, bson.M{"$set": bson.M{"outofstock": true, "updatedat": time.Now()}}); err != nil {
+				log.Printf("failed to mark crop out of stock: %v", err)
+			}
 		}
 		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.CropBoughtEvent, mqevent.CropBoughtPayload{}); err != nil {
 			log.Printf("failed to publish crop bought event: %v", err)
@@ -146,6 +133,9 @@ func updateOrderStatus(
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	userID := utils.GetUserIDFromRequest(r)
 	if userID == "" {
 		utils.RespondWithJSON(
@@ -156,8 +146,8 @@ func updateOrderStatus(
 		return
 	}
 
-	var order models.FarmOrder
-	if err := app.DB.FindOne(ctx, farmOrdersCollection, bson.M{"orderid": orderID}, &order); err != nil {
+	order, err := uc.GetOrderByID(ctx, orderID)
+	if err != nil {
 		utils.RespondWithJSON(
 			w,
 			http.StatusNotFound,
@@ -166,8 +156,8 @@ func updateOrderStatus(
 		return
 	}
 
-	var farm models.Farm
-	if err := app.DB.FindOne(ctx, farmsCollection, bson.M{"farmid": order.FarmID}, &farm); err != nil {
+	farm, err := uc.GetFarmByID(ctx, order.FarmID)
+	if err != nil {
 		utils.RespondWithJSON(
 			w,
 			http.StatusNotFound,
@@ -198,12 +188,7 @@ func updateOrderStatus(
 		return
 	}
 
-	err := app.DB.UpdateOne(
-		ctx,
-		farmOrdersCollection,
-		bson.M{"orderid": orderID},
-		bson.M{"$set": bson.M{"status": newStatus, "updatedat": time.Now()}},
-	)
+	err = uc.UpdateFarmOrder(ctx, orderID, bson.M{"$set": bson.M{"status": newStatus, "updatedat": time.Now()}})
 	if err != nil {
 		utils.RespondWithJSON(
 			w,
@@ -319,8 +304,11 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 		return
 	}
 
-	var ownedFarms []models.Farm
-	if err := app.DB.FindMany(ctx, farmsCollection, bson.M{"createdby": userID}, &ownedFarms); err != nil {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
+	ownedFarms, err := uc.FindFarms(ctx, bson.M{"createdby": userID})
+	if err != nil {
 		utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 			"success": false,
 			"message": "Failed to fetch farms",
@@ -337,8 +325,8 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 	errorsList := make([]string, 0)
 
 	for _, orderID := range req.OrderIDs {
-		var order models.FarmOrder
-		if err := app.DB.FindOne(ctx, farmOrdersCollection, bson.M{"orderid": orderID}, &order); err != nil {
+		order, err := uc.GetOrderByID(ctx, orderID)
+		if err != nil {
 			response.Failed++
 			errorsList = append(errorsList, fmt.Sprintf("Order %s not found", orderID))
 			continue
@@ -364,12 +352,7 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 			continue
 		}
 
-		if err := app.DB.UpdateOne(
-			ctx,
-			farmOrdersCollection,
-			bson.M{"orderid": orderID},
-			bson.M{"$set": bson.M{"status": newStatus, "updatedat": time.Now()}},
-		); err != nil {
+		if err := uc.UpdateFarmOrder(ctx, orderID, bson.M{"$set": bson.M{"status": newStatus, "updatedat": time.Now()}}); err != nil {
 			response.Failed++
 			errorsList = append(errorsList, fmt.Sprintf("Order %s: update failed", orderID))
 			continue
@@ -423,10 +406,13 @@ func DownloadReceipt(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
 		orderID := utils.GetParam(r, "id")
 
-		var order models.FarmOrder
-		if err := app.DB.FindOne(ctx, farmOrdersCollection, bson.M{"orderid": orderID}, &order); err != nil {
+		order, err := uc.GetOrderByID(ctx, orderID)
+		if err != nil {
 			utils.RespondWithJSON(
 				w,
 				http.StatusNotFound,

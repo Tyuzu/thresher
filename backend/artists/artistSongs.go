@@ -13,6 +13,9 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
+	"naevis/artists/repo"
+	aust "naevis/artists/usecase"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -57,6 +60,9 @@ func decodeJSONBody[T any](r *http.Request, target *T) error {
 }
 
 func PostNewSong(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		artistID := utils.GetParam(r, "id")
@@ -95,7 +101,7 @@ func PostNewSong(app *infra.Deps) http.HandlerFunc {
 			PosterExtn:  deref(payload.PosterExtn),
 		}
 
-		if err := InsertArtistSong(ctx, app.DB, &newSong); err != nil {
+		if err := uc.PostSong(ctx, &newSong); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to save song")
 			return
 		}
@@ -110,6 +116,9 @@ func PostNewSong(app *infra.Deps) http.HandlerFunc {
 }
 
 func EditSong(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		artistID := utils.GetParam(r, "id")
@@ -135,7 +144,7 @@ func EditSong(app *infra.Deps) http.HandlerFunc {
 		updateFields["updatedAt"] = time.Now()
 		update := bson.M{"$set": updateFields}
 
-		if err := UpdateArtistSong(ctx, app.DB, artistID, songID, update); err != nil {
+		if err := uc.EditSong(ctx, artistID, songID, update); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update song")
 			return
 		}
@@ -150,6 +159,9 @@ func EditSong(app *infra.Deps) http.HandlerFunc {
 }
 
 func DeleteSong(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		artistID := utils.GetParam(r, "id")
@@ -160,7 +172,7 @@ func DeleteSong(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := DeleteArtistSong(ctx, app.DB, artistID, songID); err != nil {
+		if err := uc.DeleteSong(ctx, artistID, songID); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete song")
 			return
 		}

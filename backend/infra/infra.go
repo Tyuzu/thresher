@@ -9,6 +9,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/multierr"
 
 	"naevis/config"
 	"naevis/infra/cache"
@@ -18,11 +19,13 @@ import (
 )
 
 type Deps struct {
-	DB       db.Database
-	Cache    cache.Cache
-	MQ       mq.MQ
-	NatsConn *nats.Conn
-	Config   config.Config
+	DB          db.Database
+	Cache       cache.Cache
+	MQ          mq.MQ
+	NatsConn    *nats.Conn
+	MongoClient *mongo.Client
+	RedisClient *redis.Client
+	Config      config.Config
 }
 
 /* -------------------- Constructor -------------------- */
@@ -30,8 +33,8 @@ type Deps struct {
 func New(cfg *config.Config) (*Deps, error) {
 	/* -------- Mongo -------- */
 
-	mongoURI := env("MONGO_URI", "mongodb://localhost:27017")
-	mongoDB := env("MONGO_DB", "eventdb")
+	mongoURI := cfg.MongoURI
+	mongoDB := cfg.MongoDB
 
 	client, database, err := NewMongo(mongoURI, mongoDB)
 	if err != nil {
@@ -42,12 +45,13 @@ func New(cfg *config.Config) (*Deps, error) {
 
 	/* -------- Redis -------- */
 
-	redisAddr := env("REDIS_ADDR", "localhost:6379")
-	redisPassword := env("REDIS_PASSWORD", "")
-	redisDB := 0
+	redisAddr := cfg.RedisAddr
+	redisPassword := cfg.RedisPassword
+	redisDB := cfg.RedisDB
 
 	rclient, err := NewRedis(redisAddr, redisPassword, redisDB)
 	if err != nil {
+		_ = client.Disconnect(context.Background())
 		return nil, err
 	}
 	cacheLayer := cache.NewRedisCache(rclient)
@@ -57,10 +61,12 @@ func New(cfg *config.Config) (*Deps, error) {
 	var mqLayer mq.MQ = mq.NewJetStreamMQ(nil)
 	var nc *nats.Conn
 
-	natsURL := env("NATS_URL", "")
+	natsURL := cfg.NATSURL
 	if natsURL != "" {
 		conn, js, err := NewJetStream(natsURL)
 		if err != nil {
+			_ = rclient.Close()
+			_ = client.Disconnect(context.Background())
 			return nil, err
 		}
 
@@ -71,12 +77,39 @@ func New(cfg *config.Config) (*Deps, error) {
 	logger.L.Sugar().Infow("infra initialized", "nats_enabled", natsURL != "")
 
 	return &Deps{
-		DB:       dbLayer,
-		Cache:    cacheLayer,
-		MQ:       mqLayer,
-		NatsConn: nc,
-		Config:   *cfg,
+		DB:          dbLayer,
+		Cache:       cacheLayer,
+		MQ:          mqLayer,
+		NatsConn:    nc,
+		MongoClient: client,
+		RedisClient: rclient,
+		Config:      *cfg,
 	}, nil
+}
+
+func (d *Deps) Close(ctx context.Context) error {
+	var err error
+
+	if d.NatsConn != nil {
+		if drainErr := d.NatsConn.Drain(); drainErr != nil {
+			err = multierr.Append(err, drainErr)
+		}
+		d.NatsConn.Close()
+	}
+
+	if d.RedisClient != nil {
+		if closeErr := d.RedisClient.Close(); closeErr != nil {
+			err = multierr.Append(err, closeErr)
+		}
+	}
+
+	if d.MongoClient != nil {
+		if disconnectErr := d.MongoClient.Disconnect(ctx); disconnectErr != nil {
+			err = multierr.Append(err, disconnectErr)
+		}
+	}
+
+	return err
 }
 
 /* -------------------- Helpers -------------------- */

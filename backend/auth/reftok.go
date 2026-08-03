@@ -2,17 +2,15 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
-	"go.mongodb.org/mongo-driver/bson"
+	"naevis/auth/repo"
+	aus "naevis/auth/usecase"
 )
 
 /* ============================================================
@@ -21,6 +19,9 @@ import (
 
 // RefreshToken handler: reads cookie, delegates logic, and applies cookie changes exactly once.
 func RefreshToken(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+	uc := aus.NewAuthUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -32,9 +33,9 @@ func RefreshToken(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		result, err := RefreshTokenFromCookie(ctx, cookie.Value, r, app)
+		accessToken, newRefresh, clearCookie, err := uc.RefreshTokenFromCookie(ctx, cookie.Value, r)
 		if err != nil {
-			if result != nil && result.ClearCookie {
+			if clearCookie {
 				clearRefreshCookie(w)
 			}
 			utils.RespondWithError(w, http.StatusUnauthorized, err.Error())
@@ -42,122 +43,14 @@ func RefreshToken(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Apply cookie changes (single place)
-		if result.NewRefresh != "" {
-			setRefreshCookie(w, result.NewRefresh)
+		if newRefresh != "" {
+			setRefreshCookie(w, newRefresh)
 		}
 
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TokenRefreshed, mqevent.TokenRefreshPayload{})
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
-			"message": "Token refreshed successfully",
-			"data": map[string]string{
-				"token": result.AccessToken,
-			},
-		})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"message": "Token refreshed successfully", "data": map[string]string{"token": accessToken}})
 	}
 }
 
-// RefreshTokenFromCookie performs DB checks/rotation but does NOT modify HTTP response.
-// It returns a RefreshResult that the handler should apply to the outgoing response.
-func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Request, app *infra.Deps) (*RefreshResult, error) {
-
-	now := time.Now()
-	hashed := hashRefreshToken(rawToken)
-
-	// -----------------------
-	// Find valid refresh session
-	// -----------------------
-	user, err := FindValidRefreshSession(ctx, app, hashed)
-	if err != nil {
-		// Invalid or expired token
-		return &RefreshResult{ClearCookie: true}, fmt.Errorf("invalid refresh token")
-	}
-
-	// -----------------------
-	// Refresh token reuse detection
-	// -----------------------
-	if user.RefreshPrev == hashed {
-		// Invalidate entire session
-		_ = app.DB.Update(
-			ctx,
-			UsersCollection,
-			bson.M{"userid": user.UserID},
-			bson.M{
-				"$set": bson.M{
-					"refreshtoken":  nil,
-					"refreshprev":   nil,
-					"refreshexpiry": nil,
-					"refreshua":     nil,
-					"updatedat":     now,
-				},
-			},
-		)
-
-		return &RefreshResult{ClearCookie: true}, fmt.Errorf("refresh token reuse detected")
-	}
-
-	// -----------------------
-	// UA binding validation
-	// -----------------------
-	if user.RefreshUA != uaHash(r) {
-		_ = app.DB.Update(
-			ctx,
-			UsersCollection,
-			bson.M{"userid": user.UserID},
-			bson.M{
-				"$set": bson.M{
-					"refreshtoken":  nil,
-					"refreshprev":   nil,
-					"refreshexpiry": nil,
-					"refreshua":     nil,
-					"updatedat":     now,
-				},
-			},
-		)
-
-		return &RefreshResult{ClearCookie: true}, fmt.Errorf("session invalidated")
-	}
-
-	// -----------------------
-	// Issue new access token
-	// -----------------------
-	claims := &models.Claims{
-		UserID:   user.UserID,
-		Username: user.Username,
-		Role:     user.Role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(AccessTokenTTL)),
-			IssuedAt:  jwt.NewNumericDate(now),
-		},
-	}
-
-	accessToken, err := createAccessToken(claims)
-	if err != nil {
-		return nil, err
-	}
-
-	// -----------------------
-	// Rotate refresh token
-	// -----------------------
-	newRefresh, err := generateRefreshToken()
-	if err != nil {
-		return nil, err
-	}
-
-	err = RotateRefreshTokenForUser(
-		ctx,
-		app,
-		user.UserID,
-		hashRefreshToken(newRefresh),
-		user.RefreshToken,
-		uaHash(r),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &RefreshResult{
-		AccessToken: accessToken,
-		NewRefresh:  newRefresh,
-	}, nil
-}
+// (logic moved into usecase)

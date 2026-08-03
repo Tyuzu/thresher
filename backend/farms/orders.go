@@ -2,6 +2,8 @@ package farms
 
 import (
 	"context"
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -17,12 +19,15 @@ import (
 /* ---------------------------------------------------- */
 
 func GetIncomingOrders(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
-		var orders []models.FarmOrder
-		if err := app.DB.FindMany(ctx, farmOrdersCollection, bson.M{}, &orders); err != nil {
+		orders, err := uc.FindFarmOrders(ctx, bson.M{})
+		if err != nil {
 			log.Println("GetIncomingOrders error:", err)
 			http.Error(w, "Database error", http.StatusInternalServerError)
 			return
@@ -62,14 +67,24 @@ func GetIncomingOrders(app *infra.Deps) http.HandlerFunc {
 /* ---------------------------------------------------- */
 
 func getUserByID(ctx context.Context, id string, app *infra.Deps) models.User {
-	var user models.User
-	_ = app.DB.FindOne(ctx, usersCollection, bson.M{"userid": id}, &user)
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
+	user, err := uc.GetUserByID(ctx, id)
+	if err != nil {
+		return models.User{}
+	}
 	return user
 }
 
 func getCropByID(ctx context.Context, id string, app *infra.Deps) models.Crop {
-	var crop models.Crop
-	_ = app.DB.FindOne(ctx, cropsCollection, bson.M{"cropid": id}, &crop)
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
+	crop, err := uc.GetCropByID(ctx, id)
+	if err != nil {
+		return models.Crop{}
+	}
 	return crop
 }
 

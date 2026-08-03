@@ -7,16 +7,20 @@ import (
 	"strings"
 
 	"naevis/beats/dels"
-	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
+
+	"naevis/artists/repo"
+	aust "naevis/artists/usecase"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func CreateArtist(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		if err := r.ParseMultipartForm(10 << 20); err != nil {
@@ -33,17 +37,19 @@ func CreateArtist(app *infra.Deps) http.HandlerFunc {
 		artist.ArtistID, _ = utils.GenerateRandomString(12)
 		artist.EventIDs = []string{}
 
-		if err := InsertArtist(ctx, app.DB, &artist); err != nil {
+		if err := uc.CreateArtist(ctx, &artist); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create artist")
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistCreatedEvent, mqevent.ArtistCreatedPayload{})
 		utils.RespondWithJSON(w, http.StatusCreated, artist)
 	}
 }
 
 func UpdateArtist(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := aust.NewArtistUsecase(repoImpl, app.MQ)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		idParam := utils.GetParam(r, "id")
@@ -53,8 +59,8 @@ func UpdateArtist(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var existing models.Artist
-		if err := FindArtistByID(ctx, app.DB, idParam, &existing); err != nil {
+		existing, err := uc.GetArtistByID(ctx, idParam)
+		if err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
 			return
 		}
@@ -71,7 +77,7 @@ func UpdateArtist(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		err = UpdateArtistByID(ctx, app.DB, idParam, updateData)
+		err = uc.UpdateArtist(ctx, idParam, updateData)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update artist")
 			return
@@ -81,9 +87,6 @@ func UpdateArtist(app *infra.Deps) http.HandlerFunc {
 		for _, path := range filesToDelete {
 			_ = os.Remove(path)
 		}
-
-		/* -------- Publish ArtistUpdated Event -------- */
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistUpdatedEvent, mqevent.ArtistUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Artist updated"})
 	}

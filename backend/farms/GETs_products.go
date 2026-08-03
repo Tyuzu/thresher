@@ -3,9 +3,10 @@ package farms
 import (
 	"context"
 	"encoding/json"
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"time"
@@ -18,6 +19,9 @@ import (
 // --------------------------------------------------
 
 func GetItems(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -57,13 +61,13 @@ func GetItems(app *infra.Deps) http.HandlerFunc {
 			Sort:  sortMap,
 		}
 
-		var items []models.Product
-		if err := app.DB.FindManyWithOptions(ctx, productsCollection, filter, opts, &items); err != nil {
+		items, err := uc.FindProductsWithOptions(ctx, filter, opts)
+		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch items")
 			return
 		}
 
-		total, err := app.DB.CountDocuments(ctx, productsCollection, filter)
+		total, err := uc.CountProducts(ctx, filter)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to count items")
 			return

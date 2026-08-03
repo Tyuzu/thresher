@@ -15,6 +15,9 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -26,6 +29,9 @@ func GetFilteredCrops(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
+
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
 
 		params := r.URL.Query()
 		filter := bson.M{}
@@ -51,8 +57,8 @@ func GetFilteredCrops(app *infra.Deps) http.HandlerFunc {
 			filter["price"] = price
 		}
 
-		var crops []models.Crop
-		if err := app.DB.FindMany(ctx, cropsCollection, filter, &crops); err != nil {
+		crops, err := uc.FindCrops(ctx, filter)
+		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch crops")
 			return
 		}
@@ -94,7 +100,10 @@ func GetPreCropCatalogue(app *infra.Deps) http.HandlerFunc {
 		/* 2. Database                                      */
 		/* ------------------------------------------------ */
 
-		if err := app.DB.FindMany(ctx, catalogueCollection, bson.M{}, &crops); err == nil && len(crops) > 0 {
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
+		if crops, err := uc.FindCatalogue(ctx); err == nil && len(crops) > 0 {
 			if jsonBytes, err := json.Marshal(crops); err == nil {
 				_ = app.Cache.Set(ctx, cacheKey, jsonBytes, 2*time.Hour)
 			}
@@ -187,8 +196,12 @@ func GetCropCatalogue(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
 		var allCrops []models.Crop
-		if err := app.DB.FindMany(ctx, cropsCollection, bson.M{}, &allCrops); err != nil {
+		var err error
+		if allCrops, err = uc.FindAllCrops(ctx); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 				"message": "Failed to fetch crop catalogue",
@@ -223,8 +236,11 @@ func GetCropTypes(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
-		var crops []models.Crop
-		if err := app.DB.FindMany(ctx, cropsCollection, bson.M{}, &crops); err != nil {
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
+		crops, err := uc.FindAllCrops(ctx)
+		if err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
 				"message": "Failed to fetch crops",

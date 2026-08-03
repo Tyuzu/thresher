@@ -2,6 +2,8 @@ package farms
 
 import (
 	"context"
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
 	"naevis/infra"
 	"naevis/models"
 	"naevis/utils"
@@ -12,6 +14,9 @@ import (
 )
 
 func GetMyFarms(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
@@ -45,9 +50,8 @@ func GetMyFarms(app *infra.Deps) http.HandlerFunc {
 
 		var farms []models.Farm
 
-		if err := app.DB.Aggregate(
+		if err := uc.AggregateFarms(
 			ctx,
-			farmsCollection,
 			pipeline,
 			&farms,
 		); err != nil {
@@ -59,9 +63,8 @@ func GetMyFarms(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		total, _ := app.DB.CountDocuments(
+		total, _ := uc.CountFarms(
 			ctx,
-			farmsCollection,
 			bson.M{
 				"createdby": userID,
 			},

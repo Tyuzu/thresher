@@ -10,6 +10,9 @@ import (
 	"naevis/utils/logger"
 	log "naevis/utils/logger"
 
+	"naevis/baito/repo"
+	bu "naevis/baito/usecase"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -36,10 +39,13 @@ func respondBaitos(w http.ResponseWriter, baitos []models.BaitosResponse) {
 /* -------------------- Handlers -------------------- */
 
 func GetLatestBaitos(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		baitos, err := findLatestBaitosFromDB(ctx, app, bson.M{}, 20)
+		baitos, err := uc.ListLatest(ctx, bson.M{}, 20)
 		if err != nil {
 			logger.Printf("DB error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
@@ -51,6 +57,9 @@ func GetLatestBaitos(app *infra.Deps) http.HandlerFunc {
 }
 
 func GetRelatedBaitos(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -65,7 +74,7 @@ func GetRelatedBaitos(app *infra.Deps) http.HandlerFunc {
 			filter["baitoid_ne"] = exclude
 		}
 
-		baitos, err := findRelatedBaitosFromDB(ctx, app, filter, 10)
+		baitos, err := uc.ListRelated(ctx, filter, 10)
 		if err != nil {
 			logger.Printf("DB error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
@@ -87,11 +96,14 @@ func GetRelatedBaitos(app *infra.Deps) http.HandlerFunc {
 }
 
 func GetBaitoByID(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		id := utils.GetParam(r, "baitoid")
 
-		b, err := findBaitoByIDFromDB(ctx, app, id)
+		b, err := uc.GetBaito(ctx, id)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
 				utils.RespondWithError(w, http.StatusNotFound, "Not found")
@@ -111,11 +123,14 @@ func GetBaitoByID(app *infra.Deps) http.HandlerFunc {
 }
 
 func GetMyBaitos(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
 
-		baitos, err := findMyBaitosFromDB(ctx, app, userID)
+		baitos, err := uc.ListMyBaitos(ctx, userID)
 		if err != nil {
 			log.Printf("DB error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
@@ -127,11 +142,14 @@ func GetMyBaitos(app *infra.Deps) http.HandlerFunc {
 }
 
 func GetBaitoApplicants(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		baitoID := utils.GetParam(r, "baitoid")
 
-		results, err := findBaitoApplicantsFromDB(ctx, app, baitoID)
+		results, err := uc.ListApplications(ctx, baitoID)
 		if err != nil {
 			log.Printf("DB error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
@@ -143,11 +161,14 @@ func GetBaitoApplicants(app *infra.Deps) http.HandlerFunc {
 }
 
 func GetMyApplications(app *infra.Deps) http.HandlerFunc {
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := bu.NewBaitoUsecase(repoImpl)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
 
-		results, err := findMyApplicationsFromDB(ctx, app, userID)
+		results, err := uc.ListMyApplications(ctx, userID)
 		if err != nil {
 			logger.Printf("Aggregate error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch applications")

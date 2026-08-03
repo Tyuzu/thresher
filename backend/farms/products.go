@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"naevis/config/mqevent"
+	"naevis/farms/repo"
+	fu "naevis/farms/usecase"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/models"
@@ -50,10 +52,13 @@ func createItem(w http.ResponseWriter, r *http.Request, itemType string, app *in
 	item.CreatedAt = time.Now()
 	item.UpdatedAt = time.Now()
 
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	if err := app.DB.InsertOne(ctx, productsCollection, item); err != nil {
+	if err := uc.InsertProduct(ctx, item); err != nil {
 		http.Error(w, "Failed to insert item", http.StatusInternalServerError)
 		return
 	}
@@ -100,11 +105,14 @@ func updateItem(
 	}
 
 	// SECURITY: Check if user is the creator
+	repoImpl := repo.NewMongoRepo(app.DB)
+	uc := fu.NewFarmsUsecase(repoImpl)
+
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
 	var existingItem models.Product
-	if err := app.DB.FindOne(ctx, productsCollection, bson.M{"productid": id}, &existingItem); err != nil {
+	if err := uc.GetProductByID(ctx, id, &existingItem); err != nil {
 		http.Error(w, "Product not found", http.StatusNotFound)
 		return
 	}
@@ -126,7 +134,7 @@ func updateItem(
 	item.UpdatedAt = time.Now()
 
 	update := bson.M{"$set": item}
-	if err := app.DB.UpdateOne(ctx, productsCollection, bson.M{"productid": id}, update); err != nil {
+	if err := uc.UpdateProduct(ctx, id, update); err != nil {
 		http.Error(w, "Failed to update item", http.StatusInternalServerError)
 		return
 	}
@@ -171,12 +179,15 @@ func deleteItem(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		repoImpl := repo.NewMongoRepo(app.DB)
+		uc := fu.NewFarmsUsecase(repoImpl)
+
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
 		// SECURITY: Check if user is the creator
 		var item models.Product
-		if err := app.DB.FindOne(ctx, productsCollection, bson.M{"productid": id}, &item); err != nil {
+		if err := uc.GetProductByID(ctx, id, &item); err != nil {
 			http.Error(w, "Product not found", http.StatusNotFound)
 			return
 		}
@@ -186,7 +197,7 @@ func deleteItem(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if _, err := app.DB.DeleteOne(ctx, productsCollection, bson.M{"productid": id}); err != nil {
+		if err := uc.DeleteProduct(ctx, id); err != nil {
 			http.Error(w, "Failed to delete item", http.StatusInternalServerError)
 			return
 		}
