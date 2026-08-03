@@ -107,9 +107,10 @@ func BuildUser(input SignUpRequest) (models.User, error) {
 		return models.User{}, err
 	}
 
+	rndmstr, _ := utils.GenerateRandomString(10)
 	now := time.Now()
 	user := models.User{
-		UserID:        "u" + utils.GenerateRandomString(10),
+		UserID:        "u" + rndmstr,
 		Username:      input.Username,
 		Email:         input.Email,
 		Password:      string(hashedPassword),

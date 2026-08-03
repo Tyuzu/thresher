@@ -122,7 +122,8 @@ func parseAndBuildPlace(r *http.Request, mode string) (models.Place, bson.M, err
 
 	// timestamps + ids
 	if mode == "create" {
-		id := utils.GenerateRandomString(14)
+		genID, _ := utils.GenerateRandomString(14)
+		id := genID
 		now := time.Now()
 
 		apply("placeid", id)

@@ -20,9 +20,9 @@ type EventCreatedPayload struct {
 }
 
 type EventUpdatedPayload struct {
-	EventID    string    `json:"eventid"`
-	UpdatedBy  string    `json:"updatedby"`
-	OccurredAt time.Time `json:"occurredat"`
+	EventID   string    `json:"eventid"`
+	UpdatedBy string    `json:"updatedby"`
+	UpdatedAt time.Time `json:"updatedat"`
 }
 
 type EventDeletedPayload struct {

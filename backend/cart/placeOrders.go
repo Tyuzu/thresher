@@ -222,8 +222,9 @@ func processFarmOrders(
 
 		farmTotal := farmSubtotal - discount + tax + delivery
 
+		genID, _ := utils.GenerateRandomString(9)
 		order := models.FarmOrder{
-			OrderID:         "ORD" + utils.GenerateRandomDigitString(9),
+			OrderID:         "ORD" + genID,
 			UserID:          checkout.UserID,
 			FarmID:          farmID,
 			Name:            userName,
@@ -274,8 +275,9 @@ func processGeneralOrders(
 		return nil, nil
 	}
 
+	genID, _ := utils.GenerateRandomString(9)
 	order := models.Order{
-		OrderID:       "ORD" + utils.GenerateRandomDigitString(9),
+		OrderID:       "ORD" + genID,
 		UserID:        checkout.UserID,
 		Items:         nonCropItems,
 		Address:       checkout.Address,

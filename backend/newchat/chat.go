@@ -122,10 +122,10 @@ func CreateMessage(app *infra.Deps) http.HandlerFunc {
 			http.Error(w, "No content provided", http.StatusBadRequest)
 			return
 		}
-
+		genID, _ := utils.GenerateRandomString(16)
 		now := time.Now()
 		msg := models.Message{
-			MessageID: utils.GenerateRandomDigitString(16),
+			MessageID: genID,
 			ChatID:    chatID,
 			UserID:    userID,
 			Text:      text,
@@ -287,9 +287,9 @@ func InitChat(app *infra.Deps) http.HandlerFunc {
 			}
 			return
 		}
-
+		genID, _ := utils.GenerateRandomString(16)
 		chat := models.Chat{
-			ChatID: utils.GenerateRandomDigitString(16),
+			ChatID: genID,
 			Users:  users,
 		}
 

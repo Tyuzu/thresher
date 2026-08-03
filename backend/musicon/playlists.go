@@ -69,9 +69,9 @@ func CreatePlaylist(app *infra.Deps) http.HandlerFunc {
 		}
 
 		now := time.Now()
-
+		genID, _ := utils.GenerateRandomString(12)
 		newPlaylist := Playlist{
-			PlaylistID:    "pl_" + utils.GenerateRandomString(12),
+			PlaylistID:    "pl_" + genID,
 			UserID:        userID,
 			Name:          req.Name,
 			Description:   req.Description,

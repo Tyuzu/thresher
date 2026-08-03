@@ -2,7 +2,6 @@ package vendors
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -15,14 +14,6 @@ import (
 	"naevis/infra/mq"
 	"naevis/utils"
 )
-
-func writeJSONError(w http.ResponseWriter, status int, code string, message string) {
-	utils.RespondWithJSON(w, status, map[string]any{
-		"success": false,
-		"error":   code,
-		"message": message,
-	})
-}
 
 // RegisterVendorHandler handles vendor registration.
 func RegisterVendorHandler(app *infra.Deps) http.HandlerFunc {
@@ -45,21 +36,14 @@ func RegisterVendorHandler(app *infra.Deps) http.HandlerFunc {
 			Location    string `json:"location"`
 		}
 
-		decoder := json.NewDecoder(r.Body)
-		decoder.DisallowUnknownFields()
-		if err := decoder.Decode(&req); err != nil {
+		if err := decodeJSON(r, &req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body")
 			return
 		}
 
-		req.Name = strings.TrimSpace(req.Name)
-		req.Category = strings.TrimSpace(req.Category)
-		req.Description = strings.TrimSpace(req.Description)
-		req.Email = strings.TrimSpace(req.Email)
-		req.Phone = strings.TrimSpace(req.Phone)
-		req.Location = strings.TrimSpace(req.Location)
-
-		if req.Name == "" || req.Category == "" {
+		name := strings.TrimSpace(req.Name)
+		category := strings.TrimSpace(req.Category)
+		if name == "" || category == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Name and category are required")
 			return
 		}
@@ -68,12 +52,12 @@ func RegisterVendorHandler(app *infra.Deps) http.HandlerFunc {
 			ctx,
 			app,
 			userID,
-			req.Name,
-			req.Category,
-			req.Description,
-			req.Email,
-			req.Phone,
-			req.Location,
+			name,
+			category,
+			strings.TrimSpace(req.Description),
+			strings.TrimSpace(req.Email),
+			strings.TrimSpace(req.Phone),
+			strings.TrimSpace(req.Location),
 		)
 		if err != nil {
 			if errors.Is(err, ErrVendorAlreadyExists) {
@@ -84,6 +68,7 @@ func RegisterVendorHandler(app *infra.Deps) http.HandlerFunc {
 			writeJSONError(w, http.StatusInternalServerError, "REGISTER_FAILED", "Failed to register vendor")
 			return
 		}
+
 		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorRegisteredEvent, mqevent.VendorRegisteredPayload{}); err != nil {
 			log.Printf("failed to publish vendor registered event: %v", err)
 		}
@@ -119,20 +104,12 @@ func HireVendorHandler(app *infra.Deps) http.HandlerFunc {
 			VendorIDAlt2 string `json:"vendorID"`
 		}
 
-		decoder := json.NewDecoder(r.Body)
-		decoder.DisallowUnknownFields()
-		if err := decoder.Decode(&req); err != nil {
+		if err := decodeJSON(r, &req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body")
 			return
 		}
 
-		vendorID := strings.TrimSpace(req.VendorID)
-		if vendorID == "" {
-			vendorID = strings.TrimSpace(req.VendorIDAlt)
-		}
-		if vendorID == "" {
-			vendorID = strings.TrimSpace(req.VendorIDAlt2)
-		}
+		vendorID := firstNonEmpty(req.VendorID, req.VendorIDAlt, req.VendorIDAlt2)
 		if vendorID == "" {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Vendor ID is required")
 			return
@@ -158,9 +135,19 @@ func HireVendorHandler(app *infra.Deps) http.HandlerFunc {
 		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorHiredEvent, mqevent.VendorHiredPayload{}); err != nil {
 			log.Printf("failed to publish vendor hired event: %v", err)
 		}
+
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
 			"hiring":  hiring,
 		})
 	}
+}
+
+func firstNonEmpty(items ...string) string {
+	for _, item := range items {
+		if trimmed := strings.TrimSpace(item); trimmed != "" {
+			return trimmed
+		}
+	}
+	return ""
 }

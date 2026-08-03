@@ -104,8 +104,10 @@ func CreateBooking(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		genID, _ := utils.GenerateRandomDigitString(22)
+
 		// 4. Persistence & Event Dispatch
-		req.ID = genID()
+		req.ID = genID
 		req.Status = StatusPending
 		req.CreatedAt = time.Now().Unix()
 

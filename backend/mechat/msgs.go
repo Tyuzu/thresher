@@ -93,9 +93,9 @@ func SendMessageREST(app *infra.Deps) http.HandlerFunc {
 			writeErr(w, 400, "content required")
 			return
 		}
-
+		genID, _ := utils.GenerateRandomString(16)
 		msg := &models.Message{
-			MessageID: utils.GenerateRandomDigitString(16),
+			MessageID: genID,
 			ChatID:    chatID,
 			UserID:    user,
 			Content:   body.Content,

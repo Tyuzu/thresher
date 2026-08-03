@@ -41,7 +41,7 @@ func AddArtistMember(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if m.MemberID == "" {
-			m.MemberID = utils.GenerateRandomString(12)
+			m.MemberID, _ = utils.GenerateRandomString(12)
 		}
 
 		// Prevent duplicate by referenced artist

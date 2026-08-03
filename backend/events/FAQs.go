@@ -39,7 +39,7 @@ func AddFAQs(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := addFAQToEvent(ctx, app, eventID, newFAQ); err != nil {
+		if err := AddFAQToEvent(ctx, app, eventID, newFAQ); err != nil {
 			log.Printf("Error updating event %s: %v", eventID, err)
 			http.Error(w, "Error updating event", http.StatusInternalServerError)
 			return

@@ -44,8 +44,8 @@ func createItem(w http.ResponseWriter, r *http.Request, itemType string, app *in
 		http.Error(w, "Failed to parse body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	item.ProductID = utils.GenerateRandomString(13)
+	genID, _ := utils.GenerateRandomString(13)
+	item.ProductID = genID
 	item.UserID = userID
 	item.CreatedAt = time.Now()
 	item.UpdatedAt = time.Now()

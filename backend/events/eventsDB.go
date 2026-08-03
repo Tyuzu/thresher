@@ -2,6 +2,11 @@ package events
 
 import (
 	"context"
+	"errors"
+	"fmt"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"naevis/config"
 	"naevis/infra"
@@ -10,84 +15,144 @@ import (
 	"naevis/utils"
 )
 
-var eventsCollection = config.Collections.EventsCollection
-
-func insertEvent(ctx context.Context, app *infra.Deps, event models.Event) error {
-	return app.DB.Insert(ctx, eventsCollection, event)
+func collection() string {
+	return config.Collections.EventsCollection
 }
 
-func ensureUniqueEventID(ctx context.Context, app *infra.Deps, event *models.Event) {
+// InsertEvent creates a new event document in the database.
+func InsertEvent(ctx context.Context, app *infra.Deps, event models.Event) error {
+	if err := app.DB.Insert(ctx, collection(), event); err != nil {
+		return fmt.Errorf("insert event: %w", err)
+	}
+	return nil
+}
+
+// EnsureUniqueEventID generates a random event ID and verifies uniqueness in DB.
+func EnsureUniqueEventID(ctx context.Context, app *infra.Deps, event *models.Event) error {
 	if event == nil {
-		return
+		return nil
 	}
 
-	event.EventID = utils.GenerateRandomString(14)
-	var existingEvent models.Event
-	if err := app.DB.FindOne(ctx, eventsCollection, map[string]string{"eventid": event.EventID}, &existingEvent); err == nil {
-		event.EventID = utils.GenerateRandomString(14)
-	}
-}
+	const maxAttempts = 5
+	for range maxAttempts {
+		genID, err := utils.GenerateRandomString(14)
+		if err != nil {
+			return fmt.Errorf("generate random string: %w", err)
+		}
 
-func findEventByID(ctx context.Context, app *infra.Deps, eventID string, event *models.Event) error {
-	return app.DB.FindOne(ctx, eventsCollection, map[string]string{"eventid": eventID}, event)
-}
-
-func updateEvent(ctx context.Context, app *infra.Deps, eventID string, updates map[string]any) error {
-	return app.DB.UpdateOne(ctx, eventsCollection, map[string]string{"eventid": eventID}, map[string]any{"$set": updates})
-}
-
-func aggregateEvent(ctx context.Context, app *infra.Deps, eventID string, result *[]models.Event) error {
-	pipeline := []any{
-		map[string]any{"$match": map[string]any{"eventid": eventID}},
-		map[string]any{"$lookup": map[string]any{
-			"from":         "ticks",
-			"localField":   "eventid",
-			"foreignField": "eventid",
-			"as":           "tickets",
-		}},
-		map[string]any{"$lookup": map[string]any{
-			"from": "media",
-			"let":  map[string]any{"eid": "$eventid"},
-			"pipeline": []any{
-				map[string]any{"$match": map[string]any{
-					"$expr": map[string]any{
-						"$and": []any{
-							map[string]any{"$eq": []any{"$entityid", "$$eid"}},
-							map[string]any{"$eq": []any{"$entitytype", "event"}},
-						},
-					},
-				}},
-			},
-			"as": "media",
-		}},
-		map[string]any{"$lookup": map[string]any{
-			"from": "merch",
-			"let":  map[string]any{"eid": "$eventid"},
-			"pipeline": []any{
-				map[string]any{"$match": map[string]any{
-					"$expr": map[string]any{
-						"$and": []any{
-							map[string]any{"$eq": []any{"$entity_id", "$$eid"}},
-							map[string]any{"$eq": []any{"$entity_type", "event"}},
-						},
-					},
-				}},
-			},
-			"as": "merch",
-		}},
+		filter := bson.M{"eventid": genID}
+		var existing models.Event
+		err = app.DB.FindOne(ctx, collection(), filter, &existing)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			event.EventID = genID
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("check existing event id: %w", err)
+		}
 	}
 
-	return app.DB.Aggregate(ctx, eventsCollection, pipeline, result)
+	return fmt.Errorf("failed to generate unique event ID after %d attempts", maxAttempts)
 }
 
-func listEvents(ctx context.Context, app *infra.Deps, filter map[string]any, opts db.FindManyOptions, result *[]models.Event) error {
-	return app.DB.FindManyWithOptions(ctx, eventsCollection, filter, opts, result)
+// FindEventByID retrieves a single event by its unique ID.
+func FindEventByID(ctx context.Context, app *infra.Deps, eventID string) (*models.Event, error) {
+	var event models.Event
+	filter := bson.M{"eventid": eventID}
+
+	if err := app.DB.FindOne(ctx, collection(), filter, &event); err != nil {
+		return nil, fmt.Errorf("find event by id %s: %w", eventID, err)
+	}
+	return &event, nil
 }
 
-func countEvents(ctx context.Context, app *infra.Deps, filter map[string]any) (int64, error) {
-	return app.DB.CountDocuments(ctx, eventsCollection, filter)
+// UpdateEvent updates fields on a specific event document.
+func UpdateEvent(ctx context.Context, app *infra.Deps, eventID string, updates bson.M) error {
+	filter := bson.M{"eventid": eventID}
+	update := bson.M{"$set": updates}
+
+	if err := app.DB.UpdateOne(ctx, collection(), filter, update); err != nil {
+		return fmt.Errorf("update event %s: %w", eventID, err)
+	}
+	return nil
 }
 
-func addFAQToEvent(ctx context.Context, app *infra.Deps, eventID string, faq models.FAQ) error {
-	return app.DB.AddToSet(ctx, eventsCollection, map[string]string{"eventid": eventID}, "faqs", faq)
+// AggregateEvent retrieves a single event populated with related tickets, media, and merch.
+func AggregateEvent(ctx context.Context, app *infra.Deps, eventID string) (*models.Event, error) {
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.M{"eventid": eventID}}},
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "ticks"},
+			{Key: "localField", Value: "eventid"},
+			{Key: "foreignField", Value: "eventid"},
+			{Key: "as", Value: "tickets"},
+		}}},
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "media"},
+			{Key: "let", Value: bson.M{"eid": "$eventid"}},
+			{Key: "pipeline", Value: mongo.Pipeline{
+				bson.D{{Key: "$match", Value: bson.D{
+					{Key: "$expr", Value: bson.D{
+						{Key: "$and", Value: bson.A{
+							bson.D{{Key: "$eq", Value: bson.A{"$entityid", "$$eid"}}},
+							bson.D{{Key: "$eq", Value: bson.A{"$entitytype", "event"}}},
+						}},
+					}},
+				}}},
+			}},
+			{Key: "as", Value: "media"},
+		}}},
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "merch"},
+			{Key: "let", Value: bson.M{"eid": "$eventid"}},
+			{Key: "pipeline", Value: mongo.Pipeline{
+				bson.D{{Key: "$match", Value: bson.D{
+					{Key: "$expr", Value: bson.D{
+						{Key: "$and", Value: bson.A{
+							bson.D{{Key: "$eq", Value: bson.A{"$entity_id", "$$eid"}}},
+							bson.D{{Key: "$eq", Value: bson.A{"$entity_type", "event"}}},
+						}},
+					}},
+				}}},
+			}},
+			{Key: "as", Value: "merch"},
+		}}},
+	}
+
+	var results []models.Event
+	if err := app.DB.Aggregate(ctx, collection(), pipeline, &results); err != nil {
+		return nil, fmt.Errorf("aggregate event %s: %w", eventID, err)
+	}
+	if len(results) == 0 {
+		return nil, mongo.ErrNoDocuments
+	}
+
+	return &results[0], nil
+}
+
+// ListEvents searches for event records matching specified query filters and options.
+func ListEvents(ctx context.Context, app *infra.Deps, filter bson.M, opts db.FindManyOptions) ([]models.Event, error) {
+	var events []models.Event
+	if err := app.DB.FindManyWithOptions(ctx, collection(), filter, opts, &events); err != nil {
+		return nil, fmt.Errorf("list events: %w", err)
+	}
+	return events, nil
+}
+
+// CountEvents counts total matching event documents for given criteria.
+func CountEvents(ctx context.Context, app *infra.Deps, filter bson.M) (int64, error) {
+	count, err := app.DB.CountDocuments(ctx, collection(), filter)
+	if err != nil {
+		return 0, fmt.Errorf("count events: %w", err)
+	}
+	return count, nil
+}
+
+// AddFAQToEvent appends a new FAQ entry to an existing event document's faqs slice.
+func AddFAQToEvent(ctx context.Context, app *infra.Deps, eventID string, faq models.FAQ) error {
+	filter := bson.M{"eventid": eventID}
+	if err := app.DB.AddToSet(ctx, collection(), filter, "faqs", faq); err != nil {
+		return fmt.Errorf("add faq to event %s: %w", eventID, err)
+	}
+	return nil
 }

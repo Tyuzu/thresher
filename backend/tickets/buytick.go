@@ -81,9 +81,9 @@ func BuysTicket(app *infra.Deps) http.HandlerFunc {
 		/* --------------------
 		   Create booking record with userID
 		-------------------- */
-
+		genID, _ := utils.GenerateRandomString(14)
 		booking := Ticking{
-			BookingID: utils.GenerateRandomString(14),
+			BookingID: genID,
 			EventID:   req.EventID,
 			TicketID:  req.TicketID,
 			UserID:    userID, // SECURITY: Now tracks which user made the purchase

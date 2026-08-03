@@ -98,8 +98,9 @@ func ReportContent(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		genID, _ := utils.GenerateRandomString(17)
 		now := time.Now().UTC()
-		payload.ReportID = utils.GenerateRandomString(17)
+		payload.ReportID = genID
 		payload.Status = "pending"
 		payload.CreatedAt = now
 		payload.UpdatedAt = now
@@ -275,9 +276,9 @@ func CreateAppeal(app *infra.Deps) http.HandlerFunc {
 			utils.RespondWithError(w, http.StatusConflict, "You already have a pending appeal for this content")
 			return
 		}
-
+		genID, _ := utils.GenerateRandomString(17)
 		now := time.Now().UTC()
-		appealID := utils.GenerateRandomString(17)
+		appealID := genID
 
 		appeal := bson.M{
 			"appealid":    appealID,

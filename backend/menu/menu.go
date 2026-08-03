@@ -49,7 +49,7 @@ func CreateMenu(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		menuID := utils.GenerateRandomString(14)
+		menuID, _ := utils.GenerateRandomString(14)
 		menu := models.Menu{
 			PlaceID:   placeID,
 			Name:      body.Name,

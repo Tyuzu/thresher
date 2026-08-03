@@ -2,19 +2,30 @@ package vendors
 
 import (
 	"context"
-	"encoding/json"
 	"log"
+	"net/http"
+	"strings"
+	"time"
+
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/utils"
-	"net/http"
-	"strings"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
+
+var allowedUpdateFields = map[string]struct{}{
+	"name":         {},
+	"category":     {},
+	"description":  {},
+	"phone":        {},
+	"email":        {},
+	"location":     {},
+	"profileimage": {},
+	"portfolio":    {},
+}
 
 // UpdateVendorHandler updates vendor information.
 func UpdateVendorHandler(app *infra.Deps) http.HandlerFunc {
@@ -45,61 +56,27 @@ func UpdateVendorHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var updates map[string]any
-		decoder := json.NewDecoder(r.Body)
-		decoder.DisallowUnknownFields()
-		if err := decoder.Decode(&updates); err != nil {
+		var rawUpdates map[string]any
+		if err := decodeJSON(r, &rawUpdates); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body")
 			return
 		}
 
 		updateDoc := bson.M{}
-		allowedFields := map[string]struct{}{
-			"name":         {},
-			"category":     {},
-			"description":  {},
-			"phone":        {},
-			"email":        {},
-			"location":     {},
-			"profileimage": {},
-			"portfolio":    {},
-		}
-
-		for k, v := range updates {
+		for k, v := range rawUpdates {
 			key := strings.ToLower(strings.TrimSpace(k))
-			if _, ok := allowedFields[key]; ok {
-				updateDoc[key] = v
+			if _, allowed := allowedUpdateFields[key]; allowed {
+				if strVal, ok := v.(string); ok {
+					updateDoc[key] = strings.TrimSpace(strVal)
+				} else {
+					updateDoc[key] = v
+				}
 			}
 		}
 
 		if len(updateDoc) == 0 {
 			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "No valid update fields provided")
 			return
-		}
-
-		if name, ok := updateDoc["name"].(string); ok {
-			updateDoc["name"] = strings.TrimSpace(name)
-		}
-		if category, ok := updateDoc["category"].(string); ok {
-			updateDoc["category"] = strings.TrimSpace(category)
-		}
-		if description, ok := updateDoc["description"].(string); ok {
-			updateDoc["description"] = strings.TrimSpace(description)
-		}
-		if phone, ok := updateDoc["phone"].(string); ok {
-			updateDoc["phone"] = strings.TrimSpace(phone)
-		}
-		if email, ok := updateDoc["email"].(string); ok {
-			updateDoc["email"] = strings.TrimSpace(email)
-		}
-		if location, ok := updateDoc["location"].(string); ok {
-			updateDoc["location"] = strings.TrimSpace(location)
-		}
-		if profileImage, ok := updateDoc["profileimage"].(string); ok {
-			updateDoc["profileimage"] = strings.TrimSpace(profileImage)
-		}
-		if portfolio, ok := updateDoc["portfolio"].(string); ok {
-			updateDoc["portfolio"] = strings.TrimSpace(portfolio)
 		}
 
 		if err := UpdateVendor(ctx, app, vendorID, updateDoc); err != nil {
@@ -145,19 +122,16 @@ func UpdateVendorStatusHandler(app *infra.Deps) http.HandlerFunc {
 		var req struct {
 			Status string `json:"status"`
 		}
-
-		decoder := json.NewDecoder(r.Body)
-		decoder.DisallowUnknownFields()
-		if err := decoder.Decode(&req); err != nil {
+		if err := decodeJSON(r, &req); err != nil {
 			writeJSONError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body")
 			return
 		}
 
-		status := strings.TrimSpace(strings.ToLower(req.Status))
+		status := strings.ToLower(strings.TrimSpace(req.Status))
 		switch status {
 		case "hired", "pending", "completed", "cancelled", "accepted", "rejected":
 		default:
-			writeJSONError(w, http.StatusBadRequest, "INVALID_STATUS", "Invalid status")
+			writeJSONError(w, http.StatusBadRequest, "INVALID_STATUS", "Invalid status value")
 			return
 		}
 
@@ -167,7 +141,7 @@ func UpdateVendorStatusHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		vendorOwnerID := ""
+		var vendorOwnerID string
 		if vendor, err := GetVendorByID(ctx, app, hiring.VendorID); err == nil && vendor != nil {
 			vendorOwnerID = vendor.UserID
 		}
@@ -196,6 +170,7 @@ func UpdateVendorStatusHandler(app *infra.Deps) http.HandlerFunc {
 		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorStatusUpdatedEvent, mqevent.VendorStatusUpdatedPayload{}); err != nil {
 			log.Printf("failed to publish vendor status updated event: %v", err)
 		}
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"status":  status,

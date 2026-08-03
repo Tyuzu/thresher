@@ -30,7 +30,7 @@ func CreateArtist(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		artist.ArtistID = utils.GenerateRandomString(12)
+		artist.ArtistID, _ = utils.GenerateRandomString(12)
 		artist.EventIDs = []string{}
 
 		if err := InsertArtist(ctx, app.DB, &artist); err != nil {

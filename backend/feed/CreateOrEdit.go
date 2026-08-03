@@ -54,8 +54,9 @@ func editExistingPost(ctx context.Context, claims *models.Claims, payload PostPa
 
 // insertNewPost inserts a new post using Database interface
 func insertNewPost(ctx context.Context, claims *models.Claims, payload PostPayload, app *infra.Deps) (models.FeedPost, error) {
+	genID, _ := utils.GenerateRandomString(12)
 	post := models.FeedPost{
-		PostID:      utils.GenerateRandomString(12),
+		PostID:      genID,
 		Username:    claims.Username,
 		UserID:      claims.UserID,
 		Text:        payload.Text,

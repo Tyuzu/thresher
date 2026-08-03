@@ -73,8 +73,10 @@ func CreateTicket(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		genID, _ := utils.GenerateRandomString(12)
+
 		tick := models.Ticket{
-			TicketID:   utils.GenerateRandomString(12),
+			TicketID:   genID,
 			EventID:    eventID,
 			EntityID:   eventID,
 			EntityType: "event",

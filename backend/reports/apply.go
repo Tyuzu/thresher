@@ -48,8 +48,9 @@ func ApplyModerator(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		genID, _ := utils.GenerateRandomString(16)
 		appx := ModeratorApplication{
-			ID:        "mod_" + utils.GenerateRandomString(16),
+			ID:        "mod_" + genID,
 			UserID:    payload.UserID,
 			Reason:    payload.Reason,
 			Status:    "pending",

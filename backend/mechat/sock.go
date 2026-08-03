@@ -161,9 +161,9 @@ func wsSendMessage(ctx context.Context, c *Client, in models.IncomingWSMessage, 
 	if ensureChatAccess(ctx, app, in.ChatID, c.UserID) != nil {
 		return
 	}
-
+	genID, _ := utils.GenerateRandomString(16)
 	msg := &models.Message{
-		MessageID: utils.GenerateRandomDigitString(16),
+		MessageID: genID,
 		ChatID:    in.ChatID,
 		UserID:    c.UserID,
 		Content:   in.Content,

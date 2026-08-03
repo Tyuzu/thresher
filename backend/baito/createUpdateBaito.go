@@ -127,8 +127,9 @@ func (r BaitoRequest) ToModel(userID string) models.Baito {
 		deadline = &parsed
 	}
 
+	genID, _ := utils.GenerateRandomString(15)
 	return models.Baito{
-		BaitoId:         utils.GenerateRandomString(15),
+		BaitoId:         genID,
 		Title:           r.Title,
 		Description:     r.Description,
 		Category:        r.Category,

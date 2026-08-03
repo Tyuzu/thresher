@@ -24,12 +24,6 @@ const (
 	longBatchTimeout = 10 * time.Second
 )
 
-// ---------- Utility ----------
-
-func genID() string {
-	return utils.GenerateRandomDigitString(22)
-}
-
 // ---------- Tier Handlers ----------
 
 func CreateTier(app *infra.Deps) http.HandlerFunc {
@@ -106,7 +100,9 @@ func CreateSlot(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		s.ID = genID()
+		genID, _ := utils.GenerateRandomDigitString(22)
+
+		s.ID = genID
 		s.CreatedAt = time.Now().Unix()
 
 		if err := InsertSlot(ctx, app.DB, s); err != nil {
@@ -220,8 +216,10 @@ func buildSlotsFromTier(tier models.Tier, startDate, endDate time.Time) []models
 			continue
 		}
 
+		genID, _ := utils.GenerateRandomDigitString(22)
+
 		slots = append(slots, models.Slot{
-			ID:         genID(),
+			ID:         genID,
 			EntityType: tier.EntityType,
 			EntityId:   tier.EntityId,
 			Date:       d.Format(dateFormat),

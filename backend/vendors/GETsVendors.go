@@ -2,13 +2,13 @@ package vendors
 
 import (
 	"context"
-	"naevis/config"
-	"naevis/infra"
-	"naevis/models"
-	"naevis/utils"
 	"net/http"
 	"strings"
 	"time"
+
+	"naevis/config"
+	"naevis/infra"
+	"naevis/utils"
 )
 
 // GetVendorsHandler retrieves all available vendors.
@@ -24,10 +24,6 @@ func GetVendorsHandler(app *infra.Deps) http.HandlerFunc {
 		if err != nil {
 			writeJSONError(w, http.StatusInternalServerError, "LOAD_FAILED", "Failed to get vendors")
 			return
-		}
-
-		if vendors == nil {
-			vendors = []models.Vendor{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -105,10 +101,6 @@ func GetEventVendorsHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if vendorResponses == nil {
-			vendorResponses = []models.VendorResponse{}
-		}
-
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"vendors": vendorResponses,
@@ -138,10 +130,6 @@ func GetMyVendorRequestsHandler(app *infra.Deps) http.HandlerFunc {
 		if err != nil {
 			writeJSONError(w, http.StatusInternalServerError, "LOAD_FAILED", "Failed to load vendor requests")
 			return
-		}
-
-		if hirings == nil {
-			hirings = []models.VendorHiring{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{

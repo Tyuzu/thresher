@@ -45,11 +45,11 @@ func CreateBaitoForEntity(app *infra.Deps) http.HandlerFunc {
 		if baito.Tags == nil {
 			baito.Tags = []string{}
 		}
-
+		genID, _ := utils.GenerateRandomString(15)
 		// Assign controlled/system values
 		now := time.Now()
 		dueDate := now.AddDate(0, 1, 0)
-		baito.BaitoId = utils.GenerateRandomString(15)
+		baito.BaitoId = genID
 		baito.EntityType = entityType
 		baito.EntityID = entityID
 		baito.OwnerID = userID

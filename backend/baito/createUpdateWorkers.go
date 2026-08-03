@@ -58,9 +58,11 @@ func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M
 		set["languages"] = r.FormValue("languages")
 		set["updatedat"] = time.Now().Unix()
 	} else {
+
+		genID, _ := utils.GenerateRandomString(12)
 		worker = models.BaitoWorker{
 			UserID:        utils.GetUserIDFromRequest(r),
-			BaitoWorkerId: utils.GenerateRandomString(12),
+			BaitoWorkerId: genID,
 			Name:          r.FormValue("name"),
 			Age:           age,
 			Phone:         r.FormValue("phone"),

@@ -81,10 +81,10 @@ func AddReview(app *infra.Deps) http.HandlerFunc {
 			utils.RespondWithJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid review data"})
 			return
 		}
-
+		genID, _ := utils.GenerateRandomString(16)
 		now := time.Now().UTC()
 		review := models.Review{
-			ReviewID:   utils.GenerateRandomString(16),
+			ReviewID:   genID,
 			UserID:     userId,
 			EntityType: entityType,
 			EntityID:   entityId,

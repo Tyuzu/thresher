@@ -264,8 +264,10 @@ func readPump(c *Client, hub *Hub, app *infra.Deps) {
 
 			switch in.Action {
 			case "chat":
+
+				genID, _ := utils.GenerateRandomString(16)
 				msg := Message{
-					MessageID: utils.GenerateRandomDigitString(16),
+					MessageID: genID,
 					Room:      c.Room,
 					SenderID:  c.UserID,
 					Content:   in.Content,

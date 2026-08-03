@@ -184,9 +184,10 @@ func UploadHandler(hub *Hub, app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		genID, _ := utils.GenerateRandomString(16)
 		ts := time.Now().Unix()
 		msg := Message{
-			MessageID: utils.GenerateRandomDigitString(16),
+			MessageID: genID,
 			Room:      payload.Chat,
 			SenderID:  userID,
 			Content:   "",

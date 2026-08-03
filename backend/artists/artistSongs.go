@@ -78,9 +78,9 @@ func PostNewSong(app *infra.Deps) http.HandlerFunc {
 			}
 			return *s
 		}
-
+		rndmstr, _ := utils.GenerateRandomString(12)
 		newSong := models.ArtistSong{
-			SongID:      utils.GenerateRandomString(12),
+			SongID:      rndmstr,
 			ArtistID:    artistID,
 			Title:       deref(payload.Title),
 			Genre:       deref(payload.Genre),

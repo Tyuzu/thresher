@@ -48,7 +48,7 @@ func CreateEvent(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := insertEvent(ctx, app, event); err != nil {
+		if err := InsertEvent(ctx, app, event); err != nil {
 			log.Printf("DB insert error: %v", err)
 			http.Error(w, "Error saving event", http.StatusInternalServerError)
 			return
@@ -78,12 +78,13 @@ func prepareEventDefaults(event *models.Event, userID string, app *infra.Deps) {
 	event.OrganizerName = strings.TrimSpace(event.OrganizerName)
 	event.OrganizerContact = strings.TrimSpace(event.OrganizerContact)
 
-	event.EventID = utils.GenerateRandomString(14)
+	genID, _ := utils.GenerateRandomString(14)
+	event.EventID = genID
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	ensureUniqueEventID(ctx, app, event)
+	EnsureUniqueEventID(ctx, app, event)
 }
 
 func parseArtistData(r *http.Request, event *models.Event) error {

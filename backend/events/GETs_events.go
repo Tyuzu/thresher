@@ -2,18 +2,21 @@ package events
 
 import (
 	"context"
+	"errors"
+	"net/http"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+
 	"naevis/infra"
 	"naevis/infra/db"
 	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
-	"net/http"
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson"
 )
 
-// GetEvent fetches a single event with its tickets, media, and merch
+// GetEvent fetches a single event with its tickets, media, and merch.
 func GetEvent(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -21,37 +24,36 @@ func GetEvent(app *infra.Deps) http.HandlerFunc {
 
 		eventID := utils.GetParam(r, "eventid")
 		if eventID == "" {
-			http.Error(w, "Missing event ID", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Missing event ID")
 			return
 		}
 
-		var events []models.Event
-		if err := aggregateEvent(ctx, app, eventID, &events); err != nil {
+		event, err := AggregateEvent(ctx, app, eventID)
+		if err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				utils.RespondWithError(w, http.StatusNotFound, "Event not found")
+				return
+			}
 			log.Println("Aggregate error:", err)
-			http.Error(w, "Failed to fetch event", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event")
 			return
 		}
 
-		if len(events) == 0 {
-			http.Error(w, "Event not found", http.StatusNotFound)
-			return
-		}
-
-		safe := toSafeEvent(events[0])
+		safe := toSafeEvent(*event)
 		utils.RespondWithJSON(w, http.StatusOK, safe)
 	}
 }
 
-// GetEvents fetches paginated events
+// GetEvents fetches paginated events.
 func GetEvents(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
 		skip, limit := utils.ParsePagination(r, 10, 100)
-		filter := map[string]any{} // optionally {"published": true}
+		filter := bson.M{} // e.g. bson.M{"published": true}
 
-		totalCount, err := countEvents(ctx, app, filter)
+		totalCount, err := CountEvents(ctx, app, filter)
 		if err != nil {
 			log.Println("CountDocuments error:", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event count")
@@ -64,8 +66,9 @@ func GetEvents(app *infra.Deps) http.HandlerFunc {
 			Sort:  bson.D{{Key: "createdAt", Value: -1}},
 		}
 
-		var rawEvents []models.Event
-		if err := listEvents(ctx, app, filter, opts, &rawEvents); err != nil {
+		rawEvents, err := ListEvents(ctx, app, filter, opts)
+		if err != nil {
+			log.Println("ListEvents error:", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
 			return
 		}
@@ -75,10 +78,15 @@ func GetEvents(app *infra.Deps) http.HandlerFunc {
 			safeEvents = append(safeEvents, toSafeEvent(e))
 		}
 
+		page := 1
+		if limit > 0 {
+			page = (skip / limit) + 1
+		}
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"events":     safeEvents,
 			"eventCount": totalCount,
-			"page":       skip/limit + 1,
+			"page":       page,
 			"limit":      limit,
 		})
 	}
@@ -87,8 +95,19 @@ func GetEvents(app *infra.Deps) http.HandlerFunc {
 // GetEventsCount returns the total count of published events.
 func GetEventsCount(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Example static count; replace with a real DB query if needed.
-		count := 3
-		utils.RespondWithJSON(w, http.StatusOK, count)
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		filter := bson.M{"published": true}
+		count, err := CountEvents(ctx, app, filter)
+		if err != nil {
+			log.Println("CountEvents error:", err)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch event count")
+			return
+		}
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]int64{
+			"count": count,
+		})
 	}
 }

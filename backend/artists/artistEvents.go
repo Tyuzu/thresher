@@ -26,7 +26,7 @@ func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
 		artistevent.ArtistID = utils.GetParam(r, "id")
 
 		artistevent.CreatorID = utils.GetUserIDFromRequest(r)
-		artistevent.EventID = utils.GenerateRandomString(14)
+		artistevent.EventID, _ = utils.GenerateRandomString(14)
 
 		err := InsertArtistEvent(ctx, app.DB, &artistevent)
 		if err != nil {

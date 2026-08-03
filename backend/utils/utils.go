@@ -2,46 +2,51 @@ package utils
 
 import (
 	"crypto/rand"
+	"math/big"
+
 	"net/http"
 )
 
-// --- CSRF Token Generation ---
+const (
+	letters = "abcdefghijklmnopqrstuvwxyz0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	digits  = "0123456789"
+)
 
+// CSRF handles endpoint CSRF token responses.
 func CSRF(w http.ResponseWriter, r *http.Request) {
-	csrf := GenerateRandomString(12)
+	token, err := GenerateRandomString(12)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "failed to generate token")
+		return
+	}
+
 	RespondWithJSON(w, http.StatusOK, map[string]any{
 		"ok":         true,
-		"csrf_token": csrf,
+		"csrf_token": token,
 	})
 }
 
-// --- Random String and ID Generators ---
-
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-var digitRunes = []rune("0123456789")
-
-// GenerateRandomString creates a random alphanumeric string of length n.
-func GenerateRandomString(n int) string {
-	b := make([]byte, n)
-	if _, err := rand.Read(b); err != nil {
-		panic(err) // Should never happen in normal operation
-	}
-	result := make([]rune, n)
-	for i := range b {
-		result[i] = letterRunes[int(b[i])%len(letterRunes)]
-	}
-	return string(result)
+// GenerateRandomString generates a cryptographically secure random string.
+func GenerateRandomString(n int) (string, error) {
+	return generateFromCharset(n, letters)
 }
 
-// GenerateRandomDigitString creates a random numeric string of length n.
-func GenerateRandomDigitString(n int) string {
-	b := make([]byte, n)
-	if _, err := rand.Read(b); err != nil {
-		panic(err) // Should never happen in normal operation
+// GenerateRandomDigitString generates a cryptographically secure numeric string.
+func GenerateRandomDigitString(n int) (string, error) {
+	return generateFromCharset(n, digits)
+}
+
+func generateFromCharset(n int, charset string) (string, error) {
+	bytes := make([]byte, n)
+	max := big.NewInt(int64(len(charset)))
+
+	for i := 0; i < n; i++ {
+		num, err := rand.Int(rand.Reader, max)
+		if err != nil {
+			return "", err
+		}
+		bytes[i] = charset[num.Int64()]
 	}
-	result := make([]rune, n)
-	for i := range b {
-		result[i] = digitRunes[int(b[i])%len(digitRunes)]
-	}
-	return string(result)
+
+	return string(bytes), nil
 }

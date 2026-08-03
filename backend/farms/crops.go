@@ -179,9 +179,9 @@ func EditCrop(app *infra.Deps) http.HandlerFunc {
 func parseCropForm(r *http.Request) models.Crop {
 	name := r.FormValue("name")
 	catalogueID := strings.ToLower(strings.ReplaceAll(name, " ", "_"))
-
+	genID, _ := utils.GenerateRandomString(13)
 	crop := models.Crop{
-		CropId:      utils.GenerateRandomString(13),
+		CropId:      genID,
 		Name:        name,
 		Price:       utils.ParseFloat(r.FormValue("price")),
 		Discount:    utils.ParseFloat(r.FormValue("discount")),

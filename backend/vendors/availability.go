@@ -2,9 +2,9 @@ package vendors
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"naevis/config"
@@ -17,36 +17,45 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+// ListAvailabilityHandler retrieves availability slots for a specific vendor.
 func ListAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vendorID := utils.GetParam(r, "vendorID")
+		vendorID := strings.TrimSpace(utils.GetParam(r, "vendorID"))
 		if vendorID == "" {
-			http.Error(w, "vendorID required", http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Vendor ID is required")
 			return
 		}
 
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
+		slots := make([]models.AvailabilitySlot, 0)
 		filter := bson.M{"vendorid": vendorID}
-		var slots []models.AvailabilitySlot
+
 		if err := app.DB.FindMany(ctx, config.Collections.VendorAvailabilityCollection, filter, &slots); err != nil {
-			http.Error(w, "db error", http.StatusInternalServerError)
+			writeJSONError(w, http.StatusInternalServerError, "DB_ERROR", "Failed to fetch availability slots")
 			return
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"slots": slots})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"slots":   slots,
+		})
 	}
 }
 
-// Create availability slot (vendor sets unavailable dates or recurring availability)
+// CreateAvailabilityHandler handles creating unavailable dates or recurring availability slots.
 func CreateAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, _ := r.Context().Value(config.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
+		if !ok || userID == "" {
+			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
+			return
+		}
 
-		vendorID := utils.GetParam(r, "vendorID")
+		vendorID := strings.TrimSpace(utils.GetParam(r, "vendorID"))
 		if vendorID == "" {
-			http.Error(w, "vendorID required", http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Vendor ID is required")
 			return
 		}
 
@@ -54,44 +63,45 @@ func CreateAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		var slot models.AvailabilitySlot
-		if err := json.NewDecoder(r.Body).Decode(&slot); err != nil {
-			http.Error(w, "invalid payload", http.StatusBadRequest)
+		if err := decodeJSON(r, &slot); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body")
 			return
 		}
 
-		// Basic validation
-		slot.VendorID = vendorID
+		slot.StartDate = strings.TrimSpace(slot.StartDate)
+		slot.EndDate = strings.TrimSpace(slot.EndDate)
 		if slot.StartDate == "" || slot.EndDate == "" {
-			http.Error(w, "start_date and end_date required", http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Start date and end date are required")
 			return
 		}
 
-		// Verify caller owns the vendor profile
-		var vendor models.Vendor
-		if err := app.DB.FindOne(ctx, config.Collections.VendorCollection, bson.M{"vendorid": vendorID}, &vendor); err != nil {
-			http.Error(w, "vendor not found", http.StatusNotFound)
+		vendor, err := GetVendorByID(ctx, app, vendorID)
+		if err != nil || vendor == nil {
+			writeJSONError(w, http.StatusNotFound, "VENDOR_NOT_FOUND", "Vendor not found")
 			return
 		}
-		if userID == "" || vendor.UserID != userID {
-			http.Error(w, "forbidden", http.StatusForbidden)
+
+		if vendor.UserID != userID {
+			writeJSONError(w, http.StatusForbidden, "FORBIDDEN", "Unauthorized")
 			return
 		}
 
 		var existing []models.AvailabilitySlot
 		_ = app.DB.FindMany(ctx, config.Collections.VendorAvailabilityCollection, bson.M{"vendorid": vendorID}, &existing)
-		// simple in-app overlap check
+
 		for _, ex := range existing {
 			if !(ex.EndDate < slot.StartDate || ex.StartDate > slot.EndDate) {
-				http.Error(w, "overlap", http.StatusConflict)
+				writeJSONError(w, http.StatusConflict, "SLOT_OVERLAP", "Availability slot overlaps with existing slot")
 				return
 			}
 		}
 
+		slot.VendorID = vendorID
 		slot.SlotID = genSlotID()
 		slot.CreatedAt = time.Now().UTC()
 
 		if err := app.DB.InsertOne(ctx, config.Collections.VendorAvailabilityCollection, slot); err != nil {
-			http.Error(w, "db error", http.StatusInternalServerError)
+			writeJSONError(w, http.StatusInternalServerError, "DB_ERROR", "Failed to save availability slot")
 			return
 		}
 
@@ -99,19 +109,26 @@ func CreateAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 			log.Printf("failed to publish slot created event: %v", err)
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"ok": true, "slot": slot})
+		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
+			"success": true,
+			"slot":    slot,
+		})
 	}
 }
 
-// Delete availability slot
+// DeleteAvailabilityHandler removes an availability slot.
 func DeleteAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, _ := r.Context().Value(config.UserIDKey).(string)
+		userID, ok := r.Context().Value(config.UserIDKey).(string)
+		if !ok || userID == "" {
+			writeJSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Unauthorized")
+			return
+		}
 
-		vendorID := utils.GetParam(r, "vendorID")
-		slotID := utils.GetParam(r, "slotID")
+		vendorID := strings.TrimSpace(utils.GetParam(r, "vendorID"))
+		slotID := strings.TrimSpace(utils.GetParam(r, "slotID"))
 		if vendorID == "" || slotID == "" {
-			http.Error(w, "missing params", http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "Vendor ID and Slot ID are required")
 			return
 		}
 
@@ -120,23 +137,23 @@ func DeleteAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 
 		var slot models.AvailabilitySlot
 		if err := app.DB.FindOne(ctx, config.Collections.VendorAvailabilityCollection, bson.M{"slotid": slotID, "vendorid": vendorID}, &slot); err != nil {
-			http.Error(w, "not found", http.StatusNotFound)
+			writeJSONError(w, http.StatusNotFound, "SLOT_NOT_FOUND", "Availability slot not found")
 			return
 		}
 
-		// verify ownership
-		var vendor models.Vendor
-		if err := app.DB.FindOne(ctx, config.Collections.VendorCollection, bson.M{"vendorid": vendorID}, &vendor); err != nil {
-			http.Error(w, "vendor not found", http.StatusNotFound)
+		vendor, err := GetVendorByID(ctx, app, vendorID)
+		if err != nil || vendor == nil {
+			writeJSONError(w, http.StatusNotFound, "VENDOR_NOT_FOUND", "Vendor not found")
 			return
 		}
-		if userID == "" || vendor.UserID != userID {
-			http.Error(w, "forbidden", http.StatusForbidden)
+
+		if vendor.UserID != userID {
+			writeJSONError(w, http.StatusForbidden, "FORBIDDEN", "Unauthorized")
 			return
 		}
 
 		if _, err := app.DB.DeleteOne(ctx, config.Collections.VendorAvailabilityCollection, bson.M{"slotid": slotID}); err != nil {
-			http.Error(w, "db error", http.StatusInternalServerError)
+			writeJSONError(w, http.StatusInternalServerError, "DB_ERROR", "Failed to delete availability slot")
 			return
 		}
 
@@ -144,11 +161,13 @@ func DeleteAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 			log.Printf("failed to publish slot deleted event: %v", err)
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"ok": true})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"message": "Availability slot deleted successfully",
+		})
 	}
 }
 
-// helper to generate simple slot id
 func genSlotID() string {
 	return time.Now().UTC().Format("20060102T150405")
 }

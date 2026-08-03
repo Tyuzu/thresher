@@ -66,8 +66,9 @@ func CreateNotice(app *infra.Deps) http.HandlerFunc {
 
 		userID := utils.GetUserIDFromRequest(r)
 
+		genID, _ := utils.GenerateRandomString(13)
 		notice := models.Notice{
-			NoticeID:   utils.GenerateRandomDigitString(13), // use your string ID generator
+			NoticeID:   genID,
 			EntityType: entityType,
 			EntityId:   entityID,
 			CreatedBy:  userID,

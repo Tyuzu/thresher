@@ -88,9 +88,9 @@ func CreateFarm(app *infra.Deps) http.HandlerFunc {
 			})
 			return
 		}
-
+		genID, _ := utils.GenerateRandomString(14)
 		farm := models.Farm{
-			FarmID:       utils.GenerateRandomString(14),
+			FarmID:       genID,
 			Name:         name,
 			Location:     location,
 			Description:  description,

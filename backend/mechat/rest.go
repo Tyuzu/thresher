@@ -61,10 +61,10 @@ func StartNewChat(app *infra.Deps) http.HandlerFunc {
 			utils.RespondWithJSON(w, http.StatusOK, existing)
 			return
 		}
-
+		genID, _ := utils.GenerateRandomString(16)
 		now := time.Now()
 		chat := models.Chat{
-			ChatID:       utils.GenerateRandomString(16),
+			ChatID:       genID,
 			Participants: participants,
 			EntityType:   body.EntityType,
 			EntityId:     body.EntityId,
@@ -248,10 +248,10 @@ func UploadAttachment(app *infra.Deps) http.HandlerFunc {
 		}
 
 		now := time.Now()
-
+		genID, _ := utils.GenerateRandomString(16)
 		// FIX: generate MessageID BEFORE insert
 		msg := &models.Message{
-			MessageID: utils.GenerateRandomDigitString(16),
+			MessageID: genID,
 			ChatID:    chatID,
 			UserID:    user,
 			Content:   "",

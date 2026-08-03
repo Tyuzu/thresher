@@ -3,14 +3,15 @@ package vendors
 import (
 	"context"
 	"errors"
+	"net/http"
+	"strings"
+	"time"
+
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/utils"
-	"net/http"
-	"strings"
-	"time"
 )
 
 // DeleteVendorHandler soft-deletes a vendor profile.
@@ -50,7 +51,7 @@ func DeleteVendorHandler(app *infra.Deps) http.HandlerFunc {
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.VendorDeletedEvent, mqevent.VendorDeletedPayload{})
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"message": "Vendor deleted",
+			"message": "Vendor deleted successfully",
 		})
 	}
 }

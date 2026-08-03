@@ -103,10 +103,10 @@ func CreateMerch(app *infra.Deps) http.HandlerFunc {
 			utils.RespondWithJSON(w, 400, map[string]any{"success": false, "error": "invalid merch data"})
 			return
 		}
-
+		genID, _ := utils.GenerateRandomString(14)
 		now := time.Now()
 		merch := models.Merch{
-			MerchID:    utils.GenerateRandomString(14),
+			MerchID:    genID,
 			EntityType: entityType,
 			EntityID:   eventID,
 			Name:       body.Name,

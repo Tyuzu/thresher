@@ -135,8 +135,9 @@ func CreateRecipe(app *infra.Deps) http.HandlerFunc {
 			ingredients = append(ingredients, ingredient)
 		}
 
+		genID, _ := utils.GenerateRandomString(12)
 		recipe := models.Recipe{
-			RecipeId:    utils.GenerateRandomString(12),
+			RecipeId:    genID,
 			UserID:      userID,
 			Title:       r.FormValue("title"),
 			Description: r.FormValue("description"),

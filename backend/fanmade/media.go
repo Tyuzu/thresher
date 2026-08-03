@@ -51,8 +51,8 @@ func AddMedia(app *infra.Deps) http.HandlerFunc {
 		if lang == "" || lang == "unknown" {
 			lang = DetectCaptionLanguage(payload.Caption)
 		}
-
-		mediaGroupID := "g" + utils.GenerateRandomString(16)
+		genID, _ := utils.GenerateRandomString(16)
+		mediaGroupID := "g" + genID
 		var insertedMedia []models.Media
 
 		for _, fileData := range payload.Files {
@@ -82,9 +82,9 @@ func AddMedia(app *infra.Deps) http.HandlerFunc {
 				mediaType = "unknown"
 				mimeType = "application/octet-stream"
 			}
-
+			genID, _ := utils.GenerateRandomString(16)
 			media := models.Media{
-				MediaID:      "m" + utils.GenerateRandomString(16),
+				MediaID:      "m" + genID,
 				MediaGroupID: mediaGroupID,
 				EntityID:     entityID,
 				EntityType:   entityType,

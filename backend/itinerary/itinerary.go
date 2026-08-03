@@ -44,8 +44,8 @@ func CreateItinerary(app *infra.Deps) http.HandlerFunc {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-
-		it.ItineraryID = utils.GenerateRandomString(13)
+		genID, _ := utils.GenerateRandomString(13)
+		it.ItineraryID = genID
 		it.UserID = userID
 		it.Published = false
 		if it.Status == "" {
@@ -170,9 +170,9 @@ func ForkItinerary(app *infra.Deps) http.HandlerFunc {
 		}
 
 		normalizeItinerary(&original)
-
+		genID, _ := utils.GenerateRandomString(13)
 		newItinerary := models.Itinerary{
-			ItineraryID: utils.GenerateRandomString(13),
+			ItineraryID: genID,
 			UserID:      userID,
 			Name:        "Forked - " + original.Name,
 			Description: original.Description,

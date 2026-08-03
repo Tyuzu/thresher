@@ -2,67 +2,72 @@ package events
 
 import (
 	"context"
+	"net/http"
+	"time"
+
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
-	"net/http"
-	"time"
 )
 
-// EditEvent updates an existing event
+// EditEvent updates an existing event and publishes an event updated payload.
 func EditEvent(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		eventID := utils.GetParam(r, "eventid")
 		if eventID == "" {
-			http.Error(w, "Missing event ID", http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, "Missing event ID")
 			return
 		}
 
 		updateFields, err := updateEventFields(r)
 		if err != nil {
 			log.Printf("Invalid update fields for event %s: %v", eventID, err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if err := validateUpdateFields(updateFields); err != nil {
 			log.Printf("Validation failed for event %s: %v", eventID, err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		updateFields["updated_at"] = time.Now().UTC()
+		now := time.Now().UTC()
+		updateFields["updated_at"] = now
 
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := updateEvent(ctx, app, eventID, updateFields); err != nil {
+		if err := UpdateEvent(ctx, app, eventID, updateFields); err != nil {
 			log.Printf("Error updating event %s: %v", eventID, err)
-			http.Error(w, "Error updating event", http.StatusInternalServerError)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Error updating event")
 			return
 		}
 
-		var updatedEvent models.Event
-		if err := findEventByID(ctx, app, eventID, &updatedEvent); err != nil {
-			http.Error(w, "Error retrieving updated event", http.StatusInternalServerError)
+		updatedEvent, err := FindEventByID(ctx, app, eventID)
+		if err != nil {
+			log.Printf("Error retrieving updated event %s: %v", eventID, err)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Error retrieving updated event")
 			return
 		}
 
-		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.EventUpdatedEvent, mqevent.EventUpdatedPayload{}); err != nil {
-			log.Printf("failed to publish event updated event: %v", err)
+		// Publish event updated message asynchronously
+		payload := mqevent.EventUpdatedPayload{
+			EventID:   eventID,
+			UpdatedAt: now,
+		}
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.EventUpdatedEvent, payload); err != nil {
+			log.Printf("Failed to publish event updated message for %s: %v", eventID, err)
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, updatedEvent)
 	}
 }
 
-// DeleteEvent deletes an event and its related data
+// DeleteEvent handles the deletion of an event and its related dependencies.
 func DeleteEvent(app *infra.Deps) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		dels.DeleteEvent(app)(w, r)
-	}
+	return dels.DeleteEvent(app)
 }

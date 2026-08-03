@@ -62,8 +62,9 @@ func CreateComment(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		genID, _ := utils.GenerateRandomString(18)
 		comment := models.Comment{
-			CommentID:  utils.GenerateRandomString(18),
+			CommentID:  genID,
 			EntityType: entityType,
 			EntityID:   entityID,
 			Content:    content,
