@@ -1,25 +1,17 @@
 package routes
 
 import (
-	"naevis/artists"
 	"naevis/auth"
 	"naevis/autocomplete"
 	"naevis/baito"
-	"naevis/beats"
 	"naevis/booking"
-	"naevis/cart"
-	"naevis/comments"
 	"naevis/events"
-	"naevis/fanmade"
-	"naevis/farms"
-	"naevis/feed"
 	"naevis/hashtags"
 	"naevis/home"
 	"naevis/infra"
 	"naevis/itinerary"
 	"naevis/jobs"
 	"naevis/maps"
-	"naevis/mechat"
 	"naevis/media"
 	"naevis/menu"
 	"naevis/merch"
@@ -27,18 +19,12 @@ import (
 	"naevis/metrics/ads"
 	"naevis/metrics/analytics"
 	"naevis/middleware"
-	"naevis/musicon"
-	"naevis/newchat"
-	"naevis/notices"
 	"naevis/places"
 	"naevis/posts"
 	"naevis/products"
 	"naevis/profile"
-	"naevis/recipes"
-	"naevis/reviews"
 	"naevis/search"
 	"naevis/settings"
-	"naevis/stripe"
 	"naevis/suggestions"
 	"naevis/tickets"
 	"naevis/userdata"
@@ -102,49 +88,6 @@ func AddBaitoRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mid
 	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/worker/:workerId", rateLimiter.Limit(baito.GetWorkerById(app)))
 }
 
-func AddBeatRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	// User must be logged in to like/unlike
-	router.HandlerFunc(http.MethodPut, "/api/v1/likes/:entitytype/like/:entityid", rateLimiter.Limit(authmidware(beats.ToggleLike(app))))
-
-	// Get users who liked a post/beat
-	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/users/:entityid", rateLimiter.Limit(authmidware(beats.GetLikers(app))))
-
-	// Batch check user likes
-	router.HandlerFunc(http.MethodPost, "/api/v1/likes/:entitytype/batch/users", rateLimiter.Limit(authmidware(beats.BatchUserLikes(app))))
-
-	// Like count is public
-	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/count/:entityid", rateLimiter.Limit(beats.GetLikeCount(app)))
-
-	// Follows
-	router.HandlerFunc(http.MethodPut, "/api/v1/follows/:id", rateLimiter.Limit(authmidware(beats.ToggleFollow(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/follows/:id", rateLimiter.Limit(authmidware(beats.ToggleUnFollow(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/follows/:id/status", rateLimiter.Limit(authmidware(beats.DoesFollow(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/followers/:id", rateLimiter.Limit(beats.GetFollowers(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/following/:id", rateLimiter.Limit(beats.GetFollowing(app)))
-
-	// Subscribes / Follows
-	router.HandlerFunc(http.MethodPut, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.SubscribeEntity(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.UnsubscribeEntity(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.DoesSubscribeEntity(app))))
-
-	// Get all subscribers of a user/artist
-	router.HandlerFunc(http.MethodGet, "/api/v1/subscribers/:id", rateLimiter.Limit(beats.GetSubscribers(app)))
-
-}
-
-func AddRecipeRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	router.HandlerFunc(http.MethodGet, "/api/v1/recipes/tags", rateLimiter.Limit(recipes.GetRecipeTags(app)))         // Public
-	router.HandlerFunc(http.MethodGet, "/api/v1/recipes", middleware.OptionalAuth(recipes.GetRecipes(app)))           // Public/optional
-	router.HandlerFunc(http.MethodGet, "/api/v1/recipes/recipe/:id", middleware.OptionalAuth(recipes.GetRecipe(app))) // Public/optional
-
-	// Modifications require auth
-	router.HandlerFunc(http.MethodPost, "/api/v1/recipes", authmidware(recipes.CreateRecipe(app)))
-	router.HandlerFunc(http.MethodPut, "/api/v1/recipes/recipe/:id", authmidware(recipes.UpdateRecipe(app)))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/recipes/recipe/:id", authmidware(recipes.DeleteRecipe(app)))
-}
-
 func AddHomeRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	// router.HandlerFunc(http.MethodGet,"/api/v1/home/:apiRoute", middleware.OptionalAuth(home.GetHomeContent)) // Public/optional
 	router.HandlerFunc(http.MethodGet, "/api/v1/homecards", middleware.OptionalAuth(home.HomeCardsHandler(app))) // Public/optional
@@ -152,21 +95,6 @@ func AddHomeRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *midd
 
 func AddProductRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	router.HandlerFunc(http.MethodGet, "/api/v1/products/:entityType/:entityId", middleware.OptionalAuth(products.GetProductDetails(app)))
-}
-
-// Routes registration
-func AddNoticesRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	// CREATE
-	router.HandlerFunc(http.MethodPost, "/api/v1/notices/:entitytype/:entityid", rateLimiter.Limit(authmidware(notices.CreateNotice(app))))
-
-	// READ
-	router.HandlerFunc(http.MethodGet, "/api/v1/notices/:entitytype/:entityid", notices.GetNotices(app))
-	router.HandlerFunc(http.MethodGet, "/api/v1/notices/:entitytype/:entityid/:noticeid", notices.GetNotice(app))
-
-	// UPDATE + DELETE
-	router.HandlerFunc(http.MethodPut, "/api/v1/notices/:entitytype/:entityid/:noticeid", rateLimiter.Limit(authmidware(notices.UpdateNotice(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/notices/:entitytype/:entityid/:noticeid", rateLimiter.Limit(authmidware(notices.DeleteNotice(app))))
 }
 
 // // Notifications routes
@@ -201,21 +129,6 @@ func AddNoticesRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *m
 // 	router.HandlerFunc(http.MethodGet,"/api/v1/notifs/user/:userid/preferences", authmidware(notifications.GetPreferences(app)))
 // 	router.HandlerFunc(http.MethodPut,"/api/v1/notifs/user/:userid/preferences", rateLimiter.Limit(authmidware(notifications.UpdatePreferences(app))))
 // }
-
-func AddCommentsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	// Create comment
-	router.HandlerFunc(http.MethodPost, "/api/v1/comments/:entitytype/:entityid", rateLimiter.Limit(authmidware(comments.CreateComment(app))))
-
-	// Get comments for an entity (supports pagination/sorting via query params)
-	router.HandlerFunc(http.MethodGet, "/api/v1/comments/:entitytype/:entityid", comments.GetComments(app)) // Public
-
-	router.HandlerFunc(http.MethodGet, "/api/v1/comments/:entitytype/:entityid/:commentid", comments.GetComment(app))
-
-	// Update & Delete
-	router.HandlerFunc(http.MethodPut, "/api/v1/comments/:entitytype/:entityid/:commentid", rateLimiter.Limit(authmidware(comments.UpdateComment(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/comments/:entitytype/:entityid/:commentid", rateLimiter.Limit(authmidware(comments.DeleteComment(app))))
-}
 
 func AddAuthRoutes(router *httprouter.Router, app *infra.Deps, limiter *middleware.RateLimiter) {
 	authmid := middleware.Authenticate(app)
@@ -283,97 +196,6 @@ func AddEventsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mi
 
 	// Should probably require auth if restricted
 	router.HandlerFunc(http.MethodPost, "/api/v1/events/event/:eventid/faqs", authmidware(events.AddFAQs(app)))
-}
-
-func AddCartRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	// Cart operations
-	router.HandlerFunc(http.MethodPost, "/api/v1/cart", rateLimiter.Limit(authmidware(cart.AddToCart(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/cart", authmidware(cart.GetCart(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/cart/update", rateLimiter.Limit(authmidware(cart.UpdateCart(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/cart/item", rateLimiter.Limit(authmidware(cart.RemoveFromCart(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/cart", rateLimiter.Limit(authmidware(cart.ClearCart(app))))
-	router.HandlerFunc(http.MethodPatch, "/api/v1/cart/item", rateLimiter.Limit(authmidware(cart.UpdateItemQuantity(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/cart/checkout", rateLimiter.Limit(authmidware(cart.InitiateCheckout(app))))
-
-	// Checkout session creation
-	router.HandlerFunc(http.MethodPost, "/api/v1/checkout/session", rateLimiter.Limit(authmidware(cart.CreateCheckoutSession(app))))
-
-	// Order placement
-	router.HandlerFunc(http.MethodPost, "/api/v1/order", rateLimiter.Limit(authmidware(cart.PlaceOrder(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/order/mine", authmidware(cart.GetMyOrders(app)))
-
-	router.HandlerFunc(http.MethodPost, "/api/v1/coupon/validate", rateLimiter.Limit(authmidware(cart.ValidateCouponHandler(app))))
-
-}
-
-func RegisterFarmRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	// 🌾 Farm CRUD
-	router.HandlerFunc(http.MethodPost, "/api/v1/farms", rateLimiter.Limit(authmidware(farms.CreateFarm(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/farms", farms.GetPaginatedFarms(app)) // Public
-	router.HandlerFunc(http.MethodGet, "/api/v1/farms/farm/:id", middleware.OptionalAuth(farms.GetFarm(app)))
-	router.HandlerFunc(http.MethodPut, "/api/v1/farms/farm/:id", rateLimiter.Limit(authmidware(farms.EditFarm(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/farms/farm/:id", rateLimiter.Limit(authmidware(farms.DeleteFarm(app))))
-
-	// 🌱 Crops (within farm)
-	router.HandlerFunc(http.MethodPost, "/api/v1/farms/farm/:id/crops", rateLimiter.Limit(authmidware(farms.AddCrop(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/farms/farm/:id/crops/:cropid", rateLimiter.Limit(authmidware(farms.EditCrop(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/farms/farm/:id/crops/:cropid", rateLimiter.Limit(authmidware(farms.DeleteCrop(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/farms/farm/:id/crops/:cropid/buy", rateLimiter.Limit(authmidware(farms.BuyCrop(app))))
-
-	// 📊 Dashboard
-	router.HandlerFunc(http.MethodGet, "/api/v1/dash/farms", authmidware(farms.GetFarmDash(app)))
-
-	// 📦 Farm Orders
-	router.HandlerFunc(http.MethodGet, "/api/v1/orders/mine", authmidware(farms.GetMyFarmOrders(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/orders/incoming", authmidware(farms.GetIncomingFarmOrders(app)))
-
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/accept", rateLimiter.Limit(authmidware(farms.AcceptOrder(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/reject", rateLimiter.Limit(authmidware(farms.RejectOrder(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/deliver", rateLimiter.Limit(authmidware(farms.MarkOrderDelivered(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/markpaid", rateLimiter.Limit(authmidware(farms.MarkOrderPaid(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/farmorders/order/:id/receipt", authmidware(farms.DownloadReceipt(app)))
-	// Bulk actions
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/accept", rateLimiter.Limit(authmidware(farms.BulkAcceptOrders(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/reject", rateLimiter.Limit(authmidware(farms.BulkRejectOrders(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/deliver", rateLimiter.Limit(authmidware(farms.BulkMarkOrdersDelivered(app))))
-
-	// 🌾 Crop catalogue & type browsing
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops", farms.GetFilteredCrops(app))                 // Public
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops/catalogue", farms.GetCropCatalogue(app))       // Public
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops/precatalogue", farms.GetPreCropCatalogue(app)) // Public
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops/types", farms.GetCropTypes(app))               // Public
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops/crop/:cropname", middleware.OptionalAuth(farms.GetCropTypeFarms(app)))
-
-	// Crop Wiki
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops/about", rateLimiter.Limit(farms.GetAllCropAboutsHandler(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/crops/about", rateLimiter.Limit(farms.CreateCropAboutHandler(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.GetCropAboutHandler(app)))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.DeleteCropAboutHandler(app)))
-	router.HandlerFunc(http.MethodPut, "/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.UpdateCropAboutHandler(app)))
-
-	// 🛒 Items, Products, Tools
-	// -- GET
-	router.HandlerFunc(http.MethodGet, "/api/v1/farm/items", farms.GetItems(app))                     // Public
-	router.HandlerFunc(http.MethodGet, "/api/v1/farm/items/categories", farms.GetItemCategories(app)) // Public
-
-	// -- Products (CRUD)
-	router.HandlerFunc(http.MethodPost, "/api/v1/farm/product", rateLimiter.Limit(authmidware(farms.CreateProduct(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/farm/product/:id", rateLimiter.Limit(authmidware(farms.UpdateProduct(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/farm/product/:id", rateLimiter.Limit(authmidware(farms.DeleteProduct(app))))
-
-	// -- Tools (CRUD)
-	router.HandlerFunc(http.MethodPost, "/api/v1/farm/tool", rateLimiter.Limit(authmidware(farms.CreateTool(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/farm/tool/:id", rateLimiter.Limit(authmidware(farms.UpdateTool(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/farm/tool/:id", rateLimiter.Limit(authmidware(farms.DeleteTool(app))))
-
-	// 🖼 Upload
-	// router.HandlerFunc(http.MethodPost,"/api/v1/upload/images", rateLimiter.Limit(authmidware(utils.UploadImages)))
-
-	// Weather
-	router.HandlerFunc(http.MethodGet, "/api/v1/weather", farms.GetWeather(app))
-	router.HandlerFunc(http.MethodGet, "/api/v1/farms/my", authmidware(farms.GetMyFarms(app)))
 }
 
 func AddMerchRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
@@ -455,18 +277,6 @@ func AddAutocompleteRoutes(
 	)
 }
 
-func AddReviewsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	// Public view, but rate-limited
-	router.HandlerFunc(http.MethodGet, "/api/v1/reviews/:entityType/:entityId", rateLimiter.Limit(reviews.GetReviews(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/reviews/:entityType/:entityId/:reviewId", rateLimiter.Limit(reviews.GetReview(app)))
-
-	// Authenticated actions
-	router.HandlerFunc(http.MethodPost, "/api/v1/reviews/:entityType/:entityId", rateLimiter.Limit(authmidware(reviews.AddReview(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/reviews/:entityType/:entityId/:reviewId", rateLimiter.Limit(authmidware(reviews.EditReview(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/reviews/:entityType/:entityId/:reviewId", rateLimiter.Limit(authmidware(reviews.DeleteReview(app))))
-}
-
 func AddMediaRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// Public view, but rate-limited
@@ -477,16 +287,6 @@ func AddMediaRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mid
 	router.HandlerFunc(http.MethodPost, "/api/v1/media/:entitytype/:entityid", rateLimiter.Limit(authmidware(media.AddMedia(app))))
 	router.HandlerFunc(http.MethodPut, "/api/v1/media/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(media.EditMedia(app))))
 	router.HandlerFunc(http.MethodDelete, "/api/v1/media/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(media.DeleteMedia(app))))
-}
-
-func AddFanmadeRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	router.HandlerFunc(http.MethodGet, "/api/v1/fanmade/:entitytype/:entityid/:id", rateLimiter.Limit(fanmade.GetMedia(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/fanmade/:entitytype/:entityid", rateLimiter.Limit(fanmade.GetMedias(app)))
-
-	router.HandlerFunc(http.MethodPost, "/api/v1/fanmade/:entitytype/:entityid", rateLimiter.Limit(authmidware(fanmade.AddMedia(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/fanmade/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(fanmade.EditMedia(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/fanmade/:entitytype/:entityid/:id", rateLimiter.Limit(authmidware(fanmade.DeleteMedia(app))))
 }
 
 func AddPostRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
@@ -549,46 +349,6 @@ func AddProfileRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *m
 
 }
 
-func AddArtistRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	// Public read
-	router.HandlerFunc(http.MethodGet, "/api/v1/artists", rateLimiter.Limit(artists.GetAllArtists(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id", rateLimiter.Limit(artists.GetArtistByID(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/events/event/:eventid/artists", rateLimiter.Limit(artists.GetArtistsByEvent(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/songs", rateLimiter.Limit(artists.GetArtistsSongs(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/albums", rateLimiter.Limit(artists.GetArtistsAlbums(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/posts", rateLimiter.Limit(artists.GetArtistsPosts(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/merch", rateLimiter.Limit(artists.GetArtistsMerch(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/events", rateLimiter.Limit(artists.GetArtistEvents(app)))
-
-	// Authenticated write
-	router.HandlerFunc(http.MethodPost, "/api/v1/artists", rateLimiter.Limit(authmidware(artists.CreateArtist(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id", rateLimiter.Limit(authmidware(artists.UpdateArtist(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/artists/:id", rateLimiter.Limit(authmidware(artists.DeleteArtistByID(app))))
-
-	// OLD (bulk update) – optional to keep
-	// router.HandlerFunc(http.MethodPut,"/api/v1/artists/:id/members", rateLimiter.Limit(authmidware(artists.UpdateArtistMembers)))
-
-	// NEW — per-member endpoints
-	router.HandlerFunc(http.MethodPost, "/api/v1/artists/:id/members",
-		rateLimiter.Limit(authmidware(artists.AddArtistMember(app))))
-
-	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id/members/:memberId",
-		rateLimiter.Limit(authmidware(artists.UpdateArtistMember(app))))
-
-	router.HandlerFunc(http.MethodDelete, "/api/v1/artists/:id/members/:memberId",
-		rateLimiter.Limit(authmidware(artists.DeleteArtistMember(app))))
-
-	router.HandlerFunc(http.MethodPost, "/api/v1/artists/:id/songs", rateLimiter.Limit(authmidware(artists.PostNewSong(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id/songs/:songId/edit", rateLimiter.Limit(authmidware(artists.EditSong(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/artists/:id/songs/:songId", rateLimiter.Limit(authmidware(artists.DeleteSong(app))))
-
-	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id/events/addtoevent", rateLimiter.Limit(authmidware(artists.AddArtistToEvent(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.CreateArtistEvent(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.UpdateArtistEvent(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.DeleteArtistEvent(app))))
-}
-
 // AddMapRoutes registers all map endpoints including WebSocket tracking
 func AddMapRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	// Unified Map Endpoint with Permalinks & Floor Multi-layers
@@ -623,24 +383,6 @@ func AddItineraryRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter 
 func AddUtilityRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	router.HandlerFunc(http.MethodGet, "/api/v1/csrf", rateLimiter.Limit(authmidware(utils.CSRF)))
-}
-
-func AddFeedRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	// Public viewing
-	router.HandlerFunc(http.MethodGet, "/api/v1/feed/post/:postid", rateLimiter.Limit(feed.GetPost(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/feed/feed/metadata", rateLimiter.Limit(feed.GetPostsMetadata(app)))
-
-	// Authenticated feed actions
-	router.HandlerFunc(http.MethodGet, "/api/v1/feed/feed", rateLimiter.Limit(authmidware(feed.GetPosts(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/feed/media/:entityType/:entityId", rateLimiter.Limit(authmidware(feed.GetPosts(app))))
-
-	router.HandlerFunc(http.MethodPost, "/api/v1/feed/post", rateLimiter.Limit(authmidware(feed.CreateFeedPost(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/feed/post/:postid", rateLimiter.Limit(authmidware(feed.DeletePost(app))))
-
-	// NEW
-	router.HandlerFunc(http.MethodPatch, "/api/v1/feed/post/:postid", rateLimiter.Limit(authmidware(feed.EditPost(app))))
-	// router.HandlerFunc(http.MethodPost,"/api/v1/feed/post/:postid/subtitles/:lang", rateLimiter.Limit(authmidware(filedrop.UploadSubtitle)))
 }
 
 //	func AddSettingsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
@@ -704,193 +446,6 @@ func AddMiscRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *midd
 	// router.HandlerFunc(http.MethodPost,"/api/v1/upload", rateLimiter.Limit(filecheck.UploadFile))
 	// router.HandlerFunc(http.MethodPost,"/api/v1/feed/remhash", rateLimiter.Limit(filecheck.RemoveUserFile))
 	// router.HandlerFunc(http.MethodGet,"/resize/:folder/*filename", cdn.ServeStatic)
-
-}
-
-func AddStripeRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	router.HandlerFunc(http.MethodPost, "/api/v1/stripe/create-payment-intent", rateLimiter.Limit(authmidware(stripe.CreatePaymentIntent(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/stripe/payment-success", rateLimiter.Limit(authmidware(stripe.PaymentSuccess(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/stripe/webhook", rateLimiter.Limit(authmidware(stripe.StripeWebhook(app))))
-}
-
-func AddMusicRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-
-	// --------------------------- PLAYLISTS ---------------------------
-	router.HandlerFunc(http.MethodGet,
-		"/api/v1/musicon/user/playlists",
-		rateLimiter.Limit(authmidware(musicon.GetUserPlaylists(app))),
-	)
-
-	router.HandlerFunc(http.MethodGet,
-		"/api/v1/musicon/user/liked",
-		rateLimiter.Limit(authmidware(musicon.GetUserLikes(app))),
-	)
-
-	router.HandlerFunc(http.MethodPost,
-		"/api/v1/musicon/playlists",
-		rateLimiter.Limit(authmidware(musicon.CreatePlaylist(app))),
-	)
-
-	router.HandlerFunc(http.MethodDelete,
-		"/api/v1/musicon/playlists/:playlistid",
-		rateLimiter.Limit(authmidware(musicon.DeletePlaylist(app))),
-	)
-
-	// Add / Remove songs to playlist
-	router.HandlerFunc(http.MethodPost,
-		"/api/v1/musicon/playlists/:playlistid/songs",
-		rateLimiter.Limit(authmidware(musicon.AddSongToPlaylist(app))),
-	)
-
-	router.HandlerFunc(http.MethodDelete,
-		"/api/v1/musicon/playlists/:playlistid/songs/:songid",
-		rateLimiter.Limit(authmidware(musicon.RemoveSongFromPlaylist(app))),
-	)
-
-	// Playlist details
-	router.HandlerFunc(http.MethodGet,
-		"/api/v1/musicon/playlists/:playlistid/songs",
-		rateLimiter.Limit(authmidware(musicon.GetPlaylistSongs(app))),
-	)
-
-	// Rename / Update playlist info
-	router.HandlerFunc(http.MethodPatch,
-		"/api/v1/musicon/playlists/:playlistid",
-		rateLimiter.Limit(authmidware(musicon.UpdatePlaylistInfo(app))),
-	)
-
-	// --------------------------- LIKES ---------------------------
-
-	// Like song (idempotent)
-	router.HandlerFunc(http.MethodPost,
-		"/api/v1/musicon/user/liked/:songid",
-		rateLimiter.Limit(authmidware(musicon.LikeSong(app))),
-	)
-
-	// Unlike song (idempotent)
-	router.HandlerFunc(http.MethodDelete,
-		"/api/v1/musicon/user/liked/:songid",
-		rateLimiter.Limit(authmidware(musicon.UnlikeSong(app))),
-	)
-
-	// --------------------------- ARTISTS ---------------------------
-	router.HandlerFunc(http.MethodGet,
-		"/api/v1/musicon/artists/:artistid/songs",
-		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetArtistsSongs(app))),
-	)
-
-	// --------------------------- ALBUMS ---------------------------
-	router.HandlerFunc(http.MethodGet,
-		"/api/v1/musicon/albums",
-		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetAlbums(app))),
-	)
-
-	router.HandlerFunc(http.MethodGet,
-		"/api/v1/musicon/albums/:albumid/songs",
-		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetAlbumSongs(app))),
-	)
-
-	router.HandlerFunc(http.MethodGet,
-		"/api/v1/musicon/recommended/albums",
-		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendedAlbums(app))),
-	)
-
-	// --------------------------- SONGS & RECOMMENDATIONS ---------------------------
-	router.HandlerFunc(http.MethodGet,
-		"/api/v1/musicon/recommended",
-		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendedSongs(app))),
-	)
-
-	router.HandlerFunc(http.MethodGet,
-		"/api/v1/musicon/recommendations",
-		rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendations(app))),
-	)
-}
-
-/* func AddMusicRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	--------------------------- PLAYLISTS ---------------------------
-	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/user/playlists", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetUserPlaylists(app))))
-	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/user/liked", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetUserLikes(app))))
-	router.HandlerFunc(http.MethodPost,"/api/v1/musicon/playlists", rateLimiter.Limit(authmidware(musicon.CreatePlaylist(app))))
-	router.HandlerFunc(http.MethodDelete,"/api/v1/musicon/playlists/:playlistid", rateLimiter.Limit(authmidware(musicon.DeletePlaylist(app))))
-
-	Add / Remove songs to playlist
-	router.HandlerFunc(http.MethodPost,"/api/v1/musicon/playlists/:playlistid/songs/:songid", rateLimiter.Limit(authmidware(musicon.AddSongToPlaylist)))
-	router.HandlerFunc(http.MethodPost,"/api/v1/musicon/playlists/:playlistid/songs", rateLimiter.Limit(authmidware(musicon.AddSongToPlaylist(app))))
-	router.HandlerFunc(http.MethodPost,"/api/v1/musicon/user/liked/:songid", rateLimiter.Limit(middleware.OptionalAuth(musicon.SetUserLikes(app))))
-	router.HandlerFunc(http.MethodDelete,"/api/v1/musicon/playlists/:playlistid/songs/:songid", rateLimiter.Limit(authmidware(musicon.RemoveSongFromPlaylist(app))))
-
-	Playlist details
-	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/playlists/:playlistid/songs", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetPlaylistSongs(app))))
-
-	Rename / Update playlist info
-	router.HandlerFunc(http.MethodPatch,"/api/v1/musicon/playlists/:playlistid", rateLimiter.Limit(authmidware(musicon.UpdatePlaylistInfo(app))))
-
-	--------------------------- ARTISTS ---------------------------
-	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/artists/:artistid/songs", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetArtistsSongs(app))))
-
-	--------------------------- ALBUMS ---------------------------
-	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/albums", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetAlbums(app))))
-	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/albums/:albumid/songs", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetAlbumSongs(app))))
-	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/recommended/albums", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendedAlbums(app))))
-
-	--------------------------- SONGS & RECOMMENDATIONS ---------------------------
-	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/recommended", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendedSongs(app))))
-
-	Dynamic personalized recommendations
-	router.HandlerFunc(http.MethodGet,"/api/v1/musicon/recommendations", rateLimiter.Limit(middleware.OptionalAuth(musicon.GetRecommendations(app))))
-} */
-
-// func AddDiscordRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-// 	// authmidware := middleware.Authenticate(app)
-
-// }
-
-func AddMeChatRoutes(router *httprouter.Router, hub *mechat.Hub, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	router.HandlerFunc(http.MethodGet, "/api/v1/merechats/all", authmidware(mechat.GetUserChats(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/merechats/start", authmidware(mechat.StartNewChat(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/merechats/chat/:chatid", authmidware(mechat.GetChatByID(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/merechats/chat/:chatid/messages", authmidware(mechat.GetChatMessages(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/merechats/chat/:chatid/message", authmidware(mechat.SendMessageREST(app)))
-	router.HandlerFunc(http.MethodPatch, "/api/v1/merechats/messages/:messageid", authmidware(mechat.EditMessage(app)))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/merechats/messages/:messageid", authmidware(mechat.DeleteMessage(app)))
-
-	router.HandlerFunc(http.MethodGet, "/ws/merechat", authmidware(
-		mechat.HandleWebSocket(app, hub),
-	))
-
-	router.HandlerFunc(http.MethodPost, "/api/v1/merechats/chat/:chatid/upload", authmidware(mechat.UploadAttachment(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/merechats/chat/:chatid/search", authmidware(mechat.SearchMessages(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/merechats/messages/unread-count", authmidware(mechat.GetUnreadCount(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/merechats/messages/:messageid/read", authmidware(mechat.MarkAsRead(app)))
-}
-
-func AddNewChatRoutes(router *httprouter.Router, hub *newchat.Hub, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	router.HandlerFunc(http.MethodGet, "/api/v1/newchats/all", authmidware(newchat.GetUserChats(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/newchats/init", authmidware(newchat.InitChat(app)))
-
-	// This should likely be protected; token could be in query or header
-	router.HandlerFunc(http.MethodGet, "/ws/newchat/chat/:room", authmidware(newchat.WebSocketHandler(hub, app)))
-
-	router.HandlerFunc(http.MethodPost, "/api/v1/newchat/edit", authmidware(newchat.EditMessageHandler(hub, app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/newchat/delete", authmidware(newchat.DeleteMessageHandler(hub, app)))
-
-	// router.HandlerFunc(http.MethodGet,"/newchat/:room/poll", authmidware(newchat.PollMessagesHandler))
-
-	router.HandlerFunc(http.MethodPost, "/api/v1/newchat/upload", authmidware(newchat.UploadHandler(hub, app)))
-
-	router.HandlerFunc(http.MethodGet, "/api/v1/newchat/chat/:room", authmidware(newchat.GetChat(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/newchat/chat/:room/message", authmidware(newchat.CreateMessage(app)))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/newchat/chat/:room/message/:msgid", authmidware(newchat.DeletesMessage(app)))
-
-	/**/
-
-	router.HandlerFunc(http.MethodPut, "/api/v1/newchat/chat:room/message/:msgid", authmidware(newchat.UpdateMessage(app)))
 
 }
 

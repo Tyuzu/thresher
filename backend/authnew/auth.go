@@ -25,7 +25,7 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst interface{}) error {
 	return nil
 }
 
-func Register(app *infra.Deps) http.HandlerFunc {
+func Register(app *infra.Deps, db AuthDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RegisterRequest
 		if err := decodeJSON(w, r, &req); err != nil {
@@ -37,13 +37,24 @@ func Register(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		user := &User{
+			Username: req.Username,
+			Email:    req.Email,
+			Password: req.Password, // Ensure hashing before DB persistence in implementation
+		}
+
+		if err := db.CreateUser(r.Context(), user); err != nil {
+			respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to create user"})
+			return
+		}
+
 		respondJSON(w, http.StatusCreated, RegisterResponse{
 			Message: "User registered successfully",
 		})
 	}
 }
 
-func Login(app *infra.Deps) http.HandlerFunc {
+func Login(app *infra.Deps, db AuthDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req LoginRequest
 		if err := decodeJSON(w, r, &req); err != nil {
@@ -55,6 +66,20 @@ func Login(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		var user *User
+		var err error
+
+		if req.Email != "" {
+			user, err = db.GetUserByEmail(r.Context(), req.Email)
+		} else {
+			user, err = db.GetUserByUsername(r.Context(), req.Username)
+		}
+
+		if err != nil || user == nil || user.Password != req.Password {
+			respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid credentials"})
+			return
+		}
+
 		respondJSON(w, http.StatusOK, LoginResponse{
 			Message:      "Login successful",
 			AccessToken:  "mock-access-token",
@@ -63,7 +88,7 @@ func Login(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-func RefreshToken(app *infra.Deps) http.HandlerFunc {
+func RefreshToken(app *infra.Deps, db AuthDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RefreshTokenRequest
 		if err := decodeJSON(w, r, &req); err != nil {
@@ -81,10 +106,14 @@ func RefreshToken(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-func LogoutUser(app *infra.Deps) http.HandlerFunc {
+func LogoutUser(app *infra.Deps, db AuthDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req LogoutRequest
 		_ = decodeJSON(w, r, &req)
+
+		if req.RefreshToken != "" {
+			_ = db.RevokeToken(r.Context(), req.RefreshToken)
+		}
 
 		respondJSON(w, http.StatusOK, LogoutResponse{
 			Message: "Logged out successfully",
@@ -92,15 +121,20 @@ func LogoutUser(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-func LogoutAllSessions(app *infra.Deps) http.HandlerFunc {
+func LogoutAllSessions(app *infra.Deps, db AuthDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		userID := r.Header.Get("X-User-ID")
+		if userID != "" {
+			_ = db.RevokeAllUserTokens(r.Context(), userID)
+		}
+
 		respondJSON(w, http.StatusOK, LogoutResponse{
 			Message: "Logged out from all sessions",
 		})
 	}
 }
 
-func RequestOTPHandler(app *infra.Deps) http.HandlerFunc {
+func RequestOTPHandler(app *infra.Deps, db AuthDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req OTPRequestRequest
 		if err := decodeJSON(w, r, &req); err != nil {
@@ -112,13 +146,18 @@ func RequestOTPHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		if err := db.SaveOTP(r.Context(), req.Email, "123456"); err != nil {
+			respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to generate OTP"})
+			return
+		}
+
 		respondJSON(w, http.StatusOK, OTPRequestResponse{
 			Message: "OTP sent successfully",
 		})
 	}
 }
 
-func VerifyOTPHandler(app *infra.Deps) http.HandlerFunc {
+func VerifyOTPHandler(app *infra.Deps, db AuthDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req OTPVerifyRequest
 		if err := decodeJSON(w, r, &req); err != nil {
@@ -127,6 +166,12 @@ func VerifyOTPHandler(app *infra.Deps) http.HandlerFunc {
 
 		if req.Email == "" || req.OTP == "" {
 			respondJSON(w, http.StatusBadRequest, map[string]string{"error": "Email and OTP are required"})
+			return
+		}
+
+		valid, err := db.VerifyOTP(r.Context(), req.Email, req.OTP)
+		if err != nil || !valid {
+			respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid or expired OTP"})
 			return
 		}
 
