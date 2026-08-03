@@ -5,43 +5,54 @@ import { navigate } from "../../routes/index.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import { apiFetch } from "../../api/api.js";
 import { adspace } from "../home/homeHelpers.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../components/layout/asideLayout.js";
 
-// ---------- ARTISTS PAGE ----------
 export async function displayArtists(container, isLoggedIn) {
   container.replaceChildren();
 
-  // ---------- LAYOUT ----------
-  const layout = createElement("div", { class: "artists-page" });
-  const aside = createElement("aside", { class: "artists-aside" });
-  const main = createElement("div", { class: "artists-main" });
-  layout.append(main, aside);
-  container.append(layout);
-
   // ---------- SIDEBAR ----------
-  aside.append(createElement("h2", {}, ["Actions"]));
-
+  const asideChildren = [];
   if (isLoggedIn) {
-    aside.append(
+    asideChildren.push(
       Button("Create Artist", "", { click: () => navigate("/create-artist") }, "buttonx primary")
     );
   }
 
-  aside.append(adspace("aside"));
+  const asideContent = createAsideContent({
+    title: "Actions",
+    children: asideChildren,
+    showAd: true
+  });
 
-  // ---------- TITLE ----------
-  main.append(createElement("h1", {}, ["Artists"]));
+  // ---------- MAIN CONTENT ----------
+  const mainContent = [];
 
-  // ---------- FILTERS ----------
+  // Title
+  mainContent.push(createElement("h1", {}, ["Artists"]));
+
+  // Filters
   const filterContainer = createElement("div", { class: "top-controls" });
-  const searchInput = createElement("input", { type: "text", placeholder: "Search by name...", class:"sort-box" });
-  const categorySelect = createElement("select", {class:"sort-box"}, [
+  const searchInput = createElement("input", { type: "text", placeholder: "Search by name...", class: "sort-box" });
+  const categorySelect = createElement("select", { class: "sort-box" }, [
     createElement("option", { value: "" }, ["All Categories"])
   ]);
   filterContainer.append(searchInput, categorySelect);
-  main.append(filterContainer);
+  mainContent.push(filterContainer);
 
-  // ---------- BODY AD ----------
-  main.append(adspace("inbody"));
+  mainContent.push(adspace("inbody"));
+
+  // List
+  const list = createElement("div", { class: "artists-list" });
+  mainContent.push(list);
+
+  // ---------- LAYOUT ----------
+  const layout = createMainLayout({
+    mainContent,
+    asideContent,
+    pageClass: "artists-page"
+  });
+  container.append(layout);
 
   // ---------- FETCH ARTISTS ----------
   let allArtists = [];
@@ -52,13 +63,9 @@ export async function displayArtists(container, isLoggedIn) {
     console.error("Failed to load artists", err);
   }
 
-  // Populate category select
+  // Populate categories
   const categories = [...new Set(allArtists.map(a => a.category).filter(Boolean))];
   categories.forEach(cat => categorySelect.append(createElement("option", { value: cat }, [cat])));
-
-  // ---------- LIST ----------
-  const list = createElement("div", { class: "artists-list" });
-  main.append(list);
 
   let currentPage = 1;
   const pageSize = 10;
@@ -80,32 +87,36 @@ export async function displayArtists(container, isLoggedIn) {
     paged.forEach((artist, idx) => {
       list.append(createArtistCard(artist));
       if ((idx + 1) % 6 === 0) {
-list.append(adspace("inlist"));
-}
+        list.append(adspace("inlist"));
+      }
     });
 
-    // ---------- PAGINATION ----------
     const totalPages = Math.ceil(filtered.length / pageSize);
     if (totalPages > 1) {
       const pager = createElement("div", { class: "artists-pager" });
 
       if (currentPage > 1) {
-        pager.append(Button("Prev", "", { click: () => {
- currentPage--; renderArtists(filtered); 
-} }, "buttonx secondary"));
+        pager.append(Button("Prev", "", {
+          click: () => {
+            currentPage--;
+            renderArtists(filtered);
+          }
+        }, "buttonx secondary"));
       }
 
       if (currentPage < totalPages) {
-        pager.append(Button("Next", "", { click: () => {
- currentPage++; renderArtists(filtered); 
-} }, "buttonx secondary"));
+        pager.append(Button("Next", "", {
+          click: () => {
+            currentPage++;
+            renderArtists(filtered);
+          }
+        }, "buttonx secondary"));
       }
 
       list.append(pager);
     }
   }
 
-  // ---------- FILTER LOGIC ----------
   function applyFilters() {
     const keyword = searchInput.value.toLowerCase();
     const category = categorySelect.value;

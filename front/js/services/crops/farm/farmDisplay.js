@@ -17,6 +17,8 @@ import { renderWeatherDetails } from "../weather/weather.js";
 import { createCrop } from "../crop/createCrop.js";
 import Modal from "../../../components/ui/Modal.mjs";
 import { renderAvailabilityWidget } from "../../../components/ui/Availability.mjs";
+import { createMainLayout } from "../../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../../components/layout/asideLayout.js";
 
 export async function displayFarm(isLoggedIn, farmId, content) {
   const container = createElement("div", { class: "farmpage" });
@@ -114,14 +116,20 @@ export async function displayFarm(isLoggedIn, farmId, content) {
 
   const weatherWidget = renderWeatherDetails(farm, isCreator);
 
-  const asideColumn = createElement("aside", { class: "farm-aside" }, [
+  const asideChildren = [
     weatherWidget,
     farmCTA,
     summaryStats,
     cropDistribution,
     renderAvailabilityWidget(farm.availability),
     reviewPlaceholder
-  ]);
+  ];
+
+  const asideContent = createAsideContent({
+    title: "Farm Summary",
+    children: asideChildren,
+    showAd: true
+  });
 
   // ---------- Main ----------
   const mainColumn = createElement("div", { class: "farm-main" });
@@ -236,11 +244,11 @@ export async function displayFarm(isLoggedIn, farmId, content) {
   persistTabs(mainColumn, tabs, `farm-tabs:${normalizedFarmId}`);
 
   // ---------- Layout ----------
-  const layoutWrapper = createElement(
-    "div",
-    { class: "farm-layout" },
-    [mainColumn, asideColumn]
-  );
+  const layoutWrapper = createMainLayout({
+    mainContent: [mainColumn],
+    asideContent,
+    pageClass: "farm-layout"
+  });
 
   container.append(header, layoutWrapper);
 }

@@ -4,22 +4,17 @@ import { navigate } from "../../routes/index.js";
 import { apiFetch } from "../../api/api.js";
 import { adspace } from "../home/homeHelpers.js";
 import { buildCard } from "./baitoslisting/JobCard.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../components/layout/asideLayout.js";
 
 export async function displayBaitos(container, isLoggedIn) {
   container.replaceChildren();
 
-  // ---------- LAYOUT ----------
-  const layout = createElement("div", { class: "baitos-page" });
-  const aside = createElement("aside", { class: "baitos-aside" });
-  const main = createElement("div", { class: "baitos-main" });
-  layout.append(main, aside);
-  container.append(layout);
-
-  // ---------- SIDEBAR ----------
-  aside.append(createElement("h2", {}, ["Actions"]));
+  // ---------- SIDEBAR CONTENT ----------
+  const asideChildren = [];
 
   if (isLoggedIn) {
-    aside.append(
+    asideChildren.push(
       Button("Create Baito", "ct-baito-btn", { click: () => navigate("/create-baito") }, "buttonx"),
       Button("See Dashboard", "see-dash-btn", { click: () => navigate("/baitos/dash") }, "buttonx"),
       Button("Create Baito Profile", "", { click: () => navigate("/baitos/create-profile") }, "buttonx secondary"),
@@ -37,19 +32,39 @@ export async function displayBaitos(container, isLoggedIn) {
     localStorage.setItem("baito-lang", e.target.value);
     navigate(window.location.pathname);
   });
-  aside.appendChild(langSelect);
-  aside.append(adspace("aside"));
+  asideChildren.push(langSelect);
 
-  // ---------- TITLE ----------
-  main.append(createElement("h1", {}, ["Baitos"]));
-  
-  // ---------- FILTERS ----------
+  const asideContent = createAsideContent({
+    title: "Actions",
+    children: asideChildren,
+    showAd: true
+  });
+
+  // ---------- MAIN CONTENT ----------
+  const mainContent = [];
+
+  // Title
+  mainContent.push(createElement("h1", {}, ["Baitos"]));
+
+  // Filters
   const filterContainer = createElement("div", { class: "baitos-filters" });
-  const searchInput = createElement("input", { type: "text", placeholder: "Search jobs...", class:"sort-box" });
+  const searchInput = createElement("input", { type: "text", placeholder: "Search jobs...", class: "sort-box" });
   filterContainer.append(searchInput);
-  main.append(filterContainer);
+  mainContent.push(filterContainer);
 
-  main.append(adspace("inbody"));
+  mainContent.push(adspace("inbody"));
+
+  // List
+  const list = createElement("div", { class: "baitos-list" });
+  mainContent.push(list);
+
+  // ---------- RENDER LAYOUT ----------
+  const layout = createMainLayout({
+    mainContent,
+    asideContent,
+    pageClass: "baitos-page"
+  });
+  container.append(layout);
 
   // ---------- FETCH JOBS ----------
   let allJobs = [];
@@ -59,10 +74,6 @@ export async function displayBaitos(container, isLoggedIn) {
   } catch (err) {
     console.error("Failed to load baitos", err);
   }
-
-  // ---------- LIST ----------
-  const list = createElement("div", { class: "baitos-list" });
-  main.append(list);
 
   let currentPage = 1;
   const pageSize = 10;
@@ -84,25 +95,31 @@ export async function displayBaitos(container, isLoggedIn) {
     paged.forEach((job, idx) => {
       list.append(buildCard(job));
       if ((idx + 1) % 6 === 0) {
-list.append(adspace("inlist"));
-}
+        list.append(adspace("inlist"));
+      }
     });
 
-    // ---------- PAGINATION ----------
+    // Pagination
     const totalPages = Math.ceil(filtered.length / pageSize);
     if (totalPages > 1) {
       const pager = createElement("div", { class: "baitos-pager" });
 
       if (currentPage > 1) {
-        pager.append(Button("Prev", "", { click: () => {
- currentPage--; renderJobs(filtered); 
-} }, "buttonx secondary"));
+        pager.append(Button("Prev", "", {
+          click: () => {
+            currentPage--;
+            renderJobs(filtered);
+          }
+        }, "buttonx secondary"));
       }
 
       if (currentPage < totalPages) {
-        pager.append(Button("Next", "", { click: () => {
- currentPage++; renderJobs(filtered); 
-} }, "buttonx secondary"));
+        pager.append(Button("Next", "", {
+          click: () => {
+            currentPage++;
+            renderJobs(filtered);
+          }
+        }, "buttonx secondary"));
       }
 
       list.append(pager);

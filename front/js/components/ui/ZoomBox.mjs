@@ -5,7 +5,6 @@ import {
     createVideoElement,
     applyDarkMode,
     preloadImages,
-    updateTransform,
     smoothZoom,
     handleMouseDown,
     createNavigationButtons,
@@ -65,7 +64,7 @@ const ZoomBox = (mediaItems, initialIndex = 0) => {
 
     let zoomButtonsContainer = null;
 
-    // --- Close logic (defined early so renderMedia and closeBtn can use it) ---
+    // --- Close logic ---
     const closeZoomBox = () => {
         const box = document.getElementById("zoombox");
         if (!box) return;
@@ -109,7 +108,7 @@ const ZoomBox = (mediaItems, initialIndex = 0) => {
 
         const element = type === "video"
             ? createVideoElement(src)
-            : createImageElement(src);
+            : createImageElement(src, state);
 
         // 3. Setup interactions (Images only)
         if (type === "image") {
@@ -138,17 +137,15 @@ const ZoomBox = (mediaItems, initialIndex = 0) => {
         dispatchZoomBoxEvent("mediachange", { index, src, type });
     };
 
-    // --- Run Initial Render via the unified renderMedia ---
+    // --- Run Initial Render ---
     renderMedia(state.currentIndex);
 
     // --- Navigation controls ---
     if (mediaItems.length > 1) {
+        // Fixed: Passed 3 arguments matching createNavigationButtons signature
         const [prevBtn, nextBtn] = createNavigationButtons(
             mediaItems,
-            state.currentMedia,
             state,
-            preloadImages,
-            updateTransform,
             renderMedia
         );
         content.appendChild(prevBtn);
@@ -161,20 +158,16 @@ const ZoomBox = (mediaItems, initialIndex = 0) => {
 
     // --- Keyboard handling ---
     const onKeyDown = (e) => {
-        if (e.key === "Escape") {
-            closeZoomBox();
-        } else {
-            handleKeyboard(
-                e,
-                mediaItems,
-                state.currentMedia,
-                state,
-                preloadImages,
-                updateTransform,
-                closeZoomBox,
-                renderMedia
-            );
-        }
+        // Fixed: Passed 7 arguments matching handleKeyboard signature
+        handleKeyboard(
+            e,
+            mediaItems,
+            state.currentMedia,
+            state,
+            zoombox,
+            closeZoomBox,
+            renderMedia
+        );
     };
     document.addEventListener("keydown", onKeyDown);
 

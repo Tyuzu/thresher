@@ -1,175 +1,115 @@
-// filters.js
-
-import {
-  DEFAULT_ADJUSTMENTS,
-  CONTROL_CONFIG,
-  PRESETS
-} from "./constants.js";
-
-const adjustments = {
-  ...DEFAULT_ADJUSTMENTS
-};
-
-const controlRefs = {};
+import { DEFAULT_ADJUSTMENTS, CONTROL_CONFIG, PRESETS } from "./constants.js";
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-export function getAdjustments() {
-  return adjustments;
-}
-
-export function getControlRefs() {
-  return controlRefs;
-}
-
-export function registerControl(key, refs) {
-  controlRefs[key] = refs;
-}
-
-export function unregisterControl(key) {
-  delete controlRefs[key];
-}
-
-export function resetControls() {
-  Object.keys(controlRefs).forEach((key) => {
-    delete controlRefs[key];
-  });
-}
-
-export function formatControlValue(key, value) {
-  switch (key) {
-    case "brightness":
-    case "contrast":
-    case "saturation":
-      return `${Math.round(value * 100)}%`;
-
-    case "blur":
-      return `${Number(value).toFixed(1)}px`;
-
-    case "hueRotate":
-      return `${Math.round(value)}°`;
-
-    case "grayscale":
-    case "sepia":
-    case "invert":
-      return `${Math.round(value * 100)}%`;
-
-    default:
-      return String(value);
-  }
-}
-
-export function buildFilterString() {
-  return [
-    `brightness(${adjustments.brightness})`,
-    `contrast(${adjustments.contrast})`,
-    `saturate(${adjustments.saturation})`,
-    `blur(${adjustments.blur}px)`,
-    `hue-rotate(${adjustments.hueRotate}deg)`,
-    `grayscale(${adjustments.grayscale})`,
-    `sepia(${adjustments.sepia})`,
-    `invert(${adjustments.invert})`
-  ].join(" ");
-}
-
-export function applyPreviewFilters(stage) {
-  if (!stage) {
-    return;
+export class FilterManager {
+  constructor() {
+    this.adjustments = { ...DEFAULT_ADJUSTMENTS };
+    this.controlRefs = {};
+    this.stage = null;
   }
 
-  const filter = buildFilterString();
-
-  stage.querySelectorAll("img").forEach((img) => {
-    img.style.filter = filter;
-  });
-}
-
-export function applyCanvasFilters(ctx) {
-  if (!ctx || !("filter" in ctx)) {
-    return;
+  setStage(stage) {
+    this.stage = stage;
   }
 
-  ctx.filter = buildFilterString();
-}
-
-export function setAdjustment(key, value, stage) {
-  if (!(key in adjustments)) {
-    return;
+  registerControl(key, refs) {
+    this.controlRefs[key] = refs;
   }
 
-  const config = CONTROL_CONFIG[key];
-
-  const nextValue = clamp(
-    Number(value),
-    config.min,
-    config.max
-  );
-
-  adjustments[key] = nextValue;
-
-  const ref = controlRefs[key];
-
-  if (ref) {
-    ref.input.value = String(nextValue);
-    ref.valueLabel.textContent =
-      formatControlValue(key, nextValue);
-  }
-
-  applyPreviewFilters(stage);
-}
-
-export function setAdjustments(values, stage) {
-  Object.entries(values).forEach(([key, value]) => {
-    if (key in adjustments) {
-      adjustments[key] = value;
+  formatControlValue(key, value) {
+    switch (key) {
+      case "brightness":
+      case "contrast":
+      case "saturation":
+      case "grayscale":
+      case "sepia":
+      case "invert":
+        return `${Math.round(value * 100)}%`;
+      case "blur":
+        return `${Number(value).toFixed(1)}px`;
+      case "hueRotate":
+        return `${Math.round(value)}°`;
+      default:
+        return String(value);
     }
-  });
-
-  syncControls();
-  applyPreviewFilters(stage);
-}
-
-export function resetAdjustments(stage) {
-  setAdjustments(DEFAULT_ADJUSTMENTS, stage);
-}
-
-export function applyPreset(name, stage) {
-  const preset = PRESETS[name];
-
-  if (!preset) {
-    return;
   }
 
-  setAdjustments(preset, stage);
-}
-
-export function syncControls() {
-  Object.entries(controlRefs).forEach(([key, ref]) => {
-    ref.input.value = adjustments[key];
-
-    ref.valueLabel.textContent =
-      formatControlValue(key, adjustments[key]);
-  });
-}
-
-export function exportFilterState() {
-  return {
-    ...adjustments
-  };
-}
-
-export function importFilterState(state, stage) {
-  if (!state) {
-    return;
+  buildFilterString() {
+    const adj = this.adjustments;
+    return [
+      `brightness(${adj.brightness})`,
+      `contrast(${adj.contrast})`,
+      `saturate(${adj.saturation})`,
+      `blur(${adj.blur}px)`,
+      `hue-rotate(${adj.hueRotate}deg)`,
+      `grayscale(${adj.grayscale})`,
+      `sepia(${adj.sepia})`,
+      `invert(${adj.invert})`
+    ].join(" ");
   }
 
-  Object.entries(DEFAULT_ADJUSTMENTS).forEach(([key, value]) => {
-    adjustments[key] =
-      key in state ? state[key] : value;
-  });
+  applyPreviewFilters() {
+    if (!this.stage) return;
+    const filter = this.buildFilterString();
+    
+    // Target main cropper image target explicitly rather than all dynamic images
+    const cropperImage = this.stage.querySelector(".cropper-container .cropper-canvas img");
+    if (cropperImage) {
+      cropperImage.style.filter = filter;
+    }
+  }
 
-  syncControls();
-  applyPreviewFilters(stage);
+  applyCanvasFilters(ctx) {
+    if (ctx && "filter" in ctx) {
+      ctx.filter = this.buildFilterString();
+    }
+  }
+
+  setAdjustment(key, value) {
+    if (!(key in this.adjustments)) return;
+
+    const config = CONTROL_CONFIG[key];
+    const nextValue = clamp(Number(value), config.min, config.max);
+    this.adjustments[key] = nextValue;
+
+    const ref = this.controlRefs[key];
+    if (ref) {
+      ref.input.value = String(nextValue);
+      ref.valueLabel.textContent = this.formatControlValue(key, nextValue);
+    }
+
+    this.applyPreviewFilters();
+  }
+
+  setAdjustments(values) {
+    Object.entries(values).forEach(([key, value]) => {
+      if (key in this.adjustments) {
+        this.adjustments[key] = value;
+      }
+    });
+
+    this.syncControls();
+    this.applyPreviewFilters();
+  }
+
+  resetAdjustments() {
+    this.setAdjustments(DEFAULT_ADJUSTMENTS);
+  }
+
+  applyPreset(name) {
+    const preset = PRESETS[name];
+    if (preset) {
+      this.setAdjustments(preset);
+    }
+  }
+
+  syncControls() {
+    Object.entries(this.controlRefs).forEach(([key, ref]) => {
+      ref.input.value = String(this.adjustments[key]);
+      ref.valueLabel.textContent = this.formatControlValue(key, this.adjustments[key]);
+    });
+  }
 }

@@ -1,8 +1,7 @@
-// index.js
-import { ensureCropper, getAddedAssets } from "./loader.js";
+import { ensureCropper } from "./loader.js";
 import { buildUI, mountOverlay, lockBodyScroll, unlockBodyScroll, resizeStage } from "./ui.js";
 import { createControls } from "./controls.js";
-import { applyPreviewFilters } from "./filters.js";
+import { FilterManager } from "./filters.js";
 import {
   createCropper,
   destroyCropper,
@@ -14,32 +13,25 @@ import {
 } from "./cropperCore.js";
 import { exportBlob } from "./export.js";
 
-export function openCropperWithCropperJSBoundedFixedBox({
-  file,
-  type = "avatar"
-}) {
+export function openCropperWithCropperJSBoundedFixedBox({ file, type = "avatar" }) {
   return new Promise(async (resolve) => {
-
     let cropper = null;
     let objectUrl = null;
 
     const previousOverflow = lockBodyScroll();
+    const filterManager = new FilterManager();
 
-    //
     // Build UI
-    //
-
-    const controls = createControls(null);
-
-    const { overlay, _wrapper, stage, image, cropTargetW, cropTargetH, aspectRatio } = buildUI({ file, type, controlsPanel: controls.panel });
+    const controls = createControls(null, filterManager);
+    const { overlay, stage, image, cropTargetW, cropTargetH, aspectRatio } = buildUI({
+      file,
+      type,
+      controlsPanel: controls.panel
+    });
 
     objectUrl = image.src;
-
+    filterManager.setStage(stage);
     mountOverlay(overlay);
-
-    //
-    // Cleanup
-    //
 
     function cleanup() {
       window.removeEventListener("resize", onResize);
@@ -49,19 +41,7 @@ export function openCropperWithCropperJSBoundedFixedBox({
       destroyCropper(cropper);
 
       if (objectUrl) {
-        try {
-          URL.revokeObjectURL(objectUrl);
-        } catch (_) { }
-      }
-
-      const assets = getAddedAssets();
-
-      if (assets.script && assets.script.parentNode) {
-        assets.script.parentNode.removeChild(assets.script);
-      }
-
-      if (assets.link && assets.link.parentNode) {
-        assets.link.parentNode.removeChild(assets.link);
+        URL.revokeObjectURL(objectUrl);
       }
 
       if (overlay && overlay.parentNode) {
@@ -69,20 +49,13 @@ export function openCropperWithCropperJSBoundedFixedBox({
       }
     }
 
-    //
-    // Window handlers
-    //
-
-    // Debounce the resize handler by 100ms
     const onResize = debounce(() => {
       resizeStage(stage, cropTargetW, cropTargetH);
       if (cropper) {
         cropper.resize();
-        // Recalculate crop box center after resize is done
         centerCropBox(cropper, cropTargetW, cropTargetH);
       }
     }, 100);
-
 
     function onKeyDown(e) {
       if (e.key === "Escape") {
@@ -95,10 +68,6 @@ export function openCropperWithCropperJSBoundedFixedBox({
     window.addEventListener("resize", onResize);
     window.addEventListener("keydown", onKeyDown);
 
-    //
-    // Load CropperJS
-    //
-
     try {
       await ensureCropper();
     } catch (err) {
@@ -108,31 +77,7 @@ export function openCropperWithCropperJSBoundedFixedBox({
       return;
     }
 
-    //
-    // Create Cropper
-    //
-
-    try {
-      cropper = createCropper({
-        image,
-        aspectRatio,
-        cropTargetW,
-        cropTargetH,
-        onReady() {
-          applyPreviewFilters(stage);
-        }
-      });
-    } catch (err) {
-      console.error(err);
-      cleanup();
-      resolve(null);
-      return;
-    }
-
-    //
-    // Toolbar buttons
-    //
-
+    // FIX 1: Correct key names matching controls.js output
     const {
       rotateLeft: rotateLeftBtn,
       rotateRight: rotateRightBtn,
@@ -142,26 +87,55 @@ export function openCropperWithCropperJSBoundedFixedBox({
       cancel: cancelBtn
     } = controls.buttons;
 
-    rotateLeftBtn.addEventListener("click", () => rotateLeft(cropper));
-    rotateRightBtn.addEventListener("click", () => rotateRight(cropper));
-    zoomInBtn.addEventListener("click", () => zoomIn(cropper));
-    zoomOutBtn.addEventListener("click", () => zoomOut(cropper));
+    // Attach non-cropper dependent events immediately
+    cancelBtn?.addEventListener("click", () => {
+      cleanup();
+      resolve(null);
+    });
 
-    //
-    // Cancel
-    //
-    cancelBtn.addEventListener("click", () => { cleanup(); resolve(null); });
+    try {
+      cropper = createCropper({
+        image,
+        aspectRatio,
+        cropTargetW,
+        cropTargetH,
+        onReady() {
+          filterManager.applyPreviewFilters();
+        }
+      });
+    } catch (err) {
+      console.error(err);
+      cleanup();
+      resolve(null);
+      return;
+    }
 
-    //
-    // Confirm
-    //
-    confirmBtn.addEventListener("click", async () => {
+    // FIX 2: Attach toolbar actions checking for valid cropper instance
+    rotateLeftBtn?.addEventListener("click", () => {
+      if (cropper) rotateLeft(cropper);
+    });
+
+    rotateRightBtn?.addEventListener("click", () => {
+      if (cropper) rotateRight(cropper);
+    });
+
+    zoomInBtn?.addEventListener("click", () => {
+      if (cropper) zoomIn(cropper);
+    });
+
+    zoomOutBtn?.addEventListener("click", () => {
+      if (cropper) zoomOut(cropper);
+    });
+
+    confirmBtn?.addEventListener("click", async () => {
+      if (!cropper) return;
       try {
         const dpr = Math.max(1, window.devicePixelRatio || 1);
         const blob = await exportBlob({
           cropper,
           cropWidth: Math.round(cropTargetW * dpr),
           cropHeight: Math.round(cropTargetH * dpr),
+          filterManager,
           quality: 0.92
         });
         cleanup();
@@ -175,7 +149,6 @@ export function openCropperWithCropperJSBoundedFixedBox({
   });
 }
 
-// Lightweight debounce utility
 function debounce(func, wait) {
   let timeout;
   return function (...args) {
@@ -184,6 +157,4 @@ function debounce(func, wait) {
   };
 }
 
-export {
-  openCropperWithCropperJSBoundedFixedBox as openCropper
-};
+export { openCropperWithCropperJSBoundedFixedBox as openCropper };

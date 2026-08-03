@@ -1,20 +1,5 @@
-// controls.js
-
 import { createElement } from "../../components/createElement.js";
-
-import {
-  CONTROL_CONFIG,
-  PRESETS
-} from "./constants.js";
-
-import {
-  getAdjustments,
-  registerControl,
-  formatControlValue,
-  setAdjustment,
-  applyPreset,
-  resetAdjustments
-} from "./filters.js";
+import { CONTROL_CONFIG, PRESETS } from "./constants.js";
 
 function makeButton(className, text) {
   return createElement(
@@ -30,12 +15,12 @@ function makeButton(className, text) {
 function createAdjustmentControl({
   key,
   label,
-  stage,
+  filterManager,
   showStepButtons = false,
   stepButtonDelta = 0.05
 }) {
-  const adjustments = getAdjustments();
   const cfg = CONTROL_CONFIG[key];
+  const currentVal = filterManager.adjustments[key];
 
   const root = createElement("div", {
     class: `adjustment-group adjustment-${key}`
@@ -45,27 +30,16 @@ function createAdjustmentControl({
     class: "adjustment-header"
   });
 
-  const title = createElement(
-    "strong",
-    {
-      class: "adjustment-title"
-    },
-    [label]
-  );
-
+  const title = createElement("strong", { class: "adjustment-title" }, [label]);
   const valueLabel = createElement(
     "span",
-    {
-      class: "adjustment-value"
-    },
-    [formatControlValue(key, adjustments[key])]
+    { class: "adjustment-value" },
+    [filterManager.formatControlValue(key, currentVal)]
   );
 
   header.append(title, valueLabel);
 
-  const row = createElement("div", {
-    class: "adjustment-row"
-  });
+  const row = createElement("div", { class: "adjustment-row" });
 
   let minusButton = null;
   let plusButton = null;
@@ -73,7 +47,6 @@ function createAdjustmentControl({
   if (showStepButtons) {
     minusButton = makeButton(`btn-${key}-minus btn-step`, "－");
     plusButton = makeButton(`btn-${key}-plus btn-step`, "＋");
-
     row.appendChild(minusButton);
   }
 
@@ -82,7 +55,7 @@ function createAdjustmentControl({
     min: cfg.min,
     max: cfg.max,
     step: cfg.step,
-    value: adjustments[key],
+    value: currentVal,
     class: "range-input"
   });
 
@@ -94,7 +67,7 @@ function createAdjustmentControl({
 
   root.append(header, row);
 
-  registerControl(key, {
+  filterManager.registerControl(key, {
     input,
     valueLabel,
     minusButton,
@@ -102,25 +75,23 @@ function createAdjustmentControl({
   });
 
   input.addEventListener("input", () => {
-    setAdjustment(key, input.value, stage);
+    filterManager.setAdjustment(key, input.value);
   });
 
   if (minusButton) {
     minusButton.addEventListener("click", () => {
-      setAdjustment(
+      filterManager.setAdjustment(
         key,
-        adjustments[key] - stepButtonDelta,
-        stage
+        filterManager.adjustments[key] - stepButtonDelta
       );
     });
   }
 
   if (plusButton) {
     plusButton.addEventListener("click", () => {
-      setAdjustment(
+      filterManager.setAdjustment(
         key,
-        adjustments[key] + stepButtonDelta,
-        stage
+        filterManager.adjustments[key] + stepButtonDelta
       );
     });
   }
@@ -128,10 +99,8 @@ function createAdjustmentControl({
   return root;
 }
 
-function createPresetRow(stage) {
-  const row = createElement("div", {
-    class: "preset-row"
-  });
+function createPresetRow(filterManager) {
+  const row = createElement("div", { class: "preset-row" });
 
   Object.keys(PRESETS).forEach((name) => {
     const button = makeButton(
@@ -140,7 +109,7 @@ function createPresetRow(stage) {
     );
 
     button.addEventListener("click", () => {
-      applyPreset(name, stage);
+      filterManager.applyPreset(name);
     });
 
     row.appendChild(button);
@@ -149,10 +118,8 @@ function createPresetRow(stage) {
   return row;
 }
 
-function createToolbar() {
-  const toolbar = createElement("div", {
-    class: "controls-toolbar"
-  });
+function createToolbar(filterManager) {
+  const toolbar = createElement("div", { class: "controls-toolbar" });
 
   const buttons = {
     rotateLeft: makeButton("rotate-left", "⟲"),
@@ -165,7 +132,7 @@ function createToolbar() {
   };
 
   buttons.reset.addEventListener("click", () => {
-    resetAdjustments();
+    filterManager.resetAdjustments();
   });
 
   Object.values(buttons).forEach((btn) => {
@@ -178,75 +145,35 @@ function createToolbar() {
   };
 }
 
-export function createControls(stage) {
-  const panel = createElement("div", {
-    class: "controls-panel"
+export function createControls(stage, filterManager) {
+  const panel = createElement("div", { class: "controls-panel" });
+
+  const { toolbar, buttons } = createToolbar(filterManager);
+  const presets = createPresetRow(filterManager);
+
+  const grid = createElement("div", { class: "adjustment-grid" });
+
+  const adjustmentKeys = [
+    { key: "brightness", label: "Brightness", showStepButtons: true },
+    { key: "contrast", label: "Contrast", showStepButtons: true },
+    { key: "saturation", label: "Saturation" },
+    { key: "blur", label: "Blur" },
+    { key: "hueRotate", label: "Hue Rotate" },
+    { key: "grayscale", label: "Grayscale" },
+    { key: "sepia", label: "Sepia" },
+    { key: "invert", label: "Invert" }
+  ];
+
+  adjustmentKeys.forEach((config) => {
+    grid.appendChild(
+      createAdjustmentControl({
+        ...config,
+        filterManager
+      })
+    );
   });
 
-  const { toolbar, buttons } = createToolbar();
-  const presets = createPresetRow(stage);
-
-  const grid = createElement("div", {
-    class: "adjustment-grid"
-  });
-
-  grid.append(
-    createAdjustmentControl({
-      key: "brightness",
-      label: "Brightness",
-      stage,
-      showStepButtons: true
-    }),
-
-    createAdjustmentControl({
-      key: "contrast",
-      label: "Contrast",
-      stage,
-      showStepButtons: true
-    }),
-
-    createAdjustmentControl({
-      key: "saturation",
-      label: "Saturation",
-      stage
-    }),
-
-    createAdjustmentControl({
-      key: "blur",
-      label: "Blur",
-      stage
-    }),
-
-    createAdjustmentControl({
-      key: "hueRotate",
-      label: "Hue Rotate",
-      stage
-    }),
-
-    createAdjustmentControl({
-      key: "grayscale",
-      label: "Grayscale",
-      stage
-    }),
-
-    createAdjustmentControl({
-      key: "sepia",
-      label: "Sepia",
-      stage
-    }),
-
-    createAdjustmentControl({
-      key: "invert",
-      label: "Invert",
-      stage
-    })
-  );
-
-  panel.append(
-    toolbar,
-    presets,
-    grid
-  );
+  panel.append(toolbar, presets, grid);
 
   return {
     panel,

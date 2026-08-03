@@ -7,40 +7,31 @@ import { apiFetch } from "../../api/api.js";
 import { createRecipe } from "./createOrEditRecipe.js";
 import { adspace } from "../home/homeHelpers.js";
 import { t } from "../../i18n/i18n.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../components/layout/asideLayout.js";
 
 export async function displayRecipes(container, isLoggedIn) {
   container.replaceChildren();
 
-  // ---------- LAYOUT ----------
-  const layout = createElement("div", { class: "recipes-page" });
-  const aside = createElement("aside", { class: "recipes-aside" });
-  const main = createElement("div", { class: "recipes-main" });
-
-  layout.append(main, aside);
-  container.append(layout);
-
-  // ---------- SIDEBAR ----------
-  aside.append(
-    createElement("h2", {}, [t("recipes.filters", {}, "Filters")]),
-    adspace("aside"),
+  // ---------- ACTIONS & SIDEBAR ----------
+  const actions = [
     Button(
       t("recipes.createNewRecipe", {}, "Create Recipe"),
       "create-recipe-shortcut",
       { click: () => createRecipe(container) },
       "buttonx secondary"
-    )
-  );
+    ),
+  ];
 
-  // ---------- TITLE ----------
-  main.append(
-    createElement("h1", {}, [t("recipes.recipes", {}, "Recipes")])
-  );
+  const asideContent = createAsideContent({
+    title: t("recipes.filters", {}, "Filters"),
+    actions,
+  });
 
-  // ---------- ACTIONS ----------
-  const actions = createElement("div", { class: "recipe-actions" });
-
+  // ---------- MAIN HEADER & ACTIONS ----------
+  const mainActions = createElement("div", { class: "recipe-actions" });
   if (isLoggedIn) {
-    actions.append(
+    mainActions.append(
       Button(
         t("recipes.createNewRecipe", {}, "Create New Recipe"),
         "create-recipe-btn",
@@ -50,39 +41,49 @@ export async function displayRecipes(container, isLoggedIn) {
     );
   }
 
-  main.append(actions, adspace("inbody"));
+  const mainHeader = [
+    createElement("h1", {}, [t("recipes.recipes", {}, "Recipes")]),
+    mainActions,
+    adspace("inbody"),
+  ];
 
-  // ---------- FETCH DIRECTLY ----------
+  // ---------- LAYOUT ----------
+  const layout = createMainLayout({
+    mainContent: mainHeader,
+    asideContent,
+    pageClass: "recipes-page",
+  });
+
+  container.append(layout);
+
+  const mainElement = layout.querySelector(".layout-main");
+  const list = createElement("div", { class: "recipe-list" });
+
+  // ---------- FETCH RECIPES ----------
   let recipes = [];
   try {
     const resp = await apiFetch("/recipes?offset=0&limit=5000");
-    recipes = Array.isArray(resp)
-      ? resp
-      : resp?.recipes || [];
+    recipes = Array.isArray(resp) ? resp : resp?.recipes || [];
   } catch (err) {
     console.error("Failed to load recipes", err);
   }
 
-  // ---------- LIST ----------
-  const list = createElement("div", { class: "recipe-list" });
-
+  // ---------- RENDER LIST ----------
   if (!recipes.length) {
     list.append(createElement("p", {}, ["No recipes found."]));
-    main.append(list);
-    return;
+  } else {
+    recipes.forEach((recipe, idx) => {
+      list.append(createRecipeCard(recipe, isLoggedIn));
+      if ((idx + 1) % 6 === 0) {
+        list.append(adspace("inlist"));
+      }
+    });
   }
 
-  recipes.forEach((recipe, idx) => {
-    list.append(createRecipeCard(recipe, isLoggedIn));
-    if ((idx + 1) % 6 === 0) {
-      list.append(adspace("inlist"));
-    }
-  });
-
-  main.append(list);
+  mainElement.append(list);
 }
 
-// ---------- CARD ----------
+// ---------- CARD BUILDER ----------
 function createRecipeCard(recipe, _isLoggedIn) {
   const imageUrl = resolveImagePath(
     EntityType.RECIPE,
@@ -102,13 +103,13 @@ function createRecipeCard(recipe, _isLoggedIn) {
           "recipes.prepTime",
           { cookTime: recipe.cookTime || "N/A" },
           `Prep Time: ${recipe.cookTime || "N/A"}`
-        )
+        ),
       ]
     ),
     createElement(
       "div",
       { class: "tags" },
-      (recipe.tags || []).map(tag =>
+      (recipe.tags || []).map((tag) =>
         createElement("span", { class: "tag" }, [tag])
       )
     ),
@@ -117,6 +118,6 @@ function createRecipeCard(recipe, _isLoggedIn) {
       `view-${recipe.recipeid}`,
       { click: () => navigate(`/recipe/${recipe.recipeid}`) },
       "buttonx primary"
-    )
+    ),
   ]);
 }

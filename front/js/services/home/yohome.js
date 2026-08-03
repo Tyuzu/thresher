@@ -1,52 +1,53 @@
-// YoHome.js
-// import { createElement } from "../../components/createElement.js";
-
-// import { clearElement, createListingTabs } from "./listingcon.js";
-// import {
-  // createWeatherInfoWidget,
-  // createSearchBar,
-  //createNavWrapper,
-  // createAuthForms,
-  // adspace
-// } from "./homeHelpers.js";
+import { createElement } from "../../components/createElement.js";
+import { clearElement, createListingTabs } from "./listingcon.js";
+import {
+  createWeatherInfoWidget,
+  createSearchBar,
+  createNavWrapper,
+  createAuthForms,
+  adspace
+} from "./homeHelpers.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
 
 // --- MAIN HOME ---
-export function YoHome(_isLoggedIn, _container) {
-  // clearElement(container);
+export function YoHome(isLoggedIn, container) {
+  clearElement(container);
 
-  // const aside = createElement("aside", { class: "homesidebar" }, [
-  //   createSearchBar(),
-  //   adspace("aside"),
-  // ]);
+  // ---------- ASIDE CONTENT ----------
+  const asideContent = [
+    createWeatherInfoWidget(),
+    createSearchBar()
+  ];
 
-  // const mainContent = createElement("div", { class: "main-content" }, [
-  //   // createWeatherInfoWidget(),
-  //   adspace("top"),
-  //   createNavWrapper(),
-  //   adspace("bottom"),
-  // ]);
+  // ---------- MAIN CONTENT ----------
+  const mainContent = [
+    adspace("top"),
+    createNavWrapper(),
+    adspace("bottom")
+  ];
 
-  // if (isLoggedIn) {
-  //   // defer heavy DOM work
-  //   requestIdleCallback(() => {
-  //     mainContent.appendChild(createListingTabs());
-  //   });
-  // } else {
-  //   mainContent.appendChild(createAuthForms());
-  // }
+  // Handle conditional auth / listing tabs
+  if (isLoggedIn) {
+    // defer heavy DOM work
+    requestIdleCallback(() => {
+      const mainElement = layout.querySelector(".layout-main");
+      if (mainElement) {
+        mainElement.appendChild(createListingTabs());
+      }
+    });
+  } else {
+    mainContent.push(createAuthForms());
+  }
 
-  // const homepageContent = createElement("div", { class: "hyperlocal-home two-column" }, [
-  //   mainContent,
-  //   aside,
-  // ]);
+  // ---------- LAYOUT ----------
+  const layout = createMainLayout({
+    mainContent,
+    asideContent,
+    pageClass: "hyperlocal-home"
+  });
 
-  // const fragment = document.createDocumentFragment();
-  // fragment.appendChild(homepageContent);
-  // fragment.appendChild(
-  //   createElement("div", {}, [
-  //     createElement("button", { id: "install-pwa", style: "display:none;" }, ["Install App"]),
-  //   ])
-  // );
+  const fragment = document.createDocumentFragment();
+  fragment.appendChild(layout);
 
-  // container.appendChild(fragment);
+  container.appendChild(fragment);
 }

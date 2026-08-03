@@ -11,6 +11,8 @@ import {
   createFilterControls,
   applyFiltersAndSort
 } from "./farmFilters.js";
+import { createMainLayout } from "../../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../../components/layout/asideLayout.js";
 
 // Config
 const PAGE_SIZE = 10;
@@ -52,8 +54,8 @@ async function fetchFarms(page) {
   try {
     const res = await apiFetch(`/farms?page=${page}&limit=${PAGE_SIZE}`);
     if (!res || !Array.isArray(res.farms)) {
-return [];
-}
+      return [];
+    }
     return res.farms;
   } catch {
     return [];
@@ -85,8 +87,6 @@ function Grid(isLoggedIn, toggleFavorite) {
 // ---------- Sidebar ----------
 
 function Sidebar(isLoggedIn, stateRef) {
-  const container = createElement("div", { class: "farm__sidebar" });
-
   const staticSections = createElement("div");
   const dynamicSections = createElement("div");
 
@@ -94,12 +94,10 @@ function Sidebar(isLoggedIn, stateRef) {
   renderWeatherWidget(staticSections);
   renderMap(staticSections);
 
-  container.append(staticSections, dynamicSections);
-
   function renderFavorites(container) {
     if (!isLoggedIn) {
-return;
-}
+      return;
+    }
 
     const farmIndex = indexFarmsById(stateRef.farms);
     const section = createElement("section", { class: "farm__favorites" }, [
@@ -167,8 +165,14 @@ return;
     );
   }
 
+  const asideContent = createAsideContent({
+    title: "Farm Directory",
+    children: [staticSections, dynamicSections],
+    showAd: true
+  });
+
   return {
-    container,
+    container: asideContent,
     render(farms) {
       dynamicSections.replaceChildren();
 
@@ -191,19 +195,7 @@ export async function displayFarms(content, loggedIn) {
   const container = createElement("div", { class: "farmspage" });
   content.append(container);
 
-  const layout = createElement("div", { class: "farm-page" });
-  const main = createElement("div", { class: "farm__main" });
-  const side = createElement("aside", { class: "farm__side" });
-
-  const layoutInner = createElement(
-    "div",
-    { class: "farm__layout" },
-    [main, side]
-  );
-
-  layout.append(layoutInner);
-  container.append(layout);
-
+  const mainElements = [];
   const sentinel = createElement("div", { class: "farm__sentinel" });
 
   const grid = Grid(loggedIn, toggleFavorite);
@@ -217,8 +209,15 @@ export async function displayFarms(content, loggedIn) {
 
   const filters = createFilterControls(state, commit);
 
-  main.append(filters, grid.container, sentinel);
-  side.append(sidebar.container);
+  mainElements.push(filters, grid.container, sentinel);
+
+  const layout = createMainLayout({
+    mainContent: mainElements,
+    asideContent: sidebar.container,
+    pageClass: "farm-page"
+  });
+
+  container.append(layout);
 
   const observer = new IntersectionObserver(onIntersect, {
     rootMargin: "200px"
@@ -231,8 +230,8 @@ export async function displayFarms(content, loggedIn) {
 
   async function loadNextPage() {
     if (state.isLoading || !state.hasMore) {
-return;
-}
+      return;
+    }
 
     state.isLoading = true;
     const batch = await fetchFarms(state.page);
@@ -250,8 +249,8 @@ return;
 
   async function onIntersect(entries) {
     if (!entries.some(e => e.isIntersecting)) {
-return;
-}
+      return;
+    }
 
     const prevCount = state.farms.length;
     await loadNextPage();

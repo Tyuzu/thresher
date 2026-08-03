@@ -22,9 +22,7 @@ function unlockBodyScroll() {
 }
 
 function makeHeader(title, onClose, instanceId, showCloseButton) {
-  if (!title && !showCloseButton) {
-    return null;
-  }
+  if (!title && !showCloseButton) return null;
 
   const heading = title
     ? createElement("h3", { id: `modal-title-${instanceId}` }, [title])
@@ -72,7 +70,7 @@ function makeBody(content, instanceId) {
 
 function simpleDurationMs(el) {
   const cs = window.getComputedStyle(el);
-  const toMs = v => {
+  const toMs = (v) => {
     if (!v) return 0;
     v = v.split(",")[0].trim();
     if (v.endsWith("ms")) return parseFloat(v) || 0;
@@ -98,8 +96,7 @@ export default function Modal({
   returnDataOnClose = false,
   actions = null,
   force = false,
-
-  variant = "default",          // default | theater | alert | sheet
+  variant = "default",
   showHeader = true,
   showCloseButton = true,
   autofocus = true,
@@ -107,10 +104,13 @@ export default function Modal({
   onBeforeClose = null,
   onAfterClose = null
 } = {}) {
+  const container = document.getElementById("modalcon");
+  if (!container) {
+    throw new Error('No element with id "modalcon" found');
+  }
+
   activeModalCount += 1;
   uniqueInstanceIdCounter += 1;
-  
-  // Fixed: Collision-free instance IDs separate from active layout count
   const instanceId = uniqueInstanceIdCounter;
 
   const zBase = 1000;
@@ -130,13 +130,13 @@ export default function Modal({
 
   lockBodyScroll();
   const previouslyFocused = document.activeElement;
-
-  // Track closure execution to block duplicate invocation cycles
   let isClosing = false;
 
-  const cleanup = () => {
+  const cleanup = (data) => {
     if (isClosing) return;
     isClosing = true;
+
+    onBeforeClose?.();
 
     modal.classList.remove("modal--fade-in");
     modal.classList.add("modal--fade-out");
@@ -147,30 +147,26 @@ export default function Modal({
       300
     );
 
+    document.removeEventListener("keydown", trap, true);
+
     setTimeout(() => {
-      // Fixed: Keydown trap dismantled only when element leaves the view layer
-      modal.removeEventListener("keydown", trap);
       modal.remove();
-      
+
       activeModalCount = Math.max(0, activeModalCount - 1);
       unlockBodyScroll();
-      
+
       if (previouslyFocused && typeof previouslyFocused.focus === "function") {
         previouslyFocused.focus();
       }
+
+      onClose?.(data);
       onAfterClose?.();
     }, ms + 40);
   };
 
   const wrappedClose = (data) => {
     if (force || isClosing) return;
-    onBeforeClose?.();
-    cleanup();
-    if (returnDataOnClose) {
-      onClose?.(data);
-    } else {
-      onClose?.();
-    }
+    cleanup(data);
   };
 
   if (closeOnOverlayClick && !force) {
@@ -217,15 +213,14 @@ export default function Modal({
     "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
 
   function trap(e) {
-    // Block input evaluations if the component is performing its exit animation
     if (isClosing) {
       e.preventDefault();
       return;
     }
 
-    const focusables = Array
-      .from(dialog.querySelectorAll(focusableSel))
-      .filter(n => !n.disabled && n.tabIndex !== -1 && n.offsetWidth > 0 && n.offsetHeight > 0);
+    const focusables = Array.from(dialog.querySelectorAll(focusableSel)).filter(
+      (n) => !n.disabled && n.tabIndex !== -1 && n.offsetWidth > 0 && n.offsetHeight > 0
+    );
 
     if (e.key === "Escape" && !force) {
       e.preventDefault();
@@ -234,13 +229,17 @@ export default function Modal({
     }
 
     if (e.key === "Enter" && onConfirm && variant !== "theater") {
-      // Direct text editing inputs should pass standard Enter events
-      if (document.activeElement.tagName === "TEXTAREA" || document.activeElement.tagName === "INPUT") {
+      const activeEl = document.activeElement;
+      const isInputText = activeEl && (
+        activeEl.tagName === "TEXTAREA" ||
+        (activeEl.tagName === "INPUT" && !["button", "submit", "checkbox", "radio"].includes(activeEl.type))
+      );
+
+      if (!isInputText) {
+        e.preventDefault();
+        onConfirm();
         return;
       }
-      e.preventDefault();
-      onConfirm();
-      return;
     }
 
     if (e.key === "Tab") {
@@ -263,16 +262,8 @@ export default function Modal({
     }
   }
 
-  // Fixed: Listener bound onto high-level root wrapper node capturing peripheral paths
-  modal.addEventListener("keydown", trap);
-
-  const container = document.getElementById("modalcon");
-  if (!container) {
-    modal.removeEventListener("keydown", trap);
-    activeModalCount = Math.max(0, activeModalCount - 1);
-    unlockBodyScroll();
-    throw new Error('No element with id "modalcon" found');
-  }
+  // Bind capture listener to document to prevent focus leaks
+  document.addEventListener("keydown", trap, true);
 
   modal.classList.add("modal--fade-in");
   container.appendChild(modal);
@@ -284,14 +275,15 @@ export default function Modal({
       if (autofocusSelector) {
         dialog.querySelector(autofocusSelector)?.focus();
       } else {
-        dialog.focus();
+        const firstFocusable = dialog.querySelectorAll(focusableSel)[0];
+        (firstFocusable || dialog).focus();
       }
     }, 0);
   }
 
   if (returnDataOnClose) {
     let resolve;
-    const closed = new Promise(r => (resolve = r));
+    const closed = new Promise((r) => (resolve = r));
     const close = (data) => {
       wrappedClose(data);
       resolve(data);

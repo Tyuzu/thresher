@@ -1,6 +1,4 @@
-// YoHome.js
 import { createElement } from "../../components/createElement.js";
-
 import { clearElement, createListingTabs } from "./listingcon.js";
 import {
   createWeatherInfoWidget,
@@ -9,43 +7,47 @@ import {
   createAuthForms,
   adspace
 } from "./homeHelpers.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
 
 // --- MAIN HOME ---
 export function YoHome(isLoggedIn, container) {
   clearElement(container);
 
-  const aside = createElement("aside", { class: "homesidebar" }, [
+  // ---------- ASIDE CONTENT ----------
+  const asideContent = [
     createWeatherInfoWidget(),
-    createSearchBar(),
-  ]);
+    createSearchBar()
+  ];
 
-  const mainContent = createElement("div", { class: "main-content" }, [
+  // ---------- MAIN CONTENT ----------
+  const mainContent = [
     adspace("top"),
     createNavWrapper(),
-    adspace("bottom"),
-  ]);
+    adspace("bottom")
+  ];
 
+  // Handle conditional auth / listing tabs
   if (isLoggedIn) {
     // defer heavy DOM work
     requestIdleCallback(() => {
-      mainContent.appendChild(createListingTabs());
+      const mainElement = layout.querySelector(".layout-main");
+      if (mainElement) {
+        mainElement.appendChild(createListingTabs());
+      }
     });
   } else {
-    mainContent.appendChild(createAuthForms());
+    mainContent.push(createAuthForms());
   }
 
-  const homepageContent = createElement("div", { class: "hyperlocal-home two-column" }, [
+  // ---------- LAYOUT ----------
+  const layout = createMainLayout({
     mainContent,
-    aside,
-  ]);
+    asideContent,
+    pageClass: "hyperlocal-home"
+  });
 
   const fragment = document.createDocumentFragment();
-  fragment.appendChild(homepageContent);
-  // fragment.appendChild(
-  //   createElement("div", {}, [
-  //     createElement("button", { id: "install-pwa", style: "display:none;" }, ["Install App"]),
-  //   ])
-  // );
+  fragment.appendChild(layout);
 
   container.appendChild(fragment);
 }

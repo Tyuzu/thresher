@@ -1,10 +1,11 @@
-import { createElement } from "../../../components/createElement";
-import { navigate } from "../../../routes";
+import { createElement } from "../../../components/createElement.js";
+import { navigate } from "../../../routes/index.js";
 import { cropAside } from "./cropAside.js";
 import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.js";
 import Imagex from "../../../components/base/Imagex.js";
 import { debounce } from "../../../utils/deutils.js";
 import Button from "../../../components/base/Button.js";
+import { createMainLayout } from "../../../components/layout/mainLayout.js";
 
 function filterAndSortCrops(crops = [], { term, tags, sortBy }) {
   return crops
@@ -40,7 +41,8 @@ function isSeasonal(crop) {
 // --- card ---
 export function renderCropCard(crop, mode = "catalogue") {
   const card = createElement("div", { class: "crop-card" });
-  card.addEventListener('click', () => navigate(`/crop/${crop.name.toLowerCase().replace(/\s+/g, "_")}`));
+  card.addEventListener("click", () => navigate(`/crop/${crop.name.toLowerCase().replace(/\s+/g, "_")}`));
+  
   const img = Imagex({
     src: resolveImagePath(EntityType.CROP, PictureType.THUMB, crop.banner),
     alt: crop.name,
@@ -65,17 +67,13 @@ export function renderCropCard(crop, mode = "catalogue") {
       (crop.tags || []).map(tag => createElement("span", { class: "tag-pill" }, [tag]))
     );
 
-    // const btn = createElement("button", {}, ["View Farms"]);
-    // btn.onclick = () => navigate(`/crop/${crop.name.toLowerCase().replace(/\s+/g, "_")}`);
-
     const btn = Button("View Farms", "button", {
       click: () => {
         navigate(`/crop/${crop.name.toLowerCase().replace(/\s+/g, "_")}`);
       }
     }, "buttonx");
 
-    const ccon = createElement("div", { "class": "nimgcon" }, []);
-    // card.append(img, title, info, season, tags, btn);
+    const ccon = createElement("div", { class: "nimgcon" }, []);
     ccon.append(title, info, season, tags, btn);
     card.append(img, ccon);
   }
@@ -92,15 +90,9 @@ export function renderCropCard(crop, mode = "catalogue") {
   return card;
 }
 
-
 // --- Main Renderer ---
 export function renderCropInterface(container, cropData) {
-  const layout = createElement("div", { class: "catalogue-layout" });
-  const main = createElement("div", { class: "catalogue-main" });
-  const aside = createElement("aside", { class: "catalogue-aside" });
-
-  layout.append(main, aside);
-  container.appendChild(layout);
+  const mainContent = createElement("div", { class: "catalogue-main" });
 
   const searchBox = createElement("input", {
     type: "text",
@@ -117,11 +109,11 @@ export function renderCropInterface(container, cropData) {
   const controls = createElement("div", { class: "top-controls" }, [
     searchBox, sortSelect
   ]);
-  main.append(controls);
+  mainContent.append(controls);
 
   const tabButtons = createElement("div", { class: "tabs" });
   const tabsWrapper = createElement("div", { id: "catalogue-container" });
-  main.append(tabButtons, tabsWrapper);
+  mainContent.append(tabButtons, tabsWrapper);
 
   const tabs = {};
   const activeTags = new Set();
@@ -144,7 +136,6 @@ export function renderCropInterface(container, cropData) {
       `${cat.charAt(0).toUpperCase() + cat.slice(1)} (${cropData[cat].length})`
     ]);
 
-    // Disable tabs with no crops
     if (!cropData[cat].length) {
       btn.disabled = true;
     }
@@ -169,8 +160,15 @@ export function renderCropInterface(container, cropData) {
 
   updateAllTabs(state);
 
-  aside.append(cropAside(cropData));
+  const asideContent = cropAside(cropData);
 
+  const layout = createMainLayout({
+    mainContent: [mainContent],
+    asideContent,
+    pageClass: "catalogue-layout"
+  });
+
+  container.appendChild(layout);
 }
 
 function updateAllTabs(state) {
@@ -180,7 +178,6 @@ function updateAllTabs(state) {
     return;
   }
 
-  // Only render the active tab to avoid heavy synchronous DOM work on slow devices/networks.
   updateTab(currentTab, state);
   categories.forEach(cat => {
     const pane = tabs[cat];
@@ -195,12 +192,11 @@ function updateAllTabs(state) {
   });
 }
 
-// --- Internal Update Functions ---
 function updateTab(category, state) {
   const { cropData, tabs, searchBox, sortSelect, activeTags } = state;
   let container = tabs[category];
+
   if (!container) {
-    // Fallback: create the pane if it wasn't initialized for some reason
     container = createElement("div", { class: "tab-content", id: category });
     tabs[category] = container;
     const wrapper = document.getElementById("catalogue-container");
@@ -208,7 +204,7 @@ function updateTab(category, state) {
       wrapper.appendChild(container);
     }
   }
-  // Defensive: if container is still falsy, bail out
+
   if (!container || typeof container.replaceChildren !== "function") {
     console.warn("Skipping updateTab; container missing for category:", category);
     return;

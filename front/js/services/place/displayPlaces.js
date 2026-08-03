@@ -5,38 +5,45 @@ import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePath
 import Imagex from "../../components/base/Imagex.js";
 import { apiFetch } from "../../api/api.js";
 import { adspace } from "../home/homeHelpers.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../components/layout/asideLayout.js";
 
 export async function displayPlaces(isLoggedIn, container) {
   container.replaceChildren();
 
-  // ---------- LAYOUT ----------
-  const layout = createElement("div", { class: "places-page" });
-  const aside = createElement("aside", { class: "places-aside" });
-  const main = createElement("div", { class: "places-main" });
-
-  layout.append(main, aside);
-  container.append(layout);
-
-  // ---------- SIDEBAR ----------
-  aside.append(createElement("h2", {}, ["Actions"]));
-
+  // ---------- ACTIONS & SIDEBAR ----------
+  const actions = [];
   if (isLoggedIn) {
-    aside.append(
+    actions.push(
       Button("Create Place", "", { click: () => navigate("/create-place") }, "buttonx primary")
     );
   }
 
-  aside.append(
+  actions.push(
     Button("Create Itinerary", "", { click: () => navigate("/itinerary") }, "buttonx primary"),
     Button("Manage Places", "", { click: () => navigate("/places/manage") }, "buttonx secondary"),
     Button("Help / FAQ", "", { click: () => navigate("/help") }, "buttonx secondary")
   );
 
-  aside.append(adspace("aside"));
+  const asideContent = createAsideContent({ title: "Actions", actions });
 
-  // ---------- TITLE ----------
-  main.append(createElement("h1", {}, ["All Places"]));
-  main.append(adspace("inbody"));
+  // ---------- MAIN HEADER ----------
+  const mainHeader = [
+    createElement("h1", {}, ["All Places"]),
+    adspace("inbody"),
+  ];
+
+  // ---------- LAYOUT ----------
+  const layout = createMainLayout({
+    mainContent: mainHeader,
+    asideContent,
+    pageClass: "places-page",
+  });
+
+  container.append(layout);
+
+  const mainElement = layout.querySelector(".layout-main");
+  const list = createElement("div", { class: "places-list" });
 
   // ---------- FETCH PLACES ----------
   let places = [];
@@ -47,24 +54,19 @@ export async function displayPlaces(isLoggedIn, container) {
     console.error("Failed to load places", err);
   }
 
-  // ---------- LIST ----------
-  const list = createElement("div", { class: "places-list" });
-
+  // ---------- RENDER LIST ----------
   if (!places.length) {
     list.append(createElement("p", {}, ["No matching places."]));
-    main.append(list);
-    return;
+  } else {
+    places.forEach((place, idx) => {
+      list.append(createPlaceCard(place));
+      if ((idx + 1) % 6 === 0) {
+        list.append(adspace("inlist"));
+      }
+    });
   }
 
-  places.forEach((place, idx) => {
-    list.append(createPlaceCard(place));
-
-    if ((idx + 1) % 6 === 0) {
-      list.append(adspace("inlist"));
-    }
-  });
-
-  main.append(list);
+  mainElement.append(list);
 }
 
 // ---------- CARD BUILDER ----------
@@ -76,7 +78,7 @@ function createPlaceCard(place) {
   const image = Imagex({
     src: bannerUrl,
     alt: `${place.name || "Unnamed"} Banner`,
-    loading: "lazy"
+    loading: "lazy",
   });
 
   image.onerror = () => {
@@ -86,7 +88,7 @@ function createPlaceCard(place) {
   const metaRow = createElement(
     "div",
     {
-      style: "display:flex;align-items:center;justify-content:space-between;margin-top:4px;"
+      style: "display:flex;align-items:center;justify-content:space-between;margin-top:4px;",
     },
     [createElement("span", { class: "badge" }, [place.category || "-"])]
   );
@@ -99,7 +101,7 @@ function createPlaceCard(place) {
         "a",
         {
           href: `/place/${place.placeid}`,
-          style: "text-decoration:none;color:inherit;display:block;"
+          style: "text-decoration:none;color:inherit;display:block;",
         },
         [
           image,
@@ -107,10 +109,10 @@ function createPlaceCard(place) {
             metaRow,
             createElement("h2", {}, [place.name || "Unnamed Place"]),
             createElement("p", {}, [place.address || "-"]),
-            createElement("p", {}, [place.short_desc || "-"])
-          ])
+            createElement("p", {}, [place.short_desc || "-"]),
+          ]),
         ]
-      )
+      ),
     ]
   );
 }

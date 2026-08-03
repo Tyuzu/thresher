@@ -7,13 +7,13 @@ export function formatRelativeTime(dateString) {
     const days = Math.floor(hours / 24);
 
     if (minutes < 1) {
-return "just now";
-}
+        return "just now";
+    }
     if (minutes < 60) {
-return `${minutes} min ago`;
-}
+        return `${minutes} min ago`;
+    }
     if (hours < 24) {
-return `${hours}h ago`;
-}
+        return `${hours}h ago`;
+    }
     return `${days}d ago`;
 }

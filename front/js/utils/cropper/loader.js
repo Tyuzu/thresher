@@ -1,118 +1,47 @@
-// loader.js
-
-import {
-  JS_SRC,
-  CSS_HREF
-} from "./constants.js";
-
+import { JS_SRC, CSS_HREF } from "./constants.js";
 import { createElement } from "../../components/createElement.js";
 
-let addedScript = null;
-let addedLink = null;
-
-export function getAddedAssets() {
-  return {
-    script: addedScript,
-    link: addedLink
-  };
-}
-
-export function clearAddedAssets() {
-  addedScript = null;
-  addedLink = null;
-}
+let scriptPromise = null;
+let cssPromise = null;
 
 export function loadScript(src = JS_SRC) {
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector(`script[src="${src}"]`);
+  if (window.Cropper) return Promise.resolve();
+  if (scriptPromise) return scriptPromise;
 
-    if (existing) {
-      if (window.Cropper) {
-        resolve(existing);
-        return;
-      }
-
-      existing.addEventListener(
-        "load",
-        () => resolve(existing),
-        { once: true }
-      );
-
-      existing.addEventListener(
-        "error",
-        () => reject(new Error("Failed to load CropperJS script")),
-        { once: true }
-      );
-
-      return;
-    }
-
-    const script = createElement("script", {
-      src
-    });
-
+  scriptPromise = new Promise((resolve, reject) => {
+    const script = createElement("script", { src });
     script.async = true;
 
-    script.addEventListener(
-      "load",
-      () => resolve(script),
-      { once: true }
-    );
-
-    script.addEventListener(
-      "error",
-      () => reject(new Error(`Failed to load script: ${src}`)),
-      { once: true }
-    );
-
-    addedScript = script;
+    script.addEventListener("load", () => resolve(script), { once: true });
+    script.addEventListener("error", () => {
+      scriptPromise = null;
+      reject(new Error(`Failed to load script: ${src}`));
+    }, { once: true });
 
     document.head.appendChild(script);
   });
+
+  return scriptPromise;
 }
 
 export function loadCss(href = CSS_HREF) {
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector(`link[href="${href}"]`);
+  if (cssPromise) return cssPromise;
 
-    if (existing) {
-      resolve(existing);
-      return;
-    }
+  cssPromise = new Promise((resolve, reject) => {
+    const link = createElement("link", { rel: "stylesheet", href });
 
-    const link = createElement("link", {
-      rel: "stylesheet",
-      href
-    });
-
-    link.dataset.cropperCss = "1";
-
-    link.addEventListener(
-      "load",
-      () => resolve(link),
-      { once: true }
-    );
-
-    link.addEventListener(
-      "error",
-      () => reject(new Error(`Failed to load stylesheet: ${href}`)),
-      { once: true }
-    );
-
-    addedLink = link;
+    link.addEventListener("load", () => resolve(link), { once: true });
+    link.addEventListener("error", () => {
+      cssPromise = null;
+      reject(new Error(`Failed to load stylesheet: ${href}`));
+    }, { once: true });
 
     document.head.appendChild(link);
   });
+
+  return cssPromise;
 }
 
 export async function ensureCropper() {
-  if (window.Cropper) {
-    await loadCss();
-    return;
-  }
-
-  await Promise.all([
-    loadCss(),
-    loadScript()
-  ]);
+  await Promise.all([loadCss(), loadScript()]);
 }

@@ -6,38 +6,45 @@ import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePath
 import { apiFetch } from "../../api/api.js";
 import { adspace } from "../home/homeHelpers.js";
 import Datex from "../../components/base/Datex.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../components/layout/asideLayout.js";
 
 export async function displayEvents(isLoggedIn, container) {
   container.replaceChildren();
 
-  // ---------- LAYOUT ----------
-  const layout = createElement("div", { class: "events-page" });
-  const aside = createElement("aside", { class: "events-aside" });
-  const main = createElement("div", { class: "events-main" });
-
-  layout.append(main, aside);
-  container.append(layout);
-
-  // ---------- SIDEBAR ----------
-  aside.append(createElement("h2", {}, ["Actions"]));
-
+  // ---------- ACTIONS & SIDEBAR ----------
+  const actions = [];
   if (isLoggedIn) {
-    aside.append(
+    actions.push(
       Button("Create Event", "crt-evnt", { click: () => navigate("/create-event") }, "buttonx primary")
     );
   }
 
-  aside.append(
+  actions.push(
     Button("Browse Artists", "artsts-brws", { click: () => navigate("/artists") }, "buttonx primary"),
     Button("My Events", "btn-my-events", { click: () => navigate("/my-events") }, "buttonx secondary"),
     Button("Event Calendar", "btn-event-calendar", { click: () => navigate("/event-calendar") }, "buttonx secondary")
   );
 
-  aside.append(adspace("aside"));
+  const asideContent = createAsideContent({ title: "Actions", actions });
 
-  // ---------- TITLE ----------
-  main.append(createElement("h1", {}, ["All Events"]));
-  main.append(adspace("inbody"));
+  // ---------- MAIN HEADER ----------
+  const mainHeader = [
+    createElement("h1", {}, ["All Events"]),
+    adspace("inbody"),
+  ];
+
+  // ---------- LAYOUT ----------
+  const layout = createMainLayout({
+    mainContent: mainHeader,
+    asideContent,
+    pageClass: "events-page",
+  });
+
+  container.append(layout);
+
+  const mainElement = layout.querySelector(".layout-main");
+  const list = createElement("div", { class: "events-list" });
 
   // ---------- FETCH EVENTS ----------
   let events = [];
@@ -48,24 +55,19 @@ export async function displayEvents(isLoggedIn, container) {
     console.error("Failed to load events", err);
   }
 
-  // ---------- LIST ----------
-  const list = createElement("div", { class: "events-list" });
-
+  // ---------- RENDER LIST ----------
   if (!events.length) {
     list.append(createElement("p", {}, ["No events found."]));
-    main.append(list);
-    return;
+  } else {
+    events.forEach((ev, idx) => {
+      list.append(createEventCard(ev));
+      if ((idx + 1) % 6 === 0) {
+        list.append(adspace("inlist"));
+      }
+    });
   }
 
-  events.forEach((ev, idx) => {
-    list.append(createEventCard(ev));
-
-    if ((idx + 1) % 6 === 0) {
-      list.append(adspace("inlist"));
-    }
-  });
-
-  main.append(list);
+  mainElement.append(list);
 }
 
 // ---------- CARD BUILDER ----------

@@ -108,3 +108,84 @@
 .range-input {
   width: 100%;
 }
+
+#modalcon input {
+  padding: 0.4rem;
+}
+
+ .chipscon {
+  margin-bottom: 1rem;
+  display: grid;
+} 
+
+.category-chips {
+  flex-wrap: nowrap;
+  display: flex;
+  overflow-x: auto;
+  width: 100%;
+  overflow-y: hidden;
+  padding-right: 0.4rem;
+}
+
+.category-chip {
+  /* flex-grow: 1; */
+  flex-shrink: 0;
+  opacity: 0.9;
+  margin: 0.2rem 4px;
+  overflow: hidden;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.chipper {
+  margin: 0;
+  line-height: 1;
+  display: block;
+  font-weight: 600;
+  transition: background-color .15s ease-in-out;
+  text-decoration: none;
+  padding: 10px;
+}
+
+.category-chip:hover {
+  background-color: #e0e0e0;
+}
+
+/**/
+
+.category-chips::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+.category-chips::-webkit-scrollbar-thumb {
+  background-color: #555;
+}
+
+.category-chips div:nth-child(7n-6) {
+  background: #81a1ff url(#);
+}
+
+.category-chips div:nth-child(7n-5) {
+  background: #ecec84 url(#);
+}
+
+.category-chips div:nth-child(7n-4) {
+  background: #ffb69b url(#);
+}
+
+.category-chips div:nth-child(7n-3) {
+  background: #ffacbb url(#);
+}
+
+.category-chips div:nth-child(7n-2) {
+  background: #8bc3e5 url(#);
+}
+
+.category-chips div:nth-child(7n-1) {
+  background: #c8bcff url(#);
+}
+
+.category-chips div:nth-child(7n) {
+  background: #7ccaae url(#);
+}

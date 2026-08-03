@@ -1,6 +1,7 @@
-import { createElement } from "../../../components/createElement";
-import Button from "../../../components/base/Button";
-import { navigate } from "../../../routes";
+import { createElement } from "../../../components/createElement.js";
+import Button from "../../../components/base/Button.js";
+import { navigate } from "../../../routes/index.js";
+import { createAsideContent } from "../../../components/layout/asideLayout.js";
 
 /**
  * Creates a standard promotional link/item box.
@@ -35,51 +36,34 @@ export function cropAside(_cropData) {
     ])
   ]);
 
-  // 2. Deals & Featured Offers
-  const dealsSection = createPromoBox("💸 Active Deals", [
-    "🧃 Buy 2 kg Tomatoes, get 10% off!",
-    "🥭 Fresh Mangoes now ₹40/kg!"
-  ]);
-
-  // 3. Seasonal Picks
-  const seasonalSection = createPromoBox("📅 Seasonal Picks", [
-    "🍉 Watermelons are ripe this week",
-    "🌽 Baby corn harvest starting soon"
-  ]);
-
-  // 4. Market Trends
-  const trendsSection = createPromoBox("📊 Crop Trends", [
-    "📈 Onion prices up 12% this week",
-    "📉 Cauliflower down due to surplus"
-  ]);
-
-  // 5. Announcements
-  const announcementsSection = createPromoBox("🔔 Announcements", [
-    "🛠 Maintenance scheduled this Friday",
-    "🚚 New delivery zones added in Karnal"
-  ]);
-
-  // 6. Farmer Showcase
-  const showcaseSection = createPromoBox("📷 Farmer's Showcase", [
-    "🏞️ Featured: Ajay’s organic carrot patch",
-    "🧑‍🌾 Share your crop stories with us!"
-  ]);
-
-  // return createElement("div", { class: "crop-aside-container" }, [
-  //   actionsSection,
-  //   dealsSection,
-  //   seasonalSection,
-  //   trendsSection,
-  //   announcementsSection,
-  //   showcaseSection
-  // ]);
-  
-  return createElement("div", { class: "crop-aside-container" }, [
+  // Promo sections
+  const promoSections = [
     actionsSection,
-    dealsSection,
-    seasonalSection,
-    trendsSection,
-    announcementsSection,
-    showcaseSection
-  ]);
+    createPromoBox("💸 Active Deals", [
+      "🧃 Buy 2 kg Tomatoes, get 10% off!",
+      "🥭 Fresh Mangoes now ₹40/kg!"
+    ]),
+    createPromoBox("📅 Seasonal Picks", [
+      "🍉 Watermelons are ripe this week",
+      "🌽 Baby corn harvest starting soon"
+    ]),
+    createPromoBox("📊 Crop Trends", [
+      "📈 Onion prices up 12% this week",
+      "📉 Cauliflower down due to surplus"
+    ]),
+    createPromoBox("🔔 Announcements", [
+      "🛠 Maintenance scheduled this Friday",
+      "🚚 New delivery zones added in Karnal"
+    ]),
+    createPromoBox("📷 Farmer's Showcase", [
+      "🏞️ Featured: Ajay’s organic carrot patch",
+      "🧑‍🌾 Share your crop stories with us!"
+    ])
+  ];
+
+  return createAsideContent({
+    title: "Market Highlights",
+    children: promoSections,
+    showAd: false
+  });
 }
