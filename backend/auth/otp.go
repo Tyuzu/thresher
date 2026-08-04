@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -18,13 +17,11 @@ import (
 	"strings"
 	"time"
 
-	"naevis/auth/repo"
-	aus "naevis/auth/usecase"
+	"naevis/auth/delivery"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/myerr"
-	"naevis/utils"
 	"naevis/utils/logger"
 )
 
@@ -35,67 +32,11 @@ const OTPExpiry = 10 * time.Minute
 ============================================================ */
 
 func RequestOTPHandler(app *infra.Deps) http.HandlerFunc {
-	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
-	uc := aus.NewAuthUsecase(repoImpl, app.MQ)
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-		defer cancel()
-
-		var input RequestOTPInput
-		dec := json.NewDecoder(r.Body)
-		dec.DisallowUnknownFields()
-
-		if err := dec.Decode(&input); err != nil || input.Email == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-			return
-		}
-
-		if err := uc.ProcessOTPRequest(ctx, input.Email); err != nil {
-			if errors.Is(err, myerr.ErrInvalidEmail) {
-				utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
-				return
-			}
-			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "OTP sent if the email exists"})
-	}
+	return delivery.NewRequestOTPHandler(app)
 }
 
 func VerifyOTPHandler(app *infra.Deps) http.HandlerFunc {
-	repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
-	uc := aus.NewAuthUsecase(repoImpl, app.MQ)
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-		defer cancel()
-
-		var input VerifyOTPInput
-		dec := json.NewDecoder(r.Body)
-		dec.DisallowUnknownFields()
-
-		if err := dec.Decode(&input); err != nil || input.Email == "" || input.OTP == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-			return
-		}
-
-		if err := uc.ProcessOTPVerification(ctx, input.Email, input.OTP); err != nil {
-			if errors.Is(err, myerr.ErrInvalidEmail) {
-				utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
-				return
-			}
-			if errors.Is(err, myerr.ErrOTPInvalidOrExpired) {
-				utils.RespondWithError(w, http.StatusUnauthorized, "Invalid or expired OTP")
-				return
-			}
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to verify user")
-			return
-		}
-
-		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "User verified successfully"})
-	}
+	return delivery.NewVerifyOTPHandler(app)
 }
 
 /* ============================================================

@@ -21,6 +21,7 @@ import (
 func CreateTicket(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		uc := ticketUsecase(app)
 		eventID := utils.GetParam(r, "eventid")
 		if eventID == "" {
 			http.Error(w, "Invalid event ID", http.StatusBadRequest)
@@ -36,7 +37,7 @@ func CreateTicket(app *infra.Deps) http.HandlerFunc {
 
 		// SECURITY: Verify user is the event owner
 		var event models.Event
-		if err := app.DB.FindOne(r.Context(), "events", map[string]interface{}{"eventid": eventID}, &event); err != nil {
+		if err := app.DB.FindOne(ctx, "events", map[string]interface{}{"eventid": eventID}, &event); err != nil {
 			http.Error(w, "Event not found", http.StatusNotFound)
 			return
 		}
@@ -94,7 +95,7 @@ func CreateTicket(app *infra.Deps) http.HandlerFunc {
 			UpdatedAt:  time.Now(),
 		}
 
-		if err := app.DB.Insert(r.Context(), ticketsCollection, tick); err != nil {
+		if err := uc.CreateTicket(ctx, tick); err != nil {
 			http.Error(w, "Failed to create ticket", http.StatusInternalServerError)
 			return
 		}
@@ -110,6 +111,7 @@ func CreateTicket(app *infra.Deps) http.HandlerFunc {
 // EditTicket updates existing ticket fields
 func EditTicket(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		uc := ticketUsecase(app)
 		eventID := utils.GetParam(r, "eventid")
 		ticketID := utils.GetParam(r, "ticketid")
 
@@ -123,10 +125,13 @@ func EditTicket(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		var existing models.Ticket
-		if err := app.DB.FindOne(ctx, ticketsCollection, map[string]any{"eventid": eventID, "ticketid": ticketID}, &existing); err != nil {
+		var err error
+		existingPtr, err := uc.GetTicketByID(ctx, eventID, ticketID)
+		if err != nil {
 			http.Error(w, "Ticket not found or DB error", http.StatusNotFound)
 			return
 		}
+		existing = *existingPtr
 
 		updateFields := map[string]any{}
 		if input.Name != "" && input.Name != existing.Name {
@@ -163,7 +168,7 @@ func EditTicket(app *infra.Deps) http.HandlerFunc {
 
 		updateFields["updated_at"] = time.Now()
 
-		if err := app.DB.UpdateOne(ctx, ticketsCollection, map[string]any{"eventid": eventID, "ticketid": ticketID}, map[string]any{"$set": updateFields}); err != nil {
+		if err := uc.UpdateTicket(ctx, eventID, ticketID, map[string]any{"$set": updateFields}); err != nil {
 			http.Error(w, "Failed to update ticket: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -190,6 +195,7 @@ func DeleteTicket(app *infra.Deps) http.HandlerFunc {
 // BuyTicket purchases a ticket and sets user data
 func BuyTicket(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		uc := ticketUsecase(app)
 		eventID := utils.GetParam(r, "eventid")
 		ticketID := utils.GetParam(r, "ticketid")
 
@@ -207,25 +213,22 @@ func BuyTicket(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var ticket models.Ticket
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := app.DB.FindOne(ctx, ticketsCollection, map[string]any{"eventid": eventID, "ticketid": ticketID}, &ticket); err != nil {
+		ticketPtr, err := uc.GetTicketByID(ctx, eventID, ticketID)
+		if err != nil {
 			http.Error(w, "Ticket not found", http.StatusNotFound)
 			return
 		}
+		ticket := *ticketPtr
 
 		if ticket.Quantity < body.Quantity {
 			http.Error(w, "Not enough tickets available", http.StatusBadRequest)
 			return
 		}
 
-		if err := app.DB.UpdateOne(ctx,
-			ticketsCollection,
-			map[string]any{"eventid": eventID, "ticketid": ticketID},
-			map[string]any{"$inc": map[string]any{"quantity": -body.Quantity, "available": -body.Quantity}},
-		); err != nil {
+		if _, err := uc.PurchaseTicket(ctx, eventID, ticketID, body.Quantity); err != nil {
 			http.Error(w, "Failed to update ticket quantity", http.StatusInternalServerError)
 			return
 		}

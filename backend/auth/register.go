@@ -2,20 +2,17 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
 	"time"
 
+	"naevis/auth/delivery"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
-
-	"naevis/auth/repo"
-	aus "naevis/auth/usecase"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -33,38 +30,7 @@ var (
 ============================================================ */
 
 func Register(app *infra.Deps) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
-		uc := aus.NewAuthUsecase(repoImpl, app.MQ)
-
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-		defer cancel()
-
-		var input SignUpRequest
-		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid input")
-			return
-		}
-
-		userModel, err := BuildUser(input)
-		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Registration failed")
-			return
-		}
-
-		if err := uc.RegisterUser(ctx, userModel); err != nil {
-			if mongo.IsDuplicateKeyError(err) {
-				utils.RespondWithError(w, http.StatusConflict, "User already exists")
-				return
-			}
-			utils.RespondWithError(w, http.StatusInternalServerError, "Registration failed")
-			return
-		}
-
-		utils.RespondWithJSON(w, http.StatusCreated, SignUpResponse{
-			Message: "User registered successfully", UserID: userModel.UserID,
-		})
-	}
+	return delivery.NewRegisterHandler(app)
 }
 
 /* ============================================================

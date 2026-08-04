@@ -1,11 +1,11 @@
 package filemgr
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
-	"naevis/config/mqevent"
+	"naevis/filemgr/repo"
+	"naevis/filemgr/usecase"
 	"naevis/infra"
 	"naevis/utils"
 	log "naevis/utils/logger"
@@ -87,29 +87,18 @@ func FiledropHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		uc := usecase.NewFileUsecase(repo.NewMongoRepo(app.DB), app.MQ)
+
 		if entityId != "" {
-			if err := updateEntityMedia(app, entityType, entityId, attachments); err != nil {
+			if err := uc.UpdateEntityMedia(ctx, entityType, entityId, attachments); err != nil {
 				log.Printf("[Filedrop] failed updating entity media: %v", err)
 				utils.RespondWithError(w, http.StatusInternalServerError, "failed to update entity media: "+err.Error())
 				return
 			}
 		}
 
-		// FIX 3: Populate MQ event payload with actual metadata instead of an empty struct
-		payload := mqevent.FileCreatedPayload{
-			UserID:     userid,
-			EntityType: entityType,
-			EntityID:   entityId,
-			Count:      len(attachments),
-		}
-
-		mqpayload, err := json.Marshal(payload)
-		if err != nil {
-			log.Printf("[Filedrop] failed to marshal FileCreatedEvent payload: %v", err)
-		} else {
-			if err := app.MQ.Publish(ctx, mqevent.FileCreatedEvent, mqpayload); err != nil { // #nosec G104
-				log.Printf("[Filedrop] Failed to publish FileCreatedEvent: %v", err)
-			}
+		if err := uc.PublishFileCreatedEvent(ctx, userid, entityType, entityId, attachments); err != nil {
+			log.Printf("[Filedrop] failed to publish FileCreatedEvent: %v", err)
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, convertToAttachments(attachments))

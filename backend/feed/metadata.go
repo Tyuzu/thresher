@@ -3,6 +3,9 @@ package feed
 import (
 	"context"
 	"encoding/json"
+	feedmodels "naevis/feed/models"
+	"naevis/feed/repo"
+	"naevis/feed/usecase"
 	"naevis/infra"
 	"naevis/utils"
 	"net/http"
@@ -14,7 +17,7 @@ func GetPostsMetadata(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 		defer cancel()
 
-		var req BulkMetadataRequest
+		var req feedmodels.BulkMetadataRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.IDs) == 0 {
 			http.Error(w, "invalid body", http.StatusBadRequest)
 			return
@@ -23,32 +26,13 @@ func GetPostsMetadata(app *infra.Deps) http.HandlerFunc {
 		userID, _ := r.Context().Value("userId").(string)
 		postIDs := req.IDs
 
-		likeCounts, err := AggregateLikeCounts(ctx, app, postIDs)
+		repoImpl := repo.NewMongoRepo(app.DB, app.Cache)
+		uc := usecase.NewFeedUsecase(repoImpl)
+
+		result, err := uc.GetPostsMetadata(ctx, userID, postIDs)
 		if err != nil {
-			http.Error(w, "Failed to aggregate likes", http.StatusInternalServerError)
+			http.Error(w, "Failed to fetch metadata", http.StatusInternalServerError)
 			return
-		}
-
-		commentCounts, err := AggregateCommentCounts(ctx, app, postIDs)
-		if err != nil {
-			http.Error(w, "Failed to aggregate comments", http.StatusInternalServerError)
-			return
-		}
-
-		likedByUser, err := FindLikedPostIDsByUser(ctx, app, userID, postIDs)
-		if err != nil {
-			likedByUser = map[string]bool{}
-		}
-
-		// --- Assemble final response ---
-		result := make([]PostMetadata, 0, len(postIDs))
-		for _, pid := range postIDs {
-			result = append(result, PostMetadata{
-				PostID:      pid,
-				Likes:       likeCounts[pid],
-				Comments:    commentCounts[pid],
-				LikedByUser: likedByUser[pid],
-			})
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, result)

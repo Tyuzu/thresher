@@ -20,20 +20,26 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthUsecase struct {
+type AuthUseCase struct {
 	repo domain.AuthRepository
 	mq   mq.MQ
 }
 
-func NewAuthUsecase(r domain.AuthRepository, mqclient mq.MQ) *AuthUsecase {
-	return &AuthUsecase{repo: r, mq: mqclient}
+type AuthUsecase = AuthUseCase
+
+func NewAuthUseCase(r domain.AuthRepository, mqclient mq.MQ) *AuthUseCase {
+	return &AuthUseCase{repo: r, mq: mqclient}
 }
 
-func (u *AuthUsecase) RegisterUser(ctx context.Context, user models.User) error {
+func NewAuthUsecase(r domain.AuthRepository, mqclient mq.MQ) *AuthUseCase {
+	return NewAuthUseCase(r, mqclient)
+}
+
+func (u *AuthUseCase) RegisterUser(ctx context.Context, user models.User) error {
 	return u.repo.CreateUser(ctx, user)
 }
 
-func (u *AuthUsecase) AuthenticateAndCreateSession(ctx context.Context, username, password, uaHash string, ipPrefix string) (string, string, string, error) {
+func (u *AuthUseCase) AuthenticateAndCreateSession(ctx context.Context, username, password, uaHash string, ipPrefix string) (string, string, string, error) {
 	user, err := u.repo.FindUserByUsername(ctx, username)
 	if err != nil {
 		return "", "", "", err
@@ -70,7 +76,7 @@ func (u *AuthUsecase) AuthenticateAndCreateSession(ctx context.Context, username
 	return accessToken, refreshToken, user.UserID, nil
 }
 
-func (u *AuthUsecase) RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Request) (string, string, bool, error) {
+func (u *AuthUseCase) RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Request) (string, string, bool, error) {
 	now := time.Now()
 	hashed := HashRefreshToken(rawToken)
 
@@ -114,7 +120,7 @@ func (u *AuthUsecase) RefreshTokenFromCookie(ctx context.Context, rawToken strin
 	return accessToken, newRefresh, false, nil
 }
 
-func (u *AuthUsecase) ProcessOTPRequest(ctx context.Context, email string) error {
+func (u *AuthUseCase) ProcessOTPRequest(ctx context.Context, email string) error {
 	otp, err := GenerateOTP(6)
 	if err != nil {
 		return err
@@ -130,7 +136,7 @@ func (u *AuthUsecase) ProcessOTPRequest(ctx context.Context, email string) error
 	return nil
 }
 
-func (u *AuthUsecase) ProcessOTPVerification(ctx context.Context, email, inputOTP string) error {
+func (u *AuthUseCase) ProcessOTPVerification(ctx context.Context, email, inputOTP string) error {
 	storedHashedOTP, err := u.repo.GetOTPCache(ctx, email)
 	if err != nil || len(storedHashedOTP) == 0 {
 		return err
@@ -200,11 +206,11 @@ func UAHash(r *http.Request) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func (u *AuthUsecase) ProcessSingleLogout(ctx context.Context, rawRefreshToken string) error {
+func (u *AuthUseCase) ProcessSingleLogout(ctx context.Context, rawRefreshToken string) error {
 	hashed := HashRefreshToken(rawRefreshToken)
 	return u.repo.LogoutUserByRefreshToken(ctx, hashed)
 }
 
-func (u *AuthUsecase) ProcessGlobalLogout(ctx context.Context, userID string) error {
+func (u *AuthUseCase) ProcessGlobalLogout(ctx context.Context, userID string) error {
 	return u.repo.LogoutAllUserSessions(ctx, userID)
 }

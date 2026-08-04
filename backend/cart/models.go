@@ -1,6 +1,7 @@
 package cart
 
 import (
+	"fmt"
 	"naevis/models"
 	"time"
 )
@@ -12,11 +13,28 @@ type removeFromCartRequest struct {
 	EntityType string `json:"entityType,omitempty"`
 }
 
+func (r removeFromCartRequest) validate() error {
+	if r.ItemID == "" || r.Category == "" {
+		return fmt.Errorf("itemId and category are required")
+	}
+	return nil
+}
+
 type placeOrderRequest struct {
 	Address       string                       `json:"address"`
 	Items         map[string][]models.CartItem `json:"items"`
 	PaymentMethod string                       `json:"paymentMethod"`
 	Coupon        string                       `json:"coupon"`
+}
+
+func (p placeOrderRequest) validate() error {
+	if p.Address == "" {
+		return fmt.Errorf("address is required")
+	}
+	if len(p.Items) == 0 {
+		return fmt.Errorf("no items in checkout")
+	}
+	return nil
 }
 
 type combinedOrder struct {
