@@ -12,12 +12,10 @@ import (
 )
 
 var (
-	farmsCollection      = config.Collections.FarmsCollection
 	cropsCollection      = config.Collections.CropsCollection
-	cropsAboutCollection = config.Collections.CropsAboutCollection
-	farmOrdersCollection = config.Collections.FarmOrdersCollection
+	farmsCollection      = config.Collections.FarmsCollection
 	usersCollection      = config.Collections.UserCollection
-	catalogueCollection  = config.Collections.CatalogueCollection
+	farmOrdersCollection = config.Collections.FarmOrdersCollection
 	productsCollection   = config.Collections.ProductCollection
 )
 

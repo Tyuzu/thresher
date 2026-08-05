@@ -1,4 +1,4 @@
-package baito
+package workers
 
 import (
 	"net/http"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"naevis/baito"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
@@ -23,7 +24,7 @@ func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M
 	var worker models.BaitoWorker
 	update := bson.M{"$set": bson.M{}}
 
-	if err := parseMultipartFormWithLimit(r); err != nil {
+	if err := baito.ParseMultipartFormWithLimit(r); err != nil {
 		return worker, update, err
 	}
 	defer r.MultipartForm.RemoveAll()

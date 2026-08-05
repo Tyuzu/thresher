@@ -11,26 +11,24 @@ import (
 	"naevis/models"
 	"naevis/utils"
 	"naevis/utils/logger"
-
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 /* ------------------ DELETE ------------------ */
-
 func DeleteBaito(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		userID := utils.GetUserIDFromRequest(r)
 		baitoID := utils.GetParam(r, "baitoid")
 
-		err := deleteBaitoRecord(ctx, app, baitoID, userID)
+		deletedCount, err := deleteBaitoRecord(ctx, app, baitoID, userID)
 		if err != nil {
-			if err == mongo.ErrNoDocuments {
-				utils.RespondWithError(w, http.StatusForbidden, "Baito not found or unauthorized")
-				return
-			}
 			logger.Printf("Delete error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete baito")
+			return
+		}
+
+		if deletedCount == 0 {
+			utils.RespondWithError(w, http.StatusForbidden, "Baito not found or unauthorized")
 			return
 		}
 
@@ -46,7 +44,7 @@ func ApplyToBaito(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		if err := parseMultipartFormWithLimit(r); err != nil {
+		if err := ParseMultipartFormWithLimit(r); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid form data")
 			return
 		}

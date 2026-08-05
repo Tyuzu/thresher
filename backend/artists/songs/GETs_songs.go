@@ -1,4 +1,4 @@
-package artists
+package songs
 
 import (
 	"context"

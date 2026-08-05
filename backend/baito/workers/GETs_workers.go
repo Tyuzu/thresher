@@ -1,4 +1,4 @@
-package baito
+package workers
 
 import (
 	"context"
@@ -24,20 +24,16 @@ func GetWorkerById(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var worker models.BaitoWorker
-		err := app.DB.FindOne(
-			ctx,
-			BaitoWorkersCollection,
-			bson.M{"baitoWorkerId": utils.GetParam(r, "workerId")},
-			&worker,
-		)
+		workerID := utils.GetParam(r, "workerId")
+		worker, err := findWorkerByIDFromDB(ctx, app, workerID)
 		if err != nil {
-			if errors.Is(err, mongo.ErrNoDocuments) {
-				utils.RespondWithError(w, http.StatusNotFound, "Worker not found")
-			} else {
-				log.Printf("DB error: %v", err)
-				utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch worker")
-			}
+			log.Printf("DB error: %v", err)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch worker")
+			return
+		}
+
+		if worker.BaitoWorkerId == "" {
+			utils.RespondWithError(w, http.StatusNotFound, "Worker not found")
 			return
 		}
 

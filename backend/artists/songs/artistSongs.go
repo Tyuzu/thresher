@@ -1,4 +1,4 @@
-package artists
+package songs
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"naevis/artists"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
@@ -106,7 +107,7 @@ func EditSong(app *infra.Deps) http.HandlerFunc {
 		// Delegated BSON mapping and persistence to the repo function
 		_, err := UpdateArtistSongFromPayload(ctx, app.DB, artistID, songID, payload)
 		if err != nil {
-			if errors.Is(err, ErrNoFieldsToUpdate) {
+			if errors.Is(err, artists.ErrNoFieldsToUpdate) {
 				utils.RespondWithError(w, http.StatusBadRequest, "No fields to update")
 				return
 			}

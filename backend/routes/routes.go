@@ -2,9 +2,12 @@ package routes
 
 import (
 	"naevis/artists"
+	"naevis/artists/musicon"
+	"naevis/artists/songs"
 	"naevis/auth"
 	"naevis/autocomplete"
 	"naevis/baito"
+	"naevis/baito/workers"
 	"naevis/beats"
 	"naevis/booking"
 	"naevis/cart"
@@ -12,6 +15,8 @@ import (
 	"naevis/events"
 	"naevis/fanmade"
 	"naevis/farms"
+	"naevis/farms/crops"
+	"naevis/farms/products"
 	"naevis/feed"
 	"naevis/hashtags"
 	"naevis/home"
@@ -27,12 +32,10 @@ import (
 	"naevis/metrics/ads"
 	"naevis/metrics/analytics"
 	"naevis/middleware"
-	"naevis/musicon"
 	"naevis/newchat"
 	"naevis/notices"
 	"naevis/places"
 	"naevis/posts"
-	"naevis/products"
 	"naevis/profile"
 	"naevis/recipes"
 	"naevis/reviews"
@@ -92,14 +95,14 @@ func AddBaitoRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mid
 	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/applications", authmidware(baito.GetMyApplications(app)))
 
 	// Profile creation → require auth
-	router.HandlerFunc(http.MethodPost, "/api/v1/baitos/profile", authmidware(baito.CreateWorkerProfile(app)))
-	router.HandlerFunc(http.MethodPatch, "/api/v1/baitos/profile/:workerId", authmidware(baito.UpdateWorkerProfile(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/baitos/profile", authmidware(workers.CreateWorkerProfile(app)))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/baitos/profile/:workerId", authmidware(workers.UpdateWorkerProfile(app)))
 
 	// Worker directory (probably private) → require auth
-	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/workers", rateLimiter.Limit(baito.GetWorkers(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/workers", rateLimiter.Limit(workers.GetWorkers(app)))
 
-	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/workers/skills", rateLimiter.Limit(baito.GetWorkerSkills(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/worker/:workerId", rateLimiter.Limit(baito.GetWorkerById(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/workers/skills", rateLimiter.Limit(workers.GetWorkerSkills(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/baitos/worker/:workerId", rateLimiter.Limit(workers.GetWorkerById(app)))
 }
 
 func AddBeatRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
@@ -316,56 +319,56 @@ func RegisterFarmRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter 
 	router.HandlerFunc(http.MethodDelete, "/api/v1/farms/farm/:id", rateLimiter.Limit(authmidware(farms.DeleteFarm(app))))
 
 	// 🌱 Crops (within farm)
-	router.HandlerFunc(http.MethodPost, "/api/v1/farms/farm/:id/crops", rateLimiter.Limit(authmidware(farms.AddCrop(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/farms/farm/:id/crops/:cropid", rateLimiter.Limit(authmidware(farms.EditCrop(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/farms/farm/:id/crops/:cropid", rateLimiter.Limit(authmidware(farms.DeleteCrop(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/farms/farm/:id/crops/:cropid/buy", rateLimiter.Limit(authmidware(farms.BuyCrop(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farms/farm/:id/crops", rateLimiter.Limit(authmidware(crops.AddCrop(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/farms/farm/:id/crops/:cropid", rateLimiter.Limit(authmidware(crops.EditCrop(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/farms/farm/:id/crops/:cropid", rateLimiter.Limit(authmidware(crops.DeleteCrop(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/farms/farm/:id/crops/:cropid/buy", rateLimiter.Limit(authmidware(products.BuyCrop(app))))
 
 	// 📊 Dashboard
 	router.HandlerFunc(http.MethodGet, "/api/v1/dash/farms", authmidware(farms.GetFarmDash(app)))
 
 	// 📦 Farm Orders
-	router.HandlerFunc(http.MethodGet, "/api/v1/orders/mine", authmidware(farms.GetMyFarmOrders(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/orders/incoming", authmidware(farms.GetIncomingFarmOrders(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/orders/mine", authmidware(products.GetMyFarmOrders(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/orders/incoming", authmidware(products.GetIncomingFarmOrders(app)))
 
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/accept", rateLimiter.Limit(authmidware(farms.AcceptOrder(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/reject", rateLimiter.Limit(authmidware(farms.RejectOrder(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/deliver", rateLimiter.Limit(authmidware(farms.MarkOrderDelivered(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/markpaid", rateLimiter.Limit(authmidware(farms.MarkOrderPaid(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/farmorders/order/:id/receipt", authmidware(farms.DownloadReceipt(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/accept", rateLimiter.Limit(authmidware(products.AcceptOrder(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/reject", rateLimiter.Limit(authmidware(products.RejectOrder(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/deliver", rateLimiter.Limit(authmidware(products.MarkOrderDelivered(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/order/:id/markpaid", rateLimiter.Limit(authmidware(products.MarkOrderPaid(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/farmorders/order/:id/receipt", authmidware(products.DownloadReceipt(app)))
 	// Bulk actions
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/accept", rateLimiter.Limit(authmidware(farms.BulkAcceptOrders(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/reject", rateLimiter.Limit(authmidware(farms.BulkRejectOrders(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/deliver", rateLimiter.Limit(authmidware(farms.BulkMarkOrdersDelivered(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/accept", rateLimiter.Limit(authmidware(products.BulkAcceptOrders(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/reject", rateLimiter.Limit(authmidware(products.BulkRejectOrders(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farmorders/bulk/deliver", rateLimiter.Limit(authmidware(products.BulkMarkOrdersDelivered(app))))
 
 	// 🌾 Crop catalogue & type browsing
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops", farms.GetFilteredCrops(app))                 // Public
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops/catalogue", farms.GetCropCatalogue(app))       // Public
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops/precatalogue", farms.GetPreCropCatalogue(app)) // Public
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops/types", farms.GetCropTypes(app))               // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops", crops.GetFilteredCrops(app))                 // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops/catalogue", crops.GetCropCatalogue(app))       // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops/precatalogue", crops.GetPreCropCatalogue(app)) // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops/types", crops.GetCropTypes(app))               // Public
 	router.HandlerFunc(http.MethodGet, "/api/v1/crops/crop/:cropname", middleware.OptionalAuth(farms.GetCropTypeFarms(app)))
 
 	// Crop Wiki
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops/about", rateLimiter.Limit(farms.GetAllCropAboutsHandler(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/crops/about", rateLimiter.Limit(farms.CreateCropAboutHandler(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.GetCropAboutHandler(app)))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.DeleteCropAboutHandler(app)))
-	router.HandlerFunc(http.MethodPut, "/api/v1/crops/about/:cropid", rateLimiter.Limit(farms.UpdateCropAboutHandler(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops/about", rateLimiter.Limit(crops.GetAllCropAboutsHandler(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/crops/about", rateLimiter.Limit(crops.CreateCropAboutHandler(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/crops/about/:cropid", rateLimiter.Limit(crops.GetCropAboutHandler(app)))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/crops/about/:cropid", rateLimiter.Limit(crops.DeleteCropAboutHandler(app)))
+	router.HandlerFunc(http.MethodPut, "/api/v1/crops/about/:cropid", rateLimiter.Limit(crops.UpdateCropAboutHandler(app)))
 
 	// 🛒 Items, Products, Tools
 	// -- GET
-	router.HandlerFunc(http.MethodGet, "/api/v1/farm/items", farms.GetItems(app))                     // Public
-	router.HandlerFunc(http.MethodGet, "/api/v1/farm/items/categories", farms.GetItemCategories(app)) // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/farm/items", products.GetItems(app))                     // Public
+	router.HandlerFunc(http.MethodGet, "/api/v1/farm/items/categories", products.GetItemCategories(app)) // Public
 
 	// -- Products (CRUD)
-	router.HandlerFunc(http.MethodPost, "/api/v1/farm/product", rateLimiter.Limit(authmidware(farms.CreateProduct(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/farm/product/:id", rateLimiter.Limit(authmidware(farms.UpdateProduct(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/farm/product/:id", rateLimiter.Limit(authmidware(farms.DeleteProduct(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farm/product", rateLimiter.Limit(authmidware(products.CreateProduct(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/farm/product/:id", rateLimiter.Limit(authmidware(products.UpdateProduct(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/farm/product/:id", rateLimiter.Limit(authmidware(products.DeleteProduct(app))))
 
 	// -- Tools (CRUD)
-	router.HandlerFunc(http.MethodPost, "/api/v1/farm/tool", rateLimiter.Limit(authmidware(farms.CreateTool(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/farm/tool/:id", rateLimiter.Limit(authmidware(farms.UpdateTool(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/farm/tool/:id", rateLimiter.Limit(authmidware(farms.DeleteTool(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/farm/tool", rateLimiter.Limit(authmidware(products.CreateTool(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/farm/tool/:id", rateLimiter.Limit(authmidware(products.UpdateTool(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/farm/tool/:id", rateLimiter.Limit(authmidware(products.DeleteTool(app))))
 
 	// 🖼 Upload
 	// router.HandlerFunc(http.MethodPost,"/api/v1/upload/images", rateLimiter.Limit(authmidware(utils.UploadImages)))
@@ -554,7 +557,7 @@ func AddArtistRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mi
 	router.HandlerFunc(http.MethodGet, "/api/v1/artists", rateLimiter.Limit(artists.GetAllArtists(app)))
 	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id", rateLimiter.Limit(artists.GetArtistByID(app)))
 	router.HandlerFunc(http.MethodGet, "/api/v1/events/event/:eventid/artists", rateLimiter.Limit(artists.GetArtistsByEvent(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/songs", rateLimiter.Limit(artists.GetArtistsSongs(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/songs", rateLimiter.Limit(songs.GetArtistsSongs(app)))
 	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/albums", rateLimiter.Limit(artists.GetArtistsAlbums(app)))
 	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/posts", rateLimiter.Limit(artists.GetArtistsPosts(app)))
 	router.HandlerFunc(http.MethodGet, "/api/v1/artists/:id/merch", rateLimiter.Limit(artists.GetArtistsMerch(app)))
@@ -578,9 +581,9 @@ func AddArtistRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mi
 	router.HandlerFunc(http.MethodDelete, "/api/v1/artists/:id/members/:memberId",
 		rateLimiter.Limit(authmidware(artists.DeleteArtistMember(app))))
 
-	router.HandlerFunc(http.MethodPost, "/api/v1/artists/:id/songs", rateLimiter.Limit(authmidware(artists.PostNewSong(app))))
-	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id/songs/:songId/edit", rateLimiter.Limit(authmidware(artists.EditSong(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/artists/:id/songs/:songId", rateLimiter.Limit(authmidware(artists.DeleteSong(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/artists/:id/songs", rateLimiter.Limit(authmidware(songs.PostNewSong(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id/songs/:songId/edit", rateLimiter.Limit(authmidware(songs.EditSong(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/artists/:id/songs/:songId", rateLimiter.Limit(authmidware(songs.DeleteSong(app))))
 
 	router.HandlerFunc(http.MethodPut, "/api/v1/artists/:id/events/addtoevent", rateLimiter.Limit(authmidware(artists.AddArtistToEvent(app))))
 	router.HandlerFunc(http.MethodPost, "/api/v1/artists/:id/events", rateLimiter.Limit(authmidware(artists.CreateArtistEvent(app))))

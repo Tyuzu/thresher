@@ -1,4 +1,4 @@
-package farms
+package products
 
 import (
 	"context"
