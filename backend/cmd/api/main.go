@@ -11,9 +11,9 @@ import (
 
 	"naevis/config"
 	"naevis/infra"
-	"naevis/mechat"
+	"naevis/internal/mechat"
+	"naevis/internal/newchat"
 	"naevis/middleware"
-	"naevis/newchat"
 	"naevis/routes"
 	"naevis/utils/logger"
 

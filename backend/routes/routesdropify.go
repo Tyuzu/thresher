@@ -3,8 +3,8 @@ package routes
 import (
 	"net/http"
 
-	"naevis/filemgr"
 	"naevis/infra"
+	"naevis/internal/filemgr"
 	"naevis/middleware"
 
 	"github.com/julienschmidt/httprouter"

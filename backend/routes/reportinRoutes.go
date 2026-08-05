@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"naevis/infra"
+	"naevis/internal/reports"
 	"naevis/middleware"
-	"naevis/reports"
 
 	"github.com/julienschmidt/httprouter"
 )

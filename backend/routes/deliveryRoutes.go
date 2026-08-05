@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"naevis/deliveries"
 	"naevis/infra"
+	"naevis/internal/deliveries"
 	"naevis/middleware"
 	"net/http"
 

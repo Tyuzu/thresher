@@ -2,8 +2,8 @@ package routes
 
 import (
 	"naevis/infra"
+	places "naevis/internal/places/tabs"
 	"naevis/middleware"
-	places "naevis/places/tabs"
 
 	"github.com/julienschmidt/httprouter"
 )
