@@ -3,16 +3,16 @@ package auth
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
-	"net/http"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 /* ============================================================
@@ -77,22 +77,8 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 	// Refresh token reuse detection
 	// -----------------------
 	if user.RefreshPrev == hashed {
-		// Invalidate entire session
-		_ = app.DB.Update(
-			ctx,
-			UsersCollection,
-			bson.M{"userid": user.UserID},
-			bson.M{
-				"$set": bson.M{
-					"refresh_token":  nil,
-					"refresh_prev":   nil,
-					"refresh_expiry": nil,
-					"refresh_ua":     nil,
-					"updated_at":     now,
-				},
-			},
-		)
-
+		// Invalidate entire session via repo function
+		_ = InvalidateUserSession(ctx, app, user.UserID)
 		return &RefreshResult{ClearCookie: true}, fmt.Errorf("refresh token reuse detected")
 	}
 
@@ -100,21 +86,8 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 	// UA binding validation
 	// -----------------------
 	if user.RefreshUA != uaHash(r) {
-		_ = app.DB.Update(
-			ctx,
-			UsersCollection,
-			bson.M{"userid": user.UserID},
-			bson.M{
-				"$set": bson.M{
-					"refresh_token":  nil,
-					"refresh_prev":   nil,
-					"refresh_expiry": nil,
-					"refresh_ua":     nil,
-					"updated_at":     now,
-				},
-			},
-		)
-
+		// Invalidate entire session via repo function
+		_ = InvalidateUserSession(ctx, app, user.UserID)
 		return &RefreshResult{ClearCookie: true}, fmt.Errorf("session invalidated")
 	}
 

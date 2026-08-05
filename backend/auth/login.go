@@ -21,13 +21,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Named domain errors for exact error type assertions at the HTTP Layer
-var (
-	ErrAuthInvalidCredentials = errors.New("invalid credentials")
-	ErrTokenGeneration        = errors.New("token error")
-	ErrSessionPersistence     = errors.New("session error")
-)
-
 /* ============================================================
    1. HANDLERS (HTTP LAYER)
 ============================================================ */

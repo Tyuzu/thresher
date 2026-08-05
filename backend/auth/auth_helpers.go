@@ -19,10 +19,6 @@ import (
 
 const (
 	RefreshTokenTTL = 7 * 24 * time.Hour
-	AccessTokenTTL  = 15 * time.Minute
-
-	maxFailedAttempts = 5
-	lockoutDuration   = 10 * time.Minute
 )
 
 var (

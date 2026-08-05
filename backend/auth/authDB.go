@@ -9,6 +9,7 @@ import (
 	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var UsersCollection = config.Collections.UserCollection
@@ -18,7 +19,14 @@ var UsersCollection = config.Collections.UserCollection
 ============================================================ */
 
 func CreateUser(ctx context.Context, app *infra.Deps, user models.User) error {
-	return app.DB.Insert(ctx, UsersCollection, user)
+	err := app.DB.Insert(ctx, UsersCollection, user)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return ErrUserAlreadyExists
+		}
+		return err
+	}
+	return nil
 }
 
 func FindUserByUsername(ctx context.Context, app *infra.Deps, username string) (models.User, error) {
@@ -88,17 +96,22 @@ func FindValidRefreshSession(ctx context.Context, app *infra.Deps, hashedToken s
 	return user, nil
 }
 
+// InvalidateUserSession clears all refresh token fields for a user.
 func InvalidateUserSession(ctx context.Context, app *infra.Deps, userID string) error {
-	now := time.Now()
-	return app.DB.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
-		"$set": bson.M{
-			"refresh_token":  nil,
-			"refresh_prev":   nil,
-			"refresh_expiry": nil,
-			"refresh_ua":     nil,
-			"updated_at":     now,
+	return app.DB.Update(
+		ctx,
+		UsersCollection,
+		bson.M{"userid": userID},
+		bson.M{
+			"$set": bson.M{
+				"refresh_token":  nil,
+				"refresh_prev":   nil,
+				"refresh_expiry": nil,
+				"refresh_ua":     nil,
+				"updated_at":     time.Now(),
+			},
 		},
-	})
+	)
 }
 
 func RotateRefreshTokenForUser(ctx context.Context, app *infra.Deps, userID, newRefreshHash, prevRefreshHash, ua string) error {

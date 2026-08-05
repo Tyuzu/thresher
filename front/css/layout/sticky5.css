@@ -12,8 +12,9 @@
   align-items: center;
   justify-content: space-around;
   width: 100%;
-  max-width: 480px;
-  /*padding: var(--space-xxs) var(--space-sm);*/
+  max-width: 380px;
+  /*max-width: 480px;
+  padding: var(--space-xxs) var(--space-sm);*/
   z-index: 100;
 }
 
@@ -45,6 +46,7 @@
 .plypzstp .icon-wrapper,
 .plypzstp svg {
   pointer-events: none;
+  display: flex;
 }
 
 .plypzstp svg.clrful {

@@ -30,7 +30,7 @@
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: var(--container-padding);
+  padding: var(--space-sm) 0;
   box-sizing: border-box;
 }
 

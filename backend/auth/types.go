@@ -1,5 +1,7 @@
 package auth
 
+import "time"
+
 type SignUpRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -11,6 +13,12 @@ type SignUpResponse struct {
 	UserID  string `json:"userid"`
 }
 
+const (
+	AccessTokenTTL    = 15 * time.Minute
+	maxFailedAttempts = 5
+	lockoutDuration   = 15 * time.Minute
+)
+
 type LoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -20,7 +28,7 @@ type LoginResponse struct {
 	Message string `json:"message"`
 	Status  int    `json:"status"`
 	Token   string `json:"token"`
-	UserID  string `json:"userid"`
+	UserID  string `json:"user_id"`
 }
 
 // Structural Data Transfers

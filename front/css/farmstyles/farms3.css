@@ -8,12 +8,12 @@
   width: 100%;
   max-width: var(--max-width-xl);
   margin: 0 auto;
-  padding: var(--container-padding);
+  padding: var(--space-sm);
   font-family: var(--font-body);
   color: var(--color-fg);
   background-color: var(--color-bg);
 }
-
+/*
 .two-column.farm-page {
   display: grid;
   grid-template-columns: 1fr;
@@ -25,7 +25,7 @@
     grid-template-columns: 1fr 320px;
   }
 }
-
+*/
 /* Main Content Layout */
 .layout-main {
   display: flex;

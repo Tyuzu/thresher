@@ -14,15 +14,7 @@ import (
 	"naevis/models"
 	"naevis/utils"
 
-	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
-)
-
-// Custom domain errors for clean handler matching
-var (
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrPasswordHashing    = errors.New("password processing error")
-	ErrUserAlreadyExists  = errors.New("user already exists")
 )
 
 /* ============================================================
@@ -42,7 +34,7 @@ func Register(app *infra.Deps) http.HandlerFunc {
 
 		user, err := ProcessRegistration(ctx, app, input)
 		if err != nil {
-			if errors.Is(err, ErrInvalidCredentials) {
+			if errors.Is(err, ErrAuthInvalidCredentials) {
 				utils.RespondWithError(w, http.StatusBadRequest, "Invalid credentials")
 				return
 			}
@@ -75,7 +67,7 @@ func ProcessRegistration(ctx context.Context, app *infra.Deps, input SignUpReque
 	if !validateUsername(input.Username) ||
 		!validateEmail(input.Email) ||
 		!validatePassword(input.Password) {
-		return models.User{}, ErrInvalidCredentials
+		return models.User{}, ErrAuthInvalidCredentials
 	}
 
 	// Transform data and perform CPU-bound tasks
@@ -84,11 +76,8 @@ func ProcessRegistration(ctx context.Context, app *infra.Deps, input SignUpReque
 		return models.User{}, ErrPasswordHashing
 	}
 
-	// Persist changes and emit event triggers via structural layer definitions
-	if err := PersistNewUser(ctx, app, user); err != nil {
-		if mongo.IsDuplicateKeyError(err) {
-			return models.User{}, ErrUserAlreadyExists
-		}
+	// Persist changes
+	if err := CreateUser(ctx, app, user); err != nil {
 		return models.User{}, err
 	}
 
@@ -122,12 +111,4 @@ func BuildUser(input SignUpRequest) (models.User, error) {
 	}
 
 	return user, nil
-}
-
-/* ============================================================
-   3. REPOSITORIES (DATA ACCESS LAYER)
-============================================================ */
-
-func PersistNewUser(ctx context.Context, app *infra.Deps, user models.User) error {
-	return CreateUser(ctx, app, user)
 }
