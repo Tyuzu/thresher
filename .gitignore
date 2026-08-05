@@ -36,5 +36,5 @@ go.work.sum
 # .idea/
 # .vscode/
 
-static
+static/uploads
 tmp

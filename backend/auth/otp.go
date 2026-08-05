@@ -19,9 +19,9 @@ import (
 	"time"
 
 	"naevis/config/mqevent"
+	"naevis/config/myerr"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/myerr"
 	"naevis/utils"
 	"naevis/utils/logger"
 )

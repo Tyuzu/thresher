@@ -219,7 +219,6 @@ func AddCommentsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *
 
 func AddAuthRoutes(router *httprouter.Router, app *infra.Deps, limiter *middleware.RateLimiter) {
 	authmid := middleware.Authenticate(app)
-
 	// router.HandlerFunc accepts standard http.HandlerFunc directly!
 	router.HandlerFunc(http.MethodPost, "/api/v1/auth/register", limiter.Limit(auth.Register(app)))
 	router.HandlerFunc(http.MethodPost, "/api/v1/auth/login", limiter.Limit(auth.Login(app)))
