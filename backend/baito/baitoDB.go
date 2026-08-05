@@ -2,6 +2,7 @@ package baito
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"naevis/config"
@@ -23,6 +24,9 @@ func deleteBaitoRecord(ctx context.Context, app *infra.Deps, baitoID, userID str
 		"baitoid": baitoID,
 		"ownerid": userID,
 	})
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil
+	}
 	return err
 }
 
@@ -31,22 +35,34 @@ func saveBaitoApplication(ctx context.Context, app *infra.Deps, application mode
 }
 
 func incrementBaitoApplicationCount(ctx context.Context, app *infra.Deps, baitoID string) error {
-	return app.DB.Inc(ctx, BaitoCollection, bson.M{"baitoid": baitoID}, "applicationcount", 1)
+	err := app.DB.Inc(ctx, BaitoCollection, bson.M{"baitoid": baitoID}, "applicationcount", 1)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil
+	}
+	return err
 }
 
 func createBaitoRecord(ctx context.Context, app *infra.Deps, baito models.Baito) error {
 	return app.DB.Insert(ctx, BaitoCollection, baito)
 }
 
-func updateBaitoRecord(ctx context.Context, app *infra.Deps, baitoID, userID string, update bson.M) error {
-	return app.DB.UpdateOne(ctx, BaitoCollection, bson.M{
+func updateBaitoRecord(ctx context.Context, app *infra.Deps, baitoID, userID string, update bson.M) (int64, error) {
+	_, err := app.DB.UpdateOne(ctx, BaitoCollection, bson.M{
 		"baitoid": baitoID,
 		"ownerid": userID,
 	}, update)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return 0, nil
+	}
+	return 0, err
 }
 
 func findExistingWorkerProfile(ctx context.Context, app *infra.Deps, userID string, result any) error {
-	return app.DB.FindOne(ctx, BaitoWorkersCollection, bson.M{"userId": userID}, result)
+	err := app.DB.FindOne(ctx, BaitoWorkersCollection, bson.M{"userId": userID}, result)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil
+	}
+	return err
 }
 
 func createWorkerProfileRecord(ctx context.Context, app *infra.Deps, worker models.BaitoWorker) error {
@@ -54,18 +70,30 @@ func createWorkerProfileRecord(ctx context.Context, app *infra.Deps, worker mode
 }
 
 func updateWorkerProfileRecord(ctx context.Context, app *infra.Deps, workerID, userID string, update bson.M) error {
-	return app.DB.UpdateOne(ctx, BaitoWorkersCollection, bson.M{
+	_, err := app.DB.UpdateOne(ctx, BaitoWorkersCollection, bson.M{
 		"baitoWorkerId": workerID,
 		"userId":        userID,
 	}, update)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil
+	}
+	return err
 }
 
 func addWorkerRoleToUser(ctx context.Context, app *infra.Deps, userID string) error {
-	return app.DB.AddToSet(ctx, UsersCollection, bson.M{"userid": userID}, "role", "worker")
+	err := app.DB.AddToSet(ctx, UsersCollection, bson.M{"userid": userID}, "role", "worker")
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil
+	}
+	return err
 }
 
 func touchUserUpdatedAt(ctx context.Context, app *infra.Deps, userID string) error {
-	return app.DB.UpdateOne(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{"updated_at": time.Now()})
+	_, err := app.DB.UpdateOne(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{"updated_at": time.Now()})
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil
+	}
+	return err
 }
 
 func findLatestBaitosFromDB(ctx context.Context, app *infra.Deps, filter any, limit int) ([]models.BaitosResponse, error) {
@@ -74,6 +102,9 @@ func findLatestBaitosFromDB(ctx context.Context, app *infra.Deps, filter any, li
 		Limit: limit,
 		Sort:  bson.D{{Key: "createdAt", Value: -1}},
 	}, &baitos)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return []models.BaitosResponse{}, nil
+	}
 	return baitos, err
 }
 
@@ -83,12 +114,18 @@ func findRelatedBaitosFromDB(ctx context.Context, app *infra.Deps, filter any, l
 		Limit: limit,
 		Sort:  bson.D{{Key: "createdAt", Value: -1}},
 	}, &baitos)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return []models.BaitosResponse{}, nil
+	}
 	return baitos, err
 }
 
 func findBaitoByIDFromDB(ctx context.Context, app *infra.Deps, baitoID string) (models.Baito, error) {
 	var baito models.Baito
 	err := app.DB.FindOne(ctx, BaitoCollection, bson.M{"baitoid": baitoID}, &baito)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return models.Baito{}, nil
+	}
 	return baito, err
 }
 
@@ -97,12 +134,18 @@ func findMyBaitosFromDB(ctx context.Context, app *infra.Deps, userID string) ([]
 	err := app.DB.FindManyWithOptions(ctx, BaitoCollection, bson.M{"ownerId": userID}, db.FindManyOptions{
 		Sort: bson.D{{Key: "createdAt", Value: -1}},
 	}, &baitos)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return []models.BaitosResponse{}, nil
+	}
 	return baitos, err
 }
 
 func findBaitoApplicantsFromDB(ctx context.Context, app *infra.Deps, baitoID string) ([]bson.M, error) {
 	var results []bson.M
 	err := app.DB.FindMany(ctx, BaitoAppCollection, bson.M{"baitoid": baitoID}, &results)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return []bson.M{}, nil
+	}
 	return results, err
 }
 
@@ -129,5 +172,33 @@ func findMyApplicationsFromDB(ctx context.Context, app *infra.Deps, userID strin
 
 	var results []bson.M
 	err := app.DB.Aggregate(ctx, BaitoAppCollection, pipeline, &results)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return []bson.M{}, nil
+	}
 	return results, err
+}
+func getUniqueWorkerSkillsFromDB(ctx context.Context, app *infra.Deps) ([]string, error) {
+	pipeline := mongo.Pipeline{
+		{{Key: "$unwind", Value: "$preferredRoles"}},
+		{{Key: "$group", Value: bson.M{"_id": "$preferredRoles"}}},
+		{{Key: "$project", Value: bson.M{"_id": 0, "skill": "$_id"}}},
+	}
+
+	var results []bson.M
+	err := app.DB.Aggregate(ctx, BaitoWorkersCollection, pipeline, &results)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return []string{}, nil
+		}
+		return nil, err
+	}
+
+	skills := make([]string, 0, len(results))
+	for _, r := range results {
+		if s, ok := r["skill"].(string); ok && s != "" {
+			skills = append(skills, s)
+		}
+	}
+
+	return skills, nil
 }

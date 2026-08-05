@@ -48,7 +48,7 @@ func EditProfile(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// 5. Apply updates in DB
-		if err := ApplyProfileUpdates(ctx, app.DB, claims.UserID, updates); err != nil {
+		if _, err := ApplyProfileUpdates(ctx, app.DB, claims.UserID, updates); err != nil {
 			http.Error(w, "Failed to update profile", http.StatusInternalServerError)
 			return
 		}
@@ -150,7 +150,7 @@ func ApplyProfileUpdates(
 	database db.Database,
 	userID string,
 	updates map[string]any,
-) error {
+) (any, error) {
 	return database.UpdateOne(ctx, usersCollection, map[string]any{"userid": userID}, updates)
 }
 

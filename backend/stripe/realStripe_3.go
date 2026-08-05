@@ -43,7 +43,7 @@ func updatePaymentStatus(
 	amount int64,
 	paymentIntentId string,
 	app *infra.Deps,
-) error {
+) (any, error) {
 
 	var collection string
 	var idField string
@@ -56,7 +56,7 @@ func updatePaymentStatus(
 		collection = stripeOrdersCollection
 		idField = "orderid"
 	default:
-		return errors.New("invalid entityType")
+		return nil, errors.New("invalid entityType")
 	}
 
 	update := bson.M{
@@ -151,7 +151,7 @@ func PaymentSuccess(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := updatePaymentStatus(
+		if _, err := updatePaymentStatus(
 			ctx,
 			req.EntityType,
 			req.EntityId,
@@ -207,7 +207,7 @@ func StripeWebhook(app *infra.Deps) http.HandlerFunc {
 				entityId := pi.Metadata["entityId"]
 
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-				err := updatePaymentStatus(
+				_, err := updatePaymentStatus(
 					ctx,
 					entityType,
 					entityId,

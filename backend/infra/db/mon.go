@@ -174,7 +174,6 @@ func (m *MongoDatabase) FindManyWithOptions(
 	opts FindManyOptions,
 	result any,
 ) error {
-
 	filter = m.normalizeFilter(filter)
 
 	findOpts := options.Find()
@@ -212,7 +211,6 @@ func (m *MongoDatabase) FindManyWithProjection(
 	opts FindManyOptions,
 	result any,
 ) error {
-
 	filter = m.normalizeFilter(filter)
 
 	findOpts := options.Find()
@@ -256,29 +254,29 @@ func (m *MongoDatabase) Distinct(ctx context.Context, collection string, field s
 
 /* -------------------- Update -------------------- */
 
-func (m *MongoDatabase) Update(ctx context.Context, collection string, filter any, update any) error {
+func (m *MongoDatabase) Update(ctx context.Context, collection string, filter any, update any) (any, error) {
 	return m.UpdateOne(ctx, collection, filter, update)
 }
 
-func (m *MongoDatabase) UpdateOne(ctx context.Context, collection string, filter any, update any) error {
+func (m *MongoDatabase) UpdateOne(ctx context.Context, collection string, filter any, update any) (any, error) {
 	filter = m.normalizeFilter(filter)
 	update = normalizeUpdateDocument(update)
 
-	_, err := m.collection(collection).UpdateOne(ctx, filter, update)
-	return err
+	res, err := m.collection(collection).UpdateOne(ctx, filter, update)
+	return res, err
 }
 
-func (m *MongoDatabase) UpdateMany(ctx context.Context, collection string, filter any, update any) error {
+func (m *MongoDatabase) UpdateMany(ctx context.Context, collection string, filter any, update any) (any, error) {
 	filter = m.normalizeFilter(filter)
 	update = normalizeUpdateDocument(update)
 
-	_, err := m.collection(collection).UpdateMany(ctx, filter, update)
-	return err
+	res, err := m.collection(collection).UpdateMany(ctx, filter, update)
+	return res, err
 }
 
-func (m *MongoDatabase) Upsert(ctx context.Context, collection string, filter any, update any) error {
+func (m *MongoDatabase) Upsert(ctx context.Context, collection string, filter any, document any) error {
 	filter = m.normalizeFilter(filter)
-	update = normalizeUpdateDocument(update)
+	update := normalizeUpdateDocument(document)
 
 	opts := options.Update().SetUpsert(true)
 

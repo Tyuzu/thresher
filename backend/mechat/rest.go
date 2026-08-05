@@ -277,7 +277,7 @@ func UploadAttachment(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// update chat metadata (non-critical)
-		_ = app.DB.UpdateOne(
+		_, _ = app.DB.UpdateOne(
 			ctx,
 			MereChatCollection,
 			map[string]any{"chatid": chatID},

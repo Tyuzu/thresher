@@ -262,7 +262,7 @@ func CreateOrUpdatePost(
 			"updatedAt":   now,
 		}
 
-		if err := app.DB.UpdateOne(
+		if _, err := app.DB.UpdateOne(
 			ctx,
 			blogPostsCollection,
 			filter,

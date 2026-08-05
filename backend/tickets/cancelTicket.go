@@ -85,7 +85,7 @@ func CancelTicket(app *infra.Deps) http.HandlerFunc {
 		if ticket.Price <= 0 {
 			// Free ticket - no refund needed
 			// Mark as canceled without refund
-			if err := app.DB.Update(
+			if _, err := app.DB.Update(
 				ctx,
 				purchasedTicketsCollection,
 				bson.M{
@@ -140,7 +140,7 @@ func CancelTicket(app *infra.Deps) http.HandlerFunc {
 			},
 		}
 
-		if err := app.DB.Update(
+		if _, err := app.DB.Update(
 			ctx,
 			purchasedTicketsCollection,
 			bson.M{

@@ -38,7 +38,7 @@ func GetPost(app *infra.Deps) http.HandlerFunc {
 		}
 
 		post.Likes = likeCount
-		_ = UpdateFeedPostLikeCount(ctx, app, id, likeCount)
+		_, _ = UpdateFeedPostLikeCount(ctx, app, id, likeCount)
 
 		if err := json.NewEncoder(w).Encode(post); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to encode post data")

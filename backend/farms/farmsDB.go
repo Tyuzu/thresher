@@ -31,7 +31,7 @@ func getFarmByID(ctx context.Context, database db.Database, farmID string) (mode
 	return farm, err
 }
 
-func updateOwnedFarm(ctx context.Context, database db.Database, farmID, userID string, update any) error {
+func updateOwnedFarm(ctx context.Context, database db.Database, farmID, userID string, update any) (any, error) {
 	return database.UpdateOne(ctx, farmsCollection, bson.M{"farmid": farmID, "userid": userID}, update)
 }
 

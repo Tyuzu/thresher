@@ -103,7 +103,7 @@ func UnlikeSong(app *infra.Deps) http.HandlerFunc {
 			},
 		}
 
-		err := app.DB.UpdateOne(ctx, playlistsCollection, filter, update)
+		_, err := app.DB.UpdateOne(ctx, playlistsCollection, filter, update)
 		if err != nil {
 			respondError(w, http.StatusInternalServerError, "Failed to unlike song")
 			return

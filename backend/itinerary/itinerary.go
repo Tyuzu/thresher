@@ -113,7 +113,7 @@ func UpdateItinerary(app *infra.Deps) http.HandlerFunc {
 			},
 		}
 
-		if err := updateItineraryFields(ctx, app, itineraryID, update); err != nil {
+		if _, err := updateItineraryFields(ctx, app, itineraryID, update); err != nil {
 			http.Error(w, "Error updating itinerary", http.StatusInternalServerError)
 			return
 		}
@@ -138,7 +138,7 @@ func DeleteItinerary(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := softDeleteItinerary(ctx, app, itineraryID, userID); err != nil {
+		if _, err := softDeleteItinerary(ctx, app, itineraryID, userID); err != nil {
 			http.Error(w, "Itinerary not found or forbidden", http.StatusNotFound)
 			return
 		}
@@ -209,7 +209,7 @@ func PublishItinerary(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := publishItinerary(ctx, app, id, userID); err != nil {
+		if _, err := publishItinerary(ctx, app, id, userID); err != nil {
 			http.Error(w, "Itinerary not found or forbidden", http.StatusNotFound)
 			return
 		}

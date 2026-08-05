@@ -9,4 +9,5 @@ var (
 	ErrEventNotFound      = errors.New("event not found")
 	ErrArtistAlreadyAdded = errors.New("artist already added to this event")
 	ErrUpdateFailed       = errors.New("artist event not found or update failed")
+	ErrNoFieldsToUpdate   = errors.New("no field to update")
 )

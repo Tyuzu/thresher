@@ -29,7 +29,7 @@ func UpdatexMessage(userID string, id string, newContent string, app *infra.Deps
 		"$set": map[string]any{"content": newContent},
 	}
 
-	err := app.DB.UpdateOne(ctx, messagesCollection, filter, update)
+	_, err := app.DB.UpdateOne(ctx, messagesCollection, filter, update)
 	if err != nil {
 		if strings.Contains(err.Error(), "no documents") {
 			return errors.New("message not found or unauthorized")
@@ -205,7 +205,7 @@ func UploadHandler(hub *Hub, app *infra.Deps) http.HandlerFunc {
 
 		previewText := buildLastMessagePreview(msg.Content, "", nil, len(msg.Files))
 		if previewText != "" {
-			_ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": payload.Chat}, map[string]any{
+			_, _ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": payload.Chat}, map[string]any{
 				"$set": map[string]any{
 					"lastMessage": models.MessagePreview{
 						Text:      previewText,

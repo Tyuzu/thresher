@@ -95,7 +95,7 @@ func UpdateItemQuantity(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		err := updateCartItemQuantityInDB(
+		_, err := updateCartItemQuantityInDB(
 			ctx,
 			userID,
 			payload.ItemID,

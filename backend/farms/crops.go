@@ -153,7 +153,7 @@ func EditCrop(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := app.DB.UpdateOne(
+		if _, err := app.DB.UpdateOne(
 			ctx,
 			cropsCollection,
 			bson.M{"cropid": cropID},

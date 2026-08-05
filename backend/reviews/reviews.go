@@ -164,7 +164,7 @@ func EditReview(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := app.DB.Update(
+		if _, err := app.DB.Update(
 			r.Context(),
 			reviewsCollection,
 			bson.M{"reviewid": reviewId},

@@ -34,7 +34,7 @@ func CountPostLikes(ctx context.Context, app *infra.Deps, postID string) (int64,
 	})
 }
 
-func UpdateFeedPostLikeCount(ctx context.Context, app *infra.Deps, postID string, likeCount int64) error {
+func UpdateFeedPostLikeCount(ctx context.Context, app *infra.Deps, postID string, likeCount int64) (any, error) {
 	return app.DB.UpdateOne(ctx, feedpostsCollection, map[string]any{"postid": postID}, map[string]any{"likes": likeCount})
 }
 

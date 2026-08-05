@@ -92,7 +92,7 @@ func UpdatePlaceInfo(app *infra.Deps) http.HandlerFunc {
 		update["updatedBy"] = userID
 
 		// ✅ Pass plain fields (DB layer adds $set)
-		if err := app.DB.Update(
+		if _, err := app.DB.Update(
 			ctx,
 			placesCollection,
 			bson.M{"placeid": placeID},

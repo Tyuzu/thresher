@@ -212,7 +212,7 @@ func SetDateCapacity(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		err := UpdateDateCapacity(
+		_, err := UpdateDateCapacity(
 			ctx,
 			app.DB,
 			req.EntityType,

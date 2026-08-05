@@ -66,7 +66,7 @@ func EditPlace(app *infra.Deps) http.HandlerFunc {
 		updateFields["updatedBy"] = requestingUserID
 
 		// ✅ Update using placeid and plain fields
-		if err := app.DB.Update(
+		if _, err := app.DB.Update(
 			ctx,
 			placesCollection,
 			bson.M{"placeid": placeID},

@@ -135,7 +135,7 @@ func UpdateComment(app *infra.Deps) http.HandlerFunc {
 			"updated_at": time.Now(),
 		}}
 
-		if err := updateCommentContent(ctx, app.DB, commentID, update); err != nil {
+		if _, err := updateCommentContent(ctx, app.DB, commentID, update); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "DB update failed")
 			return
 		}

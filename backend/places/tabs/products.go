@@ -165,7 +165,7 @@ func PutProduct(app *infra.Deps) httprouter.Handle {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := app.DB.UpdateOne(ctx,
+		if _, err := app.DB.UpdateOne(ctx,
 			productsCollection,
 			map[string]any{"_id": id},
 			map[string]any{

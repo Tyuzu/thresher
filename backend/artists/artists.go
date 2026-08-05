@@ -12,8 +12,6 @@ import (
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
-
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func CreateArtist(app *infra.Deps) http.HandlerFunc {
@@ -26,7 +24,7 @@ func CreateArtist(app *infra.Deps) http.HandlerFunc {
 
 		artist, _, _, err := parseArtistFormData(r, nil)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -59,49 +57,42 @@ func UpdateArtist(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		updated, updateData, filesToDelete, err := parseArtistFormData(r, &existing)
+		_, updateData, filesToDelete, err := parseArtistFormData(r, &existing)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, err.Error())
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		_ = updated
 
 		if len(updateData) == 0 {
-			utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "No changes detected"})
+			utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "No changes detected"})
 			return
 		}
 
-		err = UpdateArtistByID(ctx, app.DB, idParam, updateData)
-		if err != nil {
+		if _, err := UpdateArtistByID(ctx, app.DB, idParam, updateData); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update artist")
 			return
 		}
 
-		// Cleanup old images only after DB update succeeds
 		for _, path := range filesToDelete {
 			_ = os.Remove(path)
 		}
 
-		/* -------- Publish ArtistUpdated Event -------- */
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistUpdatedEvent, mqevent.ArtistUpdatedPayload{})
-
-		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Artist updated"})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Artist updated"})
 	}
 }
 
-func parseArtistFormData(r *http.Request, existing *models.Artist) (models.Artist, bson.M, []string, error) {
+func parseArtistFormData(r *http.Request, existing *models.Artist) (models.Artist, map[string]any, []string, error) {
 	var artist models.Artist
-	updateData := bson.M{}
+	updateData := map[string]any{}
 	filesToDelete := []string{}
 
-	// Preserve IDs
 	if existing != nil {
-		artist.ArtistID = existing.ArtistID
-		artist.EventIDs = existing.EventIDs
+		artist = *existing
 	}
 
 	assignField := func(key string, target *string, existingVal string) {
-		if val := r.FormValue(key); val != "" {
+		if val := strings.TrimSpace(r.FormValue(key)); val != "" {
 			*target = val
 			updateData[key] = val
 		} else {
@@ -109,108 +100,48 @@ func parseArtistFormData(r *http.Request, existing *models.Artist) (models.Artis
 		}
 	}
 
-	assignField("name", &artist.Name, existingValue(existing, "Name"))
-	assignField("bio", &artist.Bio, existingValue(existing, "Bio"))
-	assignField("category", &artist.Category, existingValue(existing, "Category"))
-	assignField("dob", &artist.DOB, existingValue(existing, "DOB"))
-	assignField("place", &artist.Place, existingValue(existing, "Place"))
-	assignField("country", &artist.Country, existingValue(existing, "Country"))
-
-	// Creator ID
-	artist.CreatorID = utils.GetUserIDFromRequest(r)
-	if artist.CreatorID != "" {
-		updateData["creatorid"] = artist.CreatorID
-	} else if existing != nil {
-		artist.CreatorID = existing.CreatorID
+	var name, bio, category, dob, place, country string
+	if existing != nil {
+		name, bio, category = existing.Name, existing.Bio, existing.Category
+		dob, place, country = existing.DOB, existing.Place, existing.Country
 	}
 
-	// Genres
+	assignField("name", &artist.Name, name)
+	assignField("bio", &artist.Bio, bio)
+	assignField("category", &artist.Category, category)
+	assignField("dob", &artist.DOB, dob)
+	assignField("place", &artist.Place, place)
+	assignField("country", &artist.Country, country)
+
+	if creatorID := utils.GetUserIDFromRequest(r); creatorID != "" {
+		artist.CreatorID = creatorID
+		updateData["creatorid"] = creatorID
+	}
+
 	if val := r.FormValue("genres"); val != "" {
 		var genres []string
 		for _, g := range strings.Split(val, ",") {
-			if g = strings.TrimSpace(g); g != "" {
-				genres = append(genres, g)
+			if trimmed := strings.TrimSpace(g); trimmed != "" {
+				genres = append(genres, trimmed)
 			}
 		}
 		artist.Genres = genres
 		updateData["genres"] = genres
-	} else if existing != nil {
-		artist.Genres = existing.Genres
 	}
 
-	// Socials
 	if val := r.FormValue("socials"); val != "" {
 		var socials map[string]string
 		if err := json.Unmarshal([]byte(val), &socials); err == nil {
 			artist.Socials = socials
-			updateData["socials"] = socials
 		} else {
 			artist.Socials = map[string]string{"raw": val}
-			updateData["socials"] = artist.Socials
 		}
-	} else if existing != nil {
-		artist.Socials = existing.Socials
-	}
-
-	// Preserve members (not updated here)
-	if existing != nil {
-		artist.Members = existing.Members
+		updateData["socials"] = artist.Socials
 	}
 
 	return artist, updateData, filesToDelete, nil
 }
 
 func DeleteArtistByID(app *infra.Deps) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		dels.DeleteArtistByID(app)(w, r)
-		// ctx := r.Context()
-		// artistID := utils.GetParam(r,"id")
-
-		// if artistID == "" {
-		// 	utils.RespondWithError(w, http.StatusBadRequest, "artistID is required")
-		// 	return
-		// }
-
-		// filter := bson.M{"artistid": artistID}
-		// update := bson.M{"$set": bson.M{"deleted": true}}
-
-		// _, err := app.DB.ArtistsCollection.UpdateOne(ctx, filter, update)
-		// if err != nil {
-		// 	utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete artist")
-		// 	return
-		// }
-
-		// go mq.Emit(ctx, "artist-deleted", models.Index{
-		// 	EntityType: "artist", EntityId: artistID, Method: "DELETE",
-		// })
-		// mqpayload, _ := json.Marshal(mqevent.ArtistDeletedPayload{})
-		// app.MQ.Publish(ctx, mqevent.ArtistDeletedEvent, mqpayload)
-
-		// utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Artist deleted successfully"})
-	}
-}
-func existingValue(existing *models.Artist, field string) string {
-	if existing == nil {
-		return ""
-	}
-	switch field {
-	case "Name":
-		return existing.Name
-	case "Bio":
-		return existing.Bio
-	case "Category":
-		return existing.Category
-	case "DOB":
-		return existing.DOB
-	case "Place":
-		return existing.Place
-	case "Country":
-		return existing.Country
-	case "Banner":
-		return existing.Banner
-	case "Photo":
-		return existing.Photo
-	default:
-		return ""
-	}
+	return dels.DeleteArtistByID(app)
 }

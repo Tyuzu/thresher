@@ -106,7 +106,7 @@ func (h *Handler) UpdatePreferences(w http.ResponseWriter, r *http.Request, ps h
 		"$set": updates,
 	}
 
-	if err := h.app.DB.UpdateOne(ctx, notificationsPreferencesCollection, filter, update); err != nil {
+	if _, err := h.app.DB.UpdateOne(ctx, notificationsPreferencesCollection, filter, update); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update preferences")
 		return
 	}

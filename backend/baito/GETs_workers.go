@@ -2,7 +2,7 @@ package baito
 
 import (
 	"context"
-	log "naevis/utils/logger"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -11,6 +11,7 @@ import (
 	"naevis/infra/db"
 	"naevis/models"
 	"naevis/utils"
+	log "naevis/utils/logger"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -31,7 +32,7 @@ func GetWorkerById(app *infra.Deps) http.HandlerFunc {
 			&worker,
 		)
 		if err != nil {
-			if err == mongo.ErrNoDocuments {
+			if errors.Is(err, mongo.ErrNoDocuments) {
 				utils.RespondWithError(w, http.StatusNotFound, "Worker not found")
 			} else {
 				log.Printf("DB error: %v", err)
@@ -49,29 +50,11 @@ func GetWorkerSkills(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		/*
-			Distinct is intentionally implemented via aggregation
-			to keep the Database interface Mongo-agnostic
-		*/
-		pipeline := mongo.Pipeline{
-			{{Key: "$unwind", Value: "$preferredRoles"}},
-			{{Key: "$group", Value: bson.M{"_id": "$preferredRoles"}}},
-			{{Key: "$project", Value: bson.M{"_id": 0, "skill": "$_id"}}},
-		}
-
-		var results []bson.M
-		err := app.DB.Aggregate(ctx, BaitoWorkersCollection, pipeline, &results)
+		skills, err := getUniqueWorkerSkillsFromDB(ctx, app)
 		if err != nil {
 			log.Printf("Aggregate error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch skills")
 			return
-		}
-
-		skills := make([]string, 0, len(results))
-		for _, r := range results {
-			if s, ok := r["skill"].(string); ok && s != "" {
-				skills = append(skills, s)
-			}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, skills)
@@ -110,9 +93,13 @@ func GetWorkers(app *infra.Deps) http.HandlerFunc {
 
 		var workers []models.BaitoWorkersResponse
 		if err := app.DB.FindManyWithOptions(ctx, BaitoWorkersCollection, filter, opts, &workers); err != nil {
-			log.Printf("DB error: %v", err)
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch workers")
-			return
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				workers = []models.BaitoWorkersResponse{}
+			} else {
+				log.Printf("DB error: %v", err)
+				utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch workers")
+				return
+			}
 		}
 
 		total, err := app.DB.CountDocuments(ctx, BaitoWorkersCollection, filter)

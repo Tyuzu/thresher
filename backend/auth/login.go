@@ -116,7 +116,7 @@ func AuthenticateAndCreateSession(ctx context.Context, app *infra.Deps, creds Lo
 	}
 
 	// 4. Record new system state updates down to storage repositories
-	err = PersistUserSession(
+	_, err = PersistUserSession(
 		ctx,
 		app,
 		user.UserID,
@@ -172,6 +172,6 @@ func GetUserByUsername(ctx context.Context, app *infra.Deps, username string) (m
 	return FindUserByUsername(ctx, app, username)
 }
 
-func PersistUserSession(ctx context.Context, app *infra.Deps, userID, hashedRefreshToken, uaHash, ipPrefix string) error {
+func PersistUserSession(ctx context.Context, app *infra.Deps, userID, hashedRefreshToken, uaHash, ipPrefix string) (any, error) {
 	return UpdateUserSession(ctx, app, userID, hashedRefreshToken, uaHash, ipPrefix)
 }

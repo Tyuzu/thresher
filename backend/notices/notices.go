@@ -134,7 +134,7 @@ func UpdateNotice(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// ✅ pass plain fields
-		if err := app.DB.Update(
+		if _, err := app.DB.Update(
 			ctx,
 			noticesCollection,
 			bson.M{"noticeid": noticeID},

@@ -57,7 +57,7 @@ func listFanMediaGroupsByEntity(ctx context.Context, app *infra.Deps, entityType
 }
 
 func updateFanMediaGroup(ctx context.Context, app *infra.Deps, mediaGroupID string, update map[string]any) ([]models.Media, error) {
-	if err := app.DB.UpdateMany(ctx, fanmadeMediaCollection, map[string]string{"mediaGroupId": mediaGroupID}, map[string]any{"$set": update}); err != nil {
+	if _, err := app.DB.UpdateMany(ctx, fanmadeMediaCollection, map[string]string{"mediaGroupId": mediaGroupID}, map[string]any{"$set": update}); err != nil {
 		return nil, err
 	}
 

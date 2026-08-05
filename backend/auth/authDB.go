@@ -37,7 +37,7 @@ func FindUserByUsername(ctx context.Context, app *infra.Deps, username string) (
 	return user, nil
 }
 
-func UpdateUserSession(ctx context.Context, app *infra.Deps, userID, refreshTokenHash, ua, ip string) error {
+func UpdateUserSession(ctx context.Context, app *infra.Deps, userID, refreshTokenHash, ua, ip string) (any, error) {
 	return app.DB.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
 		"$set": bson.M{
 			"refresh_token":  refreshTokenHash,
@@ -51,7 +51,7 @@ func UpdateUserSession(ctx context.Context, app *infra.Deps, userID, refreshToke
 	})
 }
 
-func LogoutUserByRefreshToken(ctx context.Context, app *infra.Deps, hashedToken string) error {
+func LogoutUserByRefreshToken(ctx context.Context, app *infra.Deps, hashedToken string) (any, error) {
 	return app.DB.Update(ctx, UsersCollection, bson.M{"refresh_token": hashedToken}, bson.M{
 		"$unset": bson.M{
 			"refresh_token":  "",
@@ -64,7 +64,7 @@ func LogoutUserByRefreshToken(ctx context.Context, app *infra.Deps, hashedToken 
 	})
 }
 
-func LogoutAllUserSessions(ctx context.Context, app *infra.Deps, userID string) error {
+func LogoutAllUserSessions(ctx context.Context, app *infra.Deps, userID string) (any, error) {
 	return app.DB.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
 		"$unset": bson.M{
 			"refresh_token":  "",
@@ -97,7 +97,7 @@ func FindValidRefreshSession(ctx context.Context, app *infra.Deps, hashedToken s
 }
 
 // InvalidateUserSession clears all refresh token fields for a user.
-func InvalidateUserSession(ctx context.Context, app *infra.Deps, userID string) error {
+func InvalidateUserSession(ctx context.Context, app *infra.Deps, userID string) (any, error) {
 	return app.DB.Update(
 		ctx,
 		UsersCollection,
@@ -114,7 +114,7 @@ func InvalidateUserSession(ctx context.Context, app *infra.Deps, userID string) 
 	)
 }
 
-func RotateRefreshTokenForUser(ctx context.Context, app *infra.Deps, userID, newRefreshHash, prevRefreshHash, ua string) error {
+func RotateRefreshTokenForUser(ctx context.Context, app *infra.Deps, userID, newRefreshHash, prevRefreshHash, ua string) (any, error) {
 	now := time.Now()
 	return app.DB.Update(ctx, UsersCollection, bson.M{"userid": userID}, bson.M{
 		"$set": bson.M{
@@ -127,7 +127,7 @@ func RotateRefreshTokenForUser(ctx context.Context, app *infra.Deps, userID, new
 	})
 }
 
-func VerifyUserEmail(ctx context.Context, app *infra.Deps, email string) error {
+func VerifyUserEmail(ctx context.Context, app *infra.Deps, email string) (any, error) {
 	return app.DB.Update(ctx, UsersCollection, bson.M{"email": email}, bson.M{
 		"$set": bson.M{
 			"email_verified": true,

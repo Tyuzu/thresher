@@ -169,7 +169,7 @@ func (p *PaymentService) processSuccessfulPayment(ctx context.Context, payload *
 	// For topup transactions, increment the account balance
 	// For other transaction types, balance should already be updated
 	if txn.Type == "topup" {
-		if err := p.app.DB.UpdateOne(ctx, accountsCollection, bson.M{
+		if _, err := p.app.DB.UpdateOne(ctx, accountsCollection, bson.M{
 			"userid": payload.UserID,
 		}, bson.M{
 			"$inc": bson.M{
@@ -184,7 +184,7 @@ func (p *PaymentService) processSuccessfulPayment(ctx context.Context, payload *
 	}
 
 	// Update transaction status to success
-	if err := p.app.DB.UpdateOne(ctx, transactionsCollection, bson.M{
+	if _, err := p.app.DB.UpdateOne(ctx, transactionsCollection, bson.M{
 		"_id": payload.TransactionID,
 	}, bson.M{
 		"$set": bson.M{
@@ -200,7 +200,7 @@ func (p *PaymentService) processSuccessfulPayment(ctx context.Context, payload *
 
 // processFailedPayment marks transaction as failed
 func (p *PaymentService) processFailedPayment(ctx context.Context, payload *PaymentWebhookPayload) error {
-	if err := p.app.DB.UpdateOne(ctx, transactionsCollection, bson.M{
+	if _, err := p.app.DB.UpdateOne(ctx, transactionsCollection, bson.M{
 		"_id": payload.TransactionID,
 	}, bson.M{
 		"$set": bson.M{

@@ -60,7 +60,7 @@ func getMediaGroupsByEntity(ctx context.Context, app *infra.Deps, entityType, en
 }
 
 func updateMediaGroup(ctx context.Context, app *infra.Deps, mediaGroupID string, updateFields bson.M) ([]models.Media, error) {
-	if err := app.DB.UpdateMany(ctx, mediaCollection, bson.M{"mediaGroupId": mediaGroupID}, bson.M{"$set": updateFields}); err != nil {
+	if _, err := app.DB.UpdateMany(ctx, mediaCollection, bson.M{"mediaGroupId": mediaGroupID}, bson.M{"$set": updateFields}); err != nil {
 		return nil, err
 	}
 

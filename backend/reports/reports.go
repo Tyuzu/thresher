@@ -215,7 +215,7 @@ func UpdateReport(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		err := app.DB.Update(
+		_, err := app.DB.Update(
 			ctx,
 			reportsCollection,
 			bson.M{"reportid": reportID},
@@ -336,7 +336,7 @@ func UpdateAppeal(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := app.DB.Update(
+		if _, err := app.DB.Update(
 			ctx,
 			appealsCollection,
 			bson.M{"appealid": appealID},
@@ -422,7 +422,7 @@ func setEntityDeletedFlag(
 		deletedAtVal = now
 	}
 
-	err := app.DB.Update(
+	_, err := app.DB.Update(
 		ctx,
 		collection,
 		bson.M{idField: id},

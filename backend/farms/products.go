@@ -126,7 +126,7 @@ func updateItem(
 	item.UpdatedAt = time.Now()
 
 	update := bson.M{"$set": item}
-	if err := app.DB.UpdateOne(ctx, productsCollection, bson.M{"productid": id}, update); err != nil {
+	if _, err := app.DB.UpdateOne(ctx, productsCollection, bson.M{"productid": id}, update); err != nil {
 		http.Error(w, "Failed to update item", http.StatusInternalServerError)
 		return
 	}

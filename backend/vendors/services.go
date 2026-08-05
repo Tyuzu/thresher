@@ -150,7 +150,7 @@ func GetAllVendors(ctx context.Context, app *infra.Deps, search string, category
 }
 
 // UpdateVendor updates vendor information.
-func UpdateVendor(ctx context.Context, app *infra.Deps, vendorID string, updates bson.M) error {
+func UpdateVendor(ctx context.Context, app *infra.Deps, vendorID string, updates bson.M) (any, error) {
 	if updates == nil {
 		updates = bson.M{}
 	}
@@ -166,7 +166,7 @@ func UpdateVendor(ctx context.Context, app *infra.Deps, vendorID string, updates
 }
 
 // DeleteVendor soft-deletes a vendor by setting available to false.
-func DeleteVendor(ctx context.Context, app *infra.Deps, vendorID string) error {
+func DeleteVendor(ctx context.Context, app *infra.Deps, vendorID string) (any, error) {
 	return app.DB.Update(
 		ctx,
 		vendorCollection,
@@ -282,7 +282,7 @@ func GetVendorHiringsByVendorID(ctx context.Context, app *infra.Deps, vendorID s
 }
 
 // RemoveVendorFromEvent removes a vendor from an event.
-func RemoveVendorFromEvent(ctx context.Context, app *infra.Deps, eventID, vendorID string) error {
+func RemoveVendorFromEvent(ctx context.Context, app *infra.Deps, eventID, vendorID string) (any, error) {
 	var existing models.VendorHiring
 	err := app.DB.FindOne(ctx, hiringCollection, bson.M{
 		"eventid":  eventID,
@@ -290,7 +290,7 @@ func RemoveVendorFromEvent(ctx context.Context, app *infra.Deps, eventID, vendor
 		"status":   bson.M{"$ne": "rejected"},
 	}, &existing)
 	if err != nil {
-		return ErrVendorNotInEvent
+		return nil, ErrVendorNotInEvent
 	}
 
 	return app.DB.Update(
@@ -310,7 +310,7 @@ func RemoveVendorFromEvent(ctx context.Context, app *infra.Deps, eventID, vendor
 }
 
 // UpdateVendorStatus updates the status of a vendor hiring.
-func UpdateVendorStatus(ctx context.Context, app *infra.Deps, hiringID, status string) error {
+func UpdateVendorStatus(ctx context.Context, app *infra.Deps, hiringID, status string) (any, error) {
 	return app.DB.Update(
 		ctx,
 		hiringCollection,

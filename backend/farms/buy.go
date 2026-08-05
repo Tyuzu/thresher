@@ -117,7 +117,7 @@ func BuyCrop(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if quantity, ok := toInt(updatedCrop["quantity"]); ok && quantity == 0 {
-			_ = app.DB.UpdateOne(
+			_, _ = app.DB.UpdateOne(
 				ctx,
 				cropsCollection,
 				bson.M{"farmid": farmID, "cropid": cropID},
@@ -198,7 +198,7 @@ func updateOrderStatus(
 		return
 	}
 
-	err := app.DB.UpdateOne(
+	_, err := app.DB.UpdateOne(
 		ctx,
 		farmOrdersCollection,
 		bson.M{"orderid": orderID},
@@ -364,7 +364,7 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 			continue
 		}
 
-		if err := app.DB.UpdateOne(
+		if _, err := app.DB.UpdateOne(
 			ctx,
 			farmOrdersCollection,
 			bson.M{"orderid": orderID},

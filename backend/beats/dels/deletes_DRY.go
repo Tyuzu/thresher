@@ -99,7 +99,7 @@ func softDeleteByField(
 		}
 	}
 
-	if err := app.DB.UpdateOne(ctx, collection, bson.M{fieldKey: entityID}, update); err != nil {
+	if _, err := app.DB.UpdateOne(ctx, collection, bson.M{fieldKey: entityID}, update); err != nil {
 		http.Error(w, "delete failed", http.StatusInternalServerError)
 		return
 	}
@@ -159,7 +159,7 @@ func DeletesMessage(app *infra.Deps) http.HandlerFunc {
 					return fmt.Errorf("forbidden")
 				}
 
-				_ = app.DB.UpdateOne(
+				_, _ = app.DB.UpdateOne(
 					ctx,
 					chatsCollection,
 					bson.M{"chatid": msg.ChatID},
@@ -246,7 +246,7 @@ func InvalidateCachedProfile(ctx context.Context, username string, c cache.Cache
 }
 
 func RemoveUserFile(ctx context.Context, userID, postID, hash string, app *infra.Deps) {
-	err := app.DB.UpdateOne(
+	_, err := app.DB.UpdateOne(
 		ctx,
 		filesCollection,
 		bson.M{"hash": hash},
@@ -270,7 +270,7 @@ func RemoveUserFile(ctx context.Context, userID, postID, hash string, app *infra
 	}
 
 	if !isAssociated {
-		_ = app.DB.UpdateOne(
+		_, _ = app.DB.UpdateOne(
 			ctx,
 			filesCollection,
 			bson.M{"hash": hash},

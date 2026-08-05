@@ -102,7 +102,7 @@ func UpdateVendorHandler(app *infra.Deps) http.HandlerFunc {
 			updateDoc["portfolio"] = strings.TrimSpace(portfolio)
 		}
 
-		if err := UpdateVendor(ctx, app, vendorID, updateDoc); err != nil {
+		if _, err := UpdateVendor(ctx, app, vendorID, updateDoc); err != nil {
 			writeJSONError(w, http.StatusInternalServerError, "UPDATE_FAILED", "Failed to update vendor")
 			return
 		}
@@ -188,7 +188,7 @@ func UpdateVendorStatusHandler(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		if err := UpdateVendorStatus(ctx, app, hiringID, status); err != nil {
+		if _, err := UpdateVendorStatus(ctx, app, hiringID, status); err != nil {
 			writeJSONError(w, http.StatusInternalServerError, "UPDATE_FAILED", "Failed to update status")
 			return
 		}

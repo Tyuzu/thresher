@@ -12,8 +12,6 @@ import (
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
-
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func (p *songPayload) ValidateRequired() error {
@@ -23,27 +21,6 @@ func (p *songPayload) ValidateRequired() error {
 		return errors.New("missing required fields: title, genre, duration")
 	}
 	return nil
-}
-
-func (p *songPayload) ToBSONUpdate() bson.M {
-	update := bson.M{}
-
-	assignIfPresent := func(field string, val *string) {
-		if val != nil {
-			update[field] = *val
-		}
-	}
-
-	assignIfPresent("title", p.Title)
-	assignIfPresent("genre", p.Genre)
-	assignIfPresent("duration", p.Duration)
-	assignIfPresent("description", p.Description)
-	assignIfPresent("audioUrl", p.Audio)
-	assignIfPresent("poster", p.Poster)
-	assignIfPresent("audioextn", p.AudioExtn)
-	assignIfPresent("posterextn", p.PosterExtn)
-
-	return update
 }
 
 // Helper to decode JSON requests consistently across handlers
@@ -126,16 +103,13 @@ func EditSong(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		updateFields := payload.ToBSONUpdate()
-		if len(updateFields) == 0 {
-			utils.RespondWithError(w, http.StatusBadRequest, "No fields to update")
-			return
-		}
-
-		updateFields["updatedAt"] = time.Now()
-		update := bson.M{"$set": updateFields}
-
-		if err := UpdateArtistSong(ctx, app.DB, artistID, songID, update); err != nil {
+		// Delegated BSON mapping and persistence to the repo function
+		_, err := UpdateArtistSongFromPayload(ctx, app.DB, artistID, songID, payload)
+		if err != nil {
+			if errors.Is(err, ErrNoFieldsToUpdate) {
+				utils.RespondWithError(w, http.StatusBadRequest, "No fields to update")
+				return
+			}
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update song")
 			return
 		}
@@ -145,7 +119,9 @@ func EditSong(app *infra.Deps) http.HandlerFunc {
 			ArtistID: artistID,
 		})
 
-		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Song updated successfully"})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
+			"message": "Song updated successfully",
+		})
 	}
 }
 
@@ -170,6 +146,8 @@ func DeleteSong(app *infra.Deps) http.HandlerFunc {
 			ArtistID: artistID,
 		})
 
-		utils.RespondWithJSON(w, http.StatusOK, bson.M{"message": "Song deleted successfully"})
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
+			"message": "Song deleted successfully",
+		})
 	}
 }

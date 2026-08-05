@@ -142,7 +142,7 @@ func ProcessOTPVerification(ctx context.Context, app *infra.Deps, rawEmail, inpu
 		return myerr.ErrOTPInvalidOrExpired
 	}
 
-	if err = UpdateUserVerificationStatus(ctx, app, email); err != nil {
+	if _, err = UpdateUserVerificationStatus(ctx, app, email); err != nil {
 		return err
 	}
 
@@ -287,6 +287,6 @@ func DeleteOTPCache(ctx context.Context, app *infra.Deps, email string) error {
 	return app.Cache.Del(ctx, key)
 }
 
-func UpdateUserVerificationStatus(ctx context.Context, app *infra.Deps, email string) error {
+func UpdateUserVerificationStatus(ctx context.Context, app *infra.Deps, email string) (any, error) {
 	return VerifyUserEmail(ctx, app, email)
 }

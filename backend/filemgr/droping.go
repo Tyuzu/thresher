@@ -96,12 +96,12 @@ func convertToAttachments(serviceAttachments []Attachment) []Attachment {
 	return append([]Attachment(nil), serviceAttachments...)
 }
 
-func updateEntityMedia(app *infra.Deps, entityType string, entityId string, attachments []Attachment) error {
+func updateEntityMedia(app *infra.Deps, entityType string, entityId string, attachments []Attachment) (any, error) {
 	log.Println("updateEntityMedia:", entityType, entityId) // #nosec G706
 	log.Println("updateEntityMedia:", attachments)          // #nosec G706
 	meta, ok := entityMeta[entityType]
 	if !ok {
-		return fmt.Errorf("unsupported entity type: %s", entityType)
+		return nil, fmt.Errorf("unsupported entity type: %s", entityType)
 	}
 
 	filter := bson.M{meta.IDField: entityId}
@@ -146,7 +146,7 @@ func updateEntityMedia(app *infra.Deps, entityType string, entityId string, atta
 		update["$push"] = bson.M{"images": bson.M{"$each": images}}
 	}
 	if len(update) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	return app.DB.UpdateOne(context.Background(), meta.Collection, filter, update)

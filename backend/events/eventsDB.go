@@ -32,7 +32,7 @@ func findEventByID(ctx context.Context, app *infra.Deps, eventID string, event *
 	return app.DB.FindOne(ctx, eventsCollection, map[string]string{"eventid": eventID}, event)
 }
 
-func updateEvent(ctx context.Context, app *infra.Deps, eventID string, updates map[string]any) error {
+func updateEvent(ctx context.Context, app *infra.Deps, eventID string, updates map[string]any) (any, error) {
 	return app.DB.UpdateOne(ctx, eventsCollection, map[string]string{"eventid": eventID}, map[string]any{"$set": updates})
 }
 

@@ -68,7 +68,7 @@ func updateCartItemQuantityInDB(
 	entityID string,
 	entityType string,
 	app *infra.Deps,
-) error {
+) (any, error) {
 	filter := buildCartFilter(userID, itemID, category, entityID, entityType)
 	update := bson.M{"$set": bson.M{"quantity": quantity}}
 	return app.DB.Update(ctx, cartCollection, filter, update)

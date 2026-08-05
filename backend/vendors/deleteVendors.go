@@ -42,7 +42,7 @@ func DeleteVendorHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := DeleteVendor(ctx, app, vendorID); err != nil {
+		if _, err := DeleteVendor(ctx, app, vendorID); err != nil {
 			writeJSONError(w, http.StatusInternalServerError, "DELETE_FAILED", "Failed to delete vendor")
 			return
 		}
@@ -85,7 +85,7 @@ func RemoveVendorHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := RemoveVendorFromEvent(ctx, app, eventID, vendorID); err != nil {
+		if _, err := RemoveVendorFromEvent(ctx, app, eventID, vendorID); err != nil {
 			if errors.Is(err, ErrVendorNotInEvent) {
 				writeJSONError(w, http.StatusNotFound, "VENDOR_NOT_FOUND", "Vendor not found for this event")
 				return

@@ -63,7 +63,7 @@ func TransferTicket(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Update ownership
-		if err := app.DB.UpdateOne(
+		if _, err := app.DB.UpdateOne(
 			ctx,
 			purchasedTicketsCollection,
 			bson.M{

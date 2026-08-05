@@ -452,7 +452,7 @@ func UpdateSettings(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := app.DB.Update(ctx, settingsCollection, filter, updateFields); err != nil {
+		if _, err := app.DB.Update(ctx, settingsCollection, filter, updateFields); err != nil {
 			settings := DefaultSettings(userID)
 			doc := settingsToMap(settings)
 
@@ -491,7 +491,7 @@ func ResetSettings(app *infra.Deps) http.HandlerFunc {
 		filter := bson.M{"userID": userID}
 		update := settingsToMap(defaults)
 
-		if err := app.DB.Update(ctx, settingsCollection, filter, update); err != nil {
+		if _, err := app.DB.Update(ctx, settingsCollection, filter, update); err != nil {
 			_ = app.DB.Insert(ctx, settingsCollection, update)
 		}
 

@@ -270,7 +270,7 @@ func EditFarm(app *infra.Deps) http.HandlerFunc {
 
 		update["updatedAt"] = time.Now()
 
-		if err := updateOwnedFarm(
+		if _, err := updateOwnedFarm(
 			ctx,
 			app.DB,
 			farmID,

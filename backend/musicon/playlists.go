@@ -174,7 +174,7 @@ func AddSongToPlaylist(app *infra.Deps) http.HandlerFunc {
 			"$set":      bson.M{"updatedAt": time.Now()},
 		}
 
-		if err := app.DB.UpdateOne(ctx, playlistsCollection, filter, update); err != nil {
+		if _, err := app.DB.UpdateOne(ctx, playlistsCollection, filter, update); err != nil {
 			respondError(w, http.StatusForbidden, "Playlist not found or unauthorized")
 			return
 		}
@@ -217,7 +217,7 @@ func RemoveSongFromPlaylist(app *infra.Deps) http.HandlerFunc {
 			"$set":  bson.M{"updatedAt": time.Now()},
 		}
 
-		if err := app.DB.UpdateOne(ctx, playlistsCollection, filter, update); err != nil {
+		if _, err := app.DB.UpdateOne(ctx, playlistsCollection, filter, update); err != nil {
 			respondError(w, http.StatusForbidden, "Playlist not found or unauthorized")
 			return
 		}
@@ -280,7 +280,7 @@ func UpdatePlaylistInfo(app *infra.Deps) http.HandlerFunc {
 			},
 		}
 
-		if err := app.DB.UpdateOne(ctx, playlistsCollection, filter, update); err != nil {
+		if _, err := app.DB.UpdateOne(ctx, playlistsCollection, filter, update); err != nil {
 			respondError(w, http.StatusForbidden, "Playlist not found or unauthorized")
 			return
 		}

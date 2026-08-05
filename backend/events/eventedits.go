@@ -40,7 +40,7 @@ func EditEvent(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		if err := updateEvent(ctx, app, eventID, updateFields); err != nil {
+		if _, err := updateEvent(ctx, app, eventID, updateFields); err != nil {
 			log.Printf("Error updating event %s: %v", eventID, err)
 			http.Error(w, "Error updating event", http.StatusInternalServerError)
 			return

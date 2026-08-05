@@ -2,15 +2,14 @@ package artists
 
 import (
 	"encoding/json"
+	"net/http"
+	"strings"
+
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
-	"net/http"
-	"strings"
-
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func AddArtistMember(app *infra.Deps) http.HandlerFunc {
@@ -21,6 +20,8 @@ func AddArtistMember(app *infra.Deps) http.HandlerFunc {
 		// Ensure artist exists
 		var artist models.Artist
 		if err := FindArtistByID(ctx, app.DB, artistID, &artist); err != nil {
+			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
+			return
 		}
 
 		var m models.BandMember
@@ -54,7 +55,7 @@ func AddArtistMember(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		if err := AddArtistMemberDB(ctx, app.DB, artistID, m); err != nil {
+		if _, err := AddArtistMemberDB(ctx, app.DB, artistID, m); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add member")
 			return
 		}
@@ -78,7 +79,7 @@ func UpdateArtistMember(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		updates := bson.M{}
+		updates := map[string]any{}
 
 		if v, ok := payload["name"]; ok {
 			updates["members.$.name"] = strings.TrimSpace(v)
@@ -98,14 +99,14 @@ func UpdateArtistMember(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := UpdateArtistMemberDB(ctx, app.DB, artistID, memberID, bson.M{"$set": updates}); err != nil {
+		if _, err := UpdateArtistMemberDB(ctx, app.DB, artistID, memberID, map[string]any{"$set": updates}); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update member")
 			return
 		}
 
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BandMemberUpdatedEvent, mqevent.BandMemberUpdatedPayload{})
 
-		utils.RespondWithJSON(w, http.StatusOK, bson.M{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Member updated",
 		})
 	}
@@ -118,14 +119,14 @@ func DeleteArtistMember(app *infra.Deps) http.HandlerFunc {
 		artistID := utils.GetParam(r, "id")
 		memberID := utils.GetParam(r, "memberId")
 
-		if err := DeleteArtistMemberDB(ctx, app.DB, artistID, memberID); err != nil {
+		if _, err := DeleteArtistMemberDB(ctx, app.DB, artistID, memberID); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete member")
 			return
 		}
 
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BandMemberDeletedEvent, mqevent.BandMemberDeletedPayload{})
 
-		utils.RespondWithJSON(w, http.StatusOK, bson.M{
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Member deleted",
 		})
 	}

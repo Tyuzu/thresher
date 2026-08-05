@@ -125,7 +125,7 @@ func UpdateEntitySubscription(
 		}
 	}
 
-	if err := app.DB.UpdateOne(
+	if _, err := app.DB.UpdateOne(
 		ctx,
 		subscribersCollection,
 		bson.M{"userid": userID},
@@ -134,7 +134,7 @@ func UpdateEntitySubscription(
 		return fmt.Errorf("failed to update user subscriptions: %w", err)
 	}
 
-	if err := app.DB.UpdateOne(
+	if _, err := app.DB.UpdateOne(
 		ctx,
 		subscribersCollection,
 		bson.M{"userid": entityID},

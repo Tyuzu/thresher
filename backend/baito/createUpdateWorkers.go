@@ -14,7 +14,6 @@ import (
 	"naevis/utils/logger"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 /* -------------------- Helpers -------------------- */
@@ -81,7 +80,6 @@ func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M
 }
 
 /* -------------------- Handlers -------------------- */
-
 // CreateWorkerProfile handles creating a new worker profile
 func CreateWorkerProfile(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -91,13 +89,15 @@ func CreateWorkerProfile(app *infra.Deps) http.HandlerFunc {
 		// Check if worker profile already exists
 		var existing models.BaitoWorker
 		err := findExistingWorkerProfile(ctx, app, userID, &existing)
-		if err == nil {
-			utils.RespondWithError(w, http.StatusConflict, "Worker profile already exists")
-			return
-		}
-		if err != mongo.ErrNoDocuments {
+		if err != nil {
 			logger.Printf("DB error: %v", err)
 			utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
+			return
+		}
+
+		// Check if profile was populated by the repository layer
+		if existing.BaitoWorkerId != "" {
+			utils.RespondWithError(w, http.StatusConflict, "Worker profile already exists")
 			return
 		}
 

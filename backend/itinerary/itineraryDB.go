@@ -34,16 +34,16 @@ func findItineraries(ctx context.Context, app *infra.Deps, filter map[string]any
 	return itineraries, nil
 }
 
-func updateItineraryFields(ctx context.Context, app *infra.Deps, itineraryID string, update map[string]any) error {
+func updateItineraryFields(ctx context.Context, app *infra.Deps, itineraryID string, update map[string]any) (any, error) {
 	return app.DB.UpdateOne(ctx, ItineraryCollection, map[string]any{"itineraryid": itineraryID}, update)
 }
 
-func softDeleteItinerary(ctx context.Context, app *infra.Deps, itineraryID, userID string) error {
+func softDeleteItinerary(ctx context.Context, app *infra.Deps, itineraryID, userID string) (any, error) {
 	update := map[string]any{"$set": map[string]any{"deleted": true}}
 	return app.DB.UpdateOne(ctx, ItineraryCollection, map[string]any{"itineraryid": itineraryID, "userid": userID}, update)
 }
 
-func publishItinerary(ctx context.Context, app *infra.Deps, itineraryID, userID string) error {
+func publishItinerary(ctx context.Context, app *infra.Deps, itineraryID, userID string) (any, error) {
 	update := map[string]any{"$set": map[string]any{"published": true}}
 	return app.DB.UpdateOne(ctx, ItineraryCollection, map[string]any{"itineraryid": itineraryID, "userid": userID}, update)
 }

@@ -112,7 +112,7 @@ func EditMenu(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Update using Database interface
-		if err := app.DB.UpdateOne(ctx, menuCollection, map[string]string{"placeid": placeID, "menuid": menuID}, map[string]any{"$set": updateFields}); err != nil {
+		if _, err := app.DB.UpdateOne(ctx, menuCollection, map[string]string{"placeid": placeID, "menuid": menuID}, map[string]any{"$set": updateFields}); err != nil {
 			http.Error(w, fmt.Sprintf("Failed to update menu: %v", err), http.StatusInternalServerError)
 			return
 		}

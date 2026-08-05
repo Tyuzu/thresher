@@ -102,7 +102,7 @@ func (p *PaymentService) CashOnDelivery(w http.ResponseWriter, r *http.Request) 
 				"updatedAt":     now,
 			},
 		}
-		if err := p.app.DB.UpdateOne(ctx, "orders", filter, update); err != nil {
+		if _, err := p.app.DB.UpdateOne(ctx, "orders", filter, update); err != nil {
 			// Log but don't fail - transaction was created
 			auditlog.LogAction(
 				ctx, p.app, r, userID,

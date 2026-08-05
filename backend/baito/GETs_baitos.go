@@ -11,7 +11,6 @@ import (
 	log "naevis/utils/logger"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 /* -------------------- Helpers -------------------- */
@@ -85,7 +84,6 @@ func GetRelatedBaitos(app *infra.Deps) http.HandlerFunc {
 		respondBaitos(w, baitos)
 	}
 }
-
 func GetBaitoByID(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -93,12 +91,14 @@ func GetBaitoByID(app *infra.Deps) http.HandlerFunc {
 
 		b, err := findBaitoByIDFromDB(ctx, app, id)
 		if err != nil {
-			if err == mongo.ErrNoDocuments {
-				utils.RespondWithError(w, http.StatusNotFound, "Not found")
-			} else {
-				logger.Printf("DB error: %v", err)
-				utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
-			}
+			logger.Printf("DB error: %v", err)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Database error")
+			return
+		}
+
+		// Check if zero-value struct was returned by repository layer
+		if b.BaitoId == "" {
+			utils.RespondWithError(w, http.StatusNotFound, "Not found")
 			return
 		}
 

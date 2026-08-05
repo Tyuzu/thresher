@@ -44,9 +44,9 @@ type Database interface {
 	Distinct(ctx context.Context, collection string, field string, filter any, result any) error
 
 	/* Update */
-	Update(ctx context.Context, collection string, filter any, update any) error
-	UpdateOne(ctx context.Context, collection string, filter any, update any) error
-	UpdateMany(ctx context.Context, collection string, filter any, update any) error
+	Update(ctx context.Context, collection string, filter any, update any) (any, error)
+	UpdateOne(ctx context.Context, collection string, filter any, update any) (any, error)
+	UpdateMany(ctx context.Context, collection string, filter any, update any) (any, error)
 	Upsert(ctx context.Context, collection string, filter any, document any) error
 	Inc(ctx context.Context, collection string, filter any, field string, value int64) error
 	AddToSet(ctx context.Context, collection string, filter any, field string, value any) error

@@ -228,7 +228,7 @@ func EditMerch(app *infra.Deps) http.HandlerFunc {
 			update["stock"] = *body.Stock
 		}
 
-		err := app.DB.UpdateOne(
+		_, err := app.DB.UpdateOne(
 			r.Context(),
 			merchCollection,
 			bson.M{
@@ -317,7 +317,7 @@ func DeleteMerch(app *infra.Deps) http.HandlerFunc {
 
 		// SECURITY: Use soft delete instead of hard delete
 		now := time.Now()
-		err := app.DB.UpdateOne(
+		_, err := app.DB.UpdateOne(
 			r.Context(),
 			merchCollection,
 			bson.M{
@@ -388,7 +388,7 @@ func BuyMerch(app *infra.Deps) http.HandlerFunc {
 				return errors.New("insufficient stock")
 			}
 
-			err = app.DB.UpdateOne(
+			_, err = app.DB.UpdateOne(
 				ctx,
 				merchCollection,
 				bson.M{"merchid": merch.MerchID},

@@ -150,7 +150,7 @@ func CreateMessage(app *infra.Deps) http.HandlerFunc {
 				"updatedAt": now,
 			},
 		}
-		_ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": chatID}, update)
+		_, _ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": chatID}, update)
 
 		mqpayload, _ := json.Marshal(mqevent.ChatMessageCreatedPayload{})
 		if err := app.MQ.Publish(ctx, mqevent.ChatMessageCreatedEvent, mqpayload); err != nil { // #nosec G104
@@ -224,7 +224,7 @@ func UpdateMessage(app *infra.Deps) http.HandlerFunc {
 		}
 
 		update := map[string]any{"$set": map[string]any{"text": input.Text}}
-		if err := app.DB.UpdateOne(ctx, messagesCollection, map[string]any{"messageid": msgID}, update); err != nil {
+		if _, err := app.DB.UpdateOne(ctx, messagesCollection, map[string]any{"messageid": msgID}, update); err != nil {
 			http.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
@@ -256,7 +256,7 @@ func DeletesMessage(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		_ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": message.ChatID},
+		_, _ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": message.ChatID},
 			map[string]any{"$set": map[string]any{"updatedAt": time.Now()}})
 
 		w.WriteHeader(http.StatusOK)

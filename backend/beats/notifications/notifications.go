@@ -199,7 +199,7 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request, ps httprout
 		},
 	}
 
-	if err := h.app.DB.UpdateOne(ctx, notificationsCollection, filter, update); err != nil {
+	if _, err := h.app.DB.UpdateOne(ctx, notificationsCollection, filter, update); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update notification")
 		return
 	}
@@ -230,7 +230,7 @@ func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request, ps httpr
 		},
 	}
 
-	if err := h.app.DB.UpdateMany(ctx, notificationsCollection, filter, update); err != nil {
+	if _, err := h.app.DB.UpdateMany(ctx, notificationsCollection, filter, update); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update notifications")
 		return
 	}

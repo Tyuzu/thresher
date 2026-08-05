@@ -2,15 +2,14 @@ package artists
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"naevis/beats/dels"
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/models"
 	"naevis/utils"
-	"net/http"
-
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
@@ -24,7 +23,6 @@ func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
 		}
 
 		artistevent.ArtistID = utils.GetParam(r, "id")
-
 		artistevent.CreatorID = utils.GetUserIDFromRequest(r)
 		artistevent.EventID = utils.GenerateRandomString(14)
 
@@ -41,7 +39,7 @@ func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
 
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventCreatedEvent, mqevent.ArtistEventCreatePayload{})
 
-		utils.RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
+		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"message": "ArtistEvent created successfully",
 			"id":      artistevent.EventID,
 		})
@@ -54,13 +52,13 @@ func UpdateArtistEvent(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 		artisteventID := utils.GetParam(r, "id")
 
-		var updateData bson.M
+		var updateData map[string]any
 		if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, ErrInvalidPayload.Error())
 			return
 		}
 
-		err := UpdateArtistEventByID(ctx, app.DB, artisteventID, updateData)
+		_, err := UpdateArtistEventByID(ctx, app.DB, artisteventID, updateData)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "ArtistEvent not found or update failed")
 			return
@@ -74,21 +72,7 @@ func UpdateArtistEvent(app *infra.Deps) http.HandlerFunc {
 
 // Delete Artist Event
 func DeleteArtistEvent(app *infra.Deps) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		dels.DeleteArtistEvent(app)(w, r)
-		// artisteventID := utils.GetParam(r,"id")
-
-		// result, err := app.DB.ArtistEventsCollection.DeleteOne(context.TODO(), bson.M{"eventid": artisteventID})
-		// if err != nil || result.DeletedCount == 0 {
-		// 	utils.RespondWithError(w, http.StatusNotFound, "ArtistEvent not found or deletion failed")
-		// 	return
-		// }
-
-		// mqpayload, _ := json.Marshal(mqevent.DummyPayload{})
-		// app.MQ.Publish(ctx, mqevent.DummyEvent, mqpayload)
-
-		// utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "ArtistEvent deleted successfully"})
-	}
+	return dels.DeleteArtistEvent(app)
 }
 
 func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
@@ -137,7 +121,7 @@ func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
 			TicketURL: event.WebsiteURL,
 		}
 
-		err = AddArtistToEventDB(ctx, app.DB, artistEvent)
+		_, err = AddArtistToEventDB(ctx, app.DB, artistEvent)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add artist to artist events")
 			return

@@ -14,7 +14,6 @@ import (
 	"naevis/utils/logger"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func parseTags(raw string) []string {
@@ -254,7 +253,6 @@ func CreateBaito(app *infra.Deps) http.HandlerFunc {
 		})
 	}
 }
-
 func UpdateBaito(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -266,21 +264,13 @@ func UpdateBaito(app *infra.Deps) http.HandlerFunc {
 		}
 
 		update := req.BuildUpdate()
+		baitoID := utils.GetParam(r, "baitoid")
+		userID := utils.GetUserIDFromRequest(r)
 
-		err = updateBaitoRecord(ctx, app, utils.GetParam(r, "baitoid"), utils.GetUserIDFromRequest(r), update)
+		matchedCount, err := updateBaitoRecord(ctx, app, baitoID, userID, update)
 
 		if err != nil {
-			if err == mongo.ErrNoDocuments {
-				utils.RespondWithError(
-					w,
-					http.StatusNotFound,
-					"baito not found or unauthorized",
-				)
-				return
-			}
-
 			logger.Printf("Update error: %v", err)
-
 			utils.RespondWithError(
 				w,
 				http.StatusInternalServerError,
@@ -289,11 +279,20 @@ func UpdateBaito(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
+		if matchedCount == 0 {
+			utils.RespondWithError(
+				w,
+				http.StatusNotFound,
+				"baito not found or unauthorized",
+			)
+			return
+		}
+
 		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BaitoUpdatedEvent, mqevent.BaitoUpdatedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, UpdateBaitoResponse{
 			Message: "Baito updated",
-			BaitoID: utils.GetParam(r, "baitoid"),
+			BaitoID: baitoID,
 		})
 	}
 }

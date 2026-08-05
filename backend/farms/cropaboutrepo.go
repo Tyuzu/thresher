@@ -64,7 +64,7 @@ func UpdateCropAbout(
 	app *infra.Deps,
 	cropID string,
 	crop *models.CropAbout,
-) error {
+) (any, error) {
 
 	return app.DB.UpdateOne(
 		ctx,

@@ -79,7 +79,7 @@ func buyMenu(w http.ResponseWriter, request MenuPurchaseRequest, requestingUserI
 
 	// Update stock in database
 	update := map[string]any{"$inc": map[string]int{"stock": -stockRequested}}
-	if err := app.DB.UpdateOne(ctx, menuCollection, map[string]string{"placeid": placeId, "menuid": menuID}, update); err != nil {
+	if _, err := app.DB.UpdateOne(ctx, menuCollection, map[string]string{"placeid": placeId, "menuid": menuID}, update); err != nil {
 		http.Error(w, "Failed to update menu stock", http.StatusInternalServerError)
 		return
 	}

@@ -161,7 +161,7 @@ func EditTicket(app *infra.Deps) http.HandlerFunc {
 
 		updateFields["updated_at"] = time.Now()
 
-		if err := app.DB.UpdateOne(ctx, ticketsCollection, map[string]any{"eventid": eventID, "ticketid": ticketID}, map[string]any{"$set": updateFields}); err != nil {
+		if _, err := app.DB.UpdateOne(ctx, ticketsCollection, map[string]any{"eventid": eventID, "ticketid": ticketID}, map[string]any{"$set": updateFields}); err != nil {
 			http.Error(w, "Failed to update ticket: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -219,7 +219,7 @@ func BuyTicket(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := app.DB.UpdateOne(ctx,
+		if _, err := app.DB.UpdateOne(ctx,
 			ticketsCollection,
 			map[string]any{"eventid": eventID, "ticketid": ticketID},
 			map[string]any{"$inc": map[string]any{"quantity": -body.Quantity, "available": -body.Quantity}},

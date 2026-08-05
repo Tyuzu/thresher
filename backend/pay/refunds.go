@@ -373,7 +373,7 @@ func ApproveRefundRequest(app *infra.Deps) http.HandlerFunc {
 		}
 
 		now := time.Now()
-		err = app.DB.UpdateOne(
+		_, err = app.DB.UpdateOne(
 			ctx,
 			RefundsCollection,
 			bson.M{"_id": refundID},
@@ -464,7 +464,7 @@ func RejectRefundRequest(app *infra.Deps) http.HandlerFunc {
 		}
 
 		now := time.Now()
-		err = app.DB.UpdateOne(
+		_, err = app.DB.UpdateOne(
 			ctx,
 			RefundsCollection,
 			bson.M{"_id": refundID},

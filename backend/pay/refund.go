@@ -179,7 +179,7 @@ func (p *PaymentService) Refund(w http.ResponseWriter, r *http.Request) {
 	p.successTxn(ctx, txnID)
 
 	// mark original reversed (best-effort)
-	_ = p.app.DB.UpdateOne(
+	_, _ = p.app.DB.UpdateOne(
 		ctx,
 		transactionsCollection,
 		map[string]any{"_id": orig.ID},

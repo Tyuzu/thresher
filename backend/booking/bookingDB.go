@@ -59,7 +59,7 @@ func UpdateBookingStatusByID(ctx context.Context, d db.Database, bookingID strin
 	return d.FindOneAndUpdate(ctx, bookingsCollection, bson.M{"id": bookingID}, update, out)
 }
 
-func UpdateDateCapacity(ctx context.Context, d db.Database, entityType, entityId, date string, payload any) error {
+func UpdateDateCapacity(ctx context.Context, d db.Database, entityType, entityId, date string, payload any) (any, error) {
 	return d.UpdateOne(ctx, dateCapsCollection, bson.M{"entityType": entityType, "entityId": entityId, "date": date}, payload)
 }
 

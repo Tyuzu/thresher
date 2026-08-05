@@ -2,13 +2,12 @@ package artists
 
 import (
 	"context"
-	"naevis/infra"
-	"naevis/models"
-	"naevis/utils"
 	"net/http"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
+	"naevis/infra"
+	"naevis/models"
+	"naevis/utils"
 )
 
 // Artist Events
@@ -31,9 +30,12 @@ func GetArtistEvents(app *infra.Deps) http.HandlerFunc {
 		utils.RespondWithJSON(w, http.StatusOK, artistevents)
 	}
 }
+
 func GetArtistByID(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
 		artistId := utils.GetParam(r, "id")
 		var artist models.Artist
 
@@ -50,10 +52,9 @@ func GetArtistByID(app *infra.Deps) http.HandlerFunc {
 		currentUserID := utils.GetUserIDFromRequest(r)
 		if currentUserID != "" {
 			// Check if the user has subscribed to this artist
-			var subscribers []bson.M
-			err := FindSubscribersForArtist(ctx, app.DB, currentUserID, artistId, &subscribers)
-			if err == nil && len(subscribers) > 0 {
-				isSubscribed = true
+			subscribed, err := FindSubscribersForArtist(ctx, app.DB, currentUserID, artistId)
+			if err == nil {
+				isSubscribed = subscribed
 			}
 		}
 
@@ -69,7 +70,9 @@ func GetArtistByID(app *infra.Deps) http.HandlerFunc {
 
 func GetArtistsByEvent(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
 		eventID := utils.GetParam(r, "eventid")
 
 		var artists []models.Artist

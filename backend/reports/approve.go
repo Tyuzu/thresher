@@ -65,7 +65,7 @@ func ApproveModerator(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		err := app.DB.UpdateOne(
+		_, err := app.DB.UpdateOne(
 			ctx,
 			moderatorAppsCollection,
 			bson.M{"id": id},
@@ -108,7 +108,7 @@ func RejectModerator(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		err := app.DB.UpdateOne(
+		_, err := app.DB.UpdateOne(
 			ctx,
 			moderatorAppsCollection,
 			bson.M{"id": id},

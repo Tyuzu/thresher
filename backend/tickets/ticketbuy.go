@@ -197,7 +197,7 @@ func PurchaseTicket(eventID, ticketID, userID string, qty int, app *infra.Deps) 
 		return nil, fmt.Errorf("not enough tickets")
 	}
 
-	if err := app.DB.UpdateOne(ctx, ticketsCollection,
+	if _, err := app.DB.UpdateOne(ctx, ticketsCollection,
 		bson.M{"eventid": eventID, "ticketid": ticketID},
 		bson.M{"$inc": bson.M{"quantity": -qty, "sold": qty}},
 	); err != nil {

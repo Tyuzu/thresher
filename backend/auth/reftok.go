@@ -78,7 +78,7 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 	// -----------------------
 	if user.RefreshPrev == hashed {
 		// Invalidate entire session via repo function
-		_ = InvalidateUserSession(ctx, app, user.UserID)
+		_, _ = InvalidateUserSession(ctx, app, user.UserID)
 		return &RefreshResult{ClearCookie: true}, fmt.Errorf("refresh token reuse detected")
 	}
 
@@ -87,7 +87,7 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 	// -----------------------
 	if user.RefreshUA != uaHash(r) {
 		// Invalidate entire session via repo function
-		_ = InvalidateUserSession(ctx, app, user.UserID)
+		_, _ = InvalidateUserSession(ctx, app, user.UserID)
 		return &RefreshResult{ClearCookie: true}, fmt.Errorf("session invalidated")
 	}
 
@@ -117,7 +117,7 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 		return nil, err
 	}
 
-	err = RotateRefreshTokenForUser(
+	_, err = RotateRefreshTokenForUser(
 		ctx,
 		app,
 		user.UserID,

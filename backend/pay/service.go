@@ -209,14 +209,14 @@ func (p *PaymentService) ensureAccountActive(acc models.Account) error {
 // HELPERS
 
 func (p *PaymentService) failTxn(ctx context.Context, txnID string) {
-	_ = p.app.DB.UpdateOne(ctx, transactionsCollection,
+	_, _ = p.app.DB.UpdateOne(ctx, transactionsCollection,
 		map[string]any{"_id": txnID},
 		map[string]any{"$set": map[string]any{"status": "failed", "updated_at": time.Now()}},
 	)
 }
 
 func (p *PaymentService) successTxn(ctx context.Context, txnID string) {
-	_ = p.app.DB.UpdateOne(ctx, transactionsCollection,
+	_, _ = p.app.DB.UpdateOne(ctx, transactionsCollection,
 		map[string]any{"_id": txnID},
 		map[string]any{"$set": map[string]any{"status": "success", "updated_at": time.Now()}},
 	)

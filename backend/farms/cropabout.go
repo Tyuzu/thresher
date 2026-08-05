@@ -137,7 +137,7 @@ func UpdateCropAboutHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		err := UpdateCropAbout(
+		_, err := UpdateCropAbout(
 			ctx,
 			app,
 			utils.GetParam(r, "cropID"),

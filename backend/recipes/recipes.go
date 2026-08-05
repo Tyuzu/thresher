@@ -262,7 +262,7 @@ func UpdateRecipe(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		err := app.DB.Update(
+		_, err := app.DB.Update(
 			ctx,
 			recipeCollection,
 			bson.M{"recipeid": id},

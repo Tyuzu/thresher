@@ -20,7 +20,7 @@ func findCommentByID(ctx context.Context, database db.Database, commentID string
 	return database.FindOne(ctx, commentsCollection, bson.M{"commentid": commentID}, comment)
 }
 
-func updateCommentContent(ctx context.Context, database db.Database, commentID string, update bson.M) error {
+func updateCommentContent(ctx context.Context, database db.Database, commentID string, update bson.M) (any, error) {
 	return database.UpdateOne(ctx, commentsCollection, bson.M{"commentid": commentID}, update)
 }
 

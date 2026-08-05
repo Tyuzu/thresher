@@ -88,7 +88,7 @@ func FiledropHandler(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if entityId != "" {
-			if err := updateEntityMedia(app, entityType, entityId, attachments); err != nil {
+			if _, err := updateEntityMedia(app, entityType, entityId, attachments); err != nil {
 				log.Printf("[Filedrop] failed updating entity media: %v", err)
 				utils.RespondWithError(w, http.StatusInternalServerError, "failed to update entity media: "+err.Error())
 				return

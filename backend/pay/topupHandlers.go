@@ -131,7 +131,7 @@ func (p *PaymentService) TopUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = p.app.DB.UpdateOne(
+	_, _ = p.app.DB.UpdateOne(
 		ctx,
 		transactionsCollection,
 		map[string]any{"_id": txnID},

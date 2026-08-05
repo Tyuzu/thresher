@@ -53,7 +53,7 @@ func updateLastMessage(
 		Timestamp: msg.CreatedAt,
 	}
 
-	_ = app.DB.UpdateOne(ctx,
+	_, _ = app.DB.UpdateOne(ctx,
 		MereChatCollection,
 		map[string]any{"chatid": chatID},
 		map[string]any{
@@ -202,7 +202,7 @@ func DeleteMessage(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Update last message if it belongs to this user
-		_ = app.DB.UpdateOne(
+		_, _ = app.DB.UpdateOne(
 			ctx,
 			MereChatCollection,
 			map[string]any{

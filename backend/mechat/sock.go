@@ -244,7 +244,7 @@ func wsDeleteMessage(ctx context.Context, c *Client, in models.IncomingWSMessage
 		return
 	}
 
-	_ = app.DB.UpdateOne(
+	_, _ = app.DB.UpdateOne(
 		ctx,
 		MereChatCollection,
 		map[string]any{
@@ -292,7 +292,7 @@ func wsReaction(ctx context.Context, c *Client, in models.IncomingWSMessage, app
 	if add {
 		_ = app.DB.AddToSet(ctx, MessagesCollection, map[string]any{"messageid": msgID}, "reactions", c.UserID)
 	} else {
-		_ = app.DB.UpdateOne(
+		_, _ = app.DB.UpdateOne(
 			ctx,
 			MessagesCollection,
 			map[string]any{"messageid": msgID},
