@@ -28,7 +28,7 @@ type LoginResponse struct {
 	Message string `json:"message"`
 	Status  int    `json:"status"`
 	Token   string `json:"token"`
-	UserID  string `json:"user_id"`
+	UserID  string `json:"userid"`
 }
 
 // Structural Data Transfers

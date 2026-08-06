@@ -45,24 +45,27 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             const lower = id.toLowerCase();
 
-            // Group node_modules into vendor chunks smartly or by group
+            // Vendor chunking
             if (id.includes('node_modules')) {
               if (lower.includes('hls.js')) return 'vendor-hls';
-              return 'vendor'; // Keeps vendor code bundled reasonably
+              return 'vendor';
             }
 
-            // Route-level splitting
-            if (lower.includes('/js/routes/')) {
-              return 'routes';
-            }
+            // Explicit feature chunking for distinct domain bundles
+            if (lower.includes('/pages/farm/') || lower.includes('/pages/crop/')) return 'feature-farms';
+            if (lower.includes('/pages/events/')) return 'feature-events';
+            if (lower.includes('/pages/baitos/')) return 'feature-baito';
+            if (lower.includes('/pages/posts/') || lower.includes('/pages/tumblr/')) return 'feature-social';
+            if (lower.includes('/pages/merechats/') || lower.includes('/pages/newchats/') || lower.includes('/pages/discord/')) return 'feature-chats';
+            if (lower.includes('/pages/admin/')) return 'feature-admin';
           },
 
-          experimentalMinChunkSize: 20000,
+          experimentalMinChunkSize: 5000,
           chunkFileNames: 'js/chunks/[name]-[hash].js',
           entryFileNames: 'js/[name]-[hash].js',
 
           assetFileNames: (assetInfo) => {
-            const name = assetInfo.name || '';
+            const name = assetInfo.name || assetInfo.names?.[0] || '';
             const ext = name.split('.').pop()?.toLowerCase();
 
             if (ext && /png|jpe?g|gif|svg/.test(ext)) {
@@ -82,7 +85,6 @@ export default defineConfig(({ mode }) => {
         },
 
         treeshake: {
-          // Keep moduleSideEffects safely scoped or rely on package.json sideEffects
           propertyReadSideEffects: false,
           tryCatchDeoptimization: false,
         },
@@ -96,8 +98,6 @@ export default defineConfig(({ mode }) => {
     server: {
       allowedHosts: ['.trycloudflare.com', 'localhost'],
       https: true,
-      
-      // ✅ FIXED: Proxy properly placed under proxy object
       proxy: {
         '/api/v1': {
           target: 'https://localhost:4000',

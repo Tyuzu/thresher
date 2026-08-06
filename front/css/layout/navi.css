@@ -183,7 +183,6 @@
 .toggle:checked ~ .navigation__inner .navigation__list.horizontal {
   flex-wrap: wrap;
   overflow-x: visible;
-  padding-bottom: 4px;
 }
 
 .toggle:checked ~ .navigation__inner .navigation__toggle .navigation__link::after {

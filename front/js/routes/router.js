@@ -1,6 +1,6 @@
 import { createElement } from "../components/createElement.js";
 import { getState, subscribe, setRouteModule, getRouteModule, hasRouteModule } from "../state/state.js";
-import { staticRoutes, dynamicRoutes } from "./routes.js";
+import { staticRoutes, dynamicRoutes } from "./newRoutes.js";
 import { navigate } from "./index.js";
 import { legalRoutes } from "./legalRoutes.js";
 

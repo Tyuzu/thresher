@@ -143,7 +143,7 @@
 /* Primary Button Modifier */
 .button.primary {
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-primary-fg);
 }
 
 .button.primary:hover {
