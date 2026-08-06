@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"naevis/models" // Ensure models.Ad has Position, Page, and Impression fields if needed
+	"naevis/models"
 )
 
-// In-memory dummy database (Mutex added for dynamic impression/click counter updates)
+// In-memory dummy database
 var (
 	adsMutex sync.RWMutex
 	ads      = []models.Ad{
@@ -22,8 +22,8 @@ var (
 			Image:       "https://via.placeholder.com/300x250?text=Tech+Ad",
 			Link:        "https://example.com/tech-sale",
 			Category:    "tech",
-			Page:        "home",
-			Position:    "aside",
+			Page:        "recipes",
+			Position:    "inbody",
 		},
 		{
 			ID:          "2",
@@ -52,7 +52,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-// GetAds fetches ads matching target parameters and returns a single dynamically picked ad slot payload.
+// GetAds handles the API request to fetch an ad.
 func GetAds(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -65,7 +65,6 @@ func GetAds(w http.ResponseWriter, r *http.Request) {
 	var candidates []models.Ad
 
 	for _, ad := range ads {
-		// Filter match checks
 		matchCategory := category == "" || category == "default" || ad.Category == category
 		matchPage := page == "" || ad.Page == page
 		matchPosition := position == "" || ad.Position == position
@@ -76,7 +75,7 @@ func GetAds(w http.ResponseWriter, r *http.Request) {
 	}
 	adsMutex.RUnlock()
 
-	// If no specific slot ad is found, fall back to any available ad
+	// Fallback to any available ad if exact match fails
 	if len(candidates) == 0 {
 		adsMutex.RLock()
 		candidates = ads
@@ -88,7 +87,6 @@ func GetAds(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Pick a random ad from filtered candidates to serve dynamic content on refresh
 	selectedAd := candidates[rand.Intn(len(candidates))]
 
 	if err := json.NewEncoder(w).Encode(selectedAd); err != nil {
@@ -102,9 +100,7 @@ func TrackImpression(w http.ResponseWriter, r *http.Request) {
 
 	if adID != "" {
 		adsMutex.Lock()
-		// TODO: Increment tracking metric here (e.g., db update)
 		inc()
-		// TODO: Increment tracking metric here (e.g., db update)
 		adsMutex.Unlock()
 	}
 
@@ -112,6 +108,4 @@ func TrackImpression(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "recorded"})
 }
 
-func inc() {
-
-}
+func inc() {}

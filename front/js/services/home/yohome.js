@@ -13,17 +13,35 @@ import { createMainLayout } from "../../components/layout/mainLayout.js";
 export function YoHome(isLoggedIn, container) {
   clearElement(container);
 
+  const PAGE_NAME = "home";
+
   // ---------- ASIDE CONTENT ----------
   const asideContent = [
     createWeatherInfoWidget(),
-    createSearchBar()
+    createSearchBar(),
+    // Sidebar Ad: 300x250 Medium Rectangle with 30s auto-refresh
+    adspace("aside", PAGE_NAME, {
+      width: 300,
+      height: 250,
+      refreshInterval: 30000
+    })
   ];
 
   // ---------- MAIN CONTENT ----------
   const mainContent = [
-    adspace("top"),
+    // Top Hero Leaderboard (728x90) with 45s auto-refresh
+    adspace("top", PAGE_NAME, {
+      width: 728,
+      height: 90,
+      refreshInterval: 45000
+    }),
     createNavWrapper(),
-    adspace("bottom")
+    // Bottom In-Body Banner (728x90) with 60s auto-refresh
+    adspace("bottom", PAGE_NAME, {
+      width: 728,
+      height: 90,
+      refreshInterval: 60000
+    })
   ];
 
   // Handle conditional auth / listing tabs

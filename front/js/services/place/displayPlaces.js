@@ -11,26 +11,45 @@ import { createAsideContent } from "../../components/layout/asideLayout.js";
 export async function displayPlaces(isLoggedIn, container) {
   container.replaceChildren();
 
+  const PAGE_NAME = "places";
+
   // ---------- ACTIONS & SIDEBAR ----------
-  const actions = [];
+  const asideChildren = [];
   if (isLoggedIn) {
-    actions.push(
+    asideChildren.push(
       Button("Create Place", "", { click: () => navigate("/create-place") }, "buttonx primary")
     );
   }
 
-  actions.push(
+  asideChildren.push(
     Button("Create Itinerary", "", { click: () => navigate("/itinerary") }, "buttonx primary"),
     Button("Manage Places", "", { click: () => navigate("/places/manage") }, "buttonx secondary"),
     Button("Help / FAQ", "", { click: () => navigate("/help") }, "buttonx secondary")
   );
 
-  const asideContent = createAsideContent({ title: "Actions", actions });
+  // Sidebar Ad: 300x250 Medium Rectangle with 30s auto-refresh
+  asideChildren.push(
+    adspace("aside", PAGE_NAME, {
+      width: 300,
+      height: 250,
+      refreshInterval: 30000
+    })
+  );
 
-  // ---------- MAIN HEADER ----------
+  const asideContent = createAsideContent({
+    title: "Actions",
+    children: asideChildren,
+    showAd: false // Handled directly via asideChildren to prevent duplication
+  });
+
+  // ---------- MAIN HEADER & INBODY AD ----------
   const mainHeader = [
     createElement("h1", {}, ["All Places"]),
-    adspace("inbody"),
+    adspace("inbody", PAGE_NAME, {
+      width: 728,
+      height: 90,
+      refreshInterval: 45000
+    })
   ];
 
   // ---------- LAYOUT ----------
@@ -60,8 +79,15 @@ export async function displayPlaces(isLoggedIn, container) {
   } else {
     places.forEach((place, idx) => {
       list.append(createPlaceCard(place));
-      if ((idx + 1) % 6 === 0) {
-        list.append(adspace("inlist"));
+
+      // Inject an in-list ad slot after every 5th place card
+      if ((idx + 1) % 5 === 0) {
+        list.append(
+          adspace("inlist", PAGE_NAME, {
+            width: "100%",
+            height: 120
+          })
+        );
       }
     });
   }

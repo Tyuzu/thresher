@@ -10,6 +10,8 @@ import { createAsideContent } from "../../../components/layout/asideLayout.js";
 export async function displayHireWorkers(isLoggedIn, container) {
   container.replaceChildren();
 
+  const PAGE_NAME = "hire-workers";
+
   // ---------- SIDEBAR ----------
   const asideChildren = [];
   if (isLoggedIn) {
@@ -18,10 +20,19 @@ export async function displayHireWorkers(isLoggedIn, container) {
     );
   }
 
+  // Sidebar Ad: 300x250 Medium Rectangle with 30s auto-refresh
+  asideChildren.push(
+    adspace("aside", PAGE_NAME, {
+      width: 300,
+      height: 250,
+      refreshInterval: 30000
+    })
+  );
+
   const asideContent = createAsideContent({
     title: "Actions",
     children: asideChildren,
-    showAd: true
+    showAd: false // Handled directly via asideChildren to avoid duplicate slots
   });
 
   // ---------- MAIN CONTENT ----------
@@ -61,7 +72,14 @@ export async function displayHireWorkers(isLoggedIn, container) {
   filterContainer.append(searchInput, toggleViewBtn);
   mainContent.push(filterContainer);
 
-  mainContent.push(adspace("inbody"));
+  // In-body Leaderboard Ad (728x90) below filters with 45s auto-refresh
+  mainContent.push(
+    adspace("inbody", PAGE_NAME, {
+      width: 728,
+      height: 90,
+      refreshInterval: 45000
+    })
+  );
 
   // List Section
   const list = createElement("section", {
@@ -106,9 +124,15 @@ export async function displayHireWorkers(isLoggedIn, container) {
 
     renderWorkerList(list, paged, isGridView, isLoggedIn);
 
+    // Inject in-list ad after every 5th worker item
     paged.forEach((_, idx) => {
-      if ((idx + 1) % 6 === 0) {
-        list.append(adspace("inlist"));
+      if ((idx + 1) % 5 === 0) {
+        list.append(
+          adspace("inlist", PAGE_NAME, {
+            width: "100%",
+            height: 120
+          })
+        );
       }
     });
 

@@ -60,6 +60,7 @@
 /* ==========================================================================
    Section Components & Cards
    ========================================================================== */
+/*
 .aside-section,
 .layout-aside > div > section,
 .layout-aside > section:not(.advert) {
@@ -70,13 +71,14 @@
   box-shadow: var(--shadow-elev-1);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
+*/
 
 .aside-section:hover,
-.layout-aside > div > section:hover {
+.layout-aside>div>section:hover {
   background-color: var(--color-card-hover);
 }
 
-.layout-aside > div {
+.layout-aside>div {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
@@ -227,4 +229,33 @@
 
 #lang-toggle:focus {
   border-color: var(--color-input-focus);
+}
+
+/* ==========================================================================
+   Advertisement Slots
+   ========================================================================== */
+.advert-aside {
+  margin-top: auto;
+  padding: var(--space-xs);
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.ad-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  text-align: center;
+}
+
+.ad-fallback-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }

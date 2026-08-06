@@ -12,20 +12,39 @@ import { createAsideContent } from "../../components/layout/asideLayout.js";
 export async function displayPosts(container, isLoggedIn) {
   container.replaceChildren();
 
+  const PAGE_NAME = "posts";
+
   // Sidebar actions setup
-  const actions = [];
+  const asideChildren = [];
   if (isLoggedIn) {
-    actions.push(
+    asideChildren.push(
       Button("Create Post", "posts-create-btn", { click: () => navigate("/create-post") }, "buttonx")
     );
   }
 
-  const asideContent = createAsideContent({ title: "Actions", actions });
+  // Sidebar Ad: 300x250 Medium Rectangle with 30s auto-refresh
+  asideChildren.push(
+    adspace("aside", PAGE_NAME, {
+      width: 300,
+      height: 250,
+      refreshInterval: 30000
+    })
+  );
+
+  const asideContent = createAsideContent({
+    title: "Actions",
+    children: asideChildren,
+    showAd: false // Handled directly via asideChildren to prevent duplicate slots
+  });
 
   // Main area initial render
   const mainHeader = [
     createElement("h1", {}, ["All Posts"]),
-    adspace("inbody")
+    adspace("inbody", PAGE_NAME, {
+      width: 728,
+      height: 90,
+      refreshInterval: 45000
+    })
   ];
 
   const layout = createMainLayout({
@@ -49,7 +68,16 @@ export async function displayPosts(container, isLoggedIn) {
     } else {
       posts.forEach((post, idx) => {
         list.append(createPostCard(post));
-        if ((idx + 1) % 6 === 0) list.append(adspace("inlist"));
+
+        // Inject an in-list native ad every 5 post items
+        if ((idx + 1) % 5 === 0) {
+          list.append(
+            adspace("inlist", PAGE_NAME, {
+              width: "100%",
+              height: 120
+            })
+          );
+        }
       });
     }
   } catch (err) {

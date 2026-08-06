@@ -13,8 +13,10 @@ import { createAsideContent } from "../../components/layout/asideLayout.js";
 export async function displayRecipes(container, isLoggedIn) {
   container.replaceChildren();
 
+  const PAGE_NAME = "recipes";
+
   // ---------- ACTIONS & SIDEBAR ----------
-  const actions = [
+  const asideChildren = [
     Button(
       t("recipes.createNewRecipe", {}, "Create Recipe"),
       "create-recipe-shortcut",
@@ -23,9 +25,19 @@ export async function displayRecipes(container, isLoggedIn) {
     ),
   ];
 
+  // Sidebar Ad: 300x250 Medium Rectangle with 30s auto-refresh
+  asideChildren.push(
+    adspace("aside", PAGE_NAME, {
+      width: 300,
+      height: 250,
+      refreshInterval: 30000
+    })
+  );
+
   const asideContent = createAsideContent({
     title: t("recipes.filters", {}, "Filters"),
-    actions,
+    children: asideChildren,
+    showAd: false // Handled directly via asideChildren to prevent duplicate slots
   });
 
   // ---------- MAIN HEADER & ACTIONS ----------
@@ -44,7 +56,11 @@ export async function displayRecipes(container, isLoggedIn) {
   const mainHeader = [
     createElement("h1", {}, [t("recipes.recipes", {}, "Recipes")]),
     mainActions,
-    adspace("inbody"),
+    adspace("inbody", PAGE_NAME, {
+      width: 728,
+      height: 90,
+      refreshInterval: 45000
+    }),
   ];
 
   // ---------- LAYOUT ----------
@@ -74,8 +90,15 @@ export async function displayRecipes(container, isLoggedIn) {
   } else {
     recipes.forEach((recipe, idx) => {
       list.append(createRecipeCard(recipe, isLoggedIn));
-      if ((idx + 1) % 6 === 0) {
-        list.append(adspace("inlist"));
+
+      // Inject an in-list native ad every 5 recipe cards
+      if ((idx + 1) % 5 === 0) {
+        list.append(
+          adspace("inlist", PAGE_NAME, {
+            width: "100%",
+            height: 120
+          })
+        );
       }
     });
   }

@@ -6,7 +6,6 @@ import { t } from "../../i18n/i18n.js";
 
 let adCounter = 0;
 
-// Centralized weak maps for memory-safe state and lifecycle tracking
 const adConfigs = new WeakMap();
 const adRefreshTimers = new WeakMap();
 
@@ -20,7 +19,6 @@ function resolvePageContext(page) {
   if (typeof window !== "undefined" && window.location) {
     const path = window.location.pathname.replace(/^\/|\/$/g, "");
     if (path) {
-      // e.g. "/dashboard/settings" -> "dashboard"
       return path.split("/")[0];
     }
   }
@@ -44,9 +42,18 @@ async function defaultAdNetworkFetcher(slotEl) {
     throw new Error(`Ad API error HTTP ${response.status}`);
   }
 
-  const adData = await response.json();
+  const rawData = await response.json();
 
-  if (!adData || !adData.Link) {
+  // Support both camelCase / lowercase and PascalCase fields
+  const adData = {
+    id: rawData.id || rawData.ID || "",
+    link: rawData.link || rawData.Link || "",
+    image: rawData.image || rawData.Image || "",
+    title: rawData.title || rawData.Title || "",
+    description: rawData.description || rawData.Description || ""
+  };
+
+  if (!adData.link || !adData.image) {
     throw new Error("Invalid ad payload received");
   }
 
@@ -54,31 +61,31 @@ async function defaultAdNetworkFetcher(slotEl) {
   slotEl.innerHTML = "";
   
   const anchor = createElement("a", {
-    href: adData.Link,
+    href: adData.link,
     target: "_blank",
     rel: "noopener noreferrer",
     class: "ad-banner-link"
   }, [
     createElement("img", {
-      src: adData.Image,
-      alt: adData.Title || "Advertisement",
+      src: adData.image,
+      alt: adData.title || "Advertisement",
       class: "ad-banner-img"
     }),
     createElement("div", { class: "ad-banner-info" }, [
-      createElement("strong", { class: "ad-title" }, [adData.Title || ""]),
-      createElement("p", { class: "ad-desc" }, [adData.Description || ""])
+      createElement("strong", { class: "ad-title" }, [adData.title]),
+      createElement("p", { class: "ad-desc" }, [adData.description])
     ])
   ]);
 
   slotEl.appendChild(anchor);
 
   // Trigger impression tracking
-  if (adData.ID && typeof navigator !== "undefined" && navigator.sendBeacon) {
-    navigator.sendBeacon(`/api/v1/sda/track-impression?id=${encodeURIComponent(adData.ID)}`);
+  if (adData.id && typeof navigator !== "undefined" && navigator.sendBeacon) {
+    navigator.sendBeacon(`/api/v1/sda/track-impression?id=${encodeURIComponent(adData.id)}`);
   }
 }
 
-// Singleton IntersectionObserver: Handles viewport-based lazy loading
+// Singleton IntersectionObserver
 const sharedAdObserver = (typeof window !== "undefined" && "IntersectionObserver" in window)
   ? new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -91,12 +98,10 @@ const sharedAdObserver = (typeof window !== "undefined" && "IntersectionObserver
           if (slotEl.getAttribute("data-ad-state") === "waiting") {
             triggerAdInitialization(slotEl, config);
           }
-          // Resume auto-refresh if enabled and ad was loaded
           if (config.refreshInterval && slotEl.getAttribute("data-ad-state") === "loaded") {
             startRefreshTimer(slotEl, config);
           }
         } else {
-          // Pause refresh when ad leaves the viewport to save memory and CPU
           stopRefreshTimer(slotEl);
         }
       });
@@ -111,12 +116,10 @@ async function triggerAdInitialization(slotEl, config) {
 
   slotEl.setAttribute("data-ad-state", "loading");
 
-  // Pipeline of networks to attempt: Primary -> Fallbacks -> Default Go API
   const networksToTry = [];
   if (typeof adNetworkInit === "function") {
     networksToTry.push(adNetworkInit);
   } else {
-    // If no provider is explicitly provided, use built-in backend fetcher
     networksToTry.push(defaultAdNetworkFetcher);
   }
 
@@ -136,7 +139,6 @@ async function triggerAdInitialization(slotEl, config) {
       slotEl.setAttribute("data-ad-provider", `provider-${i + 1}`);
       initialized = true;
 
-      // Start auto-refresh timer if feature is active
       if (config.refreshInterval) {
         startRefreshTimer(slotEl, config);
       }
@@ -152,17 +154,11 @@ async function triggerAdInitialization(slotEl, config) {
   }
 }
 
-/**
- * Starts auto-refresh interval for a given slot.
- */
 function startRefreshTimer(slotEl, config) {
-  stopRefreshTimer(slotEl); // Clear existing timer if any
-
-  // Ensure refresh interval is at least 10 seconds to avoid spamming network calls
+  stopRefreshTimer(slotEl);
   const interval = Math.max(config.refreshInterval, 10000);
 
   const timerId = setInterval(() => {
-    // Only refresh if tab is active and visible
     if (document.hidden) return;
 
     if (config.debug) {
@@ -175,9 +171,6 @@ function startRefreshTimer(slotEl, config) {
   adRefreshTimers.set(slotEl, timerId);
 }
 
-/**
- * Clears auto-refresh timer for an ad slot.
- */
 function stopRefreshTimer(slotEl) {
   if (adRefreshTimers.has(slotEl)) {
     clearInterval(adRefreshTimers.get(slotEl));
@@ -185,21 +178,6 @@ function stopRefreshTimer(slotEl) {
   }
 }
 
-/**
- * Embed an advertisement slot with lazy-loading, CLS protections, fallbacks, and auto-refresh support.
- * 
- * @param {string} [page] - Page identifier (e.g., "home", "article"). Defaults to current route.
- * @param {string} [position=""] - Slot position (e.g., "top", "sidebar", "aside")
- * @param {object} [options={}] - Configuration options
- * @param {function} [options.adNetworkInit] - Primary ad loading function (Defaults to Go backend fetcher)
- * @param {function[]} [options.fallbackNetworks] - Array of secondary ad network initializers
- * @param {number} [options.refreshInterval=0] - Auto-refresh interval in ms (e.g., 30000 for 30s). 0 to disable.
- * @param {string|number} [options.width="auto"] - Minimum width for CLS protection
- * @param {string|number} [options.height="auto"] - Minimum height for CLS protection
- * @param {string} [options.classes=""] - Additional custom CSS classes
- * @param {string} [options.fallbackText] - Display text while ad is loading/failed
- * @param {boolean} [options.debug=false] - Enables debug console logging
- */
 export function advertEmbed(page, position = "", options = {}) {
   adCounter++;
 
@@ -248,13 +226,6 @@ export function advertEmbed(page, position = "", options = {}) {
   return slotEl;
 }
 
-/**
- * Creates a semantic <section> wrapper for an ad placement.
- * 
- * @param {string} [position=""] - Slot position (e.g., "top", "sidebar", "aside")
- * @param {string} [page] - Target page context identifier (Defaults to URL path)
- * @param {object} [options={}] - Configuration options passed through to advertEmbed
- */
 export function adspace(position = "", page, options = {}) {
   const sanitizePos = position || "default";
   const resolvedPage = resolvePageContext(page);

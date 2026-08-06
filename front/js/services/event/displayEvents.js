@@ -12,26 +12,45 @@ import { createAsideContent } from "../../components/layout/asideLayout.js";
 export async function displayEvents(isLoggedIn, container) {
   container.replaceChildren();
 
+  const PAGE_NAME = "events";
+
   // ---------- ACTIONS & SIDEBAR ----------
-  const actions = [];
+  const asideChildren = [];
   if (isLoggedIn) {
-    actions.push(
+    asideChildren.push(
       Button("Create Event", "crt-evnt", { click: () => navigate("/create-event") }, "buttonx primary")
     );
   }
 
-  actions.push(
+  asideChildren.push(
     Button("Browse Artists", "artsts-brws", { click: () => navigate("/artists") }, "buttonx primary"),
     Button("My Events", "btn-my-events", { click: () => navigate("/my-events") }, "buttonx secondary"),
     Button("Event Calendar", "btn-event-calendar", { click: () => navigate("/event-calendar") }, "buttonx secondary")
   );
 
-  const asideContent = createAsideContent({ title: "Actions", actions });
+  // Sidebar Ad: 300x250 Medium Rectangle with 30s auto-refresh
+  asideChildren.push(
+    adspace("aside", PAGE_NAME, {
+      width: 300,
+      height: 250,
+      refreshInterval: 30000
+    })
+  );
 
-  // ---------- MAIN HEADER ----------
+  const asideContent = createAsideContent({
+    title: "Actions",
+    children: asideChildren,
+    showAd: false // Handled directly via asideChildren to avoid duplicate slots
+  });
+
+  // ---------- MAIN HEADER & INBODY AD ----------
   const mainHeader = [
     createElement("h1", {}, ["All Events"]),
-    adspace("inbody"),
+    adspace("inbody", PAGE_NAME, {
+      width: 728,
+      height: 90,
+      refreshInterval: 45000
+    })
   ];
 
   // ---------- LAYOUT ----------
@@ -61,8 +80,15 @@ export async function displayEvents(isLoggedIn, container) {
   } else {
     events.forEach((ev, idx) => {
       list.append(createEventCard(ev));
-      if ((idx + 1) % 6 === 0) {
-        list.append(adspace("inlist"));
+
+      // Inject an in-list ad after every 5th event card
+      if ((idx + 1) % 5 === 0) {
+        list.append(
+          adspace("inlist", PAGE_NAME, {
+            width: "100%",
+            height: 120
+          })
+        );
       }
     });
   }

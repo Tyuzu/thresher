@@ -11,6 +11,8 @@ import { createAsideContent } from "../../components/layout/asideLayout.js";
 export async function displayArtists(container, isLoggedIn) {
   container.replaceChildren();
 
+  const PAGE_NAME = "artists";
+
   // ---------- SIDEBAR ----------
   const asideChildren = [];
   if (isLoggedIn) {
@@ -19,10 +21,19 @@ export async function displayArtists(container, isLoggedIn) {
     );
   }
 
+  // Sidebar Ad: 300x250 medium rectangle with auto-refresh every 30 seconds
+  asideChildren.push(
+    adspace("aside", PAGE_NAME, {
+      width: 300,
+      height: 250,
+      refreshInterval: 30000
+    })
+  );
+
   const asideContent = createAsideContent({
     title: "Actions",
     children: asideChildren,
-    showAd: true
+    showAd: false // Handled directly above
   });
 
   // ---------- MAIN CONTENT ----------
@@ -40,7 +51,14 @@ export async function displayArtists(container, isLoggedIn) {
   filterContainer.append(searchInput, categorySelect);
   mainContent.push(filterContainer);
 
-  mainContent.push(adspace("inbody"));
+  // In-body Leaderboard Ad (728x90) below filters
+  mainContent.push(
+    adspace("inbody", PAGE_NAME, {
+      width: 728,
+      height: 90,
+      refreshInterval: 45000
+    })
+  );
 
   // List
   const list = createElement("div", { class: "artists-list" });
@@ -86,8 +104,15 @@ export async function displayArtists(container, isLoggedIn) {
 
     paged.forEach((artist, idx) => {
       list.append(createArtistCard(artist));
-      if ((idx + 1) % 6 === 0) {
-        list.append(adspace("inlist"));
+
+      // Inject an in-list ad after every 5th artist card
+      if ((idx + 1) % 5 === 0) {
+        list.append(
+          adspace("inlist", PAGE_NAME, {
+            width: "100%",
+            height: 120
+          })
+        );
       }
     });
 
