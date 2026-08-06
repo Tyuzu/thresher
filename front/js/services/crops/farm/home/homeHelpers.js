@@ -2,7 +2,6 @@
 import { createElement } from "../../components/createElement.js";
 import { navigate } from "../../routes/index.js";
 import { login, signup } from "../auth/authService.js";
-import { advertEmbed } from "../../../ads/adspace.js";
 
 // --- helpers ---
 export const formatDate = () => {
@@ -124,9 +123,4 @@ export function createAuthForms() {
   signupForm.addEventListener("submit", signup);
 
   return createElement("div", { class: "auth-forms" }, [loginForm, signupForm]);
-}
-
-// --- AD SPACE ---
-export function adspace(position = "") {
-  return createElement("section", { class: `advert advert-${position}` }, [advertEmbed("home", position)]);
 }

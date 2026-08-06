@@ -8,4 +8,6 @@ type Ad struct {
 	Image       string `json:"image,omitempty"`
 	Link        string `json:"link,omitempty"`
 	Category    string `json:"category,omitempty"`
+	Page        string `json:"page,omitempty"`
+	Position    string `json:"position,omitempty"`
 }

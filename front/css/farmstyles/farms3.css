@@ -282,22 +282,3 @@
   font-size: var(--font-size-sm);
   color: var(--color-muted);
 }
-
-/* Advertisement Slot */
-.advert-aside {
-  padding: var(--space-sm) !important;
-  text-align: center;
-}
-
-.ad-slot {
-  padding: var(--space-md);
-  background-color: var(--color-bg-tertiary);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-}
-
-.ad-fallback-text {
-  font-size: var(--font-size-xs);
-  color: var(--color-light);
-  text-transform: uppercase;
-}

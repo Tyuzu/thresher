@@ -113,26 +113,3 @@
   font-weight: var(--font-weight-bold);
   margin: 0;
 }
-
-/* --- Advertisement Slots --- */
-.advert {
-  background-color: var(--color-bg-secondary);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-sm);
-  text-align: center;
-}
-
-.ad-slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-md);
-}
-
-.ad-fallback-text {
-  font-size: var(--font-size-xs);
-  color: var(--color-light);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}

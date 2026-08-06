@@ -41,26 +41,6 @@
   color: var(--color-fg);
 }
 
-/* In-body Advertisement Slot */
-.advert-inbody {
-  margin-bottom: var(--space-sm);
-}
-
-.ad-slot {
-  padding: var(--space-md);
-  background-color: var(--color-bg-tertiary);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  text-align: center;
-}
-
-.ad-fallback-text {
-  font-size: var(--font-size-xs);
-  color: var(--color-light);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 /* Posts List Grid */
 .posts-list {
   display: grid;

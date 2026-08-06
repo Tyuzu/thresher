@@ -1,14 +1,14 @@
 // src/config/domainFeatures.js
 
 export const DOMAIN_FEATURE_MAP = {
-  "farms.myapp.com": ["core", "farms"],
-  "places.myapp.com": ["core", "places"],
+  "farms.myapp.com": ["core", "farms", "chats"],
+  "places.myapp.com": ["core", "places", "chats", "events", "baito"],
   "events.myapp.com": ["core", "events"],
-  "baito.myapp.com": ["core", "baito"],
+  "baito.myapp.com": ["core", "baito", "chats", "places"],
   "chats.myapp.com": ["core", "chats"],
   "admin.myapp.com": ["core", "admin"],
-  "social.myapp.com": ["core", "social"],
-  
+  "social.myapp.com": ["core", "social", "chats"],
+
   // Local development, staging, and main hub access
   "localhost": ["ALL"],
   "127.0.0.1": ["ALL"],
@@ -76,7 +76,7 @@ export const DOMAIN_METADATA = {
     logo: "/logos/admin.svg",
     favicon: "/favicons/admin.ico"
   },
-  
+
   // Defaults for Local Development & Main Domain
   "localhost": {
     title: "Dev Suite",

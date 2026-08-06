@@ -2,7 +2,7 @@ import { createElement } from "../../components/createElement.js";
 import { Button } from "../../components/base/Button.js";
 import { navigate } from "../../routes/index.js";
 import { apiFetch } from "../../api/api.js";
-import { adspace } from "../home/homeHelpers.js";
+import { adspace } from "../../services/ads/newads.js";
 import Imagex from "../../components/base/Imagex.js";
 import Datex from "../../components/base/Datex.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";

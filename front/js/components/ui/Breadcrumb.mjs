@@ -1,6 +1,5 @@
 import "../../../css/ui/Breadcrumb.css";
 import { navigate } from "../../routes/index.js";
-import { getCurrentAllowedFeatures } from "../../config/domainFeatures.js";
 
 /** Map static paths or route prefixes to user-friendly titles */
 const ROUTE_NAME_MAP = {

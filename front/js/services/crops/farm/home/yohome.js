@@ -4,9 +4,9 @@ import {
   createWeatherInfoWidget,
   createSearchBar,
   createNavWrapper,
-  createAuthForms,
-  adspace
+  createAuthForms
 } from "./homeHelpers.js";
+import { adspace } from "../../services/ads/newads.js";
 import { createMainLayout } from "../../components/layout/mainLayout.js";
 
 // --- MAIN HOME ---

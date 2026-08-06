@@ -219,35 +219,3 @@
   grid-column: 1 / -1;
 }
 
-
-/* ==========================================================================
-   6. ADVERTISEMENT SLOTS
-   ========================================================================== */
-
-.advert {
-  margin-bottom: var(--space-md);
-}
-
-.workers-aside .advert {
-  margin-top: var(--space-sm);
-  margin-bottom: 0;
-}
-
-.ad-slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-bg-secondary);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-md);
-  text-align: center;
-}
-
-.ad-fallback-text {
-  font-size: var(--font-size-xs);
-  color: var(--color-light);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: var(--font-weight-medium);
-}

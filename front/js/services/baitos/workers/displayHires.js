@@ -3,7 +3,7 @@ import { Button } from "../../../components/base/Button.js";
 import { navigate } from "../../../routes/index.js";
 import { renderWorkerList } from "./WorkerList.js";
 import { apiFetch } from "../../../api/api.js";
-import { adspace } from "../../home/homeHelpers.js";
+import { adspace } from "../../../services/ads/newads.js";
 import { createMainLayout } from "../../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../../components/layout/asideLayout.js";
 

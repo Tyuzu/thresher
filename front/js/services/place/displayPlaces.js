@@ -4,7 +4,7 @@ import { navigate } from "../../routes/index.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import Imagex from "../../components/base/Imagex.js";
 import { apiFetch } from "../../api/api.js";
-import { adspace } from "../home/homeHelpers.js";
+import { adspace } from "../../services/ads/newads.js";
 import { createMainLayout } from "../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../components/layout/asideLayout.js";
 
