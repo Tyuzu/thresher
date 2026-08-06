@@ -3,6 +3,8 @@ import { createNav, highlightActiveNav } from "../components/layout/navigation.j
 import { render } from "./router.js";
 import { setState, getRouteState, saveScroll, restoreScroll, subscribe } from "../state/state.js";
 import { Footer } from "../components/layout/footer.js";
+import { track } from "../services/activity/metrics.js";
+import { startPerfMonitoring } from "../services/activity/perfMonitor.js";
 
 const layoutState = {
   isHydrated: false,
@@ -32,10 +34,8 @@ function getElements() {
 
 /**
  * Checks if the navigation panel should be hidden for a given route.
- * Matches both static paths and dynamic sub-paths (e.g., /merechats, /merechats/123)
  */
 function isNavHidden(url) {
-  // Fast path for short/empty strings or default false
   return false;
 }
 
@@ -53,7 +53,6 @@ function hydrateAuthState() {
     const trimmed = userRaw.trim();
     const firstChar = trimmed.charAt(0);
 
-    // Fast check before parsing JSON
     if (firstChar === "{" || firstChar === "[") {
       try {
         user = JSON.parse(trimmed);
@@ -154,6 +153,9 @@ function navigate(path, { storeRedirect = false } = {}) {
 
     history.pushState(null, "", path);
 
+    // Track SPA navigation pageview
+    track("pageview", { path });
+
     loadContent(path)
       .catch(err => {
         console.error("Navigation rendering failed:", err);
@@ -172,6 +174,8 @@ function navigate(path, { storeRedirect = false } = {}) {
  * Initial render
  */
 async function renderPage() {
+  // Start performance monitoring on initial app mount
+  startPerfMonitoring();
   await loadContent(window.location.pathname);
 }
 

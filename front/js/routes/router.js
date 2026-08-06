@@ -3,6 +3,7 @@ import { getState, subscribe, setRouteModule, getRouteModule, hasRouteModule } f
 import { staticRoutes, dynamicRoutes } from "./newRoutes.js";
 import { navigate } from "./index.js";
 import { legalRoutes } from "./legalRoutes.js";
+import { track } from "../services/activity/metrics.js";
 
 /** --- Reactive login state --- */
 let isLoggedIn = Boolean(getState("token"));
@@ -17,41 +18,55 @@ function renderError(container, message = "404 Not Found") {
  * Evaluates dynamic states (like auth and target container) cleanly upon call.
  */
 async function handleRoute({ path, moduleImport, functionName, routeParams = [], contentContainer, cache }) {
-  // 1. If cached, retrieve the render function and execute with fresh states
-  if (cache && hasRouteModule(path)) {
-    const cachedRender = getRouteModule(path).render;
-    contentContainer.replaceChildren(); // Ensure cache hits clear previous views cleanly
-    return cachedRender(isLoggedIn, ...routeParams, contentContainer);
-  }
+  const startTime = performance.now();
 
-  // 2. Fetch the chunk over the network before tearing down the existing DOM
-  const mod = await moduleImport();
-  const renderFn = mod[functionName];
-  if (typeof renderFn !== "function") {
-    throw new Error(`Export '${functionName}' not found in module.`);
-  }
+  try {
+    // 1. If cached, retrieve the render function and execute with fresh states
+    if (cache && hasRouteModule(path)) {
+      const cachedRender = getRouteModule(path).render;
+      contentContainer.replaceChildren();
+      await cachedRender(isLoggedIn, ...routeParams, contentContainer);
+      
+      const duration = Math.round(performance.now() - startTime);
+      track("route_render_time", { path, duration_ms: duration, cached: true });
+      return;
+    }
 
-  // 3. Clear container ONLY when new content is ready to inject (Prevents white flash)
-  contentContainer.replaceChildren();
+    // 2. Fetch the chunk over the network before tearing down existing DOM
+    const mod = await moduleImport();
+    const renderFn = mod[functionName];
+    if (typeof renderFn !== "function") {
+      throw new Error(`Export '${functionName}' not found in module.`);
+    }
 
-  // Assemble arguments dynamically
-  const fullArgs = [isLoggedIn, ...routeParams, contentContainer];
-  await renderFn(...fullArgs);
+    // 3. Clear container ONLY when new content is ready to inject
+    contentContainer.replaceChildren();
 
-  // 4. Cache the raw render function pointer, keeping arguments dynamic
-  if (cache) {
-    setRouteModule(path, {
-      render: (freshIsLoggedIn, ...paramsAndContainer) => {
-        // paramsAndContainer will contain [...routeParams, contentContainer] when called
-        return renderFn(freshIsLoggedIn, ...paramsAndContainer);
-      }
-    });
+    // Assemble arguments dynamically
+    const fullArgs = [isLoggedIn, ...routeParams, contentContainer];
+    await renderFn(...fullArgs);
+
+    // 4. Cache the raw render function pointer
+    if (cache) {
+      setRouteModule(path, {
+        render: (freshIsLoggedIn, ...paramsAndContainer) => {
+          return renderFn(freshIsLoggedIn, ...paramsAndContainer);
+        }
+      });
+    }
+
+    const duration = Math.round(performance.now() - startTime);
+    track("route_render_time", { path, duration_ms: duration, cached: false });
+
+  } catch (err) {
+    const duration = Math.round(performance.now() - startTime);
+    track("route_render_error", { path, duration_ms: duration, error: err.message });
+    throw err;
   }
 }
 
 /**
  * Resolves and renders the appropriate route.
- * Keep paths normalized and execute authentication guards.
  */
 export async function render(rawPath, contentContainer) {
   let cleanPath = decodeURIComponent(String(rawPath).split(/[?#]/)[0]);
@@ -91,7 +106,7 @@ export async function render(rawPath, contentContainer) {
         path: cleanPath, 
         moduleImport: staticRoute.moduleImport, 
         functionName: staticRoute.functionName, 
-        routeParams: [], // Empty for static routes
+        routeParams: [], 
         contentContainer, 
         cache: true 
       });
@@ -112,7 +127,6 @@ export async function render(rawPath, contentContainer) {
       return navigate("/login");
     }
 
-    // Extract clean URL dynamic parameters
     const routeParams = typeof route.argBuilder === "function" 
       ? route.argBuilder(match) 
       : match.slice(1);
@@ -122,7 +136,7 @@ export async function render(rawPath, contentContainer) {
         path: cleanPath, 
         moduleImport: route.moduleImport, 
         functionName: route.moduleImport ? route.functionName : undefined,
-        routeParams, // Clean arguments passed dynamically
+        routeParams, 
         contentContainer, 
         cache: true 
       });
@@ -134,6 +148,7 @@ export async function render(rawPath, contentContainer) {
   }
 
   // 3) No match
+  track("route_not_found", { path: cleanPath });
   renderError(contentContainer);
 }
 
