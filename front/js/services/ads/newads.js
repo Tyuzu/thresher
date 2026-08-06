@@ -59,7 +59,7 @@ async function defaultAdNetworkFetcher(slotEl) {
 
   // Clear fallback text and inject HTML
   slotEl.innerHTML = "";
-  
+
   const anchor = createElement("a", {
     href: adData.link,
     target: "_blank",
@@ -88,24 +88,24 @@ async function defaultAdNetworkFetcher(slotEl) {
 // Singleton IntersectionObserver
 const sharedAdObserver = (typeof window !== "undefined" && "IntersectionObserver" in window)
   ? new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        const slotEl = entry.target;
-        const config = adConfigs.get(slotEl);
+    entries.forEach(entry => {
+      const slotEl = entry.target;
+      const config = adConfigs.get(slotEl);
 
-        if (!config) return;
+      if (!config) return;
 
-        if (entry.isIntersecting) {
-          if (slotEl.getAttribute("data-ad-state") === "waiting") {
-            triggerAdInitialization(slotEl, config);
-          }
-          if (config.refreshInterval && slotEl.getAttribute("data-ad-state") === "loaded") {
-            startRefreshTimer(slotEl, config);
-          }
-        } else {
-          stopRefreshTimer(slotEl);
+      if (entry.isIntersecting) {
+        if (slotEl.getAttribute("data-ad-state") === "waiting") {
+          triggerAdInitialization(slotEl, config);
         }
-      });
-    }, { rootMargin: "200px" })
+        if (config.refreshInterval && slotEl.getAttribute("data-ad-state") === "loaded") {
+          startRefreshTimer(slotEl, config);
+        }
+      } else {
+        stopRefreshTimer(slotEl);
+      }
+    });
+  }, { rootMargin: "200px" })
   : null;
 
 /**
@@ -134,7 +134,7 @@ async function triggerAdInitialization(slotEl, config) {
     try {
       if (debug) console.warn(`[Ad System] Trying ad provider level ${i + 1} for ${slotEl.id}`);
       await Promise.resolve(netFn(slotEl));
-      
+
       slotEl.setAttribute("data-ad-state", "loaded");
       slotEl.setAttribute("data-ad-provider", `provider-${i + 1}`);
       initialized = true;
@@ -142,7 +142,7 @@ async function triggerAdInitialization(slotEl, config) {
       if (config.refreshInterval) {
         startRefreshTimer(slotEl, config);
       }
-      break; 
+      break;
     } catch (err) {
       console.error(`[Ad System] Network provider ${i + 1} failed for ${slotEl.id}:`, err);
     }
@@ -205,7 +205,8 @@ export function advertEmbed(page, position = "", options = {}) {
     "data-page": resolvedPage,
     "data-position": position,
     "data-ad-state": "waiting",
-    style: `min-width: ${styleMinW}; min-height: ${styleMinH}; display: block;`
+    style: `min-height: ${styleMinH}; display: block;`
+    // style: `min-width: ${styleMinW}; min-height: ${styleMinH}; display: block;`
   }, [
     createElement("span", { class: "ad-fallback-text" }, [fallbackText])
   ]);
@@ -229,8 +230,8 @@ export function advertEmbed(page, position = "", options = {}) {
 export function adspace(position = "", page, options = {}) {
   const sanitizePos = position || "default";
   const resolvedPage = resolvePageContext(page);
-  
-  return createElement("section", { 
+
+  return createElement("section", {
     class: `advert advert-${sanitizePos}`.trim(),
     "aria-label": t("common.advertisement", {}, "Advertisement")
   }, [

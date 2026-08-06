@@ -57,7 +57,7 @@
   min-width: 0; /* Prevents child grid/flex elements from overflowing overflow-x */
   width: 100%;
 }
-
+/*
 .layout-main > section {
   background-color: var(--color-bg);
   border: 1px solid var(--color-border-light);
@@ -65,7 +65,7 @@
   padding: var(--space-md);
   box-shadow: var(--shadow-elev-1);
 }
-
+*/
 .layout-main h1 {
   font-family: var(--font-heading);
   font-size: var(--font-size-2xl);
@@ -83,7 +83,7 @@
   .layout-aside {
     position: sticky;
     top: var(--space-md); /* Sticks to top of viewport when scrolling */
-    max-height: calc(100vh - var(--space-lg));
+    /*max-height: calc(100vh - var(--space-lg));*/
     overflow-y: auto; /* Scrollable inside sidebar if content exceeds screen */
     scrollbar-width: thin;
     scrollbar-color: var(--color-border) transparent;

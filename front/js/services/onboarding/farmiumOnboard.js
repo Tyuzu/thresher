@@ -4,17 +4,122 @@ import { Button } from "../../components/base/Button.js";
 import Modal from "../../components/ui/Modal.mjs";
 
 /**
+ * Onboarding step configurations.
+ * Allows adding, removing, or reordering steps without altering control flow logic.
+ */
+const STEP_CONFIGS = {
+  choice: {
+    id: "choice",
+    title: "Do you want to Work or Hire?",
+    key: "choice",
+    options: { Work: "work", Hire: "hire" },
+    showBack: false,
+    getNextStep: (val) => (val === "work" ? "workDays" : "hireType")
+  },
+  // Work path steps
+  workDays: {
+    id: "workDays",
+    title: "How many days do you want to work?",
+    key: "days",
+    options: { "1 Day": "1", "Few Days": "few", "Long Term": "long", "Weekend Only": "weekend" },
+    nextStep: "workType"
+  },
+  workType: {
+    id: "workType",
+    title: "Select work type",
+    key: "type",
+    options: { Kitchen: "kitchen", Delivery: "delivery", Cleaning: "cleaning", Retail: "retail", "Event Staff": "event" },
+    nextStep: "workShift"
+  },
+  workShift: {
+    id: "workShift",
+    title: "Preferred shift timing?",
+    key: "shift",
+    options: { Morning: "morning", Afternoon: "afternoon", Night: "night", Flexible: "flexible" },
+    nextStep: "workLocation"
+  },
+  workLocation: {
+    id: "workLocation",
+    title: "Preferred work location?",
+    key: "location",
+    options: { "Near Me": "near", Remote: "remote", "Specific Area": "specific" },
+    nextStep: "workPay"
+  },
+  workPay: {
+    id: "workPay",
+    title: "What pay range are you expecting?",
+    key: "pay",
+    options: { "Below 1000/day": "low", "1000–2000/day": "medium", "2000+/day": "high" },
+    nextStep: "summary"
+  },
+  // Hire path steps
+  hireType: {
+    id: "hireType",
+    title: "What type of worker are you looking to hire?",
+    key: "hireType",
+    options: { "Part-Time": "parttime", "Full-Time": "fulltime", Temporary: "temp" },
+    nextStep: "hireShift"
+  },
+  hireShift: {
+    id: "hireShift",
+    title: "What shift do you need covered?",
+    key: "shift",
+    options: { Morning: "morning", Afternoon: "afternoon", Night: "night", Flexible: "flexible" },
+    nextStep: "hirePay"
+  },
+  hirePay: {
+    id: "hirePay",
+    title: "What pay range are you offering?",
+    key: "pay",
+    options: { Low: "low", Medium: "medium", High: "high" },
+    nextStep: "hireLocation"
+  },
+  hireLocation: {
+    id: "hireLocation",
+    title: "Where is the job located?",
+    key: "location",
+    options: { "Near Me": "near", Remote: "remote", "Specific Area": "specific" },
+    nextStep: "summary"
+  }
+};
+
+/**
  * Call Onboarding() to open the modal.
  * Saves final answers to localStorage key "farmiumOnboarding".
  */
 export function Onboarding() {
-  // skip if already completed
-  const saved = localStorage.getItem("farmiumOnboarding");
-  if (saved) {
-return;
-}
+  if (localStorage.getItem("farmiumOnboarding")) {
+    return;
+  }
 
-  // Stepper (segmented)
+  // State initialization
+  const state = {
+    currentStepId: "choice",
+    editingFromSummary: false,
+    history: [],
+    answers: {},
+    path: null
+  };
+
+  // Helper to reverse key/value lookup for summary display
+  const labelMap = {};
+  Object.values(STEP_CONFIGS).forEach((cfg) => {
+    Object.entries(cfg.options).forEach(([label, val]) => {
+      labelMap[val] = label;
+    });
+  });
+
+  // Create base modal wrapper
+  const modalEl = Modal({
+    title: "Farmium Onboarding",
+    size: "large",
+    content: () => createElement("div", { id: "onboarding-container", class: "onboarding-box" }, []),
+    closeOnOverlayClick: false
+  });
+
+  const container = modalEl.querySelector("#onboarding-container");
+
+  // --- Components ---
   function Stepper({ total, current }) {
     const wrap = createElement("div", {
       class: "stepper-wrap",
@@ -24,10 +129,11 @@ return;
       "aria-valuenow": String(current),
       style: "display:flex;gap:8px;margin-bottom:14px;"
     }, []);
+
     for (let i = 1; i <= total; i++) {
       const bg = i < current ? "#4caf50" : i === current ? "#1976d2" : "#e0e0e0";
       const stepEl = createElement("div", {
-        class: `step-seg`,
+        class: "step-seg",
         style: `flex:1; height:10px; border-radius:6px; background:${bg}; transition: background 220ms ease;`
       }, []);
       wrap.appendChild(stepEl);
@@ -35,350 +141,103 @@ return;
     return wrap;
   }
 
-  // Create modal
-  const modalEl = Modal({
-    title: "Farmium Onboarding",
-    size: "large",
-    content: () => createElement("div", { id: "onboarding-container", class: "onboarding-box" }, []),
-    closeOnOverlayClick: false
-  });
-
-  const container = modalEl.querySelector("#onboarding-container");
-  container.innerHTML = "";
-
-  // STATE
-  const state = {
-    step: 0,
-    totalSteps: 0,
-    path: "work",       // "work" or "hire"
-    answers: {},        // collected answers
-    history: [],        // stack of previous step functions for Back
-    currentFn: null     // currently active step function
-  };
-
-  // HISTORY HELPERS
-  function pushHistory(fn) {
-    // store the function (not called) so goBack can re-render it
-    if (typeof fn === "function") {
-state.history.push(fn);
-}
+  // --- Core Navigation logic ---
+  function getPathStepCount() {
+    return state.path === "hire" ? 5 : 6;
   }
+
+  function getStepIndex(stepId) {
+    if (stepId === "choice") return 1;
+    if (stepId === "summary") return getPathStepCount();
+    
+    const workOrder = ["choice", "workDays", "workType", "workShift", "workLocation", "workPay", "summary"];
+    const hireOrder = ["choice", "hireType", "hireShift", "hirePay", "hireLocation", "summary"];
+    const order = state.path === "hire" ? hireOrder : workOrder;
+    
+    const idx = order.indexOf(stepId);
+    return idx !== -1 ? idx + 1 : 1;
+  }
+
+  function goToStep(stepId, isBack = false) {
+    if (!isBack && state.currentStepId && state.currentStepId !== stepId) {
+      state.history.push(state.currentStepId);
+    }
+    state.currentStepId = stepId;
+    render();
+  }
+
   function goBack() {
-    const prevFn = state.history.pop();
-    if (!prevFn) {
-return;
-}
-    // call previous function - it should set state.step appropriately
-    state.currentFn = prevFn;
-    prevFn();
-  }
-
-  // RENDER HELPERS
-  function clearAndAppendStepper() {
-    container.innerHTML = "";
-    container.appendChild(Stepper({ total: state.totalSteps || 1, current: Math.max(1, state.step || 1) }));
-  }
-
-  function renderOptions({ title, options, onChoose, showBack = true }) {
-    clearAndAppendStepper();
-    container.appendChild(createElement("h2", {}, [title]));
-
-    const optsWrap = createElement("div", { style: "display:flex;flex-direction:column;gap:8px;margin:12px 0;" }, []);
-    Object.entries(options).forEach(([label, value]) => {
-      const btn = Button(label, `btn-${label.replace(/\s+/g, "-").toLowerCase()}`, {
-        click: () => {
-          // push the current function so Back returns here
-          if (state.currentFn) {
-pushHistory(state.currentFn);
-}
-          onChoose(value);
-        }
-      }, "buttonx");
-      optsWrap.appendChild(btn);
-    });
-    container.appendChild(optsWrap);
-
-    if (showBack && state.history.length > 0) {
-      const backBtn = Button("Back", "btn-back", { click: () => goBack() }, "button-back");
-      container.appendChild(backBtn);
+    const prevStepId = state.history.pop();
+    if (prevStepId) {
+      state.currentStepId = prevStepId;
+      render();
     }
   }
 
-  // Map of named step functions for editing jump
-  const stepNameMap = {
-    choice: () => startStep(),
-    // work steps
-    days: () => workDaysStep(),
-    type: () => workTypeStep(),
-    shift: () => workShiftStep(),
-    location: () => workLocationStep(),
-    pay: () => workPayStep(),
-    // hire steps
-    hireType: () => hireWorkerTypeStep(),
-    hireShift: () => hireShiftStep(),
-    hirePay: () => hirePayStep(),
-    hireLocation: () => hireLocationStep()
-  };
+  function handleOptionSelect(config, value) {
+    state.answers[config.key] = value;
 
-  // Jump to edit a specific step from summary without resetting answers.
-  // Push summaryStep so Back goes back to summary after editing.
-  function editTo(stepKey) {
-    const fn = stepNameMap[stepKey];
-    if (!fn) {
-return;
-}
-    // keep current summary reachable via Back
-    pushHistory(summaryStep);
-    state.currentFn = fn;
-    fn();
+    if (config.id === "choice") {
+      state.path = value;
+    }
+
+    // Return to summary directly if user clicked "Edit" from summary
+    if (state.editingFromSummary) {
+      state.editingFromSummary = false;
+      goToStep("summary");
+      return;
+    }
+
+    // Determine standard next step
+    const nextStepId = config.getNextStep ? config.getNextStep(value) : config.nextStep;
+    goToStep(nextStepId);
   }
 
-  // STEP FUNCTIONS
-  function startStep() {
-    state.currentFn = startStep;
-    state.step = 1;
-    renderOptions({
-      title: "Do you want to Work or Hire?",
-      options: { Work: "work", Hire: "hire" },
-      onChoose: (choice) => {
-        state.answers.choice = choice;
-        state.path = choice;
-        state.totalSteps = choice === "work" ? 6 : 5;
-        // next step depends on path
-        if (choice === "work") {
-          state.currentFn = workDaysStep;
-          state.step = 2;
-          workDaysStep();
-        } else {
-          state.currentFn = hireWorkerTypeStep;
-          state.step = 2;
-          hireWorkerTypeStep();
-        }
-      },
-      showBack: false
-    });
-  }
-
-  // ---- Work path ----
-  function workDaysStep() {
-    state.currentFn = workDaysStep;
-    state.step = 2;
-    renderOptions({
-      title: "How many days do you want to work?",
-      options: {
-        "1 Day": "1",
-        "Few Days": "few",
-        "Long Term": "long",
-        "Weekend Only": "weekend"
-      },
-      onChoose: (val) => {
-        state.answers.days = val;
-        state.currentFn = workTypeStep;
-        state.step = 3;
-        workTypeStep();
-      }
-    });
-  }
-
-  function workTypeStep() {
-    state.currentFn = workTypeStep;
-    state.step = 3;
-    renderOptions({
-      title: "Select work type",
-      options: {
-        Kitchen: "kitchen",
-        Delivery: "delivery",
-        Cleaning: "cleaning",
-        Retail: "retail",
-        "Event Staff": "event"
-      },
-      onChoose: (val) => {
-        state.answers.type = val;
-        state.currentFn = workShiftStep;
-        state.step = 4;
-        workShiftStep();
-      }
-    });
-  }
-
-  function workShiftStep() {
-    state.currentFn = workShiftStep;
-    state.step = 4;
-    renderOptions({
-      title: "Preferred shift timing?",
-      options: {
-        Morning: "morning",
-        Afternoon: "afternoon",
-        Night: "night",
-        Flexible: "flexible"
-      },
-      onChoose: (val) => {
-        state.answers.shift = val;
-        state.currentFn = workLocationStep;
-        state.step = 5;
-        workLocationStep();
-      }
-    });
-  }
-
-  function workLocationStep() {
-    state.currentFn = workLocationStep;
-    state.step = 5;
-    renderOptions({
-      title: "Preferred work location?",
-      options: {
-        "Near Me": "near",
-        Remote: "remote",
-        "Specific Area": "specific"
-      },
-      onChoose: (val) => {
-        state.answers.location = val;
-        state.currentFn = workPayStep;
-        state.step = 6;
-        workPayStep();
-      }
-    });
-  }
-
-  function workPayStep() {
-    state.currentFn = workPayStep;
-    state.step = 6;
-    renderOptions({
-      title: "What pay range are you expecting?",
-      options: {
-        "Below 1000/day": "low",
-        "1000–2000/day": "medium",
-        "2000+/day": "high"
-      },
-      onChoose: (val) => {
-        state.answers.pay = val;
-        state.step = state.totalSteps;
-        summaryStep();
-      }
-    });
-  }
-
-  // ---- Hire path ----
-  function hireWorkerTypeStep() {
-    state.currentFn = hireWorkerTypeStep;
-    state.step = 2;
-    renderOptions({
-      title: "What type of worker are you looking to hire?",
-      options: {
-        "Part-Time": "parttime",
-        "Full-Time": "fulltime",
-        Temporary: "temp"
-      },
-      onChoose: (val) => {
-        state.answers.hireType = val;
-        state.currentFn = hireShiftStep;
-        state.step = 3;
-        hireShiftStep();
-      }
-    });
-  }
-
-  function hireShiftStep() {
-    state.currentFn = hireShiftStep;
-    state.step = 3;
-    renderOptions({
-      title: "What shift do you need covered?",
-      options: {
-        Morning: "morning",
-        Afternoon: "afternoon",
-        Night: "night",
-        Flexible: "flexible"
-      },
-      onChoose: (val) => {
-        state.answers.shift = val;
-        state.currentFn = hirePayStep;
-        state.step = 4;
-        hirePayStep();
-      }
-    });
-  }
-
-  function hirePayStep() {
-    state.currentFn = hirePayStep;
-    state.step = 4;
-    renderOptions({
-      title: "What pay range are you offering?",
-      options: {
-        Low: "low",
-        Medium: "medium",
-        High: "high"
-      },
-      onChoose: (val) => {
-        state.answers.pay = val;
-        state.currentFn = hireLocationStep;
-        state.step = 5;
-        hireLocationStep();
-      }
-    });
-  }
-
-  function hireLocationStep() {
-    state.currentFn = hireLocationStep;
-    state.step = 5;
-    renderOptions({
-      title: "Where is the job located?",
-      options: {
-        "Near Me": "near",
-        Remote: "remote",
-        "Specific Area": "specific"
-      },
-      onChoose: (val) => {
-        state.answers.location = val;
-        state.step = state.totalSteps;
-        summaryStep();
-      }
-    });
-  }
-
-  // SUMMARY
-  function summaryStep() {
-    state.currentFn = summaryStep;
-    state.step = state.totalSteps || 1;
+  // --- Render logic ---
+  function renderSummary() {
     container.innerHTML = "";
-    container.appendChild(Stepper({ total: state.totalSteps, current: state.step }));
+    const totalSteps = getPathStepCount();
+    container.appendChild(Stepper({ total: totalSteps, current: totalSteps }));
     container.appendChild(createElement("h2", {}, ["Summary of your choices:"]));
 
-    // build rows with Edit buttons that jump to single step
-    const rows = [];
+    const isWork = state.path === "work";
+    const stepKeys = isWork
+      ? [
+          { label: "Choice", key: "choice", stepId: "choice" },
+          { label: "Days", key: "days", stepId: "workDays" },
+          { label: "Type", key: "type", stepId: "workType" },
+          { label: "Shift", key: "shift", stepId: "workShift" },
+          { label: "Location", key: "location", stepId: "workLocation" },
+          { label: "Pay", key: "pay", stepId: "workPay" }
+        ]
+      : [
+          { label: "Choice", key: "choice", stepId: "choice" },
+          { label: "Worker Type", key: "hireType", stepId: "hireType" },
+          { label: "Shift", key: "shift", stepId: "hireShift" },
+          { label: "Pay", key: "pay", stepId: "hirePay" },
+          { label: "Location", key: "location", stepId: "hireLocation" }
+        ];
 
-    function addRow(label, key, editKey) {
-      const val = state.answers[key] ?? "—";
-      const row = createElement("div", { style: "display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f7f7f7;" }, [
-        createElement("div", {}, [createElement("strong", {}, [label + ": "]), ` ${val}`]),
+    const rows = stepKeys.map(({ label, key, stepId }) => {
+      const rawVal = state.answers[key];
+      const displayVal = labelMap[rawVal] || rawVal || "—";
+
+      return createElement("div", {
+        style: "display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f7f7f7;"
+      }, [
+        createElement("div", {}, [createElement("strong", {}, [`${label}: `]), displayVal]),
         Button("Edit", `edit-${key}`, {
           click: () => {
-            // edit specific step. push summary to history so Back returns here
-            editTo(editKey || key);
+            state.editingFromSummary = true;
+            goToStep(stepId);
           }
         }, "button-link")
       ]);
-      rows.push(row);
-    }
+    });
 
-    if (state.path === "work") {
-      addRow("Choice", "choice", "choice");
-      addRow("Days", "days", "days");
-      addRow("Type", "type", "type");
-      addRow("Shift", "shift", "shift");
-      addRow("Location", "location", "location");
-      addRow("Pay", "pay", "pay");
-    } else {
-      addRow("Choice", "choice", "choice");
-      addRow("Worker Type", "hireType", "hireType");
-      addRow("Shift", "shift", "hireShift");
-      addRow("Pay", "pay", "hirePay");
-      addRow("Location", "location", "hireLocation");
-    }
+    container.appendChild(createElement("div", { style: "margin:8px 0 18px 0;" }, rows));
 
-    const listWrap = createElement("div", { style: "margin:8px 0 18px 0;" }, rows);
-    container.appendChild(listWrap);
-
-    // Finish button
+    // Action buttons
     const finishBtn = Button("Finish", "btn-finish", {
       click: () => {
         localStorage.setItem("farmiumOnboarding", JSON.stringify(state.answers));
@@ -387,14 +246,53 @@ return;
     }, "buttonx");
     container.appendChild(finishBtn);
 
-    // Back to previous if history exists
     if (state.history.length > 0) {
-      const backBtn = Button("Back", "btn-back", { click: () => goBack() }, "button-back");
+      const backBtn = Button("Back", "btn-back", { click: goBack }, "button-back");
       container.appendChild(backBtn);
     }
   }
 
-  // START
-  state.totalSteps = 1; // placeholder until path chosen
-  startStep();
+  function renderStep(stepId) {
+    const config = STEP_CONFIGS[stepId];
+    if (!config) return;
+
+    container.innerHTML = "";
+    
+    const currentStepNum = getStepIndex(stepId);
+    const totalSteps = getPathStepCount();
+    
+    container.appendChild(Stepper({ total: totalSteps, current: currentStepNum }));
+    container.appendChild(createElement("h2", {}, [config.title]));
+
+    const optsWrap = createElement("div", { style: "display:flex;flex-direction:column;gap:8px;margin:12px 0;" }, []);
+
+    Object.entries(config.options).forEach(([label, value]) => {
+      const btn = Button(
+        label,
+        `btn-${label.replace(/\s+/g, "-").toLowerCase()}`,
+        { click: () => handleOptionSelect(config, value) },
+        "buttonx"
+      );
+      optsWrap.appendChild(btn);
+    });
+
+    container.appendChild(optsWrap);
+
+    const showBack = config.showBack !== false && state.history.length > 0;
+    if (showBack) {
+      const backBtn = Button("Back", "btn-back", { click: goBack }, "button-back");
+      container.appendChild(backBtn);
+    }
+  }
+
+  function render() {
+    if (state.currentStepId === "summary") {
+      renderSummary();
+    } else {
+      renderStep(state.currentStepId);
+    }
+  }
+
+  // Initial render
+  render();
 }
