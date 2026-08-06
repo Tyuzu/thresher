@@ -681,8 +681,8 @@ func AddSettingsRoutes(
 
 // AddAdsRoutes registers the ad system API routes
 func AddAdsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	router.HandlerFunc(http.MethodGet, "/api/v1/sda/sda", rateLimiter.Limit(middleware.OptionalAuth(ads.GetAds)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/sda/track-impression", rateLimiter.Limit(middleware.OptionalAuth(ads.TrackImpression)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/sda/sda", rateLimiter.Limit(middleware.OptionalAuth(ads.GetAds(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/sda/track-impression", rateLimiter.Limit(middleware.OptionalAuth(ads.TrackImpression(app))))
 }
 
 func AddHashtagRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {

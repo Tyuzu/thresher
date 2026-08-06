@@ -3,6 +3,7 @@ package config
 type DB struct {
 	AccountsCollection                 string
 	ActivitiesCollection               string
+	AdsCollection                      string
 	AnalyticsCollection                string
 	AppealsCollection                  string
 	ArtistEventsCollection             string
@@ -74,6 +75,7 @@ type DB struct {
 var Collections = DB{
 	AccountsCollection:                 "accounts",
 	ActivitiesCollection:               "activities",
+	AdsCollection:                      "adverts",
 	AlbumsCollection:                   "albums",
 	AnalyticsCollection:                "analytics",
 	AppealsCollection:                  "appeals",

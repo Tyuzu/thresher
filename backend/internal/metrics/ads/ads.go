@@ -2,19 +2,20 @@ package ads
 
 import (
 	"encoding/json"
-	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"sync"
 	"time"
 
+	"naevis/infra"
 	"naevis/models"
 )
 
-// In-memory dummy database
+const adsCacheKey = "ads:all"
+
 var (
-	adsMutex sync.RWMutex
-	ads      = []models.Ad{
+	adsMutex   sync.RWMutex
+	defaultAds = []models.Ad{
 		{
 			ID:          "1",
 			Title:       "Tech Gadget Sale",
@@ -48,64 +49,92 @@ var (
 	}
 )
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
 // GetAds handles the API request to fetch an ad.
-func GetAds(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+func GetAds(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	category := r.URL.Query().Get("category")
-	page := r.URL.Query().Get("page")
-	position := r.URL.Query().Get("position")
+		ctx := r.Context()
+		category := r.URL.Query().Get("category")
+		page := r.URL.Query().Get("page")
+		position := r.URL.Query().Get("position")
 
-	adsMutex.RLock()
-	var candidates []models.Ad
+		var activeAds []models.Ad
 
-	for _, ad := range ads {
-		matchCategory := category == "" || category == "default" || ad.Category == category
-		matchPage := page == "" || ad.Page == page
-		matchPosition := position == "" || ad.Position == position
-
-		if matchCategory && matchPage && matchPosition {
-			candidates = append(candidates, ad)
+		// 1. Try Cache
+		if app != nil && app.Cache != nil {
+			if cachedBytes, err := app.Cache.Get(ctx, adsCacheKey); err == nil && len(cachedBytes) > 0 {
+				_ = json.Unmarshal(cachedBytes, &activeAds)
+			}
 		}
-	}
-	adsMutex.RUnlock()
 
-	// Fallback to any available ad if exact match fails
-	if len(candidates) == 0 {
-		adsMutex.RLock()
-		candidates = ads
-		adsMutex.RUnlock()
-	}
+		// 2. Fallback to Database using decoupled repository function
+		if len(activeAds) == 0 {
+			dbAds, err := FetchActiveAdsFromDB(ctx, app)
+			if err == nil && len(dbAds) > 0 {
+				activeAds = dbAds
 
-	if len(candidates) == 0 {
-		http.Error(w, `{"error":"No ads available"}`, http.StatusNotFound)
-		return
-	}
+				// Populate Cache with DB records for subsequent requests
+				if app != nil && app.Cache != nil {
+					if data, err := json.Marshal(activeAds); err == nil {
+						_ = app.Cache.Set(ctx, adsCacheKey, data, 10*time.Minute)
+					}
+				}
+			}
+		}
 
-	selectedAd := candidates[rand.Intn(len(candidates))]
+		// 3. Fallback to hardcoded defaults if DB yields nothing
+		if len(activeAds) == 0 {
+			adsMutex.RLock()
+			activeAds = append(activeAds, defaultAds...)
+			adsMutex.RUnlock()
 
-	if err := json.NewEncoder(w).Encode(selectedAd); err != nil {
-		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
+			if app != nil && app.Cache != nil {
+				if data, err := json.Marshal(activeAds); err == nil {
+					_ = app.Cache.Set(ctx, adsCacheKey, data, 1*time.Minute)
+				}
+			}
+		}
+
+		// 4. Business Logic: Filter candidate ads based on query criteria
+		var candidates []models.Ad
+		for _, ad := range activeAds {
+			matchCategory := category == "" || category == "default" || ad.Category == category
+			matchPage := page == "" || ad.Page == page
+			matchPosition := position == "" || ad.Position == position
+
+			if matchCategory && matchPage && matchPosition {
+				candidates = append(candidates, ad)
+			}
+		}
+
+		if len(candidates) == 0 {
+			candidates = activeAds
+		}
+
+		if len(candidates) == 0 {
+			http.Error(w, `{"error":"No ads available"}`, http.StatusNotFound)
+			return
+		}
+
+		selectedAd := candidates[rand.N(len(candidates))]
+
+		_ = json.NewEncoder(w).Encode(selectedAd)
 	}
 }
 
-// TrackImpression logs ad visibility events from IntersectionObserver
-func TrackImpression(w http.ResponseWriter, r *http.Request) {
-	adID := r.URL.Query().Get("id")
+// TrackImpression logs ad visibility events using app.Cache counter
+func TrackImpression(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		adID := r.URL.Query().Get("id")
 
-	if adID != "" {
-		adsMutex.Lock()
-		inc()
-		adsMutex.Unlock()
+		if adID != "" && app != nil && app.Cache != nil {
+			_, _ = app.Cache.Incr(r.Context(), "ad:impressions:"+adID)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "recorded"})
 	}
-
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "recorded"})
 }
-
-func inc() {}
