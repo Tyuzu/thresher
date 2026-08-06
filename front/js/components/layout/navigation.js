@@ -1,5 +1,6 @@
 import "../../../css/layout/navi.css";
 import { navigate } from "../../routes/index.js";
+import { getCurrentAllowedFeatures } from "../../config/domainFeatures.js";
 
 /** Highlight current active link */
 export const highlightActiveNav = (path) => {
@@ -30,7 +31,7 @@ const getNavOrder = () => {
 const createNavItem = (href, label) => {
     const li = document.createElement("li");
     li.className = "navigation__item";
-    
+
     // Start as non-draggable so normal clicks fire cleanly
     li.setAttribute("draggable", "false");
 
@@ -50,7 +51,6 @@ const enableDragDrop = (ul, toggle) => {
     const placeholder = document.createElement("li");
     placeholder.className = "navigation__placeholder";
 
-    // Dynamically toggle draggability of items based on edit-mode toggle
     const updateDraggableState = () => {
         const isEditable = toggle.checked;
         ul.querySelectorAll(".navigation__item").forEach(item => {
@@ -58,13 +58,10 @@ const enableDragDrop = (ul, toggle) => {
         });
     };
 
-    // Watch for toggle switches to enable/disable dragging safety
     toggle.addEventListener("change", updateDraggableState);
 
     const onDragStart = (e) => {
-        if (!toggle.checked) {
-            return;
-        }
+        if (!toggle.checked) return;
         draggingEl = e.target.closest("li");
         draggingEl.classList.add("dragging");
         e.dataTransfer.effectAllowed = "move";
@@ -76,7 +73,7 @@ const enableDragDrop = (ul, toggle) => {
         }
         draggingEl = null;
         placeholder.remove();
-        
+
         // Save order
         const order = Array.from(ul.children)
             .filter(el => el !== placeholder)
@@ -85,27 +82,20 @@ const enableDragDrop = (ul, toggle) => {
     };
 
     const onDragOver = (e) => {
-        // Only prevent default and show drop target if dragging is active
-        if (!toggle.checked) {
-            return;
-        }
+        if (!toggle.checked) return;
         e.preventDefault();
-        
+
         const target = e.target.closest("li");
-        if (!target || target === draggingEl || target === placeholder) {
-            return;
-        }
+        if (!target || target === draggingEl || target === placeholder) return;
 
         const rect = target.getBoundingClientRect();
-        const next = (e.clientX - rect.left) / rect.width > 0.5; // horizontal
+        const next = (e.clientX - rect.left) / rect.width > 0.5;
         ul.insertBefore(placeholder, next ? target.nextSibling : target);
     };
 
     const onDrop = (e) => {
         e.preventDefault();
-        if (!toggle.checked) {
-            return;
-        }
+        if (!toggle.checked) return;
         if (placeholder.parentNode) {
             ul.insertBefore(draggingEl, placeholder);
         }
@@ -118,31 +108,49 @@ const enableDragDrop = (ul, toggle) => {
     ul.addEventListener("drop", onDrop);
 };
 
+/** Filter nav items according to the active domain's feature flags */
+const getPermittedNavItems = (allNavItems) => {
+    const allowed = getCurrentAllowedFeatures();
+
+    // If domain allows ALL features, return everything
+    if (allowed.includes("ALL")) {
+        return allNavItems;
+    }
+
+    return allNavItems.filter(item => {
+        // Shared core items without a feature key are always shown
+        if (!item.feature) return true;
+        return allowed.includes(item.feature);
+    });
+};
+
 /** Create navigation bar */
 const createNav = () => {
-    const defaultNavItems = [
-        /*{ href: "/tools", label: "Tools" },
-        { href: "/products", label: "Products" },*/
-        { href: "/farms", label: "Farms" },
-        { href: "/grocery", label: "Grocery" },
-        { href: "/recipes", label: "Recipes" },
-        { href: "/places", label: "Places" },
-        /*{ href: "/itinerary", label: "Itinerary" },*/
-        { href: "/events", label: "Events" },
-        { href: "/artists", label: "Artists" },
-        /*{ href: "/social", label: "Social" },*/
-        { href: "/posts", label: "Posts" },
-        { href: "/baitos", label: "Baito" },
-        { href: "/baitos/hire", label: "Hire" },
-        /*{ href: "/merechats", label: "TextChat" }*/
+    // 1. Master list of navigation items mapped to feature keys
+    const allNavItems = [
+        { href: "/farms", label: "Farms", feature: "farms" },
+        { href: "/grocery", label: "Grocery", feature: "farms" },
+        { href: "/recipes", label: "Recipes", feature: "farms" },
+        { href: "/places", label: "Places", feature: "places" },
+        { href: "/events", label: "Events", feature: "events" },
+        { href: "/artists", label: "Artists", feature: "events" },
+        { href: "/posts", label: "Posts", feature: "social" },
+        { href: "/baitos", label: "Baito", feature: "baito" },
+        { href: "/baitos/hire", label: "Hire", feature: "baito" },
     ];
 
+    // 2. Filter available items based on domain permissions
+    const defaultNavItems = getPermittedNavItems(allNavItems);
+
+    // 3. Apply custom drag-and-drop ordering (stored in localStorage)
     const savedOrder = getNavOrder();
     let navItems = defaultNavItems;
+
     if (savedOrder) {
         navItems = savedOrder
             .map(href => defaultNavItems.find(item => item.href === href))
             .filter(Boolean);
+
         defaultNavItems.forEach(item => {
             if (!navItems.find(i => i.href === item.href)) {
                 navItems.push(item);
@@ -189,3 +197,12 @@ const createNav = () => {
 };
 
 export { createNav, createNavItem };
+
+
+// anchor.addEventListener("mouseenter", () => {
+//     // Finds the route definition in staticRoutes and triggers moduleImport() early
+//     const route = staticRoutes[href];
+//     if (route && route.moduleImport) {
+//         route.moduleImport(); // Browser fetches and caches the chunk in background
+//     }
+// }, { once: true });

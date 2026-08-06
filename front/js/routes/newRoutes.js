@@ -1,3 +1,4 @@
+import { getCurrentAllowedFeatures } from "../config/domainFeatures.js";
 import { adminStaticRoutes, adminDynamicRoutes } from "./modules/admin.js";
 import { farmsStaticRoutes, farmsDynamicRoutes } from "./modules/farms.js";
 import { eventsStaticRoutes, eventsDynamicRoutes } from "./modules/events.js";
@@ -11,7 +12,7 @@ export function safeArgBuilder(match) {
   return match.slice(1).filter(val => val !== undefined);
 }
 
-// Core / Shared Static Routes
+// Core / Shared Static Routes (Available across ALL domains)
 const coreStaticRoutes = {
   "/": { moduleImport: () => import("../pages/home.js"), functionName: "Home" },
   "/home": { moduleImport: () => import("../pages/home.js"), functionName: "Home" },
@@ -27,7 +28,7 @@ const coreStaticRoutes = {
   "/search": { moduleImport: () => import("../pages/search/search.js"), functionName: "Search" },
 };
 
-// Core / Shared Dynamic Routes
+// Core / Shared Dynamic Routes (Available across ALL domains)
 const coreDynamicRoutes = [
   {
     pattern: /^\/user\/([\w-]+)$/,
@@ -45,27 +46,36 @@ const coreDynamicRoutes = [
   }
 ];
 
-// Combine all Static Routes
-export const staticRoutes = Object.assign(
-  {},
-  coreStaticRoutes,
-  adminStaticRoutes,
-  palcesStaticRoutes,
-  farmsStaticRoutes,
-  eventsStaticRoutes,
-  baitoStaticRoutes,
-  socialStaticRoutes,
-  chatsStaticRoutes
-);
+// Map feature keys to their respective static and dynamic routes
+const featureModules = {
+  admin: { static: adminStaticRoutes, dynamic: adminDynamicRoutes },
+  places: { static: palcesStaticRoutes, dynamic: placesDynamicRoutes },
+  farms: { static: farmsStaticRoutes, dynamic: farmsDynamicRoutes },
+  events: { static: eventsStaticRoutes, dynamic: eventsDynamicRoutes },
+  baito: { static: baitoStaticRoutes, dynamic: baitoDynamicRoutes },
+  social: { static: socialStaticRoutes, dynamic: socialDynamicRoutes },
+  chats: { static: chatsStaticRoutes, dynamic: chatsDynamicRoutes },
+};
 
-// Combine all Dynamic Routes
-export const dynamicRoutes = [
-  ...coreDynamicRoutes,
-  ...adminDynamicRoutes,
-  ...placesDynamicRoutes,
-  ...farmsDynamicRoutes,
-  ...eventsDynamicRoutes,
-  ...baitoDynamicRoutes,
-  ...socialDynamicRoutes,
-  ...chatsDynamicRoutes
-];
+// Build routes conditionally based on domain permissions
+function buildDomainRoutes() {
+  const allowedFeatures = getCurrentAllowedFeatures();
+
+  const finalStatic = { ...coreStaticRoutes };
+  const finalDynamic = [...coreDynamicRoutes];
+
+  Object.entries(featureModules).forEach(([featureKey, module]) => {
+    // Include the feature routes if "ALL" is allowed or if the current domain permits this feature
+    if (allowedFeatures.includes("ALL") || allowedFeatures.includes(featureKey)) {
+      Object.assign(finalStatic, module.static);
+      finalDynamic.push(...module.dynamic);
+    }
+  });
+
+  return { finalStatic, finalDynamic };
+}
+
+const { finalStatic, finalDynamic } = buildDomainRoutes();
+
+export const staticRoutes = finalStatic;
+export const dynamicRoutes = finalDynamic;

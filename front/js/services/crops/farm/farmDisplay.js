@@ -19,6 +19,7 @@ import Modal from "../../../components/ui/Modal.mjs";
 import { renderAvailabilityWidget } from "../../../components/ui/Availability.mjs";
 import { createMainLayout } from "../../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../../components/layout/asideLayout.js";
+import { createBreadcrumb } from "../../../components/ui/Breadcrumb.mjs";
 
 export async function displayFarm(isLoggedIn, farmId, content) {
   const container = createElement("div", { class: "farmpage" });
@@ -37,15 +38,15 @@ export async function displayFarm(isLoggedIn, farmId, content) {
   const normalizedFarmId = String(farm.farmid);
   const isCreator = getState("user") === farm.createdBy;
 
-  // ---------- Header ----------
+  // ---------- Header & Breadcrumb ----------
+  const farmBreadcrumb = createBreadcrumb([
+    { label: "Home", path: "/" },
+    { label: "Farms", path: "/farms" },
+    { label: farm.name || "Farm Details", path: `/farms/farm/${normalizedFarmId}` }
+  ]);
+
   const header = createElement("div", { class: "farm-header" }, [
-    createElement("div", { class: "breadcrumbs" }, [
-      NoLink("🏠 Home", "", { click: () => navigate("/") }),
-      " / ",
-      NoLink("🌾 Farms", "", { click: () => navigate("/farms") }),
-      " / ",
-      createElement("span", {}, [farm.name || "Farm"])
-    ])
+    farmBreadcrumb
   ]);
 
   // ---------- Banner ----------

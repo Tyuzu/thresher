@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Farmium</title>
+  <meta name="description"
+    content="Farmium provides fast client-side navigation, lightweight components, and excellent performance using only vanilla JavaScript." />
+  <meta name="keywords" content="vanilla js, spa, mongodb, golang, frontend, webapp, router, farmium, js application" />
+  <meta name="author" content="Farmium Team" />
+  <meta name="theme-color" content="#ffffff" />
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://indium.netlify.app/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://indium.netlify.app/" />
+  <meta property="og:title" content="Farmium" />
+  <meta property="og:description" content="A fast single-page application built without heavy frameworks." />
+  <meta property="og:image" content="https://indium.netlify.app/assets/preview.png" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://indium.netlify.app/" />
+  <meta name="twitter:title" content="Farmium" />
+  <meta name="twitter:description" content="A performance-focused SPA built in pure JavaScript." />
+  <meta name="twitter:image" content="https://indium.netlify.app/assets/preview.png" />
+
+  <!-- Icons & Web App Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+  <link rel="icon" href="/assets/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/assets/icon-192.png" />
+
+  <!-- Network Performance Optimization -->
+  <link rel="dns-prefetch" href="https://thresher-o6i4.onrender.com" />
+  <link rel="preconnect" href="https://thresher-o6i4.onrender.com" crossorigin />
+
+  <!-- modulepreload Essential Assets -->
+  <link rel="preload" href="/css/style.css" as="style" />
+  <link rel="modulepreload" href="/js/app.js" as="script" crossorigin="anonymous" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/css/style.css" />
+
+  <!-- Robust Dynamic Head Update Utility for Vanilla SPA Routing -->
+  <script>
+    window.updateHeadTag = (selectorOrKey, value, attr = "content") => {
+      let el = document.querySelector(selectorOrKey);
+
+      if (!el) {
+        // Fallback for meta name or property attributes
+        el = document.querySelector(`meta[name="${selectorOrKey}"], meta[property="${selectorOrKey}"]`);
+      }
+
+      if (el) {
+        el.setAttribute(attr, value);
+      } else if (selectorOrKey.startsWith("og:") || selectorOrKey.startsWith("twitter:")) {
+        // Dynamically create OpenGraph or Twitter meta tag if missing
+        const meta = document.createElement("meta");
+        meta.setAttribute(selectorOrKey.startsWith("og:") ? "property" : "name", selectorOrKey);
+        meta.setAttribute(attr, value);
+        document.head.appendChild(meta);
+      }
+    };
+  </script>
+</head>
+
+<body>
+  <noscript>
+    <div style="padding: 20px; text-align: center; background-color: #f8d7da; color: #721c24;">
+      <p><strong>JavaScript is required.</strong> Please enable JavaScript in your browser settings to access Farmium.
+      </p>
+    </div>
+  </noscript>
+
+  <div id="app" class="app">
+    <header id="pageheader" class="pageheader"></header>
+    <nav id="primary-nav" class="primary-nav" aria-label="Main Navigation"></nav>
+    <div id="secnav" class="secnav" role="region" aria-label="Secondary Navigation"></div>
+    <main id="content" class="content-main" tabindex="-1"></main>
+    <div id="modalcon" role="region" aria-live="polite"></div>
+    <footer id="pagefooter" class="pagefooter"></footer>
+  </div>
+
+  <!-- Polyfills MUST load before any module execution -->
+  <script type="module" src="/js/polyfills/safari-polyfill.js"></script>
+
+  <!-- Main Application Bundle -->
+  <script type="module" src="/js/app.js"></script>
+</body>
+
+</html>
