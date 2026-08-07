@@ -100,12 +100,12 @@ export default defineConfig(({ mode }) => {
       https: true,
       proxy: {
         '/api/v1': {
-          target: 'https://localhost:4000',
+          target: 'http://localhost:4000',
           changeOrigin: true,
           secure: false,
         },
         '/static/uploads': {
-          target: 'https://localhost:4000',
+          target: 'http://localhost:4000',
           changeOrigin: true,
           secure: false,
         },
