@@ -3,6 +3,8 @@ package products
 import (
 	"context"
 	"naevis/infra"
+	"naevis/internal/cart"
+	"naevis/internal/farms"
 	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
@@ -21,19 +23,19 @@ func GetIncomingOrders(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
-		var orders []models.FarmOrder
+		var orders []cart.FarmOrder
 		if err := app.DB.FindMany(ctx, farmOrdersCollection, bson.M{}, &orders); err != nil {
 			log.Println("GetIncomingOrders error:", err)
 			http.Error(w, "Database error", http.StatusInternalServerError)
 			return
 		}
 
-		incoming := make([]models.IncomingOrder, 0, len(orders))
+		incoming := make([]farms.IncomingOrder, 0, len(orders))
 		for _, o := range orders {
 			user := getUserByID(ctx, o.UserID, app)
 			crop := getCropByID(ctx, o.CropID, app)
 
-			incoming = append(incoming, models.IncomingOrder{
+			incoming = append(incoming, farms.IncomingOrder{
 				ID:           o.OrderID,
 				Buyer:        user.Name,
 				Contact:      user.Email,
@@ -67,8 +69,8 @@ func getUserByID(ctx context.Context, id string, app *infra.Deps) models.User {
 	return user
 }
 
-func getCropByID(ctx context.Context, id string, app *infra.Deps) models.Crop {
-	var crop models.Crop
+func getCropByID(ctx context.Context, id string, app *infra.Deps) farms.Crop {
+	var crop farms.Crop
 	_ = app.DB.FindOne(ctx, cropsCollection, bson.M{"cropid": id}, &crop)
 	return crop
 }

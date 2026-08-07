@@ -8,14 +8,13 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
 )
 
 const adsCacheKey = "ads:all"
 
 var (
 	adsMutex   sync.RWMutex
-	defaultAds = []models.Ad{
+	defaultAds = []Ad{
 		{
 			ID:          "1",
 			Title:       "Tech Gadget Sale",
@@ -60,7 +59,7 @@ func GetAds(app *infra.Deps) http.HandlerFunc {
 		page := r.URL.Query().Get("page")
 		position := r.URL.Query().Get("position")
 
-		var activeAds []models.Ad
+		var activeAds []Ad
 
 		// 1. Try Cache
 		if app != nil && app.Cache != nil {
@@ -98,7 +97,7 @@ func GetAds(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// 4. Business Logic: Filter candidate ads based on query criteria
-		var candidates []models.Ad
+		var candidates []Ad
 		for _, ad := range activeAds {
 			matchCategory := category == "" || category == "default" || ad.Category == category
 			matchPage := page == "" || ad.Page == page

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"time"
@@ -25,7 +24,7 @@ func VerifyTicket(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var ticket models.PurchasedTicket
+		var ticket PurchasedTicket
 		if err := app.DB.FindOne(
 			ctx,
 			purchasedTicketsCollection,

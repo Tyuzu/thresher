@@ -11,7 +11,6 @@ import (
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/internal/userdata"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 
@@ -42,7 +41,7 @@ func TransferTicket(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var ticket models.PurchasedTicket
+		var ticket PurchasedTicket
 		if err := app.DB.FindOne(
 			ctx,
 			purchasedTicketsCollection,

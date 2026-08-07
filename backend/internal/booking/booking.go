@@ -12,7 +12,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
+	"naevis/internal/vendors"
 	"naevis/utils"
 )
 
@@ -52,7 +52,7 @@ func CreateBooking(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var req models.Booking
+		var req Booking
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			respondError(w, http.StatusBadRequest, "invalid payload")
 			return
@@ -65,7 +65,7 @@ func CreateBooking(app *infra.Deps) http.HandlerFunc {
 
 		// 1. Vendor availability check
 		if req.EntityType == EntityTypeVendor {
-			var unavailable []models.AvailabilitySlot
+			var unavailable []vendors.AvailabilitySlot
 			if err := FindVendorAvailability(ctx, app.DB, req.EntityId, req.Date, &unavailable); err != nil {
 				respondError(w, http.StatusInternalServerError, "db error")
 				return
@@ -147,7 +147,7 @@ func UpdateBookingStatus(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var updated models.Booking
+		var updated Booking
 		err := UpdateBookingStatusByID(
 			ctx,
 			app.DB,
@@ -177,7 +177,7 @@ func CancelBooking(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var updated models.Booking
+		var updated Booking
 		err := UpdateBookingStatusByID(
 			ctx,
 			app.DB,
@@ -198,7 +198,7 @@ func CancelBooking(app *infra.Deps) http.HandlerFunc {
 
 func SetDateCapacity(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req models.DateCap
+		var req DateCap
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			respondError(w, http.StatusBadRequest, "invalid payload")
 			return
@@ -233,7 +233,7 @@ func SetDateCapacity(app *infra.Deps) http.HandlerFunc {
 
 // ---------- Helper Functions ----------
 
-func validateBookingRequest(b *models.Booking) error {
+func validateBookingRequest(b *Booking) error {
 	if b.UserId == "" || b.EntityType == "" || b.EntityId == "" || b.Date == "" || b.Start == "" {
 		return errors.New("missing fields")
 	}
@@ -242,15 +242,15 @@ func validateBookingRequest(b *models.Booking) error {
 
 // validateCapacity handles the priority check: Slot > Tier > DateCap.
 // Returns a failure reason string (if capacity is full/missing) or an error.
-func validateCapacity(ctx context.Context, app *infra.Deps, req *models.Booking) (string, error) {
+func validateCapacity(ctx context.Context, app *infra.Deps, req *Booking) (string, error) {
 	switch {
 	case req.SlotId != "":
-		var slot models.Slot
+		var slot Slot
 		if err := FindSlotByID(ctx, app.DB, req.SlotId, &slot); err != nil {
 			return "slot-missing", nil
 		}
 
-		var slotBookings []models.Booking
+		var slotBookings []Booking
 		err := FindBookings(ctx, app.DB, bson.M{
 			"entityType": req.EntityType,
 			"entityId":   req.EntityId,
@@ -271,12 +271,12 @@ func validateCapacity(ctx context.Context, app *infra.Deps, req *models.Booking)
 		}
 
 	case req.TierId != "":
-		var tier models.Tier
+		var tier Tier
 		if err := FindTierByID(ctx, app.DB, req.TierId, &tier); err != nil {
 			return "tier-missing", nil
 		}
 
-		var tierBookings []models.Booking
+		var tierBookings []Booking
 		err := FindBookings(ctx, app.DB, bson.M{
 			"entityType": req.EntityType,
 			"entityId":   req.EntityId,
@@ -298,9 +298,9 @@ func validateCapacity(ctx context.Context, app *infra.Deps, req *models.Booking)
 		}
 
 	default:
-		var dc models.DateCap
+		var dc DateCap
 		if err := FindDateCap(ctx, app.DB, req.EntityType, req.EntityId, req.Date, &dc); err == nil {
-			var dateBookings []models.Booking
+			var dateBookings []Booking
 			err := app.DB.FindMany(ctx, bookingsCollection, bson.M{
 				"entityType": req.EntityType,
 				"entityId":   req.EntityId,
@@ -320,7 +320,7 @@ func validateCapacity(ctx context.Context, app *infra.Deps, req *models.Booking)
 	return "", nil
 }
 
-func sumSeats(bookings []models.Booking) int {
+func sumSeats(bookings []Booking) int {
 	total := 0
 	for _, b := range bookings {
 		total += b.Seats

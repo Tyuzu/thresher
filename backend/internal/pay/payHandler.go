@@ -8,7 +8,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra/mq"
 	"naevis/internal/metrics/auditlog"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 )
@@ -17,11 +16,11 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromRequest(r)
 
-	var req models.PayRequest
+	var req PayRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		auditlog.LogAction(
 			ctx, p.app, r, userID,
-			models.AuditActionPayment,
+			auditlog.AuditActionPayment,
 			"payment_error", "json_decode", "failed",
 			map[string]interface{}{
 				"error":        err.Error(),
@@ -72,7 +71,7 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		auditlog.LogAction(
 			ctx, p.app, r, userID,
-			models.AuditActionPayment,
+			auditlog.AuditActionPayment,
 			"payment_error", "resolver_failed", "failed",
 			map[string]interface{}{
 				"entity_type": req.EntityType,
@@ -87,7 +86,7 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		auditlog.LogAction(
 			ctx, p.app, r, userID,
-			models.AuditActionPayment,
+			auditlog.AuditActionPayment,
 			"payment_error", "entity_not_found", "failed",
 			map[string]interface{}{
 				"entity_type": req.EntityType,
@@ -204,7 +203,7 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request) {
 
 	// ────────── BALANCE CHECK (WALLET ONLY) ──────────
 	if req.Method == "wallet" {
-		var acc models.Account
+		var acc Account
 		if err := p.app.DB.FindOne(ctx, accountsCollection, map[string]any{"_id": userAcc}, &acc); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "account error")
 			return
@@ -223,7 +222,7 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request) {
 	txnID := utils.GetUUID()
 	now := time.Now()
 
-	txn := models.Transaction{
+	txn := Transaction{
 		ID:          txnID,
 		UserID:      userID,
 		Type:        "payment",
@@ -237,7 +236,7 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request) {
 		Status:      "initiated",
 		CreatedAt:   now,
 		UpdatedAt:   now,
-		Meta:        models.Meta{"payment_type": req.PaymentType},
+		Meta:        Meta{"payment_type": req.PaymentType},
 	}
 
 	if err := p.app.DB.InsertOne(ctx, transactionsCollection, txn); err != nil {
@@ -245,7 +244,7 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	j := models.JournalEntry{
+	j := JournalEntry{
 		ID:            utils.GetUUID(),
 		TxnID:         txnID,
 		DebitAccount:  userAcc,
@@ -281,7 +280,7 @@ func (p *PaymentService) Pay(w http.ResponseWriter, r *http.Request) {
 	// Log audit trail for payment transaction
 	auditlog.LogAction(
 		ctx, p.app, r, userID,
-		models.AuditActionPayment,
+		auditlog.AuditActionPayment,
 		"transaction", txnID, "success",
 		map[string]interface{}{
 			"amount":       price,

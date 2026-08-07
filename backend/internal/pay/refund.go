@@ -7,7 +7,6 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 )
@@ -25,7 +24,7 @@ func (p *PaymentService) Refund(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var orig models.Transaction
+	var orig Transaction
 	if err := p.app.DB.FindOne(
 		ctx,
 		transactionsCollection,
@@ -116,7 +115,7 @@ func (p *PaymentService) Refund(w http.ResponseWriter, r *http.Request) {
 	txnID := utils.GetUUID()
 	now := time.Now()
 
-	refund := models.Transaction{
+	refund := Transaction{
 		ID:          txnID,
 		UserID:      orig.UserID,
 		Type:        "refund",
@@ -128,7 +127,7 @@ func (p *PaymentService) Refund(w http.ResponseWriter, r *http.Request) {
 		Status:      "initiated",
 		CreatedAt:   now,
 		UpdatedAt:   now,
-		Meta:        models.Meta{"original_txn": orig.ID},
+		Meta:        Meta{"original_txn": orig.ID},
 	}
 
 	if err := p.app.DB.InsertOne(ctx, transactionsCollection, refund); err != nil {
@@ -136,7 +135,7 @@ func (p *PaymentService) Refund(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	j := models.JournalEntry{
+	j := JournalEntry{
 		ID:            utils.GetUUID(),
 		TxnID:         txnID,
 		DebitAccount:  fromAcc,

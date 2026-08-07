@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -16,7 +15,7 @@ func GetArtistEvents(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var artistevents []models.ArtistEvent
+		var artistevents []ArtistEvent
 		err := FindArtistEvents(ctx, app.DB, utils.GetParam(r, "id"), &artistevents)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch artist events")
@@ -24,7 +23,7 @@ func GetArtistEvents(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if len(artistevents) == 0 {
-			artistevents = []models.ArtistEvent{}
+			artistevents = []ArtistEvent{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, artistevents)
@@ -37,7 +36,7 @@ func GetArtistByID(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		artistId := utils.GetParam(r, "id")
-		var artist models.Artist
+		var artist Artist
 
 		// Fetch artist info
 		if err := FindArtistByID(ctx, app.DB, artistId, &artist); err != nil {
@@ -75,7 +74,7 @@ func GetArtistsByEvent(app *infra.Deps) http.HandlerFunc {
 
 		eventID := utils.GetParam(r, "eventid")
 
-		var artists []models.Artist
+		var artists []Artist
 		err := FindArtistsByEventID(ctx, app.DB, eventID, &artists)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error fetching artists")
@@ -83,7 +82,7 @@ func GetArtistsByEvent(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if len(artists) == 0 {
-			artists = []models.Artist{}
+			artists = []Artist{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, artists)
@@ -96,7 +95,7 @@ func GetAllArtists(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var artists []models.Artist
+		var artists []Artist
 		err := FindAllArtists(ctx, app.DB, &artists)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error fetching artists")
@@ -104,7 +103,7 @@ func GetAllArtists(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if len(artists) == 0 {
-			artists = []models.Artist{}
+			artists = []Artist{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, artists)

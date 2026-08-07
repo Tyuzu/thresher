@@ -6,7 +6,6 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"strings"
@@ -43,7 +42,7 @@ type PostInput struct {
 	Category    string
 	Subcategory string
 	ReferenceID string
-	Blocks      []models.Block
+	Blocks      []Block
 	Hashtags    []string
 }
 
@@ -74,32 +73,32 @@ func requiresReference(category, subcategory string) bool {
 	}
 }
 
-func sanitizeTextBlock(b models.Block) (models.Block, bool) {
+func sanitizeTextBlock(b Block) (Block, bool) {
 	b.Content = strings.TrimSpace(html.EscapeString(b.Content))
 	return b, b.Content != ""
 }
 
-func sanitizeImageBlock(b models.Block) (models.Block, bool) {
+func sanitizeImageBlock(b Block) (Block, bool) {
 	b.URL = strings.TrimSpace(b.URL)
 	b.Alt = strings.TrimSpace(html.EscapeString(b.Alt))
 	b.Caption = strings.TrimSpace(html.EscapeString(b.Caption))
 	return b, b.URL != ""
 }
 
-func sanitizeCodeBlock(b models.Block) (models.Block, bool) {
+func sanitizeCodeBlock(b Block) (Block, bool) {
 	b.Language = strings.TrimSpace(html.EscapeString(b.Language))
 	b.Content = strings.TrimSpace(html.EscapeString(b.Content))
 	return b, b.Content != ""
 }
 
-func sanitizeVideoBlock(b models.Block) (models.Block, bool) {
+func sanitizeVideoBlock(b Block) (Block, bool) {
 	b.URL = strings.TrimSpace(b.URL)
 	b.Caption = strings.TrimSpace(html.EscapeString(b.Caption))
 	return b, b.URL != ""
 }
 
-func sanitizeBlocks(raw []models.Block) []models.Block {
-	out := make([]models.Block, 0, len(raw))
+func sanitizeBlocks(raw []Block) []Block {
+	out := make([]Block, 0, len(raw))
 
 	for _, b := range raw {
 		var ok bool
@@ -129,7 +128,7 @@ func sanitizeBlocks(raw []models.Block) []models.Block {
 	return out
 }
 
-func pickThumb(blocks []models.Block) string {
+func pickThumb(blocks []Block) string {
 	for _, b := range blocks {
 		if b.Type == BlockImage && b.URL != "" {
 			return b.URL
@@ -161,7 +160,7 @@ func parsePostInput(r *http.Request) (*PostInput, error) {
 	referenceID := strings.TrimSpace(r.FormValue("referenceId"))
 	blocksRaw := r.FormValue("blocks")
 
-	var blocksIn []models.Block
+	var blocksIn []Block
 	if err := json.Unmarshal([]byte(blocksRaw), &blocksIn); err != nil {
 		return nil, err
 	}
@@ -282,7 +281,7 @@ func CreateOrUpdatePost(
 		return
 	}
 
-	post := models.BlogPost{
+	post := BlogPost{
 		PostID:      uuid.NewString(),
 		Type:        input.Type,
 		Title:       input.Title,

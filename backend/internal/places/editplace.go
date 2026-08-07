@@ -9,7 +9,6 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/internal/beats/dels"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -87,6 +86,5 @@ func EditPlace(app *infra.Deps) http.HandlerFunc {
 func DeletePlace(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Delegate to your dels.DeletePlace logic, which should handle DB + cache
-		dels.DeletePlace(app)
 	}
 }

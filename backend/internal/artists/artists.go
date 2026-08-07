@@ -9,8 +9,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/internal/beats/dels"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -51,7 +49,7 @@ func UpdateArtist(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var existing models.Artist
+		var existing Artist
 		if err := FindArtistByID(ctx, app.DB, idParam, &existing); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
 			return
@@ -82,8 +80,8 @@ func UpdateArtist(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-func parseArtistFormData(r *http.Request, existing *models.Artist) (models.Artist, map[string]any, []string, error) {
-	var artist models.Artist
+func parseArtistFormData(r *http.Request, existing *Artist) (Artist, map[string]any, []string, error) {
+	var artist Artist
 	updateData := map[string]any{}
 	filesToDelete := []string{}
 
@@ -143,5 +141,5 @@ func parseArtistFormData(r *http.Request, existing *models.Artist) (models.Artis
 }
 
 func DeleteArtistByID(app *infra.Deps) http.HandlerFunc {
-	return dels.DeleteArtistByID(app)
+	return func(w http.ResponseWriter, r *http.Request) {}
 }

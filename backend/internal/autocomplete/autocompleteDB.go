@@ -5,6 +5,7 @@ import (
 
 	"naevis/config"
 	db "naevis/infra/db"
+	"naevis/internal/places"
 	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,7 +15,7 @@ var (
 	AutocompleteCollection = config.Collections.AutocompleteCollection
 )
 
-func findPlacesByQuery(ctx context.Context, database db.Database, query string, places *[]models.Place) error {
+func findPlacesByQuery(ctx context.Context, database db.Database, query string, places *[]places.Place) error {
 	filter := bson.M{
 		"name": bson.M{
 			"$regex":   "^" + query,

@@ -11,7 +11,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -29,7 +28,7 @@ func ListAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		filter := bson.M{"vendorid": vendorID}
-		var slots []models.AvailabilitySlot
+		var slots []AvailabilitySlot
 		if err := app.DB.FindMany(ctx, config.Collections.VendorAvailabilityCollection, filter, &slots); err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return
@@ -53,7 +52,7 @@ func CreateAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var slot models.AvailabilitySlot
+		var slot AvailabilitySlot
 		if err := json.NewDecoder(r.Body).Decode(&slot); err != nil {
 			http.Error(w, "invalid payload", http.StatusBadRequest)
 			return
@@ -67,7 +66,7 @@ func CreateAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Verify caller owns the vendor profile
-		var vendor models.Vendor
+		var vendor Vendor
 		if err := app.DB.FindOne(ctx, config.Collections.VendorCollection, bson.M{"vendorid": vendorID}, &vendor); err != nil {
 			http.Error(w, "vendor not found", http.StatusNotFound)
 			return
@@ -77,7 +76,7 @@ func CreateAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var existing []models.AvailabilitySlot
+		var existing []AvailabilitySlot
 		_ = app.DB.FindMany(ctx, config.Collections.VendorAvailabilityCollection, bson.M{"vendorid": vendorID}, &existing)
 		// simple in-app overlap check
 		for _, ex := range existing {
@@ -118,14 +117,14 @@ func DeleteAvailabilityHandler(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var slot models.AvailabilitySlot
+		var slot AvailabilitySlot
 		if err := app.DB.FindOne(ctx, config.Collections.VendorAvailabilityCollection, bson.M{"slotid": slotID, "vendorid": vendorID}, &slot); err != nil {
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
 
 		// verify ownership
-		var vendor models.Vendor
+		var vendor Vendor
 		if err := app.DB.FindOne(ctx, config.Collections.VendorCollection, bson.M{"vendorid": vendorID}, &vendor); err != nil {
 			http.Error(w, "vendor not found", http.StatusNotFound)
 			return

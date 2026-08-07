@@ -1,0 +1,20 @@
+package songs
+
+import "time"
+
+type ArtistSong struct {
+	SongID      string    `json:"songid" bson:"songid,omitempty"`
+	ArtistID    string    `json:"artistid" bson:"artistid,omitempty"`
+	Title       string    `json:"title" bson:"title"`
+	Genre       string    `json:"genre" bson:"genre"`
+	Duration    string    `json:"duration" bson:"duration"`
+	Description string    `json:"description,omitempty" bson:"description,omitempty"`
+	AudioURL    string    `json:"audioUrl,omitempty" bson:"audioUrl,omitempty"`
+	Published   bool      `json:"published" bson:"published"`
+	Plays       int       `json:"plays,omitempty" bson:"plays,omitempty"`
+	UploadedAt  time.Time `json:"uploadedAt" bson:"uploadedAt"`
+	Poster      string    `bson:"poster,omitempty" json:"poster,omitempty"`
+	Language    string    `json:"language" bson:"language"`
+	AudioExtn   string    `json:"audioextn" bson:"audioextn"`
+	PosterExtn  string    `json:"posterextn" bson:"posterextn"`
+}

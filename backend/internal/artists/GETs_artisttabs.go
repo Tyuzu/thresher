@@ -4,14 +4,13 @@ import (
 	"naevis/infra"
 	"naevis/internal/media"
 	"naevis/internal/merch"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 )
 
 func GetArtistsAlbums(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		albums := []models.ArtistAlbum{
+		albums := []ArtistAlbum{
 			{
 				Title:       "Nightfall",
 				ReleaseDate: "2023-10-01",

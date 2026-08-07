@@ -1,7 +1,5 @@
 package artists
 
-import "naevis/models"
-
 // CreateArtistEventRequest defines the shape of the body to create an event.
 type CreateArtistEventRequest struct {
 	Title string `json:"title"`
@@ -31,6 +29,6 @@ type ArtistToEventRequestPayload struct {
 }
 
 type ArtistByIDResponse struct {
-	models.Artist
+	Artist
 	IsSubscribed bool `json:"issubscribed"`
 }

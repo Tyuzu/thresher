@@ -10,7 +10,6 @@ import (
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/internal/baito"
-	"naevis/models"
 	"naevis/utils"
 	"naevis/utils/logger"
 
@@ -20,8 +19,8 @@ import (
 /* -------------------- Helpers -------------------- */
 
 // parseWorkerForm parses form data for create or update
-func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M, error) {
-	var worker models.BaitoWorker
+func parseWorkerForm(r *http.Request, isUpdate bool) (BaitoWorker, bson.M, error) {
+	var worker BaitoWorker
 	update := bson.M{"$set": bson.M{}}
 
 	if err := baito.ParseMultipartFormWithLimit(r); err != nil {
@@ -58,7 +57,7 @@ func parseWorkerForm(r *http.Request, isUpdate bool) (models.BaitoWorker, bson.M
 		set["languages"] = r.FormValue("languages")
 		set["updatedAt"] = time.Now().Unix()
 	} else {
-		worker = models.BaitoWorker{
+		worker = BaitoWorker{
 			UserID:        utils.GetUserIDFromRequest(r),
 			BaitoWorkerId: utils.GenerateRandomString(12),
 			Name:          r.FormValue("name"),
@@ -88,7 +87,7 @@ func CreateWorkerProfile(app *infra.Deps) http.HandlerFunc {
 		userID := utils.GetUserIDFromRequest(r)
 
 		// Check if worker profile already exists
-		var existing models.BaitoWorker
+		var existing BaitoWorker
 		err := findExistingWorkerProfile(ctx, app, userID, &existing)
 		if err != nil {
 			logger.Printf("DB error: %v", err)

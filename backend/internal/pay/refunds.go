@@ -6,7 +6,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
+	"naevis/internal/tickets"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -63,7 +63,9 @@ func CreateRefundRequest(app *infra.Deps) http.HandlerFunc {
 		)
 
 		// Try regular order first.
-		var regularOrder models.Order
+		var regularOrder struct {
+			Total int64 `bson:"total"`
+		}
 		err := app.DB.FindOne(ctx, ordersCollection, bson.M{
 			"orderId": req.OrderID,
 			"userId":  userID,
@@ -75,8 +77,9 @@ func CreateRefundRequest(app *infra.Deps) http.HandlerFunc {
 			amount = regularOrder.Total
 
 		case err == mongo.ErrNoDocuments:
-			var farmOrder models.FarmOrder
-
+			var farmOrder struct {
+				Total int64 `bson:"total"`
+			}
 			err = app.DB.FindOne(ctx, farmOrdersCollection, bson.M{
 				"orderid": req.OrderID,
 				"userid":  userID,
@@ -102,7 +105,7 @@ func CreateRefundRequest(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Ensure there isn't already an active refund request.
-		var existingRefund models.RefundRequest
+		var existingRefund tickets.RefundRequest
 
 		err = app.DB.FindOne(ctx, RefundsCollection, bson.M{
 			"order_id": req.OrderID,
@@ -124,7 +127,7 @@ func CreateRefundRequest(app *infra.Deps) http.HandlerFunc {
 
 		now := time.Now()
 
-		refundReq := models.OrderRefundRequest{
+		refundReq := OrderRefundRequest{
 			ID:        utils.GetUUID(),
 			OrderID:   req.OrderID,
 			UserID:    userID,
@@ -194,7 +197,7 @@ func GetMyRefundRequests(app *infra.Deps) http.HandlerFunc {
 			SetSort(bson.D{{Key: "created_at", Value: -1}})
 
 		// Fetch refunds
-		var refunds []models.RefundRequest
+		var refunds []tickets.RefundRequest
 		err = app.DB.FindMany(
 			ctx,
 			RefundsCollection,
@@ -209,7 +212,7 @@ func GetMyRefundRequests(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if refunds == nil {
-			refunds = []models.RefundRequest{}
+			refunds = []tickets.RefundRequest{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -279,7 +282,7 @@ func GetAllRefundRequests(app *infra.Deps) http.HandlerFunc {
 			SetSort(bson.D{{Key: "created_at", Value: -1}})
 
 		// Fetch refunds
-		var refunds []models.RefundRequest
+		var refunds []tickets.RefundRequest
 
 		err = app.DB.FindMany(
 			ctx,
@@ -295,7 +298,7 @@ func GetAllRefundRequests(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if refunds == nil {
-			refunds = []models.RefundRequest{}
+			refunds = []tickets.RefundRequest{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -331,7 +334,7 @@ func ApproveRefundRequest(app *infra.Deps) http.HandlerFunc {
 		}
 		_ = json.NewDecoder(r.Body).Decode(&req)
 
-		var refund models.OrderRefundRequest
+		var refund OrderRefundRequest
 		err := app.DB.FindOne(ctx, RefundsCollection, bson.M{"_id": refundID}, &refund)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
@@ -348,7 +351,7 @@ func ApproveRefundRequest(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		refundTxn := models.Transaction{
+		refundTxn := Transaction{
 			ID:         utils.GetUUID(),
 			UserID:     refund.UserID,
 			Type:       "refund",
@@ -360,7 +363,7 @@ func ApproveRefundRequest(app *infra.Deps) http.HandlerFunc {
 			Status:     "success",
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
-			Meta: models.Meta{
+			Meta: Meta{
 				"refund_request_id": refundID,
 				"order_type":        refund.OrderType,
 			},
@@ -446,7 +449,7 @@ func RejectRefundRequest(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var refund models.OrderRefundRequest
+		var refund OrderRefundRequest
 		err := app.DB.FindOne(ctx, RefundsCollection, bson.M{"_id": refundID}, &refund)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {

@@ -8,7 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -28,7 +27,7 @@ func ListSlots(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var slots []models.Slot
+		var slots []Slot
 		if err := FindSlots(ctx, app.DB, filter, &slots); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -60,7 +59,7 @@ func ListBookings(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var bookings []models.Booking
+		var bookings []Booking
 		if err := FindBookings(ctx, app.DB, filter, &bookings); err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return
@@ -86,7 +85,7 @@ func GetDateCapacity(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var dc models.DateCap
+		var dc DateCap
 		err := FindDateCap(ctx, app.DB, entityType, entityID, date, &dc)
 		if err != nil {
 			utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -116,7 +115,7 @@ func ListTiers(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var tiers []models.Tier
+		var tiers []Tier
 		if err := FindTiers(ctx, app.DB, filter, &tiers); err != nil {
 			http.Error(w, "db error", http.StatusInternalServerError)
 			return

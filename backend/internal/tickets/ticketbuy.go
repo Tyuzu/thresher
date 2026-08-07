@@ -15,7 +15,6 @@ import (
 	"naevis/infra/mq"
 	"naevis/internal/stripe"
 	"naevis/internal/userdata"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -185,7 +184,7 @@ func PurchaseTicket(eventID, ticketID, userID string, qty int, app *infra.Deps) 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	var ticket models.Ticket
+	var ticket Ticket
 	if err := app.DB.FindOne(ctx, ticketsCollection, bson.M{
 		"eventid":  eventID,
 		"ticketid": ticketID,
@@ -215,10 +214,10 @@ func StorePurchasedTickets(eventID, ticketID, userID string, codes []string, app
 	now := time.Now()
 
 	purchased := make([]any, 0, len(codes))
-	userData := make([]models.UserData, 0, len(codes))
+	userData := make([]userdata.UserData, 0, len(codes))
 
 	for _, code := range codes {
-		purchased = append(purchased, models.PurchasedTicket{
+		purchased = append(purchased, PurchasedTicket{
 			EventID:      eventID,
 			TicketID:     ticketID,
 			UserID:       userID,
@@ -226,7 +225,7 @@ func StorePurchasedTickets(eventID, ticketID, userID string, codes []string, app
 			PurchaseDate: now,
 		})
 
-		userData = append(userData, models.UserData{
+		userData = append(userData, userdata.UserData{
 			UserID:     userID,
 			EntityID:   code,
 			EntityType: "ticket",

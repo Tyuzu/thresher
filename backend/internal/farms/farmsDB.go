@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"naevis/infra/db"
-	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 
@@ -19,12 +18,12 @@ var (
 	productsCollection   = config.Collections.ProductCollection
 )
 
-func insertFarm(ctx context.Context, database db.Database, farm models.Farm) error {
+func insertFarm(ctx context.Context, database db.Database, farm Farm) error {
 	return database.InsertOne(ctx, farmsCollection, farm)
 }
 
-func getFarmByID(ctx context.Context, database db.Database, farmID string) (models.Farm, error) {
-	var farm models.Farm
+func getFarmByID(ctx context.Context, database db.Database, farmID string) (Farm, error) {
+	var farm Farm
 	err := database.FindOne(ctx, farmsCollection, bson.M{"farmid": farmID}, &farm)
 	return farm, err
 }

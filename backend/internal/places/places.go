@@ -8,7 +8,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/internal/userdata"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"strconv"
@@ -18,13 +17,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func parseAndBuildPlace(r *http.Request, mode string) (models.Place, bson.M, error) {
+func parseAndBuildPlace(r *http.Request, mode string) (Place, bson.M, error) {
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
-		return models.Place{}, nil, fmt.Errorf("unable to parse form")
+		return Place{}, nil, fmt.Errorf("unable to parse form")
 	}
 
-	place := models.Place{}
+	place := Place{}
 	update := bson.M{}
 
 	apply := func(key string, val interface{}) {
@@ -64,7 +63,7 @@ func parseAndBuildPlace(r *http.Request, mode string) (models.Place, bson.M, err
 	// required fields
 	name := strings.TrimSpace(r.FormValue("name"))
 	if mode == "create" && name == "" {
-		return models.Place{}, nil, fmt.Errorf("name is required")
+		return Place{}, nil, fmt.Errorf("name is required")
 	}
 	if name != "" {
 		apply("name", name)
@@ -72,7 +71,7 @@ func parseAndBuildPlace(r *http.Request, mode string) (models.Place, bson.M, err
 
 	address := strings.TrimSpace(r.FormValue("address"))
 	if mode == "create" && address == "" {
-		return models.Place{}, nil, fmt.Errorf("address is required")
+		return Place{}, nil, fmt.Errorf("address is required")
 	}
 	if address != "" {
 		apply("address", address)
@@ -80,7 +79,7 @@ func parseAndBuildPlace(r *http.Request, mode string) (models.Place, bson.M, err
 
 	description := strings.TrimSpace(r.FormValue("description"))
 	if mode == "create" && description == "" {
-		return models.Place{}, nil, fmt.Errorf("description is required")
+		return Place{}, nil, fmt.Errorf("description is required")
 	}
 	if description != "" {
 		apply("description", description)
@@ -88,7 +87,7 @@ func parseAndBuildPlace(r *http.Request, mode string) (models.Place, bson.M, err
 
 	category := strings.TrimSpace(r.FormValue("category"))
 	if mode == "create" && category == "" {
-		return models.Place{}, nil, fmt.Errorf("category is required")
+		return Place{}, nil, fmt.Errorf("category is required")
 	}
 	if category != "" {
 		apply("category", category)
@@ -96,12 +95,12 @@ func parseAndBuildPlace(r *http.Request, mode string) (models.Place, bson.M, err
 
 	capacityStr := strings.TrimSpace(r.FormValue("capacity"))
 	if mode == "create" && capacityStr == "" {
-		return models.Place{}, nil, fmt.Errorf("capacity is required")
+		return Place{}, nil, fmt.Errorf("capacity is required")
 	}
 	if capacityStr != "" {
 		capacity, err := strconv.Atoi(capacityStr)
 		if err != nil || capacity <= 0 {
-			return models.Place{}, nil, fmt.Errorf("capacity must be a positive integer")
+			return Place{}, nil, fmt.Errorf("capacity must be a positive integer")
 		}
 		apply("capacity", capacity)
 	}

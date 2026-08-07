@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
+	"naevis/internal/cart"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -29,7 +29,7 @@ func GetFarmDash(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var farm models.Farm
+		var farm Farm
 		if err := app.DB.FindOne(
 			ctx,
 			farmsCollection,
@@ -43,7 +43,7 @@ func GetFarmDash(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var crops []models.Crop
+		var crops []Crop
 		if err := app.DB.FindMany(
 			ctx,
 			cropsCollection,
@@ -57,7 +57,7 @@ func GetFarmDash(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var orders []models.FarmOrder
+		var orders []cart.FarmOrder
 		_ = app.DB.FindMany(
 			ctx,
 			farmOrdersCollection,

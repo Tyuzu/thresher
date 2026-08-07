@@ -16,7 +16,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -159,7 +158,7 @@ func (p *PaymentService) HandlePaymentWebhook(w http.ResponseWriter, r *http.Req
 // processSuccessfulPayment updates transaction status and applies balance changes
 func (p *PaymentService) processSuccessfulPayment(ctx context.Context, payload *PaymentWebhookPayload) error {
 	// Fetch the original transaction to determine its type
-	var txn models.Transaction
+	var txn Transaction
 	if err := p.app.DB.FindOne(ctx, transactionsCollection, bson.M{
 		"_id": payload.TransactionID,
 	}, &txn); err != nil {

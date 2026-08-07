@@ -13,7 +13,6 @@ import (
 	"naevis/infra/mq"
 	"naevis/internal/metrics/auditlog"
 	"naevis/middleware"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -51,7 +50,7 @@ func CreateFarm(app *infra.Deps) http.HandlerFunc {
 
 		availabilityJSON := strings.TrimSpace(r.FormValue("availability"))
 
-		availability := models.WeeklyAvailability{}
+		availability := WeeklyAvailability{}
 
 		if availabilityJSON != "" {
 			if err := json.Unmarshal([]byte(availabilityJSON), &availability); err != nil {
@@ -89,7 +88,7 @@ func CreateFarm(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		farm := models.Farm{
+		farm := Farm{
 			FarmID:       utils.GenerateRandomString(14),
 			Name:         name,
 			Location:     location,
@@ -99,7 +98,7 @@ func CreateFarm(app *infra.Deps) http.HandlerFunc {
 			Availability: availability,
 			Social:       social,
 			Practice:     practice,
-			Crops:        []models.Crop{},
+			Crops:        []Crop{},
 			CreatedBy:    requestingUserID,
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
@@ -120,7 +119,7 @@ func CreateFarm(app *infra.Deps) http.HandlerFunc {
 			app,
 			r,
 			requestingUserID,
-			models.AuditActionFarmCreate,
+			auditlog.AuditActionFarmCreate,
 			"farm",
 			farm.FarmID,
 			"success",
@@ -186,7 +185,7 @@ func EditFarm(app *infra.Deps) http.HandlerFunc {
 		update := bson.M{}
 		contentType := r.Header.Get("Content-Type")
 
-		var input models.Farm
+		var input Farm
 
 		if strings.HasPrefix(contentType, "multipart/form-data") {
 			r.Body = http.MaxBytesReader(nil, r.Body, 10<<20)

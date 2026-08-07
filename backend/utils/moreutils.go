@@ -2,19 +2,16 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/config"
-	"naevis/models"
 )
 
 // ----------------------
@@ -178,36 +175,6 @@ func ParsePagination(r *http.Request, defaultLimit, maxLimit int) (skip, limit i
 }
 
 // ----------------------
-// JWT Helpers
-// ----------------------
-
-func ExtractBearerToken(header string) string {
-	if len(header) > 7 && strings.HasPrefix(header, "Bearer ") {
-		return header[7:]
-	}
-	return ""
-}
-
-func ParseToken(tokenString string) (*models.Claims, error) {
-	claims := &models.Claims{}
-	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
-		return config.JwtSecret, nil
-	})
-	if err != nil || claims.UserID == "" {
-		return nil, fmt.Errorf("unauthorized: %w", err)
-	}
-	return claims, nil
-}
-
-func ValidateJWT(tokenString string) (*models.Claims, error) {
-	tokenString = ExtractBearerToken(tokenString)
-	if tokenString == "" {
-		return nil, fmt.Errorf("invalid token")
-	}
-	return ParseToken(tokenString)
-}
-
-// ----------------------
 // User Context Helpers
 // ----------------------
 
@@ -221,10 +188,10 @@ func GetUserIDFromRequest(r *http.Request) string {
 }
 
 func GetUsernameFromRequest(r *http.Request) string {
-	tokenString := r.Header.Get("Authorization")
-	claims, err := ValidateJWT(tokenString)
-	if err != nil {
+	ctx := r.Context()
+	UserName, ok := ctx.Value(config.UserNameKey).(string)
+	if !ok || UserName == "" {
 		return ""
 	}
-	return claims.Username
+	return UserName
 }

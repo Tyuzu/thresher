@@ -7,7 +7,6 @@ import (
 
 	"naevis/config"
 	"naevis/infra/db"
-	"naevis/models"
 )
 
 var (
@@ -35,15 +34,15 @@ func CountBookings(ctx context.Context, d db.Database, filter any) (int64, error
 	return d.CountDocuments(ctx, bookingsCollection, filter)
 }
 
-func FindSlotByID(ctx context.Context, d db.Database, id string, out *models.Slot) error {
+func FindSlotByID(ctx context.Context, d db.Database, id string, out *Slot) error {
 	return d.FindOne(ctx, slotsCollection, bson.M{"id": id}, out)
 }
 
-func FindTierByID(ctx context.Context, d db.Database, id string, out *models.Tier) error {
+func FindTierByID(ctx context.Context, d db.Database, id string, out *Tier) error {
 	return d.FindOne(ctx, tiersCollection, bson.M{"id": id}, out)
 }
 
-func FindDateCap(ctx context.Context, d db.Database, entityType, entityId, date string, out *models.DateCap) error {
+func FindDateCap(ctx context.Context, d db.Database, entityType, entityId, date string, out *DateCap) error {
 	return d.FindOne(ctx, dateCapsCollection, bson.M{"entityType": entityType, "entityId": entityId, "date": date}, out)
 }
 
@@ -51,11 +50,11 @@ func FindVendorAvailability(ctx context.Context, d db.Database, vendorId string,
 	return d.FindMany(ctx, config.Collections.VendorAvailabilityCollection, bson.M{"vendorid": vendorId, "start_date": bson.M{"$lte": date}, "end_date": bson.M{"$gte": date}}, out)
 }
 
-func InsertBooking(ctx context.Context, d db.Database, b models.Booking) error {
+func InsertBooking(ctx context.Context, d db.Database, b Booking) error {
 	return d.InsertOne(ctx, bookingsCollection, b)
 }
 
-func UpdateBookingStatusByID(ctx context.Context, d db.Database, bookingID string, update any, out *models.Booking) error {
+func UpdateBookingStatusByID(ctx context.Context, d db.Database, bookingID string, update any, out *Booking) error {
 	return d.FindOneAndUpdate(ctx, bookingsCollection, bson.M{"id": bookingID}, update, out)
 }
 
@@ -75,7 +74,7 @@ func InsertSlotsMany(ctx context.Context, d db.Database, docs []any) error {
 	return d.InsertMany(ctx, slotsCollection, docs)
 }
 
-func InsertTier(ctx context.Context, d db.Database, t models.Tier) error {
+func InsertTier(ctx context.Context, d db.Database, t Tier) error {
 	return d.InsertOne(ctx, tiersCollection, t)
 }
 
@@ -83,6 +82,6 @@ func DeleteTierByID(ctx context.Context, d db.Database, tierID string) (int64, e
 	return d.DeleteOne(ctx, tiersCollection, map[string]any{"id": tierID})
 }
 
-func InsertSlot(ctx context.Context, d db.Database, s models.Slot) error {
+func InsertSlot(ctx context.Context, d db.Database, s Slot) error {
 	return d.InsertOne(ctx, slotsCollection, s)
 }

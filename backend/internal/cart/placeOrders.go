@@ -55,7 +55,7 @@ func PlaceOrder(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		// 1. Flatten items from grouped payload structure
-		var allItems []models.CartItem
+		var allItems []CartItem
 		for category, items := range payload.Items {
 			for _, item := range items {
 				item.Category = category
@@ -66,7 +66,7 @@ func PlaceOrder(app *infra.Deps) http.HandlerFunc {
 		// 2. Validate availability and calculate totals (in paise)
 		var subtotal int64
 		var itemDiscountTotal int64
-		validatedGroupedItems := make(map[string][]models.CartItem)
+		validatedGroupedItems := make(map[string][]CartItem)
 
 		for _, item := range allItems {
 			details, err := lookupItemDetails(ctx, item.ItemID, app)
@@ -93,7 +93,7 @@ func PlaceOrder(app *infra.Deps) http.HandlerFunc {
 			category := details.Category
 			validatedGroupedItems[category] = append(
 				validatedGroupedItems[category],
-				models.CartItem{
+				CartItem{
 					ItemID:     item.ItemID,
 					ItemName:   details.Name,
 					Quantity:   item.Quantity,
@@ -126,7 +126,7 @@ func PlaceOrder(app *infra.Deps) http.HandlerFunc {
 		delivery := int64(2000) // ₹20
 		total := totalAfterDiscount + tax + delivery
 
-		checkout := models.CheckoutSession{
+		checkout := CheckoutSession{
 			UserID:        userID,
 			Address:       payload.Address,
 			PaymentMethod: payload.PaymentMethod,
@@ -176,9 +176,9 @@ func PlaceOrder(app *infra.Deps) http.HandlerFunc {
 
 func processFarmOrders(
 	ctx context.Context,
-	checkout models.CheckoutSession,
+	checkout CheckoutSession,
 	app *infra.Deps,
-) ([]models.FarmOrder, error) {
+) ([]FarmOrder, error) {
 	cropItems, ok := checkout.Items["crops"]
 	if !ok || len(cropItems) == 0 {
 		return nil, nil
@@ -194,14 +194,14 @@ func processFarmOrders(
 		}
 	}
 
-	grouped := make(map[string][]models.CartItem)
+	grouped := make(map[string][]CartItem)
 	for _, item := range cropItems {
 		if item.EntityType == "farm" {
 			grouped[item.EntityID] = append(grouped[item.EntityID], item)
 		}
 	}
 
-	orders := make([]models.FarmOrder, 0, len(grouped))
+	orders := make([]FarmOrder, 0, len(grouped))
 
 	for farmID, items := range grouped {
 		var farmSubtotal int64
@@ -222,7 +222,7 @@ func processFarmOrders(
 
 		farmTotal := farmSubtotal - discount + tax + delivery
 
-		order := models.FarmOrder{
+		order := FarmOrder{
 			OrderID:         "ORD" + utils.GenerateRandomDigitString(9),
 			UserID:          checkout.UserID,
 			FarmID:          farmID,
@@ -230,7 +230,7 @@ func processFarmOrders(
 			Phone:           userPhone,
 			Status:          "pending",
 			ApprovedBy:      []string{},
-			Items:           map[string][]models.CartItem{"crops": items},
+			Items:           map[string][]CartItem{"crops": items},
 			CreatedAt:       time.Now(),
 			Quantity:        totalQty,
 			PriceAtPurchase: float64(farmSubtotal) / 100,
@@ -259,10 +259,10 @@ func processFarmOrders(
 
 func processGeneralOrders(
 	ctx context.Context,
-	checkout models.CheckoutSession,
+	checkout CheckoutSession,
 	app *infra.Deps,
-) (*models.Order, error) {
-	nonCropItems := make(map[string][]models.CartItem)
+) (*Order, error) {
+	nonCropItems := make(map[string][]CartItem)
 
 	for category, items := range checkout.Items {
 		if category != "crops" && len(items) > 0 {
@@ -274,7 +274,7 @@ func processGeneralOrders(
 		return nil, nil
 	}
 
-	order := models.Order{
+	order := Order{
 		OrderID:       "ORD" + utils.GenerateRandomDigitString(9),
 		UserID:        checkout.UserID,
 		Items:         nonCropItems,

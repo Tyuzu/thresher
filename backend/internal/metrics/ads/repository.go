@@ -5,7 +5,6 @@ import (
 
 	"naevis/config"
 	"naevis/infra"
-	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -13,12 +12,12 @@ import (
 var adsCollection = config.Collections.AdsCollection
 
 // FetchActiveAdsFromDB queries active ads using the app.DB interface
-func FetchActiveAdsFromDB(ctx context.Context, app *infra.Deps) ([]models.Ad, error) {
+func FetchActiveAdsFromDB(ctx context.Context, app *infra.Deps) ([]Ad, error) {
 	if app == nil || app.DB == nil {
 		return nil, nil
 	}
 
-	var dbAds []models.Ad
+	var dbAds []Ad
 	// Querying active ads from the 'ads' collection
 	filter := bson.M{} // Replace with active filter if needed e.g., bson.M{"status": "active"}
 

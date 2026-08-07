@@ -11,7 +11,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -47,7 +46,7 @@ func ToggleLike(app *infra.Deps) http.HandlerFunc {
 
 		redisKey := redisLikeKey(entityType, entityID)
 
-		var existing models.Like
+		var existing Like
 		err := app.DB.FindOne(ctx, likesCollection, filter, &existing)
 
 		// Already liked → unlike
@@ -66,7 +65,7 @@ func ToggleLike(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Not liked → like
-		like := models.Like{
+		like := Like{
 			UserID:     userID,
 			EntityType: entityType,
 			EntityID:   entityID,
@@ -116,7 +115,7 @@ func BatchUserLikes(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		var likes []models.Like
+		var likes []Like
 		err := app.DB.FindMany(
 			ctx,
 			likesCollection,

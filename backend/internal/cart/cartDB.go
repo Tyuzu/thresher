@@ -6,7 +6,6 @@ import (
 
 	"naevis/config"
 	"naevis/infra"
-	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -20,8 +19,8 @@ var (
 
 /* ───────────────────────── Cart Operations ───────────────────────── */
 
-func getCartItemsFromDB(ctx context.Context, userID string, app *infra.Deps) ([]models.CartItem, error) {
-	var items []models.CartItem
+func getCartItemsFromDB(ctx context.Context, userID string, app *infra.Deps) ([]CartItem, error) {
+	var items []CartItem
 	err := app.DB.FindMany(ctx, cartCollection, bson.M{"userId": userID}, &items)
 	if err != nil {
 		return nil, err
@@ -39,7 +38,7 @@ func replaceCartItemsInDB(ctx context.Context, userID string, docs []any, app *i
 	return app.DB.InsertMany(ctx, cartCollection, docs)
 }
 
-func upsertCartItemInDB(ctx context.Context, userID string, item models.CartItem, app *infra.Deps) error {
+func upsertCartItemInDB(ctx context.Context, userID string, item CartItem, app *infra.Deps) error {
 	filter := buildCartFilter(userID, item.ItemID, "", item.EntityID, item.EntityType)
 
 	update := bson.M{
@@ -98,13 +97,13 @@ func getGroupedCart(
 	userID string,
 	category string,
 	app *infra.Deps,
-) (map[string][]models.CartItem, error) {
+) (map[string][]CartItem, error) {
 	items, err := getCartItemsFromDB(ctx, userID, app)
 	if err != nil {
 		return nil, err
 	}
 
-	grouped := make(map[string][]models.CartItem)
+	grouped := make(map[string][]CartItem)
 	for _, item := range items {
 		if category != "" && item.Category != category {
 			continue
@@ -117,13 +116,13 @@ func getGroupedCart(
 
 /* ───────────────────────── Orders Operations ───────────────────────── */
 
-func fetchUserOrdersFromDB(ctx context.Context, userID string, app *infra.Deps) ([]models.Order, []models.FarmOrder, error) {
-	regularOrders := make([]models.Order, 0)
+func fetchUserOrdersFromDB(ctx context.Context, userID string, app *infra.Deps) ([]Order, []FarmOrder, error) {
+	regularOrders := make([]Order, 0)
 	if err := app.DB.FindMany(ctx, ordersCollection, bson.M{"userId": userID}, &regularOrders); err != nil {
 		return nil, nil, err
 	}
 
-	farmOrders := make([]models.FarmOrder, 0)
+	farmOrders := make([]FarmOrder, 0)
 	if err := app.DB.FindMany(ctx, farmOrdersCollection, bson.M{"userid": userID}, &farmOrders); err != nil {
 		return regularOrders, nil, nil
 	}

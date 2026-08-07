@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,7 +19,7 @@ func GetReportsForMod(app *infra.Deps) http.HandlerFunc {
 			},
 		}
 
-		var reports []models.Report
+		var reports []Report
 		err := app.DB.FindMany(ctx, reportsCollection, filter, &reports)
 		if err != nil {
 			http.Error(w, `{"error":"Failed to fetch reports"}`, http.StatusInternalServerError)

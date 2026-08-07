@@ -11,7 +11,6 @@ import (
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/internal/artists"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -57,7 +56,7 @@ func PostNewSong(app *infra.Deps) http.HandlerFunc {
 			return *s
 		}
 
-		newSong := models.ArtistSong{
+		newSong := ArtistSong{
 			SongID:      utils.GenerateRandomString(12),
 			ArtistID:    artistID,
 			Title:       deref(payload.Title),

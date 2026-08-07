@@ -152,7 +152,7 @@ func (p *PaymentService) RegisterDefaultResolvers() {
 // ===== Account Helpers =====
 
 func (p *PaymentService) getOrCreateAccount(ctx context.Context, userID string) (string, error) {
-	var acc models.Account
+	var acc Account
 	err := p.app.DB.FindOne(ctx, accountsCollection, map[string]any{"userid": userID}, &acc)
 	if err == nil {
 		return acc.ID, nil
@@ -164,7 +164,7 @@ func (p *PaymentService) getOrCreateAccount(ctx context.Context, userID string) 
 		}
 	}
 
-	newAcc := models.Account{
+	newAcc := Account{
 		ID:            utils.GetUUID(),
 		UserID:        userID,
 		Currency:      "INR",
@@ -193,13 +193,13 @@ func (p *PaymentService) userExists(ctx context.Context, userID string) bool {
 	return p.app.DB.FindOne(ctx, usersCollection, map[string]any{"userid": userID}, &user) == nil
 }
 
-func (p *PaymentService) getAccountByID(ctx context.Context, accountID string) (models.Account, error) {
-	var acc models.Account
+func (p *PaymentService) getAccountByID(ctx context.Context, accountID string) (Account, error) {
+	var acc Account
 	err := p.app.DB.FindOne(ctx, accountsCollection, map[string]any{"_id": accountID}, &acc)
 	return acc, err
 }
 
-func (p *PaymentService) ensureAccountActive(acc models.Account) error {
+func (p *PaymentService) ensureAccountActive(acc Account) error {
 	if acc.Status != "active" {
 		return errors.New("account_not_active")
 	}
@@ -227,7 +227,7 @@ func (p *PaymentService) successTxn(ctx context.Context, txnID string) {
 // reason: topup, refund, payment, transfer, etc
 func (p *PaymentService) recordGlobalLedger(ctx context.Context, txnID string, journalEntryID string, ledgerType string, reason string, amount int64, accountID string, userID string) error {
 	// Get previous running totals
-	var entries []models.GlobalLedger
+	var entries []GlobalLedger
 
 	totalAdditions := int64(0)
 	totalDeletions := int64(0)
@@ -254,7 +254,7 @@ func (p *PaymentService) recordGlobalLedger(ctx context.Context, txnID string, j
 		totalDeletions += amount
 	}
 
-	entry := models.GlobalLedger{
+	entry := GlobalLedger{
 		ID:                 utils.GetUUID(),
 		TxnID:              txnID,
 		Type:               ledgerType,

@@ -18,11 +18,11 @@ var (
 	SubscribersCollection  = config.Collections.SubscribersCollection
 )
 
-func InsertArtist(ctx context.Context, db db.Database, artist *models.Artist) error {
+func InsertArtist(ctx context.Context, db db.Database, artist *Artist) error {
 	return db.Insert(ctx, ArtistsCollection, artist)
 }
 
-func FindArtistByID(ctx context.Context, db db.Database, artistID string, artist *models.Artist) error {
+func FindArtistByID(ctx context.Context, db db.Database, artistID string, artist *Artist) error {
 	return db.FindOne(ctx, ArtistsCollection, map[string]any{"artistid": artistID}, artist)
 }
 
@@ -30,7 +30,7 @@ func UpdateArtistByID(ctx context.Context, db db.Database, artistID string, upda
 	return db.Update(ctx, ArtistsCollection, map[string]any{"artistid": artistID}, map[string]any{"$set": update})
 }
 
-func FindArtistEvents(ctx context.Context, db db.Database, artistID string, result *[]models.ArtistEvent) error {
+func FindArtistEvents(ctx context.Context, db db.Database, artistID string, result *[]ArtistEvent) error {
 	return db.FindMany(ctx, ArtistEventsCollection, map[string]any{"artistid": artistID}, result)
 }
 
@@ -51,15 +51,15 @@ func FindSubscribersForArtist(ctx context.Context, db db.Database, userID, artis
 	return len(results) > 0, nil
 }
 
-func FindArtistsByEventID(ctx context.Context, db db.Database, eventID string, result *[]models.Artist) error {
+func FindArtistsByEventID(ctx context.Context, db db.Database, eventID string, result *[]Artist) error {
 	return db.FindMany(ctx, ArtistsCollection, map[string]any{"events": eventID}, result)
 }
 
-func FindAllArtists(ctx context.Context, db db.Database, result *[]models.Artist) error {
+func FindAllArtists(ctx context.Context, db db.Database, result *[]Artist) error {
 	return db.FindMany(ctx, ArtistsCollection, map[string]any{}, result)
 }
 
-func AddArtistMemberDB(ctx context.Context, db db.Database, artistID string, member models.BandMember) (any, error) {
+func AddArtistMemberDB(ctx context.Context, db db.Database, artistID string, member BandMember) (any, error) {
 	return db.Update(ctx, ArtistsCollection, map[string]any{"artistid": artistID}, map[string]any{"$push": map[string]any{"members": member}})
 }
 
@@ -71,7 +71,7 @@ func DeleteArtistMemberDB(ctx context.Context, db db.Database, artistID, memberI
 	return db.Update(ctx, ArtistsCollection, map[string]any{"artistid": artistID}, map[string]any{"$pull": map[string]any{"members": map[string]any{"memberid": memberID}}})
 }
 
-func InsertArtistEvent(ctx context.Context, db db.Database, artistevent *models.ArtistEvent) error {
+func InsertArtistEvent(ctx context.Context, db db.Database, artistevent *ArtistEvent) error {
 	return db.Insert(ctx, ArtistEventsCollection, artistevent)
 }
 
@@ -83,18 +83,18 @@ func FindEventByID(ctx context.Context, db db.Database, eventID string, event *m
 	return db.FindOne(ctx, EventsCollection, map[string]any{"eventid": eventID}, event)
 }
 
-func FindArtistEventsByEventAndArtist(ctx context.Context, db db.Database, eventID, artistID string, result *[]models.ArtistEvent) error {
+func FindArtistEventsByEventAndArtist(ctx context.Context, db db.Database, eventID, artistID string, result *[]ArtistEvent) error {
 	return db.FindMany(ctx, ArtistEventsCollection, map[string]any{"eventid": eventID, "artistid": artistID}, result)
 }
 
-func AddArtistToEventDB(ctx context.Context, db db.Database, artistEvent models.ArtistEvent) (any, error) {
+func AddArtistToEventDB(ctx context.Context, db db.Database, artistEvent ArtistEvent) (any, error) {
 	if err := db.Insert(ctx, ArtistEventsCollection, artistEvent); err != nil {
 		return nil, err
 	}
 	return db.Update(ctx, EventsCollection, map[string]any{"eventid": artistEvent.EventID}, map[string]any{"$addToSet": map[string]any{"artists": artistEvent.ArtistID}})
 }
 
-func AddEventToDB(ctx context.Context, app *infra.Deps, artistEvent models.ArtistEvent) error {
+func AddEventToDB(ctx context.Context, app *infra.Deps, artistEvent ArtistEvent) error {
 	var event models.Event
 	dateString := artistEvent.Date
 	layout := "2006-01-02"

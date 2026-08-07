@@ -10,7 +10,6 @@ import (
 
 	"naevis/config"
 	"naevis/infra"
-	"naevis/utils"
 	log "naevis/utils/logger"
 )
 
@@ -23,13 +22,13 @@ func Authenticate(app *infra.Deps) func(http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 
-			tokenString := utils.ExtractBearerToken(r.Header.Get("Authorization"))
+			tokenString := ExtractBearerToken(r.Header.Get("Authorization"))
 			if tokenString == "" {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
 
-			claims, err := utils.ParseToken(tokenString)
+			claims, err := ParseToken(tokenString)
 			if err != nil {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
@@ -57,9 +56,9 @@ OptionalAuth Middleware
 
 func OptionalAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tokenString := utils.ExtractBearerToken(r.Header.Get("Authorization"))
+		tokenString := ExtractBearerToken(r.Header.Get("Authorization"))
 		if tokenString != "" {
-			if claims, err := utils.ParseToken(tokenString); err == nil {
+			if claims, err := ParseToken(tokenString); err == nil {
 				ctx := context.WithValue(r.Context(), config.UserIDKey, claims.UserID)
 				ctx = context.WithValue(ctx, config.RoleKey, claims.Role)
 				r = r.WithContext(ctx)

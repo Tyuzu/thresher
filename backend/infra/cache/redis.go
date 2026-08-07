@@ -15,6 +15,14 @@ func NewRedisCache(client *redis.Client) *RedisCache {
 	return &RedisCache{client: client}
 }
 
+func (r *RedisCache) Ping(ctx context.Context) ([]byte, error) {
+	val, err := r.client.Ping(ctx).Result()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(val), nil
+}
+
 /* -------------------- Basic KV -------------------- */
 
 func (r *RedisCache) Get(ctx context.Context, key string) ([]byte, error) {

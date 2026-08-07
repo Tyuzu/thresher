@@ -6,7 +6,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -29,7 +28,7 @@ func GetChat(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var chat models.Chat
+		var chat Chat
 		err := app.DB.FindOne(ctx, chatsCollection, map[string]any{
 			"chatid": chatID,
 			"users":  map[string]any{"$in": []string{userID}},
@@ -39,7 +38,7 @@ func GetChat(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var messages []models.Message
+		var messages []Message
 		opts := db.FindManyOptions{
 			Sort: bson.D{{Key: "createdAt", Value: 1}},
 		}
@@ -63,7 +62,7 @@ func CreateMessage(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var chat models.Chat
+		var chat Chat
 		if err := app.DB.FindOne(ctx, chatsCollection, map[string]any{"chatid": chatID}, &chat); err != nil {
 			http.Error(w, "Chat not found", http.StatusNotFound)
 			return
@@ -89,9 +88,9 @@ func CreateMessage(app *infra.Deps) http.HandlerFunc {
 		}
 
 		text := r.FormValue("text")
-		var replyRef *models.ReplyRef
+		var replyRef *ReplyRef
 		if v := r.FormValue("replyTo"); v != "" {
-			var rr models.ReplyRef
+			var rr ReplyRef
 			if err := json.Unmarshal([]byte(v), &rr); err != nil {
 				http.Error(w, "Invalid replyTo payload", http.StatusBadRequest)
 				return
@@ -124,7 +123,7 @@ func CreateMessage(app *infra.Deps) http.HandlerFunc {
 		}
 
 		now := time.Now()
-		msg := models.Message{
+		msg := Message{
 			MessageID: utils.GenerateRandomDigitString(16),
 			ChatID:    chatID,
 			UserID:    userID,
@@ -142,7 +141,7 @@ func CreateMessage(app *infra.Deps) http.HandlerFunc {
 		previewText := buildLastMessagePreview(text, fileType, replyRef, 0)
 		update := map[string]any{
 			"$set": map[string]any{
-				"lastMessage": models.MessagePreview{
+				"lastMessage": MessagePreview{
 					Text:      previewText,
 					UserID:    userID,
 					Timestamp: now,
@@ -161,7 +160,7 @@ func CreateMessage(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-func buildLastMessagePreview(text, fileType string, replyRef *models.ReplyRef, fileCount int) string {
+func buildLastMessagePreview(text, fileType string, replyRef *ReplyRef, fileCount int) string {
 	trimmed := strings.TrimSpace(text)
 	if trimmed != "" {
 		return trimmed
@@ -204,7 +203,7 @@ func UpdateMessage(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var message models.Message
+		var message Message
 		if err := app.DB.FindOne(ctx, messagesCollection, map[string]any{"messageid": msgID}, &message); err != nil {
 			http.Error(w, "Message not found", http.StatusNotFound)
 			return
@@ -240,7 +239,7 @@ func DeletesMessage(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var message models.Message
+		var message Message
 		if err := app.DB.FindOne(ctx, messagesCollection, map[string]any{"messageid": msgID}, &message); err != nil {
 			http.Error(w, "Message not found", http.StatusNotFound)
 			return
@@ -280,7 +279,7 @@ func InitChat(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var existing models.Chat
+		var existing Chat
 		if err := app.DB.FindOne(ctx, chatsCollection, map[string]any{"users": users}, &existing); err == nil {
 			if err := json.NewEncoder(w).Encode(map[string]any{"chatid": existing.ChatID}); err != nil { // #nosec G104
 				log.Printf("failed to encode response: %v", err)
@@ -288,7 +287,7 @@ func InitChat(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		chat := models.Chat{
+		chat := Chat{
 			ChatID: utils.GenerateRandomDigitString(16),
 			Users:  users,
 		}
@@ -315,7 +314,7 @@ func GetUserChats(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var chats []models.Chat
+		var chats []Chat
 		opts := db.FindManyOptions{
 			Sort:  bson.D{{Key: "updatedAt", Value: -1}},
 			Limit: 15,
@@ -326,7 +325,7 @@ func GetUserChats(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if chats == nil {
-			chats = []models.Chat{}
+			chats = []Chat{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, chats)

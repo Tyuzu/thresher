@@ -9,7 +9,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 )
@@ -121,21 +120,21 @@ func CreateCheckoutSession(app *infra.Deps) http.HandlerFunc {
 
 /* ───────────────────────── Helper Functions ───────────────────────── */
 
-func flattenCartItems(groupedItems map[string][]models.CartItem) []models.CartItem {
+func flattenCartItems(groupedItems map[string][]CartItem) []CartItem {
 	totalCapacity := 0
 	for _, items := range groupedItems {
 		totalCapacity += len(items)
 	}
 
-	allItems := make([]models.CartItem, 0, totalCapacity)
+	allItems := make([]CartItem, 0, totalCapacity)
 	for _, items := range groupedItems {
 		allItems = append(allItems, items...)
 	}
 	return allItems
 }
 
-func validateAndPriceItems(ctx context.Context, items []models.CartItem, app *infra.Deps) ([]models.CartItem, int64, int64, error) {
-	validatedItems := make([]models.CartItem, 0, len(items))
+func validateAndPriceItems(ctx context.Context, items []CartItem, app *infra.Deps) ([]CartItem, int64, int64, error) {
+	validatedItems := make([]CartItem, 0, len(items))
 	var subtotal, itemDiscountTotal int64
 
 	for _, item := range items {
@@ -161,7 +160,7 @@ func validateAndPriceItems(ctx context.Context, items []models.CartItem, app *in
 		subtotal += lineSubtotal
 		itemDiscountTotal += lineDiscount
 
-		validatedItems = append(validatedItems, models.CartItem{
+		validatedItems = append(validatedItems, CartItem{
 			ItemID:     item.ItemID,
 			ItemName:   details.Name,
 			Quantity:   item.Quantity,

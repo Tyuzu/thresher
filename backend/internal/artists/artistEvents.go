@@ -7,7 +7,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/internal/beats/dels"
 	"naevis/models"
 	"naevis/utils"
 )
@@ -16,7 +15,7 @@ func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		var artistevent models.ArtistEvent
+		var artistevent ArtistEvent
 		if err := json.NewDecoder(r.Body).Decode(&artistevent); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, ErrInvalidPayload.Error())
 			return
@@ -72,7 +71,7 @@ func UpdateArtistEvent(app *infra.Deps) http.HandlerFunc {
 
 // Delete Artist Event
 func DeleteArtistEvent(app *infra.Deps) http.HandlerFunc {
-	return dels.DeleteArtistEvent(app)
+	return func(w http.ResponseWriter, r *http.Request) {}
 }
 
 func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
@@ -97,7 +96,7 @@ func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Check if ArtistEvent already exists
-		var existing []models.ArtistEvent
+		var existing []ArtistEvent
 		err = FindArtistEventsByEventAndArtist(ctx, app.DB, payload.EventID, payload.ArtistID, &existing)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error checking for existing artist event")
@@ -109,7 +108,7 @@ func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Create a new ArtistEvent object
-		artistEvent := models.ArtistEvent{
+		artistEvent := ArtistEvent{
 			EventID:   event.EventID,
 			ArtistID:  payload.ArtistID,
 			Title:     event.Title,

@@ -5,7 +5,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra/mq"
 	"naevis/internal/metrics/auditlog"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -72,7 +71,7 @@ func (p *PaymentService) CashOnDelivery(w http.ResponseWriter, r *http.Request) 
 	txnID := utils.GetUUID()
 	now := time.Now()
 
-	txn := models.Transaction{
+	txn := Transaction{
 		ID:         txnID,
 		UserID:     userID,
 		Type:       "payment",
@@ -84,7 +83,7 @@ func (p *PaymentService) CashOnDelivery(w http.ResponseWriter, r *http.Request) 
 		Status:     "pending",
 		CreatedAt:  now,
 		UpdatedAt:  now,
-		Meta:       models.Meta{"payment_type": req.PaymentType},
+		Meta:       Meta{"payment_type": req.PaymentType},
 	}
 
 	if err := p.app.DB.InsertOne(ctx, transactionsCollection, txn); err != nil {
@@ -106,7 +105,7 @@ func (p *PaymentService) CashOnDelivery(w http.ResponseWriter, r *http.Request) 
 			// Log but don't fail - transaction was created
 			auditlog.LogAction(
 				ctx, p.app, r, userID,
-				models.AuditActionPayment,
+				auditlog.AuditActionPayment,
 				"payment_error", "order_update_failed", "warning",
 				map[string]interface{}{
 					"entity_type": req.EntityType,
@@ -120,7 +119,7 @@ func (p *PaymentService) CashOnDelivery(w http.ResponseWriter, r *http.Request) 
 	// ────────── AUDIT LOG ──────────
 	auditlog.LogAction(
 		ctx, p.app, r, userID,
-		models.AuditActionPayment,
+		auditlog.AuditActionPayment,
 		"cash_on_delivery", req.EntityID, "success",
 		map[string]interface{}{
 			"amount":       price,

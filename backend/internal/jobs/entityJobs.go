@@ -7,7 +7,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/models"
+	"naevis/internal/baito"
 	"naevis/utils"
 )
 
@@ -20,7 +20,7 @@ func CreateBaitoForEntity(app *infra.Deps) http.HandlerFunc {
 		entityType := utils.GetParam(r, "entitytype")
 		entityID := utils.GetParam(r, "entityid")
 
-		var baito models.Baito
+		var baito baito.Baito
 		if err := json.NewDecoder(r.Body).Decode(&baito); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 			return

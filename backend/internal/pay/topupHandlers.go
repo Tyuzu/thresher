@@ -8,7 +8,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra/mq"
 	"naevis/internal/metrics/auditlog"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -74,7 +73,7 @@ func (p *PaymentService) TopUp(w http.ResponseWriter, r *http.Request) {
 	txnID := utils.GetUUID()
 	now := time.Now()
 
-	txn := models.Transaction{
+	txn := Transaction{
 		ID:          txnID,
 		UserID:      userID,
 		Type:        "topup",
@@ -93,7 +92,7 @@ func (p *PaymentService) TopUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	j := models.JournalEntry{
+	j := JournalEntry{
 		ID:            utils.GetUUID(),
 		TxnID:         txnID,
 		DebitAccount:  "external",
@@ -149,7 +148,7 @@ func (p *PaymentService) TopUp(w http.ResponseWriter, r *http.Request) {
 		p.app,
 		r,
 		userID,
-		models.AuditActionTopUp,
+		auditlog.AuditActionTopUp,
 		"transaction",
 		txnID,
 		"success",

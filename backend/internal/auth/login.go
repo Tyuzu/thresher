@@ -13,6 +13,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
+	"naevis/middleware"
 	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
@@ -95,7 +96,7 @@ func AuthenticateAndCreateSession(ctx context.Context, app *infra.Deps, creds Lo
 	}
 
 	// 3. Produce security claim payloads
-	claims := &models.Claims{
+	claims := &middleware.Claims{
 		UserID:   user.UserID,
 		Username: user.Username,
 		Role:     user.Role,

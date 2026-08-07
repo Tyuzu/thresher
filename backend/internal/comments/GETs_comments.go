@@ -10,7 +10,6 @@ import (
 
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -29,7 +28,7 @@ func GetComment(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var comment models.Comment
+		var comment Comment
 		err := findCommentByID(ctx, app.DB, commentID, &comment)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Comment not found")
@@ -108,7 +107,7 @@ func GetComments(app *infra.Deps) http.HandlerFunc {
 			Sort:  sort,
 		}
 
-		var comments []models.Comment
+		var comments []Comment
 		if err := findCommentsByEntity(ctx, app.DB, entityType, entityID, opts, &comments); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"message": "Failed to fetch comments"})
 			return
@@ -116,7 +115,7 @@ func GetComments(app *infra.Deps) http.HandlerFunc {
 
 		// Always return array (never null)
 		if comments == nil {
-			comments = []models.Comment{}
+			comments = []Comment{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, comments)

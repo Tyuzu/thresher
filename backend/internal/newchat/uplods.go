@@ -11,7 +11,6 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -207,7 +206,7 @@ func UploadHandler(hub *Hub, app *infra.Deps) http.HandlerFunc {
 		if previewText != "" {
 			_, _ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": payload.Chat}, map[string]any{
 				"$set": map[string]any{
-					"lastMessage": models.MessagePreview{
+					"lastMessage": MessagePreview{
 						Text:      previewText,
 						UserID:    userID,
 						Timestamp: time.Unix(msg.Timestamp, 0),

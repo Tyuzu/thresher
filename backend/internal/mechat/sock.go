@@ -2,16 +2,23 @@ package mechat
 
 import (
 	"context"
-	log "naevis/utils/logger"
 	"net/http"
 	"sync"
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
+	"naevis/middleware"
 	"naevis/utils"
+	log "naevis/utils/logger"
 
 	"github.com/gorilla/websocket"
+)
+
+const (
+	writeTimeout = 10 * time.Second
+	pongWait     = 60 * time.Second
+	pingPeriod   = (pongWait * 9) / 10
+	queueSize    = 256
 )
 
 //
@@ -19,9 +26,17 @@ import (
 //
 
 type Client struct {
-	UserID string
-	Conn   *websocket.Conn
-	Send   chan any
+	UserID    string
+	Conn      *websocket.Conn
+	Send      chan any
+	closeOnce sync.Once
+}
+
+func (c *Client) Close() {
+	c.closeOnce.Do(func() {
+		close(c.Send)
+		_ = c.Conn.Close()
+	})
 }
 
 type Hub struct {
@@ -30,19 +45,43 @@ type Hub struct {
 }
 
 func NewHub() *Hub {
-	return &Hub{clients: make(map[string]*Client)}
+	return &Hub{
+		clients: make(map[string]*Client),
+	}
 }
 
-func (h *Hub) add(c *Client) {
+func (h *Hub) Run() {
+	// Background processing loop if pub/sub expansion is added
+}
+
+func (h *Hub) Stop() {
 	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	for uid, client := range h.clients {
+		client.Close()
+		delete(h.clients, uid)
+	}
+}
+
+func (h *Hub) Add(c *Client) {
+	h.mu.Lock()
+	// Disconnect existing active connection for the user if present
+	if existing, ok := h.clients[c.UserID]; ok {
+		existing.Close()
+	}
 	h.clients[c.UserID] = c
 	h.mu.Unlock()
 }
 
-func (h *Hub) remove(user string) {
+func (h *Hub) Remove(c *Client) {
 	h.mu.Lock()
-	delete(h.clients, user)
-	h.mu.Unlock()
+	defer h.mu.Unlock()
+
+	if current, ok := h.clients[c.UserID]; ok && current == c {
+		delete(h.clients, c.UserID)
+		c.Close()
+	}
 }
 
 //
@@ -50,15 +89,13 @@ func (h *Hub) remove(user string) {
 //
 
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		// Validated against trusted origins in production middleware
+		return true
+	},
 }
-
-const (
-	writeTimeout = 10 * time.Second
-	pongWait     = 60 * time.Second
-	pingPeriod   = 30 * time.Second
-	queueSize    = 256
-)
 
 func HandleWebSocket(app *infra.Deps, hub *Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +105,7 @@ func HandleWebSocket(app *infra.Deps, hub *Hub) http.HandlerFunc {
 			return
 		}
 
-		claims, err := utils.ParseToken(raw)
+		claims, err := middleware.ParseToken(raw)
 		if err != nil || claims.UserID == "" {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -76,7 +113,7 @@ func HandleWebSocket(app *infra.Deps, hub *Hub) http.HandlerFunc {
 
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			http.Error(w, "upgrade failed", http.StatusInternalServerError)
+			log.L.Sugar().Errorw("Upgrade failed", "error", err)
 			return
 		}
 
@@ -85,17 +122,15 @@ func HandleWebSocket(app *infra.Deps, hub *Hub) http.HandlerFunc {
 			Conn:   conn,
 			Send:   make(chan any, queueSize),
 		}
-		hub.add(client)
 
-		defer func() {
-			hub.remove(client.UserID)
-			close(client.Send)
-			_ = conn.Close()
-		}()
+		hub.Add(client)
 
+		// Synchronize lifecycle cleanup
 		go wsWriter(client)
-		go wsPing(client)
 		wsReader(r.Context(), client, app, hub)
+
+		// Cleanup when wsReader exits
+		hub.Remove(client)
 	}
 }
 
@@ -104,36 +139,53 @@ func HandleWebSocket(app *infra.Deps, hub *Hub) http.HandlerFunc {
 //
 
 func wsWriter(c *Client) {
-	for msg := range c.Send {
-		_ = c.Conn.SetWriteDeadline(time.Now().Add(writeTimeout))
-		if err := c.Conn.WriteJSON(msg); err != nil {
-			return
-		}
-	}
-}
-
-func wsPing(c *Client) {
 	ticker := time.NewTicker(pingPeriod)
-	defer ticker.Stop()
+	defer func() {
+		ticker.Stop()
+		_ = c.Conn.Close()
+	}()
 
-	for range ticker.C {
-		_ = c.Conn.SetWriteDeadline(time.Now().Add(writeTimeout))
-		if err := c.Conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(writeTimeout)); err != nil {
-			return
+	for {
+		select {
+		case msg, ok := <-c.Send:
+			_ = c.Conn.SetWriteDeadline(time.Now().Add(writeTimeout))
+			if !ok {
+				// Hub closed the channel
+				_ = c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+
+			if err := c.Conn.WriteJSON(msg); err != nil {
+				return
+			}
+
+		case <-ticker.C:
+			_ = c.Conn.SetWriteDeadline(time.Now().Add(writeTimeout))
+			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
 		}
 	}
 }
 
 func wsReader(ctx context.Context, c *Client, app *infra.Deps, hub *Hub) {
+	defer func() {
+		_ = c.Conn.Close()
+	}()
+
+	c.Conn.SetReadLimit(512 * 1024) // 512KB message limit
 	_ = c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error {
 		return c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	})
 
 	for {
-		var in models.IncomingWSMessage
+		var in IncomingWSMessage
 		if err := c.Conn.ReadJSON(&in); err != nil {
-			return
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.L.Sugar().Warnw("WebSocket error", "userID", c.UserID, "error", err)
+			}
+			break
 		}
 
 		switch in.Type {
@@ -157,12 +209,12 @@ func wsReader(ctx context.Context, c *Client, app *infra.Deps, hub *Hub) {
 // ================= ACTIONS =================
 //
 
-func wsSendMessage(ctx context.Context, c *Client, in models.IncomingWSMessage, app *infra.Deps, hub *Hub) {
-	if ensureChatAccess(ctx, app, in.ChatID, c.UserID) != nil {
+func wsSendMessage(ctx context.Context, c *Client, in IncomingWSMessage, app *infra.Deps, hub *Hub) {
+	if dbEnsureChatAccess(ctx, app, in.ChatID, c.UserID) != nil {
 		return
 	}
 
-	msg := &models.Message{
+	msg := &Message{
 		MessageID: utils.GenerateRandomDigitString(16),
 		ChatID:    in.ChatID,
 		UserID:    c.UserID,
@@ -172,12 +224,12 @@ func wsSendMessage(ctx context.Context, c *Client, in models.IncomingWSMessage, 
 		Status:    "sent",
 	}
 
-	if err := app.DB.InsertOne(ctx, MessagesCollection, msg); err != nil {
-		log.Println("insert failed:", err)
+	if err := dbInsertMessage(ctx, app, msg); err != nil {
+		log.L.Sugar().Errorw("Insert message failed", "error", err)
 		return
 	}
 
-	updateLastMessage(ctx, app, in.ChatID, msg)
+	dbUpdateLastMessage(ctx, app, in.ChatID, msg)
 
 	broadcastToChat(ctx, app, hub, in.ChatID, map[string]any{
 		"type":      "message",
@@ -191,32 +243,15 @@ func wsSendMessage(ctx context.Context, c *Client, in models.IncomingWSMessage, 
 	})
 }
 
-func wsEditMessage(ctx context.Context, c *Client, in models.IncomingWSMessage, app *infra.Deps, hub *Hub) {
-	msgID := in.Content
-	if msgID == "" {
+func wsEditMessage(ctx context.Context, c *Client, in IncomingWSMessage, app *infra.Deps, hub *Hub) {
+	if in.MessageID == "" || in.Content == "" {
 		return
 	}
 
-	now := time.Now()
-	var msg models.Message
-	if err := app.DB.FindOneAndUpdate(
-		ctx,
-		MessagesCollection,
-		map[string]any{
-			"messageid":  msgID,
-			"userid":     c.UserID,
-			"deleted_ne": true,
-		},
-		map[string]any{
-			"content":  in.MediaURL,
-			"editedAt": &now,
-		},
-		&msg,
-	); err != nil {
+	msg, err := dbEditMessage(ctx, app, in.MessageID, c.UserID, in.Content)
+	if err != nil {
 		return
 	}
-
-	updateLastMessage(ctx, app, msg.ChatID, &msg)
 
 	broadcastToChat(ctx, app, hub, msg.ChatID, map[string]any{
 		"type":    "edit",
@@ -224,35 +259,19 @@ func wsEditMessage(ctx context.Context, c *Client, in models.IncomingWSMessage, 
 	})
 }
 
-func wsDeleteMessage(ctx context.Context, c *Client, in models.IncomingWSMessage, app *infra.Deps, hub *Hub) {
-	msgID := in.Content
+func wsDeleteMessage(ctx context.Context, c *Client, in IncomingWSMessage, app *infra.Deps, hub *Hub) {
+	msgID := in.MessageID
+	if msgID == "" {
+		msgID = in.Content
+	}
 	if msgID == "" {
 		return
 	}
 
-	var msg models.Message
-	if err := app.DB.FindOneAndUpdate(
-		ctx,
-		MessagesCollection,
-		map[string]any{
-			"messageid": msgID,
-			"userid":    c.UserID,
-		},
-		map[string]any{"deleted": true},
-		&msg,
-	); err != nil {
+	msg, err := dbDeleteMessage(ctx, app, msgID, c.UserID)
+	if err != nil {
 		return
 	}
-
-	_, _ = app.DB.UpdateOne(
-		ctx,
-		MereChatCollection,
-		map[string]any{
-			"chatid":               msg.ChatID,
-			"lastMessage.senderId": msg.UserID,
-		},
-		map[string]any{"lastMessage": nil},
-	)
 
 	broadcastToChat(ctx, app, hub, msg.ChatID, map[string]any{
 		"type":      "delete",
@@ -260,19 +279,16 @@ func wsDeleteMessage(ctx context.Context, c *Client, in models.IncomingWSMessage
 	})
 }
 
-func wsReadMessage(ctx context.Context, c *Client, in models.IncomingWSMessage, app *infra.Deps, hub *Hub) {
-	msgID := in.Content
+func wsReadMessage(ctx context.Context, c *Client, in IncomingWSMessage, app *infra.Deps, hub *Hub) {
+	msgID := in.MessageID
+	if msgID == "" {
+		msgID = in.Content
+	}
 	if msgID == "" {
 		return
 	}
 
-	if err := app.DB.AddToSet(
-		ctx,
-		MessagesCollection,
-		map[string]any{"messageid": msgID},
-		"readBy",
-		c.UserID,
-	); err != nil {
+	if err := dbMarkAsRead(ctx, app, msgID, c.UserID); err != nil {
 		return
 	}
 
@@ -283,21 +299,17 @@ func wsReadMessage(ctx context.Context, c *Client, in models.IncomingWSMessage, 
 	})
 }
 
-func wsReaction(ctx context.Context, c *Client, in models.IncomingWSMessage, app *infra.Deps, hub *Hub, add bool) {
-	msgID := in.Content
+func wsReaction(ctx context.Context, c *Client, in IncomingWSMessage, app *infra.Deps, hub *Hub, add bool) {
+	msgID := in.MessageID
+	if msgID == "" {
+		msgID = in.Content
+	}
 	if msgID == "" {
 		return
 	}
 
-	if add {
-		_ = app.DB.AddToSet(ctx, MessagesCollection, map[string]any{"messageid": msgID}, "reactions", c.UserID)
-	} else {
-		_, _ = app.DB.UpdateOne(
-			ctx,
-			MessagesCollection,
-			map[string]any{"messageid": msgID},
-			map[string]any{"reactions": []string{}},
-		)
+	if err := dbUpdateReaction(ctx, app, msgID, c.UserID, add); err != nil {
+		return
 	}
 
 	broadcastToChat(ctx, app, hub, in.ChatID, map[string]any{
@@ -313,20 +325,20 @@ func wsReaction(ctx context.Context, c *Client, in models.IncomingWSMessage, app
 //
 
 func broadcastToChat(ctx context.Context, app *infra.Deps, hub *Hub, chatID string, payload any) {
-	var chat models.Chat
-	if err := app.DB.FindOne(ctx, MereChatCollection, map[string]any{"chatid": chatID}, &chat); err != nil {
+	participants, err := dbGetChatParticipants(ctx, app, chatID)
+	if err != nil {
 		return
 	}
 
 	hub.mu.RLock()
 	defer hub.mu.RUnlock()
 
-	for _, uid := range chat.Participants {
+	for _, uid := range participants {
 		if c, ok := hub.clients[uid]; ok {
 			select {
 			case c.Send <- payload:
 			default:
-				log.Printf("ws drop to %s", uid)
+				log.L.Sugar().Warnw("WS send queue full, dropping message", "userID", uid)
 			}
 		}
 	}

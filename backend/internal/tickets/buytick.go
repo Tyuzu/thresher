@@ -11,7 +11,6 @@ import (
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/internal/metrics/auditlog"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -51,7 +50,7 @@ func BuysTicket(app *infra.Deps) http.HandlerFunc {
 		   Uses FindOneAndUpdate to ensure atomicity
 		-------------------- */
 
-		var ticket models.Ticket
+		var ticket Ticket
 
 		err := app.DB.FindOneAndUpdate(
 			ctx,
@@ -127,7 +126,7 @@ func BuysTicket(app *infra.Deps) http.HandlerFunc {
 			app,
 			r,
 			userID,
-			models.AuditActionTicketPurchase,
+			auditlog.AuditActionTicketPurchase,
 			"ticket",
 			req.TicketID,
 			"success",

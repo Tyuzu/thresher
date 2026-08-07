@@ -9,7 +9,6 @@ import (
 
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -22,7 +21,7 @@ func GetRecipe(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 		id := utils.GetParam(r, "id")
 
-		var recipe models.Recipe
+		var recipe Recipe
 		if err := app.DB.FindOne(ctx, recipeCollection, map[string]any{"recipeid": id}, &recipe); err != nil {
 			http.Error(w, "Recipe not found", http.StatusNotFound)
 			return
@@ -79,7 +78,7 @@ func GetRecipes(app *infra.Deps) http.HandlerFunc {
 			Sort:  sort,
 		}
 
-		var recipes []models.Recipe
+		var recipes []Recipe
 		if err := app.DB.FindManyWithOptions(ctx, recipeCollection, filter, opts, &recipes); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch recipes")
 			return

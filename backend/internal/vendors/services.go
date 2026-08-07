@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -30,7 +29,7 @@ func RegisterVendor(
 	email,
 	phone,
 	location string,
-) (*models.Vendor, error) {
+) (*Vendor, error) {
 	existing, _ := GetVendorByUserID(ctx, app, userID)
 	if existing != nil {
 		return nil, ErrVendorAlreadyExists
@@ -38,7 +37,7 @@ func RegisterVendor(
 
 	now := time.Now()
 
-	vendor := &models.Vendor{
+	vendor := &Vendor{
 		VendorID:    primitive.NewObjectID().Hex(),
 		UserID:      userID,
 		Name:        name,
@@ -63,8 +62,8 @@ func RegisterVendor(
 }
 
 // GetVendorByID retrieves a vendor by vendor ID.
-func GetVendorByID(ctx context.Context, app *infra.Deps, vendorID string) (*models.Vendor, error) {
-	var vendor models.Vendor
+func GetVendorByID(ctx context.Context, app *infra.Deps, vendorID string) (*Vendor, error) {
+	var vendor Vendor
 	err := app.DB.FindOne(
 		ctx,
 		vendorCollection,
@@ -82,8 +81,8 @@ func GetVendorByID(ctx context.Context, app *infra.Deps, vendorID string) (*mode
 }
 
 // GetVendorByUserID retrieves the active vendor profile for a specific user.
-func GetVendorByUserID(ctx context.Context, app *infra.Deps, userID string) (*models.Vendor, error) {
-	var vendor models.Vendor
+func GetVendorByUserID(ctx context.Context, app *infra.Deps, userID string) (*Vendor, error) {
+	var vendor Vendor
 	err := app.DB.FindOne(
 		ctx,
 		vendorCollection,
@@ -101,8 +100,8 @@ func GetVendorByUserID(ctx context.Context, app *infra.Deps, userID string) (*mo
 }
 
 // GetVendorsByCategory retrieves all vendors in a specific category.
-func GetVendorsByCategory(ctx context.Context, app *infra.Deps, category string) ([]models.Vendor, error) {
-	var vendors []models.Vendor
+func GetVendorsByCategory(ctx context.Context, app *infra.Deps, category string) ([]Vendor, error) {
+	var vendors []Vendor
 	err := app.DB.FindMany(ctx, vendorCollection, bson.M{
 		"available": true,
 		"category":  category,
@@ -112,14 +111,14 @@ func GetVendorsByCategory(ctx context.Context, app *infra.Deps, category string)
 	}
 
 	if vendors == nil {
-		vendors = []models.Vendor{}
+		vendors = []Vendor{}
 	}
 
 	return vendors, nil
 }
 
 // GetAllVendors retrieves all available vendors, optionally filtered by search/category.
-func GetAllVendors(ctx context.Context, app *infra.Deps, search string, category string) ([]models.Vendor, error) {
+func GetAllVendors(ctx context.Context, app *infra.Deps, search string, category string) ([]Vendor, error) {
 	filter := vendorBaseFilter()
 
 	if category != "" {
@@ -136,14 +135,14 @@ func GetAllVendors(ctx context.Context, app *infra.Deps, search string, category
 		}
 	}
 
-	var vendors []models.Vendor
+	var vendors []Vendor
 	err := app.DB.FindMany(ctx, vendorCollection, filter, &vendors)
 	if err != nil {
 		return nil, err
 	}
 
 	if vendors == nil {
-		vendors = []models.Vendor{}
+		vendors = []Vendor{}
 	}
 
 	return vendors, nil
@@ -181,8 +180,8 @@ func DeleteVendor(ctx context.Context, app *infra.Deps, vendorID string) (any, e
 }
 
 // GetVendorHiringByID retrieves a hiring record by hiring ID.
-func GetVendorHiringByID(ctx context.Context, app *infra.Deps, hiringID string) (*models.VendorHiring, error) {
-	var hiring models.VendorHiring
+func GetVendorHiringByID(ctx context.Context, app *infra.Deps, hiringID string) (*VendorHiring, error) {
+	var hiring VendorHiring
 	err := app.DB.FindOne(
 		ctx,
 		hiringCollection,
@@ -197,8 +196,8 @@ func GetVendorHiringByID(ctx context.Context, app *infra.Deps, hiringID string) 
 }
 
 // GetVendorHiringByEventAndVendor retrieves a hiring record for a specific event/vendor pair.
-func GetVendorHiringByEventAndVendor(ctx context.Context, app *infra.Deps, eventID, vendorID string) (*models.VendorHiring, error) {
-	var hiring models.VendorHiring
+func GetVendorHiringByEventAndVendor(ctx context.Context, app *infra.Deps, eventID, vendorID string) (*VendorHiring, error) {
+	var hiring VendorHiring
 	err := app.DB.FindOne(
 		ctx,
 		hiringCollection,
@@ -217,7 +216,7 @@ func GetVendorHiringByEventAndVendor(ctx context.Context, app *infra.Deps, event
 }
 
 // HireVendor creates a vendor hiring record for an event.
-func HireVendor(ctx context.Context, app *infra.Deps, eventID, vendorID, vendorName, vendorCategory, hiredBy string) (*models.VendorHiring, error) {
+func HireVendor(ctx context.Context, app *infra.Deps, eventID, vendorID, vendorName, vendorCategory, hiredBy string) (*VendorHiring, error) {
 	existing, err := GetVendorHiringByEventAndVendor(ctx, app, eventID, vendorID)
 	if err == nil && existing != nil {
 		return nil, ErrVendorAlreadyHired
@@ -225,7 +224,7 @@ func HireVendor(ctx context.Context, app *infra.Deps, eventID, vendorID, vendorN
 
 	now := time.Now()
 
-	hiring := &models.VendorHiring{
+	hiring := &VendorHiring{
 		HiringID:       primitive.NewObjectID().Hex(),
 		EventID:        eventID,
 		VendorID:       vendorID,
@@ -246,8 +245,8 @@ func HireVendor(ctx context.Context, app *infra.Deps, eventID, vendorID, vendorN
 }
 
 // GetEventVendors retrieves all vendors hired for an event.
-func GetEventVendors(ctx context.Context, app *infra.Deps, eventID string) ([]models.VendorHiring, error) {
-	var hirings []models.VendorHiring
+func GetEventVendors(ctx context.Context, app *infra.Deps, eventID string) ([]VendorHiring, error) {
+	var hirings []VendorHiring
 	err := app.DB.FindMany(ctx, hiringCollection, bson.M{
 		"eventid": eventID,
 		"status":  bson.M{"$ne": "rejected"},
@@ -257,15 +256,15 @@ func GetEventVendors(ctx context.Context, app *infra.Deps, eventID string) ([]mo
 	}
 
 	if hirings == nil {
-		hirings = []models.VendorHiring{}
+		hirings = []VendorHiring{}
 	}
 
 	return hirings, nil
 }
 
 // GetVendorHiringsByVendorID retrieves vendor hiring records for a specific vendor.
-func GetVendorHiringsByVendorID(ctx context.Context, app *infra.Deps, vendorID string) ([]models.VendorHiring, error) {
-	var hirings []models.VendorHiring
+func GetVendorHiringsByVendorID(ctx context.Context, app *infra.Deps, vendorID string) ([]VendorHiring, error) {
+	var hirings []VendorHiring
 	err := app.DB.FindMany(ctx, hiringCollection, bson.M{
 		"vendorid": vendorID,
 		"status":   bson.M{"$ne": "rejected"},
@@ -275,7 +274,7 @@ func GetVendorHiringsByVendorID(ctx context.Context, app *infra.Deps, vendorID s
 	}
 
 	if hirings == nil {
-		hirings = []models.VendorHiring{}
+		hirings = []VendorHiring{}
 	}
 
 	return hirings, nil
@@ -283,7 +282,7 @@ func GetVendorHiringsByVendorID(ctx context.Context, app *infra.Deps, vendorID s
 
 // RemoveVendorFromEvent removes a vendor from an event.
 func RemoveVendorFromEvent(ctx context.Context, app *infra.Deps, eventID, vendorID string) (any, error) {
-	var existing models.VendorHiring
+	var existing VendorHiring
 	err := app.DB.FindOne(ctx, hiringCollection, bson.M{
 		"eventid":  eventID,
 		"vendorid": vendorID,
@@ -325,13 +324,13 @@ func UpdateVendorStatus(ctx context.Context, app *infra.Deps, hiringID, status s
 }
 
 // GetVendorsByEvent retrieves detailed vendor info for an event.
-func GetVendorsByEvent(ctx context.Context, app *infra.Deps, eventID string) ([]models.VendorResponse, error) {
+func GetVendorsByEvent(ctx context.Context, app *infra.Deps, eventID string) ([]VendorResponse, error) {
 	hirings, err := GetEventVendors(ctx, app, eventID)
 	if err != nil {
 		return nil, err
 	}
 
-	responses := make([]models.VendorResponse, 0, len(hirings))
+	responses := make([]VendorResponse, 0, len(hirings))
 
 	for _, hiring := range hirings {
 		vendor, err := GetVendorByID(ctx, app, hiring.VendorID)
@@ -339,7 +338,7 @@ func GetVendorsByEvent(ctx context.Context, app *infra.Deps, eventID string) ([]
 			continue
 		}
 
-		responses = append(responses, models.VendorResponse{
+		responses = append(responses, VendorResponse{
 			VendorID:     vendor.VendorID,
 			Name:         vendor.Name,
 			Category:     vendor.Category,

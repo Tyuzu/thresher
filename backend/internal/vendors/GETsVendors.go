@@ -4,7 +4,6 @@ import (
 	"context"
 	"naevis/config"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"strings"
@@ -27,7 +26,7 @@ func GetVendorsHandler(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if vendors == nil {
-			vendors = []models.Vendor{}
+			vendors = []Vendor{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -106,7 +105,7 @@ func GetEventVendorsHandler(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if vendorResponses == nil {
-			vendorResponses = []models.VendorResponse{}
+			vendorResponses = []VendorResponse{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -141,7 +140,7 @@ func GetMyVendorRequestsHandler(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if hirings == nil {
-			hirings = []models.VendorHiring{}
+			hirings = []VendorHiring{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{

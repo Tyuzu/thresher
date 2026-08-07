@@ -1,7 +1,6 @@
 package pay
 
 import (
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"strconv"
@@ -20,7 +19,7 @@ func (p *PaymentService) ListTransactions(w http.ResponseWriter, r *http.Request
 		limit = 10
 	}
 
-	var txns []models.Transaction
+	var txns []Transaction
 
 	filter := map[string]any{
 		"$or": []map[string]any{
@@ -51,7 +50,7 @@ func (p *PaymentService) GetBalance(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID := utils.GetUserIDFromRequest(r)
 
-	var acc models.Account
+	var acc Account
 	if err := p.app.DB.FindOne(ctx, accountsCollection, map[string]any{"userid": userID}, &acc); err != nil {
 		utils.RespondWithError(w, http.StatusNotFound, "account not found")
 		return

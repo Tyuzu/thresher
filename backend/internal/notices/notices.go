@@ -9,7 +9,6 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -66,7 +65,7 @@ func CreateNotice(app *infra.Deps) http.HandlerFunc {
 
 		userID := utils.GetUserIDFromRequest(r)
 
-		notice := models.Notice{
+		notice := Notice{
 			NoticeID:   utils.GenerateRandomDigitString(13), // use your string ID generator
 			EntityType: entityType,
 			EntityId:   entityID,
@@ -110,7 +109,7 @@ func UpdateNotice(app *infra.Deps) http.HandlerFunc {
 
 		userID := utils.GetUserIDFromRequest(r)
 
-		var existing models.Notice
+		var existing Notice
 		if err := app.DB.FindOne(
 			ctx,
 			noticesCollection,
@@ -176,7 +175,7 @@ func DeleteNotice(app *infra.Deps) http.HandlerFunc {
 
 		userID := utils.GetUserIDFromRequest(r)
 
-		var existing models.Notice
+		var existing Notice
 		if err := app.DB.FindOne(
 			ctx,
 			noticesCollection,

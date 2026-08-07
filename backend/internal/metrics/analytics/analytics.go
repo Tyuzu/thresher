@@ -1,15 +1,14 @@
 package analytics
 
 import (
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"time"
 )
 
 // --- Event Analytics ---
-func getEventAnalytics(entityID string) models.Analytics {
-	return models.Analytics{
+func getEventAnalytics(entityID string) Analytics {
+	return Analytics{
 		ID:   entityID,
 		Name: "Sample Event " + entityID,
 		Type: "event",
@@ -41,8 +40,8 @@ func getEventAnalytics(entityID string) models.Analytics {
 }
 
 // --- Place Analytics ---
-func getPlaceAnalytics(entityID string) models.Analytics {
-	return models.Analytics{
+func getPlaceAnalytics(entityID string) Analytics {
+	return Analytics{
 		ID:   entityID,
 		Name: "Sample Place " + entityID,
 		Type: "place",
@@ -72,8 +71,8 @@ func getPlaceAnalytics(entityID string) models.Analytics {
 }
 
 // --- Product Analytics ---
-func getProductAnalytics(entityID string) models.Analytics {
-	return models.Analytics{
+func getProductAnalytics(entityID string) Analytics {
+	return Analytics{
 		ID:   entityID,
 		Name: "Sample Product " + entityID,
 		Type: "product",
@@ -107,7 +106,7 @@ func GetEntityAnalytics(w http.ResponseWriter, r *http.Request) {
 	entityType := utils.GetParam(r, "entityType")
 	entityID := utils.GetParam(r, "entityId")
 
-	var analytics models.Analytics
+	var analytics Analytics
 
 	switch entityType {
 	case "events":

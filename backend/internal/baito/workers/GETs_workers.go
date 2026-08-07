@@ -9,7 +9,6 @@ import (
 
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 
@@ -87,10 +86,10 @@ func GetWorkers(app *infra.Deps) http.HandlerFunc {
 			Sort:  bson.D{{Key: "createdAt", Value: -1}},
 		}
 
-		var workers []models.BaitoWorkersResponse
+		var workers []BaitoWorkersResponse
 		if err := app.DB.FindManyWithOptions(ctx, BaitoWorkersCollection, filter, opts, &workers); err != nil {
 			if errors.Is(err, mongo.ErrNoDocuments) {
-				workers = []models.BaitoWorkersResponse{}
+				workers = []BaitoWorkersResponse{}
 			} else {
 				log.Printf("DB error: %v", err)
 				utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch workers")
@@ -106,7 +105,7 @@ func GetWorkers(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if workers == nil {
-			workers = []models.BaitoWorkersResponse{}
+			workers = []BaitoWorkersResponse{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{

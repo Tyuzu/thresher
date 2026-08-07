@@ -9,6 +9,7 @@ import (
 
 	"naevis/infra/cache"
 	"naevis/infra/db"
+	"naevis/middleware"
 	"naevis/models"
 	"naevis/utils"
 )
@@ -18,12 +19,12 @@ import (
 ------------------------------------------------------- */
 
 // validateJWT extracts + validates JWT from header
-func validateJWT(r *http.Request) (*models.Claims, error) {
+func validateJWT(r *http.Request) (*middleware.Claims, error) {
 	token := r.Header.Get("Authorization")
 	if token == "" {
 		return nil, errors.New("no auth header")
 	}
-	return utils.ValidateJWT(token)
+	return middleware.ValidateJWT(token)
 }
 
 /* -------------------------------------------------------

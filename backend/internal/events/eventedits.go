@@ -5,7 +5,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/internal/beats/dels"
 	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
@@ -63,6 +62,6 @@ func EditEvent(app *infra.Deps) http.HandlerFunc {
 // DeleteEvent deletes an event and its related data
 func DeleteEvent(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dels.DeleteEvent(app)(w, r)
+
 	}
 }

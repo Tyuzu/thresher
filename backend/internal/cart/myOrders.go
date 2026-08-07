@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"naevis/infra"
+	"naevis/internal/pay"
 	"naevis/models"
 	"naevis/utils"
 	"naevis/utils/logger"
@@ -122,7 +123,7 @@ func GetMyOrders(app *infra.Deps) http.HandlerFunc {
 
 /* ───────────────────────── Helper Functions ───────────────────────── */
 
-func extractFarmOrderMetadata(farmOrders []models.FarmOrder) ([]string, map[string]struct{}) {
+func extractFarmOrderMetadata(farmOrders []FarmOrder) ([]string, map[string]struct{}) {
 	orderIDs := make([]string, 0, len(farmOrders))
 	approverIDSet := make(map[string]struct{})
 
@@ -137,13 +138,13 @@ func extractFarmOrderMetadata(farmOrders []models.FarmOrder) ([]string, map[stri
 	return orderIDs, approverIDSet
 }
 
-func fetchTransactionsByOrderIDs(ctx context.Context, app *infra.Deps, orderIDs []string) map[string]models.Transaction {
-	txnMap := make(map[string]models.Transaction)
+func fetchTransactionsByOrderIDs(ctx context.Context, app *infra.Deps, orderIDs []string) map[string]pay.Transaction {
+	txnMap := make(map[string]pay.Transaction)
 	if len(orderIDs) == 0 {
 		return txnMap
 	}
 
-	var txns []models.Transaction
+	var txns []pay.Transaction
 	err := app.DB.FindMany(ctx, "transactions", bson.M{
 		"entity_type": "order",
 		"entity_id":   bson.M{"$in": orderIDs},
@@ -202,7 +203,7 @@ func parseQueryInt(r *http.Request, key string, defaultVal, minVal, maxVal int) 
 	return val
 }
 
-func mapPaymentStatus(status models.OrderStatus) string {
+func mapPaymentStatus(status OrderStatus) string {
 	switch string(status) {
 	case "paid", "delivered":
 		return "paid"
@@ -213,7 +214,7 @@ func mapPaymentStatus(status models.OrderStatus) string {
 	}
 }
 
-func mapPaymentStatusFromTxn(txn *models.Transaction, status models.OrderStatus) string {
+func mapPaymentStatusFromTxn(txn *pay.Transaction, status OrderStatus) string {
 	if txn == nil {
 		return mapPaymentStatus(status)
 	}

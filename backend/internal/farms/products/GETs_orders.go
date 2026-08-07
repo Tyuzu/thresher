@@ -8,6 +8,9 @@ import (
 	"time"
 
 	"naevis/infra"
+	"naevis/internal/cart"
+	"naevis/internal/farms"
+	"naevis/internal/pay"
 	"naevis/models"
 	"naevis/utils"
 
@@ -39,7 +42,7 @@ func GetMyFarmOrders(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		var orders []models.FarmOrder
+		var orders []cart.FarmOrder
 		if err := app.DB.FindMany(
 			ctx,
 			farmOrdersCollection,
@@ -88,12 +91,12 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 		userID := utils.GetUserIDFromRequest(r)
 
 		// 1. Fetch farms owned by this user
-		var farms []models.Farm
+		var myfarms []farms.Farm
 		if err := app.DB.FindMany(
 			ctx,
 			farmsCollection,
 			bson.M{"createdBy": userID},
-			&farms,
+			&myfarms,
 		); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
@@ -102,8 +105,8 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		farmIDs := make([]string, 0, len(farms))
-		for _, f := range farms {
+		farmIDs := make([]string, 0, len(myfarms))
+		for _, f := range myfarms {
 			farmIDs = append(farmIDs, f.FarmID)
 		}
 
@@ -147,7 +150,7 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// 2. Fetch orders for those farms
-		var orders []models.FarmOrder
+		var orders []cart.FarmOrder
 		if err := app.DB.FindMany(
 			ctx,
 			farmOrdersCollection,
@@ -172,9 +175,9 @@ func GetIncomingFarmOrders(app *infra.Deps) http.HandlerFunc {
 			orderIDs = append(orderIDs, o.OrderID)
 		}
 
-		txnByOrder := map[string]models.Transaction{}
+		txnByOrder := map[string]pay.Transaction{}
 		if len(orderIDs) > 0 {
-			var txns []models.Transaction
+			var txns []pay.Transaction
 			_ = app.DB.FindMany(ctx, "transactions", bson.M{
 				"entity_type": "order",
 				"entity_id":   bson.M{"$in": orderIDs},
@@ -240,8 +243,8 @@ func firstNonEmpty(vals ...string) string {
 	return ""
 }
 
-func fetchFarmByID(ctx context.Context, id string, app *infra.Deps) models.Farm {
-	var farm models.Farm
+func fetchFarmByID(ctx context.Context, id string, app *infra.Deps) farms.Farm {
+	var farm farms.Farm
 
 	if id == "" {
 		return farm
@@ -254,7 +257,7 @@ func fetchFarmByID(ctx context.Context, id string, app *infra.Deps) models.Farm 
 		&farm,
 	)
 	if err != nil {
-		return models.Farm{}
+		return farms.Farm{}
 	}
 
 	return farm
@@ -280,7 +283,7 @@ func fetchUserByID(ctx context.Context, id string, app *infra.Deps) models.User 
 	return user
 }
 
-func derivePaymentStatus(status models.OrderStatus) string {
+func derivePaymentStatus(status cart.OrderStatus) string {
 	normalized := string(status)
 
 	switch normalized {
@@ -294,7 +297,7 @@ func derivePaymentStatus(status models.OrderStatus) string {
 }
 
 // derivePaymentStatusFromTxn returns a payment label using transaction information
-func derivePaymentStatusFromTxn(txn *models.Transaction, status models.OrderStatus) string {
+func derivePaymentStatusFromTxn(txn *pay.Transaction, status cart.OrderStatus) string {
 	if txn == nil {
 		return derivePaymentStatus(status)
 	}
@@ -313,8 +316,8 @@ func derivePaymentStatusFromTxn(txn *models.Transaction, status models.OrderStat
 	return derivePaymentStatus(status)
 }
 
-func fetchCropByID(ctx context.Context, id string, app *infra.Deps) models.Crop {
-	var crop models.Crop
+func fetchCropByID(ctx context.Context, id string, app *infra.Deps) farms.Crop {
+	var crop farms.Crop
 
 	if id == "" {
 		return crop
@@ -327,7 +330,7 @@ func fetchCropByID(ctx context.Context, id string, app *infra.Deps) models.Crop 
 		&crop,
 	)
 	if err != nil {
-		return models.Crop{}
+		return farms.Crop{}
 	}
 
 	return crop

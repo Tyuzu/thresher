@@ -9,7 +9,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -20,7 +19,7 @@ func AddToCart(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
-		var item models.CartItem
+		var item CartItem
 		if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
 			http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
 			return

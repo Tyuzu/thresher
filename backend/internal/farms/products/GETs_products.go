@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
+	"naevis/internal/farms"
 	"naevis/utils"
 	"net/http"
 	"time"
@@ -57,7 +57,7 @@ func GetItems(app *infra.Deps) http.HandlerFunc {
 			Sort:  sortMap,
 		}
 
-		var items []models.Product
+		var items []farms.Product
 		if err := app.DB.FindManyWithOptions(ctx, productsCollection, filter, opts, &items); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch items")
 			return

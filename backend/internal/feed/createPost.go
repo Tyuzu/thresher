@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/middleware"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -14,7 +15,7 @@ func CreateFeedPost(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		token := r.Header.Get("Authorization")
-		claims, err := utils.ValidateJWT(token)
+		claims, err := middleware.ValidateJWT(token)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -49,7 +50,7 @@ func EditPost(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		token := r.Header.Get("Authorization")
-		claims, err := utils.ValidateJWT(token)
+		claims, err := middleware.ValidateJWT(token)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return

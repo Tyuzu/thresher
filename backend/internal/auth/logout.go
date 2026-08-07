@@ -8,6 +8,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
+	"naevis/middleware"
 	"naevis/utils"
 )
 
@@ -76,7 +77,7 @@ func LogoutAllSessions(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Extract and validate token
-		claims, err := utils.ValidateJWT(authHeader)
+		claims, err := middleware.ValidateJWT(authHeader)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return

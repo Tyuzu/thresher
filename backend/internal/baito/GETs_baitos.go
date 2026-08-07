@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	"naevis/utils/logger"
 	log "naevis/utils/logger"
@@ -15,7 +14,7 @@ import (
 
 /* -------------------- Helpers -------------------- */
 
-func enrichBaitoApplicationCount(ctx *context.Context, app *infra.Deps, baito *models.Baito) error {
+func enrichBaitoApplicationCount(ctx *context.Context, app *infra.Deps, baito *Baito) error {
 	count, err := app.DB.CountDocuments(*ctx, BaitoAppCollection, bson.M{"baitoid": baito.BaitoId})
 	if err != nil {
 		return err
@@ -25,9 +24,9 @@ func enrichBaitoApplicationCount(ctx *context.Context, app *infra.Deps, baito *m
 	return nil
 }
 
-func respondBaitos(w http.ResponseWriter, baitos []models.BaitosResponse) {
+func respondBaitos(w http.ResponseWriter, baitos []BaitosResponse) {
 	if baitos == nil {
-		baitos = []models.BaitosResponse{}
+		baitos = []BaitosResponse{}
 	}
 	utils.RespondWithJSON(w, http.StatusOK, baitos)
 }

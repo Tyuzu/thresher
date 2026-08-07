@@ -1,6 +1,8 @@
 package events
 
 import (
+	"naevis/internal/tickets"
+	"naevis/internal/vendors"
 	"naevis/models"
 )
 
@@ -8,7 +10,7 @@ import (
 func toSafeEvent(e models.Event) models.Event {
 	// default empty slices
 	if e.Tickets == nil {
-		e.Tickets = []models.Ticket{}
+		e.Tickets = []tickets.Ticket{}
 	}
 	if e.Merch == nil {
 		e.Merch = []models.Merch{}
@@ -23,7 +25,7 @@ func toSafeEvent(e models.Event) models.Event {
 		e.Tags = []string{}
 	}
 	if e.HiredVendors == nil {
-		e.HiredVendors = []models.VendorHiring{}
+		e.HiredVendors = []vendors.VendorHiring{}
 	}
 
 	// sanitize zero dates

@@ -2,12 +2,9 @@ package feed
 
 import (
 	"naevis/infra"
-	"naevis/internal/beats/dels"
 	"naevis/utils"
 	"net/http"
 )
-
-var deletePostFactory = dels.DeletePost
 
 // DELETE /api/v1/feed/post/:postid
 func DeletePost(app *infra.Deps) http.HandlerFunc {
@@ -17,6 +14,5 @@ func DeletePost(app *infra.Deps) http.HandlerFunc {
 			http.Error(w, "postid is required", http.StatusBadRequest)
 			return
 		}
-		deletePostFactory(app)(w, r)
 	}
 }

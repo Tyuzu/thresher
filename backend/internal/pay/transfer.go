@@ -7,7 +7,6 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 )
@@ -119,7 +118,7 @@ func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request) {
 
 	// ────────── BALANCE CHECK ──────────
 
-	var sender models.Account
+	var sender Account
 	if err := p.app.DB.FindOne(
 		ctx,
 		accountsCollection,
@@ -143,7 +142,7 @@ func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request) {
 	txnID := utils.GetUUID()
 	now := time.Now()
 
-	master := models.Transaction{
+	master := Transaction{
 		ID:          txnID,
 		Type:        "transfer",
 		Method:      "wallet",
@@ -154,7 +153,7 @@ func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request) {
 		Status:      "initiated",
 		CreatedAt:   now,
 		UpdatedAt:   now,
-		Meta:        models.Meta{"note": "user transfer"},
+		Meta:        Meta{"note": "user transfer"},
 	}
 
 	if err := p.app.DB.InsertOne(ctx, transactionsCollection, master); err != nil {
@@ -162,7 +161,7 @@ func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	j := models.JournalEntry{
+	j := JournalEntry{
 		ID:            utils.GetUUID(),
 		TxnID:         txnID,
 		DebitAccount:  senderAcc,
@@ -204,7 +203,7 @@ func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request) {
 
 	// Derived per-user transaction views (best-effort)
 	_ = p.app.DB.InsertMany(ctx, transactionsCollection, []interface{}{
-		models.Transaction{
+		Transaction{
 			ID:        utils.GetUUID(),
 			ParentTxn: txnID,
 			UserID:    senderID,
@@ -213,7 +212,7 @@ func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request) {
 			Status:    "success",
 			CreatedAt: now,
 		},
-		models.Transaction{
+		Transaction{
 			ID:        utils.GetUUID(),
 			ParentTxn: txnID,
 			UserID:    req.Recipient,

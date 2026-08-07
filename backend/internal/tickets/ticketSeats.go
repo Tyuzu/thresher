@@ -3,7 +3,6 @@ package tickets
 import (
 	"context"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"time"
@@ -54,7 +53,7 @@ func GetTicketSeats(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var ticket models.Ticket
+		var ticket Ticket
 		err := app.DB.FindOne(ctx, ticketsCollection, map[string]any{
 			"eventid":  eventID,
 			"ticketid": ticketID,
@@ -67,7 +66,7 @@ func GetTicketSeats(app *infra.Deps) http.HandlerFunc {
 
 		// Ensure empty slice if Seats is nil
 		if ticket.Seats == nil {
-			ticket.Seats = []models.Seat{}
+			ticket.Seats = []Seat{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{

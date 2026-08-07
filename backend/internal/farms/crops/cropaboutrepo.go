@@ -3,7 +3,6 @@ package crops
 import (
 	"context"
 	"naevis/infra"
-	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -11,7 +10,7 @@ import (
 func CreateCropAbout(
 	ctx context.Context,
 	app *infra.Deps,
-	crop *models.CropAbout,
+	crop *CropAbout,
 ) error {
 	return app.DB.InsertOne(
 		ctx,
@@ -24,9 +23,9 @@ func GetCropAbout(
 	ctx context.Context,
 	app *infra.Deps,
 	cropID string,
-) (*models.CropAbout, error) {
+) (*CropAbout, error) {
 
-	var crop models.CropAbout
+	var crop CropAbout
 
 	err := app.DB.FindOne(
 		ctx,
@@ -45,9 +44,9 @@ func GetCropAbout(
 func GetAllCropAbouts(
 	ctx context.Context,
 	app *infra.Deps,
-) ([]models.CropAbout, error) {
+) ([]CropAbout, error) {
 
-	var crops []models.CropAbout
+	var crops []CropAbout
 
 	err := app.DB.FindMany(
 		ctx,
@@ -63,7 +62,7 @@ func UpdateCropAbout(
 	ctx context.Context,
 	app *infra.Deps,
 	cropID string,
-	crop *models.CropAbout,
+	crop *CropAbout,
 ) (any, error) {
 
 	return app.DB.UpdateOne(

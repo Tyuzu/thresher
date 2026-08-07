@@ -8,7 +8,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	"naevis/utils/logger"
 )
@@ -56,7 +55,7 @@ func ApplyToBaito(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		appx := models.BaitoApplication{
+		appx := BaitoApplication{
 			BaitoID:     utils.GetParam(r, "baitoid"),
 			UserID:      utils.GetUserIDFromRequest(r),
 			Username:    utils.GetUsernameFromRequest(r),

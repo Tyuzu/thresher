@@ -7,7 +7,6 @@ import (
 	"naevis/config"
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -31,7 +30,7 @@ func deleteBaitoRecord(ctx context.Context, app *infra.Deps, baitoID, userID str
 	return 0, nil
 }
 
-func saveBaitoApplication(ctx context.Context, app *infra.Deps, application models.BaitoApplication) error {
+func saveBaitoApplication(ctx context.Context, app *infra.Deps, application BaitoApplication) error {
 	return app.DB.Insert(ctx, BaitoAppCollection, application)
 }
 
@@ -43,7 +42,7 @@ func incrementBaitoApplicationCount(ctx context.Context, app *infra.Deps, baitoI
 	return err
 }
 
-func createBaitoRecord(ctx context.Context, app *infra.Deps, baito models.Baito) error {
+func createBaitoRecord(ctx context.Context, app *infra.Deps, baito Baito) error {
 	return app.DB.Insert(ctx, BaitoCollection, baito)
 }
 
@@ -58,46 +57,46 @@ func updateBaitoRecord(ctx context.Context, app *infra.Deps, baitoID, userID str
 	return 0, err
 }
 
-func findLatestBaitosFromDB(ctx context.Context, app *infra.Deps, filter any, limit int) ([]models.BaitosResponse, error) {
-	var baitos []models.BaitosResponse
+func findLatestBaitosFromDB(ctx context.Context, app *infra.Deps, filter any, limit int) ([]BaitosResponse, error) {
+	var baitos []BaitosResponse
 	err := app.DB.FindManyWithOptions(ctx, BaitoCollection, filter, db.FindManyOptions{
 		Limit: limit,
 		Sort:  bson.D{{Key: "createdAt", Value: -1}},
 	}, &baitos)
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return []models.BaitosResponse{}, nil
+		return []BaitosResponse{}, nil
 	}
 	return baitos, err
 }
 
-func findRelatedBaitosFromDB(ctx context.Context, app *infra.Deps, filter any, limit int) ([]models.BaitosResponse, error) {
-	var baitos []models.BaitosResponse
+func findRelatedBaitosFromDB(ctx context.Context, app *infra.Deps, filter any, limit int) ([]BaitosResponse, error) {
+	var baitos []BaitosResponse
 	err := app.DB.FindManyWithOptions(ctx, BaitoCollection, filter, db.FindManyOptions{
 		Limit: limit,
 		Sort:  bson.D{{Key: "createdAt", Value: -1}},
 	}, &baitos)
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return []models.BaitosResponse{}, nil
+		return []BaitosResponse{}, nil
 	}
 	return baitos, err
 }
 
-func findBaitoByIDFromDB(ctx context.Context, app *infra.Deps, baitoID string) (models.Baito, error) {
-	var baito models.Baito
+func findBaitoByIDFromDB(ctx context.Context, app *infra.Deps, baitoID string) (Baito, error) {
+	var baito Baito
 	err := app.DB.FindOne(ctx, BaitoCollection, bson.M{"baitoid": baitoID}, &baito)
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return models.Baito{}, nil
+		return Baito{}, nil
 	}
 	return baito, err
 }
 
-func findMyBaitosFromDB(ctx context.Context, app *infra.Deps, userID string) ([]models.BaitosResponse, error) {
-	var baitos []models.BaitosResponse
+func findMyBaitosFromDB(ctx context.Context, app *infra.Deps, userID string) ([]BaitosResponse, error) {
+	var baitos []BaitosResponse
 	err := app.DB.FindManyWithOptions(ctx, BaitoCollection, bson.M{"ownerId": userID}, db.FindManyOptions{
 		Sort: bson.D{{Key: "createdAt", Value: -1}},
 	}, &baitos)
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return []models.BaitosResponse{}, nil
+		return []BaitosResponse{}, nil
 	}
 	return baitos, err
 }

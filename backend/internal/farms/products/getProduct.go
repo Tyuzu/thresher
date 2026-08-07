@@ -3,13 +3,13 @@ package products
 import (
 	"context"
 	"naevis/infra"
-	"naevis/models"
+	"naevis/internal/farms"
 	"naevis/utils"
 	"net/http"
 )
 
-func getProductEntity(ctx context.Context, id string, app *infra.Deps) models.Product {
-	var product models.Product
+func getProductEntity(ctx context.Context, id string, app *infra.Deps) farms.Product {
+	var product farms.Product
 
 	_ = app.DB.FindOne(ctx, productsCollection, map[string]any{
 		"productid": id,
@@ -25,7 +25,7 @@ func GetProductDetails(app *infra.Deps) http.HandlerFunc {
 		entityType := utils.GetParam(r, "entityType")
 		entityId := utils.GetParam(r, "entityId")
 
-		var product models.Product
+		var product farms.Product
 
 		switch entityType {
 		case "product", "tool":

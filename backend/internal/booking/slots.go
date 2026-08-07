@@ -10,7 +10,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -37,7 +36,7 @@ func CreateTier(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
 		defer cancel()
 
-		var tier models.Tier
+		var tier Tier
 		if err := json.NewDecoder(r.Body).Decode(&tier); err != nil {
 			http.Error(w, "invalid JSON", http.StatusBadRequest)
 			return
@@ -88,7 +87,7 @@ func CreateSlot(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
 		defer cancel()
 
-		var s models.Slot
+		var s Slot
 		if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
 			http.Error(w, "invalid payload", http.StatusBadRequest)
 			return
@@ -100,7 +99,7 @@ func CreateSlot(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if s.TierId != "" {
-			var t models.Tier
+			var t Tier
 			if err := FindTierByID(ctx, app.DB, s.TierId, &t); err == nil {
 				s.TierName = t.Name
 			}
@@ -170,7 +169,7 @@ func GenerateSlotsFromTier(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), longBatchTimeout)
 		defer cancel()
 
-		var tier models.Tier
+		var tier Tier
 		if err := FindTierByID(ctx, app.DB, tierID, &tier); err != nil {
 			http.Error(w, "tier not found", http.StatusNotFound)
 			return
@@ -205,8 +204,8 @@ func GenerateSlotsFromTier(app *infra.Deps) http.HandlerFunc {
 
 // ---------- Helper Functions ----------
 
-func buildSlotsFromTier(tier models.Tier, startDate, endDate time.Time) []models.Slot {
-	var slots []models.Slot
+func buildSlotsFromTier(tier Tier, startDate, endDate time.Time) []Slot {
+	var slots []Slot
 	now := time.Now().Unix()
 
 	startTime, endTime := defaultStartTime, defaultEndTime
@@ -220,7 +219,7 @@ func buildSlotsFromTier(tier models.Tier, startDate, endDate time.Time) []models
 			continue
 		}
 
-		slots = append(slots, models.Slot{
+		slots = append(slots, Slot{
 			ID:         genID(),
 			EntityType: tier.EntityType,
 			EntityId:   tier.EntityId,

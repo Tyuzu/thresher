@@ -5,7 +5,6 @@ import (
 	"errors"
 	"naevis/config"
 	"naevis/infra"
-	"naevis/models"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,11 +14,11 @@ import (
 var BaitoWorkersCollection = config.Collections.BaitoWorkerCollection
 var UsersCollection = config.Collections.UserCollection
 
-func findWorkerByIDFromDB(ctx context.Context, app *infra.Deps, workerID string) (models.BaitoWorker, error) {
-	var worker models.BaitoWorker
+func findWorkerByIDFromDB(ctx context.Context, app *infra.Deps, workerID string) (BaitoWorker, error) {
+	var worker BaitoWorker
 	err := app.DB.FindOne(ctx, BaitoWorkersCollection, bson.M{"baitoWorkerId": workerID}, &worker)
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return models.BaitoWorker{}, nil
+		return BaitoWorker{}, nil
 	}
 	return worker, err
 }
@@ -58,7 +57,7 @@ func findExistingWorkerProfile(ctx context.Context, app *infra.Deps, userID stri
 	return err
 }
 
-func createWorkerProfileRecord(ctx context.Context, app *infra.Deps, worker models.BaitoWorker) error {
+func createWorkerProfileRecord(ctx context.Context, app *infra.Deps, worker BaitoWorker) error {
 	return app.DB.Insert(ctx, BaitoWorkersCollection, worker)
 }
 

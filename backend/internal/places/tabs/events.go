@@ -107,18 +107,18 @@ func GetEvents(app *infra.Deps) httprouter.Handle {
 			},
 		}
 
-		var events []models.Event
-		if err := app.DB.FindManyWithOptions(ctx, eventsCollection, filter, opts, &events); err != nil {
+		var placeevents []models.Event
+		if err := app.DB.FindManyWithOptions(ctx, eventsCollection, filter, opts, &placeevents); err != nil {
 			http.Error(w, "Failed to fetch events", http.StatusInternalServerError)
 			return
 		}
 
-		if events == nil {
-			events = []models.Event{}
+		if placeevents == nil {
+			placeevents = []models.Event{}
 		}
 
 		response := map[string]any{
-			"events": events,
+			"events": placeevents,
 			"total":  total,
 			"page":   page,
 			"limit":  limit,

@@ -5,18 +5,17 @@ import (
 
 	"naevis/config"
 	db "naevis/infra/db"
-	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 var commentsCollection = config.Collections.CommentsCollection
 
-func insertComment(ctx context.Context, database db.Database, comment models.Comment) error {
+func insertComment(ctx context.Context, database db.Database, comment Comment) error {
 	return database.Insert(ctx, commentsCollection, comment)
 }
 
-func findCommentByID(ctx context.Context, database db.Database, commentID string, comment *models.Comment) error {
+func findCommentByID(ctx context.Context, database db.Database, commentID string, comment *Comment) error {
 	return database.FindOne(ctx, commentsCollection, bson.M{"commentid": commentID}, comment)
 }
 
@@ -34,7 +33,7 @@ func findCommentsByEntity(
 	entityType string,
 	entityID string,
 	opts db.FindManyOptions,
-	comments *[]models.Comment,
+	comments *[]Comment,
 ) error {
 	filter := bson.M{
 		"entity_type": entityType,

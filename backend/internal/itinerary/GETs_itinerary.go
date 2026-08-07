@@ -3,7 +3,6 @@ package itinerary
 import (
 	"context"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"time"
@@ -40,7 +39,7 @@ func GetItineraries(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if itineraries == nil {
-			itineraries = []models.Itinerary{}
+			itineraries = []Itinerary{}
 		}
 
 		for i := range itineraries {
@@ -77,7 +76,7 @@ func SearchItineraries(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if itineraries == nil {
-			itineraries = []models.Itinerary{}
+			itineraries = []Itinerary{}
 		}
 
 		for i := range itineraries {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"html"
+	"naevis/middleware"
 	log "naevis/utils/logger"
 	"net/http"
 	"strings"
@@ -154,7 +155,7 @@ func WebSocketHandler(hub *Hub, app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		claims, err := utils.ValidateJWT(token)
+		claims, err := middleware.ValidateJWT(token)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return

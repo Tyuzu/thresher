@@ -3,7 +3,6 @@ package posts
 import (
 	"fmt"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 
@@ -18,7 +17,7 @@ func GetPost(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 		postID := utils.GetParam(r, "id")
 
-		var post models.BlogPost
+		var post BlogPost
 		if err := app.DB.FindOne(ctx, blogPostsCollection, map[string]any{
 			"postid": postID,
 		}, &post); err != nil {
@@ -62,14 +61,14 @@ func GetAllPosts(app *infra.Deps) http.HandlerFunc {
 			Sort:  bson.D{{Key: "createdAt", Value: -1}},
 		}
 
-		var posts []models.BlogPost
+		var posts []BlogPost
 		if err := app.DB.FindManyWithOptions(ctx, blogPostsCollection, map[string]any{}, opts, &posts); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch posts")
 			return
 		}
 
 		if posts == nil {
-			posts = []models.BlogPost{}
+			posts = []BlogPost{}
 		}
 
 		// --- Collect unique user IDs ---
@@ -103,9 +102,9 @@ func GetAllPosts(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// --- Build response ---
-		resp := make([]models.BlogPostResponse, 0, len(posts))
+		resp := make([]BlogPostResponse, 0, len(posts))
 		for _, p := range posts {
-			resp = append(resp, models.BlogPostResponse{
+			resp = append(resp, BlogPostResponse{
 				PostID:      p.PostID,
 				Title:       p.Title,
 				Category:    p.Category,

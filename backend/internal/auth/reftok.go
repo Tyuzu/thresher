@@ -9,7 +9,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
+	"naevis/middleware"
 	"naevis/utils"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -94,7 +94,7 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 	// -----------------------
 	// Issue new access token
 	// -----------------------
-	claims := &models.Claims{
+	claims := &middleware.Claims{
 		UserID:   user.UserID,
 		Username: user.Username,
 		Role:     user.Role,

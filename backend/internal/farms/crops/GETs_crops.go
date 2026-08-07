@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
+	"naevis/internal/farms"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -51,7 +51,7 @@ func GetFilteredCrops(app *infra.Deps) http.HandlerFunc {
 			filter["price"] = price
 		}
 
-		var crops []models.Crop
+		var crops []farms.Crop
 		if err := app.DB.FindMany(ctx, cropsCollection, filter, &crops); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch crops")
 			return
@@ -74,7 +74,7 @@ func GetPreCropCatalogue(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		const cacheKey = "crop_catalogue"
-		var crops []models.CropCatalogueItem
+		var crops []farms.CropCatalogueItem
 
 		/* ------------------------------------------------ */
 		/* 1. Cache                                         */
@@ -139,7 +139,7 @@ func GetPreCropCatalogue(app *infra.Deps) http.HandlerFunc {
 				continue
 			}
 
-			item := models.CropCatalogueItem{}
+			item := farms.CropCatalogueItem{}
 			for i, h := range headers {
 				switch strings.ToLower(h) {
 				case "name":
@@ -187,7 +187,7 @@ func GetCropCatalogue(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
-		var allCrops []models.Crop
+		var allCrops []farms.Crop
 		if err := app.DB.FindMany(ctx, cropsCollection, bson.M{}, &allCrops); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,
@@ -197,7 +197,7 @@ func GetCropCatalogue(app *infra.Deps) http.HandlerFunc {
 		}
 
 		seen := make(map[string]bool)
-		unique := make([]models.Crop, 0, len(allCrops))
+		unique := make([]farms.Crop, 0, len(allCrops))
 
 		for _, c := range allCrops {
 			key := strings.ToLower(c.Name + c.CatalogueId)
@@ -223,7 +223,7 @@ func GetCropTypes(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
-		var crops []models.Crop
+		var crops []farms.Crop
 		if err := app.DB.FindMany(ctx, cropsCollection, bson.M{}, &crops); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 				"success": false,

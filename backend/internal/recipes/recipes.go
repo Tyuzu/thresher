@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/internal/beats/dels"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"strconv"
@@ -50,7 +48,7 @@ func getSafe(arr []string, index int) string {
 	return ""
 }
 
-func normalizeRecipeSlices(r *models.Recipe) {
+func normalizeRecipeSlices(r *Recipe) {
 	if r.Dietary == nil {
 		r.Dietary = []string{}
 	}
@@ -64,12 +62,12 @@ func normalizeRecipeSlices(r *models.Recipe) {
 		r.Images = []string{}
 	}
 	if r.Ingredients == nil {
-		r.Ingredients = []models.Ingredient{}
+		r.Ingredients = []Ingredient{}
 	}
 
 	for i := range r.Ingredients {
 		if r.Ingredients[i].Alternatives == nil {
-			r.Ingredients[i].Alternatives = []models.IngredientAlternative{}
+			r.Ingredients[i].Alternatives = []IngredientAlternative{}
 		}
 	}
 }
@@ -97,7 +95,7 @@ func CreateRecipe(app *infra.Deps) http.HandlerFunc {
 		units := r.MultipartForm.Value["ingredientUnit[]"]
 		rawAlts := r.MultipartForm.Value["ingredientAlternatives[]"]
 
-		ingredients := make([]models.Ingredient, 0, len(names))
+		ingredients := make([]Ingredient, 0, len(names))
 
 		for i := range names {
 			if names[i] == "" || i >= len(quantities) || i >= len(units) {
@@ -109,11 +107,11 @@ func CreateRecipe(app *infra.Deps) http.HandlerFunc {
 				continue
 			}
 
-			ingredient := models.Ingredient{
+			ingredient := Ingredient{
 				Name:         names[i],
 				Quantity:     qty,
 				Unit:         units[i],
-				Alternatives: []models.IngredientAlternative{},
+				Alternatives: []IngredientAlternative{},
 			}
 
 			if i < len(rawAlts) && rawAlts[i] != "" {
@@ -122,7 +120,7 @@ func CreateRecipe(app *infra.Deps) http.HandlerFunc {
 					if len(parts) == 3 {
 						ingredient.Alternatives = append(
 							ingredient.Alternatives,
-							models.IngredientAlternative{
+							IngredientAlternative{
 								Name:   parts[0],
 								ItemID: parts[1],
 								Type:   parts[2],
@@ -135,7 +133,7 @@ func CreateRecipe(app *infra.Deps) http.HandlerFunc {
 			ingredients = append(ingredients, ingredient)
 		}
 
-		recipe := models.Recipe{
+		recipe := Recipe{
 			RecipeId:    utils.GenerateRandomString(12),
 			UserID:      userID,
 			Title:       r.FormValue("title"),
@@ -217,7 +215,7 @@ func UpdateRecipe(app *infra.Deps) http.HandlerFunc {
 		units := r.MultipartForm.Value["ingredientUnit[]"]
 		rawAlts := r.MultipartForm.Value["ingredientAlternatives[]"]
 
-		ingredients := make([]models.Ingredient, 0, len(names))
+		ingredients := make([]Ingredient, 0, len(names))
 
 		for i := range names {
 			if names[i] == "" || i >= len(quantities) || i >= len(units) {
@@ -229,13 +227,13 @@ func UpdateRecipe(app *infra.Deps) http.HandlerFunc {
 				continue
 			}
 
-			ingredient := models.Ingredient{
+			ingredient := Ingredient{
 				Name:         names[i],
 				ItemID:       getSafe(itemIDs, i),
 				Type:         getSafe(types, i),
 				Quantity:     qty,
 				Unit:         units[i],
-				Alternatives: []models.IngredientAlternative{},
+				Alternatives: []IngredientAlternative{},
 			}
 
 			if i < len(rawAlts) && rawAlts[i] != "" {
@@ -244,7 +242,7 @@ func UpdateRecipe(app *infra.Deps) http.HandlerFunc {
 					if len(parts) >= 3 {
 						ingredient.Alternatives = append(
 							ingredient.Alternatives,
-							models.IngredientAlternative{
+							IngredientAlternative{
 								Name:   parts[0],
 								ItemID: parts[1],
 								Type:   parts[2],
@@ -284,6 +282,5 @@ func UpdateRecipe(app *infra.Deps) http.HandlerFunc {
 
 func DeleteRecipe(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dels.DeleteRecipe(app)
 	}
 }

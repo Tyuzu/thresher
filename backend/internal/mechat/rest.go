@@ -56,14 +56,14 @@ func StartNewChat(app *infra.Deps) http.HandlerFunc {
 			"entityid":     body.EntityId,
 		}
 
-		var existing models.Chat
+		var existing Chat
 		if err := app.DB.FindOne(ctx, MereChatCollection, filter, &existing); err == nil {
 			utils.RespondWithJSON(w, http.StatusOK, existing)
 			return
 		}
 
 		now := time.Now()
-		chat := models.Chat{
+		chat := Chat{
 			ChatID:       utils.GenerateRandomString(16),
 			Participants: participants,
 			EntityType:   body.EntityType,
@@ -131,14 +131,14 @@ func GetChatMessages(app *infra.Deps) http.HandlerFunc {
 			Sort:  bson.D{{Key: "createdAt", Value: -1}},
 		}
 
-		var msgs []models.Message
+		var msgs []Message
 		if err := app.DB.FindManyWithOptions(ctx, MessagesCollection, filter, opts, &msgs); err != nil {
 			writeErr(w, 500, "failed to load messages")
 			return
 		}
 
 		if msgs == nil {
-			msgs = make([]models.Message, 0)
+			msgs = make([]Message, 0)
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, msgs)
@@ -151,7 +151,7 @@ func GetChatByID(app *infra.Deps) http.HandlerFunc {
 		user := utils.GetUserIDFromRequest(r)
 
 		chatID := utils.GetParam(r, "chatid")
-		var chat models.Chat
+		var chat Chat
 
 		if err := app.DB.FindOne(ctx, MereChatCollection, map[string]any{
 			"chatid":       chatID,
@@ -190,7 +190,7 @@ func GetUserChats(app *infra.Deps) http.HandlerFunc {
 			Sort:  bson.D{{Key: "updatedAt", Value: -1}},
 		}
 
-		var chats []models.Chat
+		var chats []Chat
 		if err := app.DB.FindManyWithOptions(
 			ctx,
 			MereChatCollection,
@@ -203,7 +203,7 @@ func GetUserChats(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if chats == nil {
-			chats = make([]models.Chat, 0)
+			chats = make([]Chat, 0)
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, chats)
@@ -250,7 +250,7 @@ func UploadAttachment(app *infra.Deps) http.HandlerFunc {
 		now := time.Now()
 
 		// FIX: generate MessageID BEFORE insert
-		msg := &models.Message{
+		msg := &Message{
 			MessageID: utils.GenerateRandomDigitString(16),
 			ChatID:    chatID,
 			UserID:    user,

@@ -29,6 +29,8 @@ type MechatDeletedPayload struct {
 }
 
 type ChatMessageSentPayload struct {
+	MessageID  string    `json:"messageid"`
+	UserID     string    `json:"userid"`
 	MechatID   string    `json:"mechatid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

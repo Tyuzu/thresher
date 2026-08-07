@@ -15,5 +15,6 @@ type ContextKey string
 
 const RoleKey ContextKey = "role"
 const UserIDKey ContextKey = "userId"
+const UserNameKey ContextKey = "userName"
 
 var Ctx = context.Background()

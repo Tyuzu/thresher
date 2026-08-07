@@ -11,7 +11,7 @@ import (
 	"naevis/infra"
 	"naevis/infra/cache"
 	"naevis/infra/db"
-	"naevis/models"
+	"naevis/middleware"
 	"naevis/utils"
 )
 
@@ -103,7 +103,7 @@ func DeleteProfile(app *infra.Deps) http.HandlerFunc {
 func BuildProfileUpdates(
 	ctx context.Context,
 	r *http.Request,
-	claims *models.Claims,
+	claims *middleware.Claims,
 	c cache.Cache,
 ) (map[string]any, error) {
 

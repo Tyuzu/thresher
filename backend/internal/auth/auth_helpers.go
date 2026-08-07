@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"naevis/config"
-	"naevis/models"
+	"naevis/middleware"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -71,7 +71,7 @@ func generateRefreshToken() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func createAccessToken(claims *models.Claims) (string, error) {
+func createAccessToken(claims *middleware.Claims) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return t.SignedString(config.JwtSecret)
 }

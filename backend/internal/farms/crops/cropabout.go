@@ -6,7 +6,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -20,7 +19,7 @@ func CreateCropAboutHandler(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var crop models.CropAbout
+		var crop CropAbout
 
 		if err := utils.ParseJSON(r, &crop); err != nil {
 			utils.RespondWithError(
@@ -111,7 +110,7 @@ func GetAllCropAboutsHandler(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if crops == nil {
-			crops = []models.CropAbout{}
+			crops = []CropAbout{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -126,7 +125,7 @@ func UpdateCropAboutHandler(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var crop models.CropAbout
+		var crop CropAbout
 
 		if err := utils.ParseJSON(r, &crop); err != nil {
 			utils.RespondWithError(

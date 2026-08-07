@@ -9,7 +9,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	"naevis/utils/logger"
 
@@ -100,14 +99,14 @@ func (r BaitoRequest) Validate() error {
 	return nil
 }
 
-func (r BaitoRequest) ToModel(userID string) models.Baito {
+func (r BaitoRequest) ToModel(userID string) Baito {
 	now := time.Now()
 	var deadline *time.Time
 	if parsed, ok := parseOptionalDate(r.LastDateToApply); ok {
 		deadline = &parsed
 	}
 
-	return models.Baito{
+	return Baito{
 		BaitoId:         utils.GenerateRandomString(15),
 		Title:           r.Title,
 		Description:     r.Description,

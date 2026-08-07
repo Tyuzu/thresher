@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -32,7 +31,7 @@ func GetLikers(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var likes []models.Like
+		var likes []Like
 		err := app.DB.FindMany(
 			ctx,
 			likesCollection,

@@ -8,7 +8,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -18,13 +17,13 @@ func AddArtistMember(app *infra.Deps) http.HandlerFunc {
 		artistID := utils.GetParam(r, "id")
 
 		// Ensure artist exists
-		var artist models.Artist
+		var artist Artist
 		if err := FindArtistByID(ctx, app.DB, artistID, &artist); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
 			return
 		}
 
-		var m models.BandMember
+		var m BandMember
 		if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid JSON body")
 			return

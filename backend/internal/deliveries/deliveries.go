@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
+	"naevis/internal/cart"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -42,7 +42,7 @@ func GetMyDeliveries(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var orders []models.Order
+		var orders []cart.Order
 		if err := app.DB.FindMany(ctx, "orders", bson.M{"userId": userID}, &orders); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch deliveries")
 			return
@@ -74,7 +74,7 @@ func GetDeliveryByID(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var order models.Order
+		var order cart.Order
 		if err := app.DB.FindOne(ctx, "orders", bson.M{"orderId": id, "userId": userID}, &order); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Delivery not found")
 			return
@@ -84,7 +84,7 @@ func GetDeliveryByID(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-func buildDeliveryFromOrder(order models.Order) Delivery {
+func buildDeliveryFromOrder(order cart.Order) Delivery {
 	pickup, dropoff := parseAddress(order.Address)
 	status := normalizeStatus(order.Status)
 	return Delivery{

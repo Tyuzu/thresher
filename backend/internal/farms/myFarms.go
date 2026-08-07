@@ -3,7 +3,6 @@ package farms
 import (
 	"context"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"time"
@@ -43,7 +42,7 @@ func GetMyFarms(app *infra.Deps) http.HandlerFunc {
 			bson.M{"$limit": limit},
 		}
 
-		var farms []models.Farm
+		var farms []Farm
 
 		if err := app.DB.Aggregate(
 			ctx,

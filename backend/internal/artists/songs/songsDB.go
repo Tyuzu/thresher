@@ -5,7 +5,6 @@ import (
 	"naevis/config"
 	"naevis/infra/db"
 	"naevis/internal/artists"
-	"naevis/models"
 	"time"
 )
 
@@ -13,7 +12,7 @@ var (
 	SongsCollection = config.Collections.SongsCollection
 )
 
-func FindSongsByArtist(ctx context.Context, db db.Database, artistID string, result *[]models.ArtistSong) error {
+func FindSongsByArtist(ctx context.Context, db db.Database, artistID string, result *[]ArtistSong) error {
 	return db.FindMany(ctx, SongsCollection, map[string]any{"artistid": artistID, "published": true}, result)
 }
 
@@ -45,7 +44,7 @@ func UpdateArtistSongFromPayload(ctx context.Context, db db.Database, artistID, 
 	return UpdateArtistSong(ctx, db, artistID, songID, updateFields)
 }
 
-func InsertArtistSong(ctx context.Context, db db.Database, song *models.ArtistSong) error {
+func InsertArtistSong(ctx context.Context, db db.Database, song *ArtistSong) error {
 	return db.Insert(ctx, SongsCollection, song)
 }
 

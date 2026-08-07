@@ -3,7 +3,6 @@ package pay
 import (
 	"context"
 	"errors"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"time"
@@ -15,7 +14,7 @@ func (p *PaymentService) CreateWallet(w http.ResponseWriter, r *http.Request) {
 	userID := utils.GetUserIDFromRequest(r)
 
 	// Check if account already exists
-	var existing models.Account
+	var existing Account
 	err := p.app.DB.FindOne(ctx, accountsCollection, map[string]any{"userid": userID}, &existing)
 	if err == nil {
 		utils.RespondWithError(w, http.StatusConflict, "wallet already exists")
@@ -27,7 +26,7 @@ func (p *PaymentService) CreateWallet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newAcc := models.Account{
+	newAcc := Account{
 		ID:            utils.GetUUID(),
 		UserID:        userID,
 		Currency:      "INR",
@@ -48,7 +47,7 @@ func (p *PaymentService) CreateWallet(w http.ResponseWriter, r *http.Request) {
 
 // GetAccountStrict retrieves an account or returns an error if not found (No lazy generation!)
 func (p *PaymentService) GetAccountStrict(ctx context.Context, userID string) (string, error) {
-	var acc models.Account
+	var acc Account
 	err := p.app.DB.FindOne(ctx, accountsCollection, map[string]any{"userid": userID}, &acc)
 	if err != nil {
 		return "", errors.New("account_not_found")

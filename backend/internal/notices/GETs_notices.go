@@ -9,7 +9,6 @@ import (
 
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -53,7 +52,7 @@ func GetNotices(app *infra.Deps) http.HandlerFunc {
 			Sort:  sort,
 		}
 
-		var notices []models.Notice
+		var notices []Notice
 		if err := app.DB.FindManyWithOptions(ctx, noticesCollection, filter, opts, &notices); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch notices")
 			return
@@ -95,7 +94,7 @@ func GetNotice(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var notice models.Notice
+		var notice Notice
 		if err := app.DB.FindOne(
 			ctx,
 			noticesCollection,

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -30,7 +29,7 @@ func GetCropFarms(app *infra.Deps) http.HandlerFunc {
 		sortOrder := r.URL.Query().Get("sortOrder")
 		breedFilter := strings.ToLower(r.URL.Query().Get("breed"))
 
-		var crops []models.Crop
+		var crops []Crop
 		if err := app.DB.FindMany(ctx, cropsCollection, bson.M{"cropid": cropID}, &crops); err != nil || len(crops) == 0 {
 			utils.RespondWithError(w, http.StatusNotFound, "Crop not found")
 			return
@@ -44,7 +43,7 @@ func GetCropFarms(app *infra.Deps) http.HandlerFunc {
 			farmIDs = append(farmIDs, c.FarmID)
 		}
 
-		var farms []models.Farm
+		var farms []Farm
 		if err := app.DB.FindMany(
 			ctx,
 			farmsCollection,
@@ -55,18 +54,18 @@ func GetCropFarms(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		farmMap := make(map[string]models.Farm, len(farms))
+		farmMap := make(map[string]Farm, len(farms))
 		for _, f := range farms {
 			farmMap[f.FarmID] = f
 		}
 
-		listings := make([]models.CropListing, 0)
+		listings := make([]CropListing, 0)
 		for _, crop := range crops {
 			if breedFilter != "" && strings.ToLower(crop.Notes) != breedFilter {
 				continue
 			}
 			if farm, ok := farmMap[crop.FarmID]; ok {
-				listings = append(listings, models.CropListing{
+				listings = append(listings, CropListing{
 					FarmID:     crop.FarmID,
 					FarmName:   farm.Name,
 					Location:   farm.Location,
@@ -120,7 +119,7 @@ func GetCropTypeFarms(app *infra.Deps) http.HandlerFunc {
 			},
 		}
 
-		var crops []models.Crop
+		var crops []Crop
 		if err := app.DB.FindMany(ctx, cropsCollection, filter, &crops); err != nil || len(crops) == 0 {
 			utils.RespondWithError(w, http.StatusNotFound, "Crop type not found")
 			return
@@ -133,7 +132,7 @@ func GetCropTypeFarms(app *infra.Deps) http.HandlerFunc {
 			farmIDs = append(farmIDs, c.FarmID)
 		}
 
-		var farms []models.Farm
+		var farms []Farm
 		if err := app.DB.FindMany(
 			ctx,
 			farmsCollection,
@@ -144,12 +143,12 @@ func GetCropTypeFarms(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		farmMap := make(map[string]models.Farm, len(farms))
+		farmMap := make(map[string]Farm, len(farms))
 		for _, f := range farms {
 			farmMap[f.FarmID] = f
 		}
 
-		listings := make([]models.CropListing, 0)
+		listings := make([]CropListing, 0)
 		for _, crop := range crops {
 			if breedFilter != "" && strings.ToLower(crop.Notes) != breedFilter {
 				continue
@@ -160,7 +159,7 @@ func GetCropTypeFarms(app *infra.Deps) http.HandlerFunc {
 					harvestDate = crop.HarvestDate.Format(time.RFC3339)
 				}
 
-				listings = append(listings, models.CropListing{
+				listings = append(listings, CropListing{
 					FarmID: crop.FarmID,
 					CropId: crop.CropId,
 
@@ -232,7 +231,7 @@ func GetFarm(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 		id := utils.GetParam(r, "id")
 
-		var farm models.Farm
+		var farm Farm
 		if err := app.DB.FindOne(ctx, farmsCollection, bson.M{"farmid": id}, &farm); err != nil {
 			utils.RespondWithJSON(w, http.StatusNotFound, utils.M{
 				"success": false,
@@ -241,7 +240,7 @@ func GetFarm(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var crops []models.Crop
+		var crops []Crop
 		_ = app.DB.FindMany(ctx, cropsCollection, bson.M{"farmid": id}, &crops)
 
 		farm.Crops = crops
@@ -292,7 +291,7 @@ func GetPaginatedFarms(app *infra.Deps) http.HandlerFunc {
 			bson.M{"$limit": limit},
 		)
 
-		var farms []models.Farm
+		var farms []Farm
 		if err := app.DB.Aggregate(ctx, farmsCollection, pipeline, &farms); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Error fetching farms")
 			return
@@ -314,7 +313,7 @@ func GetPaginatedFarms(app *infra.Deps) http.HandlerFunc {
 /* Local helpers                                        */
 /* ---------------------------------------------------- */
 
-func sortCropListings(listings []models.CropListing, sortBy, sortOrder string) {
+func sortCropListings(listings []CropListing, sortBy, sortOrder string) {
 	switch sortBy {
 	case "price":
 		sort.Slice(listings, func(i, j int) bool {

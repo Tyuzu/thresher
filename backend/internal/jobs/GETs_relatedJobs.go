@@ -2,7 +2,7 @@ package jobs
 
 import (
 	"naevis/infra"
-	"naevis/models"
+	"naevis/internal/baito"
 	"naevis/utils"
 	"net/http"
 )
@@ -14,7 +14,7 @@ func GetJobsRelatedTOEntity(app *infra.Deps) http.HandlerFunc {
 		entityType := utils.GetParam(r, "entitytype")
 		entityID := utils.GetParam(r, "entityid")
 
-		var jobs []models.BaitosResponse
+		var jobs []baito.BaitosResponse
 		if err := app.DB.FindMany(ctx, baitosCollection, map[string]any{
 			"entityType": entityType,
 			"entityId":   entityID,
@@ -24,7 +24,7 @@ func GetJobsRelatedTOEntity(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if jobs == nil {
-			jobs = []models.BaitosResponse{}
+			jobs = []baito.BaitosResponse{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"jobs": jobs})

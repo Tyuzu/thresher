@@ -10,7 +10,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 
 	"github.com/julienschmidt/httprouter"
@@ -56,7 +55,7 @@ func (h *Handler) CreateNotification(w http.ResponseWriter, r *http.Request, ps 
 	}
 
 	now := time.Now()
-	notification := models.Notification{
+	notification := Notification{
 		ID:          primitive.NewObjectID().Hex(),
 		UserID:      body.UserID,
 		Type:        body.Type,
@@ -104,7 +103,7 @@ func (h *Handler) BulkCreateNotifications(w http.ResponseWriter, r *http.Request
 	notifications := make([]any, len(body.Notifications))
 	for i, n := range body.Notifications {
 		n.Trim()
-		notifications[i] = models.Notification{
+		notifications[i] = Notification{
 			ID:          primitive.NewObjectID().Hex(),
 			UserID:      n.UserID,
 			Type:        n.Type,
@@ -148,7 +147,7 @@ func (h *Handler) GetUserNotifications(w http.ResponseWriter, r *http.Request, p
 	}
 
 	// Pre-allocating an empty slice guarantees an output of `[]` instead of `null` if Mongo returns empty.
-	notifications := make([]models.Notification, 0)
+	notifications := make([]Notification, 0)
 	if err := h.app.DB.FindMany(ctx, notificationsCollection, filter, &notifications); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch notifications")
 		return

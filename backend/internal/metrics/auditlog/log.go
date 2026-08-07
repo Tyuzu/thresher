@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -37,7 +36,7 @@ func LogAction(
 		ipAddr = r.RemoteAddr
 	}
 
-	log := models.AuditLog{
+	log := AuditLog{
 		ID:         utils.GetUUID(),
 		UserID:     userID,
 		Action:     action,
@@ -79,7 +78,7 @@ func LogActionWithReason(
 		ipAddr = r.RemoteAddr
 	}
 
-	audit := models.AuditLog{
+	audit := AuditLog{
 		ID:         utils.GetUUID(),
 		UserID:     userID,
 		Action:     action,

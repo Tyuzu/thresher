@@ -14,7 +14,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -62,7 +61,7 @@ func CreateComment(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		comment := models.Comment{
+		comment := Comment{
 			CommentID:  utils.GenerateRandomString(18),
 			EntityType: entityType,
 			EntityID:   entityID,
@@ -114,7 +113,7 @@ func UpdateComment(app *infra.Deps) http.HandlerFunc {
 		}
 
 		/* Fetch + ownership check */
-		var existing models.Comment
+		var existing Comment
 		err := findCommentByID(ctx, app.DB, commentID, &existing)
 		if err != nil {
 			if errors.Is(err, mongo.ErrNoDocuments) {

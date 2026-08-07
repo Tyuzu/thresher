@@ -7,7 +7,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
+	"naevis/internal/farms"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -103,7 +103,7 @@ func updateItem(
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	var existingItem models.Product
+	var existingItem farms.Product
 	if err := app.DB.FindOne(ctx, productsCollection, bson.M{"productid": id}, &existingItem); err != nil {
 		http.Error(w, "Product not found", http.StatusNotFound)
 		return
@@ -175,7 +175,7 @@ func deleteItem(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		// SECURITY: Check if user is the creator
-		var item models.Product
+		var item farms.Product
 		if err := app.DB.FindOne(ctx, productsCollection, bson.M{"productid": id}, &item); err != nil {
 			http.Error(w, "Product not found", http.StatusNotFound)
 			return
@@ -203,8 +203,8 @@ func deleteItem(app *infra.Deps) http.HandlerFunc {
 // Parsing
 // --------------------------------------------------
 
-// parseProductJSON parses a JSON body into models.Product
-func parseProductJSON(r *http.Request, itemType string) (models.Product, error) {
+// parseProductJSON parses a JSON body into farms.Product
+func parseProductJSON(r *http.Request, itemType string) (farms.Product, error) {
 	var payload struct {
 		Name          string  `json:"name"`
 		Description   string  `json:"description"`
@@ -220,10 +220,10 @@ func parseProductJSON(r *http.Request, itemType string) (models.Product, error) 
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		return models.Product{}, fmt.Errorf("invalid JSON: %w", err)
+		return farms.Product{}, fmt.Errorf("invalid JSON: %w", err)
 	}
 
-	item := models.Product{
+	item := farms.Product{
 		Name:        payload.Name,
 		Description: payload.Description,
 		Category:    payload.Category,
@@ -238,13 +238,13 @@ func parseProductJSON(r *http.Request, itemType string) (models.Product, error) 
 
 	if payload.AvailableFrom != "" {
 		if t, err := time.Parse("2006-01-02", payload.AvailableFrom); err == nil {
-			item.AvailableFrom = &models.SafeTime{Time: t}
+			item.AvailableFrom = &farms.SafeTime{Time: t}
 		}
 	}
 
 	if payload.AvailableTo != "" {
 		if t, err := time.Parse("2006-01-02", payload.AvailableTo); err == nil {
-			item.AvailableTo = &models.SafeTime{Time: t}
+			item.AvailableTo = &farms.SafeTime{Time: t}
 		}
 	}
 

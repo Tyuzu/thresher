@@ -3,7 +3,6 @@ package userdata
 import (
 	"context"
 	"naevis/infra"
-	"naevis/models"
 	log "naevis/utils/logger"
 	"time"
 )
@@ -41,7 +40,7 @@ func AddUserData(entityType, entityId, userId, itemType, itemId string, app *inf
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	content := models.UserData{
+	content := UserData{
 		EntityID:   entityId,
 		EntityType: entityType,
 		ItemID:     itemId,
@@ -70,7 +69,7 @@ func RemUserData(entityType, entityId, userId string, app *infra.Deps) {
 	}
 }
 
-func AddUserDataBatch(docs []models.UserData, app *infra.Deps) {
+func AddUserDataBatch(docs []UserData, app *infra.Deps) {
 	if len(docs) == 0 {
 		return
 	}

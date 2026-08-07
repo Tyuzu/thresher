@@ -9,7 +9,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 )
@@ -23,7 +22,7 @@ func UpdateCart(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		var payload struct {
-			Items []models.CartItem `json:"items"`
+			Items []CartItem `json:"items"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
@@ -127,7 +126,7 @@ func UpdateItemQuantity(app *infra.Deps) http.HandlerFunc {
 func prepareValidatedCartDocs(
 	ctx context.Context,
 	userID string,
-	items []models.CartItem,
+	items []CartItem,
 	app *infra.Deps,
 ) []any {
 	now := time.Now()
@@ -151,7 +150,7 @@ func prepareValidatedCartDocs(
 			continue
 		}
 
-		docs = append(docs, models.CartItem{
+		docs = append(docs, CartItem{
 			UserID:     userID,
 			ItemID:     it.ItemID,
 			ItemName:   details.Name,

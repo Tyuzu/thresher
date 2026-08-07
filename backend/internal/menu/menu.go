@@ -6,7 +6,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/internal/beats/dels"
 	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
@@ -136,7 +135,6 @@ func EditMenu(app *infra.Deps) http.HandlerFunc {
 // DeleteMenu deletes a menu item
 func DeleteMenu(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dels.DeleteMenu(app) // keeps your existing deletion logic
 
 		// Optionally, fully interface-driven version:
 		/*

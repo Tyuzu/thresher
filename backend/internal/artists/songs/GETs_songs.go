@@ -3,7 +3,6 @@ package songs
 import (
 	"context"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"time"
@@ -17,7 +16,7 @@ func GetArtistsSongs(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var songs []models.ArtistSong
+		var songs []ArtistSong
 		err := FindSongsByArtist(ctx, app.DB, artistID, &songs)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch songs")
@@ -26,7 +25,7 @@ func GetArtistsSongs(app *infra.Deps) http.HandlerFunc {
 
 		// Ensure we always return an array, not null
 		if songs == nil {
-			songs = []models.ArtistSong{}
+			songs = []ArtistSong{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, songs)

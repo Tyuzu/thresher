@@ -6,7 +6,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -132,7 +131,7 @@ func ConfirmSeatPurchase(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var ticket models.Ticket
+		var ticket Ticket
 		if err := app.DB.FindOne(ctx, ticketsCollection, map[string]any{"ticketid": ticketID, "eventid": eventID}, &ticket); err != nil {
 			http.Error(w, `{"error":"Ticket not found"}`, http.StatusNotFound)
 			return

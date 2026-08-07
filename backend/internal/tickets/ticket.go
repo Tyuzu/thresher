@@ -8,9 +8,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/internal/beats/dels"
 	"naevis/internal/userdata"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -35,7 +33,9 @@ func CreateTicket(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// SECURITY: Verify user is the event owner
-		var event models.Event
+		var event struct {
+			CreatorID string `bson:"creatorid" json:"creatorid"`
+		}
 		if err := app.DB.FindOne(r.Context(), "events", map[string]interface{}{"eventid": eventID}, &event); err != nil {
 			http.Error(w, "Event not found", http.StatusNotFound)
 			return
@@ -73,7 +73,7 @@ func CreateTicket(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		tick := models.Ticket{
+		tick := Ticket{
 			TicketID:   utils.GenerateRandomString(12),
 			EventID:    eventID,
 			EntityID:   eventID,
@@ -111,7 +111,7 @@ func EditTicket(app *infra.Deps) http.HandlerFunc {
 		eventID := utils.GetParam(r, "eventid")
 		ticketID := utils.GetParam(r, "ticketid")
 
-		var input models.Ticket
+		var input Ticket
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid input data", http.StatusBadRequest)
 			return
@@ -120,7 +120,7 @@ func EditTicket(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var existing models.Ticket
+		var existing Ticket
 		if err := app.DB.FindOne(ctx, ticketsCollection, map[string]any{"eventid": eventID, "ticketid": ticketID}, &existing); err != nil {
 			http.Error(w, "Ticket not found or DB error", http.StatusNotFound)
 			return
@@ -181,7 +181,6 @@ func EditTicket(app *infra.Deps) http.HandlerFunc {
 // DeleteTicket deletes a ticket via the `dels` package
 func DeleteTicket(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dels.DeleteTicket(app)
 	}
 }
 
@@ -205,7 +204,7 @@ func BuyTicket(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var ticket models.Ticket
+		var ticket Ticket
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
@@ -228,8 +227,7 @@ func BuyTicket(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		m := models.Index{}
-		userdata.SetUserData("ticket", ticketID, userID, m.EntityType, m.EntityId, app)
+		userdata.SetUserData("ticket", ticketID, userID, "", "", app)
 
 		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketBoughtEvent, mqevent.TicketBoughtPayload{}); err != nil {
 			log.Printf("failed to publish ticket bought event: %v", err)

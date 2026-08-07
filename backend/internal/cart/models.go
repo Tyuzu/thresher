@@ -1,7 +1,6 @@
 package cart
 
 import (
-	"naevis/models"
 	"time"
 )
 
@@ -13,24 +12,24 @@ type removeFromCartRequest struct {
 }
 
 type placeOrderRequest struct {
-	Address       string                       `json:"address"`
-	Items         map[string][]models.CartItem `json:"items"`
-	PaymentMethod string                       `json:"paymentMethod"`
-	Coupon        string                       `json:"coupon"`
+	Address       string                `json:"address"`
+	Items         map[string][]CartItem `json:"items"`
+	PaymentMethod string                `json:"paymentMethod"`
+	Coupon        string                `json:"coupon"`
 }
 
 type combinedOrder struct {
-	OrderID       string                       `bson:"orderId" json:"orderId"`
-	OrderType     string                       `json:"orderType"` // "regular" or "farm"
-	UserID        string                       `bson:"userId" json:"userId"`
-	FarmID        string                       `json:"farmId,omitempty"`
-	Items         map[string][]models.CartItem `bson:"items" json:"items,omitempty"`
-	Address       string                       `bson:"address" json:"address,omitempty"`
-	PaymentMethod string                       `bson:"paymentMethod" json:"paymentMethod,omitempty"`
-	Total         int64                        `bson:"total" json:"total"` // In paise
-	Status        string                       `bson:"status" json:"status"`
-	CreatedAt     time.Time                    `bson:"createdAt" json:"createdAt"`
-	ApprovedBy    []string                     `bson:"approvedBy" json:"approvedBy,omitempty"`
+	OrderID       string                `bson:"orderId" json:"orderId"`
+	OrderType     string                `json:"orderType"` // "regular" or "farm"
+	UserID        string                `bson:"userId" json:"userId"`
+	FarmID        string                `json:"farmId,omitempty"`
+	Items         map[string][]CartItem `bson:"items" json:"items,omitempty"`
+	Address       string                `bson:"address" json:"address,omitempty"`
+	PaymentMethod string                `bson:"paymentMethod" json:"paymentMethod,omitempty"`
+	Total         int64                 `bson:"total" json:"total"` // In paise
+	Status        string                `bson:"status" json:"status"`
+	CreatedAt     time.Time             `bson:"createdAt" json:"createdAt"`
+	ApprovedBy    []string              `bson:"approvedBy" json:"approvedBy,omitempty"`
 }
 
 type Coupon struct {
@@ -50,10 +49,10 @@ type CouponRequest struct {
 }
 
 type createSessionPayload struct {
-	Address       string                       `json:"address"`
-	Items         map[string][]models.CartItem `json:"items"`
-	PaymentMethod string                       `json:"paymentmethod"`
-	Coupon        string                       `json:"coupon"`
+	Address       string                `json:"address"`
+	Items         map[string][]CartItem `json:"items"`
+	PaymentMethod string                `json:"paymentmethod"`
+	Coupon        string                `json:"coupon"`
 }
 
 // ItemDetails represents item metadata fetched across various entity collections.

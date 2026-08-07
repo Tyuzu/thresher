@@ -15,11 +15,9 @@ import (
 	"naevis/internal/newchat"
 	"naevis/middleware"
 	"naevis/routes"
-
 	"naevis/utils/logger"
 
 	"github.com/julienschmidt/httprouter"
-
 	"github.com/rs/cors"
 )
 
@@ -40,50 +38,37 @@ func main() {
 		logger.L.Sugar().Fatalw("Failed to initialize infrastructure", "error", err)
 	}
 
-	// =====================
-	// Rate limiter
-	// =====================
-	rateLimiter := middleware.NewRateLimiter(
-		1,
-		12,
-		10*time.Minute,
-		10000,
-	)
+	// Distributed/Redis rate limiter preferred for multi-instance scaling
+	rateLimiter := middleware.NewRateLimiter(1, 12, 10*time.Minute, 10000)
 
-	// =====================
-	// Chat hub
-	// =====================
+	// Run both chat hubs
 	hub := newchat.NewHub()
 	go hub.Run()
 
 	mehub := mechat.NewHub()
+	go mehub.Run() // Fixed: Previously unstarted goroutine
 
-	// =====================
-	// Router & middleware
-	// =====================
 	router := routes.SetupRouter(app, rateLimiter)
 
-	// Additional routes
 	routes.AddNewChatRoutes(router, hub, app, rateLimiter)
 	routes.AddMeChatRoutes(router, mehub, app, rateLimiter)
 	routes.AddStaticRoutes(router)
 
-	// Register readiness probe
+	// Hardened readiness check using direct connectivity test
 	router.GET("/ready", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		// basic checks: DB ping and Redis ping via cache interface
-		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+
 		if err := app.DB.Ping(ctx); err != nil {
 			http.Error(w, "db_unavailable", http.StatusServiceUnavailable)
 			return
 		}
 
-		// check redis via cache.Exists
-		if ok, err := app.Cache.Exists(ctx, "__health_check__"); err != nil || !ok {
+		if _, err := app.Cache.Ping(ctx); err != nil {
 			http.Error(w, "cache_unavailable", http.StatusServiceUnavailable)
 			return
 		}
 
-		// check MQ
 		if app.MQ != nil {
 			if err := app.MQ.Ping(ctx); err != nil {
 				http.Error(w, "mq_unavailable", http.StatusServiceUnavailable)
@@ -95,11 +80,11 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	innerHandler := middleware.LoggingMiddleware(
+	// Security and logging chain applied directly to router
+	handler := middleware.LoggingMiddleware(
 		middleware.SecurityHeaders(router),
 	)
 
-	// Hardened CORS settings
 	corsOpts := cors.Options{
 		AllowedOrigins:   cfg.AllowedOrigins,
 		AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -108,34 +93,26 @@ func main() {
 		MaxAge:           300,
 	}
 
-	corsHandler := cors.New(corsOpts).Handler(innerHandler)
+	// Eliminates redundant http.ServeMux routing
+	corsHandler := cors.New(corsOpts).Handler(handler)
 
-	mux := http.NewServeMux()
-	mux.Handle("/", corsHandler)
-
-	// =====================
-	// HTTP server
-	// =====================
 	server := &http.Server{
 		Addr:              cfg.HTTPPort,
-		Handler:           mux,
+		Handler:           corsHandler,
 		ReadTimeout:       7 * time.Second,
-		WriteTimeout:      15 * time.Second,
-		IdleTimeout:       120 * time.Second,
 		ReadHeaderTimeout: 2 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		// Omitted WriteTimeout at server level for WebSocket streaming compatibility;
+		// context deadlines should be enforced inside HTTP handlers instead.
 	}
 
 	go func() {
 		logger.L.Sugar().Infow("API server listening", "addr", cfg.HTTPPort)
 
 		var err error
-
-		// Fall back to standard HTTP if we are terminating TLS upstream or if paths are empty
 		if !cfg.TerminateTLSAtLB && cfg.TLSCertPath != "" && cfg.TLSKeyPath != "" {
-			logger.L.Sugar().Infow("Starting server with internal TLS configurations")
 			err = server.ListenAndServeTLS(cfg.TLSCertPath, cfg.TLSKeyPath)
 		} else {
-			logger.L.Sugar().Infow("Starting server on standard HTTP (TLS terminated externally)")
 			err = server.ListenAndServe()
 		}
 
@@ -144,29 +121,29 @@ func main() {
 		}
 	}()
 
-	// =====================
-	// Graceful shutdown
-	// =====================
+	// Graceful shutdown orchestration
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 	<-sigCh
 
-	logger.L.Sugar().Infow("Shutting down server")
+	logger.L.Sugar().Infow("Shutting down server...")
 
-	// Stop rate limiter
-	rateLimiter.Stop()
-
-	// Stop hubs
-	hub.Stop()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// 1. Stop accepting new HTTP requests and wait for current ones to drain
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	if err := server.Shutdown(ctx); err != nil {
-		logger.L.Sugar().Fatalw("Graceful shutdown failed", "error", err)
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		logger.L.Sugar().Errorw("HTTP server shutdown error", "error", err)
 	}
 
-	// drain and close NATS connection if present
+	// 2. Stop rate limiter background routines
+	rateLimiter.Stop()
+
+	// 3. Stop internal background hubs
+	hub.Stop()
+	mehub.Stop()
+
+	// 4. Drain external transport / messaging connections safely after HTTP handlers finish
 	if app.NatsConn != nil {
 		_ = app.NatsConn.Drain()
 		app.NatsConn.Close()

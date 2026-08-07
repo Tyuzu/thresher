@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"naevis/infra"
+	"naevis/internal/suggestions"
 	"naevis/models"
 	"naevis/utils"
 )
@@ -20,7 +21,7 @@ func AutocompleteUsers(app *infra.Deps) http.HandlerFunc {
 
 		query := strings.TrimSpace(r.URL.Query().Get("query"))
 		if len(query) < 2 {
-			utils.RespondWithJSON(w, http.StatusOK, []models.UserSuggestion{})
+			utils.RespondWithJSON(w, http.StatusOK, []suggestions.UserSuggestion{})
 			return
 		}
 
@@ -32,20 +33,20 @@ func AutocompleteUsers(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		suggestions := make([]models.UserSuggestion, 0, 10)
+		usersSuggestions := make([]suggestions.UserSuggestion, 0, 10)
 
 		for _, user := range users {
-			suggestions = append(suggestions, models.UserSuggestion{
+			usersSuggestions = append(usersSuggestions, suggestions.UserSuggestion{
 				ID:       user.UserID,
 				Username: user.Username,
 				Avatar:   user.Avatar,
 			})
 
-			if len(suggestions) >= 10 {
+			if len(usersSuggestions) >= 10 {
 				break
 			}
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, suggestions)
+		utils.RespondWithJSON(w, http.StatusOK, usersSuggestions)
 	}
 }

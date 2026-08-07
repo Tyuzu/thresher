@@ -11,7 +11,6 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -67,7 +66,7 @@ func ReportContent(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		var payload models.Report
+		var payload Report
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid JSON payload")
 			return
@@ -92,7 +91,7 @@ func ReportContent(app *infra.Deps) http.HandlerFunc {
 			"targetId":   payload.TargetID,
 		}
 
-		var existing models.Report
+		var existing Report
 		if err := app.DB.FindOne(ctx, reportsCollection, filter, &existing); err == nil {
 			utils.RespondWithError(w, http.StatusConflict, "You have already reported this item")
 			return
@@ -167,7 +166,7 @@ func GetReports(app *infra.Deps) http.HandlerFunc {
 			offset = v
 		}
 
-		var reports []models.Report
+		var reports []Report
 		if err := app.DB.FindMany(ctx, reportsCollection, filter, &reports); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch reports")
 			return
@@ -181,7 +180,7 @@ func GetReports(app *infra.Deps) http.HandlerFunc {
 		)
 
 		if reports == nil {
-			reports = []models.Report{}
+			reports = []Report{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, reports)

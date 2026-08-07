@@ -2,6 +2,7 @@ package suggestions
 
 import (
 	"context"
+	"naevis/internal/places"
 	log "naevis/utils/logger"
 	"net/http"
 	"strconv"
@@ -101,23 +102,23 @@ func GetNearbyPlaces(app *infra.Deps) http.HandlerFunc {
 			log.Printf("invalid place id: %s", curplace)
 		}
 
-		var places []models.Place
+		var nearbyplaces []places.Place
 		if err := app.DB.FindMany(
 			ctx,
 			placesCollection,
 			bson.M{},
-			&places,
+			&nearbyplaces,
 		); err != nil {
 			http.Error(w, "Failed to fetch places", http.StatusInternalServerError)
 			return
 		}
 
-		if places == nil {
-			places = []models.Place{}
+		if nearbyplaces == nil {
+			nearbyplaces = []places.Place{}
 		}
 
-		sanitized := make([]map[string]any, 0, len(places))
-		for _, place := range places {
+		sanitized := make([]map[string]any, 0, len(nearbyplaces))
+		for _, place := range nearbyplaces {
 			if place.PlaceID == curplace {
 				continue
 			}

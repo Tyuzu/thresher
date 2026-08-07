@@ -10,8 +10,9 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
+	"naevis/internal/cart"
+	"naevis/internal/farms"
 	"naevis/internal/metrics/auditlog"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 
@@ -50,13 +51,13 @@ func isValidOrderTransition(oldStatus, newStatus string) bool {
 func auditActionForStatus(newStatus string) string {
 	switch newStatus {
 	case "accepted":
-		return models.AuditActionOrderAccept
+		return auditlog.AuditActionOrderAccept
 	case "rejected":
-		return models.AuditActionOrderReject
+		return auditlog.AuditActionOrderReject
 	case "paid":
-		return models.AuditActionOrderMarkPaid
+		return auditlog.AuditActionOrderMarkPaid
 	case "delivered":
-		return models.AuditActionOrderMarkDeliver
+		return auditlog.AuditActionOrderMarkDeliver
 	default:
 		return ""
 	}
@@ -156,7 +157,7 @@ func updateOrderStatus(
 		return
 	}
 
-	var order models.FarmOrder
+	var order cart.FarmOrder
 	if err := app.DB.FindOne(ctx, farmOrdersCollection, bson.M{"orderid": orderID}, &order); err != nil {
 		utils.RespondWithJSON(
 			w,
@@ -166,7 +167,7 @@ func updateOrderStatus(
 		return
 	}
 
-	var farm models.Farm
+	var farm farms.Farm
 	if err := app.DB.FindOne(ctx, farmsCollection, bson.M{"farmid": order.FarmID}, &farm); err != nil {
 		utils.RespondWithJSON(
 			w,
@@ -319,7 +320,7 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 		return
 	}
 
-	var ownedFarms []models.Farm
+	var ownedFarms []farms.Farm
 	if err := app.DB.FindMany(ctx, farmsCollection, bson.M{"createdBy": userID}, &ownedFarms); err != nil {
 		utils.RespondWithJSON(w, http.StatusInternalServerError, utils.M{
 			"success": false,
@@ -337,7 +338,7 @@ func bulkUpdateOrders(w http.ResponseWriter, r *http.Request, newStatus string, 
 	errorsList := make([]string, 0)
 
 	for _, orderID := range req.OrderIDs {
-		var order models.FarmOrder
+		var order cart.FarmOrder
 		if err := app.DB.FindOne(ctx, farmOrdersCollection, bson.M{"orderid": orderID}, &order); err != nil {
 			response.Failed++
 			errorsList = append(errorsList, fmt.Sprintf("Order %s not found", orderID))
@@ -425,7 +426,7 @@ func DownloadReceipt(app *infra.Deps) http.HandlerFunc {
 
 		orderID := utils.GetParam(r, "id")
 
-		var order models.FarmOrder
+		var order cart.FarmOrder
 		if err := app.DB.FindOne(ctx, farmOrdersCollection, bson.M{"orderid": orderID}, &order); err != nil {
 			utils.RespondWithJSON(
 				w,

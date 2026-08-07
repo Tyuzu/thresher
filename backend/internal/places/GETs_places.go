@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,13 +18,13 @@ func GetPlaces(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var places []models.Place
+		var places []Place
 		if err := app.DB.FindMany(ctx, placesCollection, bson.M{}, &places); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch places")
 			return
 		}
 
-		var result []models.PlacesResponse
+		var result []PlacesResponse
 		for _, p := range places {
 			desc := p.Description
 			if len(desc) > 60 {
@@ -37,7 +36,7 @@ func GetPlaces(app *infra.Deps) http.HandlerFunc {
 				tags = tags[:5]
 			}
 
-			result = append(result, models.PlacesResponse{
+			result = append(result, PlacesResponse{
 				PlaceID:        p.PlaceID,
 				Name:           p.Name,
 				ShortDesc:      desc,
@@ -63,7 +62,7 @@ func GetPlace(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var place models.Place
+		var place Place
 		if err := app.DB.FindOne(
 			r.Context(),
 			placesCollection,
@@ -88,7 +87,7 @@ func GetPlaceQ(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var place models.Place
+		var place Place
 		if err := app.DB.FindOne(
 			r.Context(),
 			placesCollection,

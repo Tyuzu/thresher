@@ -1,6 +1,8 @@
 package models
 
 import (
+	"naevis/internal/tickets"
+	"naevis/internal/vendors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,6 +18,11 @@ type Setting struct {
 	Type        string `json:"type"`
 	Value       any    `json:"value"`
 	Description string `json:"description"`
+}
+
+type Coordinates struct {
+	Latitude  float64 `json:"latitude,omitempty" bson:"latitude,omitempty"`
+	Longitude float64 `json:"longitude,omitempty" bson:"longitude,omitempty"`
 }
 
 //	type UserSettings struct {
@@ -184,4 +191,59 @@ type Owner struct {
 	Name     string             `json:"name" bson:"name"`
 	Email    string             `json:"email" bson:"email"`
 	Password string             `json:"password" bson:"password"`
+}
+
+// Index represents the incoming JSON event structure.
+type Index struct {
+	EntityType string `json:"entity_type"`
+	Method     string `json:"method"`
+	EntityId   string `json:"entity_id"`
+	ItemId     string `json:"item_id"`
+	ItemType   string `json:"item_type"`
+}
+
+type Event struct {
+	EventID          string           `json:"eventid" bson:"eventid"`
+	Title            string           `json:"title" bson:"title"`
+	Description      string           `json:"description" bson:"description"`
+	Date             time.Time        `json:"date" bson:"date"`
+	PlaceID          string           `json:"placeid" bson:"placeid"`
+	PlaceName        string           `json:"placename" bson:"placename"`
+	Location         string           `json:"location" bson:"location"`
+	Coords           Coordinates      `json:"coords" bson:"coords"`
+	CreatorID        string           `json:"creatorid" bson:"creatorid"`
+	Tickets          []tickets.Ticket `json:"tickets" bson:"tickets"`
+	Merch            []Merch          `json:"merch" bson:"merch"`
+	StartDateTime    time.Time        `json:"start_date_time" bson:"start_date_time"`
+	EndDateTime      time.Time        `json:"end_date_time" bson:"end_date_time"`
+	Category         string           `json:"category" bson:"category"`
+	Banner           string           `json:"banner" bson:"banner"`
+	SeatingPlanImage string           `json:"seating" bson:"seating"`
+	WebsiteURL       string           `json:"website_url" bson:"website_url"`
+	Status           string           `json:"status" bson:"status"`
+	Tags             []string         `json:"tags" bson:"tags"`
+	CreatedAt        time.Time        `json:"created_at" bson:"created_at"`
+	UpdatedAt        time.Time        `json:"updated_at" bson:"updated_at"`
+	FAQs             []FAQ            `json:"faqs" bson:"faqs"`
+	OrganizerName    string           `json:"organizer_name" bson:"organizer_name"`
+	OrganizerContact string           `json:"organizer_contact" bson:"organizer_contact"`
+	Artists          []string         `json:"artists,omitempty" bson:"artists,omitempty"`
+	Published        string           `json:"published,omitempty" bson:"published,omitempty"`
+	External         bool             `json:"external" bson:"external"`
+	ExternalLink     string           `json:"externallink" bson:"externallink"`
+	// New fields for alignment (CRITICAL FIX)
+	ContactInfo  *EventContactInfo      `json:"contactInfo" bson:"contact_info"`
+	News         []NewsItem             `json:"news" bson:"news"`
+	Polls        []Poll                 `json:"polls" bson:"polls"`
+	LostFound    []LostFoundItem        `json:"lostfound" bson:"lost_found"`
+	HiredVendors []vendors.VendorHiring `json:"hired_vendors,omitempty" bson:"hired_vendors,omitempty"`
+	// Computed fields for frontend filters
+	Prices   []float64 `json:"prices,omitempty" bson:"-"`
+	Currency string    `json:"currency,omitempty" bson:"-"`
+}
+
+// FAQ represents a single FAQ structure
+type FAQ struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }

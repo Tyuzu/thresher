@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
+	"naevis/internal/places"
+	"naevis/internal/suggestions"
 	"naevis/utils"
 )
 
@@ -20,11 +21,11 @@ func AutocompletePlaces(app *infra.Deps) http.HandlerFunc {
 
 		query := strings.TrimSpace(r.URL.Query().Get("query"))
 		if len(query) < 2 {
-			utils.RespondWithJSON(w, http.StatusOK, []models.PlaceSuggestion{})
+			utils.RespondWithJSON(w, http.StatusOK, []suggestions.PlaceSuggestion{})
 			return
 		}
 
-		var places []models.Place
+		var places []places.Place
 
 		err := findPlacesByQuery(ctx, app.DB, query, &places)
 		if err != nil {
@@ -32,21 +33,21 @@ func AutocompletePlaces(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		suggestions := make([]models.PlaceSuggestion, 0, 10)
+		placeSuggestions := make([]suggestions.PlaceSuggestion, 0, 10)
 
 		for _, place := range places {
-			suggestions = append(suggestions, models.PlaceSuggestion{
+			placeSuggestions = append(placeSuggestions, suggestions.PlaceSuggestion{
 				ID:       place.PlaceID,
 				Name:     place.Name,
 				Banner:   place.Banner,
 				Category: place.Category,
 			})
 
-			if len(suggestions) >= 10 {
+			if len(placeSuggestions) >= 10 {
 				break
 			}
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, suggestions)
+		utils.RespondWithJSON(w, http.StatusOK, placeSuggestions)
 	}
 }

@@ -9,8 +9,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/internal/beats/dels"
-	"naevis/models"
+	"naevis/internal/farms"
 	"naevis/utils"
 	log "naevis/utils/logger"
 
@@ -176,11 +175,11 @@ func EditCrop(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-func parseCropForm(r *http.Request) models.Crop {
+func parseCropForm(r *http.Request) farms.Crop {
 	name := r.FormValue("name")
 	catalogueID := strings.ToLower(strings.ReplaceAll(name, " ", "_"))
 
-	crop := models.Crop{
+	crop := farms.Crop{
 		CropId:      utils.GenerateRandomString(13),
 		Name:        name,
 		Price:       utils.ParseFloat(r.FormValue("price")),
@@ -208,6 +207,5 @@ func parseCropForm(r *http.Request) models.Crop {
 
 func DeleteCrop(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dels.DeleteCrop(app)
 	}
 }

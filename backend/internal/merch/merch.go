@@ -126,7 +126,7 @@ func CreateMerch(app *infra.Deps) http.HandlerFunc {
 		// Log audit trail for merchandise creation
 		auditlog.LogAction(
 			r.Context(), app, r, userID,
-			models.AuditActionMerchCreate,
+			auditlog.AuditActionMerchCreate,
 			"merchandise", merch.MerchID, "success",
 			map[string]interface{}{
 				"name":        merch.Name,
@@ -246,7 +246,7 @@ func EditMerch(app *infra.Deps) http.HandlerFunc {
 		// Log audit trail for merchandise update
 		auditlog.LogAction(
 			r.Context(), app, r, userID,
-			models.AuditActionMerchUpdate,
+			auditlog.AuditActionMerchUpdate,
 			"merchandise", merchID, "success",
 			map[string]interface{}{
 				"updates": update,
@@ -339,7 +339,7 @@ func DeleteMerch(app *infra.Deps) http.HandlerFunc {
 		// Log audit trail for merchandise deletion
 		auditlog.LogAction(
 			r.Context(), app, r, userID,
-			models.AuditActionMerchDelete,
+			auditlog.AuditActionMerchDelete,
 			"merchandise", merchID, "success",
 			map[string]interface{}{
 				"deleted_at": now,

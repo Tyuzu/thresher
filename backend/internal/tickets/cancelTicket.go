@@ -12,7 +12,6 @@ import (
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/internal/metrics/auditlog"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -45,7 +44,7 @@ func CancelTicket(app *infra.Deps) http.HandlerFunc {
 		   Fetch purchased ticket
 		-------------------- */
 
-		var ticket models.PurchasedTicket
+		var ticket PurchasedTicket
 		if err := app.DB.FindOne(
 			ctx,
 			purchasedTicketsCollection,
@@ -109,7 +108,7 @@ func CancelTicket(app *infra.Deps) http.HandlerFunc {
 				app,
 				r,
 				requestingUserID,
-				models.AuditActionTicketCancel,
+				auditlog.AuditActionTicketCancel,
 				"ticket",
 				ticket.TicketID,
 				"success",
@@ -158,7 +157,7 @@ func CancelTicket(app *infra.Deps) http.HandlerFunc {
 		   Create refund request
 		-------------------- */
 
-		refund := models.RefundRequest{
+		refund := RefundRequest{
 			EventID:     eventID,
 			TicketID:    ticket.TicketID,
 			UserID:      requestingUserID,
@@ -190,7 +189,7 @@ func CancelTicket(app *infra.Deps) http.HandlerFunc {
 			app,
 			r,
 			requestingUserID,
-			models.AuditActionTicketCancel,
+			auditlog.AuditActionTicketCancel,
 			"ticket",
 			ticket.TicketID,
 			"success",

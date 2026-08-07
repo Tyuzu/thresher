@@ -4,14 +4,13 @@ import (
 	"net/http"
 
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 )
 
 func GetWeather(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		response := models.WeatherResponse{
+		response := WeatherResponse{
 			Location:  "Farm — NYC",
 			Icon:      "🌤️",
 			AirTemp:   28.6,

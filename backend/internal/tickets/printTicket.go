@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"naevis/infra"
-	"naevis/models"
+	"naevis/middleware"
 	"naevis/utils"
 	"net/http"
 	"time"
@@ -38,7 +38,7 @@ func PrintTicket(app *infra.Deps) http.HandlerFunc {
 		uniqueCode := r.URL.Query().Get("uniqueCode")
 
 		tokenString := r.Header.Get("Authorization")
-		claims, err := utils.ValidateJWT(tokenString)
+		claims, err := middleware.ValidateJWT(tokenString)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -53,7 +53,7 @@ func PrintTicket(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		// Fetch ticket via Database interface
-		var ticket models.PurchasedTicket
+		var ticket PurchasedTicket
 		err = app.DB.FindOne(ctx, purchasedTicketsCollection, map[string]any{
 			"eventid":    eventID,
 			"uniquecode": uniqueCode,

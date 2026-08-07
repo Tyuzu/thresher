@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,7 +22,7 @@ func ListMyTickets(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		// ---- Fetch purchased tickets ----
-		var tickets []models.PurchasedTicket
+		var tickets []PurchasedTicket
 		if err := app.DB.FindMany(
 			ctx,
 			purchasedTicketsCollection,
@@ -39,7 +38,7 @@ func ListMyTickets(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if tickets == nil {
-			tickets = []models.PurchasedTicket{}
+			tickets = []PurchasedTicket{}
 		}
 
 		// ---- Collect canceled unique codes ----
@@ -53,7 +52,7 @@ func ListMyTickets(app *infra.Deps) http.HandlerFunc {
 		// ---- Batch fetch refunds ----
 		refundMap := map[string]string{} // uniqueCode -> status
 		if len(canceledCodes) > 0 {
-			var refunds []models.RefundRequest
+			var refunds []RefundRequest
 			if err := app.DB.FindMany(
 				ctx,
 				refundsCollection,

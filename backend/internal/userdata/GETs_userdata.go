@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"naevis/infra"
-	"naevis/models"
+	"naevis/middleware"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -18,7 +18,7 @@ func GetUserProfileData(app *infra.Deps) http.HandlerFunc {
 
 		// Validate JWT
 		tokenString := r.Header.Get("Authorization")
-		claims, err := utils.ValidateJWT(tokenString)
+		claims, err := middleware.ValidateJWT(tokenString)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -43,7 +43,7 @@ func GetUserProfileData(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		var results []models.UserData
+		var results []UserData
 		filter := map[string]any{
 			"entity_type": entityType,
 			"userid":      username,
@@ -57,7 +57,7 @@ func GetUserProfileData(app *infra.Deps) http.HandlerFunc {
 
 		// Ensure empty slice instead of nil
 		if results == nil {
-			results = []models.UserData{}
+			results = []UserData{}
 		}
 
 		// Respond with JSON

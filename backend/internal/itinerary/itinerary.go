@@ -8,19 +8,18 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 )
 
 // normalizeItinerary ensures slices are never nil
-func normalizeItinerary(it *models.Itinerary) {
+func normalizeItinerary(it *Itinerary) {
 	if it.Days == nil {
-		it.Days = []models.Day{}
+		it.Days = []Day{}
 		return
 	}
 	for i := range it.Days {
 		if it.Days[i].Visits == nil {
-			it.Days[i].Visits = []models.Visit{}
+			it.Days[i].Visits = []Visit{}
 		}
 	}
 }
@@ -33,7 +32,7 @@ func GetRequestingUserID(_ http.ResponseWriter, r *http.Request) (string, error)
 // POST /api/itineraries
 func CreateItinerary(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var it models.Itinerary
+		var it Itinerary
 		if err := json.NewDecoder(r.Body).Decode(&it); err != nil {
 			http.Error(w, "Invalid request payload", http.StatusBadRequest)
 			return
@@ -93,7 +92,7 @@ func UpdateItinerary(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var updated models.Itinerary
+		var updated Itinerary
 		if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
@@ -171,7 +170,7 @@ func ForkItinerary(app *infra.Deps) http.HandlerFunc {
 
 		normalizeItinerary(&original)
 
-		newItinerary := models.Itinerary{
+		newItinerary := Itinerary{
 			ItineraryID: utils.GenerateRandomString(13),
 			UserID:      userID,
 			Name:        "Forked - " + original.Name,

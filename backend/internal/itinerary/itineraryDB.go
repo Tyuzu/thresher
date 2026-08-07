@@ -4,29 +4,28 @@ import (
 	"context"
 	"naevis/config"
 	"naevis/infra"
-	"naevis/models"
 )
 
 var ItineraryCollection = config.Collections.ItineraryCollection
 
-func insertItinerary(ctx context.Context, app *infra.Deps, itinerary models.Itinerary) error {
+func insertItinerary(ctx context.Context, app *infra.Deps, itinerary Itinerary) error {
 	return app.DB.Insert(ctx, ItineraryCollection, itinerary)
 }
 
-func findItineraryByID(ctx context.Context, app *infra.Deps, itineraryID string) (models.Itinerary, error) {
-	var itinerary models.Itinerary
+func findItineraryByID(ctx context.Context, app *infra.Deps, itineraryID string) (Itinerary, error) {
+	var itinerary Itinerary
 	err := app.DB.FindOne(ctx, ItineraryCollection, map[string]any{
 		"itineraryid": itineraryID,
 		"deleted":     map[string]any{"$ne": true},
 	}, &itinerary)
 	if err != nil {
-		return models.Itinerary{}, err
+		return Itinerary{}, err
 	}
 	return itinerary, nil
 }
 
-func findItineraries(ctx context.Context, app *infra.Deps, filter map[string]any) ([]models.Itinerary, error) {
-	var itineraries []models.Itinerary
+func findItineraries(ctx context.Context, app *infra.Deps, filter map[string]any) ([]Itinerary, error) {
+	var itineraries []Itinerary
 	err := app.DB.FindMany(ctx, ItineraryCollection, filter, &itineraries)
 	if err != nil {
 		return nil, err
