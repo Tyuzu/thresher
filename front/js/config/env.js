@@ -3,7 +3,7 @@
  * Vite + Netlify same-origin API configuration.
  */
 
-export const webSiteName = "Chingam";
+export const webSiteName = "Agrinet";
 
 // Normalize base URLs by removing trailing slashes
 const MAIN_URL = (import.meta.env.VITE_MAIN_URL || "").replace(/\/+$/, "");

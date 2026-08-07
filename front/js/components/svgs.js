@@ -100,7 +100,7 @@ const starFilledSVG = plusSquareSVG;
 const commentSVG = `<svg aria-label="Comment" class="clrful" fill="none" height="24" role="img" viewBox="0 0 24 24" width="24"><title>Comment</title><path d="M20.656 17.008a9.993 9.993 0 1 0-3.59 3.615L22 22Z" fill="none" stroke-linejoin="round" stroke-width="2"></path></svg>`;
 
 const menuSVG = `<svg class="clrful" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke-linecap="round" stroke-linejoin="round">
-<title>Menu</title><line x1="4" y1="12" x2="17" y2="12"></line><line x1="6" y1="6" x2="6" y2="20"></line><line x1="4" y1="4" x2="20" y2="4"></line></svg>`;
+<title>Menu</title><line x1="2" y1="12" x2="18" y2="12"></line><line x1="8" y1="6" x2="0" y2="20"></line><line x1="12" y1="6" x2="20" y2="20"></line></svg>`;
 
 const skipBackSVG = `<svg class="clrful" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>`;
 
