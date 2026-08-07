@@ -9,7 +9,6 @@ import (
 	"naevis/infra/mq"
 	"naevis/internal/stripe"
 	"naevis/internal/userdata"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -58,7 +57,7 @@ func buyMenu(w http.ResponseWriter, request MenuPurchaseRequest, requestingUserI
 	stockRequested := request.Stock
 
 	// Fetch the menu using Database interface
-	var menu models.Menu
+	var menu Menu
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

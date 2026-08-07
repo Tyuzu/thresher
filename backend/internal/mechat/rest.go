@@ -2,6 +2,7 @@ package mechat
 
 import (
 	"encoding/json"
+	"naevis/internal/media"
 	log "naevis/utils/logger"
 	"net/http"
 	"sort"
@@ -12,7 +13,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -255,7 +255,7 @@ func UploadAttachment(app *infra.Deps) http.HandlerFunc {
 			ChatID:    chatID,
 			UserID:    user,
 			Content:   "",
-			Media: &models.Media{
+			Media: &media.Media{
 				MediaID:   mediaID,
 				Type:      mediaType,
 				URL:       savedName,

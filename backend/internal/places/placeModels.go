@@ -1,7 +1,7 @@
 package places
 
 import (
-	"naevis/models"
+	"naevis/internal/media"
 	"time"
 )
 
@@ -61,12 +61,12 @@ type Coordinates struct {
 }
 
 type CheckIn struct {
-	UserID    string         `json:"userId,omitempty" bson:"userId,omitempty"`
-	PlaceID   string         `json:"placeId,omitempty" bson:"placeId,omitempty"`
-	Timestamp time.Time      `json:"timestamp,omitempty" bson:"timestamp,omitempty"`
-	Comment   string         `json:"comment,omitempty" bson:"comment,omitempty"`
-	Rating    float64        `json:"rating,omitempty" bson:"rating,omitempty"` // Optional
-	Medias    []models.Media `json:"images,omitempty" bson:"images,omitempty"` // Optional
+	UserID    string        `json:"userId,omitempty" bson:"userId,omitempty"`
+	PlaceID   string        `json:"placeId,omitempty" bson:"placeId,omitempty"`
+	Timestamp time.Time     `json:"timestamp,omitempty" bson:"timestamp,omitempty"`
+	Comment   string        `json:"comment,omitempty" bson:"comment,omitempty"`
+	Rating    float64       `json:"rating,omitempty" bson:"rating,omitempty"` // Optional
+	Medias    []media.Media `json:"images,omitempty" bson:"images,omitempty"` // Optional
 }
 
 type PlaceVersion struct {

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -30,7 +29,7 @@ func GetMenu(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var menu models.Menu
+		var menu Menu
 		err = app.DB.FindOne(ctx, menuCollection, map[string]string{
 			"placeid": placeID,
 			"menuid":  menuID,
@@ -55,7 +54,7 @@ func GetStock(app *infra.Deps) http.HandlerFunc {
 		placeID := utils.GetParam(r, "placeid")
 		menuID := utils.GetParam(r, "menuid")
 
-		var menu models.Menu
+		var menu Menu
 		err := app.DB.FindOne(r.Context(), menuCollection, map[string]string{
 			"placeid": placeID,
 			"menuid":  menuID,
@@ -75,7 +74,7 @@ func GetMenus(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var menus []models.Menu
+		var menus []Menu
 		err := app.DB.FindMany(ctx, menuCollection, map[string]string{
 			"placeid": utils.GetParam(r, "placeid"),
 		}, &menus)
@@ -85,7 +84,7 @@ func GetMenus(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if menus == nil {
-			menus = []models.Menu{}
+			menus = []Menu{}
 		}
 		utils.RespondWithJSON(w, http.StatusOK, menus)
 	}

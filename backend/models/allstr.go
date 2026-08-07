@@ -1,8 +1,6 @@
 package models
 
 import (
-	"naevis/internal/tickets"
-	"naevis/internal/vendors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -71,47 +69,6 @@ type Activity struct {
 	EntityID     string    `json:"entity_id,omitempty" bson:"entity_id,omitempty"`
 	EntityType   *string   `json:"entity_type,omitempty" bson:"entity_type,omitempty"` // "event", "place", or null
 }
-type Merch struct {
-	MerchID string `json:"merchid" bson:"merchid"`
-	// EventID     string             `json:"eventid" bson:"eventid"` // Reference to Event ID
-	Name        string     `json:"name" bson:"name"`
-	Slug        string     `json:"slug,omitempty" bson:"slug,omitempty"`         // URL-friendly name (e.g. "concert-tshirt")
-	SKU         string     `json:"sku,omitempty" bson:"sku,omitempty"`           // Stock Keeping Unit, unique per product
-	Category    string     `json:"category,omitempty" bson:"category,omitempty"` // e.g. “T-Shirts”, “Accessories”
-	Price       float64    `json:"price" bson:"price"`
-	Discount    float64    `json:"discount,omitempty" bson:"discount,omitempty"`         // e.g. 0.10 for 10% off
-	Stock       int        `json:"stock" bson:"stock"`                                   // Number of items available
-	StockStatus string     `json:"stock_status,omitempty" bson:"stock_status,omitempty"` // e.g. “In Stock”, “Out of Stock”, “Preorder”
-	MerchPhoto  string     `json:"merch_pic" bson:"merch_pic"`
-	Gallery     []string   `json:"gallery,omitempty" bson:"gallery,omitempty"` // Additional image filenames
-	EntityID    string     `json:"entity_id" bson:"entity_id"`
-	EntityType  string     `json:"entity_type" bson:"entity_type"` // “event” or “place”
-	Description string     `json:"description,omitempty" bson:"description,omitempty"`
-	ShortDesc   string     `json:"short_desc,omitempty" bson:"short_desc,omitempty"` // One-line summary
-	Rating      float64    `json:"rating,omitempty" bson:"rating,omitempty"`         // Average rating (0.0–5.0)
-	ReviewCount int        `json:"review_count,omitempty" bson:"review_count,omitempty"`
-	Weight      float64    `json:"weight,omitempty" bson:"weight,omitempty"`         // In kilograms/pounds
-	Dimensions  string     `json:"dimensions,omitempty" bson:"dimensions,omitempty"` // e.g. “30×20×2 cm”
-	Tags        []string   `json:"tags,omitempty" bson:"tags,omitempty"`             // e.g. ["rock", "tshirt"]
-	CreatedAt   time.Time  `json:"created_at" bson:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at" bson:"updatedAt"`
-	DeletedAt   *time.Time `json:"deleted_at,omitempty" bson:"deletedAt,omitempty"` // Soft delete timestamp
-	UserID      string     `bson:"userid" json:"userid"`
-}
-
-type Menu struct {
-	MenuID      string    `json:"menuid" bson:"menuid"`
-	PlaceID     string    `json:"placeid" bson:"placeid"` // Reference to Place ID
-	Name        string    `json:"name" bson:"name"`
-	Price       float64   `json:"price" bson:"price"`
-	Discount    float64   `json:"discount,omitempty" bson:"discount,omitempty"`
-	Stock       int       `json:"stock" bson:"stock"` // Number of items available
-	MenuPhoto   string    `json:"menu_pic" bson:"menu_pic"`
-	Description string    `json:"description,omitempty" bson:"description,omitempty"`
-	CreatedAt   time.Time `json:"created_at" bson:"created_at"`
-	UserID      string    `bson:"userid" json:"userid"`
-	UpdatedAt   time.Time `bson:"updated_at" json:"updatedAt"`
-}
 
 // UserProfileResponse defines the structure for the user profile response
 type UserSuggest struct {
@@ -146,38 +103,6 @@ type Review struct {
 	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
 }
 
-type Media struct {
-	MediaID       string    `json:"mediaid" bson:"mediaid"`
-	MediaGroupID  string    `json:"mediaGroupId" bson:"mediaGroupId"` // new field to group multiple files
-	Type          string    `json:"type" bson:"type"`                 // "image", "video", "text"
-	URL           string    `json:"url,omitempty" bson:"url,omitempty"`
-	ThumbnailURL  string    `json:"thumbnailUrl,omitempty" bson:"thumbnailUrl,omitempty"`
-	Caption       string    `json:"caption,omitempty" bson:"caption,omitempty"`
-	Description   string    `json:"description,omitempty" bson:"description,omitempty"`
-	CreatorID     string    `json:"creatorid" bson:"creatorid"`
-	LikesCount    int       `json:"likesCount" bson:"likesCount"`
-	CommentsCount int       `json:"commentsCount" bson:"commentsCount"`
-	Visibility    string    `json:"visibility,omitempty" bson:"visibility,omitempty"`
-	Tags          []string  `json:"tags,omitempty" bson:"tags,omitempty"` // e.g., song:123, event:456
-	Duration      float64   `json:"duration,omitempty" bson:"duration,omitempty"`
-	FileSize      int64     `json:"fileSize,omitempty" bson:"fileSize,omitempty"`
-	MimeType      string    `json:"mimeType,omitempty" bson:"mimeType,omitempty"`
-	IsFeatured    bool      `json:"isFeatured,omitempty" bson:"isFeatured,omitempty"`
-	EntityID      string    `json:"entityid" bson:"entityid"`
-	EntityType    string    `json:"entitytype" bson:"entitytype"` // "event", "place", etc.
-	CreatedAt     time.Time `json:"createdAt" bson:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt" bson:"updatedAt"`
-	UserID        string    `json:"userid" bson:"userid"`
-	Extn          string    `json:"extn" bson:"extn"`
-	CaptionLang   string    `json:"captionlang" bson:"captionlang"`
-}
-
-const (
-	MediaTypeImage    = "image"
-	MediaTypeVideo    = "video"
-	MediaTypePhoto360 = "photo360"
-)
-
 type Promotion struct {
 	ID          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Title       string             `json:"title" bson:"title"`
@@ -200,50 +125,4 @@ type Index struct {
 	EntityId   string `json:"entity_id"`
 	ItemId     string `json:"item_id"`
 	ItemType   string `json:"item_type"`
-}
-
-type Event struct {
-	EventID          string           `json:"eventid" bson:"eventid"`
-	Title            string           `json:"title" bson:"title"`
-	Description      string           `json:"description" bson:"description"`
-	Date             time.Time        `json:"date" bson:"date"`
-	PlaceID          string           `json:"placeid" bson:"placeid"`
-	PlaceName        string           `json:"placename" bson:"placename"`
-	Location         string           `json:"location" bson:"location"`
-	Coords           Coordinates      `json:"coords" bson:"coords"`
-	CreatorID        string           `json:"creatorid" bson:"creatorid"`
-	Tickets          []tickets.Ticket `json:"tickets" bson:"tickets"`
-	Merch            []Merch          `json:"merch" bson:"merch"`
-	StartDateTime    time.Time        `json:"start_date_time" bson:"start_date_time"`
-	EndDateTime      time.Time        `json:"end_date_time" bson:"end_date_time"`
-	Category         string           `json:"category" bson:"category"`
-	Banner           string           `json:"banner" bson:"banner"`
-	SeatingPlanImage string           `json:"seating" bson:"seating"`
-	WebsiteURL       string           `json:"website_url" bson:"website_url"`
-	Status           string           `json:"status" bson:"status"`
-	Tags             []string         `json:"tags" bson:"tags"`
-	CreatedAt        time.Time        `json:"created_at" bson:"created_at"`
-	UpdatedAt        time.Time        `json:"updated_at" bson:"updated_at"`
-	FAQs             []FAQ            `json:"faqs" bson:"faqs"`
-	OrganizerName    string           `json:"organizer_name" bson:"organizer_name"`
-	OrganizerContact string           `json:"organizer_contact" bson:"organizer_contact"`
-	Artists          []string         `json:"artists,omitempty" bson:"artists,omitempty"`
-	Published        string           `json:"published,omitempty" bson:"published,omitempty"`
-	External         bool             `json:"external" bson:"external"`
-	ExternalLink     string           `json:"externallink" bson:"externallink"`
-	// New fields for alignment (CRITICAL FIX)
-	ContactInfo  *EventContactInfo      `json:"contactInfo" bson:"contact_info"`
-	News         []NewsItem             `json:"news" bson:"news"`
-	Polls        []Poll                 `json:"polls" bson:"polls"`
-	LostFound    []LostFoundItem        `json:"lostfound" bson:"lost_found"`
-	HiredVendors []vendors.VendorHiring `json:"hired_vendors,omitempty" bson:"hired_vendors,omitempty"`
-	// Computed fields for frontend filters
-	Prices   []float64 `json:"prices,omitempty" bson:"-"`
-	Currency string    `json:"currency,omitempty" bson:"-"`
-}
-
-// FAQ represents a single FAQ structure
-type FAQ struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
 }

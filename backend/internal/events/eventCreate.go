@@ -7,7 +7,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/internal/tickets"
 	"naevis/internal/userdata"
 	"naevis/models"
 	"naevis/utils"
@@ -71,11 +70,8 @@ func prepareEventDefaults(event *models.Event, userID string, app *infra.Deps) {
 	event.CreatedAt = time.Now().UTC()
 	event.Date = event.Date.UTC()
 	event.Status = "active"
-	event.FAQs = []models.FAQ{}
 	event.Artists = []string{}
 	event.Tags = []string{}
-	event.Merch = []models.Merch{}
-	event.Tickets = []tickets.Ticket{}
 	event.OrganizerName = strings.TrimSpace(event.OrganizerName)
 	event.OrganizerContact = strings.TrimSpace(event.OrganizerContact)
 

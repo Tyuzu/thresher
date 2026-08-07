@@ -1,30 +1,30 @@
 package mechat
 
 import (
-	"naevis/models"
+	"naevis/internal/media"
 	"time"
 )
 
 type Message struct {
-	MessageID  string        `bson:"messageid,omitempty"  json:"messageid"`
-	ChatID     string        `bson:"chatid"               json:"chatid"`
-	RoomID     string        `bson:"roomid,omitempty"     json:"roomid,omitempty"`
-	UserID     string        `bson:"userid"               json:"userid"`
-	Text       string        `bson:"text,omitempty"       json:"text,omitempty"`
-	FileURL    string        `bson:"fileURL,omitempty"    json:"fileURL,omitempty"`
-	FileType   string        `bson:"fileType,omitempty"   json:"fileType,omitempty"` // "image" or "video"
-	CreatedAt  time.Time     `bson:"createdAt"            json:"createdAt"`
-	ReplyTo    *ReplyRef     `bson:"replyTo,omitempty"    json:"replyTo,omitempty"`
-	SenderName string        `bson:"senderName,omitempty" json:"senderName,omitempty"`
-	AvatarURL  string        `bson:"avatarUrl,omitempty"  json:"avatarUrl,omitempty"`
-	Content    string        `bson:"content"              json:"content"`
-	Media      *models.Media `bson:"media,omitempty"      json:"media,omitempty"`
-	EditedAt   *time.Time    `bson:"editedAt,omitempty"   json:"editedAt,omitempty"`
-	Deleted    bool          `bson:"deleted"              json:"deleted"`
-	ReadBy     []string      `bson:"readBy,omitempty"     json:"readBy,omitempty"`
-	Status     string        `bson:"status,omitempty"     json:"status,omitempty"` // e.g. "sent", "read"
-	Nonce      string        `bson:"nonce,omitempty"      json:"nonce,omitempty"`
-	Seq        int64         `bson:"seq,omitempty"        json:"seq,omitempty"`
+	MessageID  string       `bson:"messageid,omitempty"  json:"messageid"`
+	ChatID     string       `bson:"chatid"               json:"chatid"`
+	RoomID     string       `bson:"roomid,omitempty"     json:"roomid,omitempty"`
+	UserID     string       `bson:"userid"               json:"userid"`
+	Text       string       `bson:"text,omitempty"       json:"text,omitempty"`
+	FileURL    string       `bson:"fileURL,omitempty"    json:"fileURL,omitempty"`
+	FileType   string       `bson:"fileType,omitempty"   json:"fileType,omitempty"` // "image" or "video"
+	CreatedAt  time.Time    `bson:"createdAt"            json:"createdAt"`
+	ReplyTo    *ReplyRef    `bson:"replyTo,omitempty"    json:"replyTo,omitempty"`
+	SenderName string       `bson:"senderName,omitempty" json:"senderName,omitempty"`
+	AvatarURL  string       `bson:"avatarUrl,omitempty"  json:"avatarUrl,omitempty"`
+	Content    string       `bson:"content"              json:"content"`
+	Media      *media.Media `bson:"media,omitempty"      json:"media,omitempty"`
+	EditedAt   *time.Time   `bson:"editedAt,omitempty"   json:"editedAt,omitempty"`
+	Deleted    bool         `bson:"deleted"              json:"deleted"`
+	ReadBy     []string     `bson:"readBy,omitempty"     json:"readBy,omitempty"`
+	Status     string       `bson:"status,omitempty"     json:"status,omitempty"` // e.g. "sent", "read"
+	Nonce      string       `bson:"nonce,omitempty"      json:"nonce,omitempty"`
+	Seq        int64        `bson:"seq,omitempty"        json:"seq,omitempty"`
 }
 
 type Chat struct {

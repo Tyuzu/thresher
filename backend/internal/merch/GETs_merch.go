@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,7 +25,7 @@ func GetMerch(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var merch models.Merch
+		var merch Merch
 		err := app.DB.FindOne(
 			r.Context(),
 			merchCollection,
@@ -69,7 +68,7 @@ func GetMerchs(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var list []models.Merch
+		var list []Merch
 		err := app.DB.FindMany(
 			ctx,
 			merchCollection,
@@ -89,7 +88,7 @@ func GetMerchs(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if list == nil {
-			list = []models.Merch{}
+			list = []Merch{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
@@ -103,7 +102,7 @@ func GetMerchPage(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		merchID := utils.GetParam(r, "entityType") // route constraint
 
-		var merch models.Merch
+		var merch Merch
 		err := app.DB.FindOne(
 			r.Context(),
 			merchCollection,

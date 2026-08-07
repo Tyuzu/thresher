@@ -6,7 +6,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -49,7 +48,7 @@ func CreateMenu(app *infra.Deps) http.HandlerFunc {
 		}
 
 		menuID := utils.GenerateRandomString(14)
-		menu := models.Menu{
+		menu := Menu{
 			PlaceID:   placeID,
 			Name:      body.Name,
 			Price:     body.Price,
@@ -85,7 +84,7 @@ func EditMenu(app *infra.Deps) http.HandlerFunc {
 		placeID := utils.GetParam(r, "placeid")
 		menuID := utils.GetParam(r, "menuid")
 
-		var menu models.Menu
+		var menu Menu
 		if err := json.NewDecoder(r.Body).Decode(&menu); err != nil {
 			http.Error(w, "Invalid input data", http.StatusBadRequest)
 			return

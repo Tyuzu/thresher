@@ -13,7 +13,6 @@ import (
 	"naevis/infra"
 	"naevis/internal/metrics/auditlog"
 	"naevis/internal/userdata"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -105,7 +104,7 @@ func CreateMerch(app *infra.Deps) http.HandlerFunc {
 		}
 
 		now := time.Now()
-		merch := models.Merch{
+		merch := Merch{
 			MerchID:    utils.GenerateRandomString(14),
 			EntityType: entityType,
 			EntityID:   eventID,
@@ -374,7 +373,7 @@ func BuyMerch(app *infra.Deps) http.HandlerFunc {
 		}
 
 		err := app.DB.WithDB(r.Context(), func(ctx context.Context) error {
-			var merch models.Merch
+			var merch Merch
 			err := app.DB.FindOne(ctx, merchCollection, bson.M{
 				"entity_type": utils.GetParam(r, "entityType"),
 				"entity_id":   utils.GetParam(r, "eventid"),

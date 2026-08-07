@@ -5,17 +5,17 @@ import (
 	"naevis/config"
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
+	"naevis/internal/media"
 )
 
 var fanmadeMediaCollection = config.Collections.MediaCollection
 
-func insertFanMedia(ctx context.Context, app *infra.Deps, media models.Media) error {
+func insertFanMedia(ctx context.Context, app *infra.Deps, media media.Media) error {
 	return app.DB.Insert(ctx, fanmadeMediaCollection, media)
 }
 
-func getFanMediaByID(ctx context.Context, app *infra.Deps, entityType, entityID, mediaID string) (models.Media, error) {
-	var media models.Media
+func getFanMediaByID(ctx context.Context, app *infra.Deps, entityType, entityID, mediaID string) (media.Media, error) {
+	var media media.Media
 	err := app.DB.FindOne(ctx, fanmadeMediaCollection, map[string]string{
 		"entityid":   entityID,
 		"entitytype": entityType,
@@ -24,8 +24,8 @@ func getFanMediaByID(ctx context.Context, app *infra.Deps, entityType, entityID,
 	return media, err
 }
 
-func listFanMediasByEntity(ctx context.Context, app *infra.Deps, entityType, entityID string) ([]models.Media, error) {
-	var medias []models.Media
+func listFanMediasByEntity(ctx context.Context, app *infra.Deps, entityType, entityID string) ([]media.Media, error) {
+	var medias []media.Media
 	opts := db.FindManyOptions{}
 	err := app.DB.FindManyWithOptions(ctx, fanmadeMediaCollection, map[string]string{
 		"entityid":   entityID,
@@ -40,7 +40,7 @@ func listFanMediaGroupsByEntity(ctx context.Context, app *infra.Deps, entityType
 		return nil, err
 	}
 
-	mediaMap := make(map[string][]models.Media)
+	mediaMap := make(map[string][]media.Media)
 	for _, media := range medias {
 		mediaMap[media.MediaGroupID] = append(mediaMap[media.MediaGroupID], media)
 	}
@@ -56,12 +56,12 @@ func listFanMediaGroupsByEntity(ctx context.Context, app *infra.Deps, entityType
 	return groups, nil
 }
 
-func updateFanMediaGroup(ctx context.Context, app *infra.Deps, mediaGroupID string, update map[string]any) ([]models.Media, error) {
+func updateFanMediaGroup(ctx context.Context, app *infra.Deps, mediaGroupID string, update map[string]any) ([]media.Media, error) {
 	if _, err := app.DB.UpdateMany(ctx, fanmadeMediaCollection, map[string]string{"mediaGroupId": mediaGroupID}, map[string]any{"$set": update}); err != nil {
 		return nil, err
 	}
 
-	var updatedMedias []models.Media
+	var updatedMedias []media.Media
 	opts := db.FindManyOptions{}
 	err := app.DB.FindManyWithOptions(ctx, fanmadeMediaCollection, map[string]string{"mediaGroupId": mediaGroupID}, opts, &updatedMedias)
 	return updatedMedias, err

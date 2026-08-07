@@ -10,7 +10,6 @@ const (
 	EventCreatedEvent = "event.created"
 	EventUpdatedEvent = "event.updated"
 	EventRemovedEvent = "event.removed"
-	FAQAddedEvent     = "event.faq.added"
 )
 
 type EventCreatedPayload struct {
@@ -28,12 +27,5 @@ type EventUpdatedPayload struct {
 type EventDeletedPayload struct {
 	EventID    string    `json:"eventid"`
 	DeletedBy  string    `json:"deletedby"`
-	OccurredAt time.Time `json:"occurred_at"`
-}
-
-type FAQAddedPayload struct {
-	EventID    string    `json:"eventid"`
-	FAQTitle   string    `json:"faqtitle"`
-	CreatedBy  string    `json:"createdby"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

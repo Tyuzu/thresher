@@ -2,7 +2,7 @@ package newchat
 
 import (
 	"context"
-	"naevis/models"
+	"naevis/internal/media"
 	"sync"
 	"time"
 
@@ -39,20 +39,20 @@ type Attachment struct {
 }
 
 type Message struct {
-	ChatID     string        `bson:"chatid"              json:"chatid"`
-	UserID     string        `bson:"sender"              json:"sender"`
-	Text       string        `bson:"text,omitempty" json:"text,omitempty"`
-	FileURL    string        `bson:"fileURL,omitempty" json:"fileURL,omitempty"`
-	FileType   string        `bson:"fileType,omitempty" json:"fileType,omitempty"` // "image" or "video"
-	CreatedAt  time.Time     `bson:"createdAt" json:"createdAt"`
-	ReplyTo    *ReplyRef     `bson:"replyTo,omitempty" json:"replyTo,omitempty"`
-	SenderName string        `bson:"senderName,omitempty" json:"senderName,omitempty"`
-	AvatarURL  string        `bson:"avatarUrl,omitempty"   json:"avatarUrl,omitempty"`
-	Media      *models.Media `bson:"media,omitempty"   json:"media,omitempty"`
-	EditedAt   *time.Time    `bson:"editedAt,omitempty" json:"editedAt,omitempty"`
-	Deleted    bool          `bson:"deleted"           json:"deleted"`
-	ReadBy     []string      `bson:"readBy,omitempty"  json:"readBy,omitempty"`
-	Status     string        `bson:"status,omitempty"  json:"status,omitempty"` // e.g. "sent", "read"
+	ChatID     string       `bson:"chatid"              json:"chatid"`
+	UserID     string       `bson:"sender"              json:"sender"`
+	Text       string       `bson:"text,omitempty" json:"text,omitempty"`
+	FileURL    string       `bson:"fileURL,omitempty" json:"fileURL,omitempty"`
+	FileType   string       `bson:"fileType,omitempty" json:"fileType,omitempty"` // "image" or "video"
+	CreatedAt  time.Time    `bson:"createdAt" json:"createdAt"`
+	ReplyTo    *ReplyRef    `bson:"replyTo,omitempty" json:"replyTo,omitempty"`
+	SenderName string       `bson:"senderName,omitempty" json:"senderName,omitempty"`
+	AvatarURL  string       `bson:"avatarUrl,omitempty"   json:"avatarUrl,omitempty"`
+	Media      *media.Media `bson:"media,omitempty"   json:"media,omitempty"`
+	EditedAt   *time.Time   `bson:"editedAt,omitempty" json:"editedAt,omitempty"`
+	Deleted    bool         `bson:"deleted"           json:"deleted"`
+	ReadBy     []string     `bson:"readBy,omitempty"  json:"readBy,omitempty"`
+	Status     string       `bson:"status,omitempty"  json:"status,omitempty"` // e.g. "sent", "read"
 
 	MessageID string       `bson:"messageid" json:"messageid"`
 	Room      string       `bson:"room" json:"room"`

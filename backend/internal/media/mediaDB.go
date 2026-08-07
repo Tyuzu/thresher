@@ -5,19 +5,18 @@ import (
 
 	"naevis/config"
 	"naevis/infra"
-	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 var mediaCollection = config.Collections.MediaCollection
 
-func insertMedia(ctx context.Context, app *infra.Deps, media models.Media) error {
+func insertMedia(ctx context.Context, app *infra.Deps, media Media) error {
 	return app.DB.Insert(ctx, mediaCollection, media)
 }
 
-func getMediaByID(ctx context.Context, app *infra.Deps, entityType, entityID, mediaID string) (models.Media, error) {
-	var media models.Media
+func getMediaByID(ctx context.Context, app *infra.Deps, entityType, entityID, mediaID string) (Media, error) {
+	var media Media
 	err := app.DB.FindOne(ctx, mediaCollection, bson.M{
 		"entityid":   entityID,
 		"entitytype": entityType,
@@ -26,13 +25,13 @@ func getMediaByID(ctx context.Context, app *infra.Deps, entityType, entityID, me
 	return media, err
 }
 
-func listMediaByEntity(ctx context.Context, app *infra.Deps, entityType, entityID string) ([]models.Media, error) {
+func listMediaByEntity(ctx context.Context, app *infra.Deps, entityType, entityID string) ([]Media, error) {
 	filter := bson.M{
 		"entityid":   entityID,
 		"entitytype": entityType,
 	}
 
-	var medias []models.Media
+	var medias []Media
 	err := app.DB.FindMany(ctx, mediaCollection, filter, &medias)
 	return medias, err
 }
@@ -43,7 +42,7 @@ func getMediaGroupsByEntity(ctx context.Context, app *infra.Deps, entityType, en
 		return nil, err
 	}
 
-	mediaMap := make(map[string][]models.Media)
+	mediaMap := make(map[string][]Media)
 	for _, media := range medias {
 		mediaMap[media.MediaGroupID] = append(mediaMap[media.MediaGroupID], media)
 	}
@@ -59,12 +58,12 @@ func getMediaGroupsByEntity(ctx context.Context, app *infra.Deps, entityType, en
 	return groups, nil
 }
 
-func updateMediaGroup(ctx context.Context, app *infra.Deps, mediaGroupID string, updateFields bson.M) ([]models.Media, error) {
+func updateMediaGroup(ctx context.Context, app *infra.Deps, mediaGroupID string, updateFields bson.M) ([]Media, error) {
 	if _, err := app.DB.UpdateMany(ctx, mediaCollection, bson.M{"mediaGroupId": mediaGroupID}, bson.M{"$set": updateFields}); err != nil {
 		return nil, err
 	}
 
-	var updatedMedias []models.Media
+	var updatedMedias []Media
 	err := app.DB.FindMany(ctx, mediaCollection, bson.M{"mediaGroupId": mediaGroupID}, &updatedMedias)
 	return updatedMedias, err
 }

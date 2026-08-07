@@ -5,7 +5,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -39,7 +38,7 @@ func BuyMenu(app *infra.Deps) http.HandlerFunc {
 			"$set": map[string]any{"updated_at": time.Now()},
 		}
 
-		var updatedMenu models.Menu
+		var updatedMenu Menu
 		err := app.DB.FindOneAndUpdate(ctx, menuCollection, filter, update, &updatedMenu)
 		if err != nil {
 			http.Error(w, "Insufficient stock or menu not found", http.StatusConflict)

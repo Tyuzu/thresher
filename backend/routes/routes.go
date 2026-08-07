@@ -12,9 +12,9 @@ import (
 	"naevis/internal/beats"
 	"naevis/internal/booking"
 	"naevis/internal/cart"
-	"naevis/internal/comments"
 	"naevis/internal/events"
 	"naevis/internal/fanmade"
+	"naevis/internal/faqs"
 	"naevis/internal/farms"
 	"naevis/internal/farms/crops"
 	"naevis/internal/farms/products"
@@ -42,7 +42,6 @@ import (
 	"naevis/internal/settings"
 	"naevis/internal/stripe"
 	"naevis/internal/suggestions"
-	"naevis/internal/tickets"
 	"naevis/internal/userdata"
 	"naevis/internal/userdata/metadata"
 	"naevis/internal/vendors"
@@ -205,21 +204,6 @@ func AddNoticesRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *m
 // 	router.HandlerFunc(http.MethodPut,"/api/v1/notifs/user/:userid/preferences", rateLimiter.Limit(authmidware(notifications.UpdatePreferences(app))))
 // }
 
-func AddCommentsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	// Create comment
-	router.HandlerFunc(http.MethodPost, "/api/v1/comments/:entitytype/:entityid", rateLimiter.Limit(authmidware(comments.CreateComment(app))))
-
-	// Get comments for an entity (supports pagination/sorting via query params)
-	router.HandlerFunc(http.MethodGet, "/api/v1/comments/:entitytype/:entityid", comments.GetComments(app)) // Public
-
-	router.HandlerFunc(http.MethodGet, "/api/v1/comments/:entitytype/:entityid/:commentid", comments.GetComment(app))
-
-	// Update & Delete
-	router.HandlerFunc(http.MethodPut, "/api/v1/comments/:entitytype/:entityid/:commentid", rateLimiter.Limit(authmidware(comments.UpdateComment(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/comments/:entitytype/:entityid/:commentid", rateLimiter.Limit(authmidware(comments.DeleteComment(app))))
-}
-
 func AddAuthRoutes(router *httprouter.Router, app *infra.Deps, limiter *middleware.RateLimiter) {
 	authmid := middleware.Authenticate(app)
 	// router.HandlerFunc accepts standard http.HandlerFunc directly!
@@ -284,7 +268,18 @@ func AddEventsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mi
 	router.HandlerFunc(http.MethodDelete, "/api/v1/events/event/:eventid", authmidware(events.DeleteEvent(app)))
 
 	// Should probably require auth if restricted
-	router.HandlerFunc(http.MethodPost, "/api/v1/events/event/:eventid/faqs", authmidware(events.AddFAQs(app)))
+	// Add FAQs for an entity
+	// Create faq
+	router.HandlerFunc(http.MethodPost, "/api/v1/faqs/:entitytype/:entityid", rateLimiter.Limit(authmidware(faqs.CreateFAQ(app))))
+
+	// Get faqs for an entity (supports pagination/sorting via query params)
+	router.HandlerFunc(http.MethodGet, "/api/v1/faqs/:entitytype/:entityid", faqs.GetFAQs(app)) // Public
+
+	router.HandlerFunc(http.MethodGet, "/api/v1/faqs/:entitytype/:entityid/:faqid", faqs.GetFAQ(app))
+
+	// Update & Delete
+	router.HandlerFunc(http.MethodPut, "/api/v1/faqs/:entitytype/:entityid/:faqid", rateLimiter.Limit(authmidware(faqs.UpdateFAQ(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/faqs/:entitytype/:entityid/:faqid", rateLimiter.Limit(authmidware(faqs.DeleteFAQ(app))))
 }
 
 func AddCartRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
@@ -398,41 +393,6 @@ func AddMerchRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mid
 	// Payment flows
 	router.HandlerFunc(http.MethodPost, "/api/v1/merch/:entityType/:eventid/:merchid/payment-session", rateLimiter.Limit(authmidware(merch.CreateMerchPaymentSession(app))))
 	router.HandlerFunc(http.MethodPost, "/api/v1/merch/:entityType/:eventid/:merchid/confirm-purchase", rateLimiter.Limit(authmidware(merch.ConfirmMerchPurchase(app))))
-}
-
-func AddTicketRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	authmidware := middleware.Authenticate(app)
-	// Ticket CRUD
-	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/event/:eventid", rateLimiter.Limit(authmidware(tickets.CreateTicket(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/event/:eventid", rateLimiter.Limit(tickets.GetTickets(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/event/:eventid/:ticketid", rateLimiter.Limit(tickets.GetTicket(app)))
-	router.HandlerFunc(http.MethodPut, "/api/v1/ticket/event/:eventid/:ticketid", rateLimiter.Limit(authmidware(tickets.EditTicket(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/ticket/event/:eventid/:ticketid", rateLimiter.Limit(authmidware(tickets.DeleteTicket(app))))
-
-	// Buying
-	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/event/:eventid/:ticketid/buy", rateLimiter.Limit(authmidware(tickets.BuyTicket(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/tickets/book", rateLimiter.Limit(authmidware(tickets.BuysTicket(app))))
-
-	// Payment flows
-	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/event/:eventid/:ticketid/payment-session", rateLimiter.Limit(authmidware(tickets.CreateTicketPaymentSession(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/event/:eventid/:ticketid/confirm-purchase", rateLimiter.Limit(authmidware(tickets.ConfirmTicketPurchase(app))))
-
-	// Verification/printing
-	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/verify/:eventid", rateLimiter.Limit(authmidware(tickets.VerifyTicket(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/print/:eventid", rateLimiter.Limit(authmidware(tickets.PrintTicket(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/transfer/:eventid", rateLimiter.Limit(authmidware(tickets.TransferTicket(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/ticket/cancel/:eventid", rateLimiter.Limit(authmidware(tickets.CancelTicket(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/mytickets/:eventid", rateLimiter.Limit(authmidware(tickets.ListMyTickets(app))))
-
-	// Event updates
-	router.HandlerFunc(http.MethodGet, "/api/v1/events/event/:eventid/updates", rateLimiter.Limit(tickets.EventUpdates(app)))
-
-	// Seats
-	router.HandlerFunc(http.MethodGet, "/api/v1/seats/:eventid/available-seats", rateLimiter.Limit(tickets.GetAvailableSeats(app)))
-	router.HandlerFunc(http.MethodPost, "/api/v1/seats/:eventid/lock-seats", rateLimiter.Limit(authmidware(tickets.LockSeats(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/seats/:eventid/unlock-seats", rateLimiter.Limit(authmidware(tickets.UnlockSeats(app))))
-	router.HandlerFunc(http.MethodPost, "/api/v1/seats/:eventid/ticket/:ticketid/confirm-purchase", rateLimiter.Limit(authmidware(tickets.ConfirmSeatPurchase(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/ticket/event/:eventid/:ticketid/seats", rateLimiter.Limit(tickets.GetTicketSeats(app)))
 }
 
 func AddSuggestionsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {

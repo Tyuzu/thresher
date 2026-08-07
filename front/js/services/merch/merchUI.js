@@ -39,7 +39,7 @@ function addMerchForm(entityType, eventId, merchList) {
 }
 
 // --- Display Merchandise List ---
-async function displayMerchandise(container, merchData, entityType, eventId, isCreator, isLoggedIn) {
+async function displayMerchandise(container, entityType, eventId, isCreator, isLoggedIn) {
     container.replaceChildren();
     container.appendChild(createElement("h2", {}, ["Merchandise"]));
   

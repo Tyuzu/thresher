@@ -21,7 +21,17 @@ async function displayEventVenue(venueList, isLoggedIn, eventID, seatingplan) {
     venueList.appendChild(Imagex({ src: imgx }));
 }
 
-async function displayEventFAQ(faqContainer, isCreator, eventId, faqs) {
+async function displayEventFAQ(faqContainer, isCreator, eventId) {
+    let faqs = [];
+    try {
+        const response = await apiFetch(`/faqs/event/${eventId}`);
+        faqs = response?.data ?? [];
+    } catch (err) {
+        console.error("Failed to load FAQs:", err);
+        const msg = createElement("p", {}, ["Error loading faqs."]);
+        faqContainer.replaceChildren(msg);
+        return;
+    }
     displayEventFAQs(isCreator, faqContainer, eventId, faqs);
 }
 
@@ -49,8 +59,8 @@ async function displayLostAndFound(lnfContainer, isCreator, eventId) {
                 const name = nameInput.value.trim();
                 const description = descInput.value.trim();
                 if (!name) {
-return alert("Name is required");
-}
+                    return alert("Name is required");
+                }
 
                 const newItem = { type, name, description };
                 try {
@@ -106,8 +116,6 @@ return alert("Name is required");
     lnfContainer.appendChild(itemsList);
 }
 
-
-
 async function displayContactDetails(container, _isCreator, _contacts) {
     container.appendChild(createElement('h2', "", ["ContactDetails"]));
     container.appendChild(createElement('p', "", ["Does anybody need anything?"]));
@@ -130,8 +138,7 @@ async function displayEventSchedule(schContainer, _isCreator, _eventId, _faqs) {
     schContainer.appendChild(EventTimeline(events));
 }
 
-
-async function displayLivestream(divcontainer, eventId, _isLoggedIn) {
+async function displayLivestream(divcontainer, eventId, isLoggedIn) {
     displayEventLiveStream(divcontainer, eventId, isLoggedIn);
 }
 
@@ -142,50 +149,54 @@ async function displayEventLiveStream(divcontainer, eventId, isLoggedIn) {
     }
 
     divcontainer.appendChild(createElement('h2', "", ["Livestream"]));
-    // Fetch available angles
-    const response = await fetch(`${API_URL}/livestream/${eventId}`);
 
-    if (response.status === 404) {
-        divcontainer.appendChild(createElement("p", "", ["No livestream available."]));
-        return;
-    }
+    try {
+        // Fetch available angles
+        const response = await fetch(`${API_URL}/livestream/${eventId}`);
 
-    const { angles } = await response.json();
+        if (response.status === 404) {
+            divcontainer.appendChild(createElement("p", "", ["No livestream available."]));
+            return;
+        }
 
-    if (!angles.length) {
-        divcontainer.innerHTML = "<p>No livestream available.</p>";
-        return;
-    }
+        const { angles } = await response.json();
 
-    // Create video element
-    const video = document.createElement("video");
-    video.controls = true;
-    video.autoplay = true;
-    video.style.width = "100%";
-    divcontainer.appendChild(video);
+        if (!angles || !angles.length) {
+            divcontainer.innerHTML = "<p>No livestream available.</p>";
+            return;
+        }
 
-    // Create angle selection
-    const angleSelector = document.createElement("select");
-    angles.forEach((angle) => {
-        const option = document.createElement("option");
-        option.value = angle.url;
-        option.textContent = angle.name;
-        angleSelector.appendChild(option);
-    });
+        // Create video element
+        const video = document.createElement("video");
+        video.controls = true;
+        video.autoplay = true;
+        video.style.width = "100%";
+        divcontainer.appendChild(video);
 
-    angleSelector.onchange = () => {
-        video.src = angleSelector.value;
+        // Create angle selection
+        const angleSelector = document.createElement("select");
+        angles.forEach((angle) => {
+            const option = document.createElement("option");
+            option.value = angle.url;
+            option.textContent = angle.name;
+            angleSelector.appendChild(option);
+        });
+
+        angleSelector.onchange = () => {
+            video.src = angleSelector.value;
+            video.play();
+        };
+
+        divcontainer.appendChild(angleSelector);
+
+        // Start with the first angle
+        video.src = angles[0].url;
         video.play();
-    };
-
-    divcontainer.appendChild(angleSelector);
-
-    // Start with the first angle
-    video.src = angles[0].url;
-    video.play();
+    } catch (err) {
+        console.error("Failed to load livestream:", err);
+        divcontainer.appendChild(createElement("p", "", ["Error loading livestream."]));
+    }
 }
-
-
 
 export { displayEventVenue, displayEventFAQ, displayEventReviews, displayLivestream };
 export { displayLostAndFound, displayContactDetails, displayEventSchedule };

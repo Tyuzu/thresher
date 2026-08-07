@@ -87,7 +87,3 @@ func listEvents(ctx context.Context, app *infra.Deps, filter map[string]any, opt
 func countEvents(ctx context.Context, app *infra.Deps, filter map[string]any) (int64, error) {
 	return app.DB.CountDocuments(ctx, eventsCollection, filter)
 }
-
-func addFAQToEvent(ctx context.Context, app *infra.Deps, eventID string, faq models.FAQ) error {
-	return app.DB.AddToSet(ctx, eventsCollection, map[string]string{"eventid": eventID}, "faqs", faq)
-}

@@ -24,6 +24,7 @@ type DB struct {
 	CropsAboutCollection               string
 	DateCapsCollection                 string
 	EventsCollection                   string
+	FAQsCollection                     string
 	FarmsCollection                    string
 	FundingCollection                  string
 	FeedPostsCollection                string
@@ -97,6 +98,7 @@ var Collections = DB{
 	CropsAboutCollection:               "cropsabout",
 	DateCapsCollection:                 "date_caps",
 	EventsCollection:                   "events",
+	FAQsCollection:                     "faqs",
 	FarmsCollection:                    "farms",
 	FeedPostsCollection:                "feedposts",
 	FilesCollection:                    "files",

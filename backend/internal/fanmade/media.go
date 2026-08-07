@@ -6,8 +6,8 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
+	"naevis/internal/media"
 	"naevis/internal/userdata"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -53,7 +53,7 @@ func AddMedia(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mediaGroupID := "g" + utils.GenerateRandomString(16)
-		var insertedMedia []models.Media
+		var insertedMedia []media.Media
 
 		for _, fileData := range payload.Files {
 			filename, _ := fileData["filename"].(string)
@@ -73,17 +73,17 @@ func AddMedia(app *infra.Deps) http.HandlerFunc {
 			var mediaType, mimeType string
 			switch extn {
 			case ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif":
-				mediaType = models.MediaTypeImage
+				mediaType = media.MediaTypeImage
 				mimeType = "image/" + strings.TrimPrefix(extn, ".")
 			case ".mp4", ".webm", ".ogg", ".mov", ".avi":
-				mediaType = models.MediaTypeVideo
+				mediaType = media.MediaTypeVideo
 				mimeType = "video/" + strings.TrimPrefix(extn, ".")
 			default:
 				mediaType = "unknown"
 				mimeType = "application/octet-stream"
 			}
 
-			media := models.Media{
+			media := media.Media{
 				MediaID:      "m" + utils.GenerateRandomString(16),
 				MediaGroupID: mediaGroupID,
 				EntityID:     entityID,

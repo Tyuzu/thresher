@@ -104,7 +104,6 @@ func AddEventToDB(ctx context.Context, app *infra.Deps, artistEvent ArtistEvent)
 	event.CreatedAt = time.Now().UTC()
 	event.Date = dateToSave.UTC()
 	event.Status = "active"
-	event.FAQs = []models.FAQ{}
 	event.EventID = artistEvent.EventID
 	event.Artists = []string{artistEvent.ArtistID}
 	event.Title = artistEvent.Title

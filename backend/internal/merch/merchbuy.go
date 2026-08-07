@@ -10,7 +10,6 @@ import (
 	"naevis/infra"
 	"naevis/internal/stripe"
 	"naevis/internal/userdata"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -81,7 +80,7 @@ func ConfirmMerchPurchase(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// SECURITY: First lookup current merch details to verify price
-		var currentMerch models.Merch
+		var currentMerch Merch
 		if err := app.DB.FindOne(
 			ctx,
 			merchCollection,
@@ -111,7 +110,7 @@ func ConfirmMerchPurchase(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Atomically decrement stock and return updated document
-		var updatedMerch models.Merch
+		var updatedMerch Merch
 		err := app.DB.FindOneAndUpdate(
 			ctx,
 			merchCollection,
