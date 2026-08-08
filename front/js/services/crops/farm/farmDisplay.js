@@ -21,120 +21,153 @@ import { createMainLayout } from "../../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../../components/layout/asideLayout.js";
 import { createBreadcrumb } from "../../../components/ui/Breadcrumb.mjs";
 
+/**
+ * Main view renderer for individual farm pages.
+ *
+ * @param {boolean} isLoggedIn - User authorization state.
+ * @param {string|number} farmId - Unique ID of the farm to render.
+ * @param {HTMLElement} content - Container DOM node.
+ */
 export async function displayFarm(isLoggedIn, farmId, content) {
+  if (!content) return;
+
   const container = createElement("div", { class: "farmpage" });
   content.replaceChildren(container);
 
-  const res = await apiFetch(`/farms/farm/${farmId}`);
-  const farm = res?.farm;
+  let farmRes;
+  try {
+    farmRes = await apiFetch(`/farms/farm/${farmId}`);
+  } catch (error) {
+    console.error("Failed to fetch farm details:", error);
+  }
 
-  if (!res?.success || !farm) {
+  const farm = farmRes?.farm;
+  if (!farmRes?.success || !farm) {
     container.append(
-      createElement("p", {}, ["Farm not found."])
+      createElement("div", { class: "error-state" }, [
+        createElement("p", {}, ["Farm not found or failed to load."])
+      ])
     );
     return;
   }
 
   const normalizedFarmId = String(farm.farmid);
-  const isCreator = getState("user") === farm.createdBy;
+  const currentUser = getState("user");
+  const isCreator = Boolean(currentUser && currentUser === farm.createdBy);
 
-  // ---------- Header & Breadcrumb ----------
+  // ─────────── Header & Breadcrumb ───────────
   const farmBreadcrumb = createBreadcrumb([
     { label: "Home", path: "/" },
     { label: "Farms", path: "/farms" },
     { label: farm.name || "Farm Details", path: `/farms/farm/${normalizedFarmId}` }
   ]);
 
-  const header = createElement("div", { class: "farm-header" }, [
-    farmBreadcrumb
-  ]);
+  const header = createElement("div", { class: "farm-header" }, [farmBreadcrumb]);
 
-  // ---------- Banner ----------
+  // ─────────── Banner ───────────
   const bannerImage = Imagex({
     src: resolveImagePath(EntityType.FARM, PictureType.BANNER, farm.photo),
     alt: farm.name || "Farm",
     id: "farm-banner-img"
   });
 
+  const bannerControls = isCreator
+    ? [
+      Button(
+        "Edit Banner",
+        "edit-banner-btn",
+        {
+          click: () => {
+            updateImageWithCrop({
+              entityType: EntityType.FARM,
+              imageType: "banner",
+              stateKey: "banner",
+              stateEntityKey: "farm",
+              previewElementId: "farm-banner-img",
+              pictureType: PictureType.BANNER,
+              entityId: normalizedFarmId
+            });
+          }
+        },
+        "edit-banner-pic"
+      )
+    ]
+    : [];
+
   const banner = createElement("div", { class: "farm-banner" }, [
-    bannerImage
+    bannerImage,
+    ...bannerControls
   ]);
 
-  if (isCreator) {
-    banner.append(
-      Button("Edit Banner", "edit-banner-btn", {
-        click: () => {
-          updateImageWithCrop({
-            entityType: EntityType.FARM,
-            imageType: "banner",
-            stateKey: "banner",
-            stateEntityKey: "farm",
-            previewElementId: "farm-banner-img",
-            pictureType: PictureType.BANNER,
-            entityId: normalizedFarmId
-          });
-        }
-      }, "edit-banner-pic")
-    );
-  }
-
-  // ---------- Aside ----------
-  const summaryStats = renderCropSummary(farm.crops || []);
-  const cropDistribution = renderCropEmojiMap(farm.crops || []);
+  // ─────────── Aside Panel ───────────
+  const cropsList = Array.isArray(farm.crops) ? farm.crops : [];
+  const summaryStats = renderCropSummary(cropsList);
+  const cropDistribution = renderCropEmojiMap(cropsList);
 
   const reviewPlaceholder = createElement("div", { class: "review-block" }, [
     createElement("p", {}, ["⭐ Reviews"]),
-    Button("💬 Check reviews", "review-btn", {
-      click: () =>
-        displayReviews(
-          reviewPlaceholder,
-          isCreator,
-          isLoggedIn,
-          "farm",
-          normalizedFarmId
-        )
-    }, "buttonx")
+    Button(
+      "💬 Check reviews",
+      "review-btn",
+      {
+        click: () =>
+          displayReviews(
+            reviewPlaceholder,
+            isCreator,
+            isLoggedIn,
+            "farm",
+            normalizedFarmId
+          )
+      },
+      "buttonx"
+    )
   ]);
 
-  const farmCTA = createElement("div", { class: "cta-block" }, [
-    ...(isLoggedIn && !isCreator ? [
+  const userActionButtons = isLoggedIn && !isCreator
+    ? [
       Button("Schedule a visit", "cta-visit-btn", {
-        click: () => console.warn("Schedule visit not implemented")
+        click: () => console.warn("Schedule visit feature upcoming")
       }, "buttonx"),
       Button("Pre-order", "cta-pre-btn", {
-        click: () => console.warn("Pre-order not implemented")
+        click: () => console.warn("Pre-order feature upcoming")
       }, "buttonx"),
       Button("Chat", "cta-chat-btn", {
         click: () => farmChat(farm.createdBy, normalizedFarmId)
       }, "buttonx")
-    ] : []),
-    ...(isCreator ? [
+    ]
+    : [];
+
+  const creatorActionButtons = isCreator
+    ? [
       Button("Creator Tools", "cta-creator-btn", {
-        click: () => console.warn("Creator tools placeholder")
+        click: () => console.warn("Creator tools panel upcoming")
       }, "buttonx")
-    ] : [])
+    ]
+    : [];
+
+  const farmCTA = createElement("div", { class: "cta-block" }, [
+    ...userActionButtons,
+    ...creatorActionButtons
   ]);
 
   const weatherWidget = renderWeatherDetails(farm, isCreator);
 
-  const asideChildren = [
-    weatherWidget,
-    farmCTA,
-    summaryStats,
-    cropDistribution,
-    renderAvailabilityWidget(farm.availability),
-    reviewPlaceholder
-  ];
-
   const asideContent = createAsideContent({
     title: "Farm Summary",
-    children: asideChildren,
+    children: [
+      weatherWidget,
+      farmCTA,
+      summaryStats,
+      cropDistribution,
+      renderAvailabilityWidget(farm.availability),
+      reviewPlaceholder
+    ].filter(Boolean),
     showAd: true
   });
 
-  // ---------- Main ----------
+  // ─────────── Main Section & Tabs ───────────
   const mainColumn = createElement("div", { class: "farm-main" });
-  const editContainer = createElement("div");
+  const editContainer = createElement("div", { class: "edit-container" });
 
   mainColumn.append(banner, editContainer);
 
@@ -143,22 +176,22 @@ export async function displayFarm(isLoggedIn, farmId, content) {
       title: "Info",
       id: "info-tab",
       render: (tabContainer) => {
-        tabContainer.append(
-          renderFarmDetails(farm, isCreator)
-        );
+        tabContainer.replaceChildren(renderFarmDetails(farm, isCreator));
       }
     },
     {
       title: "Crops",
       id: "crops-tab",
       render: async (tabContainer) => {
+        tabContainer.replaceChildren();
+
         const cropsContainer = createElement("div", {
           class: "crop-list grid-view"
         });
 
         const cropHeader = createElement("div", { class: "crop-header" }, [
           createElement("h3", {}, ["🌾 Available Crops"]),
-          createSortDropdown(sortBy =>
+          createSortDropdown((sortBy) =>
             renderCrops(
               farm,
               cropsContainer,
@@ -176,23 +209,21 @@ export async function displayFarm(isLoggedIn, farmId, content) {
           tabContainer.append(
             Button("Add Crop", "add-crop-btn", {
               click: async () => {
-                const placeholder = createElement("div", {}, ["Loading..."]);
-
                 const modalRef = Modal({
                   title: "Add Crop",
-                  content: placeholder,
+                  content: createElement("p", {}, ["Loading..."]),
                   size: "medium",
                   closeOnOverlayClick: true
                 });
 
-                const formEl = await createCrop(
-                  normalizedFarmId,
-                  () => modalRef.close()
-                );
-
-                const body = modalRef.dialog.querySelector(".modal-body");
-                if (body) {
-                  body.replaceChildren(formEl);
+                try {
+                  const formEl = await createCrop(normalizedFarmId, () => modalRef.close());
+                  const body = modalRef.dialog?.querySelector(".modal-body");
+                  if (body && formEl) {
+                    body.replaceChildren(formEl);
+                  }
+                } catch (err) {
+                  console.error("Failed to render Add Crop form:", err);
                 }
               }
             }, "buttonx")
@@ -217,6 +248,7 @@ export async function displayFarm(isLoggedIn, farmId, content) {
       title: "Notices",
       id: "notices-tab",
       render: (tabContainer) => {
+        tabContainer.replaceChildren();
         displayNotices("farm", normalizedFarmId, tabContainer, isCreator);
       }
     },
@@ -224,6 +256,7 @@ export async function displayFarm(isLoggedIn, farmId, content) {
       title: "Gallery",
       id: "gallery-tab",
       render: (tabContainer) => {
+        tabContainer.replaceChildren();
         displayFanMedia(tabContainer, "farm", normalizedFarmId, isCreator);
       }
     },
@@ -231,6 +264,7 @@ export async function displayFarm(isLoggedIn, farmId, content) {
       title: "Reviews",
       id: "reviews-tab",
       render: (tabContainer) => {
+        tabContainer.replaceChildren();
         displayReviews(
           tabContainer,
           isCreator,
@@ -244,7 +278,7 @@ export async function displayFarm(isLoggedIn, farmId, content) {
 
   persistTabs(mainColumn, tabs, `farm-tabs:${normalizedFarmId}`);
 
-  // ---------- Layout ----------
+  // ─────────── Layout Composition ───────────
   const layoutWrapper = createMainLayout({
     mainContent: [mainColumn],
     asideContent,

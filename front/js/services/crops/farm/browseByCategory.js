@@ -1,50 +1,69 @@
+import { createElement } from "../../../components/createElement.js";
 import { createTabs } from "../../utils/persistTabs.js";
 import { renderCategoryItems } from "./renderCategoryItems.js";
-import {debounce} from "../../../utils/deutils.js";
+import { createFilterPanel } from "./createFilterPanel.js";
+import { debounce } from "../../../utils/deutils.js";
 
+/**
+ * Renders the category browser tab layout with interactive filtering.
+ *
+ * @param {HTMLElement} container - DOM node where the category browser will mount.
+ */
 export function showCategoryBrowser(container) {
-    container.textContent = "";
+  if (!container) return;
 
-    const filters = {
-        minPrice: "",
-        maxPrice: "",
-        inStock: false,
-        region: "",
-        lat: null,
-        lng: null
-    };
+  container.replaceChildren();
 
-    debounce(() => {
-        const activeTab = document.querySelector(".tab-content.active");
-        if (activeTab) {
-            const category = activeTab.id.replace("-tab", "");
-            renderCategoryItems(activeTab, category, filters);
-        }
-    }, 300);
+  const filters = {
+    minPrice: "",
+    maxPrice: "",
+    inStock: false,
+    region: "",
+    lat: null,
+    lng: null
+  };
 
-    // const filterPanel = createFilterPanel(filters, onFilterChange);
+  /**
+   * Refreshes the active tab content using the updated state of `filters`.
+   */
+  const refreshActiveTab = () => {
+    const activeTab = container.querySelector(".tab-content.active, [role='tabpanel']:not([hidden])");
+    if (activeTab) {
+      const category = activeTab.dataset.category || activeTab.id.replace("-tab", "");
+      renderCategoryItems(activeTab, category, filters);
+    }
+  };
 
-    const tabs = [
-        { id: "fruits-tab", title: "🍎 Fruits", render: el => renderCategoryItems(el, "Fruits", filters) },
-        { id: "vegetables-tab", title: "🥕 Vegetables", render: el => renderCategoryItems(el, "Vegetables", filters) },
-        { id: "grains-tab", title: "🌾 Grains", render: el => renderCategoryItems(el, "Grains", filters) },
-        { id: "dairy-tab", title: "🥛 Dairy", render: el => renderCategoryItems(el, "Dairy", filters) },
-        { id: "fishery-tab", title: "🐟 Fishery", render: el => renderCategoryItems(el, "Fishery", filters) },
-        { id: "poultry-tab", title: "🐔 Poultry", render: el => renderCategoryItems(el, "Poultry", filters) },
-        { id: "flowers-tab", title: "🌱 Flowers", render: el => renderCategoryItems(el, "Flowers", filters) },
-        { id: "others-tab", title: "🌱 Others", render: el => renderCategoryItems(el, "Others", filters) }
-    ];
+  // Debounced wrapper to prevent rapid re-renders on filter changes
+  const onFilterChange = debounce(refreshActiveTab, 300);
 
-    const tabComponent = createTabs(tabs);
-    // container.append(filterPanel, tabComponent);
-    container.append(tabComponent);
+  const filterPanel = createFilterPanel(filters, onFilterChange);
+
+  const categories = [
+    { id: "fruits-tab", title: "🍎 Fruits", category: "Fruits" },
+    { id: "vegetables-tab", title: "🥕 Vegetables", category: "Vegetables" },
+    { id: "grains-tab", title: "🌾 Grains", category: "Grains" },
+    { id: "dairy-tab", title: "🥛 Dairy", category: "Dairy" },
+    { id: "fishery-tab", title: "🐟 Fishery", category: "Fishery" },
+    { id: "poultry-tab", title: "🐔 Poultry", category: "Poultry" },
+    { id: "flowers-tab", title: "🌸 Flowers", category: "Flowers" },
+    { id: "others-tab", title: "🌱 Others", category: "Others" }
+  ];
+
+  const tabs = categories.map(({ id, title, category }) => ({
+    id,
+    title,
+    render: (el) => {
+      el.dataset.category = category;
+      return renderCategoryItems(el, category, filters);
+    }
+  }));
+
+  const tabComponent = createTabs(tabs);
+  const browserWrapper = createElement("div", { class: "category-browser" }, [
+    filterPanel,
+    tabComponent
+  ]);
+
+  container.append(browserWrapper);
 }
-
-// function debounce(fn, delay) {
-//     let timeout;
-//     return function (...args) {
-//         clearTimeout(timeout);
-//         timeout = setTimeout(() => fn.apply(this, args), delay);
-//     };
-// }
-

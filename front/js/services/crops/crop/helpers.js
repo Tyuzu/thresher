@@ -1,17 +1,17 @@
 import { createElement } from "../../../components/createElement";
 export function clearElement(el) {
-    while (el.firstChild) {
-el.removeChild(el.firstChild);
+  while (el.firstChild) {
+    el.removeChild(el.firstChild);
+  }
 }
-  }
-  
-  export function createOption(value, text) {
-    return createElement("option", { value }, [text]);
-  }
-  
-  export function showToast(msg) {
-    const toast = createElement("div", {
-      style: `
+
+export function createOption(value, text) {
+  return createElement("option", { value }, [text]);
+}
+
+export function showToast(msg) {
+  const toast = createElement("div", {
+    style: `
         position: fixed;
         bottom: 20px;
         right: 20px;
@@ -22,9 +22,8 @@ el.removeChild(el.firstChild);
         box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         z-index: 1000;
       `
-    }, [msg]);
-  
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2500);
-  }
-  
+  }, [msg]);
+
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}

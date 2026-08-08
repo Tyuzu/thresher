@@ -17,21 +17,32 @@ import { createAsideContent } from "../../../components/layout/asideLayout.js";
 // Config
 const PAGE_SIZE = 10;
 
-// State
-const state = {
-  farms: [],
-  page: 1,
-  isLoading: false,
-  hasMore: true,
-  favorites: new Set(JSON.parse(localStorage.getItem("favFarms") || "[]")),
-  searchKeyword: "",
-  locationFilter: "",
-  onlyAvailable: false,
-  minRating: 0,
-  maxRating: 5,
-  sortBy: "",
-  sortDir: ""
-};
+/**
+ * Creates a fresh state instance to prevent cross-request state pollution.
+ */
+function createInitialState() {
+  let favorites = new Set();
+  try {
+    favorites = new Set(JSON.parse(localStorage.getItem("favFarms") || "[]"));
+  } catch {
+    favorites = new Set();
+  }
+
+  return {
+    farms: [],
+    page: 1,
+    isLoading: false,
+    hasMore: true,
+    favorites,
+    searchKeyword: "",
+    locationFilter: "",
+    onlyAvailable: false,
+    minRating: 0,
+    maxRating: 5,
+    sortBy: "",
+    sortDir: ""
+  };
+}
 
 // ---------- Data helpers ----------
 
@@ -43,7 +54,7 @@ function indexFarmsById(farms) {
 
 function getTopRated(farms, limit = 3) {
   return farms
-    .filter(f => typeof f.rating === "number")
+    .filter(f => typeof f?.rating === "number")
     .sort((a, b) => b.rating - a.rating)
     .slice(0, limit);
 }
@@ -53,10 +64,7 @@ function getTopRated(farms, limit = 3) {
 async function fetchFarms(page) {
   try {
     const res = await apiFetch(`/farms?page=${page}&limit=${PAGE_SIZE}`);
-    if (!res || !Array.isArray(res.farms)) {
-      return [];
-    }
-    return res.farms;
+    return Array.isArray(res?.farms) ? res.farms : [];
   } catch {
     return [];
   }
@@ -74,7 +82,7 @@ function Grid(isLoggedIn, toggleFavorite) {
 
       if (!farms.length) {
         container.append(
-          createElement("p", {}, ["No farms found."])
+          createElement("p", { class: "farm__empty-message" }, ["No farms found."])
         );
         return;
       }
@@ -87,17 +95,15 @@ function Grid(isLoggedIn, toggleFavorite) {
 // ---------- Sidebar ----------
 
 function Sidebar(isLoggedIn, stateRef) {
-  const staticSections = createElement("div");
-  const dynamicSections = createElement("div");
+  const staticSections = createElement("div", { class: "aside-static-sections" });
+  const dynamicSections = createElement("div", { class: "aside-dynamic-sections" });
 
   renderCTAFarm(staticSections);
   renderWeatherWidget(staticSections);
   renderMap(staticSections);
 
   function renderFavorites(container) {
-    if (!isLoggedIn) {
-      return;
-    }
+    if (!isLoggedIn) return;
 
     const farmIndex = indexFarmsById(stateRef.farms);
     const section = createElement("section", { class: "farm__favorites" }, [
@@ -109,13 +115,11 @@ function Sidebar(isLoggedIn, stateRef) {
         createElement("p", {}, ["None yet. Click ❤ on a card."])
       );
     } else {
-      const list = createElement("ul");
+      const list = createElement("ul", { class: "favorites-list" });
       stateRef.favorites.forEach(id => {
         const farm = farmIndex.get(String(id));
         if (farm) {
-          list.append(
-            createElement("li", {}, [farm.name])
-          );
+          list.append(createElement("li", {}, [farm.name]));
         }
       });
       section.append(list);
@@ -138,14 +142,12 @@ function Sidebar(isLoggedIn, stateRef) {
     } else {
       top.forEach(f => {
         const rounded = Math.round(f.rating);
-        const stars =
-          "★".repeat(rounded) +
-          "☆".repeat(5 - rounded);
+        const stars = "★".repeat(rounded) + "☆".repeat(5 - rounded);
 
         section.append(
           createElement("div", { class: "rating" }, [
             createElement("strong", {}, [f.name]),
-            createElement("span", {}, [stars])
+            createElement("span", { class: "rating-stars" }, [stars])
           ])
         );
       });
@@ -165,14 +167,15 @@ function Sidebar(isLoggedIn, stateRef) {
     );
   }
 
-  const asideContent = createAsideContent({
+  // createAsideContent returns an Array of DOM nodes
+  const asideContentNodes = createAsideContent({
     title: "Farm Directory",
     children: [staticSections, dynamicSections],
     showAd: true
   });
 
   return {
-    container: asideContent,
+    container: asideContentNodes,
     render(farms) {
       dynamicSections.replaceChildren();
 
@@ -187,15 +190,12 @@ function Sidebar(isLoggedIn, stateRef) {
   };
 }
 
-// ---------- Main entry ----------
+// ---------- Main Entry ----------
 
 export async function displayFarms(content, loggedIn) {
   content.replaceChildren();
 
-  const container = createElement("div", { class: "farmspage" });
-  content.append(container);
-
-  const mainElements = [];
+  const state = createInitialState();
   const sentinel = createElement("div", { class: "farm__sentinel" });
 
   const grid = Grid(loggedIn, toggleFavorite);
@@ -209,15 +209,16 @@ export async function displayFarms(content, loggedIn) {
 
   const filters = createFilterControls(state, commit);
 
-  mainElements.push(filters, grid.container, sentinel);
-
+  // Direct layout composition
   const layout = createMainLayout({
-    mainContent: mainElements,
+    mainContent: [filters, grid.container, sentinel],
     asideContent: sidebar.container,
-    pageClass: "farm-page"
+    pageClass: "farm-page",
+    showMainAd: true,
   });
 
-  container.append(layout);
+  const pageContainer = createElement("div", { class: "farmspage" }, [layout]);
+  content.append(pageContainer);
 
   const observer = new IntersectionObserver(onIntersect, {
     rootMargin: "200px"
@@ -229,9 +230,7 @@ export async function displayFarms(content, loggedIn) {
   commit();
 
   async function loadNextPage() {
-    if (state.isLoading || !state.hasMore) {
-      return;
-    }
+    if (state.isLoading || !state.hasMore) return;
 
     state.isLoading = true;
     const batch = await fetchFarms(state.page);
@@ -248,9 +247,7 @@ export async function displayFarms(content, loggedIn) {
   }
 
   async function onIntersect(entries) {
-    if (!entries.some(e => e.isIntersecting)) {
-      return;
-    }
+    if (!entries.some(e => e.isIntersecting)) return;
 
     const prevCount = state.farms.length;
     await loadNextPage();
@@ -269,10 +266,14 @@ export async function displayFarms(content, loggedIn) {
       state.favorites.add(id);
     }
 
-    localStorage.setItem(
-      "favFarms",
-      JSON.stringify(Array.from(state.favorites))
-    );
+    try {
+      localStorage.setItem(
+        "favFarms",
+        JSON.stringify(Array.from(state.favorites))
+      );
+    } catch (e) {
+      console.warn("Could not save favorites to localStorage", e);
+    }
 
     commit();
   }

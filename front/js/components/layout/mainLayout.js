@@ -2,16 +2,29 @@ import { createElement } from "../../components/createElement.js";
 import { adspace } from "../../services/ads/newads.js";
 
 /**
- * Creates a standard two-column page structure with Main content and Aside sidebar.
- * @param {Object} options
+ * Helper to normalize single nodes, arrays, or nested arrays into a clean array of valid Nodes.
+ * Removes falsy values (null, undefined, false) to prevent rendering invalid DOM children.
+ *
+ * @param {HTMLElement|HTMLElement[]|null|undefined} content
+ * @returns {HTMLElement[]}
+ */
+const normalizeContent = (content) => {
+  if (!content) return [];
+  return (Array.isArray(content) ? content : [content]).flat().filter(Boolean);
+};
+
+/**
+ * Creates a standard two-column page structure with a main content area and an aside sidebar.
+ *
+ * @param {Object} [options={}] - Configuration options for the layout.
  * @param {HTMLElement|HTMLElement[]} [options.mainContent=[]] - Elements or single element for the main section.
  * @param {HTMLElement|HTMLElement[]} [options.asideContent=[]] - Elements or single element for the sidebar section.
- * @param {string} [options.pageClass="page-layout"] - Optional custom CSS class for the layout container.
- * @param {string} [options.page] - Page identifier for ad contexts. Defaults to auto-resolving route path if omitted.
- * @param {boolean} [options.showMainAd=false] - Optional boolean to inject an ad slot at the bottom of main content.
- * @param {string} [options.mainAdPosition="main-bottom"] - Position descriptor for the main content ad unit.
- * @param {Object} [options.mainAdOptions={}] - Ad settings for the main content ad unit.
- * @returns {HTMLElement} The complete layout container.
+ * @param {string} [options.pageClass="page-layout"] - Custom CSS class for the layout container.
+ * @param {string} [options.page] - Page identifier for ad contexts.
+ * @param {boolean} [options.showMainAd=false] - Whether to inject an ad slot at the bottom of main content.
+ * @param {string} [options.mainAdPosition="main-bottom"] - Position descriptor for the main ad unit.
+ * @param {Object} [options.mainAdOptions={}] - Settings for the main ad unit.
+ * @returns {HTMLElement} The complete layout container element.
  */
 export function createMainLayout({
   mainContent = [],
@@ -22,20 +35,17 @@ export function createMainLayout({
   mainAdPosition = "main-bottom",
   mainAdOptions = {}
 } = {}) {
-  const layout = createElement("div", { class: `two-column ${pageClass}`.trim() });
+  const mainElements = normalizeContent(mainContent);
 
-  const mainElements = Array.isArray(mainContent) ? [...mainContent] : [mainContent];
-
-  // Optional: Add a main-content stream ad slot
   if (showMainAd) {
-    mainElements.push(adspace(mainAdPosition, page, mainAdOptions));
+    const mainAd = adspace(mainAdPosition, page, mainAdOptions);
+    if (mainAd) mainElements.push(mainAd);
   }
 
+  const containerClass = ["two-column", pageClass].filter(Boolean).join(" ");
+
   const main = createElement("main", { class: "layout-main" }, mainElements);
+  const aside = createElement("aside", { class: "layout-aside" }, normalizeContent(asideContent));
 
-  const asideElements = Array.isArray(asideContent) ? asideContent : [asideContent];
-  const aside = createElement("aside", { class: "layout-aside" }, asideElements);
-
-  layout.append(main, aside);
-  return layout;
+  return createElement("div", { class: containerClass }, [main, aside]);
 }
