@@ -6,46 +6,53 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"naevis/infra"
+	"naevis/utils"
 )
 
-type Delivery struct {
-	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	TenantID   string             `bson:"tenant_id" json:"tenant_id"`
-	UserID     string             `bson:"user_id" json:"user_id"`
-	DriverID   *string            `bson:"driver_id,omitempty" json:"driver_id,omitempty"`
-	Status     string             `bson:"status" json:"status"`
-	PickupLoc  Location           `bson:"pickup_loc" json:"pickup_loc"`
-	DropoffLoc Location           `bson:"dropoff_loc" json:"dropoff_loc"`
-	CreatedAt  time.Time          `bson:"created_at" json:"created_at"`
-	UpdatedAt  time.Time          `bson:"updated_at" json:"updated_at"`
-}
+func updateDeliveryStatus(app *infra.Deps, r *http.Request, deliveryID string, newStatus string) (*Delivery, error) {
+	ctx := r.Context()
+	userID := GetUserIDFromContext(ctx)
+	tenantID := GetTenantIDFromContext(ctx)
 
-type Location struct {
-	Lat float64 `bson:"lat" json:"lat"`
-	Lng float64 `bson:"lng" json:"lng"`
-}
-
-// Helpers
-func respondJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if data != nil {
-		_ = json.NewEncoder(w).Encode(data)
+	// Fetch existing status to validate transition
+	var currentDelivery Delivery
+	filter := bson.M{"_id": deliveryID, "tenant_id": tenantID}
+	if err := app.DB.FindOne(ctx, "deliveries", filter, &currentDelivery); err != nil {
+		return nil, fmt.Errorf("delivery not found")
 	}
-}
 
-func respondError(w http.ResponseWriter, status int, message string) {
-	respondJSON(w, status, map[string]string{"error": message})
-}
+	if err := ValidateTransition(currentDelivery.Status, newStatus); err != nil {
+		return nil, err
+	}
 
-func getPathParam(r *http.Request, key string) string {
-	params := httprouter.ParamsFromContext(r.Context())
-	return params.ByName(key)
+	now := time.Now()
+	update := bson.M{
+		"$set": bson.M{
+			"status":     newStatus,
+			"updated_at": now,
+		},
+		"$push": bson.M{
+			"status_history": StatusHistoryItem{
+				Status:    newStatus,
+				Timestamp: now,
+				UpdatedBy: userID,
+			},
+		},
+	}
+
+	var updatedDelivery Delivery
+	err := app.DB.FindOneAndUpdate(ctx, "deliveries", filter, update, &updatedDelivery)
+	if err != nil {
+		return nil, err
+	}
+
+	_ = app.Cache.Del(ctx, fmt.Sprintf("delivery:%s", deliveryID))
+	_ = app.NatsConn.Publish(fmt.Sprintf("deliveries.status.%s", newStatus), []byte(deliveryID))
+
+	return &updatedDelivery, nil
 }
 
 func CreateDelivery(app *infra.Deps) http.HandlerFunc {
@@ -55,46 +62,72 @@ func CreateDelivery(app *infra.Deps) http.HandlerFunc {
 			DropoffLoc Location `json:"dropoff_loc"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			respondError(w, http.StatusBadRequest, "Invalid request body")
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 			return
-		}
-
-		delivery := Delivery{
-			ID:         primitive.NewObjectID(),
-			UserID:     r.Header.Get("X-User-ID"), // Or extract from Context/Auth middleware
-			TenantID:   r.Header.Get("X-Tenant-ID"),
-			Status:     "CREATED",
-			PickupLoc:  req.PickupLoc,
-			DropoffLoc: req.DropoffLoc,
-			CreatedAt:  time.Now(),
-			UpdatedAt:  time.Now(),
 		}
 
 		ctx := r.Context()
+		now := time.Now()
+		deliveryID := utils.GenerateRandomString(18)
+
+		delivery := Delivery{
+			DeliveryID:          deliveryID,
+			UserID:              GetUserIDFromContext(ctx),
+			TenantID:            GetTenantIDFromContext(ctx),
+			Status:              StatusCreated,
+			PickupLoc:           req.PickupLoc,
+			DropoffLoc:          req.DropoffLoc,
+			PublicTrackingToken: utils.GenerateRandomString(32),
+			CreatedAt:           now,
+			UpdatedAt:           now,
+			StatusHistory: []StatusHistoryItem{
+				{
+					Status:    StatusCreated,
+					Timestamp: now,
+					UpdatedBy: GetUserIDFromContext(ctx),
+				},
+			},
+		}
+
 		if err := app.DB.InsertOne(ctx, "deliveries", delivery); err != nil {
-			respondError(w, http.StatusInternalServerError, "Failed to create delivery")
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create delivery")
 			return
 		}
 
-		// Publish event
-		_ = app.NatsConn.Publish("deliveries.created", []byte(delivery.ID.Hex()))
+		_ = app.NatsConn.Publish("deliveries.created", []byte(delivery.DeliveryID))
+		utils.RespondWithJSON(w, http.StatusCreated, delivery)
+	}
+}
 
-		respondJSON(w, http.StatusCreated, delivery)
+func GetMyDeliveries(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		userID := GetUserIDFromContext(ctx)
+		tenantID := GetTenantIDFromContext(ctx)
+
+		filter := bson.M{"user_id": userID, "tenant_id": tenantID}
+		var myDeliveries []Delivery
+
+		if err := app.DB.FindMany(ctx, "deliveries", filter, &myDeliveries); err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch deliveries")
+			return
+		}
+		utils.RespondWithJSON(w, http.StatusOK, myDeliveries)
 	}
 }
 
 func GetDeliveryByID(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		deliveryID := getPathParam(r, "deliveryid")
+		deliveryID := utils.GetParam(r, "deliveryid")
+		tenantID := GetTenantIDFromContext(r.Context())
 		if deliveryID == "" {
-			respondError(w, http.StatusBadRequest, "Missing delivery ID")
+			utils.RespondWithError(w, http.StatusBadRequest, "Missing delivery ID")
 			return
 		}
 
 		ctx := r.Context()
 		cacheKey := fmt.Sprintf("delivery:%s", deliveryID)
 
-		// 1. Try Cache First
 		if cached, err := app.Cache.Get(ctx, cacheKey); err == nil && len(cached) > 0 {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
@@ -102,24 +135,130 @@ func GetDeliveryByID(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		// 2. Fallback to DB
-		objID, err := primitive.ObjectIDFromHex(deliveryID)
-		if err != nil {
-			respondError(w, http.StatusBadRequest, "Invalid delivery ID format")
-			return
-		}
-
 		var delivery Delivery
-		if err := app.DB.FindOne(ctx, "deliveries", bson.M{"_id": objID}, &delivery); err != nil {
-			respondError(w, http.StatusNotFound, "Delivery not found")
+		filter := bson.M{"_id": deliveryID, "tenant_id": tenantID}
+		if err := app.DB.FindOne(ctx, "deliveries", filter, &delivery); err != nil {
+			utils.RespondWithError(w, http.StatusNotFound, "Delivery not found")
 			return
 		}
 
-		// 3. Update Cache
 		if bytes, err := json.Marshal(delivery); err == nil {
 			_ = app.Cache.Set(ctx, cacheKey, bytes, 15*time.Minute)
 		}
 
-		respondJSON(w, http.StatusOK, delivery)
+		utils.RespondWithJSON(w, http.StatusOK, delivery)
+	}
+}
+
+func CancelDelivery(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deliveryID := utils.GetParam(r, "deliveryid")
+		delivery, err := updateDeliveryStatus(app, r, deliveryID, StatusCancelled)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		utils.RespondWithJSON(w, http.StatusOK, delivery)
+	}
+}
+
+func AssignDriver(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deliveryID := utils.GetParam(r, "deliveryid")
+		tenantID := GetTenantIDFromContext(r.Context())
+
+		var req struct {
+			DriverID string `json:"driver_id"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
+		ctx := r.Context()
+		var current Delivery
+		filter := bson.M{"_id": deliveryID, "tenant_id": tenantID}
+		if err := app.DB.FindOne(ctx, "deliveries", filter, &current); err != nil {
+			utils.RespondWithError(w, http.StatusNotFound, "Delivery not found")
+			return
+		}
+
+		if err := ValidateTransition(current.Status, StatusAssigned); err != nil {
+			utils.RespondWithError(w, http.StatusConflict, err.Error())
+			return
+		}
+
+		now := time.Now()
+		update := bson.M{
+			"$set": bson.M{
+				"driver_id":  req.DriverID,
+				"status":     StatusAssigned,
+				"updated_at": now,
+			},
+			"$push": bson.M{
+				"status_history": StatusHistoryItem{
+					Status:    StatusAssigned,
+					Timestamp: now,
+					UpdatedBy: GetUserIDFromContext(ctx),
+				},
+			},
+		}
+
+		var updated Delivery
+		if err := app.DB.FindOneAndUpdate(ctx, "deliveries", filter, update, &updated); err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to assign driver")
+			return
+		}
+
+		_ = app.Cache.Del(ctx, fmt.Sprintf("delivery:%s", deliveryID))
+		utils.RespondWithJSON(w, http.StatusOK, updated)
+	}
+}
+
+func AcceptAssignment(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deliveryID := utils.GetParam(r, "deliveryid")
+		delivery, err := updateDeliveryStatus(app, r, deliveryID, StatusAccepted)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		utils.RespondWithJSON(w, http.StatusOK, delivery)
+	}
+}
+
+func MarkPickedUp(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deliveryID := utils.GetParam(r, "deliveryid")
+		delivery, err := updateDeliveryStatus(app, r, deliveryID, StatusPickedUp)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		utils.RespondWithJSON(w, http.StatusOK, delivery)
+	}
+}
+
+func StartDelivery(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deliveryID := utils.GetParam(r, "deliveryid")
+		delivery, err := updateDeliveryStatus(app, r, deliveryID, StatusInTransit)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		utils.RespondWithJSON(w, http.StatusOK, delivery)
+	}
+}
+
+func CompleteDelivery(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deliveryID := utils.GetParam(r, "deliveryid")
+		delivery, err := updateDeliveryStatus(app, r, deliveryID, StatusDelivered)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		utils.RespondWithJSON(w, http.StatusOK, delivery)
 	}
 }
