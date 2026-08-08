@@ -22,7 +22,8 @@ const coreStaticRoutes = {
   "/map": { moduleImport: () => import("../pages/gtamap/mapgta.js"), functionName: "MapGTA" },
   "/cart": { moduleImport: () => import("../pages/cart/cart.js"), functionName: "Cart", protected: true },
   "/my-orders": { moduleImport: () => import("../pages/cart/myorders.js"), functionName: "MyOrders", protected: true },
-  "/deliveries": { moduleImport: () => import("../pages/cart/delivery.js"), functionName: "DeliveryPage" },
+  "/deliveries": { moduleImport: () => import("../pages/delivery/deliveries.js"), functionName: "Deliveries", protected: true },
+  "/delivery/create": { moduleImport: () => import("../pages/delivery/createDelivery.js"), functionName: "Createdelivery", protected: true },
   "/booking": { moduleImport: () => import("../pages/booking/booking.js"), functionName: "Booking" },
   "/wallet": { moduleImport: () => import("../pages/wallet/wallet.js"), functionName: "Wallet" },
   "/search": { moduleImport: () => import("../pages/search/search.js"), functionName: "Search" },
@@ -39,11 +40,11 @@ const coreDynamicRoutes = [
   },
   {
     pattern: /^\/delivery\/([\w-]+)$/,
-    moduleImport: () => import("../pages/cart/displayDelivery.js"),
+    moduleImport: () => import("../pages/delivery/displayDelivery.js"),
     functionName: "Delivery",
     protected: false,
-    argBuilder: safeArgBuilder
-  }
+    argBuilder: (match, state) => [state?.isLoggedIn, match[1]]
+  },
 ];
 
 // Map feature keys to their respective static and dynamic routes

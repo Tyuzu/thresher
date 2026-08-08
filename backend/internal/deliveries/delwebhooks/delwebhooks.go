@@ -43,6 +43,9 @@ func ListWebhooks(app *infra.Deps) http.HandlerFunc {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to list webhooks")
 			return
 		}
+		if len(webhooks) == 0 {
+			webhooks = []deliveries.Webhook{}
+		}
 		utils.RespondWithJSON(w, http.StatusOK, webhooks)
 	}
 }

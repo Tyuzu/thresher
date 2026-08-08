@@ -107,10 +107,9 @@
   display: block;
 }
 
-.nav-icon:hover {
-  transform: scale(1.05);
-  background-color: #e6f0ff;
-}
+/* .nav-icon:hover {
+  transform: scale(1);
+} */
 
 /* =========================
    NAV TOGGLE

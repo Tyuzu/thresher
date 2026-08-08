@@ -114,6 +114,9 @@ func GetAvailableJobs(app *infra.Deps) http.HandlerFunc {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch available jobs")
 			return
 		}
+		if len(jobs) == 0 {
+			jobs = []deliveries.Delivery{}
+		}
 		utils.RespondWithJSON(w, http.StatusOK, jobs)
 	}
 }
@@ -135,6 +138,9 @@ func GetActiveDeliveries(app *infra.Deps) http.HandlerFunc {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch active deliveries")
 			return
 		}
+		if len(active) == 0 {
+			active = []deliveries.Delivery{}
+		}
 		utils.RespondWithJSON(w, http.StatusOK, active)
 	}
 }
@@ -143,7 +149,7 @@ func AcceptJob(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		driverID := deliveries.GetDriverIDFromContext(r.Context())
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
-		deliveryID := deliveries.GetParam(r, "deliveryid")
+		deliveryID := utils.GetParam(r, "deliveryid")
 		ctx := r.Context()
 
 		now := time.Now()
@@ -178,7 +184,7 @@ func RejectJob(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		driverID := deliveries.GetDriverIDFromContext(r.Context())
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
-		deliveryID := deliveries.GetParam(r, "deliveryid")
+		deliveryID := utils.GetParam(r, "deliveryid")
 		ctx := r.Context()
 
 		_ = app.DB.InsertOne(ctx, "driver_job_rejections", bson.M{

@@ -14,7 +14,7 @@ import (
 
 func updateDeliveryStatus(app *infra.Deps, r *http.Request, deliveryID string, newStatus string) (*Delivery, error) {
 	ctx := r.Context()
-	userID := GetUserIDFromContext(ctx)
+	userID := utils.GetUserIDFromRequest(r)
 	tenantID := GetTenantIDFromContext(ctx)
 
 	// Fetch existing status to validate transition
@@ -72,7 +72,7 @@ func CreateDelivery(app *infra.Deps) http.HandlerFunc {
 
 		delivery := Delivery{
 			DeliveryID:          deliveryID,
-			UserID:              GetUserIDFromContext(ctx),
+			UserID:              utils.GetUserIDFromRequest(r),
 			TenantID:            GetTenantIDFromContext(ctx),
 			Status:              StatusCreated,
 			PickupLoc:           req.PickupLoc,
@@ -84,7 +84,7 @@ func CreateDelivery(app *infra.Deps) http.HandlerFunc {
 				{
 					Status:    StatusCreated,
 					Timestamp: now,
-					UpdatedBy: GetUserIDFromContext(ctx),
+					UpdatedBy: utils.GetUserIDFromRequest(r),
 				},
 			},
 		}
@@ -102,7 +102,7 @@ func CreateDelivery(app *infra.Deps) http.HandlerFunc {
 func GetMyDeliveries(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		userID := GetUserIDFromContext(ctx)
+		userID := utils.GetUserIDFromRequest(r)
 		tenantID := GetTenantIDFromContext(ctx)
 
 		filter := bson.M{"user_id": userID, "tenant_id": tenantID}
@@ -111,6 +111,9 @@ func GetMyDeliveries(app *infra.Deps) http.HandlerFunc {
 		if err := app.DB.FindMany(ctx, "deliveries", filter, &myDeliveries); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch deliveries")
 			return
+		}
+		if len(myDeliveries) == 0 {
+			myDeliveries = []Delivery{}
 		}
 		utils.RespondWithJSON(w, http.StatusOK, myDeliveries)
 	}
@@ -199,7 +202,7 @@ func AssignDriver(app *infra.Deps) http.HandlerFunc {
 				"status_history": StatusHistoryItem{
 					Status:    StatusAssigned,
 					Timestamp: now,
-					UpdatedBy: GetUserIDFromContext(ctx),
+					UpdatedBy: utils.GetUserIDFromRequest(r),
 				},
 			},
 		}

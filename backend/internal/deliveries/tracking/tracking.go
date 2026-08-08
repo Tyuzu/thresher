@@ -15,7 +15,7 @@ import (
 
 func GetDeliveryTracking(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		deliveryID := deliveries.GetParam(r, "deliveryid")
+		deliveryID := utils.GetParam(r, "deliveryid")
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		ctx := r.Context()
 
@@ -33,7 +33,7 @@ func GetDeliveryTracking(app *infra.Deps) http.HandlerFunc {
 
 func GetDeliveryLocation(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		deliveryID := deliveries.GetParam(r, "deliveryid")
+		deliveryID := utils.GetParam(r, "deliveryid")
 		ctx := r.Context()
 
 		locationBytes, err := app.Cache.Get(ctx, fmt.Sprintf("location:delivery:%s", deliveryID))
@@ -50,7 +50,7 @@ func GetDeliveryLocation(app *infra.Deps) http.HandlerFunc {
 
 func GetDeliveryEvents(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		deliveryID := deliveries.GetParam(r, "deliveryid")
+		deliveryID := utils.GetParam(r, "deliveryid")
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		ctx := r.Context()
 
@@ -60,13 +60,17 @@ func GetDeliveryEvents(app *infra.Deps) http.HandlerFunc {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve events")
 			return
 		}
+
+		if len(events) == 0 {
+			events = []bson.M{}
+		}
 		utils.RespondWithJSON(w, http.StatusOK, events)
 	}
 }
 
 func GetStatusHistory(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		deliveryID := deliveries.GetParam(r, "deliveryid")
+		deliveryID := utils.GetParam(r, "deliveryid")
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		ctx := r.Context()
 
@@ -84,7 +88,7 @@ func GetStatusHistory(app *infra.Deps) http.HandlerFunc {
 
 func AddProof(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		deliveryID := deliveries.GetParam(r, "deliveryid")
+		deliveryID := utils.GetParam(r, "deliveryid")
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 
 		var req struct {
@@ -115,7 +119,7 @@ func AddProof(app *infra.Deps) http.HandlerFunc {
 
 func GetProof(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		deliveryID := deliveries.GetParam(r, "deliveryid")
+		deliveryID := utils.GetParam(r, "deliveryid")
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		ctx := r.Context()
 
@@ -133,7 +137,7 @@ func GetProof(app *infra.Deps) http.HandlerFunc {
 
 func GetPublicTracking(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		token := deliveries.GetParam(r, "token")
+		token := utils.GetParam(r, "token")
 		ctx := r.Context()
 
 		var res bson.M
@@ -151,7 +155,7 @@ func GetPublicTracking(app *infra.Deps) http.HandlerFunc {
 
 func GetPublicLocation(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		token := deliveries.GetParam(r, "token")
+		token := utils.GetParam(r, "token")
 		ctx := r.Context()
 
 		deliveryIDBytes, err := app.Cache.Get(ctx, fmt.Sprintf("token:map:%s", token))
