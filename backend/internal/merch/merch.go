@@ -11,7 +11,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/internal/metrics/auditlog"
+	"naevis/internal/beats/auditlog"
 	"naevis/internal/userdata"
 	"naevis/utils"
 

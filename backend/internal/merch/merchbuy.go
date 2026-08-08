@@ -8,7 +8,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/internal/stripe"
+	"naevis/internal/pay/stripe"
 	"naevis/internal/userdata"
 	"naevis/utils"
 

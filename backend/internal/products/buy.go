@@ -10,9 +10,9 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
+	"naevis/internal/beats/auditlog"
 	"naevis/internal/cart"
 	"naevis/internal/farms"
-	"naevis/internal/metrics/auditlog"
 	"naevis/utils"
 	log "naevis/utils/logger"
 

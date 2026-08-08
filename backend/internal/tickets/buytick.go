@@ -10,7 +10,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/internal/metrics/auditlog"
+	"naevis/internal/beats/auditlog"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"

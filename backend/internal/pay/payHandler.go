@@ -7,7 +7,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra/mq"
-	"naevis/internal/metrics/auditlog"
+	"naevis/internal/beats/auditlog"
 	"naevis/utils"
 	log "naevis/utils/logger"
 )

@@ -1,132 +1,125 @@
 package deliveries
 
 import (
-	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
-	"naevis/infra"
-	"naevis/internal/cart"
-	"naevis/utils"
-
+	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"naevis/infra"
 )
 
 type Delivery struct {
-	DeliveryID    string    `json:"deliveryid" bson:"deliveryid"`
-	OrderID       string    `json:"orderid,omitempty" bson:"orderid,omitempty"`
-	Status        string    `json:"status" bson:"status"`
-	Pickup        string    `json:"pickup" bson:"pickup"`
-	Dropoff       string    `json:"dropoff" bson:"dropoff"`
-	PackageName   string    `json:"packageName,omitempty" bson:"packageName,omitempty"`
-	Weight        string    `json:"weight,omitempty" bson:"weight,omitempty"`
-	Distance      string    `json:"distance,omitempty" bson:"distance,omitempty"`
-	ETA           string    `json:"eta,omitempty" bson:"eta,omitempty"`
-	Reward        int64     `json:"reward,omitempty" bson:"reward,omitempty"`
-	UpdatedAt     string    `json:"updatedAt,omitempty" bson:"updatedAt,omitempty"`
-	CustomerName  string    `json:"customerName,omitempty" bson:"customerName,omitempty"`
-	CustomerPhone string    `json:"customerPhone,omitempty" bson:"customerPhone,omitempty"`
-	Notes         string    `json:"notes,omitempty" bson:"notes,omitempty"`
-	CreatedAt     time.Time `json:"createdAt" bson:"createdAt"`
+	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	TenantID   string             `bson:"tenant_id" json:"tenant_id"`
+	UserID     string             `bson:"user_id" json:"user_id"`
+	DriverID   *string            `bson:"driver_id,omitempty" json:"driver_id,omitempty"`
+	Status     string             `bson:"status" json:"status"`
+	PickupLoc  Location           `bson:"pickup_loc" json:"pickup_loc"`
+	DropoffLoc Location           `bson:"dropoff_loc" json:"dropoff_loc"`
+	CreatedAt  time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt  time.Time          `bson:"updated_at" json:"updated_at"`
 }
 
-func GetMyDeliveries(app *infra.Deps) http.HandlerFunc {
+type Location struct {
+	Lat float64 `bson:"lat" json:"lat"`
+	Lng float64 `bson:"lng" json:"lng"`
+}
+
+// Helpers
+func respondJSON(w http.ResponseWriter, status int, data any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if data != nil {
+		_ = json.NewEncoder(w).Encode(data)
+	}
+}
+
+func respondError(w http.ResponseWriter, status int, message string) {
+	respondJSON(w, status, map[string]string{"error": message})
+}
+
+func getPathParam(r *http.Request, key string) string {
+	params := httprouter.ParamsFromContext(r.Context())
+	return params.ByName(key)
+}
+
+func CreateDelivery(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-		defer cancel()
-
-		userID := utils.GetUserIDFromRequest(r)
-		if userID == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		var req struct {
+			PickupLoc  Location `json:"pickup_loc"`
+			DropoffLoc Location `json:"dropoff_loc"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			respondError(w, http.StatusBadRequest, "Invalid request body")
 			return
 		}
 
-		var orders []cart.Order
-		if err := app.DB.FindMany(ctx, "orders", bson.M{"userId": userID}, &orders); err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch deliveries")
+		delivery := Delivery{
+			ID:         primitive.NewObjectID(),
+			UserID:     r.Header.Get("X-User-ID"), // Or extract from Context/Auth middleware
+			TenantID:   r.Header.Get("X-Tenant-ID"),
+			Status:     "CREATED",
+			PickupLoc:  req.PickupLoc,
+			DropoffLoc: req.DropoffLoc,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+		}
+
+		ctx := r.Context()
+		if err := app.DB.InsertOne(ctx, "deliveries", delivery); err != nil {
+			respondError(w, http.StatusInternalServerError, "Failed to create delivery")
 			return
 		}
 
-		deliveries := make([]Delivery, 0, len(orders))
-		for _, order := range orders {
-			deliveries = append(deliveries, buildDeliveryFromOrder(order))
-		}
+		// Publish event
+		_ = app.NatsConn.Publish("deliveries.created", []byte(delivery.ID.Hex()))
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"deliveries": deliveries})
+		respondJSON(w, http.StatusCreated, delivery)
 	}
 }
 
 func GetDeliveryByID(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-		defer cancel()
-
-		userID := utils.GetUserIDFromRequest(r)
-		if userID == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		deliveryID := getPathParam(r, "deliveryid")
+		if deliveryID == "" {
+			respondError(w, http.StatusBadRequest, "Missing delivery ID")
 			return
 		}
 
-		id := strings.TrimSpace(utils.GetParam(r, "deliveryid"))
-		if id == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid delivery id")
+		ctx := r.Context()
+		cacheKey := fmt.Sprintf("delivery:%s", deliveryID)
+
+		// 1. Try Cache First
+		if cached, err := app.Cache.Get(ctx, cacheKey); err == nil && len(cached) > 0 {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write(cached)
 			return
 		}
 
-		var order cart.Order
-		if err := app.DB.FindOne(ctx, "orders", bson.M{"orderId": id, "userId": userID}, &order); err != nil {
-			utils.RespondWithError(w, http.StatusNotFound, "Delivery not found")
+		// 2. Fallback to DB
+		objID, err := primitive.ObjectIDFromHex(deliveryID)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "Invalid delivery ID format")
 			return
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, buildDeliveryFromOrder(order))
-	}
-}
+		var delivery Delivery
+		if err := app.DB.FindOne(ctx, "deliveries", bson.M{"_id": objID}, &delivery); err != nil {
+			respondError(w, http.StatusNotFound, "Delivery not found")
+			return
+		}
 
-func buildDeliveryFromOrder(order cart.Order) Delivery {
-	pickup, dropoff := parseAddress(order.Address)
-	status := normalizeStatus(order.Status)
-	return Delivery{
-		DeliveryID:   order.OrderID,
-		OrderID:      order.OrderID,
-		Status:       status,
-		Pickup:       pickup,
-		Dropoff:      dropoff,
-		PackageName:  "Order shipment",
-		Weight:       "1 kg",
-		Distance:     "5 km",
-		ETA:          "20 min",
-		Reward:       order.Total / 10,
-		UpdatedAt:    order.CreatedAt.Format(time.RFC3339),
-		CustomerName: order.UserID,
-		CreatedAt:    order.CreatedAt,
-	}
-}
+		// 3. Update Cache
+		if bytes, err := json.Marshal(delivery); err == nil {
+			_ = app.Cache.Set(ctx, cacheKey, bytes, 15*time.Minute)
+		}
 
-func normalizeStatus(status string) string {
-	switch strings.ToLower(strings.TrimSpace(status)) {
-	case "paid", "completed", "delivered":
-		return "Delivered"
-	case "pending", "processing", "accepted":
-		return "Pending"
-	case "in_progress", "inprogress", "shipping":
-		return "In Progress"
-	default:
-		return "Pending"
+		respondJSON(w, http.StatusOK, delivery)
 	}
-}
-
-func parseAddress(raw string) (string, string) {
-	parts := strings.Split(raw, "->")
-	if len(parts) == 2 {
-		return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
-	}
-
-	parts = strings.Split(raw, "-")
-	if len(parts) == 2 {
-		return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
-	}
-
-	return raw, raw
 }
