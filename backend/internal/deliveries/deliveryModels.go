@@ -17,17 +17,17 @@ type StatusHistoryItem struct {
 }
 
 type Proof struct {
-	ProofID   string    `json:"proof_id" bson:"_id"`
+	ProofID   string    `json:"proofid" bson:"id"`
 	Type      string    `json:"type" bson:"type"` // e.g. "PHOTO", "SIGNATURE"
 	URL       string    `json:"url" bson:"url"`
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 }
 
 type Delivery struct {
-	DeliveryID          string              `json:"delivery_id" bson:"_id"`
-	TenantID            string              `json:"tenant_id" bson:"tenant_id"`
-	UserID              string              `json:"user_id" bson:"user_id"`
-	DriverID            *string             `json:"driver_id" bson:"driver_id"`
+	DeliveryID          string              `json:"deliveryid" bson:"id"`
+	TenantID            string              `json:"tenantid" bson:"tenantid"`
+	UserID              string              `json:"userid" bson:"userid"`
+	DriverID            *string             `json:"driverid" bson:"driverid"`
 	Status              string              `json:"status" bson:"status"`
 	StatusHistory       []StatusHistoryItem `json:"status_history,omitempty" bson:"status_history,omitempty"`
 	PickupLoc           Location            `json:"pickup_loc" bson:"pickup_loc"`
@@ -47,8 +47,8 @@ type GPSData struct {
 }
 
 type Driver struct {
-	DriverID     string    `json:"driver_id" bson:"_id"`
-	TenantID     string    `json:"tenant_id" bson:"tenant_id"`
+	DriverID     string    `json:"driverid" bson:"id"`
+	TenantID     string    `json:"tenantid" bson:"tenantid"`
 	Name         string    `json:"name" bson:"name"`
 	IsOnline     bool      `json:"is_online" bson:"is_online"`
 	CurrentState string    `json:"current_state" bson:"current_state"`
@@ -56,8 +56,8 @@ type Driver struct {
 }
 
 type Webhook struct {
-	WebhookID string    `json:"webhook_id" bson:"_id"`
-	TenantID  string    `json:"tenant_id" bson:"tenant_id"`
+	WebhookID string    `json:"webhookid" bson:"id"`
+	TenantID  string    `json:"tenantid" bson:"tenantid"`
 	URL       string    `json:"url" bson:"url"`
 	Events    []string  `json:"events" bson:"events"`
 	Secret    string    `json:"secret" bson:"secret"`

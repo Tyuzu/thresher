@@ -17,13 +17,44 @@ const DEFAULT_SETTINGS = {
 let memorySettings = null;
 let memoryChatSettings = {};
 
+// Helper to safely obtain or instantiate the singleton AudioContext
+function getAudioContext() {
+  if (typeof window === 'undefined') return null;
+  const AudioCtor = window.AudioContext || window.webkitAudioContext;
+  if (typeof AudioCtor !== 'function') return null;
+
+  if (!window.__appSoundContext) {
+    window.__appSoundContext = new AudioCtor();
+  }
+  return window.__appSoundContext;
+}
+
+// Global user interaction handler to unlock Web Audio context on the first user gesture
+if (typeof window !== 'undefined') {
+  const unlockAudioContext = () => {
+    const context = getAudioContext();
+    if (context && context.state === 'suspended') {
+      context.resume().then(() => {
+        // Cleanup event listeners once successfully resumed
+        ['click', 'touchstart', 'keydown'].forEach((evt) => {
+          document.removeEventListener(evt, unlockAudioContext, true);
+        });
+      }).catch(() => {});
+    }
+  };
+
+  ['click', 'touchstart', 'keydown'].forEach((evt) => {
+    document.addEventListener(evt, unlockAudioContext, { capture: true, passive: true });
+  });
+}
+
 function readStoredSettings() {
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       const raw = window.localStorage.getItem(SOUND_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        memorySettings = parsed; // Sync memory cache on successful reads
+        memorySettings = parsed;
         return parsed;
       }
     } catch {
@@ -115,10 +146,6 @@ function resolveSoundPreference({ type = 'message', chatId } = {}) {
   
   const resolvedTone = chatSettings[toneKey] || settings[toneKey] || DEFAULT_TONES[type] || 'default';
   
-  // Enforce hierarchical structural precedence rules:
-  // 1. Global Master Switch OFF overrides all targets.
-  // 2. Chat-specific setting override takes next precedence if available.
-  // 3. Channel-specific global setting takes last priority fallback.
   let isEnabled = settings.enabled ?? true;
   if (isEnabled) {
     isEnabled = chatSettings[enabledKey] ?? settings[enabledKey] ?? true;
@@ -151,44 +178,42 @@ export function playSoundAlert({ type = 'message', chatId } = {}) {
     return false;
   }
 
-  const AudioCtor = window.AudioContext || window.webkitAudioContext;
-  if (typeof AudioCtor !== 'function') {
+  const context = getAudioContext();
+  if (!context) return false;
+
+  // If the browser hasn't registered user interaction yet, attempt a safe non-blocking resume
+  if (context.state === 'suspended') {
+    context.resume().catch(() => {});
+    // Abort playing sound this time to prevent unhandled autoplay warning logs
     return false;
   }
 
-  // Handle global execution singleton context layer securely
-  if (!window.__appSoundContext) {
-    window.__appSoundContext = new AudioCtor();
+  try {
+    const oscillator = context.createOscillator();
+    const gainNode = context.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.value = preference.tone === 'chime' ? 880 : preference.tone === 'sharp' ? 1320 : 660;
+    
+    gainNode.gain.setValueAtTime(0.04, context.currentTime);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(context.destination);
+
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.25);
+    oscillator.stop(context.currentTime + 0.3);
+
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gainNode.disconnect();
+    };
+
+    return true;
+  } catch (err) {
+    console.warn("Sound alert audio playback skipped:", err);
+    return false;
   }
-  const context = window.__appSoundContext;
-
-  // Unlocking explicit browser window threads safely
-  if (context.state === 'suspended') {
-    context.resume();
-  }
-
-  const oscillator = context.createOscillator();
-  const gainNode = context.createGain();
-
-  oscillator.type = 'sine';
-  oscillator.frequency.value = preference.tone === 'chime' ? 880 : preference.tone === 'sharp' ? 1320 : 660;
-  
-  gainNode.gain.setValueAtTime(0.04, context.currentTime);
-
-  oscillator.connect(gainNode);
-  gainNode.connect(context.destination);
-
-  oscillator.start();
-  gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.25);
-  oscillator.stop(context.currentTime + 0.3);
-
-  // Explicitly clear structural references on stream completion to prevent memory leaks
-  oscillator.onended = () => {
-    oscillator.disconnect();
-    gainNode.disconnect();
-  };
-
-  return true;
 }
 
 export {

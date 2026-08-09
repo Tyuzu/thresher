@@ -1,8 +1,9 @@
 import "../../../css/inistyles/deliverypage.css";
-import { displaydelivery } from '../../services/deliveries/displayDelivery.js';
+import { displayDelivery } from '../../services/deliveries/displayDelivery.js';
 
-async function Delivery(isLoggedIn, deliveryid, contentContainer) {
-    displaydelivery(isLoggedIn, deliveryid, contentContainer);
+async function Delivery(isLoggedIn, er, deliveryid, contentContainer) {
+    await displayDelivery(contentContainer, deliveryid, isLoggedIn);
 }
 
 export { Delivery };
+export default Delivery;

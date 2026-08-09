@@ -24,6 +24,7 @@ const coreStaticRoutes = {
   "/my-orders": { moduleImport: () => import("../pages/cart/myorders.js"), functionName: "MyOrders", protected: true },
   "/deliveries": { moduleImport: () => import("../pages/delivery/deliveries.js"), functionName: "Deliveries", protected: true },
   "/delivery/create": { moduleImport: () => import("../pages/delivery/createDelivery.js"), functionName: "Createdelivery", protected: true },
+  "/dash/driver": { moduleImport: () => import("../pages/delivery/driverDash.js"), functionName: "DriverDash", protected: true },
   "/booking": { moduleImport: () => import("../pages/booking/booking.js"), functionName: "Booking" },
   "/wallet": { moduleImport: () => import("../pages/wallet/wallet.js"), functionName: "Wallet" },
   "/search": { moduleImport: () => import("../pages/search/search.js"), functionName: "Search" },
@@ -45,6 +46,13 @@ const coreDynamicRoutes = [
     protected: false,
     argBuilder: (match, state) => [state?.isLoggedIn, match[1]]
   },
+  {
+    pattern: /^\/delivery\/track\/([\w-]+)$/,
+    moduleImport: () => import("../pages/delivery/trackDelivery.js"),
+    functionName: "TrackDelivery",
+    protected: false,
+    argBuilder: (match, state) => [state?.isLoggedIn, match[1]]
+  }
 ];
 
 // Map feature keys to their respective static and dynamic routes

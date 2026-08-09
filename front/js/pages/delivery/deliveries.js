@@ -1,9 +1,9 @@
 import "../../../css/inistyles/deliveries.css";
-import { displaydeliveries } from "../../services/deliveries/deliveries.js";
+import { displayDeliveries } from "../../services/deliveries/deliveries.js";
 
 async function Deliveries(isLoggedIn, contentContainer) {
   contentContainer.innerHTML = "";
-  displaydeliveries(contentContainer, isLoggedIn);
+  displayDeliveries(contentContainer, isLoggedIn);
 }
 
 export { Deliveries };

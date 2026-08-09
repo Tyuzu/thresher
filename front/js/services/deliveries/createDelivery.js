@@ -5,7 +5,16 @@ import Notify from "../../components/ui/Notify.mjs";
 import { createDeliveryRequest } from "../../services/deliveries/deliveriesApi.js";
 import { navigate } from "../../routes/index.js";
 
-async function CreateDelivery(isLoggedIn, contentContainer) {
+async function CreateDelivery(container, isLoggedIn) {
+  const contentContainer = (container && typeof container === "object" && container.nodeType)
+    ? container
+    : ((isLoggedIn && typeof isLoggedIn === "object" && isLoggedIn.nodeType) ? isLoggedIn : null);
+
+  if (!contentContainer) {
+    console.error("CreateDelivery: Missing DOM container element.");
+    return;
+  }
+
   contentContainer.innerHTML = "";
 
   const form = createElement("form", {
@@ -14,12 +23,30 @@ async function CreateDelivery(isLoggedIn, contentContainer) {
       submit: async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const payload = Object.fromEntries(formData.entries());
+        
+        const payload = {
+          pickup_loc: {
+            address: formData.get("pickupAddress"),
+            lat: parseFloat(formData.get("pickupLat") || 0),
+            lng: parseFloat(formData.get("pickupLng") || 0)
+          },
+          dropoff_loc: {
+            address: formData.get("dropoffAddress"),
+            lat: parseFloat(formData.get("dropoffLat") || 0),
+            lng: parseFloat(formData.get("dropoffLng") || 0)
+          }
+        };
 
         try {
           const res = await createDeliveryRequest(payload);
+          const deliveryId = res?.deliveryid ?? res?.id;
           Notify("Delivery scheduled successfully!", { type: "success" });
-          navigate(`delivery/${res.deliveryid || res._id}`);
+          
+          if (deliveryId) {
+            navigate(`/delivery/${deliveryId}`);
+          } else {
+            navigate("/deliveries");
+          }
         } catch (err) {
           Notify(err?.message || "Failed to schedule delivery", { type: "error" });
         }
@@ -27,26 +54,43 @@ async function CreateDelivery(isLoggedIn, contentContainer) {
     }
   }, [
     createElement("h2", {}, ["Schedule New Delivery"]),
+    
+    // Pickup Group
     createElement("div", { class: "form-group" }, [
-      createElement("label", { for: "recipientName" }, ["Recipient Name"]),
-      createElement("input", { id: "recipientName", name: "recipientName", required: true, type: "text" })
+      createElement("label", { for: "pickupAddress" }, ["Pickup Address"]),
+      createElement("input", { id: "pickupAddress", name: "pickupAddress", required: true, type: "text" })
     ]),
+    createElement("div", { class: "form-row" }, [
+      createElement("div", { class: "form-group" }, [
+        createElement("label", { for: "pickupLat" }, ["Pickup Latitude (Optional)"]),
+        createElement("input", { id: "pickupLat", name: "pickupLat", type: "number", step: "any" })
+      ]),
+      createElement("div", { class: "form-group" }, [
+        createElement("label", { for: "pickupLng" }, ["Pickup Longitude (Optional)"]),
+        createElement("input", { id: "pickupLng", name: "pickupLng", type: "number", step: "any" })
+      ])
+    ]),
+
+    // Dropoff Group
     createElement("div", { class: "form-group" }, [
-      createElement("label", { for: "address" }, ["Delivery Address"]),
-      createElement("textarea", { id: "address", name: "address", required: true, rows: "3" })
+      createElement("label", { for: "dropoffAddress" }, ["Dropoff Address"]),
+      createElement("textarea", { id: "dropoffAddress", name: "dropoffAddress", required: true, rows: "3" })
     ]),
-    createElement("div", { class: "form-group" }, [
-      createElement("label", { for: "phone" }, ["Phone Number"]),
-      createElement("input", { id: "phone", name: "phone", required: true, type: "tel" })
+    createElement("div", { class: "form-row" }, [
+      createElement("div", { class: "form-group" }, [
+        createElement("label", { for: "dropoffLat" }, ["Dropoff Latitude (Optional)"]),
+        createElement("input", { id: "dropoffLat", name: "dropoffLat", type: "number", step: "any" })
+      ]),
+      createElement("div", { class: "form-group" }, [
+        createElement("label", { for: "dropoffLng" }, ["Dropoff Longitude (Optional)"]),
+        createElement("input", { id: "dropoffLng", name: "dropoffLng", type: "number", step: "any" })
+      ])
     ]),
-    createElement("div", { class: "form-group" }, [
-      createElement("label", { for: "weight" }, ["Weight (kg)"]),
-      createElement("input", { id: "weight", name: "weight", type: "number", step: "0.1" })
-    ]),
+
     Button("Submit Delivery Order", "btn-submit-delivery", {}, "btn-primary", { type: "submit" })
   ]);
 
-  const container = createElement("div", { class: "create-delivery-container" }, [
+  const pageWrapper = createElement("div", { class: "create-delivery-container" }, [
     createElement("button", {
       class: "back-link",
       events: { click: () => history.back() }
@@ -54,8 +98,8 @@ async function CreateDelivery(isLoggedIn, contentContainer) {
     form
   ]);
 
-  contentContainer.appendChild(container);
+  contentContainer.appendChild(pageWrapper);
 }
 
-export { CreateDelivery };
+export { CreateDelivery, CreateDelivery as Createdelivery };
 export default CreateDelivery;

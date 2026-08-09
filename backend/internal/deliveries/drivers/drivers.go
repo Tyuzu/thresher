@@ -20,7 +20,7 @@ func GetProfile(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 
 		var driver deliveries.Driver
-		filter := bson.M{"_id": driverID, "tenant_id": tenantID}
+		filter := bson.M{"id": driverID, "tenantid": tenantID}
 		if err := app.DB.FindOne(ctx, "drivers", filter, &driver); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Driver profile not found")
 			return
@@ -41,11 +41,11 @@ func UpdateProfile(app *infra.Deps) http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		delete(updates, "_id")
-		delete(updates, "tenant_id")
+		delete(updates, "id")
+		delete(updates, "tenantid")
 		updates["updated_at"] = time.Now()
 
-		filter := bson.M{"_id": driverID, "tenant_id": tenantID}
+		filter := bson.M{"id": driverID, "tenantid": tenantID}
 		if _, err := app.DB.UpdateOne(ctx, "drivers", filter, bson.M{"$set": updates}); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update driver")
 			return
@@ -61,7 +61,7 @@ func GoOnline(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 
 		_ = app.Cache.HSet(ctx, "drivers:online", driverID, []byte("true"))
-		filter := bson.M{"_id": driverID, "tenant_id": tenantID}
+		filter := bson.M{"id": driverID, "tenantid": tenantID}
 		_, _ = app.DB.UpdateOne(ctx, "drivers", filter, bson.M{"$set": bson.M{"is_online": true}})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"status": "online"})
@@ -75,7 +75,7 @@ func GoOffline(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 
 		_, _ = app.Cache.HDel(ctx, "drivers:online", driverID)
-		filter := bson.M{"_id": driverID, "tenant_id": tenantID}
+		filter := bson.M{"id": driverID, "tenantid": tenantID}
 		_, _ = app.DB.UpdateOne(ctx, "drivers", filter, bson.M{"$set": bson.M{"is_online": false}})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"status": "offline"})
@@ -89,7 +89,7 @@ func GetStatus(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 
 		var status bson.M
-		filter := bson.M{"_id": driverID, "tenant_id": tenantID}
+		filter := bson.M{"id": driverID, "tenantid": tenantID}
 		if err := app.DB.FindOneWithProjection(ctx, "drivers", filter, []string{"is_online", "current_state"}, &status); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Driver status unavailable")
 			return
@@ -105,9 +105,9 @@ func GetAvailableJobs(app *infra.Deps) http.HandlerFunc {
 
 		var jobs []deliveries.Delivery
 		filter := bson.M{
-			"status":    "CREATED",
-			"driver_id": nil,
-			"tenant_id": tenantID,
+			"status":   "CREATED",
+			"driverid": nil,
+			"tenantid": tenantID,
 		}
 
 		if err := app.DB.FindMany(ctx, "deliveries", filter, &jobs); err != nil {
@@ -129,9 +129,9 @@ func GetActiveDeliveries(app *infra.Deps) http.HandlerFunc {
 
 		var active []deliveries.Delivery
 		filter := bson.M{
-			"driver_id": driverID,
-			"tenant_id": tenantID,
-			"status":    bson.M{"$in": []string{"ACCEPTED", "PICKED_UP", "IN_TRANSIT"}},
+			"driverid": driverID,
+			"tenantid": tenantID,
+			"status":   bson.M{"$in": []string{"ACCEPTED", "PICKED_UP", "IN_TRANSIT"}},
 		}
 
 		if err := app.DB.FindMany(ctx, "deliveries", filter, &active); err != nil {
@@ -153,11 +153,11 @@ func AcceptJob(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 
 		now := time.Now()
-		filter := bson.M{"_id": deliveryID, "tenant_id": tenantID, "status": "CREATED"}
+		filter := bson.M{"id": deliveryID, "tenantid": tenantID, "status": "CREATED"}
 		update := bson.M{
 			"$set": bson.M{
 				"status":     "ACCEPTED",
-				"driver_id":  driverID,
+				"driverid":   driverID,
 				"updated_at": now,
 			},
 			"$push": bson.M{
@@ -188,11 +188,11 @@ func RejectJob(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 
 		_ = app.DB.InsertOne(ctx, "driver_job_rejections", bson.M{
-			"rejection_id": utils.GenerateRandomString(18),
-			"tenant_id":    tenantID,
-			"driver_id":    driverID,
-			"delivery_id":  deliveryID,
-			"rejected_at":  time.Now(),
+			"rejectionid": utils.GenerateRandomString(18),
+			"tenantid":    tenantID,
+			"driverid":    driverID,
+			"deliveryid":  deliveryID,
+			"rejected_at": time.Now(),
 		})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"status": "rejected"})

@@ -1,29 +1,37 @@
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
-import Imagex from "../../components/base/Imagex.js";
 import Datex from "../../components/base/Datex.js";
-import Notify from "../../components/ui/Notify.mjs";
-import Modal from "../../components/ui/Modal.mjs";
-import { fetchAllDeliveries } from "./deliveriesApi.js";
+import { fetchAllDeliveries } from "../../services/deliveries/deliveriesApi.js";
 import { navigate } from "../../routes/index.js";
 
-export async function displaydeliveries(contentContainer, isLoggedIn) {
-  contentContainer.innerHTML = "";
+export async function displayDeliveries(container, isLoggedIn = false) {
+  if (!container || !container.nodeType) {
+    console.error("displayDeliveries: Missing DOM container element.");
+    return;
+  }
 
-  // Render Header Bar
-  const header = createElement("div", { class: "deliveries-header" }, [
-    createElement("h1", { class: "deliveries-title" }, ["Deliveries & Shipments"]),
-    isLoggedIn ? Button("Create New Delivery", "btn-create-delivery", {
-      click: () => { navigate("/delivery/create"); }
-    }, "btn-primary") : null
-  ]);
+  container.innerHTML = "";
+
+  const headerChildren = [
+    createElement("h1", { class: "deliveries-title" }, ["Deliveries & Shipments"])
+  ];
+
+  if (isLoggedIn) {
+    headerChildren.push(
+      Button("Create New Delivery", "btn-create-delivery", {
+        click: () => { navigate("/delivery/create"); }
+      }, "btn-primary")
+    );
+  }
+
+  const header = createElement("div", { class: "deliveries-header" }, headerChildren);
 
   const listContainer = createElement("div", { class: "deliveries-list-container" }, [
     createElement("div", { class: "deliveries-loading" }, ["Loading shipments..."])
   ]);
 
-  contentContainer.appendChild(header);
-  contentContainer.appendChild(listContainer);
+  container.appendChild(header);
+  container.appendChild(listContainer);
 
   try {
     const data = await fetchAllDeliveries();
@@ -40,33 +48,31 @@ export async function displaydeliveries(contentContainer, isLoggedIn) {
     const grid = createElement("div", { class: "deliveries-grid" });
 
     deliveries.forEach((item) => {
-      const statusClass = `status-badge status-${(item.status || "pending").toLowerCase()}`;
+      const statusClass = `status-badge status-${(item.status || "created").toLowerCase()}`;
+      const deliveryId = item.deliveryid ?? item.id ?? "N/A";
       
       const card = createElement("div", { class: "delivery-card" }, [
         createElement("div", { class: "delivery-card-header" }, [
-          createElement("span", { class: "delivery-id" }, [`ID: ${item.deliveryid || item._id}`]),
-          createElement("span", { class: statusClass }, [item.status || "Pending"])
+          createElement("span", { class: "delivery-id" }, [`ID: ${deliveryId}`]),
+          createElement("span", { class: statusClass }, [item.status || "CREATED"])
         ]),
         createElement("div", { class: "delivery-card-body" }, [
           createElement("div", { class: "delivery-info-row" }, [
-            createElement("strong", {}, ["Recipient: "]),
-            item.recipientName || "N/A"
+            createElement("strong", {}, ["Pickup: "]),
+            item.pickup_loc?.address || "N/A"
           ]),
           createElement("div", { class: "delivery-info-row" }, [
             createElement("strong", {}, ["Destination: "]),
-            item.destination || "N/A"
+            item.dropoff_loc?.address || "N/A"
           ]),
           createElement("div", { class: "delivery-info-row" }, [
             createElement("strong", {}, ["Created: "]),
-            Datex(item.createdAt || Date.now(), false)
+            Datex(item.created_at || Date.now(), false)
           ])
         ]),
         createElement("div", { class: "delivery-card-actions" }, [
           Button("View Details", "", {
-            click: () => {
-              const targetId = item.deliveryid || item._id;
-              navigate(`delivery/${targetId}`);
-            }
+            click: () => { navigate(`/delivery/${deliveryId}`); }
           }, "btn-secondary")
         ])
       ]);
@@ -79,7 +85,11 @@ export async function displaydeliveries(contentContainer, isLoggedIn) {
   } catch (err) {
     listContainer.innerHTML = "";
     listContainer.appendChild(
-      createElement("div", { class: "deliveries-error" }, ["Failed to load delivery records."])
+      createElement("div", { class: "deliveries-error" }, [
+        err?.message || "Failed to load delivery records."
+      ])
     );
   }
 }
+
+export const Deliveries = displayDeliveries;

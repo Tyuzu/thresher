@@ -20,7 +20,7 @@ func GetDeliveryTracking(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 
 		var result bson.M
-		filter := bson.M{"_id": deliveryID, "tenant_id": tenantID}
+		filter := bson.M{"id": deliveryID, "tenantid": tenantID}
 		proj := []string{"status", "status_history", "current_location"}
 
 		if err := app.DB.FindOneWithProjection(ctx, "deliveries", filter, proj, &result); err != nil {
@@ -55,7 +55,7 @@ func GetDeliveryEvents(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 
 		var events []bson.M
-		filter := bson.M{"delivery_id": deliveryID, "tenant_id": tenantID}
+		filter := bson.M{"deliveryid": deliveryID, "tenantid": tenantID}
 		if err := app.DB.FindMany(ctx, "delivery_events", filter, &events); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve events")
 			return
@@ -77,7 +77,7 @@ func GetStatusHistory(app *infra.Deps) http.HandlerFunc {
 		var res struct {
 			StatusHistory []deliveries.StatusHistoryItem `bson:"status_history" json:"status_history"`
 		}
-		filter := bson.M{"_id": deliveryID, "tenant_id": tenantID}
+		filter := bson.M{"id": deliveryID, "tenantid": tenantID}
 		if err := app.DB.FindOneWithProjection(ctx, "deliveries", filter, []string{"status_history"}, &res); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "History not found")
 			return
@@ -108,7 +108,7 @@ func AddProof(app *infra.Deps) http.HandlerFunc {
 			CreatedAt: time.Now(),
 		}
 
-		filter := bson.M{"_id": deliveryID, "tenant_id": tenantID}
+		filter := bson.M{"id": deliveryID, "tenantid": tenantID}
 		if err := app.DB.AddToSet(ctx, "deliveries", filter, "proofs", proof); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to add proof")
 			return
@@ -126,7 +126,7 @@ func GetProof(app *infra.Deps) http.HandlerFunc {
 		var res struct {
 			Proofs []deliveries.Proof `bson:"proofs" json:"proofs"`
 		}
-		filter := bson.M{"_id": deliveryID, "tenant_id": tenantID}
+		filter := bson.M{"id": deliveryID, "tenantid": tenantID}
 		if err := app.DB.FindOneWithProjection(ctx, "deliveries", filter, []string{"proofs"}, &res); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Proof not found")
 			return

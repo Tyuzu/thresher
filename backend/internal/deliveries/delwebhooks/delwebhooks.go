@@ -39,7 +39,7 @@ func ListWebhooks(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 
 		var webhooks []deliveries.Webhook
-		if err := app.DB.FindMany(ctx, "webhooks", bson.M{"tenant_id": tenantID}, &webhooks); err != nil {
+		if err := app.DB.FindMany(ctx, "webhooks", bson.M{"tenantid": tenantID}, &webhooks); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to list webhooks")
 			return
 		}
@@ -57,7 +57,7 @@ func GetWebhook(app *infra.Deps) http.HandlerFunc {
 		ctx := r.Context()
 
 		var wh deliveries.Webhook
-		filter := bson.M{"_id": whID, "tenant_id": tenantID}
+		filter := bson.M{"id": whID, "tenantid": tenantID}
 		if err := app.DB.FindOne(ctx, "webhooks", filter, &wh); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Webhook not found")
 			return
@@ -79,9 +79,9 @@ func UpdateWebhook(app *infra.Deps) http.HandlerFunc {
 
 		ctx := r.Context()
 		delete(updates, "_id")
-		delete(updates, "tenant_id")
+		delete(updates, "tenantid")
 
-		filter := bson.M{"_id": whID, "tenant_id": tenantID}
+		filter := bson.M{"_id": whID, "tenantid": tenantID}
 		if _, err := app.DB.UpdateOne(ctx, "webhooks", filter, bson.M{"$set": updates}); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update webhook")
 			return
@@ -96,7 +96,7 @@ func DeleteWebhook(app *infra.Deps) http.HandlerFunc {
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		ctx := r.Context()
 
-		filter := bson.M{"_id": whID, "tenant_id": tenantID}
+		filter := bson.M{"_id": whID, "tenantid": tenantID}
 		count, err := app.DB.DeleteOne(ctx, "webhooks", filter)
 		if err != nil || count == 0 {
 			utils.RespondWithError(w, http.StatusNotFound, "Webhook not found or failed to delete")
@@ -110,7 +110,7 @@ func TestWebhook(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		whID := utils.GetParam(r, "webhookid")
 
-		payload := map[string]string{"event": "ping", "webhook_id": whID}
+		payload := map[string]string{"event": "ping", "webhookid": whID}
 		data, _ := json.Marshal(payload)
 		_ = app.NatsConn.Publish("webhooks.test", data)
 
