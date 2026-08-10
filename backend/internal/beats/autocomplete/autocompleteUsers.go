@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"naevis/infra"
+	"naevis/internal/auth"
 	"naevis/internal/suggestions"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -25,7 +25,7 @@ func AutocompleteUsers(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var users []models.User
+		var users []auth.User
 
 		err := findUsersByQuery(ctx, app.DB, query, &users)
 		if err != nil {

@@ -5,8 +5,8 @@ import (
 
 	"naevis/config"
 	db "naevis/infra/db"
+	"naevis/internal/auth"
 	"naevis/internal/places"
-	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -25,7 +25,7 @@ func findPlacesByQuery(ctx context.Context, database db.Database, query string, 
 	return database.FindMany(ctx, AutocompleteCollection, filter, places)
 }
 
-func findUsersByQuery(ctx context.Context, database db.Database, query string, users *[]models.User) error {
+func findUsersByQuery(ctx context.Context, database db.Database, query string, users *[]auth.User) error {
 	filter := bson.M{
 		"username": bson.M{
 			"$regex":   "^" + query,

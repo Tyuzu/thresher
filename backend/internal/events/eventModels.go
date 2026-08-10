@@ -1,4 +1,4 @@
-package models
+package events
 
 import (
 	"naevis/internal/vendors"
@@ -87,4 +87,9 @@ type LostFoundItem struct {
 type SocialMediaLinks struct {
 	Title string `json:"title"`
 	Url   string `json:"Url"`
+}
+
+type Coordinates struct {
+	Latitude  float64 `json:"latitude,omitempty" bson:"latitude,omitempty"`
+	Longitude float64 `json:"longitude,omitempty" bson:"longitude,omitempty"`
 }

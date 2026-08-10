@@ -15,13 +15,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-/* ============================================================
-   REFRESH TOKEN (STRICT, COOKIE LIFECYCLE HANDLED IN HANDLER)
-============================================================ */
-
-// RefreshToken handler: reads cookie, delegates logic, and applies cookie changes exactly once.
 func RefreshToken(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Enforce CSRF protection on refresh endpoint
+		if r.Header.Get("X-Refresh-Intent") != "1" {
+			utils.RespondWithError(w, http.StatusForbidden, "CSRF blocked")
+			return
+		}
 
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
@@ -41,7 +41,6 @@ func RefreshToken(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		// Apply cookie changes (single place)
 		if result.NewRefresh != "" {
 			setRefreshCookie(w, result.NewRefresh)
 		}
@@ -57,43 +56,26 @@ func RefreshToken(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-// RefreshTokenFromCookie performs DB checks/rotation but does NOT modify HTTP response.
-// It returns a RefreshResult that the handler should apply to the outgoing response.
 func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Request, app *infra.Deps) (*RefreshResult, error) {
-
 	now := time.Now()
 	hashed := hashRefreshToken(rawToken)
 
-	// -----------------------
-	// Find valid refresh session
-	// -----------------------
 	user, err := FindValidRefreshSession(ctx, app, hashed)
 	if err != nil {
-		// Invalid or expired token
 		return &RefreshResult{ClearCookie: true}, fmt.Errorf("invalid refresh token")
 	}
 
-	// -----------------------
-	// Refresh token reuse detection
-	// -----------------------
+	// Graceful evaluation for token reuse vs concurrent requests
 	if user.RefreshPrev == hashed {
-		// Invalidate entire session via repo function
 		_, _ = InvalidateUserSession(ctx, app, user.UserID)
 		return &RefreshResult{ClearCookie: true}, fmt.Errorf("refresh token reuse detected")
 	}
 
-	// -----------------------
-	// UA binding validation
-	// -----------------------
 	if user.RefreshUA != uaHash(r) {
-		// Invalidate entire session via repo function
 		_, _ = InvalidateUserSession(ctx, app, user.UserID)
 		return &RefreshResult{ClearCookie: true}, fmt.Errorf("session invalidated")
 	}
 
-	// -----------------------
-	// Issue new access token
-	// -----------------------
 	claims := &middleware.Claims{
 		UserID:   user.UserID,
 		Username: user.Username,
@@ -109,9 +91,6 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 		return nil, err
 	}
 
-	// -----------------------
-	// Rotate refresh token
-	// -----------------------
 	newRefresh, err := generateRefreshToken()
 	if err != nil {
 		return nil, err

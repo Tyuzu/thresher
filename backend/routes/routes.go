@@ -6,12 +6,14 @@ import (
 	"naevis/internal/auth"
 	"naevis/internal/baito"
 	"naevis/internal/baito/jobs"
-	"naevis/internal/beats"
 	"naevis/internal/beats/activity"
 	"naevis/internal/beats/ads"
 	"naevis/internal/beats/analytics"
 	"naevis/internal/beats/autocomplete"
+	"naevis/internal/beats/follows"
 	"naevis/internal/beats/hashtags"
+	"naevis/internal/beats/likes"
+	"naevis/internal/beats/subscribe"
 	"naevis/internal/booking"
 	"naevis/internal/cart"
 	"naevis/internal/events"
@@ -107,31 +109,31 @@ func AddBaitoRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *mid
 func AddBeatRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
 	authmidware := middleware.Authenticate(app)
 	// User must be logged in to like/unlike
-	router.HandlerFunc(http.MethodPut, "/api/v1/likes/:entitytype/like/:entityid", rateLimiter.Limit(authmidware(beats.ToggleLike(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/likes/:entitytype/like/:entityid", rateLimiter.Limit(authmidware(likes.ToggleLike(app))))
 
 	// Get users who liked a post/beat
-	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/users/:entityid", rateLimiter.Limit(authmidware(beats.GetLikers(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/users/:entityid", rateLimiter.Limit(authmidware(likes.GetLikers(app))))
 
 	// Batch check user likes
-	router.HandlerFunc(http.MethodPost, "/api/v1/likes/:entitytype/batch/users", rateLimiter.Limit(authmidware(beats.BatchUserLikes(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/likes/:entitytype/batch/users", rateLimiter.Limit(authmidware(likes.BatchUserLikes(app))))
 
 	// Like count is public
-	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/count/:entityid", rateLimiter.Limit(beats.GetLikeCount(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/count/:entityid", rateLimiter.Limit(likes.GetLikeCount(app)))
 
 	// Follows
-	router.HandlerFunc(http.MethodPut, "/api/v1/follows/:id", rateLimiter.Limit(authmidware(beats.ToggleFollow(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/follows/:id", rateLimiter.Limit(authmidware(beats.ToggleUnFollow(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/follows/:id/status", rateLimiter.Limit(authmidware(beats.DoesFollow(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/followers/:id", rateLimiter.Limit(beats.GetFollowers(app)))
-	router.HandlerFunc(http.MethodGet, "/api/v1/following/:id", rateLimiter.Limit(beats.GetFollowing(app)))
+	router.HandlerFunc(http.MethodPut, "/api/v1/follows/:id", rateLimiter.Limit(authmidware(follows.ToggleFollow(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/follows/:id", rateLimiter.Limit(authmidware(follows.ToggleUnFollow(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/follows/:id/status", rateLimiter.Limit(authmidware(follows.DoesFollow(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/followers/:id", rateLimiter.Limit(follows.GetFollowers(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/following/:id", rateLimiter.Limit(follows.GetFollowing(app)))
 
 	// Subscribes / Follows
-	router.HandlerFunc(http.MethodPut, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.SubscribeEntity(app))))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.UnsubscribeEntity(app))))
-	router.HandlerFunc(http.MethodGet, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(beats.DoesSubscribeEntity(app))))
+	router.HandlerFunc(http.MethodPut, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(subscribe.SubscribeEntity(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(subscribe.UnsubscribeEntity(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(subscribe.DoesSubscribeEntity(app))))
 
 	// Get all subscribers of a user/artist
-	router.HandlerFunc(http.MethodGet, "/api/v1/subscribers/:id", rateLimiter.Limit(beats.GetSubscribers(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/subscribers/:id", rateLimiter.Limit(subscribe.GetSubscribers(app)))
 
 }
 

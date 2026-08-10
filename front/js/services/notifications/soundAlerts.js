@@ -17,30 +17,45 @@ const DEFAULT_SETTINGS = {
 let memorySettings = null;
 let memoryChatSettings = {};
 
-// Helper to safely obtain or instantiate the singleton AudioContext
+// Helper to safely obtain or lazily instantiate the singleton AudioContext
 function getAudioContext() {
   if (typeof window === 'undefined') return null;
-  const AudioCtor = window.AudioContext || window.webkitAudioContext;
-  if (typeof AudioCtor !== 'function') return null;
-
-  if (!window.__appSoundContext) {
-    window.__appSoundContext = new AudioCtor();
-  }
-  return window.__appSoundContext;
+  return window.__appSoundContext || null;
 }
 
-// Global user interaction handler to unlock Web Audio context on the first user gesture
+// Global user interaction handler to create and unlock Web Audio context on the first user gesture
 if (typeof window !== 'undefined') {
-  const unlockAudioContext = () => {
-    const context = getAudioContext();
-    if (context && context.state === 'suspended') {
-      context.resume().then(() => {
-        // Cleanup event listeners once successfully resumed
-        ['click', 'touchstart', 'keydown'].forEach((evt) => {
-          document.removeEventListener(evt, unlockAudioContext, true);
-        });
-      }).catch(() => {});
-    }
+  const unlockAudioContext = (e) => {
+    // Ignore held-down keypress repetitions to prevent event processing bottlenecks
+    if (e && e.repeat) return;
+
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (typeof AudioCtor !== 'function') return;
+
+    // Yield control back to main thread immediately so keydown event finishes in <1ms
+    requestAnimationFrame(() => {
+      try {
+        if (!window.__appSoundContext) {
+          window.__appSoundContext = new AudioCtor();
+        }
+
+        const context = window.__appSoundContext;
+
+        const removeListeners = () => {
+          ['click', 'touchstart', 'keydown'].forEach((evt) => {
+            document.removeEventListener(evt, unlockAudioContext, { capture: true });
+          });
+        };
+
+        if (context.state === 'suspended') {
+          context.resume().then(removeListeners).catch(() => {});
+        } else if (context.state === 'running') {
+          removeListeners();
+        }
+      } catch {
+        // Fallback for isolated security contexts
+      }
+    });
   };
 
   ['click', 'touchstart', 'keydown'].forEach((evt) => {
@@ -179,12 +194,9 @@ export function playSoundAlert({ type = 'message', chatId } = {}) {
   }
 
   const context = getAudioContext();
-  if (!context) return false;
-
-  // If the browser hasn't registered user interaction yet, attempt a safe non-blocking resume
-  if (context.state === 'suspended') {
-    context.resume().catch(() => {});
-    // Abort playing sound this time to prevent unhandled autoplay warning logs
+  
+  // If the audio context hasn't been instantiated via user interaction yet, abort cleanly
+  if (!context || context.state === 'suspended') {
     return false;
   }
 

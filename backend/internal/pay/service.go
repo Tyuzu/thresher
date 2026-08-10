@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
+	"naevis/internal/auth"
 	"naevis/utils"
 )
 
@@ -189,7 +189,7 @@ func (p *PaymentService) userExists(ctx context.Context, userID string) bool {
 		return false
 	}
 
-	var user models.User
+	var user auth.User
 	return p.app.DB.FindOne(ctx, usersCollection, map[string]any{"userid": userID}, &user) == nil
 }
 

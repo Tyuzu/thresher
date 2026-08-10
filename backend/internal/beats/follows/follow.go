@@ -1,11 +1,13 @@
-package beats
+package follows
 
 import (
+	"context"
 	"net/http"
 
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/db"
 	"naevis/infra/mq"
 	"naevis/internal/userdata"
 	"naevis/utils"
@@ -60,4 +62,24 @@ func ToggleUnFollow(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		HandleFollowAction(w, r, "unfollow", app)
 	}
+}
+
+/* -------------------------------------------------------
+   Follow data + caching utilities
+------------------------------------------------------- */
+
+// GetUserFollowData returns followers and follows for a user
+func GetUserFollowData(ctx context.Context, userID string, database db.Database) (UserFollow, error) {
+	var uf UserFollow
+	_ = database.FindOne(ctx, "followings", map[string]any{"userid": userID}, &uf)
+
+	// return empty if not found
+	if uf.UserID == "" {
+		return UserFollow{
+			Followers: []string{},
+			Follows:   []string{},
+		}, nil
+	}
+
+	return uf, nil
 }

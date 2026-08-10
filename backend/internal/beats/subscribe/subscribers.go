@@ -1,4 +1,4 @@
-package beats
+package subscribe
 
 import (
 	"net/http"

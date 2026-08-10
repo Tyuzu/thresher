@@ -3,9 +3,9 @@ package products
 import (
 	"context"
 	"naevis/infra"
+	"naevis/internal/auth"
 	"naevis/internal/cart"
 	"naevis/internal/farms"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -63,8 +63,8 @@ func GetIncomingOrders(app *infra.Deps) http.HandlerFunc {
 /* Helpers                                              */
 /* ---------------------------------------------------- */
 
-func getUserByID(ctx context.Context, id string, app *infra.Deps) models.User {
-	var user models.User
+func getUserByID(ctx context.Context, id string, app *infra.Deps) auth.User {
+	var user auth.User
 	_ = app.DB.FindOne(ctx, usersCollection, bson.M{"userid": id}, &user)
 	return user
 }

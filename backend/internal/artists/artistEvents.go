@@ -7,7 +7,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
+	"naevis/internal/events"
 	"naevis/utils"
 )
 
@@ -88,7 +88,7 @@ func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
 		payload.ArtistID = utils.GetParam(r, "id")
 
 		// Fetch event details from EventsCollection
-		var event models.Event
+		var event events.Event
 		err := FindEventByID(ctx, app.DB, payload.EventID, &event)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Event not found")

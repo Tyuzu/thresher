@@ -6,7 +6,6 @@ import (
 
 	"naevis/config"
 	"naevis/infra"
-	"naevis/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,7 +17,7 @@ var UsersCollection = config.Collections.UserCollection
    3. REPOSITORIES (DATA ACCESS LAYER)
 ============================================================ */
 
-func CreateUser(ctx context.Context, app *infra.Deps, user models.User) error {
+func CreateUser(ctx context.Context, app *infra.Deps, user User) error {
 	err := app.DB.Insert(ctx, UsersCollection, user)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
@@ -29,10 +28,10 @@ func CreateUser(ctx context.Context, app *infra.Deps, user models.User) error {
 	return nil
 }
 
-func FindUserByUsername(ctx context.Context, app *infra.Deps, username string) (models.User, error) {
-	var user models.User
+func FindUserByUsername(ctx context.Context, app *infra.Deps, username string) (User, error) {
+	var user User
 	if err := app.DB.FindOne(ctx, UsersCollection, bson.M{"username": username}, &user); err != nil {
-		return models.User{}, err
+		return User{}, err
 	}
 	return user, nil
 }
@@ -80,9 +79,9 @@ func LogoutAllUserSessions(ctx context.Context, app *infra.Deps, userID string) 
 	})
 }
 
-func FindValidRefreshSession(ctx context.Context, app *infra.Deps, hashedToken string) (models.User, error) {
+func FindValidRefreshSession(ctx context.Context, app *infra.Deps, hashedToken string) (User, error) {
 	now := time.Now()
-	var user models.User
+	var user User
 	err := app.DB.FindOne(ctx, UsersCollection, bson.M{
 		"refresh_expiry": bson.M{"$gt": now},
 		"$or": []bson.M{
@@ -91,7 +90,7 @@ func FindValidRefreshSession(ctx context.Context, app *infra.Deps, hashedToken s
 		},
 	}, &user)
 	if err != nil {
-		return models.User{}, err
+		return User{}, err
 	}
 	return user, nil
 }

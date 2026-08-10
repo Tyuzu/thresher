@@ -9,9 +9,10 @@ import { navigate } from "../../routes/index.js";
 import { fetchProfile } from "../profile/fetchProfile.js";
 import Notify from "../../components/ui/Notify.mjs";
 import { apiFetch } from "../../api/api.js";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.mjs";
 
 /* =========================
-   SIGNUP (With error parsing fix)
+   SIGNUP
 ========================= */
 async function signup(event) {
     if (event) event.preventDefault();
@@ -49,6 +50,8 @@ async function signup(event) {
         return;
     }
 
+    const hideSpinner = LoadingSpinner(); 
+
     try {
         await apiFetch("/auth/register", "POST", { username, email, password }, { credentials: "include" });
 
@@ -67,15 +70,17 @@ async function signup(event) {
             duration: 3000,
             dismissible: true
         });
+    } finally {
+        if (typeof hideSpinner === "function") hideSpinner();
     }
 }
 
 /* =========================
-   REACTIVE SUBSCRIPTIONS (Robust Role Check)
+   REACTIVE SUBSCRIPTIONS
 ========================= */
 subscribeDeep("userProfile.role", role => {
-    const isAdmin = Array.isArray(role) 
-        ? role.includes("admin") 
+    const isAdmin = Array.isArray(role)
+        ? role.includes("admin")
         : role === "admin";
 
     document.body.dataset.isAdmin = isAdmin ? "true" : "false";
@@ -100,22 +105,21 @@ async function login(event) {
     }
 
     try {
-        const res = await apiFetch("/auth/login", "POST", 
-            { username, password }, 
+        const res = await apiFetch("/auth/login", "POST",
+            { username, password },
             { credentials: "include" }
         );
 
+        // Standardized extraction supporting both casing variations
         const token = res?.token;
-        const userId = res?.userid;
+        const userId = res?.userid || res?.userId;
 
         if (!token || !userId) {
             throw new Error("Invalid response format from server.");
         }
 
-        // Persist access token & base user data
         setState({ token, user: userId, username }, true);
 
-        // Best-effort profile fetch
         try {
             const profile = await fetchProfile();
             if (profile) {
@@ -129,7 +133,6 @@ async function login(event) {
             });
         }
 
-        // Redirect handling
         const redirect = localStorage.getItem("redirectAfterLogin") || "/home";
         localStorage.removeItem("redirectAfterLogin");
 
@@ -145,19 +148,22 @@ async function login(event) {
 }
 
 /* =========================
-   TOKEN REFRESH (Updated)
+   TOKEN REFRESH
 ========================= */
 async function refreshAccessToken() {
     try {
-        const res = await apiFetch("/auth/refresh", "POST", null, { credentials: "include" });
-        const token = res?.data?.token;
+        const res = await apiFetch("/auth/refresh", "POST", null, {
+            headers: { "X-Refresh-Intent": "1" },
+            credentials: "include"
+        });
+        
+        const token = res?.data?.token || res?.token;
         if (token) {
             setState({ token }, true);
             return token;
         }
         throw new Error("No token returned");
-    } catch (err) {
-        // Trigger silent logout when refresh fails due to missing auth cookie
+    } catch {
         silentLogout();
         return null;
     }
@@ -172,10 +178,11 @@ async function logout() {
             headers: { "X-Refresh-Intent": "1" },
             credentials: "include"
         });
-    } catch (e) {
-        // Fail silently on server-side logout errors to ensure UI cleans up regardless
+    } catch {
+        // Fail silently
+    } finally {
+        silentLogout();
     }
-    silentLogout();
 }
 
 function silentLogout() {
@@ -183,11 +190,9 @@ function silentLogout() {
     sessionStorage.clear();
     localStorage.removeItem("redirectAfterLogin");
 
-    // Defends against Module Evaluation TDZ
     queueMicrotask(() => {
         navigate("/login");
     });
 }
-
 
 export { signup, login, logout, silentLogout, refreshAccessToken };

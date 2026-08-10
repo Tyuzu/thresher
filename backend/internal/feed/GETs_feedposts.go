@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"strconv"
@@ -64,7 +63,7 @@ func GetPosts(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if len(posts) == 0 {
-			posts = []models.FeedPost{}
+			posts = []FeedPost{}
 		}
 
 		userIDs := make([]string, 0, len(posts))

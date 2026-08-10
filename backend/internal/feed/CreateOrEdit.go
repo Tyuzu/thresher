@@ -6,7 +6,6 @@ import (
 	"naevis/infra"
 	"naevis/internal/userdata"
 	"naevis/middleware"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"regexp"
@@ -17,8 +16,8 @@ import (
 // -------------------- POST HANDLERS --------------------
 
 // editExistingPost updates an existing post using Database interface
-func editExistingPost(ctx context.Context, claims *middleware.Claims, payload PostPayload, app *infra.Deps) (models.FeedPost, error) {
-	var post models.FeedPost
+func editExistingPost(ctx context.Context, claims *middleware.Claims, payload PostPayload, app *infra.Deps) (FeedPost, error) {
+	var post FeedPost
 	if payload.PostID == "" {
 		return post, errors.New("missing postid")
 	}
@@ -54,8 +53,8 @@ func editExistingPost(ctx context.Context, claims *middleware.Claims, payload Po
 }
 
 // insertNewPost inserts a new post using Database interface
-func insertNewPost(ctx context.Context, claims *middleware.Claims, payload PostPayload, app *infra.Deps) (models.FeedPost, error) {
-	post := models.FeedPost{
+func insertNewPost(ctx context.Context, claims *middleware.Claims, payload PostPayload, app *infra.Deps) (FeedPost, error) {
+	post := FeedPost{
 		PostID:      utils.GenerateRandomString(12),
 		Username:    claims.Username,
 		UserID:      claims.UserID,
@@ -116,8 +115,8 @@ func insertNewPost(ctx context.Context, claims *middleware.Claims, payload PostP
 }
 
 // CreateOrEditPost creates or edits a post depending on action
-func CreateOrEditPost(ctx context.Context, claims *middleware.Claims, payload PostPayload, action PostAction, app *infra.Deps) (models.FeedPost, error) {
-	var post models.FeedPost
+func CreateOrEditPost(ctx context.Context, claims *middleware.Claims, payload PostPayload, action PostAction, app *infra.Deps) (FeedPost, error) {
+	var post FeedPost
 
 	log.Println("***************************", payload.Images)
 

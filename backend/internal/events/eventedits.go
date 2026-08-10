@@ -5,7 +5,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -45,7 +44,7 @@ func EditEvent(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var updatedEvent models.Event
+		var updatedEvent Event
 		if err := findEventByID(ctx, app, eventID, &updatedEvent); err != nil {
 			http.Error(w, "Error retrieving updated event", http.StatusInternalServerError)
 			return

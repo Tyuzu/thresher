@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"naevis/infra"
+	"naevis/internal/auth"
 	"naevis/internal/cart"
 	"naevis/internal/farms"
 	"naevis/internal/pay"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -263,8 +263,8 @@ func fetchFarmByID(ctx context.Context, id string, app *infra.Deps) farms.Farm {
 	return farm
 }
 
-func fetchUserByID(ctx context.Context, id string, app *infra.Deps) models.User {
-	var user models.User
+func fetchUserByID(ctx context.Context, id string, app *infra.Deps) auth.User {
+	var user auth.User
 
 	if id == "" {
 		return user
@@ -277,7 +277,7 @@ func fetchUserByID(ctx context.Context, id string, app *infra.Deps) models.User 
 		&user,
 	)
 	if err != nil {
-		return models.User{}
+		return auth.User{}
 	}
 
 	return user

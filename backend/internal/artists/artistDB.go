@@ -7,8 +7,8 @@ import (
 	"naevis/config"
 	"naevis/infra"
 	db "naevis/infra/db"
+	"naevis/internal/events"
 	"naevis/internal/userdata"
-	"naevis/models"
 )
 
 var (
@@ -79,7 +79,7 @@ func UpdateArtistEventByID(ctx context.Context, db db.Database, artisteventID st
 	return db.Update(ctx, ArtistEventsCollection, map[string]any{"eventid": artisteventID}, update)
 }
 
-func FindEventByID(ctx context.Context, db db.Database, eventID string, event *models.Event) error {
+func FindEventByID(ctx context.Context, db db.Database, eventID string, event *events.Event) error {
 	return db.FindOne(ctx, EventsCollection, map[string]any{"eventid": eventID}, event)
 }
 
@@ -95,7 +95,7 @@ func AddArtistToEventDB(ctx context.Context, db db.Database, artistEvent ArtistE
 }
 
 func AddEventToDB(ctx context.Context, app *infra.Deps, artistEvent ArtistEvent) error {
-	var event models.Event
+	var event events.Event
 	dateString := artistEvent.Date
 	layout := "2006-01-02"
 	dateToSave, _ := time.Parse(layout, dateString)

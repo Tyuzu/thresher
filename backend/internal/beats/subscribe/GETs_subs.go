@@ -1,4 +1,4 @@
-package beats
+package subscribe
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/infra"
-	"naevis/models"
+	"naevis/internal/auth"
 	"naevis/utils"
 )
 
@@ -67,7 +67,7 @@ func GetSubscribers(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var sub models.UserSubscribe
+		var sub UserSubscribe
 		err := app.DB.FindOne(
 			r.Context(),
 			subscribersCollection,
@@ -75,11 +75,11 @@ func GetSubscribers(app *infra.Deps) http.HandlerFunc {
 			&sub,
 		)
 		if err != nil || len(sub.Subscribers) == 0 {
-			utils.RespondWithJSON(w, http.StatusOK, []models.User{})
+			utils.RespondWithJSON(w, http.StatusOK, []auth.User{})
 			return
 		}
 
-		var subscribers []models.User
+		var subscribers []auth.User
 		err = app.DB.FindMany(
 			r.Context(),
 			usersCollection,

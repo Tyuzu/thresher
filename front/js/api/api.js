@@ -89,7 +89,9 @@ function acquireRefreshLock() {
             JSON.stringify({ owner: TAB_ID, ts: now })
         );
 
-        return true;
+        // Fix #2: Verification check to prevent race condition write-overwrites
+        const verify = JSON.parse(localStorage.getItem(REFRESH_LOCK_KEY) || "{}");
+        return verify.owner === TAB_ID;
     } catch {
         return true;
     }
@@ -114,6 +116,12 @@ function releaseRefreshLock() {
 let refreshPromise = null;
 
 export async function refreshToken() {
+    // Fix #5: Clear pending scheduled timers when an active refresh begins
+    if (refreshTimer) {
+        clearTimeout(refreshTimer);
+        refreshTimer = null;
+    }
+
     // Return existing in-flight promise if a refresh is already underway
     if (refreshPromise) {
         return refreshPromise;
@@ -128,6 +136,12 @@ export async function refreshToken() {
 
                     if (e.data.type === "TOKEN_REFRESHED") {
                         AUTH_CHANNEL.removeEventListener("message", handler);
+                        
+                        // Fix #1: Synchronize state using payload directly from the locking tab
+                        if (e.data.payload) {
+                            setState(e.data.payload, true);
+                        }
+
                         const token = getState("token");
                         resolve(Boolean(token && !isTokenNearExpiry(token)));
                     }
@@ -182,20 +196,22 @@ export async function refreshToken() {
                 parsed.sub ||
                 "";
 
-            // Update app state with newly minted access token
-            setState(
-                {
-                    token,
-                    user: userId,
-                    userId,
-                    username: parsed.username || "",
-                    role: parsed.role || []
-                },
-                true
-            );
+            const authPayload = {
+                token,
+                user: userId,
+                userId,
+                username: parsed.username || "",
+                role: parsed.role || []
+            };
 
-            // Notify other tabs that token refresh succeeded
-            AUTH_CHANNEL.postMessage({ type: "TOKEN_REFRESHED" });
+            // Update local app state with newly minted access token
+            setState(authPayload, true);
+
+            // Fix #1: Post token payload to other tabs for immediate sync
+            AUTH_CHANNEL.postMessage({
+                type: "TOKEN_REFRESHED",
+                payload: authPayload
+            });
 
             return true;
         } catch (err) {
@@ -223,6 +239,7 @@ let refreshTimer = null;
 export function scheduleBackgroundRefresh() {
     if (refreshTimer) {
         clearTimeout(refreshTimer);
+        refreshTimer = null;
     }
 
     const token = getState("token");
@@ -233,14 +250,22 @@ export function scheduleBackgroundRefresh() {
 
     const delay = payload.exp * 1000 - REFRESH_BUFFER_MS - Date.now();
 
+    // Helper to evaluate refresh outcome and trigger logout on failure
+    const handleScheduledRefresh = () => {
+        refreshToken().then((ok) => {
+            // Fix #4: Log out if session expired/revoked during background refresh
+            if (!ok && getState("token")) {
+                silentLogout();
+            }
+        });
+    };
+
     if (delay <= 0) {
-        refreshToken().catch(() => {});
+        handleScheduledRefresh();
         return;
     }
 
-    refreshTimer = setTimeout(() => {
-        refreshToken().catch(() => {});
-    }, delay);
+    refreshTimer = setTimeout(handleScheduledRefresh, delay);
 }
 
 /* =========================
@@ -255,6 +280,7 @@ AUTH_CHANNEL.addEventListener("message", (e) => {
     if (e.data?.type === "LOGOUT") {
         if (refreshTimer) {
             clearTimeout(refreshTimer);
+            refreshTimer = null;
         }
     }
 });
@@ -288,15 +314,16 @@ async function apixFetch(endpoint, method = "GET", body = null, options = {}, re
         if (nearExpiry && !retry) {
             const ok = await refreshToken();
             if (!ok) {
-                silentLogout();
+                // Fix #4: Delegate logout handling to apiFetch caller layer
                 throw new Error("Unauthorized");
             }
         }
 
+        // Fix #3: Merge custom options.headers instead of overwriting with empty object
         const fetchOptions = {
             method,
             credentials: options.credentials ?? "include", // Essential for HttpOnly refresh cookie transmission
-            headers: {},
+            headers: { ...(options.headers || {}) },
             signal: options.signal
         };
 
@@ -330,8 +357,7 @@ async function apixFetch(endpoint, method = "GET", body = null, options = {}, re
                 );
             }
 
-            // Refresh failed (cookie expired, missing, or invalidated by backend) -> log out
-            silentLogout();
+            // Fix #4: Throw Unauthorized and let outer wrapper execute silentLogout once
             throw new Error("Unauthorized");
         }
 
@@ -370,6 +396,7 @@ export async function apiFetch(endpoint, method = "GET", body = null, options = 
         return await apixFetch(`${API_URL}${endpoint}`, method, body, options);
     } catch (err) {
         if (err?.message === "Unauthorized") {
+            // Fix #4: Single point of entry for unauthorized logout
             silentLogout();
         } else {
             Notify(err?.message || "Network error", { type: "error" });

@@ -3,7 +3,6 @@ package reviews
 import (
 	"context"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 	"net/http"
 	"time"
@@ -30,7 +29,7 @@ func GetReviews(app *infra.Deps) http.HandlerFunc {
 			"entityId":   entityId,
 		}
 
-		var reviews []models.Review
+		var reviews []Review
 		if err := app.DB.FindMany(ctx, reviewsCollection, filter, &reviews); err != nil {
 			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "Failed to fetch reviews"})
 			return
@@ -44,7 +43,7 @@ func GetReviews(app *infra.Deps) http.HandlerFunc {
 		)
 
 		if reviews == nil {
-			reviews = []models.Review{}
+			reviews = []Review{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, reviews)
@@ -59,7 +58,7 @@ func GetReview(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reviewId := utils.GetParam(r, "reviewId")
 
-		var review models.Review
+		var review Review
 		if err := app.DB.FindOne(
 			r.Context(),
 			reviewsCollection,

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
+	"naevis/internal/beats/follows"
 	"naevis/utils"
 )
 
@@ -26,7 +26,7 @@ func GetProfile(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		userFollow, err := GetUserFollowData(ctx, user.UserID, app.DB)
+		userFollow, err := follows.GetUserFollowData(ctx, user.UserID, app.DB)
 		if err == nil && userFollow.UserID != "" {
 			user.FollowersCount = len(userFollow.Followers)
 			user.FollowingCount = len(userFollow.Follows)
@@ -69,7 +69,7 @@ func GetUserProfile(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		userFollow, _ := GetUserFollowData(ctx, user.UserID, app.DB)
+		userFollow, _ := follows.GetUserFollowData(ctx, user.UserID, app.DB)
 
 		isFollowing := false
 		if userFollow.UserID != "" {
@@ -78,7 +78,7 @@ func GetUserProfile(app *infra.Deps) http.HandlerFunc {
 
 		online, _ := isOnline(ctx, user.UserID, app.Cache)
 
-		response := models.UserProfileResponse{
+		response := UserProfileResponse{
 			UserID:         user.UserID,
 			Username:       user.Username,
 			Email:          user.Email,

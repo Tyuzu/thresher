@@ -8,7 +8,6 @@ import (
 
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,7 +18,7 @@ import (
 func insertActivities(
 	ctx context.Context,
 	app *infra.Deps,
-	activities []models.Activity,
+	activities []Activity,
 ) error {
 	docs := make([]any, len(activities))
 	for i := range activities {
@@ -37,7 +36,7 @@ func getActivities(
 	userID string,
 	cursor time.Time,
 	limit int,
-) ([]models.Activity, error) {
+) ([]Activity, error) {
 	filter := bson.M{
 		"userid": userID,
 	}
@@ -53,7 +52,7 @@ func getActivities(
 		Sort:  bson.D{{Key: "timestamp", Value: -1}},
 	}
 
-	var activities []models.Activity
+	var activities []Activity
 
 	err := app.DB.FindManyWithOptions(
 		ctx,
@@ -116,7 +115,7 @@ func LogActivities(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var activities []models.Activity
+		var activities []Activity
 		if err := json.NewDecoder(r.Body).Decode(&activities); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "invalid payload")
 			return

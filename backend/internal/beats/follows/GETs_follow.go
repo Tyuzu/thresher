@@ -1,4 +1,4 @@
-package beats
+package follows
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"naevis/infra"
-	"naevis/models"
+	"naevis/internal/auth"
 	"naevis/utils"
 )
 
@@ -58,7 +58,7 @@ func GetFollowers(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var userFollow models.UserFollow
+		var userFollow UserFollow
 		err := app.DB.FindOne(
 			r.Context(),
 			followingsCollection,
@@ -66,11 +66,11 @@ func GetFollowers(app *infra.Deps) http.HandlerFunc {
 			&userFollow,
 		)
 		if err != nil || len(userFollow.Followers) == 0 {
-			utils.RespondWithJSON(w, http.StatusOK, []models.User{})
+			utils.RespondWithJSON(w, http.StatusOK, []auth.User{})
 			return
 		}
 
-		var followers []models.User
+		var followers []auth.User
 		err = app.DB.FindMany(
 			r.Context(),
 			usersCollection,
@@ -99,7 +99,7 @@ func GetFollowing(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var userFollow models.UserFollow
+		var userFollow UserFollow
 		err := app.DB.FindOne(
 			r.Context(),
 			followingsCollection,
@@ -107,11 +107,11 @@ func GetFollowing(app *infra.Deps) http.HandlerFunc {
 			&userFollow,
 		)
 		if err != nil || len(userFollow.Follows) == 0 {
-			utils.RespondWithJSON(w, http.StatusOK, []models.User{})
+			utils.RespondWithJSON(w, http.StatusOK, []auth.User{})
 			return
 		}
 
-		var following []models.User
+		var following []auth.User
 		err = app.DB.FindMany(
 			r.Context(),
 			usersCollection,

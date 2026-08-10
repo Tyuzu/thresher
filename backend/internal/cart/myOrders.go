@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"naevis/infra"
+	"naevis/internal/auth"
 	"naevis/internal/pay"
-	"naevis/models"
 	"naevis/utils"
 	"naevis/utils/logger"
 
@@ -173,7 +173,7 @@ func fetchUserNamesByIDs(ctx context.Context, app *infra.Deps, userIDs map[strin
 		ids = append(ids, id)
 	}
 
-	var users []models.User
+	var users []auth.User
 	err := app.DB.FindMany(ctx, "users", bson.M{"userid": bson.M{"$in": ids}}, &users)
 	if err != nil {
 		logger.Printf("Warning: failed to batch fetch users: %v", err)

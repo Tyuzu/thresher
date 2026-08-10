@@ -4,7 +4,7 @@ import (
 	"context"
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
+	"naevis/internal/events"
 	"naevis/utils"
 	"net/http"
 	"strconv"
@@ -107,14 +107,14 @@ func GetEvents(app *infra.Deps) httprouter.Handle {
 			},
 		}
 
-		var placeevents []models.Event
+		var placeevents []events.Event
 		if err := app.DB.FindManyWithOptions(ctx, eventsCollection, filter, opts, &placeevents); err != nil {
 			http.Error(w, "Failed to fetch events", http.StatusInternalServerError)
 			return
 		}
 
 		if placeevents == nil {
-			placeevents = []models.Event{}
+			placeevents = []events.Event{}
 		}
 
 		response := map[string]any{

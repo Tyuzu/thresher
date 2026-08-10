@@ -2,11 +2,10 @@ package events
 
 import (
 	"naevis/internal/vendors"
-	"naevis/models"
 )
 
 // toSafeEvent ensures no nil slices or zero-values, computes Prices & Currency.
-func toSafeEvent(e models.Event) models.Event {
+func toSafeEvent(e Event) Event {
 	// default empty slices
 	if e.Artists == nil {
 		e.Artists = []string{}

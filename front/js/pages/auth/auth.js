@@ -5,30 +5,44 @@ import { getState, subscribeDeep } from "../../state/state.js";
 import { createElement } from "../../components/createElement.js";
 import { navigate } from "../../routes/index.js";
 
+let unsubscribeToken = null;
+
 // --- Main entry
 export function Auth(isL, contentContainer) {
+  if (typeof unsubscribeToken === "function") {
+    unsubscribeToken();
+    unsubscribeToken = null;
+  }
+
+  if (getState("token")) {
+    navigate("/home");
+    return;
+  }
+
   clearContainer(contentContainer);
   renderAuthSection(isL, contentContainer);
 
-  // Reactive update when token changes
-  subscribeDeep("token", () => {
-    clearContainer(contentContainer);
-    renderAuthSection(isL, contentContainer);
+  unsubscribeToken = subscribeDeep("token", (token) => {
+    if (token) {
+      if (typeof unsubscribeToken === "function") {
+        unsubscribeToken();
+        unsubscribeToken = null;
+      }
+      navigate("/home");
+    }
   });
 }
 
-// --- helper: clear container without innerHTML ---
 function clearContainer(el) {
+  if (!el) return;
   while (el.firstChild) {
-el.firstChild.remove();
-}
+    el.firstChild.remove();
+  }
 }
 
-// --- Core UI Renderer
 function renderAuthSection(isL, contentContainer) {
   clearContainer(contentContainer);
 
-  // If user is already logged in, use navigate (do not write directly to href)
   if (getState("token")) {
     navigate("/home");
     return;
@@ -46,7 +60,6 @@ function renderAuthSection(isL, contentContainer) {
   contentContainer.append(wrapper);
 }
 
-// --- Login form
 function createLoginForm() {
   const section = createElement("section", { class: "auth-section" }, []);
   const title = createElement("h2", { class: "auth-title" }, ["Log In"]);
@@ -63,7 +76,6 @@ function createLoginForm() {
   return section;
 }
 
-// --- Signup form
 function createSignupForm() {
   const section = createElement("section", { class: "auth-section" }, []);
   const title = createElement("h2", { class: "auth-title" }, ["Sign Up"]);
@@ -73,18 +85,20 @@ function createSignupForm() {
   const passwordInput = inputField("password", "Password", "signup-password", "new-password");
 
   const checkbox = createElement("input", { type: "checkbox", id: "signup-terms", required: true }, []);
-  const termsLabel = createElement("label", { class: "auth-terms" }, [" I agree to the Terms & Conditions"]);
-  // insert checkbox before text
-  termsLabel.insertBefore(checkbox, termsLabel.firstChild);
+  const termsLabel = createElement("label", { class: "auth-terms", htmlFor: "signup-terms" }, [
+    checkbox,
+    " I agree to the Terms & Conditions"
+  ]);
 
   const submitBtn = submitButton("Signup");
   const form = createElement("form", { class: "auth-form" }, []);
-  form.append(emailInput, usernameInput, passwordInput, termsLabel, submitBtn);
+  form.append(usernameInput, emailInput, passwordInput, termsLabel, submitBtn);
 
   form.addEventListener("submit", (e) => {
-    if (!document.getElementById("signup-terms").checked) {
+    // Scoped query selector prevents targeting stale DOM elements
+    const termsCheck = e.currentTarget.querySelector("#signup-terms");
+    if (!termsCheck?.checked) {
       e.preventDefault();
-      // non-blocking notify
       import("../../components/ui/Notify.mjs").then(({ default: Notify }) => {
         Notify("You must agree to the Terms & Conditions.", { type: "warning", duration: 3000 });
       });
@@ -97,17 +111,14 @@ function createSignupForm() {
   return section;
 }
 
-// --- Helper: Input
 function inputField(type, placeholder, id, autocomplete = "") {
   const attrs = { type, id, placeholder, required: true };
   if (autocomplete) {
-attrs.autocomplete = autocomplete;
-}
+    attrs.autocomplete = autocomplete;
+  }
   return createElement("input", attrs, []);
 }
 
-// --- Helper: Button
 function submitButton(label) {
-  // keep simple; createElement will produce a <button>
   return createElement("button", { type: "submit" }, [label]);
 }

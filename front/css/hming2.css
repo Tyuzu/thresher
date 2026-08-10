@@ -35,8 +35,7 @@
 ========================= */
 
 .hero-jumbotron,
-.navbox,
-.advert {
+.navbox {
   text-align: center;
   padding: 10px;
   border-radius: 8px;

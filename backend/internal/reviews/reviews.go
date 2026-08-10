@@ -9,7 +9,6 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -65,7 +64,7 @@ func AddReview(app *infra.Deps) http.HandlerFunc {
 			"entityId":   entityId,
 		}
 
-		var existing models.Review
+		var existing Review
 		if err := app.DB.FindOne(r.Context(), reviewsCollection, dupFilter, &existing); err == nil {
 			utils.RespondWithJSON(w, http.StatusConflict, map[string]string{"error": "Already reviewed"})
 			return
@@ -83,7 +82,7 @@ func AddReview(app *infra.Deps) http.HandlerFunc {
 		}
 
 		now := time.Now().UTC()
-		review := models.Review{
+		review := Review{
 			ReviewID:   utils.GenerateRandomString(16),
 			UserID:     userId,
 			EntityType: entityType,
@@ -121,7 +120,7 @@ func EditReview(app *infra.Deps) http.HandlerFunc {
 
 		reviewId := utils.GetParam(r, "reviewId")
 
-		var existing models.Review
+		var existing Review
 		if err := app.DB.FindOne(
 			r.Context(),
 			reviewsCollection,
@@ -196,7 +195,7 @@ func DeleteReview(app *infra.Deps) http.HandlerFunc {
 
 		reviewId := utils.GetParam(r, "reviewId")
 
-		var review models.Review
+		var review Review
 		if err := app.DB.FindOne(
 			r.Context(),
 			reviewsCollection,

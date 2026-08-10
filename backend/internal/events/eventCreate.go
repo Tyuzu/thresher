@@ -8,7 +8,6 @@ import (
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/internal/userdata"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -65,7 +64,7 @@ func CreateEvent(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-func prepareEventDefaults(event *models.Event, userID string, app *infra.Deps) {
+func prepareEventDefaults(event *Event, userID string, app *infra.Deps) {
 	event.CreatorID = userID
 	event.CreatedAt = time.Now().UTC()
 	event.Date = event.Date.UTC()
@@ -83,7 +82,7 @@ func prepareEventDefaults(event *models.Event, userID string, app *infra.Deps) {
 	ensureUniqueEventID(ctx, app, event)
 }
 
-func parseArtistData(r *http.Request, event *models.Event) error {
+func parseArtistData(r *http.Request, event *Event) error {
 	artistStr := r.FormValue("artists")
 	if artistStr == "" {
 		return nil
@@ -96,8 +95,8 @@ func parseArtistData(r *http.Request, event *models.Event) error {
 	return nil
 }
 
-func parseEventData(r *http.Request) (models.Event, error) {
-	var event models.Event
+func parseEventData(r *http.Request) (Event, error) {
+	var event Event
 	data := r.FormValue("event")
 	if data == "" {
 		return event, http.ErrMissingFile

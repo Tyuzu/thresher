@@ -6,21 +6,20 @@ import (
 	"naevis/config"
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
 )
 
 var feedpostsCollection = config.Collections.FeedPostsCollection
 var likesCollection = config.Collections.LikesCollection
 var commentsCollection = config.Collections.CommentsCollection
 
-func FindFeedPost(ctx context.Context, app *infra.Deps, postID string) (models.FeedPost, error) {
-	var post models.FeedPost
+func FindFeedPost(ctx context.Context, app *infra.Deps, postID string) (FeedPost, error) {
+	var post FeedPost
 	err := app.DB.FindOne(ctx, feedpostsCollection, map[string]any{"postid": postID}, &post)
 	return post, err
 }
 
-func FindFeedPosts(ctx context.Context, app *infra.Deps, opts db.FindManyOptions) ([]models.FeedPost, error) {
-	var posts []models.FeedPost
+func FindFeedPosts(ctx context.Context, app *infra.Deps, opts db.FindManyOptions) ([]FeedPost, error) {
+	var posts []FeedPost
 	if err := app.DB.FindManyWithOptions(ctx, feedpostsCollection, map[string]any{}, opts, &posts); err != nil {
 		return nil, err
 	}
@@ -53,7 +52,7 @@ func GetCachedUsernames(ctx context.Context, app *infra.Deps, userIDs []string) 
 	return usernameMap
 }
 
-func InsertFeedPost(ctx context.Context, app *infra.Deps, post models.FeedPost) error {
+func InsertFeedPost(ctx context.Context, app *infra.Deps, post FeedPost) error {
 	return app.DB.InsertOne(ctx, feedpostsCollection, post)
 }
 

@@ -9,8 +9,8 @@ import (
 
 	"naevis/infra/cache"
 	"naevis/infra/db"
+	"naevis/internal/auth"
 	"naevis/middleware"
-	"naevis/models"
 	"naevis/utils"
 )
 
@@ -32,8 +32,8 @@ func validateJWT(r *http.Request) (*middleware.Claims, error) {
 ------------------------------------------------------- */
 
 // findUser returns a user by filter, or nil if not found
-func findUser(ctx context.Context, filter map[string]any, database db.Database) (*models.User, error) {
-	var user models.User
+func findUser(ctx context.Context, filter map[string]any, database db.Database) (*auth.User, error) {
+	var user auth.User
 	_ = database.FindOne(ctx, usersCollection, filter, &user)
 	// ignore errors; return nil if user not found
 	if user.UserID == "" {
@@ -56,7 +56,7 @@ func RespondWithUserProfile(w http.ResponseWriter, userid string, database db.Da
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	var userProfile models.User
+	var userProfile auth.User
 	_ = database.FindOne(ctx, usersCollection, map[string]any{"userid": userid}, &userProfile)
 
 	if userProfile.UserID == "" {
@@ -65,26 +65,6 @@ func RespondWithUserProfile(w http.ResponseWriter, userid string, database db.Da
 	}
 
 	utils.RespondWithJSON(w, http.StatusOK, userProfile)
-}
-
-/* -------------------------------------------------------
-   Follow data + caching utilities
-------------------------------------------------------- */
-
-// GetUserFollowData returns followers and follows for a user
-func GetUserFollowData(ctx context.Context, userID string, database db.Database) (models.UserFollow, error) {
-	var uf models.UserFollow
-	_ = database.FindOne(ctx, "followings", map[string]any{"userid": userID}, &uf)
-
-	// return empty if not found
-	if uf.UserID == "" {
-		return models.UserFollow{
-			Followers: []string{},
-			Follows:   []string{},
-		}, nil
-	}
-
-	return uf, nil
 }
 
 // CacheProfile stores the serialized profile in cache

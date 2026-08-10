@@ -14,9 +14,7 @@ import (
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/middleware"
-	"naevis/models"
 	"naevis/utils"
-	log "naevis/utils/logger"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -38,22 +36,18 @@ func Login(app *infra.Deps) http.HandlerFunc {
 		}
 		creds.Username = strings.TrimSpace(creds.Username)
 
-		// Gather request-scoped raw layout parameters
 		ip := clientIP(r)
 		failKey := fmt.Sprintf("auth:fail:%s:%s", creds.Username, ipPrefix(ip))
 		uaHashStr := uaHash(r)
 		ipPrefixStr := ipPrefix(ip)
 
-		// 1. Check Rate Limit
 		if isLocked := CheckRateLimitLockout(ctx, app, failKey); isLocked {
 			utils.RespondWithError(w, http.StatusTooManyRequests, "Too many attempts")
 			return
 		}
 
-		// 2. Run Authentication and Session Creation via Service Layer orchestrators
 		accessToken, refreshToken, userID, err := AuthenticateAndCreateSession(ctx, app, creds, uaHashStr, ipPrefixStr)
 		if err != nil {
-			// Track failure and update brute-force count checks
 			IncrementRateLimitCounter(ctx, app, failKey)
 
 			if errors.Is(err, ErrAuthInvalidCredentials) {
@@ -64,7 +58,6 @@ func Login(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		// 3. Clean up security keys and finalize responses
 		_ = ClearRateLimitCounter(ctx, app, failKey)
 
 		setRefreshCookie(w, refreshToken)
@@ -84,18 +77,15 @@ func Login(app *infra.Deps) http.HandlerFunc {
 ============================================================ */
 
 func AuthenticateAndCreateSession(ctx context.Context, app *infra.Deps, creds LoginRequest, uaHash string, ipPrefix string) (string, string, string, error) {
-	// 1. Fetch record entity safely from storage
 	user, err := GetUserByUsername(ctx, app, creds.Username)
 	if err != nil {
 		return "", "", "", ErrAuthInvalidCredentials
 	}
 
-	// 2. Verify password hashes match
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password)); err != nil {
 		return "", "", "", ErrAuthInvalidCredentials
 	}
 
-	// 3. Produce security claim payloads
 	claims := &middleware.Claims{
 		UserID:   user.UserID,
 		Username: user.Username,
@@ -116,7 +106,6 @@ func AuthenticateAndCreateSession(ctx context.Context, app *infra.Deps, creds Lo
 		return "", "", "", ErrTokenGeneration
 	}
 
-	// 4. Record new system state updates down to storage repositories
 	_, err = PersistUserSession(
 		ctx,
 		app,
@@ -140,11 +129,7 @@ func CheckRateLimitLockout(ctx context.Context, app *infra.Deps, failKey string)
 	val, err := app.Cache.Get(ctx, failKey)
 	var cnt int64
 	if err == nil && len(val) > 0 {
-		cnt, err = strconv.ParseInt(string(val), 10, 64)
-		if err != nil {
-			log.Printf("warn: failed to parse auth fail count: %v", err)
-			cnt = 0
-		}
+		cnt, _ = strconv.ParseInt(string(val), 10, 64)
 	}
 	return cnt >= maxFailedAttempts
 }
@@ -152,24 +137,16 @@ func CheckRateLimitLockout(ctx context.Context, app *infra.Deps, failKey string)
 func IncrementRateLimitCounter(ctx context.Context, app *infra.Deps, failKey string) {
 	cnt, err := app.Cache.Incr(ctx, failKey)
 	if err != nil {
-		log.Printf("warn: failed to increment auth fail count: %v", err)
 		cnt = 0
 	}
-
-	if err = app.Cache.Set(ctx, failKey, []byte(strconv.FormatInt(cnt, 10)), lockoutDuration); err != nil {
-		log.Printf("warn: failed to persist auth fail count: %v", err)
-	}
+	_ = app.Cache.Set(ctx, failKey, []byte(strconv.FormatInt(cnt, 10)), lockoutDuration)
 }
 
 func ClearRateLimitCounter(ctx context.Context, app *infra.Deps, failKey string) error {
-	if err := app.Cache.Del(ctx, failKey); err != nil {
-		log.Printf("warn: failed to clear auth fail count: %v", err)
-		return err
-	}
-	return nil
+	return app.Cache.Del(ctx, failKey)
 }
 
-func GetUserByUsername(ctx context.Context, app *infra.Deps, username string) (models.User, error) {
+func GetUserByUsername(ctx context.Context, app *infra.Deps, username string) (User, error) {
 	return FindUserByUsername(ctx, app, username)
 }
 

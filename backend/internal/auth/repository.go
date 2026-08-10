@@ -6,12 +6,11 @@ import (
 	"time"
 
 	"naevis/infra"
-	"naevis/models"
 	log "naevis/utils/logger"
 )
 
 type Repository interface {
-	GetUserByUsername(ctx context.Context, username string) (models.User, error)
+	GetUserByUsername(ctx context.Context, username string) (User, error)
 	PersistUserSession(ctx context.Context, userID, hashedRefreshToken, uaHash, ipPrefix string) error
 	CheckRateLimit(ctx context.Context, key string) (bool, error)
 	IncrementRateLimit(ctx context.Context, key string, ttl time.Duration)
@@ -26,7 +25,7 @@ func NewRepository(deps *infra.Deps) Repository {
 	return &redisDBRepository{deps: deps}
 }
 
-func (r *redisDBRepository) GetUserByUsername(ctx context.Context, username string) (models.User, error) {
+func (r *redisDBRepository) GetUserByUsername(ctx context.Context, username string) (User, error) {
 	return FindUserByUsername(ctx, r.deps, username)
 }
 

@@ -1,4 +1,4 @@
-package beats
+package likes
 
 import (
 	"time"

@@ -4,7 +4,6 @@ import (
 	"context"
 	"naevis/infra"
 	"naevis/infra/db"
-	"naevis/models"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -25,7 +24,7 @@ func GetEvent(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		var events []models.Event
+		var events []Event
 		if err := aggregateEvent(ctx, app, eventID, &events); err != nil {
 			log.Println("Aggregate error:", err)
 			http.Error(w, "Failed to fetch event", http.StatusInternalServerError)
@@ -64,13 +63,13 @@ func GetEvents(app *infra.Deps) http.HandlerFunc {
 			Sort:  bson.D{{Key: "createdAt", Value: -1}},
 		}
 
-		var rawEvents []models.Event
+		var rawEvents []Event
 		if err := listEvents(ctx, app, filter, opts, &rawEvents); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch events")
 			return
 		}
 
-		safeEvents := make([]models.Event, 0, len(rawEvents))
+		safeEvents := make([]Event, 0, len(rawEvents))
 		for _, e := range rawEvents {
 			safeEvents = append(safeEvents, toSafeEvent(e))
 		}

@@ -11,7 +11,6 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
 	"naevis/utils"
 
 	"golang.org/x/crypto/bcrypt"
@@ -57,28 +56,24 @@ func Register(app *infra.Deps) http.HandlerFunc {
    2. SERVICES (BUSINESS LAYER)
 ============================================================ */
 
-func ProcessRegistration(ctx context.Context, app *infra.Deps, input SignUpRequest) (models.User, error) {
-	// Sanitize values
+func ProcessRegistration(ctx context.Context, app *infra.Deps, input SignUpRequest) (User, error) {
 	input.Username = strings.TrimSpace(input.Username)
 	input.Password = strings.TrimSpace(input.Password)
 	input.Email = strings.ToLower(strings.TrimSpace(input.Email))
 
-	// Validate formats
 	if !validateUsername(input.Username) ||
 		!validateEmail(input.Email) ||
 		!validatePassword(input.Password) {
-		return models.User{}, ErrAuthInvalidCredentials
+		return User{}, ErrAuthInvalidCredentials
 	}
 
-	// Transform data and perform CPU-bound tasks
 	user, err := BuildUser(input)
 	if err != nil {
-		return models.User{}, ErrPasswordHashing
+		return User{}, ErrPasswordHashing
 	}
 
-	// Persist changes
 	if err := CreateUser(ctx, app, user); err != nil {
-		return models.User{}, err
+		return User{}, err
 	}
 
 	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserRegistered, mqevent.UserRegisteredPayload{})
@@ -86,18 +81,17 @@ func ProcessRegistration(ctx context.Context, app *infra.Deps, input SignUpReque
 	return user, nil
 }
 
-// BuildUser handles purely mapping request values to a state model entity structure
-func BuildUser(input SignUpRequest) (models.User, error) {
+func BuildUser(input SignUpRequest) (User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword(
 		[]byte(input.Password),
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
-		return models.User{}, err
+		return User{}, err
 	}
 
 	now := time.Now()
-	user := models.User{
+	user := User{
 		UserID:        "u" + utils.GenerateRandomString(10),
 		Username:      input.Username,
 		Email:         input.Email,

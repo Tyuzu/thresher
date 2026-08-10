@@ -2,6 +2,7 @@ package suggestions
 
 import (
 	"context"
+	"naevis/internal/beats/follows"
 	"naevis/internal/places"
 	log "naevis/utils/logger"
 	"net/http"
@@ -10,7 +11,6 @@ import (
 
 	"naevis/config"
 	"naevis/infra"
-	"naevis/models"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -45,7 +45,7 @@ func SuggestFollowers(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		var followData models.UserFollow
+		var followData follows.UserFollow
 		err = app.DB.FindOne(
 			ctx,
 			followingsCollection,
@@ -62,7 +62,7 @@ func SuggestFollowers(app *infra.Deps) http.HandlerFunc {
 			"userid": bson.M{"$nin": excludedUserIDs},
 		}
 
-		var users []models.UserSuggest
+		var users []UserSuggest
 		if err := app.DB.FindMany(
 			ctx,
 			usersCollection,
@@ -85,7 +85,7 @@ func SuggestFollowers(app *infra.Deps) http.HandlerFunc {
 		)
 
 		if users == nil {
-			users = []models.UserSuggest{}
+			users = []UserSuggest{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, users)

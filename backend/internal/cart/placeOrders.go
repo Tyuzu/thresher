@@ -10,7 +10,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/mq"
-	"naevis/models"
+	"naevis/internal/auth"
 	"naevis/utils"
 	log "naevis/utils/logger"
 
@@ -185,7 +185,7 @@ func processFarmOrders(
 	}
 
 	// Fetch buyer info once up front rather than inside the per-farm loop
-	var user models.User
+	var user auth.User
 	var userName, userPhone string
 	if err := app.DB.FindOne(ctx, "users", bson.M{"userid": checkout.UserID}, &user); err == nil {
 		userName = user.Name
