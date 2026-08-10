@@ -12,6 +12,29 @@ import (
 	"naevis/utils"
 )
 
+// Handler for generic status updates (e.g. PATCH /api/v1/deliveries/:deliveryid/status)
+func UpdateDeliveryStatus(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deliveryID := utils.GetParam(r, "deliveryid")
+
+		var req struct {
+			Status string `json:"status"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
+		delivery, err := updateDeliveryStatus(app, r, deliveryID, req.Status)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.RespondWithJSON(w, http.StatusOK, delivery)
+	}
+}
+
 func CancelDelivery(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		deliveryID := utils.GetParam(r, "deliveryid")
@@ -39,7 +62,7 @@ func AssignDriver(app *infra.Deps) http.HandlerFunc {
 
 		ctx := r.Context()
 		var current Delivery
-		filter := bson.M{"_id": deliveryID, "tenant_id": tenantID}
+		filter := bson.M{"id": deliveryID, "tenantid": tenantID}
 		if err := app.DB.FindOne(ctx, "deliveries", filter, &current); err != nil {
 			utils.RespondWithError(w, http.StatusNotFound, "Delivery not found")
 			return
@@ -53,7 +76,7 @@ func AssignDriver(app *infra.Deps) http.HandlerFunc {
 		now := time.Now()
 		update := bson.M{
 			"$set": bson.M{
-				"driver_id":  req.DriverID,
+				"driverid":   req.DriverID,
 				"status":     StatusAssigned,
 				"updated_at": now,
 			},

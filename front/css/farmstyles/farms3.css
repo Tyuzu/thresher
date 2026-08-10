@@ -13,25 +13,6 @@
   color: var(--color-fg);
   background-color: var(--color-bg);
 }
-/*
-.two-column.farm-page {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-lg);
-}
-
-@media (min-width: 1024px) {
-  .two-column.farm-page {
-    grid-template-columns: 1fr 320px;
-  }
-}
-*/
-/* Main Content Layout */
-.layout-main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-}
 
 /* Filter Controls Bar */
 .farm__filters {

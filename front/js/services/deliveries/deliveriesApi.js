@@ -20,12 +20,16 @@ export async function cancelDelivery(deliveryId) {
   return await apiFetch(`${BASE_URL}/${deliveryId}`, "DELETE");
 }
 
-// --- LIFECYCLE ---
+// --- LIFECYCLE & STATUS UPDATES ---
 export async function updateDeliveryLifecycle(deliveryId, action, body = null) {
   if (action === "cancel") {
     return await cancelDelivery(deliveryId);
   }
   return await apiFetch(`${BASE_URL}/${deliveryId}/${action}`, "POST", body);
+}
+
+export async function updateDeliveryStatus(deliveryId, statusData) {
+  return await apiFetch(`${BASE_URL}/${deliveryId}/status`, "PATCH", statusData);
 }
 
 // --- TRACKING & PROOF ---
@@ -91,6 +95,10 @@ export async function fetchActiveDeliveries() {
   return await apiFetch("/drivers/me/deliveries/active", "GET");
 }
 
+export async function claimDelivery(deliveryId) {
+  return await apiFetch(`/drivers/me/deliveries/${deliveryId}/claim`, "POST");
+}
+
 export async function acceptDriverJob(deliveryId) {
   return await apiFetch(`/drivers/me/deliveries/${deliveryId}/accept`, "POST");
 }
@@ -130,16 +138,4 @@ export async function deleteWebhook(webhookId) {
 
 export async function testWebhook(webhookId) {
   return await apiFetch(`/webhooks/${webhookId}/test`, "POST");
-}
-
-// new
-
-
-export async function claimDelivery() {
-  return await apiFetch("/drivers/me", "GET");
-}
-
-
-export async function updateDeliveryStatus() {
-  return await apiFetch("/drivers/me", "GET");
 }

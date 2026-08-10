@@ -1,0 +1,239 @@
+/* ==========================================================================
+   Deliveries Overview & Catalog Styles
+   ========================================================================== */
+
+/* Header & Controls Bar */
+.deliveries-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.deliveries-header-row h1 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-fg);
+}
+
+.btn-refresh {
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-fg);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.btn-refresh:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.btn-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Toolbar Controls */
+.deliveries-toolbar {
+  display: flex;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.delivery-search-input {
+  flex: 1 1 200px;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-input, #ffffff);
+  color: var(--color-fg);
+  font-size: var(--font-size-sm);
+}
+
+.delivery-filter-select,
+.delivery-sort-select {
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-input, #ffffff);
+  color: var(--color-fg);
+  font-size: var(--font-size-sm);
+}
+
+/* View Mode Toggles */
+.view-toggle-group {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-view-toggle {
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-fg);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.btn-view-toggle.active {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border-color: var(--color-primary);
+}
+
+/* Layout Modes */
+.deliveries-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-md);
+}
+
+.deliveries-list-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Delivery Cards */
+.delivery-card {
+  border: 1px solid var(--color-border-light);
+  padding: var(--space-sm);
+  border-radius: var(--radius-card);
+  margin-bottom: var(--space-xs);
+  background-color: var(--color-card-bg);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--transition-fast);
+}
+
+.delivery-card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+.card-body {
+  margin: var(--space-xs) 0;
+  font-size: var(--font-size-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-body p {
+  color: var(--color-fg);
+  line-height: var(--line-height-normal);
+}
+
+.card-body p strong {
+  color: var(--color-muted);
+}
+
+.delivery-card-actions {
+  margin-top: var(--space-sm);
+  display: flex;
+  gap: var(--space-xs);
+}
+
+/* Badges */
+.badge-group {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 2px 6px;
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.badge-weight {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-fg);
+}
+
+.badge-vehicle {
+  background-color: var(--color-info-light, #e3f2fd);
+  color: var(--color-info, #0288d1);
+}
+
+.badge-fragile {
+  background-color: var(--color-danger-light, #ffebee);
+  color: var(--color-danger, #c62828);
+}
+
+/* Expiry Counter */
+.expiry-countdown {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+  font-weight: var(--font-weight-bold);
+  margin-top: var(--space-xxs);
+}
+
+/* Map Mode Placeholder */
+.deliveries-map-view {
+  height: 400px;
+  background-color: var(--color-bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-fg);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Load More Button */
+.btn-load-more {
+  margin: var(--space-md) auto;
+  display: block;
+}
+
+/* Empty / State Messages */
+.deliveries-loading,
+.deliveries-empty {
+  padding: var(--space-md);
+  color: var(--color-muted);
+  text-align: center;
+  font-size: var(--font-size-sm);
+}
+
+.deliveries-error {
+  padding: var(--space-md);
+  color: var(--color-danger);
+  background-color: var(--color-highlight);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+/* Responsive Rules */
+@media (max-width: 600px) {
+  .deliveries-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .view-toggle-group {
+    justify-content: center;
+  }
+
+  .deliveries-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -38,6 +38,9 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
     asideChildren.push(
       Button("Create Delivery", "btn-crt-del", { click: () => navigate("/delivery/create") }, "buttonx primary")
     );
+    asideChildren.push(
+      Button("Register as Driver", "btn-reg-drv", { click: () => navigate("/delivery/addDriver") }, "buttonx primary")
+    );
   }
 
   // Role Switcher Toggle (Feature 0)
@@ -82,7 +85,7 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
   }, ["🔄 Refresh"]);
 
   const mainHeader = [
-    createElement("div", { class: "deliveries-header-row", style: "display:flex;justify-content:space-between;align-items:center;" }, [
+    createElement("div", { class: "deliveries-header-row" }, [
       createElement("h1", {}, ["Deliveries & Shipments"]),
       refreshBtn
     ]),
@@ -134,7 +137,7 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
   ]);
 
   // Feature 1: Grid vs List vs Map View Selector
-  const viewToggleContainer = createElement("div", { class: "view-toggle-group", style: "display:flex;gap:4px;" }, [
+  const viewToggleContainer = createElement("div", { class: "view-toggle-group" }, [
     createElement("button", {
       class: "btn-view-toggle active",
       events: { click: (e) => setViewMode("grid", e.target) }
@@ -149,7 +152,7 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
     }, ["Map"])
   ]);
 
-  const toolbar = createElement("div", { class: "deliveries-toolbar", style: "display:flex;gap:10px;margin:15px 0;flex-wrap:wrap;" }, [
+  const toolbar = createElement("div", { class: "deliveries-toolbar" }, [
     searchInput,
     statusSelect,
     sortSelect,
@@ -225,10 +228,7 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
 
     // Feature 1: Map View Handler
     if (currentViewMode === "map") {
-      const mapPlaceholder = createElement("div", {
-        class: "deliveries-map-view",
-        style: "height:400px;background:#e9ecef;display:flex;align-items:center;justify-content:center;border-radius:8px;"
-      }, [
+      const mapPlaceholder = createElement("div", { class: "deliveries-map-view" }, [
         createElement("p", {}, [`Interactive Map Mode (${filteredDeliveries.length} Pins loaded)`])
       ]);
       listContainer.append(mapPlaceholder);
@@ -241,7 +241,7 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
     const contentBox = createElement("div", { class: gridOrListClass });
 
     paginatedItems.forEach((item, idx) => {
-      contentBox.append(createDeliveryCard(item, userRole));
+      contentBox.append(createDeliveryCard(item, userRole, renderList));
 
       // Inject in-list ad after every 5th item
       if ((idx + 1) % 5 === 0) {
@@ -264,10 +264,8 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
             renderList();
           }
         },
-        "buttonx secondary"
+        "buttonx secondary btn-load-more"
       );
-      loadMoreBtn.style.margin = "20px auto";
-      loadMoreBtn.style.display = "block";
       listContainer.append(loadMoreBtn);
     }
   }
@@ -277,7 +275,7 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
 }
 
 // ---------- CARD BUILDER (FEATURES 0, 4, 5, 6) ----------
-function createDeliveryCard(item, userRole) {
+function createDeliveryCard(item, userRole, onRenderList) {
   const deliveryId = item.deliveryid ?? item.id ?? "N/A";
   const status = (item.status || "AVAILABLE").toUpperCase();
   const payout = item.payout ? `$${Number(item.payout).toFixed(2)}` : "$15.00";
@@ -287,25 +285,25 @@ function createDeliveryCard(item, userRole) {
   const estTimeMinutes = Math.round((distance / 25) * 60) + 10; // ~25km/h avg speed + buffer
 
   // Feature 5: Package Attributes Badges
-  const badgesContainer = createElement("div", { class: "badge-group", style: "display:flex;gap:6px;margin:6px 0;flex-wrap:wrap;" }, [
-    createElement("span", { class: "badge badge-weight", style: "background:#eee;padding:2px 6px;font-size:11px;border-radius:4px;" }, [
+  const badgesContainer = createElement("div", { class: "badge-group" }, [
+    createElement("span", { class: "badge badge-weight" }, [
       item.package_weight ? `${item.package_weight} kg` : "< 5 kg"
     ]),
-    createElement("span", { class: "badge badge-vehicle", style: "background:#e3f2fd;padding:2px 6px;font-size:11px;border-radius:4px;" }, [
+    createElement("span", { class: "badge badge-vehicle" }, [
       item.vehicle_type || "Car / Bike"
     ]),
-    item.is_fragile ? createElement("span", { class: "badge badge-fragile", style: "background:#ffebee;color:#c62828;padding:2px 6px;font-size:11px;border-radius:4px;" }, ["Fragile"]) : null
+    item.is_fragile ? createElement("span", { class: "badge badge-fragile" }, ["Fragile"]) : null
   ].filter(Boolean));
 
   // Feature 4: Expiry / Timeout Countdown
-  const expiryContainer = createElement("div", { class: "expiry-countdown", style: "font-size:12px;color:#d32f2f;font-weight:bold;" });
+  const expiryContainer = createElement("div", { class: "expiry-countdown" });
   if (status === "AVAILABLE") {
     const expiresAt = item.expires_at ? new Date(item.expires_at).getTime() : Date.now() + 45 * 60 * 1000;
     startCountdown(expiresAt, expiryContainer);
   }
 
   // Feature 0: Role-Based Views & Actions
-  const cardActions = createElement("div", { class: "delivery-card-actions", style: "margin-top:10px;display:flex;gap:8px;" });
+  const cardActions = createElement("div", { class: "delivery-card-actions" });
 
   if (userRole === "courier" && status === "AVAILABLE") {
     const claimBtn = Button(`Claim (${payout})`, "", {
@@ -330,7 +328,7 @@ function createDeliveryCard(item, userRole) {
           await cancelDelivery(deliveryId);
           Notify("Delivery request cancelled.", { type: "info" });
           item.status = "CANCELLED";
-          renderList();
+          if (onRenderList) onRenderList();
         } catch (err) {
           Notify(err?.message || "Failed to cancel order.", { type: "error" });
         }
@@ -344,13 +342,13 @@ function createDeliveryCard(item, userRole) {
     Button("Details", "", { click: () => navigate(`/delivery/${deliveryId}`) }, "btn-secondary")
   );
 
-  return createElement("div", { class: "delivery-card", style: "border:1px solid #ddd;padding:12px;border-radius:8px;margin-bottom:12px;background:#fff;" }, [
-    createElement("div", { class: "card-header", style: "display:flex;justify-content:space-between;" }, [
+  return createElement("div", { class: "delivery-card" }, [
+    createElement("div", { class: "card-header" }, [
       createElement("strong", {}, [`ID: ${deliveryId}`]),
-      createElement("span", { class: `status-badge status-${status.toLowerCase()}`, style: "font-weight:bold;font-size:12px;" }, [status])
+      createElement("span", { class: `status-badge status-${status.toLowerCase()}` }, [status])
     ]),
     badgesContainer,
-    createElement("div", { class: "card-body", style: "margin:8px 0;font-size:14px;" }, [
+    createElement("div", { class: "card-body" }, [
       createElement("p", {}, [createElement("strong", {}, ["Pickup: "]), item.pickup_loc?.address || "N/A"]),
       createElement("p", {}, [createElement("strong", {}, ["Dropoff: "]), item.dropoff_loc?.address || "N/A"]),
       createElement("p", {}, [createElement("strong", {}, ["Distance: "]), `${distance} km (~${estTimeMinutes} mins)`]),

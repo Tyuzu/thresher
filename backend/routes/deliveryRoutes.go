@@ -1,13 +1,14 @@
 package routes
 
 import (
+	"net/http"
+
 	"naevis/infra"
 	"naevis/internal/deliveries"
 	"naevis/internal/deliveries/delwebhooks"
 	"naevis/internal/deliveries/drivers"
 	"naevis/internal/deliveries/tracking"
 	"naevis/middleware"
-	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -27,6 +28,7 @@ func AddDeliveryRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *
 	router.HandlerFunc(http.MethodPost, "/api/v1/deliveries", protected(deliveries.CreateDelivery(app)))
 	router.HandlerFunc(http.MethodGet, "/api/v1/deliveries", protected(deliveries.GetMyDeliveries(app)))
 	router.HandlerFunc(http.MethodGet, "/api/v1/deliveries/:deliveryid", protected(deliveries.GetDeliveryByID(app)))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/deliveries/:deliveryid/status", protected(deliveries.UpdateDeliveryStatus(app)))
 	router.HandlerFunc(http.MethodDelete, "/api/v1/deliveries/:deliveryid", protected(deliveries.CancelDelivery(app)))
 
 	// LIFECYCLE
@@ -55,6 +57,7 @@ func AddDeliveryRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *
 
 	router.HandlerFunc(http.MethodGet, "/api/v1/drivers/me/deliveries", protected(drivers.GetAvailableJobs(app)))
 	router.HandlerFunc(http.MethodGet, "/api/v1/drivers/me/deliveries/active", protected(drivers.GetActiveDeliveries(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/drivers/me/deliveries/:deliveryid/claim", protected(drivers.ClaimJob(app)))
 	router.HandlerFunc(http.MethodPost, "/api/v1/drivers/me/deliveries/:deliveryid/accept", protected(drivers.AcceptJob(app)))
 	router.HandlerFunc(http.MethodPost, "/api/v1/drivers/me/deliveries/:deliveryid/reject", protected(drivers.RejectJob(app)))
 

@@ -63,11 +63,10 @@ export async function DriverDashboard(container, isLoggedIn) {
 
   // Elements & State Indicators
   const statusIndicator = createElement("span", { 
-    class: "driver-status-badge offline", 
-    style: "padding:4px 12px;border-radius:12px;font-weight:bold;background:#dc3545;color:#fff;" 
+    class: "driver-status-badge offline" 
   }, ["OFFLINE"]);
   
-  const locationReadout = createElement("div", { class: "gps-readout", style: "font-size:13px;color:#666;margin-top:8px;" }, ["GPS Idle"]);
+  const locationReadout = createElement("div", { class: "gps-readout" }, ["GPS Idle"]);
 
   // High-accuracy live position tracker using watchPosition
   const startGpsTracker = () => {
@@ -117,7 +116,6 @@ export async function DriverDashboard(container, isLoggedIn) {
         if (isCurrentlyOnline) {
           await setDriverOffline();
           statusIndicator.textContent = "OFFLINE";
-          statusIndicator.style.backgroundColor = "#dc3545";
           statusIndicator.className = "driver-status-badge offline";
           toggleStatusBtn.textContent = "Go Online";
           stopGpsTracker();
@@ -125,7 +123,6 @@ export async function DriverDashboard(container, isLoggedIn) {
         } else {
           await setDriverOnline();
           statusIndicator.textContent = "ONLINE";
-          statusIndicator.style.backgroundColor = "#28a745";
           statusIndicator.className = "driver-status-badge online";
           toggleStatusBtn.textContent = "Go Offline";
           startGpsTracker();
@@ -139,8 +136,7 @@ export async function DriverDashboard(container, isLoggedIn) {
 
   // Metrics Bar
   const metricsBar = createElement("div", { 
-    class: "driver-metrics-bar", 
-    style: "display:grid;grid-template-columns:repeat(3, 1fr);gap:15px;margin-bottom:20px;" 
+    class: "driver-metrics-bar"
   }, [
     createMetricCard("Today's Earnings", "$142.50"),
     createMetricCard("Completed", "6 Jobs"),
@@ -155,19 +151,19 @@ export async function DriverDashboard(container, isLoggedIn) {
     metricsBar,
 
     // Status Control Card
-    createElement("div", { class: "driver-control-card", style: "background:#fff;padding:20px;border-radius:8px;border:1px solid #ddd;margin-bottom:20px;" }, [
-      createElement("h2", { style: "margin-bottom:15px;" }, ["Location & Duty Status"]),
-      createElement("div", { class: "status-row", style: "display:flex;align-items:center;gap:10px;margin-bottom:15px;" }, [
+    createElement("div", { class: "driver-control-card" }, [
+      createElement("h2", { class: "card-title" }, ["Location & Duty Status"]),
+      createElement("div", { class: "status-row" }, [
         createElement("strong", {}, ["Duty Status: "]),
         statusIndicator
       ]),
-      createElement("div", { class: "action-row", style: "margin-bottom:10px;" }, [toggleStatusBtn]),
+      createElement("div", { class: "action-row" }, [toggleStatusBtn]),
       locationReadout
     ]),
 
     // Active Jobs Card
-    createElement("div", { class: "active-jobs-card", style: "background:#fff;padding:20px;border-radius:8px;border:1px solid #ddd;" }, [
-      createElement("h3", { style: "margin-bottom:15px;" }, ["Active Deliveries"]),
+    createElement("div", { class: "active-jobs-card" }, [
+      createElement("h3", { class: "card-title" }, ["Active Deliveries"]),
       activeJobsContainer
     ])
   ]);
@@ -179,7 +175,6 @@ export async function DriverDashboard(container, isLoggedIn) {
     const statusRes = await fetchDriverStatus();
     if (statusRes?.is_online || statusRes?.status === "online") {
       statusIndicator.textContent = "ONLINE";
-      statusIndicator.style.backgroundColor = "#28a745";
       statusIndicator.className = "driver-status-badge online";
       toggleStatusBtn.textContent = "Go Offline";
       startGpsTracker();
@@ -191,7 +186,7 @@ export async function DriverDashboard(container, isLoggedIn) {
 
     if (activeDeliveries.length === 0) {
       activeJobsContainer.append(
-        createElement("div", { class: "empty-jobs", style: "padding:20px;text-align:center;color:#777;" }, [
+        createElement("div", { class: "empty-jobs" }, [
           "No active delivery tasks assigned. Go online or check the Available Jobs feed!"
         ])
       );
@@ -204,18 +199,15 @@ export async function DriverDashboard(container, isLoggedIn) {
         // Deep-link to navigation maps
         const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dropoffAddr)}`;
 
-        const card = createElement("div", { 
-          class: "job-item-card", 
-          style: "border:1px solid #eee;padding:15px;border-radius:6px;margin-bottom:15px;background:#fdfdfd;" 
-        }, [
-          createElement("div", { style: "display:flex;justify-content:space-between;margin-bottom:8px;" }, [
+        const card = createElement("div", { class: "job-item-card" }, [
+          createElement("div", { class: "job-header-row" }, [
             createElement("strong", {}, [`Job #${jobId}`]),
-            createElement("span", { style: "font-weight:bold;color:#007bff;" }, [job.status || "IN_PROGRESS"])
+            createElement("span", { class: "job-status-text" }, [job.status || "IN_PROGRESS"])
           ]),
-          createElement("div", { class: "job-pickup", style: "margin-bottom:4px;" }, [`📍 Pickup: ${pickupAddr}`]),
-          createElement("div", { class: "job-dropoff", style: "margin-bottom:12px;" }, [`🎯 Dropoff: ${dropoffAddr}`]),
+          createElement("div", { class: "job-pickup" }, [`📍 Pickup: ${pickupAddr}`]),
+          createElement("div", { class: "job-dropoff" }, [`🎯 Dropoff: ${dropoffAddr}`]),
           
-          createElement("div", { style: "display:flex;gap:10px;" }, [
+          createElement("div", { class: "job-actions-row" }, [
             Button("Navigate Map", `btn-nav-${jobId}`, {
               click: () => window.open(navUrl, "_blank")
             }, "buttonx secondary"),
@@ -242,7 +234,7 @@ export async function DriverDashboard(container, isLoggedIn) {
     }
   } catch (err) {
     activeJobsContainer.replaceChildren(
-      createElement("div", { class: "error-text", style: "color:#d9534f;padding:10px;" }, [
+      createElement("div", { class: "error-text" }, [
         "Could not load active driver details."
       ])
     );
@@ -251,11 +243,9 @@ export async function DriverDashboard(container, isLoggedIn) {
 
 // Helper component for shift stats
 function createMetricCard(label, value) {
-  return createElement("div", { 
-    style: "background:#fff;padding:15px;border-radius:8px;border:1px solid #ddd;text-align:center;" 
-  }, [
-    createElement("span", { style: "font-size:12px;color:#666;display:block;" }, [label]),
-    createElement("strong", { style: "font-size:20px;color:#333;" }, [value])
+  return createElement("div", { class: "metric-card" }, [
+    createElement("span", { class: "metric-label" }, [label]),
+    createElement("strong", { class: "metric-value" }, [value])
   ]);
 }
 

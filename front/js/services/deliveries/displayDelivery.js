@@ -8,6 +8,10 @@ import { createAsideContent } from "../../components/layout/asideLayout.js";
 import { adspace } from "../../services/ads/newads.js";
 import { 
   fetchDeliveryById, 
+  fetchDeliveryTracking,
+  fetchDeliveryEvents,
+  fetchStatusHistory,
+  getProofOfDelivery,
   cancelDelivery, 
   claimDelivery, 
   updateDeliveryStatus 
@@ -25,27 +29,31 @@ export async function displayDelivery(container, deliveryId, options = {}) {
 
   contentContainer.replaceChildren();
   const PAGE_NAME = "delivery-detail";
+  const userRole = options.userRole || localStorage.getItem("user_role") || "courier";
 
-  // Identify user role from context or local state
-  const userRole = options.userRole || localStorage.getItem("user_role") || "courier"; // "courier" | "sender"
-
-  // --- ASIDE & ACTIONS ---
+  // --- 1. ASIDE LAYOUT ---
   const asideChildren = [
     Button("← Back to Deliveries", "btn-back-del", { click: () => navigate("/deliveries") }, "buttonx secondary"),
-    Button("Create New Delivery", "btn-crt-del", { click: () => navigate("/delivery/create") }, "buttonx primary"),
+    Button("Refresh View", "btn-refresh-del", { click: () => displayDelivery(container, deliveryId, options) }, "buttonx primary"),
     adspace("aside", PAGE_NAME, { width: 300, height: 250, refreshInterval: 30000 })
   ];
 
+  if (userRole === "sender") {
+    asideChildren.splice(1, 0, 
+      Button("Create New Delivery", "btn-crt-del", { click: () => navigate("/delivery/create") }, "buttonx primary")
+    );
+  }
+
   const asideContent = createAsideContent({
-    title: "Quick Actions",
+    title: "Delivery Actions",
     children: asideChildren,
     showAd: false
   });
 
-  // --- MAIN LAYOUT SETUP ---
+  // --- 2. MAIN LAYOUT HEADER ---
   const mainHeader = [
     createElement("div", { class: "delivery-detail-header-row" }, [
-      createElement("h1", {}, [`Delivery Details`])
+      createElement("h1", {}, [`Delivery Tracking & Details - Order #${deliveryId}`])
     ]),
     adspace("inbody", PAGE_NAME, { width: 728, height: 90, refreshInterval: 45000 })
   ];
@@ -60,46 +68,65 @@ export async function displayDelivery(container, deliveryId, options = {}) {
   const mainElement = layout.querySelector(".layout-main");
 
   const pageWrapper = createElement("div", { class: "delivery-details-container" }, [
-    createElement("div", { class: "deliveries-loading" }, ["Loading delivery details..."])
+    createElement("div", { class: "deliveries-loading" }, ["Fetching delivery details and live tracking..."])
   ]);
 
   mainElement.append(pageWrapper);
 
+  // --- 3. CONCURRENT DATA FETCHING ---
   try {
-    const item = await fetchDeliveryById(deliveryId);
+    const [itemRes, trackingRes, eventsRes, historyRes, proofRes] = await Promise.allSettled([
+      fetchDeliveryById(deliveryId),
+      fetchDeliveryTracking(deliveryId),
+      fetchDeliveryEvents(deliveryId),
+      fetchStatusHistory(deliveryId),
+      getProofOfDelivery(deliveryId)
+    ]);
+
     pageWrapper.replaceChildren();
 
-    const currentStatus = (item.status || "CREATED").toUpperCase();
+    const item = itemRes.status === "fulfilled" ? itemRes.value : {};
+    const tracking = trackingRes.status === "fulfilled" ? trackingRes.value : {};
+    const events = eventsRes.status === "fulfilled" ? (Array.isArray(eventsRes.value) ? eventsRes.value : eventsRes.value?.events || []) : [];
+    const history = historyRes.status === "fulfilled" ? (Array.isArray(historyRes.value) ? historyRes.value : historyRes.value?.history || []) : [];
+    const proof = proofRes.status === "fulfilled" ? proofRes.value : null;
+
+    const currentStatus = (item.status || tracking.status || "CREATED").toUpperCase();
     const statusClass = `status-badge status-${currentStatus.toLowerCase()}`;
     const id = item.deliveryid ?? item.id ?? deliveryId;
     const payout = item.payout ? `$${Number(item.payout).toFixed(2)}` : "$18.50";
 
-    // --- 1. STATUS STEPPER TIMELINE ---
+    // --- 4. STEPPER TIMELINE ---
     const steps = ["CREATED", "CLAIMED", "PICKED_UP", "IN_TRANSIT", "DELIVERED"];
     const currentStepIndex = steps.indexOf(currentStatus);
 
-    const stepperNode = createElement("div", { class: "status-stepper", style: "display:flex;justify-content:space-between;margin:20px 0;padding:10px;background:#f8f9fa;border-radius:8px;" }, 
+    const stepperNode = createElement("div", { class: "status-stepper" }, 
       steps.map((step, idx) => {
         const isCompleted = idx <= currentStepIndex && currentStatus !== "CANCELLED";
-        const style = `padding:6px 12px;border-radius:12px;font-size:12px;font-weight:bold;background:${isCompleted ? "#28a745" : "#e0e0e0"};color:${isCompleted ? "#fff" : "#666"};`;
-        return createElement("span", { style }, [step.replace("_", " ")]);
+        const stepClass = `stepper-step ${isCompleted ? "completed" : "pending"}`;
+        return createElement("span", { class: stepClass }, [step.replace("_", " ")]);
       })
     );
 
-    // --- 2. LIVE TRACKING MAP PLACEHOLDER ---
-    const mapContainer = createElement("div", {
-      class: "delivery-live-map",
-      style: "height:280px;background:#e9ecef;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;"
-    }, [
-      createElement("p", {}, [
-        currentStatus === "IN_TRANSIT" 
-          ? "🛰️ Live GPS Tracking Active (Courier en route to dropoff)" 
-          : "📍 Route Overview Map"
+    // --- 5. MAP & LIVE GPS OVERVIEW ---
+    const mapContainer = createElement("div", { class: "delivery-live-map" }, [
+      createElement("div", { class: "map-content" }, [
+        createElement("p", { class: "map-status-text" }, [
+          currentStatus === "IN_TRANSIT" 
+            ? "🛰️ Live GPS Tracking Active (Courier en route)" 
+            : "📍 Route Overview Map"
+        ]),
+        tracking.current_location 
+          ? createElement("span", { class: "map-subtitle" }, [`Current Loc: ${tracking.current_location.lat}, ${tracking.current_location.lng}`])
+          : "",
+        tracking.eta 
+          ? createElement("span", { class: "map-subtitle" }, [`ETA: ${Datex(tracking.eta, true)}`])
+          : ""
       ])
     ]);
 
-    // --- 3. DYNAMIC ROLE-BASED ACTIONS ---
-    const actionsContainer = createElement("div", { class: "delivery-card-actions", style: "display:flex;gap:10px;margin-top:20px;" });
+    // --- 6. ROLE ACTIONS ---
+    const actionsContainer = createElement("div", { class: "delivery-card-actions" });
 
     if (userRole === "courier") {
       if (currentStatus === "AVAILABLE" || currentStatus === "CREATED") {
@@ -119,17 +146,13 @@ export async function displayDelivery(container, deliveryId, options = {}) {
       } else if (currentStatus === "CLAIMED") {
         actionsContainer.append(
           Button("Mark Package Picked Up", "btn-pickup", {
-            click: async () => {
-              await handleStatusUpdate(id, "PICKED_UP", container, options);
-            }
+            click: async () => handleStatusUpdate(id, "PICKED_UP", container, options)
           }, "btn-primary")
         );
       } else if (currentStatus === "PICKED_UP") {
         actionsContainer.append(
           Button("Start Transit to Dropoff", "btn-transit", {
-            click: async () => {
-              await handleStatusUpdate(id, "IN_TRANSIT", container, options);
-            }
+            click: async () => handleStatusUpdate(id, "IN_TRANSIT", container, options)
           }, "btn-primary")
         );
       } else if (currentStatus === "IN_TRANSIT") {
@@ -146,7 +169,6 @@ export async function displayDelivery(container, deliveryId, options = {}) {
       }
     }
 
-    // Sender Cancel Options
     if (userRole === "sender" && (currentStatus === "CREATED" || currentStatus === "AVAILABLE")) {
       actionsContainer.append(
         Button("Cancel Delivery Order", "btn-cancel-delivery", {
@@ -165,17 +187,54 @@ export async function displayDelivery(container, deliveryId, options = {}) {
       );
     }
 
-    // --- 4. DETAILS CARD RENDER ---
-    const card = createElement("div", { class: "delivery-details-card", style: "background:#fff;padding:20px;border-radius:8px;border:1px solid #ddd;" }, [
-      createElement("div", { class: "delivery-card-header", style: "display:flex;justify-content:space-between;align-items:center;" }, [
+    // --- 7. ACTIVITY LOGS ---
+    const combinedLogs = [...history, ...events].sort(
+      (a, b) => new Date(b.created_at || b.timestamp || 0) - new Date(a.created_at || a.timestamp || 0)
+    );
+
+    const historyList = createElement("div", { class: "tracking-history-list" }, 
+      combinedLogs.length === 0
+        ? [createElement("div", { class: "empty-history" }, ["No status updates recorded yet."])]
+        : combinedLogs.map((log) => 
+            createElement("div", { class: "history-item" }, [
+              createElement("div", { class: "history-timestamp" }, [Datex(log.created_at || log.timestamp || Date.now(), true)]),
+              createElement("div", { class: "history-event" }, [log.status || log.event_type || "Event logged"]),
+              log.description ? createElement("div", { class: "history-desc" }, [log.description]) : ""
+            ])
+          )
+    );
+
+    // --- 8. PROOF OF DELIVERY ---
+    let proofSection = null;
+    if (proof?.url) {
+      proofSection = createElement("div", { class: "delivery-info-group proof-section" }, [
+        createElement("h3", {}, ["Proof of Delivery"]),
+        createElement("div", { class: "proof-content" }, [
+          createElement("img", {
+            src: proof.url,
+            alt: "Proof of Delivery",
+            class: "proof-image",
+            events: { click: () => window.open(proof.url, "_blank") }
+          }),
+          createElement("div", { class: "proof-details" }, [
+            proof.recipient_name ? createElement("p", {}, [createElement("strong", {}, ["Received By: "]), proof.recipient_name]) : "",
+            proof.timestamp ? createElement("p", {}, [createElement("strong", {}, ["Signed At: "]), Datex(proof.timestamp, true)]) : ""
+          ])
+        ])
+      ]);
+    }
+
+    // --- 9. DETAILS CARD RENDER ---
+    const card = createElement("div", { class: "delivery-details-card" }, [
+      createElement("div", { class: "delivery-card-header" }, [
         createElement("h2", {}, [`Delivery #${id}`]),
-        createElement("span", { class: statusClass, style: "font-weight:bold;padding:4px 8px;border-radius:4px;" }, [currentStatus])
+        createElement("span", { class: statusClass }, [currentStatus])
       ]),
 
       stepperNode,
       mapContainer,
 
-      createElement("div", { class: "delivery-card-body", style: "display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:15px;" }, [
+      createElement("div", { class: "delivery-card-body" }, [
         createElement("div", { class: "delivery-info-group" }, [
           createElement("h3", {}, ["Pickup Details"]),
           createElement("p", {}, [createElement("strong", {}, ["Address: "]), item.pickup_loc?.address || "N/A"]),
@@ -196,8 +255,13 @@ export async function displayDelivery(container, deliveryId, options = {}) {
           createElement("h3", {}, ["Handover Security"]),
           createElement("p", {}, [createElement("strong", {}, ["Delivery OTP Code: "]), item.handover_otp || "****"]),
           createElement("p", {}, [createElement("strong", {}, ["Assigned Courier: "]), item.courier_name || (item.courier_id ? `#${item.courier_id}` : "Unassigned")])
+        ]),
+        proofSection,
+        createElement("div", { class: "delivery-info-group activity-history-group" }, [
+          createElement("h3", {}, ["Activity & Tracking History"]),
+          historyList
         ])
-      ]),
+      ].filter(Boolean)),
 
       actionsContainer
     ]);
@@ -212,7 +276,6 @@ export async function displayDelivery(container, deliveryId, options = {}) {
   }
 }
 
-// Internal Status State Transition Helper
 async function handleStatusUpdate(deliveryId, newStatus, container, options, extraPayload = {}) {
   try {
     await updateDeliveryStatus(deliveryId, { status: newStatus, ...extraPayload });

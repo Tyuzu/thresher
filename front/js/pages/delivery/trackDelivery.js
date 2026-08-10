@@ -1,4 +1,4 @@
-import "../../../css/inistyles/deliverypage.css";
+import "../../../css/inistyles/deliveryTrack.css";
 import { DeliveryTracking } from '../../services/deliveries/DeliveryTracking.js';
 
 async function TrackDelivery(isLoggedIn, er, deliveryid, contentContainer) {

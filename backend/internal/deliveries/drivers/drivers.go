@@ -13,9 +13,17 @@ import (
 	"naevis/utils"
 )
 
+// Helper to resolve driver ID from context or request fallback
+func resolveDriverID(r *http.Request) string {
+	if driverID := deliveries.GetDriverIDFromContext(r.Context()); driverID != "" {
+		return driverID
+	}
+	return utils.GetUserIDFromRequest(r)
+}
+
 func GetProfile(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		driverID := deliveries.GetDriverIDFromContext(r.Context())
+		driverID := resolveDriverID(r)
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		ctx := r.Context()
 
@@ -31,7 +39,7 @@ func GetProfile(app *infra.Deps) http.HandlerFunc {
 
 func UpdateProfile(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		driverID := deliveries.GetDriverIDFromContext(r.Context())
+		driverID := resolveDriverID(r)
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 
 		var updates bson.M
@@ -56,7 +64,7 @@ func UpdateProfile(app *infra.Deps) http.HandlerFunc {
 
 func GoOnline(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		driverID := deliveries.GetDriverIDFromContext(r.Context())
+		driverID := resolveDriverID(r)
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		ctx := r.Context()
 
@@ -70,7 +78,7 @@ func GoOnline(app *infra.Deps) http.HandlerFunc {
 
 func GoOffline(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		driverID := deliveries.GetDriverIDFromContext(r.Context())
+		driverID := resolveDriverID(r)
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		ctx := r.Context()
 
@@ -84,7 +92,7 @@ func GoOffline(app *infra.Deps) http.HandlerFunc {
 
 func GetStatus(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		driverID := deliveries.GetDriverIDFromContext(r.Context())
+		driverID := resolveDriverID(r)
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		ctx := r.Context()
 
@@ -105,7 +113,7 @@ func GetAvailableJobs(app *infra.Deps) http.HandlerFunc {
 
 		var jobs []deliveries.Delivery
 		filter := bson.M{
-			"status":   "CREATED",
+			"status":   deliveries.StatusCreated,
 			"driverid": nil,
 			"tenantid": tenantID,
 		}
@@ -123,7 +131,7 @@ func GetAvailableJobs(app *infra.Deps) http.HandlerFunc {
 
 func GetActiveDeliveries(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		driverID := deliveries.GetDriverIDFromContext(r.Context())
+		driverID := resolveDriverID(r)
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		ctx := r.Context()
 
@@ -131,7 +139,12 @@ func GetActiveDeliveries(app *infra.Deps) http.HandlerFunc {
 		filter := bson.M{
 			"driverid": driverID,
 			"tenantid": tenantID,
-			"status":   bson.M{"$in": []string{"ACCEPTED", "PICKED_UP", "IN_TRANSIT"}},
+			"status": bson.M{"$in": []string{
+				deliveries.StatusAssigned,
+				deliveries.StatusAccepted,
+				deliveries.StatusPickedUp,
+				deliveries.StatusInTransit,
+			}},
 		}
 
 		if err := app.DB.FindMany(ctx, "deliveries", filter, &active); err != nil {
@@ -145,24 +158,87 @@ func GetActiveDeliveries(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-func AcceptJob(app *infra.Deps) http.HandlerFunc {
+// ClaimJob allows a driver to pick up an unassigned job (POST /drivers/me/deliveries/:deliveryid/claim)
+func ClaimJob(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		driverID := deliveries.GetDriverIDFromContext(r.Context())
+		driverID := resolveDriverID(r)
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		deliveryID := utils.GetParam(r, "deliveryid")
 		ctx := r.Context()
 
+		var current deliveries.Delivery
+		filter := bson.M{"id": deliveryID, "tenantid": tenantID}
+		if err := app.DB.FindOne(ctx, "deliveries", filter, &current); err != nil {
+			utils.RespondWithError(w, http.StatusNotFound, "Delivery not found")
+			return
+		}
+
+		if current.DriverID != nil && *current.DriverID != "" {
+			utils.RespondWithError(w, http.StatusConflict, "Delivery is already assigned to another driver")
+			return
+		}
+
+		if err := deliveries.ValidateTransition(current.Status, deliveries.StatusAssigned); err != nil {
+			utils.RespondWithError(w, http.StatusConflict, err.Error())
+			return
+		}
+
 		now := time.Now()
-		filter := bson.M{"id": deliveryID, "tenantid": tenantID, "status": "CREATED"}
 		update := bson.M{
 			"$set": bson.M{
-				"status":     "ACCEPTED",
+				"status":     deliveries.StatusAssigned,
 				"driverid":   driverID,
 				"updated_at": now,
 			},
 			"$push": bson.M{
 				"status_history": deliveries.StatusHistoryItem{
-					Status:    "ACCEPTED",
+					Status:    deliveries.StatusAssigned,
+					Timestamp: now,
+					UpdatedBy: driverID,
+				},
+			},
+		}
+
+		var updated deliveries.Delivery
+		if err := app.DB.FindOneAndUpdate(ctx, "deliveries", filter, update, &updated); err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to claim delivery")
+			return
+		}
+
+		_ = app.Cache.Del(ctx, fmt.Sprintf("delivery:%s", deliveryID))
+		utils.RespondWithJSON(w, http.StatusOK, updated)
+	}
+}
+
+func AcceptJob(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		driverID := resolveDriverID(r)
+		tenantID := deliveries.GetTenantIDFromContext(r.Context())
+		deliveryID := utils.GetParam(r, "deliveryid")
+		ctx := r.Context()
+
+		var current deliveries.Delivery
+		filter := bson.M{"id": deliveryID, "tenantid": tenantID}
+		if err := app.DB.FindOne(ctx, "deliveries", filter, &current); err != nil {
+			utils.RespondWithError(w, http.StatusNotFound, "Delivery not found")
+			return
+		}
+
+		if err := deliveries.ValidateTransition(current.Status, deliveries.StatusAccepted); err != nil {
+			utils.RespondWithError(w, http.StatusConflict, err.Error())
+			return
+		}
+
+		now := time.Now()
+		update := bson.M{
+			"$set": bson.M{
+				"status":     deliveries.StatusAccepted,
+				"driverid":   driverID,
+				"updated_at": now,
+			},
+			"$push": bson.M{
+				"status_history": deliveries.StatusHistoryItem{
+					Status:    deliveries.StatusAccepted,
 					Timestamp: now,
 					UpdatedBy: driverID,
 				},
@@ -176,13 +252,15 @@ func AcceptJob(app *infra.Deps) http.HandlerFunc {
 		}
 
 		_ = app.Cache.Del(ctx, fmt.Sprintf("delivery:%s", deliveryID))
+		_ = app.NatsConn.Publish(fmt.Sprintf("deliveries.status.%s", deliveries.StatusAccepted), []byte(deliveryID))
+
 		utils.RespondWithJSON(w, http.StatusOK, delivery)
 	}
 }
 
 func RejectJob(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		driverID := deliveries.GetDriverIDFromContext(r.Context())
+		driverID := resolveDriverID(r)
 		tenantID := deliveries.GetTenantIDFromContext(r.Context())
 		deliveryID := utils.GetParam(r, "deliveryid")
 		ctx := r.Context()
@@ -201,7 +279,7 @@ func RejectJob(app *infra.Deps) http.HandlerFunc {
 
 func SendGPSLocation(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		driverID := deliveries.GetDriverIDFromContext(r.Context())
+		driverID := resolveDriverID(r)
 		var loc deliveries.GPSData
 		if err := json.NewDecoder(r.Body).Decode(&loc); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid payload")
@@ -221,7 +299,7 @@ func SendGPSLocation(app *infra.Deps) http.HandlerFunc {
 
 func GetCurrentGPS(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		driverID := deliveries.GetDriverIDFromContext(r.Context())
+		driverID := resolveDriverID(r)
 		ctx := r.Context()
 
 		val, err := app.Cache.Get(ctx, fmt.Sprintf("gps:driver:%s", driverID))
