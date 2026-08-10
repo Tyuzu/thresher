@@ -1,7 +1,7 @@
 import { createUserControls } from "../farm/displayFarmHelpers.js";
 import { createElement } from "../../../components/createElement.js";
 import { apiFetch } from "../../../api/api.js";
-import { navigate } from "../../../routes.js";
+import { navigate } from "../../../routes/index.js";
 import Imagex from "../../../components/base/Imagex.js";
 import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.js";
 import Notify from "../../../components/ui/Notify.mjs";
