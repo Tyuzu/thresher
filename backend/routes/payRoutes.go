@@ -4,6 +4,7 @@ package routes
 import (
 	"naevis/infra"
 	"naevis/internal/pay"
+	"naevis/internal/pay/stripe"
 	"naevis/middleware"
 	"net/http"
 
@@ -34,4 +35,11 @@ func AddPayRoutes(r *httprouter.Router, app *infra.Deps, rl *middleware.RateLimi
 	r.HandlerFunc(http.MethodGet, "/api/v1/refunds/all", middleware.Chain(rl.Limit, auth)(pay.GetAllRefundRequests(app)))
 	r.HandlerFunc(http.MethodPost, "/api/v1/refunds/approve/:id", middleware.Chain(rl.Limit, auth, middleware.WithTxn)(pay.ApproveRefundRequest(app)))
 	r.HandlerFunc(http.MethodPost, "/api/v1/refunds/reject/:id", middleware.Chain(rl.Limit, auth)(pay.RejectRefundRequest(app)))
+}
+
+func AddStripeRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
+	authmidware := middleware.Authenticate(app)
+	router.HandlerFunc(http.MethodPost, "/api/v1/stripe/create-payment-intent", rateLimiter.Limit(authmidware(stripe.CreatePaymentIntent(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/stripe/payment-success", rateLimiter.Limit(authmidware(stripe.PaymentSuccess(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/stripe/webhook", rateLimiter.Limit(authmidware(stripe.StripeWebhook(app))))
 }

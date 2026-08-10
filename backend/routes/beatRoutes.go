@@ -1,0 +1,85 @@
+package routes
+
+import (
+	"naevis/infra"
+	"naevis/internal/beats/activity"
+	"naevis/internal/beats/ads"
+	"naevis/internal/beats/analytics"
+	"naevis/internal/beats/autocomplete"
+	"naevis/internal/beats/follows"
+	"naevis/internal/beats/hashtags"
+	"naevis/internal/beats/likes"
+	"naevis/internal/beats/subscribe"
+	"naevis/middleware"
+	"net/http"
+
+	"github.com/julienschmidt/httprouter"
+)
+
+func AddBeatRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
+	authmidware := middleware.Authenticate(app)
+	// User must be logged in to like/unlike
+	router.HandlerFunc(http.MethodPut, "/api/v1/likes/:entitytype/like/:entityid", rateLimiter.Limit(authmidware(likes.ToggleLike(app))))
+
+	// Get users who liked a post/beat
+	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/users/:entityid", rateLimiter.Limit(authmidware(likes.GetLikers(app))))
+
+	// Batch check user likes
+	router.HandlerFunc(http.MethodPost, "/api/v1/likes/:entitytype/batch/users", rateLimiter.Limit(authmidware(likes.BatchUserLikes(app))))
+
+	// Like count is public
+	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/count/:entityid", rateLimiter.Limit(likes.GetLikeCount(app)))
+
+	// Follows
+	router.HandlerFunc(http.MethodPut, "/api/v1/follows/:id", rateLimiter.Limit(authmidware(follows.ToggleFollow(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/follows/:id", rateLimiter.Limit(authmidware(follows.ToggleUnFollow(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/follows/:id/status", rateLimiter.Limit(authmidware(follows.DoesFollow(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/followers/:id", rateLimiter.Limit(follows.GetFollowers(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/following/:id", rateLimiter.Limit(follows.GetFollowing(app)))
+
+	// Subscribes / Follows
+	router.HandlerFunc(http.MethodPut, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(subscribe.SubscribeEntity(app))))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(subscribe.UnsubscribeEntity(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/subscribes/:id", rateLimiter.Limit(authmidware(subscribe.DoesSubscribeEntity(app))))
+
+	// Get all subscribers of a user/artist
+	router.HandlerFunc(http.MethodGet, "/api/v1/subscribers/:id", rateLimiter.Limit(subscribe.GetSubscribers(app)))
+
+}
+
+func AddActivityRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
+	// If activity log/feed is user-specific, keep auth
+	authmidware := middleware.Authenticate(app)
+	router.HandlerFunc(http.MethodPost, "/api/v1/activity/log", rateLimiter.Limit(authmidware(activity.LogActivities(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/activity/get", authmidware(activity.GetActivityFeed(app)))
+
+	// Public analytics/telemetry ingestion
+	router.HandlerFunc(http.MethodPost, "/api/v1/scitylana/event", activity.HandleAnalyticsEvent(app))
+}
+
+func AddAnalyticsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
+	// Example: /api/v1/antics/events/123 or /api/v1/analytics/places/456
+	router.HandlerFunc(http.MethodGet, "/api/v1/antics/:entityType/:entityId", rateLimiter.Limit(analytics.GetEntityAnalytics))
+}
+
+func AddAutocompleteRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
+	router.HandlerFunc(http.MethodGet, "/api/v1/ac/places", rateLimiter.Limit(autocomplete.AutocompletePlaces(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/ac/users", rateLimiter.Limit(autocomplete.AutocompleteUsers(app)))
+}
+
+// AddAdsRoutes registers the ad system API routes
+func AddAdsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
+	router.HandlerFunc(http.MethodGet, "/api/v1/sda/sda", rateLimiter.Limit(middleware.OptionalAuth(ads.GetAds(app))))
+	router.HandlerFunc(http.MethodPost, "/api/v1/sda/track-impression", rateLimiter.Limit(middleware.OptionalAuth(ads.TrackImpression(app))))
+}
+
+func AddHashtagRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
+	router.HandlerFunc(http.MethodGet, "/api/v1/hashtags/hashtag/:tag", hashtags.GetHashtagPosts)
+	router.HandlerFunc(http.MethodGet, "/api/v1/hashtags/hashtag/:tag/top", hashtags.GetTopHashtagPosts)
+	router.HandlerFunc(http.MethodGet, "/api/v1/hashtags/hashtag/:tag/latest", hashtags.GetLatestHashtagPosts)
+	router.HandlerFunc(http.MethodGet, "/api/v1/hashtags/hashtag/:tag/people", hashtags.GetHashtagPeople)
+	router.HandlerFunc(http.MethodGet, "/api/v1/hashtags/hashtags/trending", hashtags.GetTrendingHashtags)
+
+	// router.HandlerFunc(http.MethodGet,"/api/v1/hashtags/hashtag/:tag", hashtags.GetHashtagPosts)
+	// router.HandlerFunc(http.MethodGet,"/api/v1/hashtags/hashtags/trending", hashtags.GetTrendingHashtags)
+}

@@ -43,3 +43,59 @@ type ArtistEvent struct {
 	CreatorID string `bson:"creatorid" json:"creatorid"`
 	TicketURL string `bson:"ticket_url,omitempty" json:"ticketUrl,omitempty"`
 }
+
+type ArtistAlbum struct {
+	Title       string `json:"title"`
+	ReleaseDate string `json:"releaseDate"`
+	Description string `json:"description"`
+	Published   bool   `json:"published"`
+}
+
+type ArtistPost struct {
+	Title     string `json:"title"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"createdAt"`
+	Published bool   `json:"published"`
+}
+
+type ArtistMerchItem struct {
+	Name        string  `json:"name"`
+	Price       float64 `json:"price"`
+	Description string  `json:"description"`
+	Image       string  `json:"image,omitempty"`
+	Visible     bool    `json:"visible"`
+	MerchID     string  `json:"merchid" bson:"merchid"`
+}
+
+// CreateArtistEventRequest defines the shape of the body to create an event.
+type CreateArtistEventRequest struct {
+	Title string `json:"title"`
+	Date  string `json:"date"` // Expects "YYYY-MM-DD"
+	Venue string `json:"venue"`
+}
+
+// CreateArtistEventResponse returning data after creation success.
+type CreateArtistEventResponse struct {
+	Message string `json:"message"`
+	ID      string `json:"id"`
+}
+
+// AddArtistToEventRequest captures standard event mapping requirements.
+type AddArtistToEventRequest struct {
+	EventID string `json:"eventid"`
+}
+
+// GenericMessageResponse is reused across successful operations.
+type GenericMessageResponse struct {
+	Message string `json:"message"`
+}
+
+type ArtistToEventRequestPayload struct {
+	EventID  string `json:"eventid"`
+	ArtistID string `json:"artistid"`
+}
+
+type ArtistByIDResponse struct {
+	Artist
+	IsSubscribed bool `json:"issubscribed"`
+}
