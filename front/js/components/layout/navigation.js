@@ -131,6 +131,7 @@ const createNav = () => {
         { href: "/farms", label: "Farms", feature: "farms" },
         { href: "/grocery", label: "Grocery", feature: "farms" },
         { href: "/recipes", label: "Recipes", feature: "farms" },
+        { href: "/deliveries", label: "Deliveries", feature: "farms" },
         { href: "/places", label: "Places", feature: "places" },
         { href: "/events", label: "Events", feature: "events" },
         { href: "/artists", label: "Artists", feature: "events" },

@@ -131,3 +131,15 @@ export async function deleteWebhook(webhookId) {
 export async function testWebhook(webhookId) {
   return await apiFetch(`/webhooks/${webhookId}/test`, "POST");
 }
+
+// new
+
+
+export async function claimDelivery() {
+  return await apiFetch("/drivers/me", "GET");
+}
+
+
+export async function updateDeliveryStatus() {
+  return await apiFetch("/drivers/me", "GET");
+}
