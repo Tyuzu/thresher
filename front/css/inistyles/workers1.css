@@ -8,7 +8,6 @@
   gap: var(--space-lg);
   max-width: var(--max-width-xl);
   margin: 0 auto;
-  padding: var(--space-md);
   color: var(--color-fg);
   background-color: var(--color-bg);
   box-sizing: border-box;

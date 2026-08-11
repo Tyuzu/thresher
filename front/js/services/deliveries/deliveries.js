@@ -43,7 +43,7 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
     );
   }
 
-  // Role Switcher Toggle (Feature 0)
+  // Role Switcher Toggle
   const roleToggleBtn = Button(
     `Role: ${userRole.toUpperCase()}`,
     "btn-toggle-role",
@@ -51,11 +51,13 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
       click: () => {
         userRole = userRole === "courier" ? "sender" : "courier";
         roleToggleBtn.textContent = `Role: ${userRole.toUpperCase()}`;
+        roleToggleBtn.setAttribute("aria-label", `Current role: ${userRole}. Click to toggle.`);
         renderList();
       }
     },
     "buttonx secondary"
   );
+  roleToggleBtn.setAttribute("aria-label", `Current role: ${userRole}. Click to toggle.`);
   asideChildren.push(roleToggleBtn);
 
   // Sidebar Ad Placement
@@ -69,34 +71,39 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
     showAd: false
   });
 
-  // --- TOP HEADER CONTROLS ---
-  // Feature 2: Manual Refresh Button
+  // --- TOP HEADER & CONTROLS ---
   const refreshBtn = createElement("button", {
+    type: "button",
     class: "btn-refresh",
+    "aria-label": "Refresh deliveries list",
     events: {
       click: async () => {
         refreshBtn.disabled = true;
         refreshBtn.textContent = "Refreshing...";
+        refreshBtn.setAttribute("aria-busy", "true");
         await loadDeliveries();
         refreshBtn.disabled = false;
         refreshBtn.textContent = "🔄 Refresh";
+        refreshBtn.removeAttribute("aria-busy");
       }
     }
   }, ["🔄 Refresh"]);
 
-  const mainHeader = [
+  const headerContainer = createElement("header", { class: "deliveries-header" }, [
     createElement("div", { class: "deliveries-header-row" }, [
       createElement("h1", {}, ["Deliveries & Shipments"]),
       refreshBtn
     ]),
     adspace("inbody", PAGE_NAME, { width: 728, height: 90, refreshInterval: 45000 })
-  ];
+  ]);
 
-  // --- FEATURE 7: FILTER, SORT & SEARCH BAR ---
+  // --- FILTER, SORT & SEARCH BAR (FORM / TOOLBAR) ---
   const searchInput = createElement("input", {
-    type: "text",
+    type: "search",
+    id: "delivery-search",
     placeholder: "Search address, package or ID...",
     class: "delivery-search-input",
+    "aria-label": "Search shipments",
     events: {
       input: (e) => {
         searchQuery = e.target.value.toLowerCase();
@@ -106,7 +113,9 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
   });
 
   const statusSelect = createElement("select", {
+    id: "delivery-status-filter",
     class: "delivery-filter-select",
+    "aria-label": "Filter by status",
     events: {
       change: (e) => {
         statusFilter = e.target.value;
@@ -123,7 +132,9 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
   ]);
 
   const sortSelect = createElement("select", {
+    id: "delivery-sort",
     class: "delivery-sort-select",
+    "aria-label": "Sort deliveries",
     events: {
       change: (e) => {
         sortBy = e.target.value;
@@ -136,30 +147,49 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
     createElement("option", { value: "expiry" }, ["Expiring Soon"])
   ]);
 
-  // Feature 1: Grid vs List vs Map View Selector
-  const viewToggleContainer = createElement("div", { class: "view-toggle-group" }, [
-    createElement("button", {
-      class: "btn-view-toggle active",
-      events: { click: (e) => setViewMode("grid", e.target) }
-    }, ["Grid"]),
-    createElement("button", {
-      class: "btn-view-toggle",
-      events: { click: (e) => setViewMode("list", e.target) }
-    }, ["List"]),
-    createElement("button", {
-      class: "btn-view-toggle",
-      events: { click: (e) => setViewMode("map", e.target) }
-    }, ["Map"])
-  ]);
+  // Grid vs List vs Map View Selector
+  const btnGridMode = createElement("button", {
+    type: "button",
+    class: "btn-view-toggle active",
+    "aria-pressed": "true",
+    events: { click: (e) => setViewMode("grid", e.currentTarget) }
+  }, ["Grid"]);
 
-  const toolbar = createElement("div", { class: "deliveries-toolbar" }, [
+  const btnListMode = createElement("button", {
+    type: "button",
+    class: "btn-view-toggle",
+    "aria-pressed": "false",
+    events: { click: (e) => setViewMode("list", e.currentTarget) }
+  }, ["List"]);
+
+  const btnMapMode = createElement("button", {
+    type: "button",
+    class: "btn-view-toggle",
+    "aria-pressed": "false",
+    events: { click: (e) => setViewMode("map", e.currentTarget) }
+  }, ["Map"]);
+
+  const viewToggleGroup = createElement("div", {
+    class: "view-toggle-group",
+    role: "group",
+    "aria-label": "View display mode toggle"
+  }, [btnGridMode, btnListMode, btnMapMode]);
+
+  const toolbar = createElement("form", {
+    class: "deliveries-toolbar",
+    role: "search",
+    "aria-label": "Filter and search deliveries",
+    events: {
+      submit: (e) => e.preventDefault()
+    }
+  }, [
     searchInput,
     statusSelect,
     sortSelect,
-    viewToggleContainer
+    viewToggleGroup
   ]);
 
-  mainHeader.push(toolbar);
+  const mainHeader = [headerContainer, toolbar];
 
   // --- LAYOUT SETUP ---
   const layout = createMainLayout({
@@ -169,28 +199,45 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
   });
 
   contentContainer.append(layout);
-  const mainElement = layout.querySelector(".layout-main");
-  const listContainer = createElement("div", { class: "deliveries-list-container" });
+  const mainElement = layout.querySelector("main") || layout.querySelector(".layout-main");
+  
+  const listContainer = createElement("section", {
+    class: "deliveries-list-container",
+    "aria-live": "polite",
+    "aria-label": "Shipments List"
+  });
+  
   mainElement.append(listContainer);
 
   // --- VIEW MODE TOGGLE HELPER ---
   function setViewMode(mode, btnElement) {
     currentViewMode = mode;
-    const buttons = viewToggleContainer.querySelectorAll(".btn-view-toggle");
-    buttons.forEach((btn) => btn.classList.remove("active"));
-    if (btnElement) btnElement.classList.add("active");
+    const buttons = viewToggleGroup.querySelectorAll(".btn-view-toggle");
+    buttons.forEach((btn) => {
+      btn.classList.remove("active");
+      btn.setAttribute("aria-pressed", "false");
+    });
+
+    if (btnElement) {
+      btnElement.classList.add("active");
+      btnElement.setAttribute("aria-pressed", "true");
+    }
     renderList();
   }
 
   // --- FETCH DELIVERIES ---
   async function loadDeliveries() {
-    listContainer.innerHTML = `<div class="deliveries-loading">Loading shipments...</div>`;
+    listContainer.replaceChildren(
+      createElement("div", { class: "deliveries-loading", role: "status" }, ["Loading shipments..."])
+    );
     try {
       const resp = await fetchAllDeliveries();
       rawDeliveries = Array.isArray(resp) ? resp : resp?.data || resp?.deliveries || [];
       applyFiltersAndRender();
     } catch (err) {
-      listContainer.innerHTML = `<div class="deliveries-error">${err?.message || "Failed to load deliveries."}</div>`;
+      listContainer.replaceChildren(
+        createElement("div", { class: "deliveries-error", role: "alert" }, [err?.message || "Failed to load deliveries."])
+      );
     }
   }
 
@@ -222,23 +269,34 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
     listContainer.replaceChildren();
 
     if (!filteredDeliveries.length) {
-      listContainer.append(createElement("div", { class: "deliveries-empty" }, ["No matching deliveries found."]));
+      listContainer.append(
+        createElement("div", { class: "deliveries-empty", role: "status" }, ["No matching deliveries found."])
+      );
       return;
     }
 
-    // Feature 1: Map View Handler
+    // Map View Handler
     if (currentViewMode === "map") {
-      const mapPlaceholder = createElement("div", { class: "deliveries-map-view" }, [
+      const mapPlaceholder = createElement("div", {
+        class: "deliveries-map-view",
+        role: "region",
+        "aria-label": "Deliveries map view"
+      }, [
         createElement("p", {}, [`Interactive Map Mode (${filteredDeliveries.length} Pins loaded)`])
       ]);
       listContainer.append(mapPlaceholder);
       return;
     }
 
-    // Feature 3: Pagination / Load More
+    // Pagination / Load More
     const paginatedItems = filteredDeliveries.slice(0, currentPage * PAGE_SIZE);
     const gridOrListClass = currentViewMode === "grid" ? "deliveries-grid" : "deliveries-list-view";
-    const contentBox = createElement("div", { class: gridOrListClass });
+    
+    const contentBox = createElement("div", {
+      class: gridOrListClass,
+      role: "feed",
+      "aria-label": "Shipment listings"
+    });
 
     paginatedItems.forEach((item, idx) => {
       contentBox.append(createDeliveryCard(item, userRole, renderList));
@@ -253,10 +311,11 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
 
     listContainer.append(contentBox);
 
-    // Feature 3: "Load More" controls
+    // "Load More" controls
     if (paginatedItems.length < filteredDeliveries.length) {
+      const remainingCount = filteredDeliveries.length - paginatedItems.length;
       const loadMoreBtn = Button(
-        `Load More (${filteredDeliveries.length - paginatedItems.length} remaining)`,
+        `Load More (${remainingCount} remaining)`,
         "btn-load-more",
         {
           click: () => {
@@ -266,7 +325,10 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
         },
         "buttonx secondary btn-load-more"
       );
-      listContainer.append(loadMoreBtn);
+      loadMoreBtn.setAttribute("aria-label", `Load ${remainingCount} more deliveries`);
+      
+      const navContainer = createElement("nav", { class: "pagination-container", "aria-label": "Pagination Navigation" }, [loadMoreBtn]);
+      listContainer.append(navContainer);
     }
   }
 
@@ -274,36 +336,42 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
   await loadDeliveries();
 }
 
-// ---------- CARD BUILDER (FEATURES 0, 4, 5, 6) ----------
+// ---------- CARD BUILDER ----------
 function createDeliveryCard(item, userRole, onRenderList) {
   const deliveryId = item.deliveryid ?? item.id ?? "N/A";
   const status = (item.status || "AVAILABLE").toUpperCase();
   const payout = item.payout ? `$${Number(item.payout).toFixed(2)}` : "$15.00";
 
-  // Feature 6: Distance & Estimated Time Calculation
+  // Distance & Estimated Time Calculation
   const distance = item.distance_km || calculateDistance(item.pickup_loc, item.dropoff_loc);
-  const estTimeMinutes = Math.round((distance / 25) * 60) + 10; // ~25km/h avg speed + buffer
+  const estTimeMinutes = Math.round((distance / 25) * 60) + 10;
 
-  // Feature 5: Package Attributes Badges
-  const badgesContainer = createElement("div", { class: "badge-group" }, [
-    createElement("span", { class: "badge badge-weight" }, [
-      item.package_weight ? `${item.package_weight} kg` : "< 5 kg"
+  // Package Attributes Badges
+  const badgesList = createElement("ul", { class: "badge-group", "aria-label": "Package Attributes" }, [
+    createElement("li", {}, [
+      createElement("span", { class: "badge badge-weight" }, [
+        item.package_weight ? `${item.package_weight} kg` : "< 5 kg"
+      ])
     ]),
-    createElement("span", { class: "badge badge-vehicle" }, [
-      item.vehicle_type || "Car / Bike"
+    createElement("li", {}, [
+      createElement("span", { class: "badge badge-vehicle" }, [
+        item.vehicle_type || "Car / Bike"
+      ])
     ]),
-    item.is_fragile ? createElement("span", { class: "badge badge-fragile" }, ["Fragile"]) : null
+    item.is_fragile 
+      ? createElement("li", {}, [createElement("span", { class: "badge badge-fragile" }, ["Fragile"])]) 
+      : null
   ].filter(Boolean));
 
-  // Feature 4: Expiry / Timeout Countdown
-  const expiryContainer = createElement("div", { class: "expiry-countdown" });
+  // Expiry / Timeout Countdown
+  const expiryContainer = createElement("div", { class: "expiry-countdown", role: "timer", "aria-live": "off" });
   if (status === "AVAILABLE") {
     const expiresAt = item.expires_at ? new Date(item.expires_at).getTime() : Date.now() + 45 * 60 * 1000;
     startCountdown(expiresAt, expiryContainer);
   }
 
-  // Feature 0: Role-Based Views & Actions
-  const cardActions = createElement("div", { class: "delivery-card-actions" });
+  // Role-Based Views & Actions
+  const cardActions = createElement("footer", { class: "delivery-card-actions" });
 
   if (userRole === "courier" && status === "AVAILABLE") {
     const claimBtn = Button(`Claim (${payout})`, "", {
@@ -319,6 +387,7 @@ function createDeliveryCard(item, userRole, onRenderList) {
         }
       }
     }, "btn-primary");
+    claimBtn.setAttribute("aria-label", `Claim delivery ${deliveryId} for ${payout}`);
     cardActions.append(claimBtn);
   } else if (userRole === "sender" && (status === "CREATED" || status === "AVAILABLE")) {
     const cancelBtn = Button("Cancel Order", "", {
@@ -334,25 +403,53 @@ function createDeliveryCard(item, userRole, onRenderList) {
         }
       }
     }, "btn-secondary");
+    cancelBtn.setAttribute("aria-label", `Cancel delivery order ${deliveryId}`);
     cardActions.append(cancelBtn);
   }
 
   // View Details default link button
-  cardActions.append(
-    Button("Details", "", { click: () => navigate(`/delivery/${deliveryId}`) }, "btn-secondary")
-  );
+  const detailsBtn = Button("Details", "", { click: () => navigate(`/delivery/${deliveryId}`) }, "btn-secondary");
+  detailsBtn.setAttribute("aria-label", `View details for delivery ${deliveryId}`);
+  cardActions.append(detailsBtn);
 
-  return createElement("div", { class: "delivery-card" }, [
-    createElement("div", { class: "card-header" }, [
-      createElement("strong", {}, [`ID: ${deliveryId}`]),
+  const createdAtDate = item.created_at ? new Date(item.created_at) : new Date();
+
+  return createElement("article", { 
+    class: "delivery-card",
+    "aria-labelledby": `delivery-title-${deliveryId}`
+  }, [
+    createElement("header", { class: "card-header" }, [
+      createElement("h2", { id: `delivery-title-${deliveryId}`, class: "card-title" }, [`ID: ${deliveryId}`]),
       createElement("span", { class: `status-badge status-${status.toLowerCase()}` }, [status])
     ]),
-    badgesContainer,
+    badgesList,
     createElement("div", { class: "card-body" }, [
-      createElement("p", {}, [createElement("strong", {}, ["Pickup: "]), item.pickup_loc?.address || "N/A"]),
-      createElement("p", {}, [createElement("strong", {}, ["Dropoff: "]), item.dropoff_loc?.address || "N/A"]),
-      createElement("p", {}, [createElement("strong", {}, ["Distance: "]), `${distance} km (~${estTimeMinutes} mins)`]),
-      createElement("p", {}, [createElement("strong", {}, ["Created: "]), Datex(item.created_at || Date.now())]),
+      createElement("dl", { class: "delivery-details-list" }, [
+        createElement("div", { class: "detail-item" }, [
+          createElement("dt", {}, ["Pickup:"]),
+          createElement("dd", {}, [
+            createElement("address", { class: "address-inline" }, [item.pickup_loc?.address || "N/A"])
+          ])
+        ]),
+        createElement("div", { class: "detail-item" }, [
+          createElement("dt", {}, ["Dropoff:"]),
+          createElement("dd", {}, [
+            createElement("address", { class: "address-inline" }, [item.dropoff_loc?.address || "N/A"])
+          ])
+        ]),
+        createElement("div", { class: "detail-item" }, [
+          createElement("dt", {}, ["Distance:"]),
+          createElement("dd", {}, [`${distance} km (~${estTimeMinutes} mins)`])
+        ]),
+        createElement("div", { class: "detail-item" }, [
+          createElement("dt", {}, ["Created:"]),
+          createElement("dd", {}, [
+            createElement("time", { datetime: createdAtDate.toISOString() }, [
+              Datex(item.created_at || Date.now())
+            ])
+          ])
+        ])
+      ]),
       expiryContainer
     ]),
     cardActions
@@ -364,12 +461,19 @@ function startCountdown(targetTimestamp, element) {
   function update() {
     const diff = targetTimestamp - Date.now();
     if (diff <= 0) {
-      element.textContent = "Expired";
+      element.replaceChildren(
+        createElement("time", { class: "expired-time" }, ["Expired"])
+      );
       return;
     }
     const mins = Math.floor(diff / 60000);
     const secs = Math.floor((diff % 60000) / 1000);
-    element.textContent = `Expires in: ${mins}m ${secs}s`;
+    const isoDuration = `PT${mins}M${secs}S`;
+    
+    element.replaceChildren(
+      "Expires in: ",
+      createElement("time", { datetime: isoDuration }, [`${mins}m ${secs}s`])
+    );
   }
   update();
   setInterval(update, 1000);
@@ -377,7 +481,7 @@ function startCountdown(targetTimestamp, element) {
 
 // Distance helper calculation (Haversine Formula)
 function calculateDistance(locA, locB) {
-  if (!locA?.lat || !locB?.lat) return 4.5; // Default distance fallback
+  if (!locA?.lat || !locB?.lat) return 4.5;
   const R = 6371;
   const dLat = (locB.lat - locA.lat) * (Math.PI / 180);
   const dLng = (locB.lng - locA.lng) * (Math.PI / 180);

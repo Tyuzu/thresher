@@ -2,6 +2,6 @@
 
 /* Page-specific layout override */
 .artists-page {
-  padding-top: var(--space-lg);
+  /* padding-top: var(--space-lg); */
   padding-bottom: var(--space-xl);
 }

@@ -46,7 +46,7 @@ export async function DriverDashboard(container, isLoggedIn) {
 
   // --- MAIN LAYOUT HEADER ---
   const mainHeader = [
-    createElement("div", { class: "driver-dashboard-header" }, [
+    createElement("header", { class: "driver-dashboard-header" }, [
       createElement("h1", {}, ["Courier Console & Tracking"])
     ]),
     adspace("inbody", PAGE_NAME, { width: 728, height: 90, refreshInterval: 45000 })
@@ -59,14 +59,19 @@ export async function DriverDashboard(container, isLoggedIn) {
   });
 
   contentContainer.append(layout);
-  const mainElement = layout.querySelector(".layout-main");
+  const mainElement = layout.querySelector("main") || layout.querySelector(".layout-main");
 
   // Elements & State Indicators
   const statusIndicator = createElement("span", { 
-    class: "driver-status-badge offline" 
+    class: "driver-status-badge offline",
+    id: "duty-status-badge"
   }, ["OFFLINE"]);
   
-  const locationReadout = createElement("div", { class: "gps-readout" }, ["GPS Idle"]);
+  const locationReadout = createElement("div", { 
+    class: "gps-readout",
+    role: "status",
+    "aria-live": "polite"
+  }, ["GPS Idle"]);
 
   // High-accuracy live position tracker using watchPosition
   const startGpsTracker = () => {
@@ -118,6 +123,7 @@ export async function DriverDashboard(container, isLoggedIn) {
           statusIndicator.textContent = "OFFLINE";
           statusIndicator.className = "driver-status-badge offline";
           toggleStatusBtn.textContent = "Go Online";
+          toggleStatusBtn.setAttribute("aria-label", "Switch duty status to online");
           stopGpsTracker();
           Notify("Driver status set to Offline", { type: "info" });
         } else {
@@ -125,6 +131,7 @@ export async function DriverDashboard(container, isLoggedIn) {
           statusIndicator.textContent = "ONLINE";
           statusIndicator.className = "driver-status-badge online";
           toggleStatusBtn.textContent = "Go Offline";
+          toggleStatusBtn.setAttribute("aria-label", "Switch duty status to offline");
           startGpsTracker();
           Notify("Driver status set to Online", { type: "success" });
         }
@@ -134,27 +141,38 @@ export async function DriverDashboard(container, isLoggedIn) {
     }
   }, "btn-primary");
 
+  toggleStatusBtn.setAttribute("aria-label", "Switch duty status to online");
+
   // Metrics Bar
-  const metricsBar = createElement("div", { 
-    class: "driver-metrics-bar"
+  const metricsBar = createElement("section", { 
+    class: "driver-metrics-bar",
+    "aria-label": "Shift Performance Metrics"
   }, [
     createMetricCard("Today's Earnings", "$142.50"),
     createMetricCard("Completed", "6 Jobs"),
     createMetricCard("Rating", "4.95 ★")
   ]);
 
-  const activeJobsContainer = createElement("div", { class: "active-jobs-list" }, [
-    createElement("div", { class: "loading" }, ["Loading active assignments..."])
+  const activeJobsContainer = createElement("div", { 
+    class: "active-jobs-list",
+    role: "feed",
+    "aria-live": "polite",
+    "aria-label": "Assigned active deliveries feed"
+  }, [
+    createElement("div", { class: "loading", role: "status" }, ["Loading active assignments..."])
   ]);
 
   const dashboardWrapper = createElement("div", { class: "driver-dashboard" }, [
     metricsBar,
 
     // Status Control Card
-    createElement("div", { class: "driver-control-card" }, [
-      createElement("h2", { class: "card-title" }, ["Location & Duty Status"]),
-      createElement("div", { class: "status-row" }, [
-        createElement("strong", {}, ["Duty Status: "]),
+    createElement("section", { 
+      class: "driver-control-card",
+      "aria-labelledby": "status-card-title"
+    }, [
+      createElement("h2", { id: "status-card-title", class: "card-title" }, ["Location & Duty Status"]),
+      createElement("div", { class: "status-row", "aria-live": "polite", "aria-atomic": "true" }, [
+        createElement("strong", { id: "duty-label" }, ["Duty Status: "]),
         statusIndicator
       ]),
       createElement("div", { class: "action-row" }, [toggleStatusBtn]),
@@ -162,8 +180,11 @@ export async function DriverDashboard(container, isLoggedIn) {
     ]),
 
     // Active Jobs Card
-    createElement("div", { class: "active-jobs-card" }, [
-      createElement("h3", { class: "card-title" }, ["Active Deliveries"]),
+    createElement("section", { 
+      class: "active-jobs-card",
+      "aria-labelledby": "active-jobs-title"
+    }, [
+      createElement("h2", { id: "active-jobs-title", class: "card-title" }, ["Active Deliveries"]),
       activeJobsContainer
     ])
   ]);
@@ -177,6 +198,7 @@ export async function DriverDashboard(container, isLoggedIn) {
       statusIndicator.textContent = "ONLINE";
       statusIndicator.className = "driver-status-badge online";
       toggleStatusBtn.textContent = "Go Offline";
+      toggleStatusBtn.setAttribute("aria-label", "Switch duty status to offline");
       startGpsTracker();
     }
 
@@ -186,7 +208,7 @@ export async function DriverDashboard(container, isLoggedIn) {
 
     if (activeDeliveries.length === 0) {
       activeJobsContainer.append(
-        createElement("div", { class: "empty-jobs" }, [
+        createElement("p", { class: "empty-jobs", role: "status" }, [
           "No active delivery tasks assigned. Go online or check the Available Jobs feed!"
         ])
       );
@@ -195,37 +217,57 @@ export async function DriverDashboard(container, isLoggedIn) {
         const jobId = job.deliveryid ?? job.id;
         const pickupAddr = job.pickup_loc?.address || "N/A";
         const dropoffAddr = job.dropoff_loc?.address || "N/A";
+        const jobStatus = job.status || "IN_PROGRESS";
 
         // Deep-link to navigation maps
         const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dropoffAddr)}`;
 
-        const card = createElement("div", { class: "job-item-card" }, [
-          createElement("div", { class: "job-header-row" }, [
-            createElement("strong", {}, [`Job #${jobId}`]),
-            createElement("span", { class: "job-status-text" }, [job.status || "IN_PROGRESS"])
-          ]),
-          createElement("div", { class: "job-pickup" }, [`📍 Pickup: ${pickupAddr}`]),
-          createElement("div", { class: "job-dropoff" }, [`🎯 Dropoff: ${dropoffAddr}`]),
-          
-          createElement("div", { class: "job-actions-row" }, [
-            Button("Navigate Map", `btn-nav-${jobId}`, {
-              click: () => window.open(navUrl, "_blank")
-            }, "buttonx secondary"),
+        const navBtn = Button("Navigate Map", `btn-nav-${jobId}`, {
+          click: () => window.open(navUrl, "_blank")
+        }, "buttonx secondary");
+        navBtn.setAttribute("aria-label", `Navigate to dropoff address for Job ${jobId}`);
 
-            Button("Complete Handover", `btn-complete-${jobId}`, {
-              click: async () => {
-                const otp = prompt("Enter Handover Verification OTP:");
-                if (otp) {
-                  try {
-                    await updateDeliveryStatus(jobId, { status: "DELIVERED", otp });
-                    Notify("Delivery completed successfully!", { type: "success" });
-                    DriverDashboard(container, isLoggedIn);
-                  } catch (err) {
-                    Notify(err?.message || "Verification failed.", { type: "error" });
-                  }
-                }
+        const completeBtn = Button("Complete Handover", `btn-complete-${jobId}`, {
+          click: async () => {
+            const otp = prompt("Enter Handover Verification OTP:");
+            if (otp) {
+              try {
+                await updateDeliveryStatus(jobId, { status: "DELIVERED", otp });
+                Notify("Delivery completed successfully!", { type: "success" });
+                DriverDashboard(container, isLoggedIn);
+              } catch (err) {
+                Notify(err?.message || "Verification failed.", { type: "error" });
               }
-            }, "buttonx primary")
+            }
+          }
+        }, "buttonx primary");
+        completeBtn.setAttribute("aria-label", `Complete handover for Job ${jobId}`);
+
+        const card = createElement("article", { 
+          class: "job-item-card",
+          "aria-labelledby": `job-heading-${jobId}`
+        }, [
+          createElement("header", { class: "job-header-row" }, [
+            createElement("h3", { id: `job-heading-${jobId}`, class: "job-title" }, [`Job #${jobId}`]),
+            createElement("span", { class: `job-status-text status-${jobStatus.toLowerCase()}` }, [jobStatus])
+          ]),
+          createElement("dl", { class: "job-details-list" }, [
+            createElement("div", { class: "job-detail-item" }, [
+              createElement("dt", {}, ["Pickup:"]),
+              createElement("dd", {}, [
+                createElement("address", { class: "address-inline" }, [pickupAddr])
+              ])
+            ]),
+            createElement("div", { class: "job-detail-item" }, [
+              createElement("dt", {}, ["Dropoff:"]),
+              createElement("dd", {}, [
+                createElement("address", { class: "address-inline" }, [dropoffAddr])
+              ])
+            ])
+          ]),
+          createElement("footer", { class: "job-actions-row" }, [
+            navBtn,
+            completeBtn
           ])
         ]);
 
@@ -234,18 +276,20 @@ export async function DriverDashboard(container, isLoggedIn) {
     }
   } catch (err) {
     activeJobsContainer.replaceChildren(
-      createElement("div", { class: "error-text" }, [
+      createElement("p", { class: "error-text", role: "alert" }, [
         "Could not load active driver details."
       ])
     );
   }
 }
 
-// Helper component for shift stats
+// Helper component for shift stats using semantic description list definition
 function createMetricCard(label, value) {
   return createElement("div", { class: "metric-card" }, [
-    createElement("span", { class: "metric-label" }, [label]),
-    createElement("strong", { class: "metric-value" }, [value])
+    createElement("dl", {}, [
+      createElement("dt", { class: "metric-label" }, [label]),
+      createElement("dd", { class: "metric-value" }, [value])
+    ])
   ]);
 }
 

@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"naevis/infra"
+	"naevis/python"
 )
 
 const adsCacheKey = "ads:all"
 
 var (
 	adsMutex   sync.RWMutex
-	defaultAds = []Ad{
+	defaultAds = []python.Ad{
 		{
 			ID:          "1",
 			Title:       "Tech Gadget Sale",
@@ -49,11 +50,11 @@ var (
 )
 
 // getSafeDefaultAds returns a thread-safe copy of default ads.
-func getSafeDefaultAds() []Ad {
+func getSafeDefaultAds() []python.Ad {
 	adsMutex.RLock()
 	defer adsMutex.RUnlock()
 
-	copied := make([]Ad, len(defaultAds))
+	copied := make([]python.Ad, len(defaultAds))
 	copy(copied, defaultAds)
 	return copied
 }
@@ -74,7 +75,7 @@ func GetAds(app *infra.Deps) http.HandlerFunc {
 		page := r.URL.Query().Get("page")
 		position := r.URL.Query().Get("position")
 
-		var activeAds []Ad
+		var activeAds []python.Ad
 
 		// 1. Fetch from Cache
 		if app != nil && app.Cache != nil {
@@ -83,7 +84,20 @@ func GetAds(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		// 2. Fallback to Database
+		// 2. Fetch from Python Server (if Cache Miss)
+		if len(activeAds) == 0 {
+			if pyAds, err := python.FetchAdsFromPython(ctx); err == nil && len(pyAds) > 0 {
+				activeAds = pyAds
+
+				if app != nil && app.Cache != nil {
+					if data, err := json.Marshal(activeAds); err == nil {
+						_ = app.Cache.Set(ctx, adsCacheKey, data, 5*time.Minute)
+					}
+				}
+			}
+		}
+
+		// 3. Fallback to Database
 		if len(activeAds) == 0 {
 			dbAds, err := FetchActiveAdsFromDB(ctx, app)
 			if err == nil && len(dbAds) > 0 {
@@ -97,7 +111,7 @@ func GetAds(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		// 3. Fallback to Hardcoded Defaults
+		// 4. Fallback to Hardcoded Defaults
 		if len(activeAds) == 0 {
 			activeAds = getSafeDefaultAds()
 
@@ -108,8 +122,8 @@ func GetAds(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		// 4. Candidate Filtering
-		var candidates []Ad
+		// 5. Candidate Filtering
+		var candidates []python.Ad
 		for _, ad := range activeAds {
 			matchCategory := category == "" || category == "default" || ad.Category == category
 			matchPage := page == "" || ad.Page == page

@@ -9,7 +9,7 @@ import {
 } from "./farmListHelpers.js";
 import {
   createFilterControls,
-  applyFiltersAndSort
+  applyFiltersAndSort,
 } from "./farmFilters.js";
 import { createMainLayout } from "../../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../../components/layout/asideLayout.js";
@@ -40,7 +40,7 @@ function createInitialState() {
     minRating: 0,
     maxRating: 5,
     sortBy: "",
-    sortDir: ""
+    sortDir: "",
   };
 }
 
@@ -48,13 +48,17 @@ function createInitialState() {
 
 function indexFarmsById(farms) {
   const map = new Map();
-  farms.forEach(f => map.set(String(f.id), f));
+  farms.forEach((f) => {
+    if (f && f.id !== undefined) {
+      map.set(String(f.id), f);
+    }
+  });
   return map;
 }
 
 function getTopRated(farms, limit = 3) {
-  return farms
-    .filter(f => typeof f?.rating === "number")
+  return [...farms]
+    .filter((f) => typeof f?.rating === "number")
     .sort((a, b) => b.rating - a.rating)
     .slice(0, limit);
 }
@@ -65,7 +69,8 @@ async function fetchFarms(page) {
   try {
     const res = await apiFetch(`/farms?page=${page}&limit=${PAGE_SIZE}`);
     return Array.isArray(res?.farms) ? res.farms : [];
-  } catch {
+  } catch (error) {
+    console.error("Failed to fetch farms:", error);
     return [];
   }
 }
@@ -88,7 +93,7 @@ function Grid(isLoggedIn, toggleFavorite) {
       }
 
       renderFarmCards(farms, container, isLoggedIn, toggleFavorite);
-    }
+    },
   };
 }
 
@@ -107,16 +112,14 @@ function Sidebar(isLoggedIn, stateRef) {
 
     const farmIndex = indexFarmsById(stateRef.farms);
     const section = createElement("section", { class: "farm__favorites" }, [
-      createElement("h3", {}, ["Favorites"])
+      createElement("h3", {}, ["Favorites"]),
     ]);
 
     if (stateRef.favorites.size === 0) {
-      section.append(
-        createElement("p", {}, ["None yet. Click ❤ on a card."])
-      );
+      section.append(createElement("p", {}, ["None yet. Click ❤ on a card."]));
     } else {
       const list = createElement("ul", { class: "favorites-list" });
-      stateRef.favorites.forEach(id => {
+      stateRef.favorites.forEach((id) => {
         const farm = farmIndex.get(String(id));
         if (farm) {
           list.append(createElement("li", {}, [farm.name]));
@@ -130,24 +133,22 @@ function Sidebar(isLoggedIn, stateRef) {
 
   function renderRatings(container, farms) {
     const section = createElement("section", { class: "farm__ratings" }, [
-      createElement("h3", {}, ["Top Rated"])
+      createElement("h3", {}, ["Top Rated"]),
     ]);
 
     const top = getTopRated(farms);
 
     if (!top.length) {
-      section.append(
-        createElement("p", {}, ["No ratings yet."])
-      );
+      section.append(createElement("p", {}, ["No ratings yet."]));
     } else {
-      top.forEach(f => {
-        const rounded = Math.round(f.rating);
+      top.forEach((f) => {
+        const rounded = Math.min(5, Math.max(0, Math.round(f.rating)));
         const stars = "★".repeat(rounded) + "☆".repeat(5 - rounded);
 
         section.append(
           createElement("div", { class: "rating" }, [
             createElement("strong", {}, [f.name]),
-            createElement("span", { class: "rating-stars" }, [stars])
+            createElement("span", { class: "rating-stars" }, [stars]),
           ])
         );
       });
@@ -161,32 +162,32 @@ function Sidebar(isLoggedIn, stateRef) {
       createElement("section", { class: "farm__map" }, [
         createElement("h3", {}, ["Farm Map"]),
         createElement("div", { class: "farm__map-placeholder" }, [
-          "Map integration point"
-        ])
+          "Map integration point",
+        ]),
       ])
     );
   }
 
-  // createAsideContent returns an Array of DOM nodes
   const asideContentNodes = createAsideContent({
     title: "Farm Directory",
     children: [staticSections, dynamicSections],
-    showAd: true
+    showAd: true,
   });
 
   return {
     container: asideContentNodes,
-    render(farms) {
+    render(allFarms, filteredFarms) {
       dynamicSections.replaceChildren();
 
-      if (farms.length) {
-        renderFeaturedFarm(dynamicSections, farms[0]);
+      // Show top farm from master list or filtered list
+      if (allFarms.length) {
+        renderFeaturedFarm(dynamicSections, allFarms[0]);
       }
 
-      renderFarmStats(dynamicSections, farms);
+      renderFarmStats(dynamicSections, filteredFarms);
       renderFavorites(dynamicSections);
-      renderRatings(dynamicSections, farms);
-    }
+      renderRatings(dynamicSections, filteredFarms);
+    },
   };
 }
 
@@ -204,12 +205,11 @@ export async function displayFarms(content, loggedIn) {
   function commit() {
     const visible = applyFiltersAndSort(state.farms, state);
     grid.render(visible);
-    sidebar.render(visible);
+    sidebar.render(state.farms, visible);
   }
 
   const filters = createFilterControls(state, commit);
 
-  // Direct layout composition
   const layout = createMainLayout({
     mainContent: [filters, grid.container, sentinel],
     asideContent: sidebar.container,
@@ -221,7 +221,7 @@ export async function displayFarms(content, loggedIn) {
   content.append(pageContainer);
 
   const observer = new IntersectionObserver(onIntersect, {
-    rootMargin: "200px"
+    rootMargin: "200px",
   });
 
   observer.observe(sentinel);
@@ -238,6 +238,11 @@ export async function displayFarms(content, loggedIn) {
     if (batch.length) {
       state.farms.push(...batch);
       state.page += 1;
+      // End pagination if batch size is less than expected PAGE_SIZE
+      if (batch.length < PAGE_SIZE) {
+        state.hasMore = false;
+        observer.disconnect();
+      }
     } else {
       state.hasMore = false;
       observer.disconnect();
@@ -247,7 +252,7 @@ export async function displayFarms(content, loggedIn) {
   }
 
   async function onIntersect(entries) {
-    if (!entries.some(e => e.isIntersecting)) return;
+    if (!entries.some((e) => e.isIntersecting)) return;
 
     const prevCount = state.farms.length;
     await loadNextPage();

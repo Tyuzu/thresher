@@ -2,7 +2,6 @@
 .places-page {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: var(--space-md);
   color: var(--color-fg);
   display: grid;
   grid-template-columns: 1fr;

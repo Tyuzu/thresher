@@ -116,7 +116,6 @@
   gap: var(--space-sm);
 }
 
-.button,
 .buttonx {
   display: inline-flex;
   align-items: center;
@@ -135,36 +134,36 @@
   /* Default Button Style */
   background-color: var(--color-btn-bg);
   color: var(--color-btn-fg);
+  margin-right: var(--space-xs);
 }
 
-.button:hover,
 .buttonx:hover {
   background-color: var(--color-btn-hover-bg);
 }
 
 /* Primary Button Modifier */
-.button.primary {
+.buttonx.primary {
   background-color: var(--color-primary);
   color: var(--color-primary-fg);
 }
 
-.button.primary:hover {
+.buttonx.primary:hover {
   background-color: var(--color-primary-hover);
 }
 
 /* Secondary Button Modifier */
-.button.secondary {
+.buttonx.secondary {
   background-color: transparent;
   border-color: var(--color-border);
   color: var(--color-fg);
 }
 
-.button.secondary:hover {
+.buttonx.secondary:hover {
   background-color: var(--color-bg-tertiary);
   border-color: var(--color-muted);
 }
 
-.button:disabled {
+.buttonx:disabled {
   background-color: var(--color-btn-disabled-bg);
   color: var(--color-btn-disabled-fg);
   cursor: not-allowed;
