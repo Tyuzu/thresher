@@ -6,6 +6,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 	"net/http"
 	"strings"
@@ -311,7 +312,8 @@ func CreateOrUpdatePost(
 	}
 
 	mqpayload, _ := json.Marshal(mqevent.BlogPostUpdatedPayload{})
-	app.MQ.Publish(ctx, mqevent.BlogPostUpdatedEvent, mqpayload)
+
+	mq.PublishWithMeta(ctx, app.MQ, mqevent.BlogPostUpdatedEvent, mqpayload)
 
 	utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 		"postid": post.PostID,
@@ -375,7 +377,8 @@ func DeletePost(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.BlogPostDeletedPayload{})
-		app.MQ.Publish(ctx, mqevent.BlogPostDeletedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.BlogPostDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"postid":  postID,

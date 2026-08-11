@@ -9,6 +9,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 	log "naevis/utils/logger"
 )
@@ -96,9 +97,7 @@ func SendMessageREST(app *infra.Deps) http.HandlerFunc {
 			UserID:    user,
 		})
 
-		if err := app.MQ.Publish(ctx, mqevent.ChatMessageSentEvent, mqpayload); err != nil {
-			log.L.Sugar().Warnw("Failed to publish chat message sent event", "error", err)
-		}
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ChatMessageSentEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}

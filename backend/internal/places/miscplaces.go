@@ -9,6 +9,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -103,7 +104,8 @@ func UpdatePlaceInfo(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.PlaceUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.PlaceUpdatedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.PlaceUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, update)
 	}

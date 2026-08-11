@@ -9,7 +9,7 @@ import "time"
 const (
 	MenuCreatedEvent                 = "menu.created"
 	MenuUpdatedEvent                 = "menu.updated"
-	MenuRemovedEvent                 = "menu.removed"
+	MenuDeletedEvent                 = "menu.removed"
 	MenuBoughtEvent                  = "menu.removed"
 	MenuPaymentSessionInitiatedEvent = "menu.removed"
 )

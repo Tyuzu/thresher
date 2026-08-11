@@ -7,6 +7,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 	log "naevis/utils/logger"
 )
@@ -104,13 +105,8 @@ func FiledropHandler(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, err := json.Marshal(payload)
-		if err != nil {
-			log.Printf("[Filedrop] failed to marshal FileCreatedEvent payload: %v", err)
-		} else {
-			if err := app.MQ.Publish(ctx, mqevent.FileCreatedEvent, mqpayload); err != nil { // #nosec G104
-				log.Printf("[Filedrop] Failed to publish FileCreatedEvent: %v", err)
-			}
-		}
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.FileCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, convertToAttachments(attachments))
 	}

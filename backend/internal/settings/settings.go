@@ -9,6 +9,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -465,7 +466,7 @@ func UpdateSettings(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.UserSettingsUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.UserSettingsUpdatedEvent, mqpayload)
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.UserSettingsUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"status":  "success",
@@ -496,7 +497,7 @@ func ResetSettings(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.UserSettingsResetPayload{})
-		app.MQ.Publish(ctx, mqevent.UserSettingsResetEvent, mqpayload)
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.UserSettingsResetEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"status":  "success",
@@ -539,7 +540,7 @@ func InitUserSettings(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.UserSettingsInitiatedPayload{})
-		app.MQ.Publish(ctx, mqevent.UserSettingsInitiatedEvent, mqpayload)
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.UserSettingsInitiatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, true)
 	}

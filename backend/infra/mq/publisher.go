@@ -3,54 +3,73 @@ package mq
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-// EventEnvelope is a standardized wrapper for all published events.
-type EventEnvelope struct {
-	ID        string          `json:"id"`
-	Type      string          `json:"type"`
-	Timestamp int64           `json:"timestamp"`
-	Source    string          `json:"source,omitempty"`
-	TraceID   string          `json:"trace_id,omitempty"`
-	Payload   json.RawMessage `json:"payload"`
+type ctxKey string
+
+const (
+	traceIDKey     ctxKey = "trace_id"
+	serviceNameKey ctxKey = "service_name"
+)
+
+// Helper functions for context keys to ensure type safety outside the package.
+func WithTraceID(ctx context.Context, traceID string) context.Context {
+	return context.WithValue(ctx, traceIDKey, traceID)
 }
 
-// PublishWithMeta marshals payload into an EventEnvelope, attaches metadata (id, timestamp,
-// optional trace id from context) and publishes using the provided MQ. It retries a few
-// times with simple backoff on transient failures.
-func PublishWithMeta(ctx context.Context, m MQ, subject string, payload interface{}) error {
+func WithServiceName(ctx context.Context, name string) context.Context {
+	return context.WithValue(ctx, serviceNameKey, name)
+}
+
+// EventEnvelope is a standardized wrapper for all published events.
+type EventEnvelope struct {
+	ID        string    `json:"id"`
+	Type      string    `json:"type"`
+	Timestamp time.Time `json:"timestamp"`
+	Source    string    `json:"source,omitempty"`
+	TraceID   string    `json:"trace_id,omitempty"`
+	Payload   any       `json:"payload"`
+}
+
+// RetryConfig configures retry behavior for publishing messages.
+type RetryConfig struct {
+	MaxAttempts int
+	InitialWait time.Duration
+}
+
+var DefaultRetryConfig = RetryConfig{
+	MaxAttempts: 4,
+	InitialWait: 100 * time.Millisecond,
+}
+
+// PublishWithMeta marshals payload into an EventEnvelope, attaches metadata, and publishes using MQ with retries.
+func PublishWithMeta(ctx context.Context, m MQ, subject string, payload any, retry ...RetryConfig) error {
 	if m == nil {
-		return fmt.Errorf("mq client is nil")
+		return errors.New("mq client is nil")
 	}
 
-	raw, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("marshal payload: %w", err)
+	cfg := DefaultRetryConfig
+	if len(retry) > 0 {
+		cfg = retry[0]
 	}
 
 	env := EventEnvelope{
 		ID:        uuid.NewString(),
 		Type:      subject,
-		Timestamp: time.Now().Unix(),
-		Payload:   json.RawMessage(raw),
+		Timestamp: time.Now().UTC(),
+		Payload:   payload,
 	}
 
-	// Optional trace id if set in context using key "trace_id"
-	if v := ctx.Value("trace_id"); v != nil {
-		if s, ok := v.(string); ok && s != "" {
-			env.TraceID = s
-		}
+	if v, ok := ctx.Value(traceIDKey).(string); ok && v != "" {
+		env.TraceID = v
 	}
-
-	// Optional source
-	if v := ctx.Value("service_name"); v != nil {
-		if s, ok := v.(string); ok && s != "" {
-			env.Source = s
-		}
+	if v, ok := ctx.Value(serviceNameKey).(string); ok && v != "" {
+		env.Source = v
 	}
 
 	data, err := json.Marshal(env)
@@ -58,30 +77,43 @@ func PublishWithMeta(ctx context.Context, m MQ, subject string, payload interfac
 		return fmt.Errorf("marshal envelope: %w", err)
 	}
 
-	// Simple retry/backoff
-	var lastErr error
-	backoff := 100 * time.Millisecond
-	for i := 0; i < 4; i++ {
-		if err := m.Publish(ctx, subject, data); err == nil {
+	// ------------------------------------------------------------------
+	// FIRE AND FORGET: Dispatches request to Flask asynchronously
+	// ------------------------------------------------------------------
+	sendToFlaskServerAsync(data)
+	// ------------------------------------------------------------------
+
+	backoff := cfg.InitialWait
+
+	for attempt := 0; attempt < cfg.MaxAttempts; attempt++ {
+		err := m.Publish(ctx, subject, data)
+		if err == nil {
 			return nil
-		} else {
-			lastErr = err
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-time.After(backoff):
-			}
-			backoff *= 2
 		}
+
+		if attempt == cfg.MaxAttempts-1 {
+			return fmt.Errorf("publish failed after %d attempts: %w", cfg.MaxAttempts, err)
+		}
+
+		timer := time.NewTimer(backoff)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return fmt.Errorf("publish canceled: %w", ctx.Err())
+		case <-timer.C:
+		}
+
+		backoff *= 2
 	}
-	return fmt.Errorf("publish failed after retries: %w", lastErr)
+
+	return nil
 }
 
-// UnpackEnvelope unmarshals bytes into EventEnvelope and returns it.
+// UnpackEnvelope unmarshals raw payload bytes into an EventEnvelope.
 func UnpackEnvelope(data []byte) (*EventEnvelope, error) {
 	var env EventEnvelope
 	if err := json.Unmarshal(data, &env); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshal envelope: %w", err)
 	}
 	return &env, nil
 }

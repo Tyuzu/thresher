@@ -8,6 +8,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -62,7 +63,8 @@ func ApplyModerator(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.AppliedForModeratorRolePayload{})
-		app.MQ.Publish(ctx, mqevent.AppliedForModeratorRoleEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.AppliedForModeratorRoleEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Moderator application submitted",

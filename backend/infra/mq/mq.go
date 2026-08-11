@@ -15,21 +15,7 @@ type Subscription interface {
 
 type MQ interface {
 	Publish(ctx context.Context, subject string, data []byte) error
-
-	// Ping checks health of the MQ (non-destructive). Implementations should
-	// perform a lightweight check and return nil if healthy.
 	Ping(ctx context.Context) error
-
-	Subscribe(
-		ctx context.Context,
-		subject string,
-		handler MessageHandler,
-	) (Subscription, error)
-
-	QueueSubscribe(
-		ctx context.Context,
-		subject string,
-		queue string,
-		handler MessageHandler,
-	) (Subscription, error)
+	Subscribe(ctx context.Context, subject string, handler MessageHandler) (Subscription, error)
+	QueueSubscribe(ctx context.Context, subject string, queue string, handler MessageHandler) (Subscription, error)
 }

@@ -2,13 +2,13 @@ package media
 
 import (
 	"encoding/json"
-	log "naevis/utils/logger"
 	"net/http"
 	"time"
 
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -79,9 +79,8 @@ func EditMedia(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.MediaUpdatedPayload{})
-		if err := app.MQ.Publish(ctx, mqevent.MediaUpdatedEvent, mqpayload); err != nil { // #nosec G104
-			log.Printf("failed to publish media updated event: %v", err)
-		}
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.MediaUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, updatedMedias)
 	}

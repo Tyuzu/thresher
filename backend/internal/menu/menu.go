@@ -135,26 +135,24 @@ func EditMenu(app *infra.Deps) http.HandlerFunc {
 func DeleteMenu(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		// Optionally, fully interface-driven version:
-		/*
-				ctx := r.Context()
-				placeID := utils.GetParam(r,"placeid")
-				menuID := utils.GetParam(r,"menuid")
+		ctx := r.Context()
+		placeID := utils.GetParam(r, "placeid")
+		menuID := utils.GetParam(r, "menuid")
 
-				if err := app.DB.DeleteOne(ctx, "menu", map[string]string{"placeid": placeID, "menuid": menuID}); err != nil {
-					http.Error(w, fmt.Sprintf("Failed to delete menu: %v", err), http.StatusInternalServerError)
-					return
-				}
+		if _, err := app.DB.DeleteOne(ctx, "menu", map[string]string{"placeid": placeID, "menuid": menuID}); err != nil {
+			http.Error(w, fmt.Sprintf("Failed to delete menu: %v", err), http.StatusInternalServerError)
+			return
+		}
 
-				app.cache.Del(ctx, fmt.Sprintf("menu:%s:%s", placeID, menuID))
+		app.Cache.Del(ctx, fmt.Sprintf("menu:%s:%s", placeID, menuID))
 
-			mqpayload, _ := json.Marshal(mqevent.MenuDeletedPayload{})
-			app.MQ.Publish(ctx, mqevent.MenuDeletedEvent, mqpayload)
+		mqpayload, _ := json.Marshal(mqevent.MenuDeletedPayload{})
 
-				utils.RespondWithJSON(w, http.StatusOK, map[string]any{
-					"success": true,
-					"message": "Menu deleted successfully",
-				})
-		*/
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.MenuDeletedEvent, mqpayload)
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"message": "Menu deleted successfully",
+		})
 	}
 }

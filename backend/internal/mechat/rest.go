@@ -3,7 +3,6 @@ package mechat
 import (
 	"encoding/json"
 	"naevis/internal/media"
-	log "naevis/utils/logger"
 	"net/http"
 	"sort"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/db"
+	"naevis/infra/mq"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -78,9 +78,8 @@ func StartNewChat(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.MechatCreatedPayload{})
-		if err := app.MQ.Publish(ctx, mqevent.MechatCreated, mqpayload); err != nil { // #nosec G104
-			log.Printf("failed to publish mechat created event: %v", err)
-		}
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.MechatCreated, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, chat)
 	}

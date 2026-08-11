@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"naevis/infra/mq"
 	log "naevis/utils/logger"
 	"net/http"
 	"strings"
@@ -230,9 +231,8 @@ func UploadHandler(hub *Hub, app *infra.Deps) http.HandlerFunc {
 		hub.broadcast <- broadcastMsg{Room: msg.Room, Data: data}
 
 		mqpayload, _ := json.Marshal(mqevent.FileAddedToChatPayload{})
-		if err := app.MQ.Publish(ctx, mqevent.FileAddedToChatEvent, mqpayload); err != nil { // #nosec G104
-			log.Printf("failed to publish file added to chat event: %v", err)
-		}
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.FileAddedToChatEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, data)
 	}

@@ -11,6 +11,7 @@ import (
 	"naevis/infra"
 	"naevis/infra/cache"
 	"naevis/infra/db"
+	"naevis/infra/mq"
 	"naevis/middleware"
 	"naevis/utils"
 )
@@ -88,7 +89,8 @@ func DeleteProfile(app *infra.Deps) http.HandlerFunc {
 		// Success response
 
 		mqpayload, _ := json.Marshal(mqevent.ProfileDeletedPayload{})
-		app.MQ.Publish(ctx, mqevent.ProfileDeletedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ProfileDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Profile deleted successfully",

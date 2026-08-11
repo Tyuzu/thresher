@@ -8,6 +8,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 )
 
@@ -62,7 +63,8 @@ func CreateItinerary(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.ItineraryCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.ItineraryCreatedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ItineraryCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, it)
 	}
@@ -118,7 +120,8 @@ func UpdateItinerary(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.ItineraryUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.ItineraryUpdatedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ItineraryUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"status": "200", "message": "Itinerary updated successfully"})
 	}
@@ -143,7 +146,8 @@ func DeleteItinerary(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.ItineraryRemovedPayload{})
-		app.MQ.Publish(ctx, mqevent.ItineraryRemovedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ItineraryRemovedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"message": "Itinerary deleted"})
 	}
@@ -189,7 +193,8 @@ func ForkItinerary(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.ItineraryForkedPayload{})
-		app.MQ.Publish(ctx, mqevent.ItineraryForkedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ItineraryForkedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, newItinerary)
 	}
@@ -214,7 +219,8 @@ func PublishItinerary(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.ItineraryPublishedPayload{})
-		app.MQ.Publish(ctx, mqevent.ItineraryPublishedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ItineraryPublishedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"published": true})
 	}

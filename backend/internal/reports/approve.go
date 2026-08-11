@@ -7,6 +7,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -85,9 +86,8 @@ func ApproveModerator(app *infra.Deps) http.HandlerFunc {
 
 		mqpayload, _ := json.Marshal(mqevent.ApprovedModeratorRoleRequestPayload{
 			ApplicationID: id,
-			ApprovedAt:    time.Now().UTC(),
-		})
-		_ = app.MQ.Publish(ctx, mqevent.ApprovedModeratorRoleRequestEvent, mqpayload)
+			ApprovedAt:    time.Now().UTC()})
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ApprovedModeratorRoleRequestEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Application approved successfully",
@@ -128,9 +128,8 @@ func RejectModerator(app *infra.Deps) http.HandlerFunc {
 
 		mqpayload, _ := json.Marshal(mqevent.RejectedModeratorRoleRequestPayload{
 			ApplicationID: id,
-			RejectedAt:    time.Now().UTC(),
-		})
-		_ = app.MQ.Publish(ctx, mqevent.RejectedModeratorRoleRequestEvent, mqpayload)
+			RejectedAt:    time.Now().UTC()})
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.RejectedModeratorRoleRequestEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Application rejected successfully",

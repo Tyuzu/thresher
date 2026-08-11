@@ -7,6 +7,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/internal/userdata"
 	"naevis/utils"
 	"net/http"
@@ -163,7 +164,8 @@ func CreatePlace(app *infra.Deps) http.HandlerFunc {
 		userdata.SetUserData("place", place.PlaceID, requestingUserID, "", "", app)
 
 		mqpayload, _ := json.Marshal(mqevent.PlaceCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.PlaceCreatedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.PlaceCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, place)
 	}

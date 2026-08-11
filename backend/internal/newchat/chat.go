@@ -6,6 +6,7 @@ import (
 	"naevis/config/mqevent"
 	"naevis/infra"
 	"naevis/infra/db"
+	"naevis/infra/mq"
 	"naevis/utils"
 	log "naevis/utils/logger"
 	"net/http"
@@ -152,9 +153,8 @@ func CreateMessage(app *infra.Deps) http.HandlerFunc {
 		_, _ = app.DB.UpdateOne(ctx, chatsCollection, map[string]any{"chatid": chatID}, update)
 
 		mqpayload, _ := json.Marshal(mqevent.ChatMessageCreatedPayload{})
-		if err := app.MQ.Publish(ctx, mqevent.ChatMessageCreatedEvent, mqpayload); err != nil { // #nosec G104
-			log.Printf("failed to publish message created event: %v", err)
-		}
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ChatMessageCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, msg)
 	}

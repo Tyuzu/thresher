@@ -3,6 +3,8 @@ package mq
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/nats-io/nats.go"
 )
@@ -24,14 +26,13 @@ type jetStreamSubscription struct {
 }
 
 func (s *jetStreamSubscription) Unsubscribe() error {
+	if s.sub == nil {
+		return nil
+	}
 	return s.sub.Unsubscribe()
 }
 
-func (j *JetStreamMQ) Publish(
-	ctx context.Context,
-	subject string,
-	data []byte,
-) error {
+func (j *JetStreamMQ) Publish(ctx context.Context, subject string, data []byte) error {
 	if j.js == nil {
 		return ErrJetStreamNotInitialized
 	}
@@ -42,7 +43,10 @@ func (j *JetStreamMQ) Publish(
 	}
 
 	_, err := j.js.PublishMsg(msg, nats.Context(ctx))
-	return err
+	if err != nil {
+		return fmt.Errorf("publish to jetstream failed: %w", err)
+	}
+	return nil
 }
 
 func (j *JetStreamMQ) Ping(ctx context.Context) error {
@@ -50,52 +54,15 @@ func (j *JetStreamMQ) Ping(ctx context.Context) error {
 		return ErrJetStreamNotInitialized
 	}
 
-	// Fetching JetStream account info is a non-mutating check on JS health
 	_, err := j.js.AccountInfo(nats.Context(ctx))
-	return err
+	if err != nil {
+		return fmt.Errorf("jetstream ping failed: %w", err)
+	}
+	return nil
 }
 
-func (j *JetStreamMQ) Subscribe(
-	ctx context.Context,
-	subject string,
-	handler MessageHandler,
-) (Subscription, error) {
-	if j.js == nil {
-		return nil, ErrJetStreamNotInitialized
-	}
-
-	sub, err := j.js.Subscribe(
-		subject,
-		func(msg *nats.Msg) {
-			m := Message{
-				Subject: msg.Subject,
-				Data:    msg.Data,
-			}
-
-			// Context for message execution isolated from subscription lifecycle
-			if err := handler(context.Background(), m); err != nil {
-				_ = msg.Nak()
-				return
-			}
-
-			_ = msg.Ack()
-		},
-		nats.ManualAck(),
-		nats.AckExplicit(),
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		<-ctx.Done()
-		_ = sub.Unsubscribe()
-	}()
-
-	return &jetStreamSubscription{
-		sub: sub,
-	}, nil
+func (j *JetStreamMQ) Subscribe(ctx context.Context, subject string, handler MessageHandler) (Subscription, error) {
+	return j.QueueSubscribe(ctx, subject, "", handler)
 }
 
 func (j *JetStreamMQ) QueueSubscribe(
@@ -108,36 +75,47 @@ func (j *JetStreamMQ) QueueSubscribe(
 		return nil, ErrJetStreamNotInitialized
 	}
 
-	sub, err := j.js.QueueSubscribe(
-		subject,
-		queue,
-		func(msg *nats.Msg) {
-			m := Message{
-				Subject: msg.Subject,
-				Data:    msg.Data,
-			}
+	callback := func(msg *nats.Msg) {
+		m := Message{
+			Subject: msg.Subject,
+			Data:    msg.Data,
+		}
 
-			if err := handler(context.Background(), m); err != nil {
-				_ = msg.Nak()
-				return
-			}
+		// Use a bounded execution context for handlers to avoid hanging forever
+		hCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
 
-			_ = msg.Ack()
-		},
-		nats.ManualAck(),
-		nats.AckExplicit(),
-	)
+		if err := handler(hCtx, m); err != nil {
+			_ = msg.Nak()
+			return
+		}
 
-	if err != nil {
-		return nil, err
+		_ = msg.Ack()
 	}
 
+	opts := []nats.SubOpt{
+		nats.ManualAck(),
+		nats.AckExplicit(),
+	}
+
+	var sub *nats.Subscription
+	var err error
+
+	if queue != "" {
+		sub, err = j.js.QueueSubscribe(subject, queue, callback, opts...)
+	} else {
+		sub, err = j.js.Subscribe(subject, callback, opts...)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create jetstream subscription: %w", err)
+	}
+
+	// Handle context cancellation to automatically unsubscribe
 	go func() {
 		<-ctx.Done()
 		_ = sub.Unsubscribe()
 	}()
 
-	return &jetStreamSubscription{
-		sub: sub,
-	}, nil
+	return &jetStreamSubscription{sub: sub}, nil
 }

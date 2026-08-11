@@ -9,6 +9,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -83,7 +84,8 @@ func CreateNotice(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.NoticesCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.NoticesCreatedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.NoticesCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, notice)
 	}
@@ -155,7 +157,8 @@ func UpdateNotice(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.NoticesUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.NoticesUpdatedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.NoticesUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, existing)
 	}

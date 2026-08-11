@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 	"net/http"
 	"strconv"
@@ -170,7 +171,8 @@ func CreateRecipe(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.RecipeCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.RecipeCreatedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.RecipeCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, recipe)
 	}
@@ -272,7 +274,8 @@ func UpdateRecipe(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.RecipeUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.RecipeUpdatedEvent, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.RecipeUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, []byte(`{"status":"updated"}`))
 	}

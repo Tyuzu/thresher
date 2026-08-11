@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/middleware"
 	"naevis/utils"
-	log "naevis/utils/logger"
 	"net/http"
 )
 
@@ -34,9 +34,8 @@ func CreateFeedPost(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.FeedPostCreatedPayload{})
-		if err := app.MQ.Publish(ctx, mqevent.FeedPostCreatedEvent, mqpayload); err != nil {
-			log.Printf("Failed to publish FeedPostCreatedEvent: %v", err)
-		}
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.FeedPostCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":   true,
@@ -70,9 +69,8 @@ func EditPost(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.FeedPostUpdatedPayload{})
-		if err := app.MQ.Publish(ctx, mqevent.FeedPostUpdatedEvent, mqpayload); err != nil {
-			log.Printf("Failed to publish FeedPostUpdatedEvent: %v", err)
-		}
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.FeedPostUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"ok":   true,

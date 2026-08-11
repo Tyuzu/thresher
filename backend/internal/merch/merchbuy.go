@@ -2,6 +2,7 @@ package merch
 
 import (
 	"encoding/json"
+	"naevis/infra/mq"
 	log "naevis/utils/logger"
 	"net/http"
 
@@ -48,9 +49,8 @@ func CreateMerchPaymentSession(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.MerchPaymentSessionCreatedPayload{})
-		if err := app.MQ.Publish(ctx, mqevent.MerchPaymentSessionCreatedEvent, mqpayload); err != nil { // #nosec G104
-			log.Printf("failed to publish merch payment session created event: %v", err)
-		}
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.MerchPaymentSessionCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, response)
 	}
@@ -152,9 +152,8 @@ func ConfirmMerchPurchase(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.MerchPurchaseConfirmedPayload{})
-		if err := app.MQ.Publish(ctx, mqevent.MerchPurchaseConfirmedEvent, mqpayload); err != nil { // #nosec G104
-			log.Printf("failed to publish merch purchase confirmed event: %v", err)
-		}
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.MerchPurchaseConfirmedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, resp)
 	}

@@ -7,6 +7,7 @@ import (
 
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/internal/baito"
 	"naevis/utils"
 )
@@ -65,7 +66,8 @@ func CreateBaitoForEntity(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.JobCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.JobCreated, mqpayload)
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.JobCreated, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"baitoid": baito.BaitoId})
 	}

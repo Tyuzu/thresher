@@ -2,6 +2,7 @@ package media
 
 import (
 	"encoding/json"
+	"naevis/infra/mq"
 	log "naevis/utils/logger"
 	"net/http"
 	"strings"
@@ -125,9 +126,8 @@ func AddMedia(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.MediaUploadedPayload{})
-		if err := app.MQ.Publish(ctx, mqevent.MediaUploadedEvent, mqpayload); err != nil { // #nosec G104
-			log.Printf("failed to publish media uploaded event: %v", err)
-		}
+
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.MediaUploadedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, insertedMedia)
 	}

@@ -9,6 +9,7 @@ import (
 	"naevis/config"
 	"naevis/config/mqevent"
 	"naevis/infra"
+	"naevis/infra/mq"
 	"naevis/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -99,7 +100,7 @@ func AddReview(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.ReviewCreatedPayload{})
-		app.MQ.Publish(ctx, mqevent.ReviewCreatedEvent, mqpayload)
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ReviewCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, review)
 	}
@@ -174,7 +175,7 @@ func EditReview(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.ReviewUpdatedPayload{})
-		app.MQ.Publish(ctx, mqevent.ReviewUpdatedEvent, mqpayload)
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ReviewUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Review updated"})
 	}
@@ -221,7 +222,7 @@ func DeleteReview(app *infra.Deps) http.HandlerFunc {
 		}
 
 		mqpayload, _ := json.Marshal(mqevent.ReviewDeletedPayload{})
-		app.MQ.Publish(ctx, mqevent.ReviewDeletedEvent, mqpayload)
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ReviewDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Review deleted"})
 	}
