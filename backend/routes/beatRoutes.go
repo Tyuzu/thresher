@@ -69,8 +69,19 @@ func AddAutocompleteRoutes(router *httprouter.Router, app *infra.Deps, rateLimit
 
 // AddAdsRoutes registers the ad system API routes
 func AddAdsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
+	// Ad Serving Endpoint
 	router.HandlerFunc(http.MethodGet, "/api/v1/sda/sda", rateLimiter.Limit(middleware.OptionalAuth(ads.GetAds(app))))
+	router.HandlerFunc(http.MethodOptions, "/api/v1/sda/sda", middleware.OptionalAuth(ads.GetAds(app)))
+
+	// Impression Tracking (Fired via sendBeacon)
 	router.HandlerFunc(http.MethodPost, "/api/v1/sda/track-impression", rateLimiter.Limit(middleware.OptionalAuth(ads.TrackImpression(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/sda/track-impression", rateLimiter.Limit(middleware.OptionalAuth(ads.TrackImpression(app))))
+	router.HandlerFunc(http.MethodOptions, "/api/v1/sda/track-impression", middleware.OptionalAuth(ads.TrackImpression(app)))
+
+	// Click Tracking (Fired via sendBeacon)
+	router.HandlerFunc(http.MethodPost, "/api/v1/sda/track-click", rateLimiter.Limit(middleware.OptionalAuth(ads.TrackClick(app))))
+	router.HandlerFunc(http.MethodGet, "/api/v1/sda/track-click", rateLimiter.Limit(middleware.OptionalAuth(ads.TrackClick(app))))
+	router.HandlerFunc(http.MethodOptions, "/api/v1/sda/track-click", middleware.OptionalAuth(ads.TrackClick(app)))
 }
 
 func AddHashtagRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {

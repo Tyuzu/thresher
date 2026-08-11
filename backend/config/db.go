@@ -6,6 +6,7 @@ type DB struct {
 	AdsCollection                      string
 	AnalyticsCollection                string
 	AppealsCollection                  string
+	ArtistAlbumsCollection             string
 	ArtistEventsCollection             string
 	ArtistsCollection                  string
 	AutocompleteCollection             string

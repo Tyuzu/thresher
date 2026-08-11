@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"naevis/config/mqevent"
-	"naevis/config/myerr"
 	"naevis/infra"
 	"naevis/infra/mq"
 	"naevis/utils"
@@ -48,7 +47,7 @@ func RequestOTPHandler(app *infra.Deps) http.HandlerFunc {
 
 		err := ProcessOTPRequest(ctx, app, input.Email)
 		if err != nil {
-			if errors.Is(err, myerr.ErrInvalidEmail) {
+			if errors.Is(err, ErrInvalidEmail) {
 				utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
 				return
 			}
@@ -78,11 +77,11 @@ func VerifyOTPHandler(app *infra.Deps) http.HandlerFunc {
 
 		err := ProcessOTPVerification(ctx, app, input.Email, input.OTP)
 		if err != nil {
-			if errors.Is(err, myerr.ErrInvalidEmail) {
+			if errors.Is(err, ErrInvalidEmail) {
 				utils.RespondWithError(w, http.StatusBadRequest, "Invalid email")
 				return
 			}
-			if errors.Is(err, myerr.ErrOTPInvalidOrExpired) {
+			if errors.Is(err, ErrOTPInvalidOrExpired) {
 				utils.RespondWithError(w, http.StatusUnauthorized, "Invalid or expired OTP")
 				return
 			}
@@ -103,7 +102,7 @@ func VerifyOTPHandler(app *infra.Deps) http.HandlerFunc {
 func ProcessOTPRequest(ctx context.Context, app *infra.Deps, rawEmail string) error {
 	email, err := sanitizeEmailAddress(rawEmail)
 	if err != nil {
-		return myerr.ErrInvalidEmail
+		return ErrInvalidEmail
 	}
 
 	otp, err := GenerateOTP(6)
@@ -129,17 +128,17 @@ func ProcessOTPRequest(ctx context.Context, app *infra.Deps, rawEmail string) er
 func ProcessOTPVerification(ctx context.Context, app *infra.Deps, rawEmail, inputOTP string) error {
 	email, err := sanitizeEmailAddress(rawEmail)
 	if err != nil {
-		return myerr.ErrInvalidEmail
+		return ErrInvalidEmail
 	}
 
 	storedHashedOTP, err := GetOTPCache(ctx, app, email)
 	if err != nil || len(storedHashedOTP) == 0 {
-		return myerr.ErrOTPInvalidOrExpired
+		return ErrOTPInvalidOrExpired
 	}
 
 	expectedHashedOTP := hashPlainSHA256(inputOTP)
 	if subtle.ConstantTimeCompare([]byte(storedHashedOTP), []byte(expectedHashedOTP)) != 1 {
-		return myerr.ErrOTPInvalidOrExpired
+		return ErrOTPInvalidOrExpired
 	}
 
 	if _, err = UpdateUserVerificationStatus(ctx, app, email); err != nil {

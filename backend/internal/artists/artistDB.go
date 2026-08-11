@@ -15,6 +15,7 @@ var (
 	EventsCollection       = config.Collections.EventsCollection
 	ArtistsCollection      = config.Collections.ArtistsCollection
 	ArtistEventsCollection = config.Collections.ArtistEventsCollection
+	ArtistAlbumsCollection = config.Collections.ArtistAlbumsCollection
 	SubscribersCollection  = config.Collections.SubscribersCollection
 )
 
@@ -77,6 +78,12 @@ func InsertArtistEvent(ctx context.Context, db db.Database, artistevent *ArtistE
 
 func UpdateArtistEventByID(ctx context.Context, db db.Database, artisteventID string, update map[string]any) (any, error) {
 	return db.Update(ctx, ArtistEventsCollection, map[string]any{"eventid": artisteventID}, update)
+}
+
+// DeleteArtistEventByID deletes an artist event entry by its ID.
+func DeleteArtistEventByID(ctx context.Context, db db.Database, artisteventID string) error {
+	_, err := db.DeleteOne(ctx, ArtistEventsCollection, map[string]any{"eventid": artisteventID})
+	return err
 }
 
 func FindEventByID(ctx context.Context, db db.Database, eventID string, event *events.Event) error {

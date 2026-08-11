@@ -4,9 +4,9 @@ import (
 	"naevis/infra"
 	"naevis/internal/baito"
 	"naevis/internal/baito/jobs"
+	"naevis/internal/baito/vendors"
+	"naevis/internal/baito/workers"
 	"naevis/internal/booking"
-	"naevis/internal/vendors"
-	"naevis/internal/workers"
 	"naevis/middleware"
 	"net/http"
 

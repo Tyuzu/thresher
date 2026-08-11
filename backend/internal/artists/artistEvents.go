@@ -36,7 +36,11 @@ func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventCreatedEvent, mqevent.ArtistEventCreatePayload{})
+		// Publish MQ event with payload details
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventCreatedEvent, mqevent.ArtistEventCreatePayload{
+			EventID:  artistevent.EventID,
+			ArtistID: artistevent.ArtistID,
+		})
 
 		utils.RespondWithJSON(w, http.StatusCreated, map[string]any{
 			"message": "ArtistEvent created successfully",
@@ -63,7 +67,10 @@ func UpdateArtistEvent(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventUpdatedEvent, mqevent.ArtistEventUpdatePayload{})
+		// Publish MQ event after successful update
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventUpdatedEvent, mqevent.ArtistEventUpdatePayload{
+			EventID: artisteventID,
+		})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "ArtistEvent updated successfully"})
 	}
@@ -71,7 +78,23 @@ func UpdateArtistEvent(app *infra.Deps) http.HandlerFunc {
 
 // Delete Artist Event
 func DeleteArtistEvent(app *infra.Deps) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {}
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		artisteventID := utils.GetParam(r, "id")
+
+		err := DeleteArtistEventByID(ctx, app.DB, artisteventID)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete ArtistEvent")
+			return
+		}
+
+		// Added MQ event trigger for deletion
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventDeletedEvent, mqevent.ArtistEventDeletePayload{
+			EventID: artisteventID,
+		})
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "ArtistEvent deleted successfully"})
+	}
 }
 
 func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
@@ -126,7 +149,11 @@ func AddArtistToEvent(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistAddedToEvent, mqevent.ArtistAddedToEventPayload{})
+		// Publish MQ event with specific field context
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistAddedToEvent, mqevent.ArtistAddedToEventPayload{
+			EventID:  artistEvent.EventID,
+			ArtistID: artistEvent.ArtistID,
+		})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Artist successfully added to event"})
 	}

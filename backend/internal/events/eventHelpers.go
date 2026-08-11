@@ -1,7 +1,7 @@
 package events
 
 import (
-	"naevis/internal/vendors"
+	"naevis/internal/baito/vendors"
 )
 
 // toSafeEvent ensures no nil slices or zero-values, computes Prices & Currency.

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"naevis/config/mqevent"
 	"naevis/infra"
@@ -34,7 +35,13 @@ func CreateArtist(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistCreatedEvent, mqevent.ArtistCreatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistCreatedEvent, mqevent.ArtistCreatedPayload{
+			ArtistID:   artist.ArtistID,
+			UserID:     artist.CreatorID,
+			ArtistName: artist.Name,
+			OccurredAt: time.Now().UTC(),
+		})
+
 		utils.RespondWithJSON(w, http.StatusCreated, artist)
 	}
 }
@@ -75,7 +82,14 @@ func UpdateArtist(app *infra.Deps) http.HandlerFunc {
 			_ = os.Remove(path)
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistUpdatedEvent, mqevent.ArtistUpdatedPayload{})
+		userID := utils.GetUserIDFromRequest(r)
+
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistUpdatedEvent, mqevent.ArtistUpdatedPayload{
+			ArtistID:   idParam,
+			UserID:     userID,
+			OccurredAt: time.Now().UTC(),
+		})
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Artist updated"})
 	}
 }
@@ -141,5 +155,28 @@ func parseArtistFormData(r *http.Request, existing *Artist) (Artist, map[string]
 }
 
 func DeleteArtistByID(app *infra.Deps) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {}
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		artistID := utils.GetParam(r, "id")
+		userID := utils.GetUserIDFromRequest(r)
+
+		var artist Artist
+		if err := FindArtistByID(ctx, app.DB, artistID, &artist); err != nil {
+			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
+			return
+		}
+
+		if _, err := app.DB.DeleteOne(ctx, ArtistsCollection, map[string]any{"artistid": artistID}); err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete artist")
+			return
+		}
+
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistUpdatedEvent, mqevent.ArtistUpdatedPayload{
+			ArtistID:   artistID,
+			UserID:     userID,
+			OccurredAt: time.Now().UTC(),
+		})
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Artist deleted successfully"})
+	}
 }

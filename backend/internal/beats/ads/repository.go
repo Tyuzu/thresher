@@ -11,15 +11,15 @@ import (
 
 var adsCollection = config.Collections.AdsCollection
 
-// FetchActiveAdsFromDB queries active ads using the app.DB interface
+// FetchActiveAdsFromDB queries active ads using the app.DB interface.
 func FetchActiveAdsFromDB(ctx context.Context, app *infra.Deps) ([]Ad, error) {
 	if app == nil || app.DB == nil {
 		return nil, nil
 	}
 
 	var dbAds []Ad
-	// Querying active ads from the 'ads' collection
-	filter := bson.M{} // Replace with active filter if needed e.g., bson.M{"status": "active"}
+	// Fetch active ads from the database
+	filter := bson.M{"status": bson.M{"$ne": "inactive"}}
 
 	err := app.DB.FindMany(ctx, adsCollection, filter, &dbAds)
 	if err != nil {

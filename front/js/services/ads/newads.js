@@ -26,7 +26,31 @@ function resolvePageContext(page) {
 }
 
 /**
- * Default internal fetcher that connects directly to the Go backend (/api/v1/sda/sda).
+ * Secondary Observer for IAB-Compliant Impression Tracking
+ * Triggers beacon ONLY when ad is >= 50% visible in the viewport.
+ */
+const impressionObserver = (typeof window !== "undefined" && "IntersectionObserver" in window)
+  ? new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+          const slotEl = entry.target;
+          const adId = slotEl.getAttribute("data-ad-id");
+          const tracked = slotEl.getAttribute("data-impression-tracked");
+
+          if (adId && tracked !== "true") {
+            slotEl.setAttribute("data-impression-tracked", "true");
+            if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+              navigator.sendBeacon(`/api/v1/sda/track-impression?id=${encodeURIComponent(adId)}`);
+            }
+            impressionObserver.unobserve(slotEl);
+          }
+        }
+      });
+    }, { threshold: 0.5 })
+  : null;
+
+/**
+ * Default internal fetcher connecting directly to Go backend.
  */
 async function defaultAdNetworkFetcher(slotEl) {
   const page = slotEl.getAttribute("data-page") || "home";
@@ -44,7 +68,6 @@ async function defaultAdNetworkFetcher(slotEl) {
 
   const rawData = await response.json();
 
-  // Support both camelCase / lowercase and PascalCase fields
   const adData = {
     id: rawData.id || rawData.ID || "",
     link: rawData.link || rawData.Link || "",
@@ -57,8 +80,9 @@ async function defaultAdNetworkFetcher(slotEl) {
     throw new Error("Invalid ad payload received");
   }
 
-  // Clear fallback text and inject HTML
   slotEl.innerHTML = "";
+  slotEl.setAttribute("data-ad-id", adData.id);
+  slotEl.setAttribute("data-impression-tracked", "false");
 
   const anchor = createElement("a", {
     href: adData.link,
@@ -77,40 +101,44 @@ async function defaultAdNetworkFetcher(slotEl) {
     ])
   ]);
 
+  // Click Tracking Listener
+  anchor.addEventListener("click", () => {
+    if (adData.id && typeof navigator !== "undefined" && navigator.sendBeacon) {
+      navigator.sendBeacon(`/api/v1/sda/track-click?id=${encodeURIComponent(adData.id)}`);
+    }
+  });
+
   slotEl.appendChild(anchor);
 
-  // Trigger impression tracking
-  if (adData.id && typeof navigator !== "undefined" && navigator.sendBeacon) {
-    navigator.sendBeacon(`/api/v1/sda/track-impression?id=${encodeURIComponent(adData.id)}`);
+  // Delegate impression tracking to visibility observer
+  if (impressionObserver && adData.id) {
+    impressionObserver.observe(slotEl);
   }
 }
 
-// Singleton IntersectionObserver
+// Primary IntersectionObserver for Lazy-Loading
 const sharedAdObserver = (typeof window !== "undefined" && "IntersectionObserver" in window)
   ? new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      const slotEl = entry.target;
-      const config = adConfigs.get(slotEl);
+      entries.forEach(entry => {
+        const slotEl = entry.target;
+        const config = adConfigs.get(slotEl);
 
-      if (!config) return;
+        if (!config) return;
 
-      if (entry.isIntersecting) {
-        if (slotEl.getAttribute("data-ad-state") === "waiting") {
-          triggerAdInitialization(slotEl, config);
+        if (entry.isIntersecting) {
+          if (slotEl.getAttribute("data-ad-state") === "waiting") {
+            triggerAdInitialization(slotEl, config);
+          }
+          if (config.refreshInterval && slotEl.getAttribute("data-ad-state") === "loaded") {
+            startRefreshTimer(slotEl, config);
+          }
+        } else {
+          stopRefreshTimer(slotEl);
         }
-        if (config.refreshInterval && slotEl.getAttribute("data-ad-state") === "loaded") {
-          startRefreshTimer(slotEl, config);
-        }
-      } else {
-        stopRefreshTimer(slotEl);
-      }
-    });
-  }, { rootMargin: "200px" })
+      });
+    }, { rootMargin: "200px" })
   : null;
 
-/**
- * Handles ad network execution with fallback strategy chain.
- */
 async function triggerAdInitialization(slotEl, config) {
   const { adNetworkInit, fallbackNetworks = [], debug } = config;
 
@@ -132,7 +160,7 @@ async function triggerAdInitialization(slotEl, config) {
   for (let i = 0; i < networksToTry.length; i++) {
     const netFn = networksToTry[i];
     try {
-      if (debug) console.warn(`[Ad System] Trying ad provider level ${i + 1} for ${slotEl.id}`);
+      if (debug) console.warn(`[Ad System] Trying provider ${i + 1} for ${slotEl.id}`);
       await Promise.resolve(netFn(slotEl));
 
       slotEl.setAttribute("data-ad-state", "loaded");
@@ -165,6 +193,8 @@ function startRefreshTimer(slotEl, config) {
       console.warn(`[Ad System] Auto-refreshing slot: ${slotEl.id}`);
     }
 
+    // Reset ad state to allow re-fetching
+    slotEl.setAttribute("data-ad-state", "waiting");
     triggerAdInitialization(slotEl, config);
   }, interval);
 
@@ -176,6 +206,18 @@ function stopRefreshTimer(slotEl) {
     clearInterval(adRefreshTimers.get(slotEl));
     adRefreshTimers.delete(slotEl);
   }
+}
+
+/**
+ * Destroys an ad slot and cleans up all observers and timers.
+ * Call this when unmounting components in single-page apps.
+ */
+export function destroyAdSlot(slotEl) {
+  if (!slotEl) return;
+  stopRefreshTimer(slotEl);
+  if (sharedAdObserver) sharedAdObserver.unobserve(slotEl);
+  if (impressionObserver) impressionObserver.unobserve(slotEl);
+  adConfigs.delete(slotEl);
 }
 
 export function advertEmbed(page, position = "", options = {}) {
@@ -196,7 +238,6 @@ export function advertEmbed(page, position = "", options = {}) {
 
   const slotId = `ad-slot-${resolvedPage}-${position || "default"}-${adCounter}`;
 
-  const styleMinW = typeof width === "number" ? `${width}px` : width;
   const styleMinH = typeof height === "number" ? `${height}px` : height;
 
   const slotEl = createElement("div", {
@@ -206,7 +247,6 @@ export function advertEmbed(page, position = "", options = {}) {
     "data-position": position,
     "data-ad-state": "waiting",
     style: `min-height: ${styleMinH}; display: block;`
-    // style: `min-width: ${styleMinW}; min-height: ${styleMinH}; display: block;`
   }, [
     createElement("span", { class: "ad-fallback-text" }, [fallbackText])
   ]);

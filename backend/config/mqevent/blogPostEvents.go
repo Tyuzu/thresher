@@ -13,21 +13,21 @@ const (
 )
 
 type BlogPostCreatedPayload struct {
-	PostID     string    `json:"post_id"`
-	UserID     string    `json:"user_id"`
+	PostID     string    `json:"postid"`
+	UserID     string    `json:"userid"`
 	Username   string    `json:"username"`
-	PostType   string    `json:"post_type"`
+	PostType   string    `json:"posttype"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type BlogPostUpdatedPayload struct {
-	PostID     string    `json:"post_id"`
-	UserID     string    `json:"user_id"`
+	PostID     string    `json:"postid"`
+	UserID     string    `json:"userid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type BlogPostDeletedPayload struct {
-	PostID     string    `json:"post_id"`
-	UserID     string    `json:"user_id"`
+	PostID     string    `json:"postid"`
+	UserID     string    `json:"userid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

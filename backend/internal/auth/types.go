@@ -43,6 +43,7 @@ type VerifyOTPInput struct {
 
 // RefreshResult communicates intended cookie side-effects and tokens.
 type RefreshResult struct {
+	UserID      string
 	AccessToken string
 	NewRefresh  string // non-empty => set this new refresh in cookie
 	ClearCookie bool   // true => clear cookie on response

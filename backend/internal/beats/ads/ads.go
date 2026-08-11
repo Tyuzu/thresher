@@ -48,11 +48,26 @@ var (
 	}
 )
 
-// GetAds handles the API request to fetch an ad.
+// getSafeDefaultAds returns a thread-safe copy of default ads.
+func getSafeDefaultAds() []Ad {
+	adsMutex.RLock()
+	defer adsMutex.RUnlock()
+
+	copied := make([]Ad, len(defaultAds))
+	copy(copied, defaultAds)
+	return copied
+}
+
+// GetAds handles the API request to fetch an ad slot item.
 func GetAds(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
 		ctx := r.Context()
 		category := r.URL.Query().Get("category")
@@ -61,20 +76,19 @@ func GetAds(app *infra.Deps) http.HandlerFunc {
 
 		var activeAds []Ad
 
-		// 1. Try Cache
+		// 1. Fetch from Cache
 		if app != nil && app.Cache != nil {
 			if cachedBytes, err := app.Cache.Get(ctx, adsCacheKey); err == nil && len(cachedBytes) > 0 {
 				_ = json.Unmarshal(cachedBytes, &activeAds)
 			}
 		}
 
-		// 2. Fallback to Database using decoupled repository function
+		// 2. Fallback to Database
 		if len(activeAds) == 0 {
 			dbAds, err := FetchActiveAdsFromDB(ctx, app)
 			if err == nil && len(dbAds) > 0 {
 				activeAds = dbAds
 
-				// Populate Cache with DB records for subsequent requests
 				if app != nil && app.Cache != nil {
 					if data, err := json.Marshal(activeAds); err == nil {
 						_ = app.Cache.Set(ctx, adsCacheKey, data, 10*time.Minute)
@@ -83,11 +97,9 @@ func GetAds(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		// 3. Fallback to hardcoded defaults if DB yields nothing
+		// 3. Fallback to Hardcoded Defaults
 		if len(activeAds) == 0 {
-			adsMutex.RLock()
-			activeAds = append(activeAds, defaultAds...)
-			adsMutex.RUnlock()
+			activeAds = getSafeDefaultAds()
 
 			if app != nil && app.Cache != nil {
 				if data, err := json.Marshal(activeAds); err == nil {
@@ -96,7 +108,7 @@ func GetAds(app *infra.Deps) http.HandlerFunc {
 			}
 		}
 
-		// 4. Business Logic: Filter candidate ads based on query criteria
+		// 4. Candidate Filtering
 		var candidates []Ad
 		for _, ad := range activeAds {
 			matchCategory := category == "" || category == "default" || ad.Category == category
@@ -118,21 +130,47 @@ func GetAds(app *infra.Deps) http.HandlerFunc {
 		}
 
 		selectedAd := candidates[rand.N(len(candidates))]
-
 		_ = json.NewEncoder(w).Encode(selectedAd)
 	}
 }
 
-// TrackImpression logs ad visibility events using app.Cache counter
+// TrackImpression logs ad visibility events (fires via sendBeacon).
 func TrackImpression(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		adID := r.URL.Query().Get("id")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Content-Type", "application/json")
 
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		adID := r.URL.Query().Get("id")
 		if adID != "" && app != nil && app.Cache != nil {
 			_, _ = app.Cache.Incr(r.Context(), "ad:impressions:"+adID)
 		}
 
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "recorded"})
+	}
+}
+
+// TrackClick logs ad click events (fires via sendBeacon).
+func TrackClick(app *infra.Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		adID := r.URL.Query().Get("id")
+		if adID != "" && app != nil && app.Cache != nil {
+			_, _ = app.Cache.Incr(r.Context(), "ad:clicks:"+adID)
+		}
+
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "recorded"})
 	}

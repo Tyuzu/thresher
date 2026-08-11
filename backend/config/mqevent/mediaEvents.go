@@ -10,8 +10,8 @@ const (
 )
 
 type MediaUploadedPayload struct {
-	EntityType string `json:"entity_type"`
-	EntityID   string `json:"entity_id"`
+	EntityType string `json:"entitytype"`
+	EntityID   string `json:"entityid"`
 	FilePath   string `json:"file_path"`
 	Extension  string `json:"extension"`
 	FileName   string `json:"file_name"`
@@ -19,8 +19,8 @@ type MediaUploadedPayload struct {
 }
 
 type MediaUpdatedPayload struct {
-	EntityType string `json:"entity_type"`
-	EntityID   string `json:"entity_id"`
+	EntityType string `json:"entitytype"`
+	EntityID   string `json:"entityid"`
 	FilePath   string `json:"file_path"`
 	Extension  string `json:"extension"`
 	FileName   string `json:"file_name"`

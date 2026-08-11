@@ -45,7 +45,12 @@ func RefreshToken(app *infra.Deps) http.HandlerFunc {
 			setRefreshCookie(w, result.NewRefresh)
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TokenRefreshed, mqevent.TokenRefreshPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TokenRefreshed, mqevent.TokenRefreshPayload{
+			UserID:     result.UserID,
+			UserAgent:  r.UserAgent(),
+			IPAddress:  r.RemoteAddr,
+			OccurredAt: time.Now().UTC(),
+		})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"message": "Token refreshed successfully",
@@ -109,6 +114,7 @@ func RefreshTokenFromCookie(ctx context.Context, rawToken string, r *http.Reques
 	}
 
 	return &RefreshResult{
+		UserID:      user.UserID,
 		AccessToken: accessToken,
 		NewRefresh:  newRefresh,
 	}, nil

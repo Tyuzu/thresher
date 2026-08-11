@@ -178,9 +178,63 @@ func EditTicket(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-// DeleteTicket deletes a ticket via the `dels` package
 func DeleteTicket(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		eventID := utils.GetParam(r, "eventid")
+		ticketID := utils.GetParam(r, "ticketid")
+
+		if eventID == "" || ticketID == "" {
+			http.Error(w, "Invalid event ID or ticket ID", http.StatusBadRequest)
+			return
+		}
+
+		// SECURITY: Verify user is authenticated
+		userID, ok := ctx.Value(config.UserIDKey).(string)
+		if !ok || userID == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// SECURITY: Verify user is the event owner
+		var event struct {
+			CreatorID string `bson:"creatorid" json:"creatorid"`
+		}
+		if err := app.DB.FindOne(ctx, "events", map[string]interface{}{"eventid": eventID}, &event); err != nil {
+			http.Error(w, "Event not found", http.StatusNotFound)
+			return
+		}
+
+		if event.CreatorID != userID {
+			http.Error(w, "Forbidden: Only event owner can delete tickets", http.StatusForbidden)
+			return
+		}
+
+		// Ensure ticket exists before deleting
+		var existing Ticket
+		if err := app.DB.FindOne(ctx, ticketsCollection, map[string]interface{}{"eventid": eventID, "ticketid": ticketID}, &existing); err != nil {
+			http.Error(w, "Ticket not found or DB error", http.StatusNotFound)
+			return
+		}
+
+		// Perform deletion (using hard delete; replace DeleteOne with app.DB.SoftDelete if applicable)
+		if _, err := app.DB.DeleteOne(ctx, ticketsCollection, map[string]interface{}{"eventid": eventID, "ticketid": ticketID}); err != nil {
+			http.Error(w, "Failed to delete ticket", http.StatusInternalServerError)
+			return
+		}
+
+		// Optional: Publish message queue event
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketDeletedEvent, mqevent.TicketDeletedPayload{
+			TicketID: ticketID,
+			EventID:  eventID,
+		}); err != nil {
+			log.Printf("failed to publish ticket deleted event: %v", err)
+		}
+
+		utils.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
+			"success": true,
+			"message": "Ticket deleted successfully",
+		})
 	}
 }
 

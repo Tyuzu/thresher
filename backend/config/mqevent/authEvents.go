@@ -26,32 +26,34 @@ const (
 ============================================================ */
 
 type UserRegisteredPayload struct {
-	UserID    string    `json:"user_id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
+	UserID     string    `json:"userid"`
+	Username   string    `json:"username"`
+	Email      string    `json:"email"`
+	OccurredAt time.Time `json:"occured_at"`
 }
 
 type UserLoggedInPayload struct {
-	UserID     string    `json:"user_id"`
+	UserID     string    `json:"userid"`
 	Username   string    `json:"username"`
 	OccurredAt time.Time `json:"occurred_at"`
 	IP         string    `json:"ip"`
 }
 
 type UserLoggedOutPayload struct {
-	UserID     string    `json:"user_id"`
+	UserID     string    `json:"userid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type UserOTPPayload struct {
-	UserID     string    `json:"user_id"`
+	UserID     string    `json:"userid"`
 	OTP        string    `json:"otp"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type TokenRefreshPayload struct {
-	UserID     string    `json:"user_id"`
+	UserAgent  string
+	IPAddress  string
+	UserID     string    `json:"userid"`
 	OTP        string    `json:"otp"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

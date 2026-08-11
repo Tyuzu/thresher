@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"naevis/config/mqevent"
 	"naevis/infra"
@@ -15,6 +16,7 @@ func AddArtistMember(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		artistID := utils.GetParam(r, "id")
+		userID := utils.GetUserIDFromRequest(r)
 
 		// Ensure artist exists
 		var artist Artist
@@ -59,7 +61,12 @@ func AddArtistMember(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BandMemberAddedEvent, mqevent.BandMemberAddedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BandMemberAddedEvent, mqevent.BandMemberAddedPayload{
+			ArtistID:   artistID,
+			UserID:     userID,
+			ArtistName: artist.Name,
+			OccurredAt: time.Now().UTC(),
+		})
 
 		utils.RespondWithJSON(w, http.StatusCreated, m)
 	}
@@ -71,6 +78,13 @@ func UpdateArtistMember(app *infra.Deps) http.HandlerFunc {
 
 		artistID := utils.GetParam(r, "id")
 		memberID := utils.GetParam(r, "memberId")
+		userID := utils.GetUserIDFromRequest(r)
+
+		var artist Artist
+		if err := FindArtistByID(ctx, app.DB, artistID, &artist); err != nil {
+			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
+			return
+		}
 
 		var payload map[string]string
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -98,12 +112,18 @@ func UpdateArtistMember(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if _, err := UpdateArtistMemberDB(ctx, app.DB, artistID, memberID, map[string]any{"$set": updates}); err != nil {
+		// UpdateArtistMemberDB already encapsulates map[string]any{"$set": update} internally
+		if _, err := UpdateArtistMemberDB(ctx, app.DB, artistID, memberID, updates); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update member")
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BandMemberUpdatedEvent, mqevent.BandMemberUpdatedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BandMemberUpdatedEvent, mqevent.BandMemberUpdatedPayload{
+			ArtistID:   artistID,
+			UserID:     userID,
+			ArtistName: artist.Name,
+			OccurredAt: time.Now().UTC(),
+		})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Member updated",
@@ -117,13 +137,25 @@ func DeleteArtistMember(app *infra.Deps) http.HandlerFunc {
 
 		artistID := utils.GetParam(r, "id")
 		memberID := utils.GetParam(r, "memberId")
+		userID := utils.GetUserIDFromRequest(r)
+
+		var artist Artist
+		if err := FindArtistByID(ctx, app.DB, artistID, &artist); err != nil {
+			utils.RespondWithError(w, http.StatusNotFound, "Artist not found")
+			return
+		}
 
 		if _, err := DeleteArtistMemberDB(ctx, app.DB, artistID, memberID); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete member")
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BandMemberDeletedEvent, mqevent.BandMemberDeletedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BandMemberDeletedEvent, mqevent.BandMemberDeletedPayload{
+			ArtistID:   artistID,
+			UserID:     userID,
+			ArtistName: artist.Name,
+			OccurredAt: time.Now().UTC(),
+		})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{
 			"message": "Member deleted",

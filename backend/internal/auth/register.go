@@ -76,7 +76,12 @@ func ProcessRegistration(ctx context.Context, app *infra.Deps, input SignUpReque
 		return User{}, err
 	}
 
-	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserRegistered, mqevent.UserRegisteredPayload{})
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserRegistered, mqevent.UserRegisteredPayload{
+		UserID:     user.UserID,
+		Username:   user.Username,
+		Email:      user.Email,
+		OccurredAt: time.Now().UTC(),
+	})
 
 	return user, nil
 }

@@ -1,34 +1,28 @@
 package artists
 
 import (
+	"net/http"
+
 	"naevis/infra"
 	"naevis/internal/media"
 	"naevis/internal/merch"
 	"naevis/utils"
-	"net/http"
 )
 
 func GetArtistsAlbums(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		albums := []ArtistAlbum{
-			{
-				Title:       "Nightfall",
-				ReleaseDate: "2023-10-01",
-				Description: "A journey through dusk.",
-				Published:   true,
-			},
-			{
-				Title:       "Drip",
-				ReleaseDate: "2025-11-17",
-				Description: "A journey till dawn.",
-				Published:   true,
-			},
-			{
-				Title:       "Unreleased Gems",
-				ReleaseDate: "2025-01-01",
-				Description: "Upcoming exclusives.",
-				Published:   false,
-			},
+		ctx := r.Context()
+		artistID := utils.GetParam(r, "id")
+
+		var albums []ArtistAlbum
+		err := app.DB.FindMany(ctx, ArtistAlbumsCollection, map[string]any{"artistid": artistID}, &albums)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve artist albums")
+			return
+		}
+
+		if albums == nil {
+			albums = []ArtistAlbum{}
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, albums)
@@ -37,14 +31,12 @@ func GetArtistsAlbums(app *infra.Deps) http.HandlerFunc {
 
 func GetArtistsPosts(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		media.GetMedias(app)(w, r)
 	}
 }
 
 func GetArtistsMerch(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		merch.GetMerchs(app)(w, r)
 	}
 }

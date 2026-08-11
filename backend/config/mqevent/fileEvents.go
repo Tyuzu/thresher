@@ -13,28 +13,28 @@ const (
 )
 
 type FileCreatedPayload struct {
-	FileID     string    `json:"file_id,omitempty"`
-	FileIDs    []string  `json:"file_ids,omitempty"`
-	UserID     string    `json:"user_id"`
-	EntityType string    `json:"entity_type"`
-	EntityID   string    `json:"entity_id,omitempty"`
+	FileID     string    `json:"fileid,omitempty"`
+	FileIDs    []string  `json:"fileids,omitempty"`
+	UserID     string    `json:"userid"`
+	EntityType string    `json:"entitytype"`
+	EntityID   string    `json:"entityid,omitempty"`
 	Count      int       `json:"count"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type FileUpdatedPayload struct {
-	FileID     string    `json:"file_id"`
-	UserID     string    `json:"user_id,omitempty"`
-	EntityType string    `json:"entity_type,omitempty"`
-	EntityID   string    `json:"entity_id,omitempty"`
+	FileID     string    `json:"fileid"`
+	UserID     string    `json:"userid,omitempty"`
+	EntityType string    `json:"entitytype,omitempty"`
+	EntityID   string    `json:"entityid,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type FileRemovedPayload struct {
-	FileID     string    `json:"file_id"`
-	UserID     string    `json:"user_id,omitempty"`
-	EntityType string    `json:"entity_type,omitempty"`
-	EntityID   string    `json:"entity_id,omitempty"`
+	FileID     string    `json:"fileid"`
+	UserID     string    `json:"userid,omitempty"`
+	EntityType string    `json:"entitytype,omitempty"`
+	EntityID   string    `json:"entityid,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 

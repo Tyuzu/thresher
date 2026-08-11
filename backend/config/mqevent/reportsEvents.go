@@ -27,30 +27,30 @@ const (
 // --- Report Payloads ---
 
 type ReportCreatedPayload struct {
-	ReportID   string    `json:"report_id"`
-	ReporterID string    `json:"reporter_id,omitempty"`
-	TargetType string    `json:"target_type"`
-	TargetID   string    `json:"target_id"`
+	ReportID   string    `json:"reportid"`
+	ReporterID string    `json:"reporterid,omitempty"`
+	TargetType string    `json:"targettype"`
+	TargetID   string    `json:"targetid"`
 	Reason     string    `json:"reason"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type ReportUpdatedPayload struct {
-	ReportID    string    `json:"report_id"`
+	ReportID    string    `json:"reportid"`
 	Status      string    `json:"status"`
 	ActionTaken string    `json:"action_taken,omitempty"`
 	OccurredAt  time.Time `json:"occurred_at"`
 }
 
 type ReportDeletedPayload struct {
-	ReportID   string    `json:"report_id"`
+	ReportID   string    `json:"reportid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type ReportSoftDeletedPayload struct {
-	EntityID   string    `json:"entity_id"`
-	EntityType string    `json:"entity_type"`
-	ActorID    string    `json:"actor_id,omitempty"`
+	EntityID   string    `json:"entityid"`
+	EntityType string    `json:"entitytype"`
+	ActorID    string    `json:"actorid,omitempty"`
 	Reason     string    `json:"reason,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
@@ -58,44 +58,44 @@ type ReportSoftDeletedPayload struct {
 // --- Appeal Payloads ---
 
 type AppealCreatedPayload struct {
-	AppealID   string    `json:"appeal_id"`
-	UserID     string    `json:"user_id"`
-	ReportID   string    `json:"report_id,omitempty"`
+	AppealID   string    `json:"appealid"`
+	UserID     string    `json:"userid"`
+	ReportID   string    `json:"reportid,omitempty"`
 	Reason     string    `json:"reason"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type AppealUpdatedPayload struct {
-	AppealID   string    `json:"appeal_id"`
+	AppealID   string    `json:"appealid"`
 	Status     string    `json:"status"`
-	ReviewerID string    `json:"reviewer_id,omitempty"`
+	ReviewerID string    `json:"reviewerid,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type AppealDeletedPayload struct {
-	AppealID   string    `json:"appeal_id"`
+	AppealID   string    `json:"appealid"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 // --- Moderator Application Payloads ---
 
 type AppliedForModeratorRolePayload struct {
-	ApplicationID string    `json:"application_id"`
-	UserID        string    `json:"user_id"`
+	ApplicationID string    `json:"applicationid"`
+	UserID        string    `json:"userid"`
 	OccurredAt    time.Time `json:"occurred_at"`
 }
 
 type ApprovedModeratorRoleRequestPayload struct {
-	ApplicationID string    `json:"application_id"`
-	UserID        string    `json:"user_id,omitempty"`
+	ApplicationID string    `json:"applicationid"`
+	UserID        string    `json:"userid,omitempty"`
 	ApprovedBy    string    `json:"approved_by,omitempty"`
 	ApprovedAt    time.Time `json:"approved_at"`
 	OccurredAt    time.Time `json:"occurred_at"`
 }
 
 type RejectedModeratorRoleRequestPayload struct {
-	ApplicationID string    `json:"application_id"`
-	UserID        string    `json:"user_id,omitempty"`
+	ApplicationID string    `json:"applicationid"`
+	UserID        string    `json:"userid,omitempty"`
 	RejectedBy    string    `json:"rejected_by,omitempty"`
 	RejectedAt    time.Time `json:"rejected_at"`
 	OccurredAt    time.Time `json:"occurred_at"`
