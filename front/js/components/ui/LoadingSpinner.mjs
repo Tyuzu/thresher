@@ -1,22 +1,22 @@
 import "../../../css/ui/LoadingSpinner.css";
+import { createElement } from "../../components/createElement.js"; // Adjust path as needed
 
 const LoadingSpinner = () => {
-    const spinner = document.createElement("div");
-    spinner.className = "loading-spinner";
-    spinner.setAttribute("role", "status");
-    spinner.setAttribute("aria-label", "Loading");
+  const orbit = createElement("span", { class: "loading-spinner__orbit" }, [
+    createElement("span", { class: "loading-spinner__dot" }),
+    createElement("span", { class: "loading-spinner__dot" }),
+    createElement("span", { class: "loading-spinner__dot" })
+  ]);
 
-    spinner.innerHTML = `
-        <span class="loading-spinner__orbit">
-            <span class="loading-spinner__dot"></span>
-            <span class="loading-spinner__dot"></span>
-            <span class="loading-spinner__dot"></span>
-        </span>
+  const core = createElement("span", { class: "loading-spinner__core" });
 
-        <span class="loading-spinner__core"></span>
-    `;
+  const spinner = createElement("div", {
+    class: "loading-spinner",
+    role: "status",
+    "aria-label": "Loading"
+  }, [orbit, core]);
 
-    return spinner;
+  return spinner;
 };
 
 export default LoadingSpinner;

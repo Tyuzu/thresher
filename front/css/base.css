@@ -119,3 +119,14 @@ textarea {
   display: flex;
   flex-direction: column;
 }
+
+.hflex {
+  display: flex;
+  flex-direction: row;
+}
+
+.hflex-sb {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}

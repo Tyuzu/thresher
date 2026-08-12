@@ -47,22 +47,19 @@ const determineInitialSource = (originalSrc, availableResolutions = []) => {
 };
 
 /**
- * Creates and configures the standard HTML <video> element.
+ * Creates and configures the standard HTML <video> element via createElement.
  */
 const createVideoElement = (src, resolutions, poster) => {
-  const video = document.createElement("video");
-  video.className = "video-player";
-  video.preload = "metadata";
-  video.setAttribute("playsinline", "");
-
   const initialSrc = determineInitialSource(src, resolutions);
-  video.src = initialSrc;
-  
-  // Set poster image fallback cleanly
   const baseSrc = getBaseSrc(src);
-  video.poster = poster || `${baseSrc}-poster.jpg`;
 
-  return video;
+  return createElement("video", {
+    class: "video-player",
+    preload: "metadata",
+    playsinline: "",
+    src: initialSrc,
+    poster: poster || `${baseSrc}-poster.jpg`
+  });
 };
 
 /**
@@ -88,13 +85,6 @@ const togglePlayOnClick = (video) => {
 // ---- Quality Selector ----
 
 export const createQualitySelector = (video, baseSrc, availableResolutions = [], videoId = "default") => {
-  const selector = createElement("select", {
-    id: `quality-selector-${videoId}`,
-    name: "videoQuality",
-    class: "quality-selector buttonx",
-    "aria-label": "Select Video Quality",
-  });
-
   const available = ALL_QUALITIES.filter((q) => availableResolutions.includes(q));
   if (available.length === 0) {
     return { selector: null, qualities: [], cleanup: () => {} };
@@ -103,19 +93,17 @@ export const createQualitySelector = (video, baseSrc, availableResolutions = [],
   const stored = Number(localStorage.getItem("videoQuality"));
   const defaultQuality = available.includes(stored) ? stored : (available.includes(360) ? 360 : Math.min(...available));
 
-  const fragment = document.createDocumentFragment();
-  available.forEach((quality) => {
-    const option = createElement(
+  // Generate option elements via createElement
+  const optionElements = available.map((quality) =>
+    createElement(
       "option",
       {
         value: `${baseSrc}-${quality}.mp4`,
-        ...(defaultQuality === quality ? { selected: "true" } : {}),
+        ...(defaultQuality === quality ? { selected: true } : {})
       },
       [`${quality}p`]
-    );
-    fragment.appendChild(option);
-  });
-  selector.appendChild(fragment);
+    )
+  );
 
   let activeMetadataHandler = null;
 
@@ -149,14 +137,20 @@ export const createQualitySelector = (video, baseSrc, availableResolutions = [],
     video.addEventListener("loadedmetadata", activeMetadataHandler, { once: true });
   };
 
-  const changeHandler = (e) => switchQuality(e.target);
-  selector.addEventListener("change", changeHandler);
+  const selector = createElement("select", {
+    id: `quality-selector-${videoId}`,
+    name: "videoQuality",
+    class: "quality-selector buttonx",
+    "aria-label": "Select Video Quality",
+    events: {
+      change: (e) => switchQuality(e.target)
+    }
+  }, optionElements);
 
   return {
     selector,
     qualities: available,
     cleanup: () => {
-      selector.removeEventListener("change", changeHandler);
       if (activeMetadataHandler) {
         video.removeEventListener("loadedmetadata", activeMetadataHandler);
       }
@@ -180,19 +174,6 @@ const VideoPlayer = (
   },
   videoId = "main"
 ) => {
-  const container = createElement("div", {
-    class: `video-container theme-${theme}`,
-    role: "region",
-    "aria-label": "Video Player Container",
-  });
-
-  const controlsContainer = createElement("div", { class: "hflex-sb vcon" });
-  const controlsl = createElement("div", { class: "hflex" });
-  const controlsr = createElement("div", { class: "hflex" });
-  controlsContainer.append(controlsl, controlsr);
-
-  const videocon = createElement("div", { class: "videocon" });
-
   // --- Load User Settings ---
   const userAutoPlay = localStorage.getItem("videoAutoPlay") === "true" || autoplay;
   const userAutoMute = localStorage.getItem("videoAutoMute") !== "false" && muted;
@@ -239,7 +220,6 @@ const VideoPlayer = (
     label: "",
     ariaLabel: "Play/Pause",
   });
-  controlsl.appendChild(playButton);
 
   // --- Mute Button ---
   const muteButton = createIconButton({
@@ -254,7 +234,6 @@ const VideoPlayer = (
     label: "",
     ariaLabel: video.muted ? "Unmute" : "Mute",
   });
-  controlsl.appendChild(muteButton);
 
   // --- UI State Syncing Handlers ---
   const updatePlayStyles = () => {
@@ -273,24 +252,22 @@ const VideoPlayer = (
 
   const removeTogglePlay = togglePlayOnClick(video);
 
+  // --- Left Controls Section ---
+  const controlslChildren = [playButton, muteButton];
+
   // --- Quality Selector ---
   let availableQualities = [];
   let qualityCleanup = null;
   if (Array.isArray(availableResolutions) && availableResolutions.length > 0) {
     const { selector, qualities, cleanup } = createQualitySelector(video, baseSrc, availableResolutions, videoId);
     if (selector) {
-      controlsl.appendChild(selector);
+      controlslChildren.push(selector);
     }
     availableQualities = qualities;
     qualityCleanup = cleanup;
   }
 
-  // --- Subtitles ---
-  if (Array.isArray(subtitles) && subtitles.length > 0) {
-    const subtitleContainer = createElement("div", { class: "subtitle-container" });
-    videocon.appendChild(subtitleContainer);
-    setupSubtitles(video, subtitles, subtitleContainer);
-  }
+  const controlsl = createElement("div", { class: "hflex" }, controlslChildren);
 
   // --- Theater Mode Button ---
   const theaterButton = createIconButton({
@@ -313,11 +290,30 @@ const VideoPlayer = (
     ariaLabel: "Activate Theater Mode",
   });
   theaterButton.setAttribute("title", "Activate Theater Mode");
-  controlsr.appendChild(theaterButton);
 
-  // ---- Build DOM ----
-  videocon.append(video, controlsContainer);
-  container.appendChild(videocon);
+  const controlsr = createElement("div", { class: "hflex" }, [theaterButton]);
+
+  // --- Controls Bar ---
+  const controlsContainer = createElement("div", { class: "hflex-sb vcon" }, [controlsl, controlsr]);
+
+  // --- Videocon Shell ---
+  const videoconChildren = [video, controlsContainer];
+
+  // --- Subtitles ---
+  if (Array.isArray(subtitles) && subtitles.length > 0) {
+    const subtitleContainer = createElement("div", { class: "subtitle-container" });
+    videoconChildren.push(subtitleContainer);
+    setupSubtitles(video, subtitles, subtitleContainer);
+  }
+
+  const videocon = createElement("div", { class: "videocon" }, videoconChildren);
+
+  // ---- Main Container ----
+  const container = createElement("div", {
+    class: `video-container theme-${theme}`,
+    role: "region",
+    "aria-label": "Video Player Container",
+  }, [videocon]);
 
   // ---- Complete Cleanup ----
   container.cleanup = () => {

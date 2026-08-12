@@ -1,37 +1,15 @@
 import "../../../css/ui/Sightbox.css";
+import { createElement } from "../../components/createElement.js"; // Adjust path as needed
 import { createIconButton } from "../../utils/svgIconButton";
 import { xSVG } from "../svgs";
 
 const LightBox = (div) => {
-  // prevent duplicate instance
+  // Prevent duplicate instance
   if (document.getElementById("sightbox")) {
-return;
-}
+    return;
+  }
 
-  const lightbox = document.createElement("div");
-  lightbox.id = "sightbox";
-  lightbox.className = "sightbox";
-
-  const overlay = document.createElement("div");
-  overlay.className = "sightbox-overlay";
-  overlay.addEventListener("click", closeLightBox);
-
-  const content = document.createElement("div");
-  content.className = "sightbox-content";
-  content.setAttribute("tabindex", "-1");
-
-  content.appendChild(div);
-
-  // // close button
-  // const closeButton = document.createElement("button");
-  // closeButton.className = "sightbox-close";
-  // closeButton.textContent = "×";
-  // closeButton.setAttribute("aria-label", "Close");
-  // closeButton.addEventListener("click", closeLightBox);
-  // content.appendChild(closeButton);
-
-
-  // --- close Button ---
+  // --- Close Button ---
   const closeButton = createIconButton({
     classSuffix: "sightbox-close",
     svgMarkup: xSVG,
@@ -39,28 +17,44 @@ return;
     label: "",
     ariaLabel: "Close"
   });
-  // closeButton.addEventListener("click", closeLightBox);
-  content.appendChild(closeButton);
 
+  // --- Content Container ---
+  const content = createElement("div", {
+    class: "sightbox-content",
+    tabindex: "-1"
+  }, [div, closeButton]);
 
-  // append DOM
-  lightbox.appendChild(overlay);
-  lightbox.appendChild(content);
-  document.getElementById("app").appendChild(lightbox);
+  // --- Overlay ---
+  const overlay = createElement("div", {
+    class: "sightbox-overlay",
+    events: {
+      click: closeLightBox
+    }
+  });
 
-  // focus trap
+  // --- Root LightBox Container ---
+  const lightbox = createElement("div", {
+    id: "sightbox",
+    class: "sightbox"
+  }, [overlay, content]);
+
+  // Append DOM
+  const appRoot = document.getElementById("app") || document.body;
+  appRoot.appendChild(lightbox);
+
+  // Focus trap
   content.focus();
 
-  // history push
+  // History push
   history.pushState({ lightboxOpen: true }, "");
 
-  // esc + focus trap listener
+  // ESC + focus trap listener
   function onKeyDown(e) {
     if (e.key === "Escape") {
       e.preventDefault();
       closeLightBox();
     } else if (e.key === "Tab") {
-      // trap focus inside content
+      // Trap focus inside content
       const focusable = [closeButton];
       const currentIndex = focusable.indexOf(document.activeElement);
       if (e.shiftKey && currentIndex === 0) {
@@ -73,24 +67,24 @@ return;
     }
   }
 
-  // back button
+  // Back button listener
   function onPopState(e) {
     if (e.state && e.state.lightboxOpen) {
       closeLightBox(true);
     }
   }
 
-  // clean close
+  // Clean close
   function closeLightBox(fromPop = false) {
     if (!document.body.contains(lightbox)) {
-return;
-}
+      return;
+    }
     lightbox.remove();
     window.removeEventListener("keydown", onKeyDown);
     window.removeEventListener("popstate", onPopState);
     if (!fromPop) {
-history.back();
-}
+      history.back();
+    }
   }
 
   window.addEventListener("keydown", onKeyDown);

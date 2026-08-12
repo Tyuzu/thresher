@@ -1,30 +1,31 @@
 import "../../../css/ui/ToggleSwitch.css";
+import { createElement } from "../createElement.js"; // Adjust path as needed
 
 const ToggleSwitch = (onToggle, { checked = false, id = "", label = "" } = {}) => {
-  const toggle = document.createElement("label");
-  toggle.className = "toggle-switch";
+  const inputAttributes = {
+    type: "checkbox",
+    checked: Boolean(checked),
+    "aria-label": label || "Toggle",
+    events: {
+      change: (e) => onToggle(e.target.checked)
+    }
+  };
+
   if (id) {
-toggle.setAttribute("for", id);
-}
+    inputAttributes.id = id;
+  }
 
-  const input = document.createElement("input");
-  input.type = "checkbox";
-  input.checked = checked;
+  const input = createElement("input", inputAttributes);
+  const slider = createElement("span", { class: "slider" });
+
+  const labelAttributes = { class: "toggle-switch" };
   if (id) {
-input.id = id;
-}
-  input.setAttribute("aria-label", label || "Toggle");
+    labelAttributes.for = id;
+  }
 
-  input.addEventListener("change", () => onToggle(input.checked));
-
-  const slider = document.createElement("span");
-  slider.className = "slider";
-
-  toggle.appendChild(input);
-  toggle.appendChild(slider);
+  const toggle = createElement("label", labelAttributes, [input, slider]);
 
   return toggle;
 };
 
-  export default ToggleSwitch;
-  
+export default ToggleSwitch;

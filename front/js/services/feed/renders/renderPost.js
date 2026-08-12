@@ -8,38 +8,58 @@ import { getState } from "../../../state/state.js";
 import { navigate } from "../../../routes/index.js";
 import Datex from "../../../components/base/Datex.js";
 
+// Keep active video player references to prevent memory leaks
 let activeVideoPlayers = [];
 
-export async function renderPost(posts, postsContainer, postmetadata, isNew) {
-    // ---- Cleanup existing players before re-render ----
-    if (activeVideoPlayers.length > 0) {
-        activeVideoPlayers.forEach(v => {
-            if (v && typeof v.cleanup === "function") {
-                v.cleanup();
-            }
-        });
-        activeVideoPlayers = [];
-    }
+/**
+ * Cleans up initialized video player instances.
+ */
+export function cleanupRenderPost() {
+    activeVideoPlayers.forEach(player => {
+        if (player && typeof player.cleanup === "function") {
+            player.cleanup();
+        }
+    });
+    activeVideoPlayers = [];
+}
 
-    if (!Array.isArray(posts)) {
-        posts = [posts];
-    }
+/**
+ * Renders feed post elements into a container.
+ * 
+ * @param {Object|Object[]} posts - Single post or array of posts.
+ * @param {HTMLElement} postsContainer - Parent container to mount posts into.
+ * @param {Record<string, any>} postmetadata - Metadata map keyed by post ID.
+ * @param {boolean|number} isNew - Indicates whether to prepend (1/true) or append (0/false).
+ */
+export async function renderPost(posts, postsContainer, postmetadata = {}, isNew = false) {
+    if (!postsContainer) return;
 
+    // Cleanup video players from previous renders
+    cleanupRenderPost();
+
+    const postList = Array.isArray(posts) ? posts : [posts];
     const isLoggedIn = Boolean(getState("token"));
     const user = getState("user");
 
-    for (const post of posts) {
+    // Use DocumentFragment to batch DOM inserts and avoid repeated layout reflows
+    const fragment = document.createDocumentFragment();
+
+    for (const post of postList) {
         const isCreator = isLoggedIn && user === post.userid;
 
+        // --- POST CONTAINER (<article>) ---
         const postElement = createElement("article", {
             class: ["feed-item"],
             id: `post-${post.postid}`,
-            // "date-is": new Date(post.timestamp).toLocaleString()
-            "date-is": Datex(post.timestamp)
+            "data-date": Datex(post.timestamp)
         }, [createPostHeader(post)]);
 
-        // --- MEDIA ---
-        const mediaContainer = createElement("div", { class: ["post-media"] });
+        // --- MEDIA CONTAINER (<section>) ---
+        const mediaContainer = createElement("section", { 
+            class: ["post-media"],
+            "aria-label": "Post media" 
+        });
+
         const mediaUrls = Array.isArray(post.media_url)
             ? post.media_url
             : post.media_url ? [post.media_url] : [];
@@ -47,59 +67,88 @@ export async function renderPost(posts, postsContainer, postmetadata, isNew) {
         if (post.type === "image") {
             RenderImagePost(mediaContainer, mediaUrls);
         } else if (post.type === "video") {
-            const media = post.media.map(m => resolveImagePath(EntityType.FEED, PictureType.VIDEO, m));
-            const posterPath = resolveImagePath(EntityType.FEED, PictureType.POSTER, `${post.thumbnail || mediaUrls[0]}`);
-            const players = await RenderVideoPost(mediaContainer, media, mediaUrls, post.resolutions || [], [], posterPath);
-            activeVideoPlayers.push(...players);
+            const media = (post.media || []).map(m => resolveImagePath(EntityType.FEED, PictureType.VIDEO, m));
+            const posterPath = resolveImagePath(EntityType.FEED, PictureType.POSTER, `${post.thumbnail || mediaUrls[0] || ""}`);
+            
+            const players = await RenderVideoPost(
+                mediaContainer, 
+                media, 
+                mediaUrls, 
+                post.resolutions || [], 
+                [], 
+                posterPath
+            );
+            
+            if (Array.isArray(players)) {
+                activeVideoPlayers.push(...players);
+            }
         } else if (post.text) {
-            mediaContainer.appendChild(createElement("p", {}, [post.text]));
+            mediaContainer.appendChild(createElement("p", { class: ["post-text-body"] }, [post.text]));
         } else {
-            mediaContainer.appendChild(createElement("p", {}, ["Unknown post type."]));
+            mediaContainer.appendChild(createElement("p", { class: ["post-unknown-type"] }, ["Unknown post type."]));
         }
 
-        // // click on media navigates to full post
-        // mediaContainer.addEventListener("click", () => navigate(`/feedpost/${post.postid}`));
         postElement.appendChild(mediaContainer);
 
-        // --- META ---
-        if (post.title || (post.tags?.length)) {
-            const metaSection = createElement("div", { class: ["post-meta"] });
+        // --- META CONTAINER (<header> / <section>) ---
+        if (post.title || post.tags?.length) {
+            const metaSection = createElement("section", { class: ["post-meta"] });
+
             if (post.title) {
                 metaSection.appendChild(createElement("h3", { class: ["post-title"] }, [post.title]));
             }
+
             if (post.tags?.length) {
-                const tagsContainer = createElement("nav", { class: ["tags"], "aria-label": "Tags" },
+                const tagsList = createElement("ul", { class: ["tags-list"] },
                     post.tags.map(tag =>
-                        createElement("a", { href: `/hashtag/${tag}` }, [
-                            createElement("span", { class: ["tag"] }, [tag])
+                        createElement("li", { class: ["tag-item"] }, [
+                            createElement("a", { 
+                                href: `/hashtag/${tag}`,
+                                class: ["tag-link"] 
+                            }, [`#${tag}`])
                         ])
                     )
                 );
-                metaSection.appendChild(tagsContainer);
+
+                const tagsNav = createElement("nav", { 
+                    class: ["tags"], 
+                    "aria-label": "Post hashtags" 
+                }, [tagsList]);
+
+                metaSection.appendChild(tagsNav);
             }
-            metaSection.addEventListener("click", () => navigate(`/feedpost/${post.postid}`));
+
+            // Keyboard and click navigation handling for post details
+            metaSection.addEventListener("click", (e) => {
+                // Avoid capturing clicks directly made on hashtag links
+                if (!e.target.closest("a")) {
+                    navigate(`/feedpost/${post.postid}`);
+                }
+            });
+
             postElement.appendChild(metaSection);
         }
 
-        // --- ACTIONS ---
+        // --- ACTIONS CONTAINER (<footer>) ---
         const meta = postmetadata[post.postid] || { likes: 0, comments: 0, likedByUser: false };
         const actionsContainer = await createActions(meta, isCreator, postElement);
-        postElement.appendChild(actionsContainer);
+        
+        // Wrap actions inside semantic footer
+        const footerElement = createElement("footer", { class: ["post-actions-wrapper"] }, [actionsContainer]);
+        postElement.appendChild(footerElement);
 
-        if (isNew === 1) {
-            postsContainer.prepend(postElement);
+        // Append to batch fragment
+        if (isNew) {
+            fragment.prepend(postElement);
         } else {
-            postsContainer.appendChild(postElement);
+            fragment.appendChild(postElement);
         }
     }
-}
 
-// Expose cleanup if you need it elsewhere
-export function cleanupRenderPost() {
-    activeVideoPlayers.forEach(v => {
-        if (v && typeof v.cleanup === "function") {
-            v.cleanup();
-        }
-    });
-    activeVideoPlayers = [];
+    // Single DOM update for better performance
+    if (isNew) {
+        postsContainer.prepend(fragment);
+    } else {
+        postsContainer.appendChild(fragment);
+    }
 }

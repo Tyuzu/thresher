@@ -5,8 +5,6 @@ import { createElement } from "../../components/createElement.js";
 import { displayReviews } from "../reviews/displayReviews.js";
 import { displayEventFAQs } from "./eventFAQHelper.js";
 // import { displaySeatingMap } from "./seatingMap.js";
-// import { loadMap } from "../gmaps/mapUI.js";
-import EventTimeline from "../../components/ui/EventTimeline.mjs";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
 
 
@@ -121,22 +119,6 @@ async function displayContactDetails(container, _isCreator, _contacts) {
     container.appendChild(createElement('p', "", ["Does anybody need anything?"]));
 }
 
-async function displayEventSchedule(schContainer, _isCreator, _eventId, _faqs) {
-    const events = [
-        { time: '09:00 AM', description: 'Doors Open & Registration' },
-        { time: '10:00 AM', description: 'Opening Ceremony' },
-        { time: '10:30 AM', description: 'Guest Speaker: The Future of Tech' },
-        { time: '11:15 AM', description: 'Panel Discussion: Innovations & AI' },
-        { time: '12:00 PM', description: 'Networking & Lunch Break' },
-        { time: '01:30 PM', description: 'Workshops: Choose Your Track' },
-        { time: '03:00 PM', description: 'Startup Pitch Competition' },
-        { time: '04:30 PM', description: 'Closing Remarks & Awards' },
-        { time: '05:00 PM', description: 'After-Party & Networking' }
-    ];
-
-    schContainer.appendChild(createElement('h2', "", ["Schedule"]));
-    schContainer.appendChild(EventTimeline(events));
-}
 
 async function displayLivestream(divcontainer, eventId, isLoggedIn) {
     displayEventLiveStream(divcontainer, eventId, isLoggedIn);
@@ -199,4 +181,4 @@ async function displayEventLiveStream(divcontainer, eventId, isLoggedIn) {
 }
 
 export { displayEventVenue, displayEventFAQ, displayEventReviews, displayLivestream };
-export { displayLostAndFound, displayContactDetails, displayEventSchedule };
+export { displayLostAndFound, displayContactDetails };

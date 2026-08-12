@@ -8,25 +8,22 @@ import Notify from "../../components/ui/Notify.mjs";
 function parseAmountToPaise(value) {
     const amount = Number(value);
     if (Number.isNaN(amount) || amount <= 0) return 0;
-    // Fixes floating point errors during calculation transitions
     return Math.round((amount + Number.EPSILON) * 100);
 }
 
 export function WalletManager() {
-    // CRITICAL FIX: Persist token reference outside execution parameters so retries use identical tracking hashes
     let currentIdempotencyKey = uuidv4();
 
-    const balanceEl = createElement("div", { id: "wallet-balance", class: "balance-display" });
+    const balanceEl = createElement("div", { id: "wallet-balance", class: "balance-display" }, ["Loading balance..."]);
     const amountInput = createElement("input", {
         type: "number",
         id: "topup-amount",
-        placeholder: "Enter value in INR",
+        placeholder: "Enter amount in INR",
         min: "1",
         step: "0.01"
     });
 
     const methodSelect = createElement("select", { id: "topup-method" }, [
-        createElement("option", { value: "wallet" }, ["Wallet Balance"]),
         createElement("option", { value: "card" }, ["Credit/Debit Card"]),
         createElement("option", { value: "upi" }, ["UPI Ecosystem"])
     ]);
@@ -37,7 +34,7 @@ export function WalletManager() {
             const method = methodSelect.value;
 
             if (amountPaise <= 0) {
-                return Notify("Please insert a valid currency configuration value", { type: "warning" });
+                return Notify("Please enter a valid amount", { type: "warning" });
             }
 
             topupBtn.disabled = true;
@@ -48,18 +45,18 @@ export function WalletManager() {
                 );
 
                 if (res?.success) {
-                    Notify(res.message || "Top-up initialized successfully", { type: "success" });
-                    
-                    // Reset key signature ONLY when confirmed complete by data nodes
+                    Notify(res.message || "Top-up successful", { type: "success" });
                     currentIdempotencyKey = uuidv4();
                     amountInput.value = "";
-                    await loadBalance();
+                    
+                    // Dispatch event for any component listening to balance updates
+                    window.dispatchEvent(new CustomEvent("wallet:balance-changed"));
                 } else {
-                    Notify(res?.message || "Execution blocked by financial gateway", { type: "error" });
+                    Notify(res?.message || "Transaction declined by gateway", { type: "error" });
                 }
             } catch (err) {
-                console.error("Network system collision:", err);
-                Notify("Top-up request execution interrupted by processing failure", { type: "error" });
+                console.error("Network error:", err);
+                Notify("Top-up request failed", { type: "error" });
             } finally {
                 topupBtn.disabled = false;
             }
@@ -72,19 +69,21 @@ export function WalletManager() {
             if (res && res.balance !== undefined) {
                 balanceEl.textContent = `Wallet Balance: ${formatCurrency(res.balance)}`;
             } else {
-                balanceEl.textContent = "Balance status calculation unreadable";
+                balanceEl.textContent = "Balance unavailable";
             }
         } catch (err) {
-            console.error("Balance calculation error:", err);
-            balanceEl.textContent = "Balance synchronization unavailable";
+            console.error("Balance fetch error:", err);
+            balanceEl.textContent = "Sync failed";
         }
     }
 
+    // Auto-listen to global balance updates
+    window.addEventListener("wallet:balance-changed", loadBalance);
     loadBalance();
 
     return {
         element: createElement("div", { id: "wallet-manager", class: "wallet-card" }, [
-            createElement("h3", { class: "wallet-section-title" }, ["Account Balance Balance"]),
+            createElement("h3", { class: "wallet-section-title" }, ["Account Balance"]),
             balanceEl,
             createElement("div", { class: "wallet-form" }, [amountInput, methodSelect, topupBtn])
         ]),

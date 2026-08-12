@@ -20,11 +20,6 @@
   align-items: start;
 }
 
-.layout-main,
-.layout-aside {
-  min-width: 0;
-}
-
 /* =========================================================
    MAIN CATALOGUE
    ========================================================= */
@@ -333,7 +328,7 @@
 /* =========================================================
    ASIDE
    ========================================================= */
-
+/* 
 .layout-aside {
   display: flex;
   flex-direction: column;
@@ -368,7 +363,7 @@
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-heading);
-}
+} */
 
 /* =========================================================
    ACTIONS

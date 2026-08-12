@@ -2,7 +2,7 @@ import { loadContent, navigate } from "./routes/index.js";
 import { setState } from "./state/state.js";
 import { detectLanguage, setLanguage } from "./i18n/i18n.js";
 
-// --- Environment Profiling (Lightweight & Non-blocking) ---
+// --- Environment Profiling ---
 function profileEnvironment() {
   const ENV_CACHE_KEY = "env-profile-v1";
   const ENV_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -23,7 +23,7 @@ function profileEnvironment() {
 
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
   const networkSpeed = navigator.connection?.effectiveType || "unknown";
-  
+
   let uiTier = localStorage.getItem("ui-tier-v1");
   if (!uiTier) {
     if (isMobile || networkSpeed.includes("2g")) {
@@ -67,7 +67,7 @@ function toggleOfflineBanner(isOffline) {
       Object.assign(banner.style, {
         position: "fixed", top: "0", left: "0", right: "0",
         background: "#b00020", color: "#fff", textAlign: "center",
-        padding: "0.5rem", zIndex: "9999", fontSize: "0.9rem",
+        padding: "0.5rem", zIndex: "9999", fontSize: "0.9rem"
       });
       banner.textContent = "🔌 You're offline. Some features may not work.";
       document.body.appendChild(banner);
@@ -94,23 +94,41 @@ window.addEventListener("unhandledrejection", (e) => trackError(e.reason, { type
 // --- Performance Monitoring ---
 function setupPerformanceMonitoring() {
   if (!window.PerformanceObserver) return;
+
   try {
     const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (entry.duration > 3000) {
-          const details = { name: entry.name, entryType: entry.entryType, duration: Math.round(entry.duration) };
-          trackError(new Error("Performance degradation"), Object.assign({ type: "slow_operation" }, details));
+        // Exclude generic static asset requests from throwing performance alerts
+        if (entry.entryType === "resource" && /\.(png|jpe?g|gif|svg|webp|woff2?)$/i.test(entry.name)) {
+          continue;
+        }
+
+        // Adjust thresholds depending on event types
+        const threshold = entry.entryType === "longtask" ? 200 : 3000;
+
+        if (entry.duration > threshold) {
+          const details = { 
+            name: entry.name, 
+            entryType: entry.entryType, 
+            duration: Math.round(entry.duration) 
+          };
+          
+          // Log as performance warning rather than instantiating artificial error class
+          console.warn(`🐢 Slow Performance Detected [${entry.entryType}]:`, details);
+          if (window.__errorTracker?.trackMetric) {
+            window.__errorTracker.trackMetric("performance_degradation", details);
+          }
         }
       }
     });
 
-    const typesToObserve = ["navigation", "resource", "paint", "largest-contentful-paint"];
-    
+    const typesToObserve = ["navigation", "longtask", "largest-contentful-paint"];
+
     for (const type of typesToObserve) {
       try {
         observer.observe({ type, buffered: true });
       } catch (err) {
-        console.warn(`Performance type "${type}" not supported:`, err.message);
+        // Certain browsers do not support specific entry types
       }
     }
   } catch (e) {
@@ -123,28 +141,25 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     const lang = detectLanguage();
     await setLanguage(lang);
-    
+
     // Initial Render of current URL
     await loadContent(window.location.pathname);
 
-    // Profile and observe lazily when the CPU is idle
-    if (window.requestIdleCallback) {
-      window.requestIdleCallback(() => {
-        profileEnvironment();
-        setupPerformanceMonitoring();
-      });
+    // Profile and observe lazily when CPU is idle
+    const initDeferredTasks = () => {
+      profileEnvironment();
+      setupPerformanceMonitoring();
+    };
+
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(initDeferredTasks);
     } else {
-      setTimeout(() => {
-        profileEnvironment();
-        setupPerformanceMonitoring();
-      }, 1);
+      setTimeout(initDeferredTasks, 200);
     }
 
-    // --- Clean History State Syncing ---
+    // Router and History State Syncing
     window.addEventListener("popstate", async () => {
       if (!document.hidden) {
-        // Run navigation through standard flow to allow the layout manager 
-        // to handle scroll restoration and set navigation lock state.
         await loadContent(window.location.pathname);
       }
     });

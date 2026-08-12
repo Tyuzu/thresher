@@ -249,14 +249,15 @@
 }
 
 /* Content Area */
-.post-media {
+/*.post-media {
   padding: 0 var(--space-md) var(--space-sm);
-}
+}*/
 
 .post-media p {
   margin: 0;
   font-size: var(--font-size-base);
   line-height: var(--line-height-relaxed);
+  padding: 1rem;
 }
 
 .video-error {

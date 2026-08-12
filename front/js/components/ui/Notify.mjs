@@ -1,4 +1,5 @@
 import "../../../css/ui/Notify.css";
+import { createElement } from "../../components/createElement.js"; // Adjust path as needed
 import { getState, setState } from "../../state/state.js";
 import { playSoundAlert } from "../../services/notifications/soundAlerts.js";
 
@@ -7,12 +8,6 @@ const Notify = (message, {
   duration = 0,              // 0 = auto based on message length
   dismissible = true,
 } = {}) => {
-  const notify = document.createElement('div');
-  notify.className = `notify ${type}`;
-  notify.setAttribute("role", "alert");
-  notify.setAttribute("aria-live", "assertive");
-  notify.textContent = message;
-
   // Track timeouts so we can clear them if dismissed early
   let hideTimeoutId = null;
   let removeTimeoutId = null;
@@ -23,22 +18,33 @@ const Notify = (message, {
     notify.remove();
   };
 
+  const children = [message];
+
   if (dismissible) {
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'notify-close';
-    closeBtn.textContent = '×';
-    closeBtn.setAttribute('aria-label', 'Close');
-    closeBtn.addEventListener('click', removeNotification);
-    notify.appendChild(closeBtn);
+    const closeBtn = createElement('button', {
+      class: 'notify-close',
+      'aria-label': 'Close',
+      events: {
+        click: removeNotification
+      }
+    }, ['×']);
+    children.push(closeBtn);
   }
+
+  const notify = createElement('div', {
+    class: `notify ${type}`,
+    role: 'alert',
+    'aria-live': 'assertive'
+  }, children);
 
   const containerId = "notify-container";
   let container = document.getElementById(containerId);
   if (!container) {
-    container = document.createElement("div");
-    container.id = containerId;
-    container.className = "notify-container";
-    
+    container = createElement("div", {
+      id: containerId,
+      class: "notify-container"
+    });
+
     // Fall back safely to document.body if '#app' isn't in the DOM yet
     const appRoot = document.getElementById("app") || document.body;
     appRoot.appendChild(container);
@@ -56,7 +62,7 @@ const Notify = (message, {
   // Global app state & Side Effects
   setState("unreadNotifications", (getState("unreadNotifications") || 0) + 1);
   playSoundAlert({ type: "notification" });
-  
+
   return notify;
 };
 

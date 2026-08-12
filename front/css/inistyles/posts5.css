@@ -106,10 +106,3 @@
   border-radius: var(--radius-md);
 }
 
-/* Sidebar Advertisement Block */
-.advert-aside {
-  padding: var(--space-sm);
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-md);
-}

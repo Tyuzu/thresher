@@ -1,4 +1,5 @@
 import "../../../css/ui/ZoomBox.css";
+import { createElement } from "../createElement.js"; // Adjust path as needed
 import {
     createOverlay,
     createImageElement,
@@ -49,21 +50,6 @@ const ZoomBox = (mediaItems, initialIndex = 0) => {
         mediaType: null
     };
 
-    // --- Base DOM Shell Preparation ---
-    const zoombox = createOverlay();
-    zoombox.id = "zoombox";
-    zoombox.setAttribute("role", "dialog");
-    zoombox.setAttribute("aria-modal", "true");
-    applyDarkMode(zoombox);
-
-    const content = document.createElement("div");
-    content.setAttribute("data-zoombox-content", "");
-    content.setAttribute("tabindex", "-1");
-    content.style.outline = "none";
-    zoombox.appendChild(content);
-
-    let zoomButtonsContainer = null;
-
     // --- Close logic ---
     const closeZoomBox = () => {
         const box = document.getElementById("zoombox");
@@ -84,7 +70,25 @@ const ZoomBox = (mediaItems, initialIndex = 0) => {
     };
 
     const closeBtn = createCloseButton(closeZoomBox);
-    content.appendChild(closeBtn);
+
+    // Build central container structure via createElement
+    const content = createElement("div", {
+        dataset: { zoomboxContent: "" },
+        tabindex: "-1",
+        style: { outline: "none" }
+    }, [closeBtn]);
+
+    // Construct root overlay structure
+    const zoombox = createOverlay();
+    Object.assign(zoombox, {
+        id: "zoombox",
+        role: "dialog"
+    });
+    zoombox.setAttribute("aria-modal", "true");
+    zoombox.appendChild(content);
+    applyDarkMode(zoombox);
+
+    let zoomButtonsContainer = null;
 
     // --- Media renderer ---
     const renderMedia = (index) => {
@@ -130,7 +134,7 @@ const ZoomBox = (mediaItems, initialIndex = 0) => {
             zoombox.appendChild(zoomButtonsContainer);
         }
 
-        // 4. Insert before the close button to keep DOM ordering clean
+        // 4. Insert before close button to maintain target DOM layout order
         content.insertBefore(element, closeBtn);
         state.currentMedia = element;
 
@@ -142,7 +146,6 @@ const ZoomBox = (mediaItems, initialIndex = 0) => {
 
     // --- Navigation controls ---
     if (mediaItems.length > 1) {
-        // Fixed: Passed 3 arguments matching createNavigationButtons signature
         const [prevBtn, nextBtn] = createNavigationButtons(
             mediaItems,
             state,
@@ -158,7 +161,6 @@ const ZoomBox = (mediaItems, initialIndex = 0) => {
 
     // --- Keyboard handling ---
     const onKeyDown = (e) => {
-        // Fixed: Passed 7 arguments matching handleKeyboard signature
         handleKeyboard(
             e,
             mediaItems,

@@ -1,43 +1,33 @@
 import "../../../css/ui/Owl.css";
-const Owl = (eventsArray) => {
-    const owlContainer = document.createElement('div');
-    owlContainer.className = 'owl';
+import { createElement } from "../../components/createElement.js"; // Adjust path as needed
 
-    eventsArray.forEach((event) => {
-        const eventCard = document.createElement('div');
-        eventCard.className = 'event-card';
-
-        const img = document.createElement('img');
-        img.src = event.image || '';
-        img.alt = event.name || 'Event Image';
-        img.className = 'event-image';
-
-        const details = document.createElement('div');
-        details.className = 'event-details';
-
-        const name = document.createElement('h3');
-        name.textContent = event.name || 'Event Name';
-
-        const date = document.createElement('p');
-        date.textContent = `Date: ${event.date || 'TBD'}`;
-
-        const location = document.createElement('p');
-        location.textContent = `Location: ${event.location || 'TBD'}`;
-
-        details.appendChild(name);
-        details.appendChild(date);
-        details.appendChild(location);
-        eventCard.appendChild(img);
-        eventCard.appendChild(details);
-
-        eventCard.addEventListener('click', () => {
-            alert(`You clicked on ${event.name}`); // Replace with desired functionality
-        });
-
-        owlContainer.appendChild(eventCard);
+const Owl = (eventsArray = []) => {
+  const eventCards = eventsArray.map((event) => {
+    const img = createElement("img", {
+      src: event.image || "",
+      alt: event.name || "Event Image",
+      class: "event-image"
     });
 
-    return owlContainer;
+    const details = createElement("div", { class: "event-details" }, [
+      createElement("h3", {}, [event.name || "Event Name"]),
+      createElement("p", {}, [`Date: ${event.date || "TBD"}`]),
+      createElement("p", {}, [`Location: ${event.location || "TBD"}`])
+    ]);
+
+    return createElement("div", {
+      class: "event-card",
+      events: {
+        click: () => {
+          alert(`You clicked on ${event.name}`); // Replace with desired functionality
+        }
+      }
+    }, [img, details]);
+  });
+
+  const owlContainer = createElement("div", { class: "owl" }, eventCards);
+
+  return owlContainer;
 };
 
 export default Owl;

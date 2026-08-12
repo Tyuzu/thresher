@@ -1,52 +1,16 @@
 import "../../../css/ui/Sightbox.css";
+import { createElement } from "../../components/createElement.js"; // Adjust path as needed
 import { createIconButton } from "../../utils/svgIconButton";
 import Imagex from "../base/Imagex";
 import { xSVG } from "../svgs";
 
 const Sightbox = (mediaSrc, mediaType = "image") => {
-  // prevent duplicate instance
+  // Prevent duplicate instance
   if (document.getElementById("sightbox")) {
-return;
-}
-
-  const sightbox = document.createElement("div");
-  sightbox.id = "sightbox";
-  sightbox.className = "sightbox";
-
-  const overlay = document.createElement("div");
-  overlay.className = "sightbox-overlay";
-  overlay.addEventListener("click", closeSightbox);
-
-  const content = document.createElement("div");
-  content.className = "sightbox-content";
-  content.setAttribute("tabindex", "-1");
-
-  // media
-  let mediaEl;
-  if (mediaType === "image") {
-    mediaEl = Imagex({
-      src: mediaSrc,
-      alt: "Sightbox Image",
-      classes: "zoomable-image",
-    })
-  } else if (mediaType === "video") {
-    mediaEl = document.createElement("video");
-    mediaEl.src = mediaSrc;
-    mediaEl.controls = true;
-    mediaEl.muted = true;
-
+    return;
   }
-  content.appendChild(mediaEl);
 
-  // // close button
-  // const closeButton = document.createElement("button");
-  // closeButton.className = "sightbox-close";
-  // closeButton.textContent = "×";
-  // closeButton.setAttribute("aria-label", "Close");
-  // closeButton.addEventListener("click", closeSightbox);
-  // content.appendChild(closeButton);
-
-  // --- close Buttons ---
+  // --- Close Buttons ---
   const closeButton = createIconButton({
     classSuffix: "sightbox-close",
     svgMarkup: xSVG,
@@ -54,26 +18,66 @@ return;
     label: "",
     ariaLabel: "Close"
   });
-  content.appendChild(closeButton);
 
-  // append DOM
-  sightbox.appendChild(overlay);
-  sightbox.appendChild(content);
-  document.getElementById("app").appendChild(sightbox);
+  // --- Media Element ---
+  let mediaEl;
+  if (mediaType === "image") {
+    mediaEl = Imagex({
+      src: mediaSrc,
+      alt: "Sightbox Image",
+      classes: "zoomable-image",
+    });
+  } else if (mediaType === "video") {
+    mediaEl = createElement("video", {
+      src: mediaSrc,
+      controls: true,
+      muted: true
+    });
+  }
 
-  // focus trap
+  // --- Shell Layout Construction ---
+  const content = createElement(
+    "div",
+    {
+      class: "sightbox-content",
+      tabindex: "-1"
+    },
+    [mediaEl, closeButton]
+  );
+
+  const overlay = createElement("div", {
+    class: "sightbox-overlay",
+    events: {
+      click: closeSightbox
+    }
+  });
+
+  const sightbox = createElement(
+    "div",
+    {
+      id: "sightbox",
+      class: "sightbox"
+    },
+    [overlay, content]
+  );
+
+  // Append DOM
+  const appRoot = document.getElementById("app") || document.body;
+  appRoot.appendChild(sightbox);
+
+  // Focus trap
   content.focus();
 
-  // history push
+  // History push
   history.pushState({ sightboxOpen: true }, "");
 
-  // esc + focus trap listener
+  // ESC + focus trap listener
   function onKeyDown(e) {
     if (e.key === "Escape") {
       e.preventDefault();
       closeSightbox();
     } else if (e.key === "Tab") {
-      // trap focus inside content
+      // Trap focus inside content
       const focusable = [closeButton];
       const currentIndex = focusable.indexOf(document.activeElement);
       if (e.shiftKey && currentIndex === 0) {
@@ -86,24 +90,24 @@ return;
     }
   }
 
-  // back button
+  // Back button listener
   function onPopState(e) {
     if (e.state && e.state.sightboxOpen) {
       closeSightbox(true);
     }
   }
 
-  // clean close
+  // Clean close
   function closeSightbox(fromPop = false) {
     if (!document.body.contains(sightbox)) {
-return;
-}
+      return;
+    }
     sightbox.remove();
     window.removeEventListener("keydown", onKeyDown);
     window.removeEventListener("popstate", onPopState);
     if (!fromPop) {
-history.back();
-}
+      history.back();
+    }
   }
 
   window.addEventListener("keydown", onKeyDown);

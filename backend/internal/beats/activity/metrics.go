@@ -13,6 +13,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+// AnalyticsPayload represents the incoming batch payload from activityLogger.js
+type AnalyticsPayload struct {
+	Meta   map[string]any   `json:"meta"`
+	Events []map[string]any `json:"events"`
+}
+
 // -------------------- MongoDB Helpers --------------------
 
 func insertActivities(
@@ -37,8 +43,9 @@ func getActivities(
 	cursor time.Time,
 	limit int,
 ) ([]Activity, error) {
+	// FIX: Matched struct bson tag "user_id" instead of "userid"
 	filter := bson.M{
-		"userid": userID,
+		"user_id": userID,
 	}
 
 	if !cursor.IsZero() {
@@ -68,13 +75,18 @@ func getActivities(
 func insertAnalyticsEvents(
 	ctx context.Context,
 	app *infra.Deps,
-	events []map[string]any,
+	payload AnalyticsPayload,
 	remoteAddr string,
 ) (int, error) {
-	inserted := 0
+	var docsToInsert []any
+
+	meta := payload.Meta
+	user, _ := meta["user"].(string)
+	session, _ := meta["session"].(string)
+	url, _ := meta["url"].(string)
 
 	err := app.DB.WithDB(ctx, func(ctx context.Context) error {
-		for _, ev := range events {
+		for _, ev := range payload.Events {
 			key := analyticsIdempotencyKey(ev)
 
 			ok, err := app.Cache.SetNX(ctx, key, []byte("1"), analyticsIdemTTL)
@@ -82,27 +94,29 @@ func insertAnalyticsEvents(
 				continue
 			}
 
+			// Consolidate payload metadata with specific event data
 			doc := bson.M{
 				"type":      ev["type"],
 				"data":      ev["data"],
-				"url":       ev["url"],
-				"user":      ev["user"],
-				"session":   ev["session"],
+				"url":       url,
+				"user":      user,
+				"session":   session,
 				"timestamp": time.Now(),
 				"ip":        remoteAddr,
 			}
 
-			if err := app.DB.Insert(ctx, AnalyticsCollection, doc); err != nil {
-				return err
-			}
-
-			inserted++
+			docsToInsert = append(docsToInsert, doc)
 		}
 
-		return nil
+		if len(docsToInsert) == 0 {
+			return nil
+		}
+
+		// FIX: Use batch insertion rather than loops of single inserts
+		return app.DB.InsertMany(ctx, AnalyticsCollection, docsToInsert)
 	})
 
-	return inserted, err
+	return len(docsToInsert), err
 }
 
 // -------------------- Log Activities --------------------
@@ -180,9 +194,7 @@ func GetActivityFeed(app *infra.Deps) http.HandlerFunc {
 
 func HandleAnalyticsEvent(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var payload struct {
-			Events []map[string]any `json:"events"`
-		}
+		var payload AnalyticsPayload
 
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "invalid payload")
@@ -197,7 +209,7 @@ func HandleAnalyticsEvent(app *infra.Deps) http.HandlerFunc {
 		inserted, err := insertAnalyticsEvents(
 			r.Context(),
 			app,
-			payload.Events,
+			payload,
 			r.RemoteAddr,
 		)
 		if err != nil {

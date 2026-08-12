@@ -1,91 +1,155 @@
-/* .video-player {
+/* ==========================================================================
+   Video Player Container & Overlays
+   ========================================================================== */
+
+.video-container {
+    position: relative;
     width: 100%;
-    max-width: 800px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-   */
-@import url(Sightbox.css);
-@import url(Vidpop.css);
-
-#video-player.fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-  background: black;
+    max-width: var(--max-width-lg);
+    margin: 0 auto;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background-color: #000000;
+    box-shadow: var(--shadow-card);
+    font-family: var(--font-body);
 }
 
-#main-video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.videocon {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 }
 
-.video-controls {
-  position: absolute;
-  bottom: 10px;
-  left: 0;
-  width: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  transition: opacity 0.3s ease;
+.video-player {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background-color: #000000;
 }
 
-.video-controls.hidden {
-  opacity: 0;
-  pointer-events: none;
+/* ==========================================================================
+   Controls Bar & Layout Flex Helpers
+   ========================================================================== */
+
+/* Bottom controls bar with glassmorphism overlay */
+.vcon {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--space-sm) var(--space-md);
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.75) 100%);
+    backdrop-filter: blur(4px);
+    z-index: 2;
+    transition: opacity var(--transition-medium);
 }
 
-.controls {
-  position: absolute;
-  bottom: 10px;
-  left: 0;
-  width: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  transition: opacity 0.3s ease;
+/* Flexbox Containers */
+.hflex-sb {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
 }
 
-.controls:not(.visible) {
-  opacity: 0;
-  pointer-events: none;
+.hflex {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
 }
 
-#video-player.fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: black;
-  z-index: 9999;
+/* ==========================================================================
+   Interactive Control Icons & Buttons
+   ========================================================================== */
+
+.logoicon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-circle);
+    cursor: pointer;
+    user-select: none;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
 }
 
-.fullscreen-button {
-  position: absolute;
-  bottom: 15px;
-  right: 15px;
-  padding: 5px 10px;
-  background: white;
-  border: none;
-  cursor: pointer;
+/* Floating dark button style */
+.logoicon.bonw {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-#video-player .controlcon {
-  width: 100%;
+.logoicon.bonw:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.08);
 }
-#video-player .controlcon {
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  background: linear-gradient(0deg, black, transparent);
-  /* padding: 10px; */
-  color: #fff;
-  opacity: 0;
-  transform: translateY(100%);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+
+.logoicon.bonw:active {
+    transform: scale(0.95);
+}
+
+.logoicon:focus-visible {
+    outline: 2px solid var(--color-primary-fg);
+    outline-offset: 2px;
+}
+
+.icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* SVG Icon Coloring & Stroke Styles */
+.clrful {
+    stroke: #ffffff;
+    stroke-width: 2;
+    transition: stroke var(--transition-fast);
+}
+
+.logoicon:hover .clrful {
+    stroke: var(--color-primary-fg);
+}
+
+/* ==========================================================================
+   Quality Selector Dropdown
+   ========================================================================== */
+
+.quality-selector.buttonx {
+    appearance: none;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    padding: var(--space-xs) var(--space-lg) var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right var(--space-xs) center;
+    background-size: 1rem;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.quality-selector.buttonx:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.quality-selector.buttonx:focus {
+    outline: none;
+    border-color: var(--color-primary-fg);
+}
+
+.quality-selector.buttonx option {
+    background-color: #1f2937;
+    color: #ffffff;
 }

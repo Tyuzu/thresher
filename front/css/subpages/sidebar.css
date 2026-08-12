@@ -1,101 +1,262 @@
-/* sidebar.css */
+/* ==========================================================================
+   Control Center Sheet & Internal Component Styles
+   ========================================================================== */
 
-.sidebar {
-  position: fixed;
-  top: 42px;
-  left: 0;
-  height: calc(100vh - 84px);
-  width: 200px;
-  background: #1e1e2f;
-  box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+/* --- Modal Sheet Container Adjustments --- */
+.modal-sheet,
+dialog[data-variant="sheet"] {
   display: flex;
   flex-direction: column;
-  padding: 10px 20px;
-  transform: translateX(-100%);
-  transition: transform 0.3s ease, opacity 0.2s ease;
-  z-index: 1001;
+  padding: 0;
+  overflow: hidden;
+  /* Uses your global backdrop, surface, and border tokens */
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid var(--color-border);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elev-3);
+  touch-action: pan-y;
+}
+
+/* --- Scrollable Body (.cc-scroll) --- */
+.cc-scroll {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  max-height: 82vh;
+  padding: var(--space-xs) var(--container-padding) var(--space-xl);
   overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
-.sidebar:not(.hidden) {
-  transform: translateX(0);
+.cc-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Grab Handle Indicator */
+.cc-handle {
+  flex-shrink: 0;
+  width: 36px;
+  height: 4px;
+  margin-top: var(--space-sm);
+  margin-bottom: var(--space-xs);
+  border-radius: var(--radius-full);
+  background-color: var(--color-border);
+  opacity: 0.7;
+  cursor: grab;
+  transition: opacity var(--transition-fast);
+}
+
+.cc-handle:hover {
   opacity: 1;
 }
 
-.sidebar.hidden {
-  opacity: 0;
-  pointer-events: none;
+.cc-handle:active {
+  cursor: grabbing;
 }
 
-/* .sidebar-close {
-  align-self: flex-start;
-  background: transparent;
-  border: none;
-  font-size: 26px;
-  font-weight: bold;
-  color: #fff;
+/* --- Personal Hub Section (.cc-personal-hub) --- */
+.cc-personal-hub {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+}
+
+/* User Avatar */
+.cc-avatar {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-circle);
+  background-color: var(--color-bg-secondary);
+  border: 2px solid var(--color-border);
+  box-shadow: var(--shadow-elev-1);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Encoded SVG placeholder fallback */
+  background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"%3E%3Cpath d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/%3E%3Ccircle cx="12" cy="7" r="4"/%3E%3C/svg%3E');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 36px;
+}
+
+.cc-avatar img.chat-message-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-circle);
+}
+
+.cc-profile-name {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-fg);
+  margin-bottom: var(--space-sm);
+  letter-spacing: -0.01em;
+}
+
+.cc-btn-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.cc-small-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 6px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-fg);
+  font-family: var(--font-base);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  margin-bottom: 20px;
-  transition: color 0.2s ease;
-} */
-/* 
-.sidebar-close:hover {
-  color: #ff6b6b;
-} */
-
-.sidebar-link {
-  display: block;
-  padding: 12px 15px;
-  border-radius: 6px;
-  font-size: 16px;
-  color: #f0f0f0;
-  text-decoration: none;
-  font-weight: 500;
-  transition: background 0.2s ease, color 0.2s ease;
+  user-select: none;
+  transition: background-color var(--transition-fast), 
+              border-color var(--transition-fast), 
+              color var(--transition-fast),
+              transform var(--transition-fast);
 }
 
-.sidebar-link:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+.cc-small-btn:hover {
+  background-color: var(--color-card-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
-.sidebar-link:active {
-  background: rgba(255, 255, 255, 0.15);
+.cc-small-btn:active {
+  transform: scale(0.96);
 }
 
-.sidebar-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(2px);
-  z-index: 1000;
-  opacity: 1;
-  transition: opacity 0.3s ease;
+.cc-small-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
-.sidebar-backdrop.hidden {
-  opacity: 0;
-  pointer-events: none;
+/* --- Live Tiles Grid (.cc-tiles) --- */
+.cc-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: var(--max-width-sm);
 }
 
-/* Scrollbar styling for body */
-.sidebar::-webkit-scrollbar {
-  width: 12px;
+.cc-live-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-elev-1);
+  transition: background-color var(--transition-fast), 
+              border-color var(--transition-fast), 
+              transform var(--transition-fast);
 }
 
-.sidebar::-webkit-scrollbar-track {
-  background: var(--color-bg);
+.cc-live-tile:hover {
+  background-color: var(--color-card-hover);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  transform: translateY(-1px);
 }
 
-.sidebar::-webkit-scrollbar-thumb {
-  background-color: var(--color-accent);
-  /* border-radius: 6px; */
+.cc-tile-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-muted);
+  margin-bottom: var(--space-xxs);
 }
 
-.weather-extra {
-    display: flex;
-    flex-direction: column;
+.cc-tile-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-fg);
+}
+
+/* --- Navigation Grid (.cc-nav-grid) --- */
+.cc-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: var(--max-width-sm);
+}
+
+.cc-nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-fg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transition-fast), 
+              border-color var(--transition-fast), 
+              color var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.cc-nav-link:hover {
+  background-color: var(--color-card-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.cc-nav-link:active {
+  transform: scale(0.95);
+  background-color: var(--color-primary);
+  color: var(--color-btn-fg);
+}
+
+.cc-nav-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* --- Tablet / Desktop Centered Sheet Overlay --- */
+@media (min-width: 768px) {
+  .modal-sheet,
+  dialog[data-variant="sheet"] {
+    top: auto;
+    bottom: var(--space-lg);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: var(--max-width-sm);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-elev-3);
+  }
+
+  .cc-scroll {
+    max-height: 70vh;
+    padding-top: var(--space-sm);
+  }
 }

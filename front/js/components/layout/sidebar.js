@@ -1,8 +1,10 @@
-import "../../../css/subpages/controlcenter.css";
 import "../../../css/subpages/sidebar.css";
 import Modal from "../ui/Modal.mjs";
 import { createElement } from "../createElement.js";
 import { navigate } from "../../routes/index.js";
+import Imagex from "../base/Imagex.js"; // Adjust the import path if needed
+import { getState } from "../../state/state.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 
 /* ---------------------------------- */
 /* Config                             */
@@ -28,8 +30,19 @@ let activeControlCenter = null;
 /* ---------------------------------- */
 
 function buildPersonalHub() {
+  const avatarUrl = getState("user") ? resolveImagePath(EntityType.USER, PictureType.THUMB, `${getState("user")}.jpg`) : "";
+
+  const avatarImage = Imagex({ src: avatarUrl, alt: "User avatar", classes: "chat-message-avatar" });
+
+  const avatarContainer = createElement(
+    "div",
+    { class: "cc-avatar", role: "img", "aria-label": "User Avatar" },
+    [avatarImage]
+  );
+
+
   return createElement("div", { class: "cc-personal-hub" }, [
-    createElement("div", { class: "cc-avatar", role: "img", "aria-label": "User Avatar" }),
+    avatarContainer,
     createElement("div", { class: "cc-profile-name" }, ["Guest User"]),
     createElement("div", { class: "cc-btn-row" }, [
       createElement(
@@ -149,7 +162,7 @@ function attachHandlers(dialog, closeFn) {
     isDragging = false;
 
     if (dialog.releasePointerCapture && e.pointerId) {
-      try { dialog.releasePointerCapture(e.pointerId); } catch (_) {}
+      try { dialog.releasePointerCapture(e.pointerId); } catch (_) { }
     }
 
     dialog.style.transition = "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)";

@@ -1,29 +1,31 @@
+import { createElement } from "../createElement.js"; 
 import "../../../css/ui/VidPlay.css";
 import { generateVideoPlayer } from "./vidpopHelpers";
 
 const VidPlay = (videoSrc, poster, qualities, subtitles, videoid) => {
-  const player = document.createElement("div");
-  player.className = "video-player-container";
-
   // Create a predictable unique instance key
   const instanceId = `vidplay-${videoid}-${Date.now()}`;
 
   // Establish modal state context flags
   history.pushState({ isVidPlayOpen: true, instanceId }, "");
 
-  // Add close button
-  const closeButton = document.createElement("button");
-  closeButton.className = "video-close-btn";
-  closeButton.textContent = "X";
-  
-  // Explicit close calls triggerBack to remove the history entry we added
-  closeButton.addEventListener("click", () => closeVidPlay(true));
-  player.appendChild(closeButton);
+  // Declare close button with event handlers and attributes via createElement
+  const closeButton = createElement("button", {
+    class: "video-close-btn",
+    events: {
+      click: () => closeVidPlay(true)
+    }
+  }, ["X"]);
+
+  // Build root container with the close button attached initially
+  const player = createElement("div", {
+    class: "video-player-container"
+  }, [closeButton]);
 
   // Variable to store dynamic video player shell for clean disposal
   let activeVideoElement = null;
 
-  // Append the generated video player
+  // Append the generated video player asynchronously
   generateVideoPlayer(videoSrc, poster, qualities, subtitles, videoid).then((videoPlayer) => {
     activeVideoElement = videoPlayer;
     player.appendChild(videoPlayer);
@@ -52,7 +54,7 @@ const VidPlay = (videoSrc, poster, qualities, subtitles, videoid) => {
     }
   }
 
-  // Fixed: Close when the modal state marker is no longer active in the window stack
+  // Close when the modal state marker is no longer active in the window stack
   function onPopState(event) {
     const isModalActive = event.state && event.state.isVidPlayOpen && event.state.instanceId === instanceId;
     if (!isModalActive) {

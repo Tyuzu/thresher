@@ -1,3 +1,6 @@
+import "../../../css/ui/vidpop.css";
+import "../../../css/ui/Sightbox.css";
+import { createElement } from "../createElement.js"; // Adjust path as needed
 import { createIconButton } from "../../utils/svgIconButton";
 import { xSVG } from "../svgs";
 import { generateVideoPlayer } from "./vidpopHelpers";
@@ -5,17 +8,7 @@ import { generateVideoPlayer } from "./vidpopHelpers";
 const Vidpop = (mediaSrc, videoid, options = {}) => {
   const { poster = null, theme = "light", qualities = [], subtitles = [] } = options;
 
-  const sightbox = document.createElement("div");
-  sightbox.className = `sightbox theme-${theme}`;
-
-  const overlay = document.createElement("div");
-  overlay.className = "sightbox-overlay";
-  overlay.addEventListener("click", () => removePopup(sightbox));
-
-  const content = document.createElement("div");
-  content.className = "sightbox-content";
-
-  // Fixed: Synchronous creation using createIconButton directly (No nested buttons)
+  // 1. Instantiate the Close Button
   const closeButton = createIconButton({
     classSuffix: "sightbox-close",
     svgMarkup: xSVG,
@@ -24,35 +17,50 @@ const Vidpop = (mediaSrc, videoid, options = {}) => {
     ariaLabel: "Close Theater Mode"
   });
 
-  sightbox.appendChild(overlay);
-  sightbox.appendChild(content);
-  // Fixed: Close button mounted immediately to secure visual structure
-  content.appendChild(closeButton);
+  // 2. Build DOM layout tree declaratively using createElement
+  const content = createElement("div", { class: "sightbox-content" }, [closeButton]);
+
+  const overlay = createElement("div", {
+    class: "sightbox-overlay",
+    events: {
+      click: () => removePopup(sightbox)
+    }
+  });
+
+  const sightbox = createElement("div", { class: `sightbox theme-${theme}` }, [
+    overlay,
+    content
+  ]);
 
   let loadedVideoPlayer = null;
 
-  // Append the generated video player asynchronously
-  generateVideoPlayer(mediaSrc, poster, qualities, subtitles, videoid).then(videoPlayer => {
-    // Edge case safety verification
-    if (!sightbox.parentNode) {
-      if (videoPlayer && typeof videoPlayer.cleanup === "function") videoPlayer.cleanup();
-      return;
-    }
-    loadedVideoPlayer = videoPlayer;
-    // Insert behind or beside the fixed navigation architecture
-    content.insertBefore(videoPlayer, closeButton);
-  }).catch(err => {
-    console.error("Failed to compile target theater stream engine:", err);
-  });
+  // 3. Append the generated video player asynchronously
+  generateVideoPlayer(mediaSrc, poster, qualities, subtitles, videoid)
+    .then((videoPlayer) => {
+      // Edge case safety verification
+      if (!sightbox.parentNode) {
+        if (videoPlayer && typeof videoPlayer.cleanup === "function") {
+          videoPlayer.cleanup();
+        }
+        return;
+      }
+      loadedVideoPlayer = videoPlayer;
+      // Insert before closeButton to preserve target DOM order
+      content.insertBefore(videoPlayer, closeButton);
+    })
+    .catch((err) => {
+      console.error("Failed to compile target theater stream engine:", err);
+    });
 
-  const appRoot = document.getElementById('app');
+  // 4. Mount to app root or document body
+  const appRoot = document.getElementById("app");
   if (appRoot) {
     appRoot.appendChild(sightbox);
   } else {
     document.body.appendChild(sightbox);
   }
 
-  // Attach an isolated component lifecycle destructor hook
+  // 5. Attach isolated component lifecycle destructor hook
   sightbox.cleanup = () => {
     if (loadedVideoPlayer) {
       const videoElement = loadedVideoPlayer.querySelector("video") || loadedVideoPlayer;
@@ -73,7 +81,6 @@ function removePopup(popupElement) {
     return;
   }
 
-  // Fixed: Stop audio engine instantly before layout fading transformations run
   if (typeof popupElement.cleanup === "function") {
     popupElement.cleanup();
   } else {

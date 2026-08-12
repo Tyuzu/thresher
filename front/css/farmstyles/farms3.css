@@ -18,10 +18,6 @@
     align-items: start;
 }
 
-.layout-main,
-.layout-aside {
-    min-width: 0;
-}
 
 /* =========================================================
    FILTER BAR
@@ -445,34 +441,6 @@
 }
 */
 /* =========================================================
-   ASIDE
-   ========================================================= */
-/*
-.layout-aside {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-}
-
-.aside-title {
-    margin: 0;
-    padding-bottom: var(--space-sm);
-
-    color: var(--color-fg);
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-bold);
-
-    border-bottom: 1px solid var(--color-border);
-}
-
-.aside-static-sections,
-.aside-dynamic-sections {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-}*/
-
-/* =========================================================
    ASIDE CARDS / SECTIONS
    ========================================================= */
 
@@ -652,25 +620,6 @@
     .two-column.farm-page {
         grid-template-columns: 1fr;
     }
-/*
-    .layout-aside {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-items: start;
-    }
-
-    .aside-title {
-        grid-column: 1 / -1;
-    }
-
-    .advert-aside {
-        grid-column: 1 / -1;
-    }
-
-    .aside-static-sections,
-    .aside-dynamic-sections {
-        display: contents;
-    }*/
 }
 
 /* =========================================================
@@ -708,16 +657,6 @@
     .farm__image {
         height: 210px;
     }
-/*
-    .layout-aside {
-        grid-template-columns: 1fr;
-    }
-    
-    .aside-title,
-    .advert-aside {
-        grid-column: auto;
-    }
-*/
     .farm__featured-photo {
         height: 200px;
     }

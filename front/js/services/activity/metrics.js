@@ -47,6 +47,14 @@ function setStorageQueue(queue) {
   }
 }
 
+// Safely remove specifically flushed items (prevents multi-tab race conditions)
+function removeFlushedItems(sentEvents) {
+  const currentQueue = getStorageQueue();
+  const sentTimestamps = new Set(sentEvents.map((e) => e.ts));
+  const remaining = currentQueue.filter((item) => !sentTimestamps.has(item.ts));
+  setStorageQueue(remaining);
+}
+
 // --- Queue Management ---
 let isSyncing = false;
 let retryDelay = 1000;
@@ -118,8 +126,7 @@ async function flush(isUnloading = false) {
       }).catch(() => {});
     }
 
-    // Remove dispatched payload from queue upon unload
-    setStorageQueue(queue.slice(batchSize));
+    removeFlushedItems(eventsToSend);
     return;
   }
 
@@ -131,9 +138,7 @@ async function flush(isUnloading = false) {
     });
 
     if (res.ok) {
-      // Re-read storage in case another tab enqueued items during fetch
-      queue = getStorageQueue();
-      setStorageQueue(queue.slice(batchSize));
+      removeFlushedItems(eventsToSend);
 
       retryDelay = 1000;
       isSyncing = false;
@@ -160,7 +165,7 @@ function track(type, data = {}) {
   enqueue({ type, data });
 }
 
-// Bounded Deduplicated tracking (FIFO Set to avoid memory leak)
+// Bounded Deduplicated tracking
 const seenEvents = new Set();
 function dedupTrack(key, type, data = {}) {
   if (seenEvents.has(key)) return;
@@ -216,7 +221,7 @@ document.addEventListener("focusin", (e) => {
   }
 });
 
-// --- Modern Tab Lifecycle Handling ---
+// --- Tab Lifecycle Handling ---
 const pageStart = Date.now();
 
 function handleVisibilityOrPageHide(e) {
