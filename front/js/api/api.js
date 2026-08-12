@@ -1,4 +1,3 @@
-// api/api.js 
 import {
     API_URL,
     SRC_URL,
@@ -16,14 +15,14 @@ import Notify from "../components/ui/Notify.mjs";
 import { silentLogout } from "../services/auth/authService.js";
 
 /* =========================
-    CONSTANTS
+   CONSTANTS
 ========================= */
 
 const REFRESH_BUFFER_MS = 2 * 60 * 1000; // 2 minutes buffer
 const REFRESH_LOCK_TTL = 10_000; // 10 seconds lock TTL
 
 /* =========================
-    MULTI-TAB MANAGEMENT
+   MULTI-TAB MANAGEMENT
 ========================= */
 
 const TAB_ID =
@@ -35,7 +34,7 @@ const REFRESH_LOCK_KEY = "__refresh_lock__";
 const AUTH_CHANNEL = new BroadcastChannel("auth_channel");
 
 /* =========================
-    HELPERS
+   HELPERS
 ========================= */
 
 export function generateUUID() {
@@ -68,7 +67,7 @@ export function isTokenNearExpiry(token, bufferMs = REFRESH_BUFFER_MS) {
 }
 
 /* =========================
-    LOCK MANAGEMENT
+   LOCK MANAGEMENT
 ========================= */
 
 function acquireRefreshLock() {
@@ -89,7 +88,6 @@ function acquireRefreshLock() {
             JSON.stringify({ owner: TAB_ID, ts: now })
         );
 
-        // Fix #2: Verification check to prevent race condition write-overwrites
         const verify = JSON.parse(localStorage.getItem(REFRESH_LOCK_KEY) || "{}");
         return verify.owner === TAB_ID;
     } catch {
@@ -110,25 +108,22 @@ function releaseRefreshLock() {
 }
 
 /* =========================
-    TOKEN REFRESH LOGIC
+   TOKEN REFRESH LOGIC
 ========================= */
 
 let refreshPromise = null;
 
 export async function refreshToken() {
-    // Fix #5: Clear pending scheduled timers when an active refresh begins
     if (refreshTimer) {
         clearTimeout(refreshTimer);
         refreshTimer = null;
     }
 
-    // Return existing in-flight promise if a refresh is already underway
     if (refreshPromise) {
         return refreshPromise;
     }
 
     refreshPromise = (async () => {
-        // If another tab holds the lock, wait for broadcast response or lock expiration
         if (!acquireRefreshLock()) {
             return new Promise((resolve) => {
                 const handler = (e) => {
@@ -137,7 +132,6 @@ export async function refreshToken() {
                     if (e.data.type === "TOKEN_REFRESHED") {
                         AUTH_CHANNEL.removeEventListener("message", handler);
                         
-                        // Fix #1: Synchronize state using payload directly from the locking tab
                         if (e.data.payload) {
                             setState(e.data.payload, true);
                         }
@@ -168,9 +162,10 @@ export async function refreshToken() {
 
             const res = await fetch(`${API_URL}/auth/refresh`, {
                 method: "POST",
-                credentials: "include", // Essential for HttpOnly cookie transmission
+                credentials: "include", // Transmit HttpOnly refresh cookie
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "X-Refresh-Intent": "1" // Enforced by backend CSRF check
                 },
                 signal: controller.signal
             });
@@ -178,12 +173,12 @@ export async function refreshToken() {
             clearTimeout(timeoutId);
 
             if (!res.ok) {
-                // If backend actively returns 401/403, the session is invalid
                 return false;
             }
 
             const data = await res.json().catch(() => null);
-            const token = data?.data?.token;
+            // Standarize extraction across potential backend JSON payload variations
+            const token = data?.data?.token || data?.token || data?.Token;
 
             if (!token) return false;
 
@@ -193,6 +188,7 @@ export async function refreshToken() {
             const userId =
                 parsed.userId ||
                 parsed.userID ||
+                parsed.user_id ||
                 parsed.sub ||
                 "";
 
@@ -204,10 +200,9 @@ export async function refreshToken() {
                 role: parsed.role || []
             };
 
-            // Update local app state with newly minted access token
+            // Synchronize state and trigger multi-tab updates
             setState(authPayload, true);
 
-            // Fix #1: Post token payload to other tabs for immediate sync
             AUTH_CHANNEL.postMessage({
                 type: "TOKEN_REFRESHED",
                 payload: authPayload
@@ -231,7 +226,7 @@ export async function refreshToken() {
 }
 
 /* =========================
-    BACKGROUND SCHEDULER
+   BACKGROUND SCHEDULER
 ========================= */
 
 let refreshTimer = null;
@@ -250,10 +245,8 @@ export function scheduleBackgroundRefresh() {
 
     const delay = payload.exp * 1000 - REFRESH_BUFFER_MS - Date.now();
 
-    // Helper to evaluate refresh outcome and trigger logout on failure
     const handleScheduledRefresh = () => {
         refreshToken().then((ok) => {
-            // Fix #4: Log out if session expired/revoked during background refresh
             if (!ok && getState("token")) {
                 silentLogout();
             }
@@ -269,7 +262,7 @@ export function scheduleBackgroundRefresh() {
 }
 
 /* =========================
-    EVENT LISTENERS
+   EVENT LISTENERS
 ========================= */
 
 AUTH_CHANNEL.addEventListener("message", (e) => {
@@ -302,7 +295,7 @@ document.addEventListener("visibilitychange", () => {
 scheduleBackgroundRefresh();
 
 /* =========================
-    CORE FETCH
+   CORE FETCH
 ========================= */
 
 async function apixFetch(endpoint, method = "GET", body = null, options = {}, retry = false) {
@@ -314,15 +307,13 @@ async function apixFetch(endpoint, method = "GET", body = null, options = {}, re
         if (nearExpiry && !retry) {
             const ok = await refreshToken();
             if (!ok) {
-                // Fix #4: Delegate logout handling to apiFetch caller layer
                 throw new Error("Unauthorized");
             }
         }
 
-        // Fix #3: Merge custom options.headers instead of overwriting with empty object
         const fetchOptions = {
             method,
-            credentials: options.credentials ?? "include", // Essential for HttpOnly refresh cookie transmission
+            credentials: options.credentials ?? "include",
             headers: { ...(options.headers || {}) },
             signal: options.signal
         };
@@ -342,12 +333,11 @@ async function apixFetch(endpoint, method = "GET", body = null, options = {}, re
 
         const res = await fetch(endpoint, fetchOptions);
 
-        // 2. Handle 401 Unauthorized (Expired Access Token or Invalid Session)
+        // 2. Handle 401 Unauthorized
         if (res.status === 401 && !retry) {
             const refreshed = await refreshToken();
 
             if (refreshed) {
-                // Retry the original request once with the new access token
                 return apixFetch(
                     endpoint,
                     method,
@@ -357,7 +347,6 @@ async function apixFetch(endpoint, method = "GET", body = null, options = {}, re
                 );
             }
 
-            // Fix #4: Throw Unauthorized and let outer wrapper execute silentLogout once
             throw new Error("Unauthorized");
         }
 
@@ -388,7 +377,7 @@ async function apixFetch(endpoint, method = "GET", body = null, options = {}, re
 }
 
 /* =========================
-    PUBLIC API
+   PUBLIC API
 ========================= */
 
 export async function apiFetch(endpoint, method = "GET", body = null, options = {}) {
@@ -396,7 +385,6 @@ export async function apiFetch(endpoint, method = "GET", body = null, options = 
         return await apixFetch(`${API_URL}${endpoint}`, method, body, options);
     } catch (err) {
         if (err?.message === "Unauthorized") {
-            // Fix #4: Single point of entry for unauthorized logout
             silentLogout();
         } else {
             Notify(err?.message || "Network error", { type: "error" });

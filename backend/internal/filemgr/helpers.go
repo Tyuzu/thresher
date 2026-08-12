@@ -2,8 +2,6 @@ package filemgr
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -325,11 +323,6 @@ func validateRemoteHost(rawURL string) error {
 		}
 	}
 	return nil
-}
-
-func hashURL(s string) string {
-	sum := sha256.Sum256([]byte(s))
-	return hex.EncodeToString(sum[:])
 }
 
 func normalizePath(p string) string {

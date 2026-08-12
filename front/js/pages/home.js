@@ -1,4 +1,4 @@
-import "../../css/hming2.css";
+import "../../css/home.css";
 import "../../css/farmstyles/crops8.css";
 
 

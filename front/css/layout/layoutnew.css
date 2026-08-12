@@ -30,7 +30,6 @@
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: var(--space-sm) 0;
   box-sizing: border-box;
 }
 
@@ -56,7 +55,6 @@
   gap: var(--space-md);
   min-width: 0; /* Prevents child grid/flex elements from overflowing overflow-x */
   width: 100%;
-  padding: var(--container-padding);
 }
 /*
 .layout-main > section {

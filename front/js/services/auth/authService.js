@@ -104,15 +104,17 @@ async function login(event) {
         return;
     }
 
+    const hideSpinner = LoadingSpinner();
+
     try {
         const res = await apiFetch("/auth/login", "POST",
             { username, password },
             { credentials: "include" }
         );
 
-        // Standardized extraction supporting both casing variations
-        const token = res?.token;
-        const userId = res?.userid || res?.userId;
+        // Standardized extraction supporting all casing variations from Go backend
+        const token = res?.token || res?.Token;
+        const userId = res?.user_id || res?.userid || res?.userId || res?.UserID;
 
         if (!token || !userId) {
             throw new Error("Invalid response format from server.");
@@ -144,6 +146,8 @@ async function login(event) {
             duration: 3000,
             dismissible: true
         });
+    } finally {
+        if (typeof hideSpinner === "function") hideSpinner();
     }
 }
 
@@ -157,7 +161,7 @@ async function refreshAccessToken() {
             credentials: "include"
         });
         
-        const token = res?.data?.token || res?.token;
+        const token = res?.data?.token || res?.token || res?.Token;
         if (token) {
             setState({ token }, true);
             return token;

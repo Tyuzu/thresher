@@ -1,5 +1,4 @@
 import "../../../css/inistyles/authpage.css";
-// pages/auth.js
 import { login, signup } from "../../services/auth/authService.js";
 import { getState, subscribeDeep } from "../../state/state.js";
 import { createElement } from "../../components/createElement.js";
@@ -95,7 +94,6 @@ function createSignupForm() {
   form.append(usernameInput, emailInput, passwordInput, termsLabel, submitBtn);
 
   form.addEventListener("submit", (e) => {
-    // Scoped query selector prevents targeting stale DOM elements
     const termsCheck = e.currentTarget.querySelector("#signup-terms");
     if (!termsCheck?.checked) {
       e.preventDefault();

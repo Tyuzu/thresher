@@ -97,20 +97,6 @@
   font-weight: var(--font-weight-medium);
 }
 
-/* Sidebar Layout */
-.layout-aside {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.layout-aside h2 {
-  margin: 0;
-  font-family: var(--font-heading);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-fg);
-}
 
 .aside-actions {
   padding: var(--space-md);

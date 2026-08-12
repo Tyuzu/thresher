@@ -37,7 +37,6 @@ func getCropBanner(cropname string) string {
 		"onion":       "https://i.pinimg.com/736x/bc/01/67/bc016702f08439323f7fdd715da8edf7.jpg",
 		"garlic":      "https://i.pinimg.com/1200x/c9/a5/76/c9a57633fe0c4d6f5d4dd88846c48703.jpg",
 		"radish":      "https://i.pinimg.com/736x/17/fe/16/17fe16a2827e21a0785c0fd568ed7863.jpg",
-		"coriander":   "https://i.pinimg.com/736x/60/3c/3e/603c3e3515959d6c0795e6f34908328b.jpg",
 		"cabbage":     "https://i.pinimg.com/1200x/70/91/33/709133b3fa2387dc35c2c539c12c4206.jpg",
 		"cauliflower": "https://i.pinimg.com/1200x/f9/a3/a1/f9a3a14f1d0c1ca829f0604c07181e0e.jpg",
 		"okra":        "https://i.pinimg.com/736x/cb/79/c2/cb79c24bf22d83b53cf4df2480ea7457.jpg",
@@ -65,14 +64,17 @@ func getCropBanner(cropname string) string {
 		"kidney-bean": "https://i.pinimg.com/736x/b2/df/52/b2df529aa1e3bbb339908447b1ca45dd.jpg",
 		"pigeon-pea":  "https://i.pinimg.com/736x/bc/d9/ad/bcd9ad4b4288e3a545f4b88dd8cdf287.jpg",
 
+		// herbs
+		"coriander": "https://i.pinimg.com/736x/60/3c/3e/603c3e3515959d6c0795e6f34908328b.jpg",
+
+		// spices
+		"fenugreek": "https://i.pinimg.com/1200x/bc/27/92/bc279270d76531cd83436394d7367896.jpg",
+
 		// others
 		"sugarcane": "https://i.pinimg.com/1200x/bc/27/92/bc279270d76531cd83436394d7367896.jpg",
 		"cotton":    "https://i.pinimg.com/736x/32/3f/66/323f665d3b2e81de82334893728b44f9.jpg",
 		"tea":       "https://i.pinimg.com/736x/b3/4a/49/b34a498694a6fadd8628eb104d154c9e.jpg",
 		"coffee":    "https://i.pinimg.com/736x/52/76/ff/5276ff3d3923743c62dea0e9e05ddcb8.jpg",
-
-		// spices
-		"fenugreek": "https://i.pinimg.com/1200x/bc/27/92/bc279270d76531cd83436394d7367896.jpg",
 	}
 
 	cropname = strings.ToLower(cropname)
@@ -81,5 +83,5 @@ func getCropBanner(cropname string) string {
 	if banner, ok := m[cropname]; ok {
 		return banner
 	}
-	return "https://example.com/images/default.jpg"
+	return "https://i.pinimg.com/236x/fe/69/7a/fe697ad227585a0b809db2c46ecc7997.jpg"
 }

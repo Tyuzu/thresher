@@ -1,9 +1,10 @@
 import "../../../css/layout/footer.css";
 import { setLanguage } from "../../i18n/i18n.js";
 import { navigate } from "../../routes/index.js";
-import {webSiteName} from "../../config/env.js";
+import { webSiteName } from "../../config/env.js";
 import { userFeedbackGlobal } from "../../services/reporting/feedback/feedback.js";
 import { createElement } from "../createElement.js";
+import { Button } from "../base/Button.js"; // Import the Button component
 
 const handleNavigation = (event, href) => {
   event.preventDefault();
@@ -63,13 +64,16 @@ const Footer = () => {
   const savedLang = localStorage.getItem("lang") || "en";
   langSelect.value = savedLang;
 
-  const feedbackButton = createElement("button", {
-    id: "feedback-btn",
-    class: "buttonx",
-    events: {
+  // Refactored to use the Button component matching positional parameters:
+  // Button(title, id, events, classes, styles, ...rest)
+  const feedbackButton = Button(
+    "Feedback",
+    "feedback-btn",
+    {
       click: () => userFeedbackGlobal()
-    }
-  }, ["Feedback"]);
+    },
+    "buttonx"
+  );
 
   const footerBottom = createElement("div", { class: "footer-bottom" }, [
     langSelect,

@@ -79,6 +79,7 @@
   width: 24px;
   height: 24px;
   stroke: var(--stroke-svg);
+  stroke-width: 1.5;
 }
 
 /* --- Menu Toggle Button --- */

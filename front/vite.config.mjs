@@ -6,6 +6,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const isProd = mode === 'production';
 
+  // Target Go backend running locally (e.g., http://localhost:4000 or http://127.0.0.1:4000)
+  const BACKEND_TARGET = env.VITE_BACKEND_URL || 'http://localhost:4000';
+
   return {
     root: '.',
 
@@ -100,12 +103,13 @@ export default defineConfig(({ mode }) => {
       https: true,
       proxy: {
         '/api/v1': {
-          target: 'http://localhost:4000',
+          target: BACKEND_TARGET,
           changeOrigin: true,
           secure: false,
         },
-        '/static/uploads': {
-          target: 'http://localhost:4000',
+        // Catch-all for all static subpaths: /static/uploads, /static/proxy, /static/mediacache
+        '/static': {
+          target: BACKEND_TARGET,
           changeOrigin: true,
           secure: false,
         },

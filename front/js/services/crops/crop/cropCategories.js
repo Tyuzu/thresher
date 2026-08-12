@@ -26,11 +26,11 @@ export const cropCategoryMap = Object.freeze({
   ],
   flowers: [
     "marigold", "rose", "jasmine", "sunflower", "hibiscus", "lavender", "chrysanthemum",
-    "tulip", "lotus", "gerbera", "daisy", "dahlia", "orchid"
+    "tulip", "lotus", "gerbera", "daisy", "dahlia", "orchid", "lily"
   ],
   spices: [
     "turmeric", "chili", "ginger", "cardamom", "cumin", "coriander-seed", "fennel",
-    "mustard", "fenugreek", "clove", "black-pepper", "nutmeg", "cinnamon"
+    "mustard", "mustard-seed", "fenugreek", "clove", "black-pepper", "nutmeg", "cinnamon"
   ],
   oilseeds: [
     "sunflower-seed", "sesame", "groundnut", "soybean", "linseed", "mustard", "castor",
@@ -40,7 +40,8 @@ export const cropCategoryMap = Object.freeze({
     "ashwagandha", "giloy", "tulsi", "aloe-vera", "neem", "turmeric", "shatavari"
   ],
   others: [
-    "fodder", "dried-leaves", "bamboo", "sugarcane", "tea", "coffee", "cotton"
+    "fodder", "dried-leaves", "bamboo", "sugarcane", "tea", "coffee", "cotton",
+    "hara-chara", "tooda"
   ]
 });
 

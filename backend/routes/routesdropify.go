@@ -11,10 +11,10 @@ import (
 )
 
 func AddStaticRoutes(router *httprouter.Router) {
-	// Serve static uploaded files using standard http.FileServer
+	// Serve static uploaded files directly using standard file server
 	router.ServeFiles("/static/uploads/*filepath", http.Dir("static/uploads"))
 
-	// Proxy handler for external media using standard HandlerFunc
+	// Proxy handler for external media supporting both query parameter & wildcard paths
 	router.HandlerFunc(http.MethodGet, "/static/proxy/*url", filemgr.ProxyHandler)
 	router.HandlerFunc(http.MethodGet, "/static/proxy", filemgr.ProxyHandler)
 }
@@ -26,7 +26,7 @@ func AddFiledropRoutes(
 ) {
 	authMid := middleware.Authenticate(app)
 
-	// Combine middleware: Rate Limit -> Auth -> Handler
+	// Combine middleware: Rate Limit -> Auth
 	filedropChain := middleware.Chain(
 		rateLimiter.Limit,
 		authMid,

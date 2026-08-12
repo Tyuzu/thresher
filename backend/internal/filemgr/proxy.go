@@ -3,10 +3,14 @@ package filemgr
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"image"
 	"image/jpeg"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -38,11 +42,13 @@ var (
 	encSem          = make(chan struct{}, MaxEncoders)
 )
 
-// ProxyHandler updated to standard http.HandlerFunc signature
+// ProxyHandler fetches external images, resizes/caches them safely, and serves content.
 func ProxyHandler(w http.ResponseWriter, r *http.Request) {
-	// Extract raw target URL from route path or query string
-	rawTarget := strings.TrimPrefix(r.URL.Path, "/static/proxy/")
-	if rawTarget == "" || rawTarget == "/static/proxy" {
+	// Extract raw target URL from either route path (/static/proxy/https://...) or query parameter (?url=https://...)
+	rawTarget := strings.TrimPrefix(r.URL.Path, "/static/proxy")
+	rawTarget = strings.TrimPrefix(rawTarget, "/")
+
+	if rawTarget == "" {
 		rawTarget = r.URL.Query().Get("url")
 	}
 
@@ -68,17 +74,19 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request) {
 	cacheKey := target + "|" + r.URL.RawQuery
 	cachePath := filepath.Join(CacheDir, hashURL(cacheKey))
 
-	if fi, err := os.Stat(cachePath); err == nil && time.Since(fi.ModTime()) < CacheMaxAge { // #nosec G703
-		http.ServeFile(w, r, cachePath) // #nosec G703
+	// Return cached version if fresh
+	if fi, err := os.Stat(cachePath); err == nil && time.Since(fi.ModTime()) < CacheMaxAge {
+		serveCacheFile(w, r, cachePath)
 		return
 	}
 
 	wParam, _ := strconv.Atoi(r.URL.Query().Get("w"))
 	hParam, _ := strconv.Atoi(r.URL.Query().Get("h"))
 	qParam, _ := strconv.Atoi(r.URL.Query().Get("q"))
-	if qParam <= 0 {
+	if qParam <= 0 || qParam > 100 {
 		qParam = 80
 	}
+
 	format := strings.ToLower(r.URL.Query().Get("format"))
 	if format == "" || (format != "jpeg" && format != "jpg") {
 		format = "jpeg"
@@ -102,11 +110,11 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "stream fail", http.StatusBadGateway)
 			return
 		}
-		w.Header().Set("Cache-Control", "public, max-age=86400")
-		http.ServeFile(w, r, cachePath) // #nosec G703
+		serveCacheFile(w, r, cachePath)
 		return
 	}
 
+	// Read initial header bytes to probe image dimensions safely
 	head, err := io.ReadAll(io.LimitReader(resp.Body, ProbeLimit))
 	if err != nil && err != io.EOF {
 		http.Error(w, "probe fail", http.StatusBadGateway)
@@ -125,8 +133,9 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	full, err := io.ReadAll(io.MultiReader(bytes.NewReader(head), resp.Body))
-	if err != nil || int64(len(full)) > MaxImageBytes {
+	fullReader := io.MultiReader(bytes.NewReader(head), resp.Body)
+	full, err := io.ReadAll(io.LimitReader(fullReader, MaxImageBytes))
+	if err != nil {
 		streamFallback(w, r, cachePath, contentType, head, resp.Body)
 		return
 	}
@@ -153,16 +162,38 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	serveCacheFile(w, r, cachePath)
+}
+
+// serveCacheFile directly streams the file on disk to the client using http.ServeContent,
+// avoiding path-resolution issues present in http.ServeFile when routing through handlers.
+func serveCacheFile(w http.ResponseWriter, r *http.Request, cachePath string) {
+	file, err := os.Open(cachePath)
+	if err != nil {
+		http.Error(w, "file read error", http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	fi, err := file.Stat()
+	if err != nil {
+		http.Error(w, "file stat error", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Cache-Control", "public, max-age=86400")
-	http.ServeFile(w, r, cachePath) // #nosec G703
+	http.ServeContent(w, r, filepath.Base(cachePath), fi.ModTime(), file)
+}
+
+func hashURL(input string) string {
+	h := sha256.Sum256([]byte(input))
+	return hex.EncodeToString(h[:])
 }
 
 func normalizeTarget(raw string) (string, error) {
 	raw = strings.TrimSpace(raw)
-	raw = strings.TrimPrefix(raw, "/")
-
 	if raw == "" {
-		return "", fmt.Errorf("empty url")
+		return "", errors.New("empty url")
 	}
 
 	if u, err := url.PathUnescape(raw); err == nil {
@@ -179,11 +210,11 @@ func normalizeTarget(raw string) (string, error) {
 	}
 
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return "", fmt.Errorf("unsupported scheme")
+		return "", errors.New("unsupported scheme")
 	}
 
 	if u.Host == "" {
-		return "", fmt.Errorf("missing host")
+		return "", errors.New("missing host")
 	}
 
 	return u.String(), nil
@@ -200,15 +231,28 @@ func isAllowedHost(host string) bool {
 	if len(DomainAllowlist) > 0 && !DomainAllowlist[host] {
 		return false
 	}
-	if err := validateRemoteHost("https://" + host); err != nil {
+
+	// Resolve IP addresses and prevent targeting internal or loopback addresses
+	ips, err := net.LookupIP(host)
+	if err != nil || len(ips) == 0 {
 		return false
+	}
+
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+			return false
+		}
 	}
 	return true
 }
 
 func fetchWithContext(ctx context.Context, target string) (*http.Response, error) {
-	fetchSem <- struct{}{}
-	defer func() { <-fetchSem }()
+	select {
+	case fetchSem <- struct{}{}:
+		defer func() { <-fetchSem }()
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	if err != nil {
@@ -224,8 +268,7 @@ func streamFallback(w http.ResponseWriter, r *http.Request, cachePath, contentTy
 		http.Error(w, "stream fail", http.StatusBadGateway)
 		return
 	}
-	w.Header().Set("Cache-Control", "public, max-age=86400")
-	http.ServeFile(w, r, cachePath) // #nosec G703
+	serveCacheFile(w, r, cachePath)
 }
 
 func streamToCache(src io.Reader, cachePath string) error {
@@ -237,7 +280,7 @@ func streamToCache(src io.Reader, cachePath string) error {
 
 func saveAtomically(path string, writeFn func(*os.File) error) error {
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o750); err != nil { // #nosec G703
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return err
 	}
 	tmp, err := os.CreateTemp(dir, ".cache-*")
@@ -249,7 +292,7 @@ func saveAtomically(path string, writeFn func(*os.File) error) error {
 	defer func() {
 		_ = tmp.Close()
 		if cleanup {
-			_ = os.Remove(tmpName) // #nosec G703
+			_ = os.Remove(tmpName)
 		}
 	}()
 
@@ -262,7 +305,7 @@ func saveAtomically(path string, writeFn func(*os.File) error) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	if err := os.Rename(tmpName, path); err != nil { // #nosec G703
+	if err := os.Rename(tmpName, path); err != nil {
 		return err
 	}
 	cleanup = false
@@ -270,15 +313,15 @@ func saveAtomically(path string, writeFn func(*os.File) error) error {
 }
 
 func encode(img image.Image, cachePath, format string, quality int) error {
-	encSem <- struct{}{}
-	defer func() { <-encSem }()
+	_ = format
+	select {
+	case encSem <- struct{}{}:
+		defer func() { <-encSem }()
+	case <-time.After(5 * time.Second):
+		return fmt.Errorf("encoding semaphore timeout")
+	}
 
 	return saveAtomically(cachePath, func(f *os.File) error {
-		switch format {
-		case "jpeg", "jpg":
-			return jpeg.Encode(f, img, &jpeg.Options{Quality: quality})
-		default:
-			return jpeg.Encode(f, img, &jpeg.Options{Quality: quality})
-		}
+		return jpeg.Encode(f, img, &jpeg.Options{Quality: quality})
 	})
 }
