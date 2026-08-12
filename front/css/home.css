@@ -11,6 +11,7 @@
     margin: 0 auto;
     font-family: var(--font-body);
     */
+    padding: 1rem;
     color: var(--color-fg);
     background-color: var(--color-bg);
 }

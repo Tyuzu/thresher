@@ -55,8 +55,10 @@ const impressionObserver = (typeof window !== "undefined" && "IntersectionObserv
 async function defaultAdNetworkFetcher(slotEl) {
   const page = slotEl.getAttribute("data-page") || "home";
   const position = slotEl.getAttribute("data-position") || "";
+  const category = slotEl.getAttribute("data-category") || "";
 
-  const queryParams = new URLSearchParams({ page, position });
+  // Pass all parameters expected by Go handler
+  const queryParams = new URLSearchParams({ page, position, category });
   const response = await fetch(`/api/v1/sda/sda?${queryParams.toString()}`, {
     method: "GET",
     headers: { "Accept": "application/json" }
@@ -193,7 +195,6 @@ function startRefreshTimer(slotEl, config) {
       console.warn(`[Ad System] Auto-refreshing slot: ${slotEl.id}`);
     }
 
-    // Reset ad state to allow re-fetching
     slotEl.setAttribute("data-ad-state", "waiting");
     triggerAdInitialization(slotEl, config);
   }, interval);
@@ -208,10 +209,6 @@ function stopRefreshTimer(slotEl) {
   }
 }
 
-/**
- * Destroys an ad slot and cleans up all observers and timers.
- * Call this when unmounting components in single-page apps.
- */
 export function destroyAdSlot(slotEl) {
   if (!slotEl) return;
   stopRefreshTimer(slotEl);
@@ -226,6 +223,7 @@ export function advertEmbed(page, position = "", options = {}) {
   const resolvedPage = resolvePageContext(page);
 
   const {
+    category = "",
     classes = "",
     fallbackText = t("common.advertisement", {}, "Advertisement"),
     adNetworkInit = null,
@@ -237,7 +235,6 @@ export function advertEmbed(page, position = "", options = {}) {
   } = options;
 
   const slotId = `ad-slot-${resolvedPage}-${position || "default"}-${adCounter}`;
-
   const styleMinH = typeof height === "number" ? `${height}px` : height;
 
   const slotEl = createElement("div", {
@@ -245,6 +242,7 @@ export function advertEmbed(page, position = "", options = {}) {
     class: `ad-slot ${classes}`.trim(),
     "data-page": resolvedPage,
     "data-position": position,
+    "data-category": category,
     "data-ad-state": "waiting",
     style: `min-height: ${styleMinH}; display: block;`
   }, [
@@ -254,7 +252,7 @@ export function advertEmbed(page, position = "", options = {}) {
   const config = { adNetworkInit, fallbackNetworks, refreshInterval, debug };
 
   if (debug) {
-    console.warn(`[Ad System] Created slot ${slotId} [${width}x${height}] (Page: ${resolvedPage}, Refresh: ${refreshInterval}ms)`);
+    console.warn(`[Ad System] Created slot ${slotId} [${width}x${height}] (Page: ${resolvedPage}, Category: ${category}, Refresh: ${refreshInterval}ms)`);
   }
 
   if (sharedAdObserver) {

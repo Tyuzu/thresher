@@ -6,17 +6,23 @@ let activeRequest = 0;
 
 // Cache the Promises rather than data objects to resolve race-condition fetches
 const cache = new Map();
-// Cache the PluralRules instance to save massive CPU iteration cycles
+// Cache the PluralRules instance to save CPU iteration cycles
 let cachedPluralRules = null;
 
 const SUPPORTED_LANGS = ["en", "es", "fr", "hi", "ar", "ja"];
 const FALLBACK_LANG = "en";
 
 function fetchTranslations(lang) {
-  return fetch(`/i18n/${lang}.json`).then(res => {
-    if (!res.ok) throw new Error(`Failed to load ${lang}`);
-    return res.json();
-  });
+  return fetch(`/i18n/${lang}.json`)
+    .then(res => {
+      if (!res.ok) throw new Error(`Failed to load ${lang}`);
+      return res.json();
+    })
+    .catch(err => {
+      // Evict failed requests so future retries can attempt a fresh fetch
+      cache.delete(lang);
+      throw err;
+    });
 }
 
 async function loadTranslations(lang) {
@@ -94,10 +100,10 @@ export function t(key, vars = {}, fallback = "") {
     if (plural) template = plural;
   }
 
-  if (!template) {
-    // process.env checking checks safely depending on standard bundle outputs
+  // Ensure template is a valid string/number (prevent [object Object] output on parent keys)
+  if (!template || typeof template === "object") {
     if (import.meta.env?.DEV) {
-      console.warn(`Missing translation: ${key}`);
+      console.warn(`Missing or non-string translation key: ${key}`);
     }
     template = fallback || key;
   }
