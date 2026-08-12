@@ -13,7 +13,7 @@ const SUPPORTED_LANGS = ["en", "es", "fr", "hi", "ar", "ja"];
 const FALLBACK_LANG = "en";
 
 function fetchTranslations(lang) {
-  return fetch(`/static/i18n/${lang}.json`).then(res => {
+  return fetch(`/i18n/${lang}.json`).then(res => {
     if (!res.ok) throw new Error(`Failed to load ${lang}`);
     return res.json();
   });
