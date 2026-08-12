@@ -4,7 +4,7 @@
    ========================================================================== */
 
 /* Main Container & Page Layout */
-#content.content-main {
+/* #content.content-main {
   width: 100%;
   max-width: var(--max-width-xl);
   margin: 0 auto;
@@ -12,9 +12,10 @@
   font-family: var(--font-body);
   color: var(--color-fg);
   background-color: var(--color-bg);
-}
+} */
 
 .two-column.posts-page {
+  padding: var(--space-sm);
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-lg);

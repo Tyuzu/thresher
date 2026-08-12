@@ -3,6 +3,7 @@
   flex-direction: row;
   height: calc(94vh);
   background-color: var(--color-surface);
+  padding: var(--space-sm);
 }
 
 .chat-topbar {

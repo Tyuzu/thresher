@@ -6,6 +6,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-lg);
+  padding: var(--space-sm);
 }
 
 @media (min-width: 1024px) {

@@ -8,7 +8,6 @@
   width: 100%;
   max-width: var(--max-width-md); /* Keeps the layout clean and compact */
   margin: 0 auto;
-  padding: var(--space-md);
   box-sizing: border-box;
 }
 
@@ -169,6 +168,7 @@
 .edit-btn {
   background-color: var(--color-btn-bg);
   color: var(--color-btn-fg);
+  border: 1px solid transparent;
 }
 
 .edit-btn:hover {
@@ -287,6 +287,7 @@
 }
 
 /* Sub-Tab Segment Pill Bar */
+/*
 .content-tab-buttons,
 .subcontent-tab-buttons {
   display: flex;
@@ -317,7 +318,7 @@
 .tab-button:hover:not(.active) {
   color: var(--color-fg);
 }
-
+*/
 /* ── Entity List & Card Items ── */
 .entity-list {
   list-style: none;

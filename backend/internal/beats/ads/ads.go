@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"naevis/infra"
+	"naevis/utils"
 )
 
 var (
@@ -16,6 +17,7 @@ var (
 	defaultAds = []Ad{
 		{
 			ID:          "1",
+			Type:        TypeExternal,
 			Title:       "Tech Gadget Sale",
 			Description: "Get the latest gadgets at unbeatable prices!",
 			Image:       "https://via.placeholder.com/300x250?text=Tech+Ad",
@@ -23,9 +25,11 @@ var (
 			Category:    "tech",
 			Page:        "recipes",
 			Position:    "inbody",
+			Status:      "active",
 		},
 		{
 			ID:          "2",
+			Type:        TypeExternal,
 			Title:       "Travel Deals",
 			Description: "Explore the world with our exclusive travel packages.",
 			Image:       "https://via.placeholder.com/300x250?text=Travel+Ad",
@@ -33,9 +37,11 @@ var (
 			Category:    "travel",
 			Page:        "home",
 			Position:    "aside",
+			Status:      "active",
 		},
 		{
 			ID:          "3",
+			Type:        TypeExternal,
 			Title:       "Local Restaurant",
 			Description: "Taste the best food in town at amazing discounts.",
 			Image:       "https://via.placeholder.com/728x90?text=Food+Banner",
@@ -43,6 +49,7 @@ var (
 			Category:    "food",
 			Page:        "home",
 			Position:    "main-bottom",
+			Status:      "active",
 		},
 	}
 )
@@ -60,8 +67,6 @@ func getSafeDefaultAds() []Ad {
 // GetAds handles the API request to fetch an ad for a specific slot.
 func GetAds(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
@@ -168,12 +173,12 @@ func GetAds(app *infra.Deps) http.HandlerFunc {
 		// 4. Return Ad or Error
 		// ---------------------------------------------------------
 		if len(candidates) == 0 {
-			http.Error(w, `{"error":"No ads available"}`, http.StatusNotFound)
+			utils.RespondWithError(w, http.StatusNotFound, "No ads available")
 			return
 		}
 
 		selectedAd := candidates[rand.N(len(candidates))]
-		_ = json.NewEncoder(w).Encode(selectedAd)
+		utils.RespondWithJSON(w, http.StatusOK, selectedAd)
 	}
 }
 

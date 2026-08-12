@@ -6,7 +6,6 @@ import Button from "../../components/base/Button.js";
 
 import { toggleAction } from "../beats/toggleFollows.js";
 import { meChat } from "../mechat/plugnplay.js";
-// import {userChatInit} from "../chats/chatPage.js";
 
 // Reuse appendChildren from profileImages.js or redefine here if needed
 function appendChildren(parent, ...children) {
@@ -42,8 +41,6 @@ function createProfileDetails(profile, isLoggedIn) {
     return profileDetails;
 }
 
-
-
 /**
  * Follow a user
  */
@@ -58,44 +55,50 @@ function FollowUser(followBtn, userId) {
     });
 }
 
-
-
 function createProfileActions(profile, isLoggedIn) {
     const profileActions = document.createElement("div");
     profileActions.className = "profile-actions";
 
-    if (profile.userid === getState("user")) {
-        const logoutButton = document.createElement("button");
-        logoutButton.className = "dropdown-item logout-btn";
-        logoutButton.textContent = "Logout";
-        logoutButton.addEventListener("click", async () => await logout());
+    const currentUser = getState("user");
+
+    // Owner Actions (Logout, Edit Profile)
+    if (profile.userid === currentUser) {
+        const logoutButton = Button(
+            "Logout",
+            "logout-btn",
+            {
+                click: async () => await logout()
+            },
+            "dropdown-item logout-btn"
+        );
         profileActions.appendChild(logoutButton);
 
-        const editButton = document.createElement("button");
-        editButton.className = "btn edit-btn";
-        editButton.dataset.action = "edit-profile";
-        editButton.textContent = "Edit Profile";
+        const editButton = Button(
+            "Edit Profile",
+            "edit-profile-btn",
+            {},
+            "btn edit-btn",
+            {},
+            { "data-action": "edit-profile" }
+        );
         profileActions.appendChild(editButton);
     }
 
-
-    const currentUser = getState("user");
-
-    // Profile Actions (Follow, Message, Report)
+    // Profile Actions for other users (Follow, Message, Report)
     if (isLoggedIn && profile.userid !== currentUser) {
         const followButton = Button(
             profile.is_following ? "Unfollow" : "Follow",
             "follow-btn",
             {
-                // click: () => toggleFollow(profile.userid, followButton, profile)
                 click: () => FollowUser(followButton, profile.userid)
             },
             "btn follow-button",
-            { backgroundColor: "green" }
+            { backgroundColor: "green" },
+            {
+                "data-action": "toggle-follow",
+                "data-userid": profile.userid
+            }
         );
-
-        followButton.dataset.action = "toggle-follow";
-        followButton.dataset.userid = profile.userid;
         profileActions.appendChild(followButton);
 
         const sendMessagebtn = Button(
@@ -116,8 +119,7 @@ function createProfileActions(profile, isLoggedIn) {
                     reportEntity(profile.userid, "user");
                 }
             },
-            "report-btn",
-            {}
+            "report-btn"
         );
         profileActions.appendChild(reportButton);
     }
@@ -142,7 +144,6 @@ function createProfileInfo(profile) {
         strongLabel.textContent = label + ":";
         infoItem.appendChild(strongLabel);
 
-        // If value is a DOM element, append it; otherwise, append text
         if (value instanceof Node) {
             infoItem.appendChild(document.createTextNode(" "));
             infoItem.appendChild(value);
@@ -155,7 +156,6 @@ function createProfileInfo(profile) {
 
     return profileInfo;
 }
-
 
 function createStatistics(profile) {
     const statistics = document.createElement("div");

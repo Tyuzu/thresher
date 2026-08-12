@@ -4,6 +4,7 @@
   height: 100vh;
   background-color: var(--color-bg);
   color: var(--color-fg);
+  padding: var(--space-sm);
 }
 
 /* === Sidebar === */

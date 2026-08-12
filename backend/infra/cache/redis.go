@@ -61,6 +61,29 @@ func (r *RedisCache) Del(ctx context.Context, key string) error {
 	return r.client.Del(ctx, key).Err()
 }
 
+// FlushPattern uses Redis SCAN to safely iterate and delete keys matching a pattern without blocking Redis.
+func (r *RedisCache) FlushPattern(ctx context.Context, pattern string) error {
+	var cursor uint64
+	for {
+		keys, nextCursor, err := r.client.Scan(ctx, cursor, pattern, 100).Result()
+		if err != nil {
+			return err
+		}
+
+		if len(keys) > 0 {
+			if err := r.client.Del(ctx, keys...).Err(); err != nil {
+				return err
+			}
+		}
+
+		cursor = nextCursor
+		if cursor == 0 {
+			break
+		}
+	}
+	return nil
+}
+
 /* -------------------- Hash -------------------- */
 
 func (r *RedisCache) HSet(ctx context.Context, key, field string, value []byte) error {

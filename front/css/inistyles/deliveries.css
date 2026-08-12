@@ -2,6 +2,10 @@
    Deliveries Overview & Catalog Styles
    ========================================================================== */
 
+.deliveries-page {
+  padding: var(--space-sm);
+}
+
 /* Header & Controls Bar */
 .deliveries-header-row {
   display: flex;

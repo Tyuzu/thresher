@@ -67,21 +67,27 @@ func AddAutocompleteRoutes(router *httprouter.Router, app *infra.Deps, rateLimit
 	router.HandlerFunc(http.MethodGet, "/api/v1/ac/users", rateLimiter.Limit(autocomplete.AutocompleteUsers(app)))
 }
 
-// AddAdsRoutes registers the ad system API routes
 func AddAdsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	// Ad Serving Endpoint
+	authmidware := middleware.Authenticate(app)
+	// Public Serving & Analytics Endpoints
 	router.HandlerFunc(http.MethodGet, "/api/v1/sda/sda", rateLimiter.Limit(middleware.OptionalAuth(ads.GetAds(app))))
 	router.HandlerFunc(http.MethodOptions, "/api/v1/sda/sda", middleware.OptionalAuth(ads.GetAds(app)))
 
-	// Impression Tracking (Fired via sendBeacon)
 	router.HandlerFunc(http.MethodPost, "/api/v1/sda/track-impression", rateLimiter.Limit(middleware.OptionalAuth(ads.TrackImpression(app))))
 	router.HandlerFunc(http.MethodGet, "/api/v1/sda/track-impression", rateLimiter.Limit(middleware.OptionalAuth(ads.TrackImpression(app))))
 	router.HandlerFunc(http.MethodOptions, "/api/v1/sda/track-impression", middleware.OptionalAuth(ads.TrackImpression(app)))
 
-	// Click Tracking (Fired via sendBeacon)
 	router.HandlerFunc(http.MethodPost, "/api/v1/sda/track-click", rateLimiter.Limit(middleware.OptionalAuth(ads.TrackClick(app))))
 	router.HandlerFunc(http.MethodGet, "/api/v1/sda/track-click", rateLimiter.Limit(middleware.OptionalAuth(ads.TrackClick(app))))
 	router.HandlerFunc(http.MethodOptions, "/api/v1/sda/track-click", middleware.OptionalAuth(ads.TrackClick(app)))
+
+	// Admin / Management CRUD Routes (Require Auth)
+	router.HandlerFunc(http.MethodPost, "/api/v1/admin/ads", authmidware(ads.CreateAd(app)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/admin/ads/promote-post", authmidware(ads.PromotePostToAd(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/admin/ads", authmidware(ads.ListAds(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/admin/ads/:id", authmidware(ads.GetAdByID(app)))
+	router.HandlerFunc(http.MethodPut, "/api/v1/admin/ads/:id", authmidware(ads.UpdateAd(app)))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/admin/ads/:id", authmidware(ads.DeleteAd(app)))
 }
 
 func AddHashtagRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {

@@ -2,7 +2,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-lg);
-  /* padding: var(--container-padding); */
+  padding: var(--space-sm);
   max-width: var(--max-width);
   margin: 0 auto;
   /* background-color: var(--color-bg); */
