@@ -13,40 +13,24 @@ export async function displayHireWorkers(isLoggedIn, container) {
   const PAGE_NAME = "hire-workers";
 
   // ---------- SIDEBAR ----------
-  const asideChildren = [];
-  if (isLoggedIn) {
-    asideChildren.push(
-      Button("Create Worker Profile", "", { click: () => navigate("/baitos/create-profile") }, "buttonx")
-    );
-  }
-
-  // Sidebar Ad: 300x250 Medium Rectangle with 30s auto-refresh
-  asideChildren.push(
-    adspace("aside", PAGE_NAME, {
+  const asideContent = createAsideContent({
+    title: "Actions",
+    actions: isLoggedIn
+      ? [Button("Create Worker Profile", "", { click: () => navigate("/baitos/create-profile") }, "buttonx")]
+      : [],
+    showAd: true,
+    page: PAGE_NAME,
+    adPosition: "aside",
+    adPlacement: "bottom",
+    adOptions: {
+      layout: "vertical",
       width: 300,
       height: 250,
       refreshInterval: 30000
-    })
-  );
-
-  const asideContent = createAsideContent({
-    title: "Actions",
-    children: asideChildren,
-    showAd: false // Handled directly via asideChildren to avoid duplicate slots
+    }
   });
 
-  // ---------- MAIN CONTENT ----------
-  const mainContent = [];
-
-  // Title
-  mainContent.push(createElement("h1", {}, ["Find Skilled Workers"]));
-
-  // Filters & View Toggle
-  const filterContainer = createElement("section", {
-    class: "workers-filters",
-    "aria-label": "Search and view options"
-  });
-
+  // ---------- MAIN CONTENT CONTROLS ----------
   const searchInput = createElement("input", {
     type: "search",
     placeholder: "Search by name, skills, or roles...",
@@ -69,24 +53,29 @@ export async function displayHireWorkers(isLoggedIn, container) {
     "buttonx secondary"
   );
 
-  filterContainer.append(searchInput, toggleViewBtn);
-  mainContent.push(filterContainer);
-
-  // In-body Leaderboard Ad (728x90) below filters with 45s auto-refresh
-  mainContent.push(
-    adspace("inbody", PAGE_NAME, {
-      width: 728,
-      height: 90,
-      refreshInterval: 45000
-    })
+  const filterContainer = createElement(
+    "section",
+    { class: "workers-filters", "aria-label": "Search and view options" },
+    [searchInput, toggleViewBtn]
   );
 
-  // List Section
   const list = createElement("section", {
     class: "workers-list",
     "aria-label": "Workers list"
   });
-  mainContent.push(list);
+
+  // ---------- MAIN CONTENT ARRAY ----------
+  const mainContent = [
+    createElement("h1", {}, ["Find Skilled Workers"]),
+    filterContainer,
+    adspace("inbody", PAGE_NAME, {
+      layout: "horizontal",
+      width: 728,
+      height: 90,
+      refreshInterval: 45000
+    }),
+    list
+  ];
 
   // ---------- LAYOUT ----------
   const layout = createMainLayout({
@@ -129,6 +118,7 @@ export async function displayHireWorkers(isLoggedIn, container) {
       if ((idx + 1) % 5 === 0) {
         list.append(
           adspace("inlist", PAGE_NAME, {
+            layout: "vertical",
             width: "100%",
             height: 120
           })

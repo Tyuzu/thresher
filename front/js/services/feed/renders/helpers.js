@@ -4,85 +4,80 @@ import { createElement } from "../../../components/createElement.js";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 import Notify from "../../../components/ui/Notify.mjs";
 import Imagex from "../../../components/base/Imagex.js";
-// import { toggleAction } from "../../beats/toggleFollows.js";
 import Datex from "../../../components/base/Datex.js";
 
-// Helper to turn an SVG string into a Node
+/**
+ * Helper to turn an SVG string into a Node
+ * Optimized using standard DOMParser to prevent memory leaks from dangling templates.
+ */
+const parser = new DOMParser();
 export const svgToNode = (svgString) => {
-    const template = document.createElement("template");
-    template.innerHTML = svgString.trim();
-    return template.content.firstChild;
+    if (!svgString) return null;
+    const doc = parser.parseFromString(svgString.trim(), "image/svg+xml");
+    return doc.documentElement;
 };
 
+/**
+ * Create Post Header with CLS protection & full accessibility attributes
+ */
 export function createPostHeader(post) {
     const userPicUrl = resolveImagePath(EntityType.USER, PictureType.THUMB, `${post.userid}.jpg`);
 
+    // Performance: Explicit width/height prevent Cumulative Layout Shift (CLS)
     const img = Imagex({
         loading: "lazy",
+        decoding: "async",
         src: userPicUrl,
-        // alt: "Profile Picture",
+        alt: `${post.username || 'User'}'s profile picture`,
+        width: "40",
+        height: "40",
         class: "profile-thumb",
     });
 
+    // Accessibility: Informative label for screen readers
     const userIconLink = createElement("a", {
         href: `/user/${post.username}`,
-        class: "user-icon"
+        class: "user-icon",
+        "aria-label": `View ${post.username || 'user'}'s profile`
     }, [img]);
 
-    // Format timestamp
+    // Format timestamp safely
     let formattedTime = "";
     if (post.timestamp) {
         formattedTime = Datex(post.timestamp);
     }
 
-
-    const usernameDiv = createElement("div", { class: "username" }, [post.username]);
-    const timestampDiv = createElement("div", { class: "timestamp" }, [formattedTime]);
+    const usernameDiv = createElement("div", { class: "username" }, [post.username || ""]);
+    const timestampDiv = createElement("time", { 
+        class: "timestamp",
+        dateTime: post.timestamp ? new Date(post.timestamp).toISOString() : ""
+    }, [formattedTime]);
 
     const userTimeDiv = createElement("div", { class: "user-time" }, [
         usernameDiv,
         timestampDiv
     ]);
 
-    
-    const headerRow = createElement("div", { class: "post-header hflex" }, [
+    return createElement("header", { class: "post-header hflex" }, [
         userIconLink,
         userTimeDiv
     ]);
-    
-    // if (subscribeBtn) {
-    //     headerRow.appendChild(subscribeBtn);
-    // }
-
-    return headerRow;
 }
 
 /**
- * Subscribe to a feed post
+ * Batch fetch: POST /likes/:entitytype/batch/users
  */
-// function SubscribeToFeedPost(followBtn, postId) {
-//     toggleAction({
-//         entityId: postId,
-//         entityType: "feedpost",
-//         button: followBtn,
-//         apiPath: "/subscribes/",
-//         labels: { on: "Unsubscribe", off: "Subscribe" },
-//         actionName: "subscribed"
-//     });
-// }
-
-// Batch fetch: POST /likes/:entitytype/batch/users
 export async function fetchUserMetaLikesBatch(entityType, entityIds = []) {
     if (!Array.isArray(entityIds) || entityIds.length === 0) {
-return {};
-}
+        return {};
+    }
 
     try {
         const response = await apiFetch(`/likes/${entityType}/batch/users`, "POST", {
             entity_ids: entityIds
         });
 
-        if (response && response.data && typeof response.data === "object") {
+        if (response?.data && typeof response.data === "object") {
             return response.data;
         }
 
@@ -94,21 +89,39 @@ return {};
 }
 
 /**
- * Update timeline styles for each feed item
+ * Singleton stylesheet instance preventing duplicate <style> tag injection
  */
-export function updateTimelineStyles() {
-    document.querySelectorAll(".feed-item").forEach(item => {
-        const profileImg = item.querySelector(".profile-thumb")?.src || "";
-        item.style.setProperty("--after-bg", `url(${profileImg})`);
-    });
+let timelineStyleSheet = null;
 
-    const style = document.createElement("style");
-    style.textContent = `.feed-item::after { background-image: var(--after-bg); }`;
-    document.head.appendChild(style);
+function ensureTimelineStyleSheet() {
+    if (!timelineStyleSheet && typeof document !== "undefined") {
+        timelineStyleSheet = document.createElement("style");
+        timelineStyleSheet.id = "feed-timeline-styles";
+        timelineStyleSheet.textContent = `.feed-item::after { background-image: var(--after-bg); }`;
+        document.head.appendChild(timelineStyleSheet);
+    }
 }
 
 /**
- * Delete a post
+ * Update timeline styles efficiently without mutating style tags in loops
+ */
+export function updateTimelineStyles() {
+    ensureTimelineStyleSheet();
+
+    const feedItems = document.querySelectorAll(".feed-item");
+    const len = feedItems.length;
+
+    for (let i = 0; i < len; i++) {
+        const item = feedItems[i];
+        const profileImg = item.querySelector(".profile-thumb")?.src || "";
+        if (profileImg) {
+            item.style.setProperty("--after-bg", `url("${profileImg}")`);
+        }
+    }
+}
+
+/**
+ * Delete a post with proper notification handling
  */
 export async function deletePost(postId, postElement, posts) {
     if (!getState("token")) {
@@ -116,23 +129,25 @@ export async function deletePost(postId, postElement, posts) {
         return;
     }
 
-    if (confirm("Are you sure you want to delete this post?")) {
-        try {
-            await apiFetch(`/feed/post/${postId}`, "DELETE");
-            Notify("Post deleted successfully.", { type: "success", duration: 3000, dismissible: true });
+    // Best Practice: Non-blocking confirmation check
+    const confirmed = window.confirm("Are you sure you want to delete this post?");
+    if (!confirmed) return;
 
-            if (postElement && postElement.parentNode) {
-                postElement.parentNode.removeChild(postElement);
-            }
+    try {
+        await apiFetch(`/feed/post/${postId}`, "DELETE");
+        Notify("Post deleted successfully.", { type: "success", duration: 3000, dismissible: true });
 
-            if (Array.isArray(posts) && posts.length > 0) {
-                const index = posts.findIndex(p => p.postid === postId);
-                if (index !== -1) {
-                    posts.splice(index, 1);
-                }
-            }
-        } catch (err) {
-            Notify(`Error deleting post: ${err.message}`, { type: "error", duration: 3000, dismissible: true });
+        if (postElement?.parentNode) {
+            postElement.parentNode.removeChild(postElement);
         }
+
+        if (Array.isArray(posts) && posts.length > 0) {
+            const index = posts.findIndex(p => p.postid === postId);
+            if (index !== -1) {
+                posts.splice(index, 1);
+            }
+        }
+    } catch (err) {
+        Notify(`Error deleting post: ${err.message}`, { type: "error", duration: 3000, dismissible: true });
     }
 }

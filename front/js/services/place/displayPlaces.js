@@ -13,39 +13,52 @@ export async function displayPlaces(isLoggedIn, container) {
 
   const PAGE_NAME = "places";
 
-  // ---------- ACTIONS & SIDEBAR ----------
-  const asideChildren = [];
+  // ---------- SIDEBAR SECTIONS ----------
+  const actionButtons = [];
   if (isLoggedIn) {
-    asideChildren.push(
+    actionButtons.push(
       Button("Create Place", "", { click: () => navigate("/create-place") }, "buttonx primary")
     );
   }
 
-  asideChildren.push(
+  actionButtons.push(
     Button("Create Itinerary", "", { click: () => navigate("/itinerary") }, "buttonx primary"),
     Button("Manage Places", "", { click: () => navigate("/places/manage") }, "buttonx secondary"),
     Button("Help / FAQ", "", { click: () => navigate("/help") }, "buttonx secondary")
   );
 
-  // Sidebar Ad: 300x250 Medium Rectangle with 30s auto-refresh
-  asideChildren.push(
-    adspace("aside", PAGE_NAME, {
-      width: 300,
-      height: 250,
-      refreshInterval: 30000
-    })
-  );
+  const actionsWrapper = createElement("div", { class: "aside-actions-group" }, actionButtons);
+
+  // Sidebar Ad component
+  const sidebarAd = adspace("aside", PAGE_NAME, {
+    layout: "vertical",
+    width: 300,
+    height: 250,
+    refreshInterval: 30000
+  });
 
   const asideContent = createAsideContent({
-    title: "Actions",
-    children: asideChildren,
-    showAd: false // Handled directly via asideChildren to prevent duplication
+    title: "Places Overview",
+    sections: [
+      {
+        title: "Actions",
+        content: actionsWrapper,
+        className: "aside-actions-section",
+      },
+      {
+        content: sidebarAd,
+        className: "aside-ad-section",
+      },
+    ],
+    showAd: false, // Handled directly via custom section to prevent duplication
+    page: PAGE_NAME,
   });
 
   // ---------- MAIN HEADER & INBODY AD ----------
   const mainHeader = [
     createElement("h1", {}, ["All Places"]),
     adspace("inbody", PAGE_NAME, {
+      layout: "horizontal",
       width: 728,
       height: 90,
       refreshInterval: 45000
@@ -84,6 +97,7 @@ export async function displayPlaces(isLoggedIn, container) {
       if ((idx + 1) % 5 === 0) {
         list.append(
           adspace("inlist", PAGE_NAME, {
+            layout: "vertical",
             width: "100%",
             height: 120
           })

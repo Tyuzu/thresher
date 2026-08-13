@@ -334,7 +334,7 @@
   flex-direction: column;
   gap: var(--space-md);
 }
-
+*/
 .aside-title {
   margin: 0;
   padding-bottom: var(--space-sm);
@@ -363,7 +363,7 @@
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-heading);
-} */
+}
 
 /* =========================================================
    ACTIONS

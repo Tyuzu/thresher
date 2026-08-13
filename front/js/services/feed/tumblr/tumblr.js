@@ -1,13 +1,25 @@
+import { apiFetch } from "../../../api/api.js";
+import { fetchFeed } from "../fetchFeed.js";
+import { renderNewPost } from "../renderNewPost.js";
 import { createFormGroup } from "../../../components/createFormGroupEnhanced.js";
+import { tposts_text, tposts_video, tposts_photo, tposts_audio } from "../../../components/tumblrSvgs.js";
+import { createIconButton } from "../../../utils/svgIconButton.js";
 import {
   createEl,
   createTabButton,
   createPanel,
   createFileInput,
-  createPreviewContainer
+  createPreviewContainer,
+  renderPreviewList,
+  getCSRFToken
 } from "./tumblrHelpers.js";
-import { tposts_text, tposts_video, tposts_photo, tposts_audio } from "../../../components/tumblrSvgs.js";
-import { createIconButton } from "../../../utils/svgIconButton.js";
+import {
+  appendIfValue,
+  appendTags,
+  clearChildren,
+  uploadFilesInBatches,
+  handleFileUpload
+} from "./tumblrUploader.js";
 
 const MEDIA_ENTITY = "feedpost";
 
@@ -129,8 +141,7 @@ export function displayTumblr(isLoggedIn, root) {
   layout.append(formCon, feedContainer);
   root.append(layout);
 
-  // Lazy load feed after main interface renders
-  setTimeout(() => refreshFeed(feedContainer), 0);
+  refreshFeed(feedContainer);
 
   /* =========================
      CORE STATE CONTROLLERS
@@ -184,7 +195,7 @@ export function displayTumblr(isLoggedIn, root) {
   }
 
   /* =========================
-     UNIFIED MEDIA UPLOADER (LAZY)
+     UNIFIED MEDIA UPLOADER
   ========================= */
 
   function wireMediaUpload(type, input, preview) {
@@ -201,10 +212,6 @@ export function displayTumblr(isLoggedIn, root) {
 
       state.uploading[type] = true;
       updatePublishState();
-
-      // Lazy import uploader helpers only when a file is selected
-      const { uploadFilesInBatches, handleFileUpload, clearChildren } = await import("./tumblrUploader.js");
-      const { renderPreviewList } = await import("./tumblrHelpers.js");
 
       if (type === "image") {
         clearChildren(preview);
@@ -235,28 +242,21 @@ export function displayTumblr(isLoggedIn, root) {
   }
 
   /* =========================
-     DATA TRANSFERS & MUTATIONS (LAZY)
+     DATA TRANSFERS & MUTATIONS
   ========================= */
 
   async function handlePublish() {
     publishBtn.disabled = true;
     try {
-      const payload = await buildPayload();
-      
-      // Dynamic imports on publish action
-      const [{ apiFetch }, { getCSRFToken }, { renderNewPost }] = await Promise.all([
-        import("../../../api/api.js"),
-        import("./tumblrHelpers.js"),
-        import("../renderNewPost.js")
-      ]);
-
+      const payload = buildPayload();
       const csrfToken = await getCSRFToken();
+
       const res = await apiFetch("/feed/post", "POST", payload, {
         headers: { "X-CSRF-Token": csrfToken }
       });
 
       renderNewPost([res.data], 1, feedContainer);
-      await resetState();
+      resetState();
     } catch {
       alert("Failed to publish post.");
     } finally {
@@ -264,8 +264,7 @@ export function displayTumblr(isLoggedIn, root) {
     }
   }
 
-  async function buildPayload() {
-    const { appendIfValue, appendTags } = await import("./tumblrUploader.js");
+  function buildPayload() {
     const { type } = state.activeTab;
     const typeInputs = elements.inputs[type];
     const obj = { type };
@@ -286,9 +285,7 @@ export function displayTumblr(isLoggedIn, root) {
     return obj;
   }
 
-  async function resetState() {
-    const { clearChildren } = await import("./tumblrUploader.js");
-
+  function resetState() {
     Object.values(elements.inputs).forEach(typeMap => {
       Object.values(typeMap).forEach(input => {
         if (input && "value" in input) input.value = "";
@@ -313,7 +310,6 @@ export function displayTumblr(isLoggedIn, root) {
 
   async function refreshFeed(container) {
     try {
-      const { fetchFeed } = await import("../fetchFeed.js");
       await fetchFeed(container);
     } catch {
       alert("Failed to load feed.");

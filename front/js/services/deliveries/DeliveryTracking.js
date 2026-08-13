@@ -26,16 +26,35 @@ export async function DeliveryTracking(container, deliveryId, isLoggedIn) {
   const PAGE_NAME = "delivery-tracking";
 
   // --- ASIDE & QUICK ACTIONS ---
-  const asideChildren = [
+  const actionButtons = [
     Button("← Back to Deliveries", "btn-back", { click: () => navigate("/deliveries") }, "buttonx secondary"),
-    Button("Refresh Status", "btn-refresh", { click: () => DeliveryTracking(container, deliveryId, isLoggedIn) }, "buttonx primary"),
-    adspace("aside", PAGE_NAME, { width: 300, height: 250, refreshInterval: 30000 })
+    Button("Refresh Status", "btn-refresh", { click: () => DeliveryTracking(container, deliveryId, isLoggedIn) }, "buttonx primary")
   ];
+
+  const actionsWrapper = createElement("div", { class: "aside-actions-group" }, actionButtons);
+
+  const sidebarAd = adspace("aside", PAGE_NAME, {
+    layout: "vertical",
+    width: 300,
+    height: 250,
+    refreshInterval: 30000
+  });
 
   const asideContent = createAsideContent({
     title: "Tracking Actions",
-    children: asideChildren,
-    showAd: false
+    sections: [
+      {
+        title: "Actions",
+        content: actionsWrapper,
+        className: "aside-actions-section"
+      },
+      {
+        content: sidebarAd,
+        className: "aside-ad-section"
+      }
+    ],
+    showAd: false, // Handled directly via custom section
+    page: PAGE_NAME
   });
 
   // --- MAIN LAYOUT HEADER ---
@@ -43,7 +62,9 @@ export async function DeliveryTracking(container, deliveryId, isLoggedIn) {
     createElement("div", { class: "tracking-header-title" }, [
       createElement("h1", {}, [`Live Tracking - Order #${deliveryId}`])
     ]),
-    adspace("inbody", PAGE_NAME, { width: 728, height: 90, refreshInterval: 45000 })
+    adspace("inbody", PAGE_NAME, {
+      layout: "horizontal", width: 728, height: 90, refreshInterval: 45000
+    })
   ];
 
   const layout = createMainLayout({

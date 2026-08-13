@@ -14,55 +14,43 @@ export async function displayArtists(container, isLoggedIn) {
   const PAGE_NAME = "artists";
 
   // ---------- SIDEBAR ----------
-  const asideChildren = [];
-  if (isLoggedIn) {
-    asideChildren.push(
-      Button("Create Artist", "", { click: () => navigate("/create-artist") }, "buttonx primary")
-    );
-  }
-
-  // Sidebar Ad: 300x250 medium rectangle with auto-refresh every 30 seconds
-  asideChildren.push(
-    adspace("aside", PAGE_NAME, {
+  const asideContent = createAsideContent({
+    title: "Actions",
+    actions: isLoggedIn
+      ? [Button("Create Artist", "", { click: () => navigate("/create-artist") }, "buttonx primary")]
+      : [],
+    showAd: true,
+    page: PAGE_NAME,
+    adPosition: "aside",
+    adPlacement: "bottom",
+    adOptions: {
+      layout: "vertical",
       width: 300,
       height: 250,
       refreshInterval: 30000
-    })
-  );
-
-  const asideContent = createAsideContent({
-    title: "Actions",
-    children: asideChildren,
-    showAd: false // Handled directly above
+    }
   });
 
   // ---------- MAIN CONTENT ----------
-  const mainContent = [];
-
-  // Title
-  mainContent.push(createElement("h1", {}, ["Artists"]));
-
-  // Filters
-  const filterContainer = createElement("div", { class: "top-controls" });
   const searchInput = createElement("input", { type: "text", placeholder: "Search by name...", class: "sort-box" });
   const categorySelect = createElement("select", { class: "sort-box" }, [
     createElement("option", { value: "" }, ["All Categories"])
   ]);
-  filterContainer.append(searchInput, categorySelect);
-  mainContent.push(filterContainer);
 
-  // In-body Leaderboard Ad (728x90) below filters
-  mainContent.push(
+  const filterContainer = createElement("div", { class: "top-controls" }, [searchInput, categorySelect]);
+  const list = createElement("div", { class: "artists-list" });
+
+  const mainContent = [
+    createElement("h1", {}, ["Artists"]),
+    filterContainer,
     adspace("inbody", PAGE_NAME, {
+      layout: "horizontal",
       width: 728,
       height: 90,
       refreshInterval: 45000
-    })
-  );
-
-  // List
-  const list = createElement("div", { class: "artists-list" });
-  mainContent.push(list);
+    }),
+    list
+  ];
 
   // ---------- LAYOUT ----------
   const layout = createMainLayout({
@@ -109,6 +97,7 @@ export async function displayArtists(container, isLoggedIn) {
       if ((idx + 1) % 5 === 0) {
         list.append(
           adspace("inlist", PAGE_NAME, {
+            layout: "vertical",
             width: "100%",
             height: 120
           })

@@ -6,15 +6,15 @@ import { navigate } from "../../routes/index.js";
 import { createMainLayout } from "../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../components/layout/asideLayout.js";
 import { adspace } from "../../services/ads/newads.js";
-import { 
-  fetchDeliveryById, 
+import {
+  fetchDeliveryById,
   fetchDeliveryTracking,
   fetchDeliveryEvents,
   fetchStatusHistory,
   getProofOfDelivery,
-  cancelDelivery, 
-  claimDelivery, 
-  updateDeliveryStatus 
+  cancelDelivery,
+  claimDelivery,
+  updateDeliveryStatus
 } from "../../services/deliveries/deliveriesApi.js";
 
 export async function displayDelivery(container, deliveryId, options = {}) {
@@ -32,22 +32,44 @@ export async function displayDelivery(container, deliveryId, options = {}) {
   const userRole = options.userRole || localStorage.getItem("user_role") || "courier";
 
   // --- 1. ASIDE LAYOUT ---
-  const asideChildren = [
-    Button("← Back to Deliveries", "btn-back-del", { click: () => navigate("/deliveries") }, "buttonx secondary"),
-    Button("Refresh View", "btn-refresh-del", { click: () => displayDelivery(container, deliveryId, options) }, "buttonx primary"),
-    adspace("aside", PAGE_NAME, { width: 300, height: 250, refreshInterval: 30000 })
+  const actionButtons = [
+    Button("← Back to Deliveries", "btn-back-del", { click: () => navigate("/deliveries") }, "buttonx secondary")
   ];
 
   if (userRole === "sender") {
-    asideChildren.splice(1, 0, 
+    actionButtons.push(
       Button("Create New Delivery", "btn-crt-del", { click: () => navigate("/delivery/create") }, "buttonx primary")
     );
   }
 
+  actionButtons.push(
+    Button("Refresh View", "btn-refresh-del", { click: () => displayDelivery(container, deliveryId, options) }, "buttonx primary")
+  );
+
+  const actionsWrapper = createElement("div", { class: "aside-actions-group" }, actionButtons);
+
+  const sidebarAd = adspace("aside", PAGE_NAME, {
+    layout: "vertical",
+    width: 300,
+    height: 250,
+    refreshInterval: 30000
+  });
+
   const asideContent = createAsideContent({
     title: "Delivery Actions",
-    children: asideChildren,
-    showAd: false
+    sections: [
+      {
+        title: "Actions",
+        content: actionsWrapper,
+        className: "aside-actions-section"
+      },
+      {
+        content: sidebarAd,
+        className: "aside-ad-section"
+      }
+    ],
+    showAd: false, // Handled directly via custom section
+    page: PAGE_NAME
   });
 
   // --- 2. MAIN LAYOUT HEADER ---
@@ -55,7 +77,9 @@ export async function displayDelivery(container, deliveryId, options = {}) {
     createElement("header", { class: "delivery-detail-header-row" }, [
       createElement("h1", {}, [`Delivery Tracking & Details - Order #${deliveryId}`])
     ]),
-    adspace("inbody", PAGE_NAME, { width: 728, height: 90, refreshInterval: 45000 })
+    adspace("inbody", PAGE_NAME, {
+      layout: "horizontal", width: 728, height: 90, refreshInterval: 45000
+    })
   ];
 
   const layout = createMainLayout({
@@ -102,16 +126,16 @@ export async function displayDelivery(container, deliveryId, options = {}) {
     const steps = ["CREATED", "CLAIMED", "PICKED_UP", "IN_TRANSIT", "DELIVERED"];
     const currentStepIndex = steps.indexOf(currentStatus);
 
-    const stepperNode = createElement("nav", { 
+    const stepperNode = createElement("nav", {
       class: "status-stepper-nav",
-      "aria-label": "Delivery progress" 
+      "aria-label": "Delivery progress"
     }, [
-      createElement("ol", { class: "status-stepper" }, 
+      createElement("ol", { class: "status-stepper" },
         steps.map((step, idx) => {
           const isCompleted = idx <= currentStepIndex && currentStatus !== "CANCELLED";
           const isCurrent = idx === currentStepIndex && currentStatus !== "CANCELLED";
           const stepClass = `stepper-step ${isCompleted ? "completed" : "pending"}`;
-          
+
           const stepAttrs = { class: stepClass };
           if (isCurrent) stepAttrs["aria-current"] = "step";
 
@@ -124,27 +148,27 @@ export async function displayDelivery(container, deliveryId, options = {}) {
 
     // --- 5. MAP & LIVE GPS OVERVIEW ---
     const etaDate = tracking.eta ? new Date(tracking.eta) : null;
-    const mapContainer = createElement("section", { 
+    const mapContainer = createElement("section", {
       class: "delivery-live-map",
-      "aria-label": "Live GPS tracking and map" 
+      "aria-label": "Live GPS tracking and map"
     }, [
       createElement("div", { class: "map-content" }, [
         createElement("p", { class: "map-status-text" }, [
-          currentStatus === "IN_TRANSIT" 
-            ? "🛰️ Live GPS Tracking Active (Courier en route)" 
+          currentStatus === "IN_TRANSIT"
+            ? "🛰️ Live GPS Tracking Active (Courier en route)"
             : "📍 Route Overview Map"
         ]),
-        tracking.current_location 
+        tracking.current_location
           ? createElement("p", { class: "map-subtitle" }, [
-              "Current Loc: ",
-              createElement("span", { class: "coordinates" }, [`${tracking.current_location.lat}, ${tracking.current_location.lng}`])
-            ])
+            "Current Loc: ",
+            createElement("span", { class: "coordinates" }, [`${tracking.current_location.lat}, ${tracking.current_location.lng}`])
+          ])
           : "",
-        etaDate 
+        etaDate
           ? createElement("p", { class: "map-subtitle" }, [
-              "ETA: ",
-              createElement("time", { datetime: etaDate.toISOString() }, [Datex(tracking.eta, true)])
-            ])
+            "ETA: ",
+            createElement("time", { datetime: etaDate.toISOString() }, [Datex(tracking.eta, true)])
+          ])
           : ""
       ].filter(Boolean))
     ]);
@@ -216,21 +240,21 @@ export async function displayDelivery(container, deliveryId, options = {}) {
       (a, b) => new Date(b.created_at || b.timestamp || 0) - new Date(a.created_at || a.timestamp || 0)
     );
 
-    const historyList = createElement("ol", { class: "tracking-history-list" }, 
+    const historyList = createElement("ol", { class: "tracking-history-list" },
       combinedLogs.length === 0
         ? [createElement("li", { class: "empty-history" }, ["No status updates recorded yet."])]
         : combinedLogs.map((log) => {
-            const rawTimestamp = log.created_at || log.timestamp || Date.now();
-            const logDate = new Date(rawTimestamp);
+          const rawTimestamp = log.created_at || log.timestamp || Date.now();
+          const logDate = new Date(rawTimestamp);
 
-            return createElement("li", { class: "history-item" }, [
-              createElement("div", { class: "history-timestamp" }, [
-                createElement("time", { datetime: logDate.toISOString() }, [Datex(rawTimestamp, true)])
-              ]),
-              createElement("div", { class: "history-event" }, [log.status || log.event_type || "Event logged"]),
-              log.description ? createElement("div", { class: "history-desc" }, [log.description]) : ""
-            ].filter(Boolean));
-          })
+          return createElement("li", { class: "history-item" }, [
+            createElement("div", { class: "history-timestamp" }, [
+              createElement("time", { datetime: logDate.toISOString() }, [Datex(rawTimestamp, true)])
+            ]),
+            createElement("div", { class: "history-event" }, [log.status || log.event_type || "Event logged"]),
+            log.description ? createElement("div", { class: "history-desc" }, [log.description]) : ""
+          ].filter(Boolean));
+        })
     );
 
     // --- 8. PROOF OF DELIVERY ---
@@ -238,9 +262,9 @@ export async function displayDelivery(container, deliveryId, options = {}) {
     if (proof?.url) {
       const proofDate = proof.timestamp ? new Date(proof.timestamp) : null;
 
-      proofSection = createElement("section", { 
+      proofSection = createElement("section", {
         class: "delivery-info-group proof-section",
-        "aria-labelledby": `proof-heading-${id}` 
+        "aria-labelledby": `proof-heading-${id}`
       }, [
         createElement("h3", { id: `proof-heading-${id}` }, ["Proof of Delivery"]),
         createElement("figure", { class: "proof-content" }, [
@@ -257,14 +281,14 @@ export async function displayDelivery(container, deliveryId, options = {}) {
             })
           ]),
           createElement("figcaption", { class: "proof-details" }, [
-            proof.recipient_name 
-              ? createElement("p", {}, [createElement("strong", {}, ["Received By: "]), proof.recipient_name]) 
+            proof.recipient_name
+              ? createElement("p", {}, [createElement("strong", {}, ["Received By: "]), proof.recipient_name])
               : "",
-            proofDate 
+            proofDate
               ? createElement("p", {}, [
-                  createElement("strong", {}, ["Signed At: "]), 
-                  createElement("time", { datetime: proofDate.toISOString() }, [Datex(proof.timestamp, true)])
-                ]) 
+                createElement("strong", {}, ["Signed At: "]),
+                createElement("time", { datetime: proofDate.toISOString() }, [Datex(proof.timestamp, true)])
+              ])
               : ""
           ].filter(Boolean))
         ])
@@ -274,7 +298,7 @@ export async function displayDelivery(container, deliveryId, options = {}) {
     // --- 9. DETAILS CARD RENDER ---
     const createdAtDate = item.created_at ? new Date(item.created_at) : new Date();
 
-    const card = createElement("article", { 
+    const card = createElement("article", {
       class: "delivery-details-card",
       "aria-labelledby": `delivery-title-${id}`
     }, [
@@ -290,7 +314,7 @@ export async function displayDelivery(container, deliveryId, options = {}) {
         createElement("section", { class: "delivery-info-group", "aria-labelledby": `pickup-heading-${id}` }, [
           createElement("h3", { id: `pickup-heading-${id}` }, ["Pickup Details"]),
           createElement("p", {}, [
-            createElement("strong", {}, ["Address: "]), 
+            createElement("strong", {}, ["Address: "]),
             createElement("address", { class: "address-inline" }, [item.pickup_loc?.address || "N/A"])
           ]),
           createElement("p", {}, [createElement("strong", {}, ["Contact Person: "]), item.pickup_contact || "On site"])
@@ -299,7 +323,7 @@ export async function displayDelivery(container, deliveryId, options = {}) {
         createElement("section", { class: "delivery-info-group", "aria-labelledby": `dropoff-heading-${id}` }, [
           createElement("h3", { id: `dropoff-heading-${id}` }, ["Dropoff Details"]),
           createElement("p", {}, [
-            createElement("strong", {}, ["Address: "]), 
+            createElement("strong", {}, ["Address: "]),
             createElement("address", { class: "address-inline" }, [item.dropoff_loc?.address || "N/A"])
           ]),
           createElement("p", {}, [createElement("strong", {}, ["Contact Person: "]), item.dropoff_contact || "Recipient"])
@@ -310,7 +334,7 @@ export async function displayDelivery(container, deliveryId, options = {}) {
           createElement("p", {}, [createElement("strong", {}, ["Payout: "]), payout]),
           createElement("p", {}, [createElement("strong", {}, ["Vehicle Req: "]), item.vehicle_type || "Standard"]),
           createElement("p", {}, [
-            createElement("strong", {}, ["Created At: "]), 
+            createElement("strong", {}, ["Created At: "]),
             createElement("time", { datetime: createdAtDate.toISOString() }, [Datex(item.created_at || Date.now(), true)])
           ])
         ]),

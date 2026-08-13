@@ -21,6 +21,7 @@ export function YoHome(isLoggedIn, container) {
     createSearchBar(),
     // Sidebar Ad: 300x250 Medium Rectangle with 30s auto-refresh
     adspace("aside", PAGE_NAME, {
+      layout: "vertical",
       width: 300,
       height: 250,
       refreshInterval: 30000
@@ -31,6 +32,7 @@ export function YoHome(isLoggedIn, container) {
   const mainContent = [
     // Top Hero Leaderboard (728x90) with 45s auto-refresh
     adspace("top", PAGE_NAME, {
+      layout: "horizontal",
       width: 728,
       height: 90,
       refreshInterval: 45000
@@ -38,6 +40,7 @@ export function YoHome(isLoggedIn, container) {
     createNavWrapper(),
     // Bottom In-Body Banner (728x90) with 60s auto-refresh
     adspace("bottom", PAGE_NAME, {
+      layout: "horizontal",
       width: 728,
       height: 90,
       refreshInterval: 60000

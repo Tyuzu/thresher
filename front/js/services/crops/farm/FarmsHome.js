@@ -97,97 +97,111 @@ function Grid(isLoggedIn, toggleFavorite) {
   };
 }
 
-// ---------- Sidebar ----------
+// ---------- Sidebar Helper Builders ----------
 
-function Sidebar(isLoggedIn, stateRef) {
-  const staticSections = createElement("div", { class: "aside-static-sections" });
-  const dynamicSections = createElement("div", { class: "aside-dynamic-sections" });
+function buildFavoritesContent(isLoggedIn, stateRef) {
+  if (!isLoggedIn) return null;
 
-  renderCTAFarm(staticSections);
-  renderWeatherWidget(staticSections);
-  renderMap(staticSections);
+  const farmIndex = indexFarmsById(stateRef.farms);
 
-  function renderFavorites(container) {
-    if (!isLoggedIn) return;
+  if (stateRef.favorites.size === 0) {
+    return createElement("p", {}, ["None yet. Click ❤ on a card."]);
+  }
 
-    const farmIndex = indexFarmsById(stateRef.farms);
-    const section = createElement("section", { class: "farm__favorites" }, [
-      createElement("h3", {}, ["Favorites"]),
-    ]);
-
-    if (stateRef.favorites.size === 0) {
-      section.append(createElement("p", {}, ["None yet. Click ❤ on a card."]));
-    } else {
-      const list = createElement("ul", { class: "favorites-list" });
-      stateRef.favorites.forEach((id) => {
-        const farm = farmIndex.get(String(id));
-        if (farm) {
-          list.append(createElement("li", {}, [farm.name]));
-        }
-      });
-      section.append(list);
+  const list = createElement("ul", { class: "favorites-list" });
+  stateRef.favorites.forEach((id) => {
+    const farm = farmIndex.get(String(id));
+    if (farm) {
+      list.append(createElement("li", {}, [farm.name]));
     }
-
-    container.append(section);
-  }
-
-  function renderRatings(container, farms) {
-    const section = createElement("section", { class: "farm__ratings" }, [
-      createElement("h3", {}, ["Top Rated"]),
-    ]);
-
-    const top = getTopRated(farms);
-
-    if (!top.length) {
-      section.append(createElement("p", {}, ["No ratings yet."]));
-    } else {
-      top.forEach((f) => {
-        const rounded = Math.min(5, Math.max(0, Math.round(f.rating)));
-        const stars = "★".repeat(rounded) + "☆".repeat(5 - rounded);
-
-        section.append(
-          createElement("div", { class: "rating" }, [
-            createElement("strong", {}, [f.name]),
-            createElement("span", { class: "rating-stars" }, [stars]),
-          ])
-        );
-      });
-    }
-
-    container.append(section);
-  }
-
-  function renderMap(container) {
-    container.append(
-      createElement("section", { class: "farm__map" }, [
-        createElement("h3", {}, ["Farm Map"]),
-        createElement("div", { class: "farm__map-placeholder" }, [
-          "Map integration point",
-        ]),
-      ])
-    );
-  }
-
-  const asideContentNodes = createAsideContent({
-    title: "Farm Directory",
-    children: [staticSections, dynamicSections],
-    showAd: true,
   });
 
+  return list;
+}
+
+function buildRatingsContent(farms) {
+  const top = getTopRated(farms);
+
+  if (!top.length) {
+    return createElement("p", {}, ["No ratings yet."]);
+  }
+
+  const wrapper = createElement("div", { class: "ratings-list" });
+  top.forEach((f) => {
+    const rounded = Math.min(5, Math.max(0, Math.round(f.rating)));
+    const stars = "★".repeat(rounded) + "☆".repeat(5 - rounded);
+
+    wrapper.append(
+      createElement("div", { class: "rating" }, [
+        createElement("strong", {}, [f.name]),
+        createElement("span", { class: "rating-stars" }, [stars]),
+      ])
+    );
+  });
+
+  return wrapper;
+}
+
+function buildMapContent() {
+  return createElement("div", { class: "farm__map-placeholder" }, [
+    "Map integration point",
+  ]);
+}
+
+// ---------- Sidebar Controller ----------
+
+function Sidebar(isLoggedIn, stateRef) {
+  // Persistent container element for layout stability across renders
+  const container = createElement("aside", { class: "farm-sidebar-wrapper" });
+
+  function render(allFarms, filteredFarms) {
+    const ctaContainer = createElement("div", { class: "cta-wrapper" });
+    renderCTAFarm(ctaContainer);
+
+    const weatherContainer = createElement("div", { class: "weather-wrapper" });
+    renderWeatherWidget(weatherContainer);
+
+    const featuredContainer = createElement("div", { class: "featured-wrapper" });
+    if (allFarms.length) {
+      renderFeaturedFarm(featuredContainer, allFarms[0]);
+    }
+
+    const statsContainer = createElement("div", { class: "stats-wrapper" });
+    renderFarmStats(statsContainer, filteredFarms);
+
+    const favoritesContent = buildFavoritesContent(isLoggedIn, stateRef);
+    const ratingsContent = buildRatingsContent(filteredFarms);
+
+    const sections = [
+      { content: ctaContainer },
+      { content: weatherContainer },
+      { title: "Farm Map", content: buildMapContent(), className: "farm__map" },
+      featuredContainer.hasChildNodes() && { title: "Featured Farm", content: featuredContainer },
+      statsContainer.hasChildNodes() && { title: "Directory Stats", content: statsContainer },
+      favoritesContent && { title: "Favorites", content: favoritesContent, className: "farm__favorites" },
+      ratingsContent && { title: "Top Rated", content: ratingsContent, className: "farm__ratings" },
+    ].filter(Boolean);
+
+    const asideContent = createAsideContent({
+      title: "Farm Directory",
+      sections,
+      showAd: true,
+      page: "farms-list",
+      adPosition: "aside",
+      adOptions : {
+        layout: "vertical"
+      },
+      asContainer: true
+    });
+
+    // Safely update contents of persistent container element
+    const childToAppend = asideContent instanceof Node ? asideContent : asideContent?.container;
+    container.replaceChildren(childToAppend || asideContent);
+  }
+
   return {
-    container: asideContentNodes,
-    render(allFarms, filteredFarms) {
-      dynamicSections.replaceChildren();
-
-      // Show top farm from master list or filtered list
-      if (allFarms.length) {
-        renderFeaturedFarm(dynamicSections, allFarms[0]);
-      }
-
-      renderFarmStats(dynamicSections, filteredFarms);
-      renderFavorites(dynamicSections);
-      renderRatings(dynamicSections, filteredFarms);
-    },
+    container,
+    render,
   };
 }
 
@@ -209,6 +223,9 @@ export async function displayFarms(content, loggedIn) {
   }
 
   const filters = createFilterControls(state, commit);
+
+  // Initial state synchronization before mounting to layout
+  commit();
 
   const layout = createMainLayout({
     mainContent: [filters, grid.container, sentinel],
@@ -238,7 +255,6 @@ export async function displayFarms(content, loggedIn) {
     if (batch.length) {
       state.farms.push(...batch);
       state.page += 1;
-      // End pagination if batch size is less than expected PAGE_SIZE
       if (batch.length < PAGE_SIZE) {
         state.hasMore = false;
         observer.disconnect();

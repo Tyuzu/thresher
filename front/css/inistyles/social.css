@@ -5,8 +5,7 @@
 /* Layout Container */
 .tumblr-layout {
   max-width: var(--max-width-sm);
-  margin: var(--space-lg) auto;
-  padding: 0 var(--container-padding);
+  margin: var(--space-sm) auto;
   font-family: var(--font-body);
   color: var(--color-fg);
   background-color: var(--color-bg);
@@ -388,4 +387,9 @@
 
 .dropxdown .delete-btn:hover {
   background-color: #fef2f2;
+}
+
+.post-actions button .clrful {
+  width: 1.5rem;
+  height: 1.5rem;
 }

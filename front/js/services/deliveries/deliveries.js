@@ -32,13 +32,13 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
   let statusFilter = "ALL";
   let sortBy = "newest";
 
-  // --- SIDEBAR & ACTIONS ---
-  const asideChildren = [];
+  // --- SIDEBAR ACTIONS ---
+  const actionButtons = [];
   if (isLoggedIn) {
-    asideChildren.push(
+    actionButtons.push(
       Button("Create Delivery", "btn-crt-del", { click: () => navigate("/delivery/create") }, "buttonx primary")
     );
-    asideChildren.push(
+    actionButtons.push(
       Button("Register as Driver", "btn-reg-drv", { click: () => navigate("/delivery/addDriver") }, "buttonx primary")
     );
   }
@@ -58,17 +58,33 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
     "buttonx secondary"
   );
   roleToggleBtn.setAttribute("aria-label", `Current role: ${userRole}. Click to toggle.`);
-  asideChildren.push(roleToggleBtn);
+  actionButtons.push(roleToggleBtn);
+
+  const actionsWrapper = createElement("div", { class: "aside-actions-group" }, actionButtons);
 
   // Sidebar Ad Placement
-  asideChildren.push(
-    adspace("aside", PAGE_NAME, { width: 300, height: 250, refreshInterval: 30000 })
-  );
+  const sidebarAd = adspace("aside", PAGE_NAME, {
+    layout: "vertical",
+    width: 300,
+    height: 250,
+    refreshInterval: 30000
+  });
 
   const asideContent = createAsideContent({
     title: "Operations",
-    children: asideChildren,
-    showAd: false
+    sections: [
+      {
+        title: "Actions",
+        content: actionsWrapper,
+        className: "aside-actions-section"
+      },
+      {
+        content: sidebarAd,
+        className: "aside-ad-section"
+      }
+    ],
+    showAd: false, // Handled directly via custom section
+    page: PAGE_NAME
   });
 
   // --- TOP HEADER & CONTROLS ---
@@ -94,7 +110,9 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
       createElement("h1", {}, ["Deliveries & Shipments"]),
       refreshBtn
     ]),
-    adspace("inbody", PAGE_NAME, { width: 728, height: 90, refreshInterval: 45000 })
+    adspace("inbody", PAGE_NAME, {
+      layout: "horizontal", width: 728, height: 90, refreshInterval: 45000
+    })
   ]);
 
   // --- FILTER, SORT & SEARCH BAR (FORM / TOOLBAR) ---
@@ -200,13 +218,13 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
 
   contentContainer.append(layout);
   const mainElement = layout.querySelector("main") || layout.querySelector(".layout-main");
-  
+
   const listContainer = createElement("section", {
     class: "deliveries-list-container",
     "aria-live": "polite",
     "aria-label": "Shipments List"
   });
-  
+
   mainElement.append(listContainer);
 
   // --- VIEW MODE TOGGLE HELPER ---
@@ -291,7 +309,7 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
     // Pagination / Load More
     const paginatedItems = filteredDeliveries.slice(0, currentPage * PAGE_SIZE);
     const gridOrListClass = currentViewMode === "grid" ? "deliveries-grid" : "deliveries-list-view";
-    
+
     const contentBox = createElement("div", {
       class: gridOrListClass,
       role: "feed",
@@ -304,7 +322,7 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
       // Inject in-list ad after every 5th item
       if ((idx + 1) % 5 === 0) {
         contentBox.append(
-          adspace("inlist", PAGE_NAME, { width: "100%", height: 120 })
+          adspace("inlist", PAGE_NAME, { layout: "horizontal", width: "100%", height: 120 })
         );
       }
     });
@@ -326,7 +344,7 @@ export async function displayDeliveries(isLoggedIn, container, options = {}) {
         "buttonx secondary btn-load-more"
       );
       loadMoreBtn.setAttribute("aria-label", `Load ${remainingCount} more deliveries`);
-      
+
       const navContainer = createElement("nav", { class: "pagination-container", "aria-label": "Pagination Navigation" }, [loadMoreBtn]);
       listContainer.append(navContainer);
     }
@@ -358,8 +376,8 @@ function createDeliveryCard(item, userRole, onRenderList) {
         item.vehicle_type || "Car / Bike"
       ])
     ]),
-    item.is_fragile 
-      ? createElement("li", {}, [createElement("span", { class: "badge badge-fragile" }, ["Fragile"])]) 
+    item.is_fragile
+      ? createElement("li", {}, [createElement("span", { class: "badge badge-fragile" }, ["Fragile"])])
       : null
   ].filter(Boolean));
 
@@ -414,7 +432,7 @@ function createDeliveryCard(item, userRole, onRenderList) {
 
   const createdAtDate = item.created_at ? new Date(item.created_at) : new Date();
 
-  return createElement("article", { 
+  return createElement("article", {
     class: "delivery-card",
     "aria-labelledby": `delivery-title-${deliveryId}`
   }, [
@@ -469,7 +487,7 @@ function startCountdown(targetTimestamp, element) {
     const mins = Math.floor(diff / 60000);
     const secs = Math.floor((diff % 60000) / 1000);
     const isoDuration = `PT${mins}M${secs}S`;
-    
+
     element.replaceChildren(
       "Expires in: ",
       createElement("time", { datetime: isoDuration }, [`${mins}m ${secs}s`])
@@ -486,8 +504,8 @@ function calculateDistance(locA, locB) {
   const dLat = (locB.lat - locA.lat) * (Math.PI / 180);
   const dLng = (locB.lng - locA.lng) * (Math.PI / 180);
   const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(locA.lat * (Math.PI / 180)) * Math.cos(locB.lat * (Math.PI / 180)) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    Math.cos(locA.lat * (Math.PI / 180)) * Math.cos(locB.lat * (Math.PI / 180)) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c * 10) / 10;
 }

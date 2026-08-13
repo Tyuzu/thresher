@@ -15,7 +15,7 @@ export const socialDynamicRoutes = [
   },
   {
     pattern: /^\/feedpost\/([\w-]+)$/,
-    moduleImport: () => import("../../pages/feed/postDisplay.js"),
+    moduleImport: () => import("../../pages/tumblr/postDisplay.js"),
     functionName: "Post",
     protected: false,
     argBuilder: safeArgBuilder

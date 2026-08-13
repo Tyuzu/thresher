@@ -5,6 +5,7 @@
   border-radius: 12px;
   max-width: 720px;
   margin: auto;
+  padding: var(--space-sm);
 }
 
 /* Sort dropdown */

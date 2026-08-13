@@ -83,19 +83,24 @@ async function renderTicksPage(isLoggedIn, eventId, containerx) {
     const mainContent = [header, editTabs, ticketSection];
 
     /* Organizer / Sidebar Content */
-    const sidebarChildren = [];
+    const sections = [];
+
     if (eventData.organizer_name || eventData.organizer_contact) {
-      sidebarChildren.push(
-        createElement("div", { class: "event-organizer-info" }, [
-          createElement("p", {}, [`Name: ${eventData.organizer_name || "Unknown"}`]),
-          createElement("p", {}, [`Contact: ${eventData.organizer_contact || "Not Provided"}`])
-        ])
-      );
+      const organizerInfo = createElement("div", { class: "event-organizer-info" }, [
+        createElement("p", {}, [`Name: ${eventData.organizer_name || "Unknown"}`]),
+        createElement("p", {}, [`Contact: ${eventData.organizer_contact || "Not Provided"}`])
+      ]);
+
+      sections.push({
+        title: "Organizer Details",
+        content: organizerInfo,
+        className: "aside-organizer-section"
+      });
     }
 
     const asideContent = createAsideContent({
-      title: "Organizer",
-      children: sidebarChildren,
+      title: "Event Info",
+      sections,
       showAd: true
     });
 

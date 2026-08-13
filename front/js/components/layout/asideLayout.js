@@ -3,58 +3,80 @@ import { createElement } from "../../components/createElement.js";
 import { adspace } from "../../services/ads/newads.js";
 
 /**
- * Helper to normalize single nodes, arrays, or nested arrays into a clean array of valid Nodes.
- * Removes falsy values (null, undefined, false) to prevent rendering invalid DOM children.
- *
- * @param {HTMLElement|HTMLElement[]|null|undefined} content
- * @returns {HTMLElement[]}
+ * Normalizes mixed inputs into a flat array of valid DOM Nodes.
  */
 const normalizeContent = (content) => {
-  if (!content) return [];
-  return (Array.isArray(content) ? content : [content]).flat().filter(Boolean);
+  if (content == null || content === false) return [];
+
+  return [content]
+    .flat(Infinity)
+    .filter(Boolean)
+    .map((item) => (item instanceof Node ? item : document.createTextNode(String(item))));
 };
 
 /**
- * Reusable sidebar element builder with title, actions, custom content, and optional ad slot.
- *
- * @param {Object} [options={}] - Configuration options for sidebar content.
- * @param {string|null} [options.title="Actions"] - Optional section title for the sidebar. Pass null or empty string to omit.
- * @param {HTMLElement|HTMLElement[]} [options.actions=[]] - Action buttons or interactive controls.
- * @param {HTMLElement|HTMLElement[]} [options.children=[]] - Additional custom elements or widgets.
- * @param {boolean} [options.showAd=true] - Whether to render an adspace block.
- * @param {string} [options.page] - Page context override for ads. If omitted, auto-resolves from route path.
- * @param {string} [options.adPosition="aside"] - Position descriptor for the ad unit.
- * @param {Object} [options.adOptions={}] - Configuration options for the ad unit.
- * @returns {HTMLElement[]} Array of elements ready to be inserted into an <aside> container.
+ * Creates structured sections or elements inside an aside layout.
+ */
+function renderSection(section) {
+  if (!section) return null;
+  if (section instanceof Node) return section;
+
+  const children = [];
+  if (section.title) {
+    children.push(createElement("h3", { class: "aside-section-title" }, [section.title]));
+  }
+  if (section.content) {
+    children.push(...normalizeContent(section.content));
+  }
+
+  const className = ["aside-section", section.className].filter(Boolean).join(" ");
+  return createElement("section", { class: className }, children);
+}
+
+/**
+ * Reusable sidebar element builder with title, actions, sections, custom content, and ad placement.
  */
 export function createAsideContent({
   title = "Actions",
   actions = [],
+  sections = [],
   children = [],
   showAd = true,
   page,
   adPosition = "aside",
-  adOptions = {}
+  adPlacement = "top",
+  adOptions = {},
+  asContainer = false // Defaulted to true so it always returns a single HTMLElement
 } = {}) {
-  const content = [];
+  // 1. Resolve optional ad node
+  const adNode = showAd ? adspace(adPosition, page, adOptions) : null;
 
-  if (showAd) {
-    const adNode = adspace(adPosition, page, adOptions);
-    if (adNode) content.push(adNode);
-  }
-
-  if (title) {
-    content.push(createElement("h2", { class: "aside-title" }, [title]));
-  }
+  // 2. Build title and actions
+  const titleNode = title ? createElement("h2", { class: "aside-title" }, [title]) : null;
 
   const normalizedActions = normalizeContent(actions);
-  if (normalizedActions.length > 0) {
-    content.push(createElement("div", { class: "aside-actions" }, normalizedActions));
-  }
+  const actionsContainer = normalizedActions.length > 0
+    ? createElement("div", { class: "aside-actions" }, normalizedActions)
+    : null;
 
+  // 3. Process sections & children
+  const renderedSections = sections.map(renderSection).filter(Boolean);
   const normalizedChildren = normalizeContent(children);
-  if (normalizedChildren.length > 0) {
-    content.push(...normalizedChildren);
+
+  // 4. Assemble components based on ad placement
+  const content = [
+    adPlacement === "top" && adNode,
+    titleNode,
+    actionsContainer,
+    adPlacement === "middle" && adNode,
+    ...renderedSections,
+    ...normalizedChildren,
+    adPlacement === "bottom" && adNode
+  ].filter(Boolean);
+
+  // 5. Return container element
+  if (asContainer) {
+    return createElement("aside", { class: "aside-container" }, content);
   }
 
   return content;

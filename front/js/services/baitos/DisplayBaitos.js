@@ -13,17 +13,6 @@ export async function displayBaitos(container, isLoggedIn) {
   const PAGE_NAME = "baitos";
 
   // ---------- SIDEBAR CONTENT ----------
-  const asideChildren = [];
-
-  if (isLoggedIn) {
-    asideChildren.push(
-      Button("Create Baito", "ct-baito-btn", { click: () => navigate("/create-baito") }, "buttonx"),
-      Button("See Dashboard", "see-dash-btn", { click: () => navigate("/baitos/dash") }, "buttonx"),
-      Button("Create Baito Profile", "", { click: () => navigate("/baitos/create-profile") }, "buttonx secondary"),
-      Button("Hire Workers", "", { click: () => navigate("/baitos/hire") }, "buttonx secondary")
-    );
-  }
-
   // Language selector
   const langSelect = createElement("select", { id: "lang-toggle" });
   ["EN", "JP"].forEach(lang =>
@@ -34,47 +23,45 @@ export async function displayBaitos(container, isLoggedIn) {
     localStorage.setItem("baito-lang", e.target.value);
     navigate(window.location.pathname);
   });
-  asideChildren.push(langSelect);
-
-  // Sidebar Ad: 300x250 Medium Rectangle with 30s auto-refresh
-  asideChildren.push(
-    adspace("aside", PAGE_NAME, {
-      width: 300,
-      height: 250,
-      refreshInterval: 30000
-    })
-  );
-
   const asideContent = createAsideContent({
     title: "Actions",
-    children: asideChildren,
-    showAd: false // Handled directly via asideChildren
+    actions: isLoggedIn
+      ? [
+        Button("Create Baito", "ct-baito-btn", { click: () => navigate("/create-baito") }, "buttonx"),
+        Button("See Dashboard", "see-dash-btn", { click: () => navigate("/baitos/dash") }, "buttonx"),
+        Button("Create Baito Profile", "", { click: () => navigate("/baitos/create-profile") }, "buttonx secondary"),
+        Button("Hire Workers", "", { click: () => navigate("/baitos/hire") }, "buttonx secondary")
+      ]
+      : [],
+    children: [langSelect],
+    showAd: true,
+    page: PAGE_NAME,
+    adPosition: "aside",
+    adPlacement: "bottom",
+    adOptions: {
+      layout: "vertical",
+      width: "100%",
+      height: 320,
+      refreshInterval: 30000
+    }
   });
 
   // ---------- MAIN CONTENT ----------
-  const mainContent = [];
-
-  // Title
-  mainContent.push(createElement("h1", {}, ["Baitos"]));
-
-  // Filters
-  const filterContainer = createElement("div", { class: "baitos-filters" });
   const searchInput = createElement("input", { type: "text", placeholder: "Search jobs...", class: "sort-box" });
-  filterContainer.append(searchInput);
-  mainContent.push(filterContainer);
+  const filterContainer = createElement("div", { class: "baitos-filters" }, [searchInput]);
+  const list = createElement("div", { class: "baitos-list" });
 
-  // In-body Leaderboard Ad (728x90) below filters with 45s auto-refresh
-  mainContent.push(
+  const mainContent = [
+    createElement("h1", {}, ["Baitos"]),
+    filterContainer,
     adspace("inbody", PAGE_NAME, {
+      layout: "horizontal",
       width: 728,
       height: 90,
       refreshInterval: 45000
-    })
-  );
-
-  // List
-  const list = createElement("div", { class: "baitos-list" });
-  mainContent.push(list);
+    }),
+    list
+  ];
 
   // ---------- RENDER LAYOUT ----------
   const layout = createMainLayout({
@@ -117,6 +104,7 @@ export async function displayBaitos(container, isLoggedIn) {
       if ((idx + 1) % 5 === 0) {
         list.append(
           adspace("inlist", PAGE_NAME, {
+            layout: "vertical",
             width: "100%",
             height: 120
           })

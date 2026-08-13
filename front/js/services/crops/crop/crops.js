@@ -2,12 +2,69 @@ import { createElement } from "../../../components/createElement.js";
 import { apiFetch } from "../../../api/api.js";
 import { guessCategoryFromName } from "./displayCropshelpers.js";
 import { navigate } from "../../../routes/index.js";
-import { cropAside } from "./cropAside.js";
 import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.js";
 import Imagex from "../../../components/base/Imagex.js";
 import { debounce } from "../../../utils/deutils.js";
 import Button from "../../../components/base/Button.js";
 import { createMainLayout } from "../../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../../components/layout/asideLayout.js";
+
+/**
+ * Creates formatted promo items/list configuration for createAsideContent sections.
+ */
+function createPromoSection(title, items) {
+  return {
+    title,
+    className: "promo-box",
+    content: createElement(
+      "ul",
+      { class: "promo-list" },
+      items.map((item) => createElement("li", {}, [item]))
+    )
+  };
+}
+
+export function cropAside(_cropData) {
+  return createAsideContent({
+    title: "Market Highlights",
+    actions: [
+      Button("Buy Products", "buyprds-crp-btn", {
+        click: () => navigate("/products")
+      }, "action-btn buttonx primary"),
+
+      Button("See Recipes", "recipes-crp-btn", {
+        click: () => navigate("/recipes")
+      }, "buttonx secondary"),
+
+      Button("List Your Farm", "newfrm-btn", {
+        click: () => navigate("/create-farm")
+      }, "buttonx secondary")
+    ],
+    sections: [
+      createPromoSection("💸 Active Deals", [
+        "🧃 Buy 2 kg Tomatoes, get 10% off!",
+        "🥭 Fresh Mangoes now ₹40/kg!"
+      ]),
+      createPromoSection("📅 Seasonal Picks", [
+        "🍉 Watermelons are ripe this week",
+        "🌽 Baby corn harvest starting soon"
+      ]),
+      createPromoSection("📊 Crop Trends", [
+        "📈 Onion prices up 12% this week",
+        "📉 Cauliflower down due to surplus"
+      ]),
+      createPromoSection("🔔 Announcements", [
+        "🛠 Maintenance scheduled this Friday",
+        "🚚 New delivery zones added in Karnal"
+      ]),
+      createPromoSection("📷 Farmer's Showcase", [
+        "🏞️ Featured: Ajay’s organic carrot patch",
+        "🧑‍🌾 Share your crop stories with us!"
+      ])
+    ],
+    showAd: false
+  });
+}
 
 // --- Helpers & Utils ---
 

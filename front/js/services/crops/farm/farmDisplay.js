@@ -145,24 +145,21 @@ export async function displayFarm(isLoggedIn, farmId, content) {
     ]
     : [];
 
-  const farmCTA = createElement("div", { class: "cta-block" }, [
-    ...userActionButtons,
-    ...creatorActionButtons
-  ]);
-
   const weatherWidget = renderWeatherDetails(farm, isCreator);
 
   const asideContent = createAsideContent({
     title: "Farm Summary",
-    children: [
-      weatherWidget,
-      farmCTA,
-      summaryStats,
-      cropDistribution,
-      renderAvailabilityWidget(farm.availability),
-      reviewPlaceholder
+    actions: [...userActionButtons, ...creatorActionButtons],
+    sections: [
+      weatherWidget && { content: weatherWidget },
+      summaryStats && { title: "Crop Summary", content: summaryStats },
+      cropDistribution && { title: "Crop Distribution", content: cropDistribution },
+      { content: renderAvailabilityWidget(farm.availability) },
+      { content: reviewPlaceholder }
     ].filter(Boolean),
-    showAd: true
+    showAd: true,
+    page: "farm-detail",
+    adPosition: "aside"
   });
 
   // ─────────── Main Section & Tabs ───────────

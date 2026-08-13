@@ -1,7 +1,7 @@
 import "../../../css/inistyles/social.css";
-import "../../../css/inistyles/feedposts.css";
+// import "../../../css/inistyles/feedposts.css";
 import "../../../css/inistyles/feedimages.css";
-import { displayTumblr } from "../../services/tumblr/tumblr.js";
+import { displayTumblr } from "../../services/feed/tumblr/tumblr.js";
 
 async function Tumblr(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

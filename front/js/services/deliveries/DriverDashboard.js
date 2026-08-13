@@ -15,6 +15,16 @@ import {
   updateDeliveryStatus
 } from "../../services/deliveries/deliveriesApi.js";
 
+// Keep active tracker references at module scope or attach cleanup to container
+let activeWatchId = null;
+
+export function stopGpsTracker() {
+  if (activeWatchId !== null) {
+    navigator.geolocation.clearWatch(activeWatchId);
+    activeWatchId = null;
+  }
+}
+
 export async function DriverDashboard(container, isLoggedIn) {
   const contentContainer = (container && typeof container === "object" && container.nodeType)
     ? container
@@ -25,17 +35,20 @@ export async function DriverDashboard(container, isLoggedIn) {
     return;
   }
 
+  // Ensure any previous geolocation tracking loop is cleaned up before re-rendering
+  stopGpsTracker();
+
   contentContainer.replaceChildren();
   const PAGE_NAME = "driver-dashboard";
-
-  let watchId = null;
 
   // --- ASIDE / SIDEBAR ACTIONS ---
   const asideChildren = [
     Button("Available Jobs Feed", "btn-jobs-feed", { click: () => navigate("/deliveries/available") }, "buttonx primary"),
     Button("Earnings History", "btn-earnings", { click: () => navigate("/driver/earnings") }, "buttonx secondary"),
     Button("SOS / Support", "btn-support", { click: () => alert("Connecting to Dispatcher...") }, "buttonx danger"),
-    adspace("aside", PAGE_NAME, { width: 300, height: 250, refreshInterval: 30000 })
+    adspace("aside", PAGE_NAME, {
+      layout: "vertical", width: 300, height: 250, refreshInterval: 30000
+    })
   ];
 
   const asideContent = createAsideContent({
@@ -49,7 +62,9 @@ export async function DriverDashboard(container, isLoggedIn) {
     createElement("header", { class: "driver-dashboard-header" }, [
       createElement("h1", {}, ["Courier Console & Tracking"])
     ]),
-    adspace("inbody", PAGE_NAME, { width: 728, height: 90, refreshInterval: 45000 })
+    adspace("inbody", PAGE_NAME, {
+      layout: "horizontal", width: 728, height: 90, refreshInterval: 45000
+    })
   ];
 
   const layout = createMainLayout({
@@ -61,28 +76,28 @@ export async function DriverDashboard(container, isLoggedIn) {
   contentContainer.append(layout);
   const mainElement = layout.querySelector("main") || layout.querySelector(".layout-main");
 
-  // Elements & State Indicators
-  const statusIndicator = createElement("span", { 
+  // State Indicators
+  const statusIndicator = createElement("span", {
     class: "driver-status-badge offline",
     id: "duty-status-badge"
   }, ["OFFLINE"]);
-  
-  const locationReadout = createElement("div", { 
+
+  const locationReadout = createElement("div", {
     class: "gps-readout",
     role: "status",
     "aria-live": "polite"
   }, ["GPS Idle"]);
 
-  // High-accuracy live position tracker using watchPosition
+  // Start High-Accuracy Position Tracking
   const startGpsTracker = () => {
     if (!navigator.geolocation) {
       locationReadout.textContent = "Geolocation is not supported by your browser.";
       return;
     }
 
-    if (watchId !== null) return;
+    if (activeWatchId !== null) return;
 
-    watchId = navigator.geolocation.watchPosition(
+    activeWatchId = navigator.geolocation.watchPosition(
       async (position) => {
         const payload = {
           lat: position.coords.latitude,
@@ -93,7 +108,8 @@ export async function DriverDashboard(container, isLoggedIn) {
 
         try {
           await sendGPSLocation(payload);
-          locationReadout.textContent = `📍 Live GPS: ${payload.lat.toFixed(4)}, ${payload.lng.toFixed(4)} (${Math.round((payload.speed || 0) * 3.6)} km/h)`;
+          const speedKmH = Math.round((payload.speed || 0) * 3.6);
+          locationReadout.textContent = `📍 Live GPS: ${payload.lat.toFixed(4)}, ${payload.lng.toFixed(4)} (${speedKmH} km/h)`;
         } catch (err) {
           locationReadout.textContent = `⚠️ GPS Sync Failed: ${err?.message || "Network Error"}`;
         }
@@ -105,18 +121,12 @@ export async function DriverDashboard(container, isLoggedIn) {
     );
   };
 
-  const stopGpsTracker = () => {
-    if (watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
-      watchId = null;
-    }
-    locationReadout.textContent = "GPS Tracking Stopped";
-  };
-
-  // Toggle Driver Online / Offline Status
+  // Toggle Driver Online / Offline Status Button
   const toggleStatusBtn = Button("Go Online", "btn-toggle-online", {
     click: async () => {
       const isCurrentlyOnline = statusIndicator.classList.contains("online");
+      toggleStatusBtn.disabled = true;
+
       try {
         if (isCurrentlyOnline) {
           await setDriverOffline();
@@ -125,6 +135,7 @@ export async function DriverDashboard(container, isLoggedIn) {
           toggleStatusBtn.textContent = "Go Online";
           toggleStatusBtn.setAttribute("aria-label", "Switch duty status to online");
           stopGpsTracker();
+          locationReadout.textContent = "GPS Tracking Stopped";
           Notify("Driver status set to Offline", { type: "info" });
         } else {
           await setDriverOnline();
@@ -137,14 +148,16 @@ export async function DriverDashboard(container, isLoggedIn) {
         }
       } catch (err) {
         Notify(err?.message || "Failed to update driver status", { type: "error" });
+      } finally {
+        toggleStatusBtn.disabled = false;
       }
     }
   }, "btn-primary");
 
   toggleStatusBtn.setAttribute("aria-label", "Switch duty status to online");
 
-  // Metrics Bar
-  const metricsBar = createElement("section", { 
+  // Shift Performance Metrics
+  const metricsBar = createElement("section", {
     class: "driver-metrics-bar",
     "aria-label": "Shift Performance Metrics"
   }, [
@@ -153,7 +166,7 @@ export async function DriverDashboard(container, isLoggedIn) {
     createMetricCard("Rating", "4.95 ★")
   ]);
 
-  const activeJobsContainer = createElement("div", { 
+  const activeJobsContainer = createElement("div", {
     class: "active-jobs-list",
     role: "feed",
     "aria-live": "polite",
@@ -164,9 +177,7 @@ export async function DriverDashboard(container, isLoggedIn) {
 
   const dashboardWrapper = createElement("div", { class: "driver-dashboard" }, [
     metricsBar,
-
-    // Status Control Card
-    createElement("section", { 
+    createElement("section", {
       class: "driver-control-card",
       "aria-labelledby": "status-card-title"
     }, [
@@ -178,9 +189,7 @@ export async function DriverDashboard(container, isLoggedIn) {
       createElement("div", { class: "action-row" }, [toggleStatusBtn]),
       locationReadout
     ]),
-
-    // Active Jobs Card
-    createElement("section", { 
+    createElement("section", {
       class: "active-jobs-card",
       "aria-labelledby": "active-jobs-title"
     }, [
@@ -191,35 +200,28 @@ export async function DriverDashboard(container, isLoggedIn) {
 
   mainElement.append(dashboardWrapper);
 
-  // Hydration logic
-  try {
-    const statusRes = await fetchDriverStatus();
-    if (statusRes?.is_online || statusRes?.status === "online") {
-      statusIndicator.textContent = "ONLINE";
-      statusIndicator.className = "driver-status-badge online";
-      toggleStatusBtn.textContent = "Go Offline";
-      toggleStatusBtn.setAttribute("aria-label", "Switch duty status to offline");
-      startGpsTracker();
-    }
+  // Load Active Deliveries Component
+  const loadDeliveries = async () => {
+    try {
+      const activeRes = await fetchActiveDeliveries();
+      const activeDeliveries = Array.isArray(activeRes) ? activeRes : activeRes?.deliveries || [];
+      activeJobsContainer.replaceChildren();
 
-    const activeRes = await fetchActiveDeliveries();
-    const activeDeliveries = Array.isArray(activeRes) ? activeRes : activeRes?.deliveries || [];
-    activeJobsContainer.replaceChildren();
+      if (activeDeliveries.length === 0) {
+        activeJobsContainer.append(
+          createElement("p", { class: "empty-jobs", role: "status" }, [
+            "No active delivery tasks assigned. Go online or check the Available Jobs feed!"
+          ])
+        );
+        return;
+      }
 
-    if (activeDeliveries.length === 0) {
-      activeJobsContainer.append(
-        createElement("p", { class: "empty-jobs", role: "status" }, [
-          "No active delivery tasks assigned. Go online or check the Available Jobs feed!"
-        ])
-      );
-    } else {
       activeDeliveries.forEach((job) => {
         const jobId = job.deliveryid ?? job.id;
         const pickupAddr = job.pickup_loc?.address || "N/A";
         const dropoffAddr = job.dropoff_loc?.address || "N/A";
         const jobStatus = job.status || "IN_PROGRESS";
 
-        // Deep-link to navigation maps
         const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dropoffAddr)}`;
 
         const navBtn = Button("Navigate Map", `btn-nav-${jobId}`, {
@@ -230,20 +232,22 @@ export async function DriverDashboard(container, isLoggedIn) {
         const completeBtn = Button("Complete Handover", `btn-complete-${jobId}`, {
           click: async () => {
             const otp = prompt("Enter Handover Verification OTP:");
-            if (otp) {
-              try {
-                await updateDeliveryStatus(jobId, { status: "DELIVERED", otp });
-                Notify("Delivery completed successfully!", { type: "success" });
-                DriverDashboard(container, isLoggedIn);
-              } catch (err) {
-                Notify(err?.message || "Verification failed.", { type: "error" });
-              }
+            if (!otp) return;
+
+            try {
+              completeBtn.disabled = true;
+              await updateDeliveryStatus(jobId, { status: "DELIVERED", otp });
+              Notify("Delivery completed successfully!", { type: "success" });
+              await loadDeliveries(); // Re-fetch list instead of whole view re-render
+            } catch (err) {
+              Notify(err?.message || "Verification failed.", { type: "error" });
+              completeBtn.disabled = false;
             }
           }
         }, "buttonx primary");
         completeBtn.setAttribute("aria-label", `Complete handover for Job ${jobId}`);
 
-        const card = createElement("article", { 
+        const card = createElement("article", {
           class: "job-item-card",
           "aria-labelledby": `job-heading-${jobId}`
         }, [
@@ -273,17 +277,31 @@ export async function DriverDashboard(container, isLoggedIn) {
 
         activeJobsContainer.append(card);
       });
+    } catch (err) {
+      activeJobsContainer.replaceChildren(
+        createElement("p", { class: "error-text", role: "alert" }, [
+          "Could not load active driver details."
+        ])
+      );
     }
+  };
+
+  // Initial Hydration
+  try {
+    const statusRes = await fetchDriverStatus();
+    if (statusRes?.is_online || statusRes?.status === "online") {
+      statusIndicator.textContent = "ONLINE";
+      statusIndicator.className = "driver-status-badge online";
+      toggleStatusBtn.textContent = "Go Offline";
+      toggleStatusBtn.setAttribute("aria-label", "Switch duty status to offline");
+      startGpsTracker();
+    }
+    await loadDeliveries();
   } catch (err) {
-    activeJobsContainer.replaceChildren(
-      createElement("p", { class: "error-text", role: "alert" }, [
-        "Could not load active driver details."
-      ])
-    );
+    console.error("Dashboard hydration error:", err);
   }
 }
 
-// Helper component for shift stats using semantic description list definition
 function createMetricCard(label, value) {
   return createElement("div", { class: "metric-card" }, [
     createElement("dl", {}, [

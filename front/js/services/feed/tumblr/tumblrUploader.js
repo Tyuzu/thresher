@@ -1,4 +1,4 @@
-import { uploadFile } from "../media/api/mediaApi.js";
+import { uploadFile } from "../../media/api/mediaApi.js";
 import { createEl } from "./tumblrHelpers.js";
 
 export function appendIfValue(obj, key, el) {

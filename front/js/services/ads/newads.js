@@ -1,5 +1,4 @@
 // src/utils/newads.js
-import "../../../css/subpages/rolling1.css";
 import "../../../css/subpages/sda.css";
 import { createElement } from "../../components/createElement.js";
 import { t } from "../../i18n/i18n.js";
@@ -57,7 +56,6 @@ async function defaultAdNetworkFetcher(slotEl) {
   const position = slotEl.getAttribute("data-position") || "";
   const category = slotEl.getAttribute("data-category") || "";
 
-  // Pass all parameters expected by Go handler
   const queryParams = new URLSearchParams({ page, position, category });
   const response = await fetch(`/api/v1/sda/sda?${queryParams.toString()}`, {
     method: "GET",
@@ -75,7 +73,9 @@ async function defaultAdNetworkFetcher(slotEl) {
     link: rawData.link || rawData.Link || "",
     image: rawData.image || rawData.Image || "",
     title: rawData.title || rawData.Title || "",
-    description: rawData.description || rawData.Description || ""
+    description: rawData.description || rawData.Description || "",
+    badge: rawData.badge || rawData.Badge || t("common.sponsored", {}, "Sponsored"),
+    cta: rawData.cta || rawData.CTA || t("common.learnMore", {}, "Learn More")
   };
 
   if (!adData.link || !adData.image) {
@@ -90,16 +90,23 @@ async function defaultAdNetworkFetcher(slotEl) {
     href: adData.link,
     target: "_blank",
     rel: "noopener noreferrer",
-    class: "ad-banner-link"
+    class: "ad-card-link"
   }, [
-    createElement("img", {
-      src: adData.image,
-      alt: adData.title || "Advertisement",
-      class: "ad-banner-img"
-    }),
-    createElement("div", { class: "ad-banner-info" }, [
-      createElement("strong", { class: "ad-title" }, [adData.title]),
-      createElement("p", { class: "ad-desc" }, [adData.description])
+    createElement("div", { class: "ad-card-media" }, [
+      createElement("img", {
+        src: adData.image,
+        alt: adData.title || "Advertisement",
+        class: "ad-card-img",
+        loading: "lazy"
+      }),
+      createElement("span", { class: "ad-badge" }, [adData.badge])
+    ]),
+    createElement("div", { class: "ad-card-content" }, [
+      createElement("strong", { class: "ad-card-title" }, [adData.title]),
+      ...(adData.description ? [createElement("p", { class: "ad-card-desc" }, [adData.description])] : []),
+      createElement("div", { class: "ad-card-footer" }, [
+        createElement("span", { class: "ad-card-cta" }, [adData.cta])
+      ])
     ])
   ]);
 
@@ -112,7 +119,6 @@ async function defaultAdNetworkFetcher(slotEl) {
 
   slotEl.appendChild(anchor);
 
-  // Delegate impression tracking to visibility observer
   if (impressionObserver && adData.id) {
     impressionObserver.observe(slotEl);
   }
@@ -224,6 +230,7 @@ export function advertEmbed(page, position = "", options = {}) {
 
   const {
     category = "",
+    layout = "horizontal", // "horizontal" | "vertical" | "banner" | "compact"
     classes = "",
     fallbackText = t("common.advertisement", {}, "Advertisement"),
     adNetworkInit = null,
@@ -239,20 +246,28 @@ export function advertEmbed(page, position = "", options = {}) {
 
   const slotEl = createElement("div", {
     id: slotId,
-    class: `ad-slot ${classes}`.trim(),
+    class: `ad-slot ad-layout-${layout} ${classes}`.trim(),
     "data-page": resolvedPage,
     "data-position": position,
     "data-category": category,
+    "data-ad-layout": layout,
     "data-ad-state": "waiting",
-    style: `min-height: ${styleMinH}; display: block;`
+    style: `min-height: ${styleMinH};`
   }, [
+    createElement("div", { class: "ad-skeleton" }, [
+      createElement("div", { class: "ad-skeleton-img" }),
+      createElement("div", { class: "ad-skeleton-lines" }, [
+        createElement("div", { class: "ad-skeleton-line short" }),
+        createElement("div", { class: "ad-skeleton-line medium" })
+      ])
+    ]),
     createElement("span", { class: "ad-fallback-text" }, [fallbackText])
   ]);
 
   const config = { adNetworkInit, fallbackNetworks, refreshInterval, debug };
 
   if (debug) {
-    console.warn(`[Ad System] Created slot ${slotId} [${width}x${height}] (Page: ${resolvedPage}, Category: ${category}, Refresh: ${refreshInterval}ms)`);
+    console.warn(`[Ad System] Created slot ${slotId} [Layout: ${layout}]`);
   }
 
   if (sharedAdObserver) {

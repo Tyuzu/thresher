@@ -1,6 +1,5 @@
 /**
  * Recursively normalizes variant children layouts into a single flat array
- * Lifted outside the core execution scope to prevent runtime memory thrashing.
  */
 function flattenChildren(items, targetArray = []) {
   if (items === null || items === undefined || items === false) {
@@ -12,7 +11,7 @@ function flattenChildren(items, targetArray = []) {
     return targetArray;
   }
 
-  if (Array.isArray(items)) {
+  if (Array.isArray(items) || items instanceof NodeList || items instanceof HTMLCollection) {
     const len = items.length;
     for (let i = 0; i < len; i++) {
       flattenChildren(items[i], targetArray);
@@ -20,16 +19,6 @@ function flattenChildren(items, targetArray = []) {
     return targetArray;
   }
 
-  // Handle live collection node maps efficiently
-  if (items instanceof NodeList || items instanceof HTMLCollection) {
-    const len = items.length;
-    for (let i = 0; i < len; i++) {
-      flattenChildren(items[i], targetArray);
-    }
-    return targetArray;
-  }
-
-  // Fallback case
   targetArray.push(items);
   return targetArray;
 }
@@ -38,14 +27,16 @@ export function createElement(tag, attributes = {}, children = []) {
   const element = document.createElement(tag);
   const safeAttributes = attributes || {};
 
-  for (const [key, value] of Object.entries(safeAttributes)) {
+  for (const key in safeAttributes) {
+    if (!Object.prototype.hasOwnProperty.call(safeAttributes, key)) continue;
+    const value = safeAttributes[key];
     if (value === undefined || value === null) continue;
 
     // 1. Event Subscriptions
     if (key === "events" && typeof value === "object") {
-      for (const [eventName, handler] of Object.entries(value)) {
-        if (typeof handler === "function") {
-          element.addEventListener(eventName, handler);
+      for (const eventName in value) {
+        if (typeof value[eventName] === "function") {
+          element.addEventListener(eventName, value[eventName]);
         }
       }
       continue;
@@ -59,10 +50,7 @@ export function createElement(tag, attributes = {}, children = []) {
 
     // 3. String Class Name Parsers
     if (key === "class" && typeof value === "string") {
-      const classes = value.trim().split(/\s+/);
-      for (let i = 0; i < classes.length; i++) {
-        if (classes[i]) element.classList.add(classes[i]);
-      }
+      element.className = value.trim();
       continue;
     }
 
@@ -72,16 +60,15 @@ export function createElement(tag, attributes = {}, children = []) {
       continue;
     }
 
-    // 5. Explicit IDL Property Bindings vs HTML Attributes
-    // Protect core properties that require live object access states
-    if (key === "value" || key === "checked" || key === "disabled" || key === "id") {
+    // 5. Direct Property vs Attribute Binding
+    if (key in element && key !== "list" && key !== "type" && key !== "draggable") {
       element[key] = value;
     } else {
       element.setAttribute(key, String(value));
     }
   }
 
-  // --- Process and Inject Children flatly ---
+  // Inject Children Flatly
   const flatChildren = [];
   flattenChildren(children, flatChildren);
   const childLength = flatChildren.length;
@@ -94,8 +81,6 @@ export function createElement(tag, attributes = {}, children = []) {
       element.appendChild(child);
     } else if (typeof child === "string" || typeof child === "number") {
       element.appendChild(document.createTextNode(String(child)));
-    } else {
-      console.error("Invalid child passed to createElement:", child);
     }
   }
 

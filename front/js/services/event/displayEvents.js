@@ -14,43 +14,56 @@ export async function displayEvents(isLoggedIn, container) {
 
   const PAGE_NAME = "events";
 
-  // ---------- ACTIONS & SIDEBAR ----------
-  const asideChildren = [];
+  // ---------- SIDEBAR SECTIONS ----------
+  const actionButtons = [];
   if (isLoggedIn) {
-    asideChildren.push(
+    actionButtons.push(
       Button("Create Event", "crt-evnt", { click: () => navigate("/create-event") }, "buttonx primary")
     );
   }
 
-  asideChildren.push(
+  actionButtons.push(
     Button("Browse Artists", "artsts-brws", { click: () => navigate("/artists") }, "buttonx primary"),
     Button("My Events", "btn-my-events", { click: () => navigate("/my-events") }, "buttonx secondary"),
     Button("Event Calendar", "btn-event-calendar", { click: () => navigate("/event-calendar") }, "buttonx secondary")
   );
 
-  // Sidebar Ad: 300x250 Medium Rectangle with 30s auto-refresh
-  asideChildren.push(
-    adspace("aside", PAGE_NAME, {
-      width: 300,
-      height: 250,
-      refreshInterval: 30000
-    })
-  );
+  const actionsWrapper = createElement("div", { class: "aside-actions-group" }, actionButtons);
+
+  // Sidebar Ad component
+  const sidebarAd = adspace("aside", PAGE_NAME, {
+    layout: "vertical",
+    width: 300,
+    height: 250,
+    refreshInterval: 30000,
+  });
 
   const asideContent = createAsideContent({
-    title: "Actions",
-    children: asideChildren,
-    showAd: false // Handled directly via asideChildren to avoid duplicate slots
+    title: "Events Overview",
+    sections: [
+      {
+        title: "Actions",
+        content: actionsWrapper,
+        className: "aside-actions-section",
+      },
+      {
+        content: sidebarAd,
+        className: "aside-ad-section",
+      },
+    ],
+    showAd: false, // Explicitly set false to use custom integrated ad space
+    page: PAGE_NAME,
   });
 
   // ---------- MAIN HEADER & INBODY AD ----------
   const mainHeader = [
     createElement("h1", {}, ["All Events"]),
     adspace("inbody", PAGE_NAME, {
+      layout: "horizontal",
       width: 728,
       height: 90,
-      refreshInterval: 45000
-    })
+      refreshInterval: 45000,
+    }),
   ];
 
   // ---------- LAYOUT ----------
@@ -85,8 +98,9 @@ export async function displayEvents(isLoggedIn, container) {
       if ((idx + 1) % 5 === 0) {
         list.append(
           adspace("inlist", PAGE_NAME, {
+            layout: "vertical",
             width: "100%",
-            height: 120
+            height: 120,
           })
         );
       }
@@ -106,37 +120,50 @@ function createEventCard(ev) {
   const savedEvents = getSavedEvents();
   let isSaved = savedEvents.includes(ev.eventid);
 
-  const saveToggle = createElement("span", {
-    title: "Save Event",
-    style: `cursor:pointer;font-size:18px;color:${isSaved ? "gold" : "gray"};margin-left:auto;`,
-    events: {
-      click: (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleSaveEvent(ev.eventid);
-        isSaved = !isSaved;
-        saveToggle.textContent = isSaved ? "★" : "☆";
-        saveToggle.style.color = isSaved ? "gold" : "gray";
+  const saveToggle = createElement(
+    "span",
+    {
+      title: "Save Event",
+      style: `cursor:pointer;font-size:18px;color:${isSaved ? "gold" : "gray"};margin-left:auto;`,
+      events: {
+        click: (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleSaveEvent(ev.eventid);
+          isSaved = !isSaved;
+          saveToggle.textContent = isSaved ? "★" : "☆";
+          saveToggle.style.color = isSaved ? "gold" : "gray";
+        },
       },
     },
-  }, [isSaved ? "★" : "☆"]);
+    [isSaved ? "★" : "☆"]
+  );
 
-  const shareBtn = createElement("button", {
-    type: "button",
-    style: "font-size:12px;margin-top:4px;",
-    events: {
-      click: (e) => {
-        e.preventDefault();
-        navigator.clipboard.writeText(`${location.origin}/event/${ev.eventid}`);
-        shareBtn.textContent = "Link Copied";
-        setTimeout(() => (shareBtn.textContent = "Share"), 1500);
+  const shareBtn = createElement(
+    "button",
+    {
+      type: "button",
+      style: "font-size:12px;margin-top:4px;",
+      events: {
+        click: (e) => {
+          e.preventDefault();
+          navigator.clipboard.writeText(`${location.origin}/event/${ev.eventid}`);
+          shareBtn.textContent = "Link Copied";
+          setTimeout(() => (shareBtn.textContent = "Share"), 1500);
+        },
       },
     },
-  }, ["Share"]);
+    ["Share"]
+  );
 
-  const statusLabel = createElement("span", {
-    style: `font-size:0.75rem;padding:2px 6px;border-radius:4px;background:${isPast ? "#888" : "#28a745"};color:white;margin-left:8px;`,
-  }, [isPast ? "Past" : "Upcoming"]);
+  const statusLabel = createElement(
+    "span",
+    {
+      style: `font-size:0.75rem;padding:2px 6px;border-radius:4px;background:${isPast ? "#888" : "#28a745"
+        };color:white;margin-left:8px;`,
+    },
+    [isPast ? "Past" : "Upcoming"]
+  );
 
   const bannerUrl = resolveImagePath(EntityType.EVENT, PictureType.THUMB, ev.banner);
   const bannerImg = Imagex({
@@ -146,10 +173,14 @@ function createEventCard(ev) {
     style: "width:100%;aspect-ratio:16/9;object-fit:cover;",
   });
 
-  const bannerLink = createElement("a", {
-    class: "event-link",
-    events: { click: () => navigate(`/event/${ev.eventid}`) },
-  }, [bannerImg]);
+  const bannerLink = createElement(
+    "a",
+    {
+      class: "event-link",
+      events: { click: () => navigate(`/event/${ev.eventid}`) },
+    },
+    [bannerImg]
+  );
 
   const eventInfo = createElement("div", { class: "event-info" }, [
     createElement("div", { style: "display:flex;align-items:center;gap:8px;" }, [
