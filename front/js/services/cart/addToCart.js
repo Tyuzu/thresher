@@ -70,14 +70,14 @@ export async function addToCart(options = {}) {
     return false;
   }
 
-  // FIXED: Pre-normalize all components to avoid validation mismatches and mapping drops
-  const cleanFields = {
-    itemId: normalize(options.itemId),
-    itemType: normalize(options.itemType),
-    entityType: normalize(options.entityType),
-    entityId: normalize(options.entityId),
-    quantity: Number(options.quantity)
-  };
+// AFTER:
+const cleanFields = {
+  itemId: String(options.itemId || "").trim(), // ✅ Keep exact casing
+  itemType: normalize(options.itemType),
+  entityType: normalize(options.entityType),
+  entityId: String(options.entityId || "").trim(), // ✅ Keep exact casing
+  quantity: Number(options.quantity)
+};
 
   const error = validateNormalizedInput(cleanFields);
   if (error) {

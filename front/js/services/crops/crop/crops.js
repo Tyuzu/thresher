@@ -62,7 +62,10 @@ export function cropAside(_cropData) {
         "🧑‍🌾 Share your crop stories with us!"
       ])
     ],
-    showAd: false
+    showAd: true,
+    adOptions: {
+      layout: "vertical"
+    }
   });
 }
 
@@ -234,7 +237,9 @@ export function renderCropInterface(container, cropData) {
   const layout = createMainLayout({
     mainContent: [mainContent],
     asideContent: cropAside(cropData),
-    pageClass: "catalogue-layout"
+    pageClass: "catalogue-layout",
+    showMainAd: true,
+    mainAdPlacement: "top"
   });
 
   container.appendChild(layout);
