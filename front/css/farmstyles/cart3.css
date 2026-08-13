@@ -5,7 +5,7 @@
 
 .cartpage {
   max-width: var(--max-width-md);
-  margin: 0 auto var(--space-lg) auto;
+  margin: var(--space-md) auto var(--space-lg) auto;
   padding: var(--space-lg);
   background-color: var(--color-bg);
   border-radius: var(--radius-lg);
