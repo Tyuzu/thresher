@@ -1,5 +1,5 @@
 import { createheader } from "../components/layout/header.js";
-import { createNav, highlightActiveNav } from "../components/layout/navigation.js";
+// import { createNav, highlightActiveNav } from "../components/layout/navigation.js";
 import { render } from "./router.js";
 import { setState, getRouteState, saveScroll, restoreScroll, subscribe } from "../state/state.js";
 import { Footer } from "../components/layout/footer.js";
@@ -89,11 +89,11 @@ async function loadContent(url) {
     layoutState.headerRendered = true;
   }
 
-  if (!layoutState.navRendered) {
-    const navContent = createNav();
-    if (navContent) nav.replaceChildren(navContent);
-    layoutState.navRendered = true;
-  }
+  // if (!layoutState.navRendered) {
+  //   const navContent = createNav();
+  //   if (navContent) nav.replaceChildren(navContent);
+  //   layoutState.navRendered = true;
+  // }
 
   if (!layoutState.footerRendered) {
     const footerContent = Footer();
@@ -101,17 +101,17 @@ async function loadContent(url) {
     layoutState.footerRendered = true;
   }
 
-  // 3. Toggle Navigation Visibility
-  const shouldHideNav = isNavHidden(url);
-  const targetDisplay = shouldHideNav ? "none" : "";
+  // // 3. Toggle Navigation Visibility
+  // const shouldHideNav = isNavHidden(url);
+  // const targetDisplay = shouldHideNav ? "none" : "";
 
-  if (nav.style.display !== targetDisplay) {
-    nav.style.display = targetDisplay;
-  }
+  // if (nav.style.display !== targetDisplay) {
+  //   nav.style.display = targetDisplay;
+  // }
 
-  if (!shouldHideNav) {
-    highlightActiveNav(url);
-  }
+  // if (!shouldHideNav) {
+  //   highlightActiveNav(url);
+  // }
 
   // 4. Render route content
   await render(url, main);
@@ -190,17 +190,17 @@ subscribe("token", () => {
     if (updatedHeader) header.replaceChildren(updatedHeader);
   }
 
-  if (nav) {
-    const updatedNav = createNav();
-    if (updatedNav) {
-      nav.replaceChildren(updatedNav);
-      const shouldHideNav = isNavHidden(window.location.pathname);
-      nav.style.display = shouldHideNav ? "none" : "";
-      if (!shouldHideNav) {
-        highlightActiveNav(window.location.pathname);
-      }
-    }
-  }
+  // if (nav) {
+  //   const updatedNav = createNav();
+  //   if (updatedNav) {
+  //     nav.replaceChildren(updatedNav);
+  //     const shouldHideNav = isNavHidden(window.location.pathname);
+  //     nav.style.display = shouldHideNav ? "none" : "";
+  //     if (!shouldHideNav) {
+  //       highlightActiveNav(window.location.pathname);
+  //     }
+  //   }
+  // }
 });
 
 export { navigate, renderPage, loadContent };

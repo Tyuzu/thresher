@@ -56,11 +56,11 @@ export default defineConfig(({ mode }) => {
 
             // Explicit feature chunking for distinct domain bundles
             if (lower.includes('/pages/farm/') || lower.includes('/pages/crop/')) return 'feature-farms';
-            if (lower.includes('/pages/events/')) return 'feature-events';
-            if (lower.includes('/pages/baitos/')) return 'feature-baito';
-            if (lower.includes('/pages/posts/') || lower.includes('/pages/tumblr/')) return 'feature-social';
+            // if (lower.includes('/pages/events/')) return 'feature-events';
+            // if (lower.includes('/pages/baitos/')) return 'feature-baito';
+            // if (lower.includes('/pages/posts/') || lower.includes('/pages/tumblr/')) return 'feature-social';
             if (lower.includes('/pages/merechats/') || lower.includes('/pages/newchats/') || lower.includes('/pages/discord/')) return 'feature-chats';
-            if (lower.includes('/pages/admin/')) return 'feature-admin';
+            // if (lower.includes('/pages/admin/')) return 'feature-admin';
           },
 
           experimentalMinChunkSize: 5000,

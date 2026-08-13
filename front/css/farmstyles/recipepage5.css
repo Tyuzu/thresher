@@ -311,7 +311,6 @@ img.recipe-banner {
 }
 
 .recipe-actions .buttonx {
-    flex: 1 1 140px;
     padding: var(--space-sm);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);

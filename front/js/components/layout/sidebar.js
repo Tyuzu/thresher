@@ -11,6 +11,8 @@ import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePath
 /* ---------------------------------- */
 
 const LINKS = [
+  { href: "/grocery", label: "Grocery" },
+  { href: "/recipes", label: "Recipes" },
   { href: "/farms", label: "Farms" },
   { href: "/dash", label: "Dash" }
 ];

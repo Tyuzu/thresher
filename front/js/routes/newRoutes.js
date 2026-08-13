@@ -25,9 +25,7 @@ const coreStaticRoutes = {
   "/deliveries": { moduleImport: () => import("../pages/delivery/deliveries.js"), functionName: "Deliveries", protected: true },
   "/delivery/create": { moduleImport: () => import("../pages/delivery/createDelivery.js"), functionName: "Createdelivery", protected: true },
   "/dash/driver": { moduleImport: () => import("../pages/delivery/driverDash.js"), functionName: "DriverDash", protected: true },
-  "/booking": { moduleImport: () => import("../pages/booking/booking.js"), functionName: "Booking" },
   "/wallet": { moduleImport: () => import("../pages/wallet/wallet.js"), functionName: "Wallet" },
-  "/search": { moduleImport: () => import("../pages/search/search.js"), functionName: "Search" },
 };
 
 // Core / Shared Dynamic Routes (Available across ALL domains)
@@ -58,11 +56,11 @@ const coreDynamicRoutes = [
 // Map feature keys to their respective static and dynamic routes
 const featureModules = {
   admin: { static: adminStaticRoutes, dynamic: adminDynamicRoutes },
-  places: { static: palcesStaticRoutes, dynamic: placesDynamicRoutes },
+  // places: { static: palcesStaticRoutes, dynamic: placesDynamicRoutes },
   farms: { static: farmsStaticRoutes, dynamic: farmsDynamicRoutes },
-  events: { static: eventsStaticRoutes, dynamic: eventsDynamicRoutes },
-  baito: { static: baitoStaticRoutes, dynamic: baitoDynamicRoutes },
-  social: { static: socialStaticRoutes, dynamic: socialDynamicRoutes },
+  // events: { static: eventsStaticRoutes, dynamic: eventsDynamicRoutes },
+  // baito: { static: baitoStaticRoutes, dynamic: baitoDynamicRoutes },
+  // social: { static: socialStaticRoutes, dynamic: socialDynamicRoutes },
   chats: { static: chatsStaticRoutes, dynamic: chatsDynamicRoutes },
 };
 

@@ -1,9 +1,10 @@
 import { createElement } from "../../components/createElement.js";
-import { clearElement, createListingTabs } from "./listingcon.js";
+import { clearElement } from "./listingcon.js";
+// import { clearElement, createListingTabs } from "./listingcon.js";
 import {
   createWeatherInfoWidget,
-  createSearchBar,
-  createNavWrapper,
+  // createSearchBar,
+  // createNavWrapper,
   createAuthForms
 } from "./homeHelpers.js";
 import { adspace } from "../../services/ads/newads.js";
@@ -24,7 +25,7 @@ export function YoHome(isLoggedIn, container) {
     title: null,
     children: [
       createWeatherInfoWidget(),
-      createSearchBar()
+      // createSearchBar()
     ],
     showAd: true,
     page: PAGE_NAME,
@@ -47,7 +48,7 @@ export function YoHome(isLoggedIn, container) {
       height: 90,
       refreshInterval: 45000
     }),
-    createNavWrapper(),
+    // createNavWrapper(),
     // Bottom In-Body Banner (728x90) with 60s auto-refresh
     adspace("bottom", PAGE_NAME, {
       layout: "horizontal",
@@ -69,9 +70,9 @@ export function YoHome(isLoggedIn, container) {
     // Defer heavy DOM work
     requestIdleCallback(() => {
       const mainElement = layout.querySelector(".layout-main");
-      if (mainElement) {
-        mainElement.appendChild(createListingTabs());
-      }
+      // if (mainElement) {
+      //   mainElement.appendChild(createListingTabs());
+      // }
     });
   } else {
     mainContent.push(createAuthForms());

@@ -143,13 +143,13 @@ function buildNav() {
 
   if (token) {
     const createLinks = [
-      { href: "/create-event", text: "Event" },
+     /* { href: "/create-event", text: "Event" },
       { href: "/create-place", text: "Place" },
       { href: "/create-artist", text: "Artist" },
       { href: "/create-post", text: "Post" },
       { href: "/create-baito", text: "Baito" },
+      { href: "/create-itinerary", text: "Itinerary" },*/
       { href: "/create-farm", text: "Farm" },
-      { href: "/create-itinerary", text: "Itinerary" },
       { href: "/create-recipe", text: "Recipe" }
     ];
     nav.append(createDropdownMenu("create-menu", "Create", createLinks));
