@@ -1,7 +1,16 @@
-import { safeArgBuilder } from "../safeArgsBuilder.js";
-export const adminStaticRoutes = {
-  "/admin": { moduleImport: () => import("../../pages/admin/admin.js"), functionName: "Admin", protected: true },
-  "/dash": { moduleImport: () => import("../../pages/dash/dash.js"), functionName: "Dash", protected: true },
-};
+import { authGuard, roleGuard } from "../../middleware/middleware.js";
 
-export const adminDynamicRoutes = [];
+export const adminRoutes = [
+  {
+    path: "/admin",
+    component: () => import("../../pages/admin/admin.js"),
+    functionName: "Admin",
+    middleware: [authGuard, roleGuard(["admin"])]
+  },
+  {
+    path: "/dash",
+    component: () => import("../../pages/dash/dash.js"),
+    functionName: "Dash",
+    middleware: [authGuard]
+  }
+];

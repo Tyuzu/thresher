@@ -1,88 +1,133 @@
 import { getCurrentAllowedFeatures } from "../config/domainFeatures.js";
-import { adminStaticRoutes, adminDynamicRoutes } from "./modules/admin.js";
-import { farmsStaticRoutes, farmsDynamicRoutes } from "./modules/farms.js";
-import { eventsStaticRoutes, eventsDynamicRoutes } from "./modules/events.js";
-import { baitoStaticRoutes, baitoDynamicRoutes } from "./modules/baito.js";
-import { socialStaticRoutes, socialDynamicRoutes } from "./modules/social.js";
-import { chatsStaticRoutes, chatsDynamicRoutes } from "./modules/chats.js";
-import { palcesStaticRoutes, placesDynamicRoutes } from "./modules/places.js";
+import { authGuard, guestGuard, roleGuard } from "../middleware/middleware.js";
 
-export function safeArgBuilder(match) {
-  if (!match) return [];
-  return match.slice(1).filter(val => val !== undefined);
-}
+// Feature module imports
+import { adminRoutes } from "./modules/admin.js";
+import { farmsRoutes } from "./modules/farms.js";
+import { eventsRoutes } from "./modules/events.js";
+import { baitoRoutes } from "./modules/baito.js";
+import { socialRoutes } from "./modules/social.js";
+import { chatsRoutes } from "./modules/chats.js";
+import { placesRoutes } from "./modules/places.js";
 
-// Core / Shared Static Routes (Available across ALL domains)
-const coreStaticRoutes = {
-  "/": { moduleImport: () => import("../pages/home.js"), functionName: "Home" },
-  "/home": { moduleImport: () => import("../pages/home.js"), functionName: "Home" },
-  "/login": { moduleImport: () => import("../pages/auth/auth.js"), functionName: "Auth" },
-  "/profile": { moduleImport: () => import("../pages/profile/userProfile.js"), functionName: "MyProfile", protected: true },
-  "/settings": { moduleImport: () => import("../pages/profile/settings.js"), functionName: "Settings", protected: true },
-  "/map": { moduleImport: () => import("../pages/gtamap/mapgta.js"), functionName: "MapGTA" },
-  "/cart": { moduleImport: () => import("../pages/cart/cart.js"), functionName: "Cart", protected: true },
-  "/my-orders": { moduleImport: () => import("../pages/cart/myorders.js"), functionName: "MyOrders", protected: true },
-  "/deliveries": { moduleImport: () => import("../pages/delivery/deliveries.js"), functionName: "Deliveries", protected: true },
-  "/delivery/create": { moduleImport: () => import("../pages/delivery/createDelivery.js"), functionName: "Createdelivery", protected: true },
-  "/dash/driver": { moduleImport: () => import("../pages/delivery/driverDash.js"), functionName: "DriverDash", protected: true },
-  "/wallet": { moduleImport: () => import("../pages/wallet/wallet.js"), functionName: "Wallet" },
-};
-
-// Core / Shared Dynamic Routes (Available across ALL domains)
-const coreDynamicRoutes = [
+// Core routes accessible across all deployments
+const coreRoutes = [
+  { path: "/", component: () => import("../pages/home.js"), functionName: "Home" },
+  { path: "/home", component: () => import("../pages/home.js"), functionName: "Home" },
   {
-    pattern: /^\/user\/([\w-]+)$/,
-    moduleImport: () => import("../pages/profile/userProfile.js"),
-    functionName: "UserProfile",
-    protected: false,
-    argBuilder: safeArgBuilder
+    path: "/login",
+    component: () => import("../pages/auth/auth.js"),
+    functionName: "Auth",
+    middleware: [guestGuard]
   },
   {
-    pattern: /^\/delivery\/([\w-]+)$/,
-    moduleImport: () => import("../pages/delivery/displayDelivery.js"),
-    functionName: "Delivery",
-    protected: false,
-    argBuilder: (match, state) => [state?.isLoggedIn, match[1]]
+    path: "/profile",
+    component: () => import("../pages/profile/userProfile.js"),
+    functionName: "MyProfile",
+    middleware: [authGuard]
   },
   {
-    pattern: /^\/delivery\/track\/([\w-]+)$/,
-    moduleImport: () => import("../pages/delivery/trackDelivery.js"),
-    functionName: "TrackDelivery",
-    protected: false,
-    argBuilder: (match, state) => [state?.isLoggedIn, match[1]]
-  }
+    path: "/user/:id",
+    component: () => import("../pages/profile/userProfile.js"),
+    functionName: "UserProfile"
+  },
+  {
+    path: "/settings",
+    component: () => import("../pages/profile/settings.js"),
+    functionName: "Settings",
+    middleware: [authGuard]
+  },
+  { path: "/map", component: () => import("../pages/gtamap/mapgta.js"), functionName: "MapGTA" },
+  {
+    path: "/cart",
+    component: () => import("../pages/cart/cart.js"),
+    functionName: "Cart",
+    middleware: [authGuard]
+  },
+  {
+    path: "/my-orders",
+    component: () => import("../pages/cart/myorders.js"),
+    functionName: "MyOrders",
+    middleware: [authGuard]
+  },
+  {
+    path: "/deliveries",
+    component: () => import("../pages/delivery/deliveries.js"),
+    functionName: "Deliveries",
+    middleware: [authGuard]
+  },
+  {
+    path: "/delivery/create",
+    component: () => import("../pages/delivery/createDelivery.js"),
+    functionName: "Createdelivery",
+    middleware: [authGuard]
+  },
+  {
+    path: "/delivery/:id",
+    component: () => import("../pages/delivery/displayDelivery.js"),
+    functionName: "Delivery"
+  },
+  {
+    path: "/delivery/track/:id",
+    component: () => import("../pages/delivery/trackDelivery.js"),
+    functionName: "TrackDelivery"
+  },
+  {
+    path: "/dash/driver",
+    component: () => import("../pages/delivery/driverDash.js"),
+    functionName: "DriverDash",
+    middleware: [authGuard, roleGuard(["driver", "admin"])]
+  },
+  { path: "/wallet", component: () => import("../pages/wallet/wallet.js"), functionName: "Wallet" }
 ];
 
-// Map feature keys to their respective static and dynamic routes
+// Legal static pages
+const legalRoutes = [
+  { path: "/about", component: () => import("../legalPages/home.js"), functionName: "About" },
+  { path: "/contact", component: () => import("../legalPages/home.js"), functionName: "Contact" },
+  { path: "/faq", component: () => import("../legalPages/home.js"), functionName: "Faq" },
+  { path: "/terms", component: () => import("../legalPages/home.js"), functionName: "Terms" },
+  { path: "/privacy", component: () => import("../legalPages/home.js"), functionName: "Privacy" },
+  { path: "/refund", component: () => import("../legalPages/home.js"), functionName: "Refund" },
+  { path: "/shipping", component: () => import("../legalPages/home.js"), functionName: "Shipping" },
+  { path: "/returns", component: () => import("../legalPages/home.js"), functionName: "Returns" },
+  { path: "/disclaimer", component: () => import("../legalPages/home.js"), functionName: "Disclaimer" },
+  { path: "/blog", component: () => import("../legalPages/home.js"), functionName: "Blog" }
+];
+
+// Mapping feature keys to their respective module route arrays
 const featureModules = {
-  admin: { static: adminStaticRoutes, dynamic: adminDynamicRoutes },
-  // places: { static: palcesStaticRoutes, dynamic: placesDynamicRoutes },
-  farms: { static: farmsStaticRoutes, dynamic: farmsDynamicRoutes },
-  // events: { static: eventsStaticRoutes, dynamic: eventsDynamicRoutes },
-  // baito: { static: baitoStaticRoutes, dynamic: baitoDynamicRoutes },
-  // social: { static: socialStaticRoutes, dynamic: socialDynamicRoutes },
-  chats: { static: chatsStaticRoutes, dynamic: chatsDynamicRoutes },
+  admin: adminRoutes,
+  farms: farmsRoutes,
+  events: eventsRoutes,
+  baito: baitoRoutes,
+  social: socialRoutes,
+  chats: chatsRoutes,
+  places: placesRoutes
 };
 
-// Build routes conditionally based on domain permissions
-function buildDomainRoutes() {
+function buildRoutes() {
   const allowedFeatures = getCurrentAllowedFeatures();
+  const aggregatedRoutes = [...coreRoutes, ...legalRoutes];
 
-  const finalStatic = { ...coreStaticRoutes };
-  const finalDynamic = [...coreDynamicRoutes];
-
-  Object.entries(featureModules).forEach(([featureKey, module]) => {
-    // Include the feature routes if "ALL" is allowed or if the current domain permits this feature
-    if (allowedFeatures.includes("ALL") || allowedFeatures.includes(featureKey)) {
-      Object.assign(finalStatic, module.static);
-      finalDynamic.push(...module.dynamic);
+  // Dynamically attach feature modules based on domain permission configuration
+  Object.entries(featureModules).forEach(([featureKey, routesList]) => {
+    if ((allowedFeatures.includes("ALL") || allowedFeatures.includes(featureKey)) && Array.isArray(routesList)) {
+      aggregatedRoutes.push(...routesList);
     }
   });
 
-  return { finalStatic, finalDynamic };
+  // Catch-all admin fallback route
+  if (allowedFeatures.includes("ALL") || allowedFeatures.includes("admin")) {
+    aggregatedRoutes.push({
+      path: "/admin/*path",
+      component: () => import("../pages/admin/dashboard.js"),
+      functionName: "AdminDashboard",
+      middleware: [authGuard, roleGuard(["admin"])]
+    });
+  }
+
+  return aggregatedRoutes;
 }
 
-const { finalStatic, finalDynamic } = buildDomainRoutes();
-
-export const staticRoutes = finalStatic;
-export const dynamicRoutes = finalDynamic;
+export const routes = buildRoutes();

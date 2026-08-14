@@ -1,72 +1,69 @@
 import { createElement } from "../components/createElement.js";
 import { getState, subscribe, setRouteModule, getRouteModule, hasRouteModule } from "../state/state.js";
-import { staticRoutes, dynamicRoutes } from "./newRoutes.js";
+import { routes } from "./newRoutes.js";
 import { navigate } from "./index.js";
-import { legalRoutes } from "./legalRoutes.js";
 import { track } from "../services/activity/metrics.js";
 
-/** --- Reactive login state --- */
 let isLoggedIn = Boolean(getState("token"));
 
-/** Render a simple error message */
-function renderError(container, message = "404 Not Found") {
-  container.replaceChildren(createElement("h1", {}, [message]));
-}
-
 /**
- * Invokes and caches a page's render function.
- * Evaluates dynamic states (like auth and target container) cleanly upon call.
+ * Extracts route parameters matching `:param` and `*wildcard` tokens.
  */
-async function handleRoute({ path, moduleImport, functionName, routeParams = [], contentContainer, cache }) {
-  const startTime = performance.now();
+function matchRoute(routePath, currentPath) {
+  const paramNames = [];
+  const regexPath = routePath
+    .replace(/\/+/g, "/")
+    .replace(/:([a-zA-Z0-9_]+)/g, (_, paramName) => {
+      paramNames.push(paramName);
+      return "([^/]+)";
+    })
+    .replace(/\*([a-zA-Z0-9_]+)/g, (_, paramName) => {
+      paramNames.push(paramName);
+      return "(.*)";
+    });
 
-  try {
-    // 1. If cached, retrieve the render function and execute with fresh states
-    if (cache && hasRouteModule(path)) {
-      const cachedRender = getRouteModule(path).render;
-      contentContainer.replaceChildren();
-      await cachedRender(isLoggedIn, ...routeParams, contentContainer);
-      
-      const duration = Math.round(performance.now() - startTime);
-      track("route_render_time", { path, duration_ms: duration, cached: true });
-      return;
-    }
+  const match = currentPath.match(new RegExp(`^${regexPath}$`));
+  if (!match) return null;
 
-    // 2. Fetch the chunk over the network before tearing down existing DOM
-    const mod = await moduleImport();
-    const renderFn = mod[functionName];
-    if (typeof renderFn !== "function") {
-      throw new Error(`Export '${functionName}' not found in module.`);
-    }
+  const params = {};
+  paramNames.forEach((name, index) => {
+    params[name] = decodeURIComponent(match[index + 1]);
+  });
 
-    // 3. Clear container ONLY when new content is ready to inject
-    contentContainer.replaceChildren();
-
-    // Assemble arguments dynamically
-    const fullArgs = [isLoggedIn, ...routeParams, contentContainer];
-    await renderFn(...fullArgs);
-
-    // 4. Cache the raw render function pointer
-    if (cache) {
-      setRouteModule(path, {
-        render: (freshIsLoggedIn, ...paramsAndContainer) => {
-          return renderFn(freshIsLoggedIn, ...paramsAndContainer);
-        }
-      });
-    }
-
-    const duration = Math.round(performance.now() - startTime);
-    track("route_render_time", { path, duration_ms: duration, cached: false });
-
-  } catch (err) {
-    const duration = Math.round(performance.now() - startTime);
-    track("route_render_error", { path, duration_ms: duration, error: err.message });
-    throw err;
-  }
+  return params;
 }
 
 /**
- * Resolves and renders the appropriate route.
+ * Executes the route middleware pipeline.
+ */
+async function runMiddleware(route, context) {
+  const middlewareStack = [...(route.middleware || [])];
+
+  for (const fn of middlewareStack) {
+    const result = await fn(context);
+    if (result === false) return false;           // Halt navigation
+    if (typeof result === "string") return result; // Redirect URL
+  }
+
+  return true;
+}
+
+function renderError(container, message = "404 Not Found") {
+  container.replaceChildren(createElement("h1", { class: "error-heading" }, [message]));
+}
+
+/**
+ * Helper to execute component render with or without route parameters.
+ */
+function invokeRender(renderFn, auth, params, container) {
+  const hasParams = params && Object.keys(params).length > 0;
+  return hasParams
+    ? renderFn(auth, params, container)
+    : renderFn(auth, container);
+}
+
+/**
+ * Main route resolver and renderer.
  */
 export async function render(rawPath, contentContainer) {
   let cleanPath = decodeURIComponent(String(rawPath).split(/[?#]/)[0]);
@@ -74,99 +71,101 @@ export async function render(rawPath, contentContainer) {
     cleanPath = cleanPath.slice(0, -1);
   }
 
-  // 0) Legal routes
-  const legalRoute = legalRoutes[cleanPath];
-  if (legalRoute) {
-    try {
-      await handleRoute({ 
-        path: cleanPath, 
-        moduleImport: legalRoute.moduleImport, 
-        functionName: legalRoute.functionName, 
-        routeParams: [], 
-        contentContainer, 
-        cache: true 
-      });
-    } catch (err) {
-      console.error("Legal route error:", err);
-      renderError(contentContainer, "500 Internal Error");
+  let matchedRoute = null;
+  let routeParams = {};
+
+  for (const route of routes) {
+    const params = matchRoute(route.path, cleanPath);
+    if (params) {
+      matchedRoute = route;
+      routeParams = params;
+      break;
     }
+  }
+
+  if (!matchedRoute) {
+    track("route_not_found", { path: cleanPath });
+    renderError(contentContainer, "404 Not Found");
     return;
   }
 
-  // 1) Static routes
-  const staticRoute = staticRoutes[cleanPath];
-  if (staticRoute) {
-    if (staticRoute.protected && !isLoggedIn) {
-      localStorage.setItem("redirectAfterLogin", cleanPath);
-      return navigate("/login");
-    }
+  const context = { path: cleanPath, params: routeParams, route: matchedRoute };
 
-    try {
-      await handleRoute({ 
-        path: cleanPath, 
-        moduleImport: staticRoute.moduleImport, 
-        functionName: staticRoute.functionName, 
-        routeParams: [], 
-        contentContainer, 
-        cache: true 
-      });
-    } catch (err) {
-      console.error("Static route error:", err);
-      renderError(contentContainer, "500 Internal Error");
-    }
-    return;
+  // Execute middleware pipeline
+  const guardResult = await runMiddleware(matchedRoute, context);
+  if (guardResult === false) return; // Halt rendering
+  if (typeof guardResult === "string") {
+    return navigate(guardResult);
   }
 
-  // 2) Dynamic routes
-  for (const route of dynamicRoutes) {
-    const match = cleanPath.match(route.pattern);
-    if (!match) continue;
-
-    if (route.protected && !isLoggedIn) {
-      localStorage.setItem("redirectAfterLogin", cleanPath);
-      return navigate("/login");
-    }
-
-    const routeParams = typeof route.argBuilder === "function" 
-      ? route.argBuilder(match) 
-      : match.slice(1);
-
-    try {
-      await handleRoute({ 
-        path: cleanPath, 
-        moduleImport: route.moduleImport, 
-        functionName: route.moduleImport ? route.functionName : undefined,
-        routeParams, 
-        contentContainer, 
-        cache: true 
-      });
-    } catch (err) {
-      console.error("Dynamic route error:", err);
-      renderError(contentContainer, "500 Internal Error");
-    }
-    return;
+  // Lifecycle Hook: beforeEnter
+  if (typeof matchedRoute.beforeEnter === "function") {
+    const hookRes = await matchedRoute.beforeEnter(context);
+    if (hookRes === false) return;
+    if (typeof hookRes === "string") return navigate(hookRes);
   }
 
-  // 3) No match
-  track("route_not_found", { path: cleanPath });
-  renderError(contentContainer);
+  const startTime = performance.now();
+
+  try {
+    // Check module cache
+    if (hasRouteModule(cleanPath)) {
+      const cachedRender = getRouteModule(cleanPath).render;
+      contentContainer.replaceChildren();
+      await cachedRender(isLoggedIn, routeParams, contentContainer);
+    } else {
+      const mod = await matchedRoute.component();
+      const exportName = matchedRoute.functionName || "default";
+      const renderFn = mod[exportName] || mod.default;
+
+      if (typeof renderFn !== "function") {
+        throw new Error(`Export '${exportName}' not found in component module.`);
+      }
+
+      contentContainer.replaceChildren();
+      await invokeRender(renderFn, isLoggedIn, routeParams, contentContainer);
+
+      setRouteModule(cleanPath, {
+        render: (freshAuth, freshParams, container) =>
+          invokeRender(renderFn, freshAuth, freshParams, container)
+      });
+    }
+
+    const duration = Math.round(performance.now() - startTime);
+    track("route_render_time", { path: cleanPath, duration_ms: duration });
+
+    // Lifecycle Hook: afterEnter
+    if (typeof matchedRoute.afterEnter === "function") {
+      matchedRoute.afterEnter(context);
+    }
+  } catch (err) {
+    console.error("Route execution error:", err);
+    track("route_render_error", { path: cleanPath, error: err.message });
+    renderError(contentContainer, "500 Internal Error");
+  }
 }
 
-/* ------------------------------------------------------
-    Unified Subscriber (Handles post-login redirects)
---------------------------------------------------------- */
+// Reactive auth syncing for route guards
 subscribe("token", (token) => {
   isLoggedIn = Boolean(token);
-
   if (!token) return;
 
   const redirect = localStorage.getItem("redirectAfterLogin");
   if (!redirect) return;
 
   localStorage.removeItem("redirectAfterLogin");
-  const target = redirect.startsWith("/") && redirect !== "/login" && redirect !== "/logout" 
-    ? redirect 
-    : "/home";
+  const target =
+    redirect.startsWith("/") && redirect !== "/login" && redirect !== "/logout"
+      ? redirect
+      : "/home";
 
   navigate(target);
 });
+
+/**
+ * Safely extracts regex capture groups and filters out undefined values.
+ */
+export function safeArgBuilder(match) {
+  if (!match) return [];
+  return match.slice(1).filter((val) => val !== undefined);
+}

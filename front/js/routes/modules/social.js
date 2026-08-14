@@ -1,22 +1,28 @@
-import { safeArgBuilder } from "../safeArgsBuilder.js";
-export const socialStaticRoutes = {
-  "/posts": { moduleImport: () => import("../../pages/posts/posts.js"), functionName: "Posts" },
-  "/create-post": { moduleImport: () => import("../../pages/posts/createNewPost.js"), functionName: "CreatePost", protected: true },
-};
+import { authGuard } from "../../middleware/middleware.js";
 
-export const socialDynamicRoutes = [
+export const socialRoutes = [
+  // Static
   {
-    pattern: /^\/post\/([\w-]+)$/,
-    moduleImport: () => import("../../pages/posts/displayPost.js"),
-    functionName: "Post",
-    protected: false,
-    argBuilder: safeArgBuilder
+    path: "/posts",
+    component: () => import("../../pages/posts/posts.js"),
+    functionName: "Posts"
   },
   {
-    pattern: /^\/hashtag\/([\w-]+)$/,
-    moduleImport: () => import("../../pages/hashtag/hashtagPage.js"),
-    functionName: "Hashtag",
-    protected: false,
-    argBuilder: safeArgBuilder
+    path: "/create-post",
+    component: () => import("../../pages/posts/createNewPost.js"),
+    functionName: "CreatePost",
+    middleware: [authGuard]
+  },
+
+  // Dynamic
+  {
+    path: "/post/:id",
+    component: () => import("../../pages/posts/displayPost.js"),
+    functionName: "Post"
+  },
+  {
+    path: "/hashtag/:tag",
+    component: () => import("../../pages/hashtag/hashtagPage.js"),
+    functionName: "Hashtag"
   }
 ];

@@ -61,7 +61,6 @@ async function signup(event) {
             dismissible: true
         });
 
-        localStorage.setItem("redirectAfterLogin", "/home");
         navigate("/login");
     } catch (err) {
         const errorMsg = typeof err === "string" ? err : err?.message || err?.error || "Signup failed.";
@@ -120,12 +119,11 @@ async function login(event) {
             throw new Error("Invalid response format from server.");
         }
 
-        setState({ token, user: userId, username }, true);
-
+        // Fetch optional user profile before firing reactive token subscribers
         try {
             const profile = await fetchProfile();
             if (profile) {
-                setState({ userProfile: profile }, true);
+                setState({ userProfile: profile }, false);
             }
         } catch {
             Notify("Logged in, but profile could not be loaded.", {
@@ -135,10 +133,8 @@ async function login(event) {
             });
         }
 
-        const redirect = localStorage.getItem("redirectAfterLogin") || "/home";
-        localStorage.removeItem("redirectAfterLogin");
-
-        navigate(redirect === "/login" ? "/home" : redirect);
+        // Setting token triggers router.js subscribe("token") which handles redirecting seamlessly
+        setState({ token, user: userId, username }, true);
 
     } catch (err) {
         Notify(err?.message || "Login failed.", {
@@ -192,6 +188,8 @@ async function logout() {
 function silentLogout() {
     clearState();
     sessionStorage.clear();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     localStorage.removeItem("redirectAfterLogin");
 
     queueMicrotask(() => {

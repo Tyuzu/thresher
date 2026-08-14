@@ -1,27 +1,50 @@
-import { safeArgBuilder } from "../safeArgsBuilder.js";
-export const palcesStaticRoutes = {
-  "/map": { moduleImport: () => import("../../pages/gtamap/mapgta.js"), functionName: "MapGTA" },
-  "/places": { moduleImport: () => import("../../pages/places/places.js"), functionName: "Places" },
-  "/create-place": { moduleImport: () => import("../../pages/places/createPlace.js"), functionName: "CreatePlace", protected: true },
+import { authGuard } from "../../middleware/middleware.js";
 
-  "/itinerary": { moduleImport: () => import("../../pages/itinerary/itinerary.js"), functionName: "Itinerary" },
-  "/create-itinerary": { moduleImport: () => import("../../pages/itinerary/createItinerary.js"), functionName: "CreateItinerary", protected: true },
-  "/edit-itinerary": { moduleImport: () => import("../../pages/itinerary/editItinerary.js"), functionName: "EditItinerary", protected: true },
-};
-
-export const placesDynamicRoutes = [
+export const placesRoutes = [
+  // Static
   {
-    pattern: /^\/place\/([\w-]+)$/,
-    moduleImport: () => import("../../pages/places/placePage.js"),
-    functionName: "Place",
-    protected: false,
-    argBuilder: safeArgBuilder
+    path: "/map",
+    component: () => import("../../pages/gtamap/mapgta.js"),
+    functionName: "MapGTA"
   },
   {
-    pattern: /^\/itinerary\/([\w-]+)$/,
-    moduleImport: () => import("../../pages/itinerary/itineraryDisplay.js"),
-    functionName: "Itinerary",
-    protected: false,
-    argBuilder: safeArgBuilder
+    path: "/places",
+    component: () => import("../../pages/places/places.js"),
+    functionName: "Places"
   },
+  {
+    path: "/create-place",
+    component: () => import("../../pages/places/createPlace.js"),
+    functionName: "CreatePlace",
+    middleware: [authGuard]
+  },
+  {
+    path: "/itinerary",
+    component: () => import("../../pages/itinerary/itinerary.js"),
+    functionName: "Itinerary"
+  },
+  {
+    path: "/create-itinerary",
+    component: () => import("../../pages/itinerary/createItinerary.js"),
+    functionName: "CreateItinerary",
+    middleware: [authGuard]
+  },
+  {
+    path: "/edit-itinerary",
+    component: () => import("../../pages/itinerary/editItinerary.js"),
+    functionName: "EditItinerary",
+    middleware: [authGuard]
+  },
+
+  // Dynamic
+  {
+    path: "/place/:id",
+    component: () => import("../../pages/places/placePage.js"),
+    functionName: "Place"
+  },
+  {
+    path: "/itinerary/:id",
+    component: () => import("../../pages/itinerary/itineraryDisplay.js"),
+    functionName: "Itinerary"
+  }
 ];

@@ -8,18 +8,21 @@ export const {
 
 // --- Allowed and persisted keys ---
 const allowedKeys = new Set([
-  "token", "user", "username", "userProfile", "socket", "role", "environment",
-  "lang", "lastPath", "currentRoute", "routeCache", "routeState", "currentChatId", 
-  "isLoading", "userId", "unreadMessages", "unreadNotifications"
+  "token", "user", "username", "userProfile", "socket", "roles", "permissions", "auth",
+  "environment", "lang", "lastPath", "currentRoute", "routeCache", "routeState", 
+  "currentChatId", "isLoading", "userId", "unreadMessages", "unreadNotifications"
 ]);
 
-const PERSISTED_KEYS = new Set(["token", "userProfile", "user", "username", "role", "unreadMessages", "unreadNotifications"]);
+const PERSISTED_KEYS = new Set([
+  "token", "userProfile", "user", "username", "roles", "permissions", "unreadMessages", "unreadNotifications"
+]);
 
 // --- Safe JSON parse ---
 function safeParse(key) {
   try {
     const item = localStorage.getItem(key) || sessionStorage.getItem(key);
-    return item ? JSON.parse(item) : null;
+    if (!item) return null;
+    return item.startsWith("{") || item.startsWith("[") ? JSON.parse(item) : item;
   } catch {
     return null;
   }
@@ -37,22 +40,22 @@ function getValueByPath(path) {
   return path.split(".").reduce((acc, part) => acc?.[part], state);
 }
 
-function scheduleNotify(key, value) {
+function scheduleNotify(key) {
   notifyQueue.add(key);
   if (!notifyPending) {
     notifyPending = true;
-    queueMicrotask(() => { // Using microtask instead of animation frame for faster, snappy UI states
+    queueMicrotask(() => {
       for (const queueKey of notifyQueue) {
         const val = queueKey.includes(".") ? getValueByPath(queueKey) : state[queueKey];
         
         // 1. Top level listeners
-        listeners.get(queueKey)?.forEach(fn => fn(val));
+        listeners.get(queueKey)?.forEach(fn => fn(val, state));
 
         // 2. Deep path processing
         for (const [path, fns] of deepListeners) {
-          if (path === queueKey || path.startsWith(queueKey + ".")) {
+          if (path === queueKey || path.startsWith(queueKey + ".") || queueKey.startsWith(path + ".")) {
             const deepVal = getValueByPath(path);
-            fns.forEach(fn => fn(deepVal));
+            fns.forEach(fn => fn(deepVal, state));
           }
         }
       }
@@ -62,7 +65,7 @@ function scheduleNotify(key, value) {
   }
 }
 
-// --- Lean Deep Proxy Configuration ---
+// --- Deep Proxy Configuration ---
 function createReactiveObject(obj, path = []) {
   if (obj instanceof Map || obj instanceof Set || obj === null || typeof obj !== "object") {
     return obj;
@@ -70,6 +73,7 @@ function createReactiveObject(obj, path = []) {
 
   return new Proxy(obj, {
     get(target, prop) {
+      if (typeof prop === "symbol") return target[prop];
       const val = target[prop];
       if (val && typeof val === "object" && !(val instanceof Map) && !(val instanceof Set)) {
         return createReactiveObject(val, path.concat(prop));
@@ -82,9 +86,9 @@ function createReactiveObject(obj, path = []) {
       target[prop] = value;
       const fullPath = path.concat(prop).join(".");
       
-      scheduleNotify(fullPath, value);
+      scheduleNotify(fullPath);
       if (path.length > 0) {
-        scheduleNotify(path[0], target);
+        scheduleNotify(path[0]);
       }
       return true;
     },
@@ -93,76 +97,116 @@ function createReactiveObject(obj, path = []) {
       const fullPath = path.concat(prop).join(".");
       scheduleNotify(fullPath);
       if (path.length > 0) {
-        scheduleNotify(path[0], target);
+        scheduleNotify(path[0]);
       }
       return true;
     }
   });
 }
 
-// --- Initialize reactive state ---
+// --- Raw initial state ---
+const initialToken = localStorage.getItem("token") || sessionStorage.getItem("token") || null;
+const initialRoles = safeParse("roles") || [];
+const initialPermissions = safeParse("permissions") || [];
+
 const rawState = {
-  token: localStorage.getItem("token") || sessionStorage.getItem("token") || null,
+  token: initialToken,
   userProfile: safeParse("userProfile") || {},
   user: safeParse("user") || {},
-  lastPath: window.location.pathname,
+  username: localStorage.getItem("username") || sessionStorage.getItem("username") || "",
+  roles: Array.isArray(initialRoles) ? initialRoles : [initialRoles].filter(Boolean),
+  permissions: Array.isArray(initialPermissions) ? initialPermissions : [],
+  auth: {
+    isAuthenticated: Boolean(initialToken),
+    loading: false,
+    roles: Array.isArray(initialRoles) ? initialRoles : [initialRoles].filter(Boolean),
+    permissions: Array.isArray(initialPermissions) ? initialPermissions : []
+  },
+  socket: null,
+  environment: {},
+  lastPath: typeof window !== "undefined" ? window.location.pathname : "/",
   lang: "en",
   currentRoute: null,
   routeCache: new Map(),
   routeState: new Map(),
+  currentChatId: null,
+  userId: null,
   isLoading: false,
-  unreadMessages: 0,
-  unreadNotifications: 0,
+  unreadMessages: Number(safeParse("unreadMessages")) || 0,
+  unreadNotifications: Number(safeParse("unreadNotifications")) || 0,
 };
+
 const state = createReactiveObject(rawState);
 
-// --- Core state functions ---
+// --- Core state access ---
 function getState(key) {
-  if (!allowedKeys.has(key)) throw new Error(`Invalid state key: ${key}`);
-  return state[key];
+  if (!key) return { ...state };
+  
+  const rootKey = key.split(".")[0];
+  if (!allowedKeys.has(rootKey)) {
+    throw new Error(`Invalid state key: ${key}`);
+  }
+
+  return key.includes(".") ? getValueByPath(key) : state[key];
 }
 
-// --- State manipulation ---
-function setState(keyOrObj, persist = false, value = undefined) {
-  if (typeof keyOrObj === "object" && keyOrObj !== null) {
-    for (const [key, val] of Object.entries(keyOrObj)) {
-      if (!allowedKeys.has(key)) throw new Error(`Invalid state key: ${key}`);
-      if (key === "routeCache" || key === "routeState") continue;
-      
-      state[key] = val;
+// --- Core state manipulation ---
+function setState(keyOrObj, persistOrValue = false, maybeValue = undefined) {
+  let persist = false;
 
-      if (persist && PERSISTED_KEYS.has(key)) {
-        const str = typeof val === "string" ? val : JSON.stringify(val);
-        sessionStorage.setItem(key, str);
-        localStorage.setItem(key, str);
+  const updateSingleKey = (k, v) => {
+    if (!allowedKeys.has(k)) throw new Error(`Invalid state key: ${k}`);
+    if (k === "routeCache" || k === "routeState") return;
+
+    state[k] = v;
+
+    // Automatically sync composite `auth` state object when tokens or roles update
+    if (k === "token" || k === "roles" || k === "permissions") {
+      state.auth = {
+        isAuthenticated: Boolean(state.token),
+        loading: state.isLoading,
+        roles: state.roles || [],
+        permissions: state.permissions || []
+      };
+      scheduleNotify("auth");
+    }
+
+    if (persist && PERSISTED_KEYS.has(k)) {
+      if (v === null || v === undefined) {
+        sessionStorage.removeItem(k);
+        localStorage.removeItem(k);
+      } else {
+        const str = typeof v === "string" ? v : JSON.stringify(v);
+        sessionStorage.setItem(k, str);
+        localStorage.setItem(k, str);
       }
     }
-    return;
-  }
+  };
 
-  const key = keyOrObj;
-  if (!allowedKeys.has(key)) throw new Error(`Invalid state key: ${key}`);
-  if (key === "routeCache" || key === "routeState") return;
-
-  state[key] = value;
-
-  if (persist && PERSISTED_KEYS.has(key)) {
-    const str = typeof value === "string" ? value : JSON.stringify(value);
-    sessionStorage.setItem(key, str);
-    localStorage.setItem(key, str);
+  if (typeof keyOrObj === "object" && keyOrObj !== null) {
+    persist = Boolean(persistOrValue);
+    for (const [key, val] of Object.entries(keyOrObj)) {
+      updateSingleKey(key, val);
+    }
+  } else {
+    persist = Boolean(maybeValue);
+    updateSingleKey(keyOrObj, persistOrValue);
   }
 }
 
-// --- Subscriptions with automatic cleanup ---
+// --- Subscriptions ---
 function subscribe(key, fn) {
-  if (!allowedKeys.has(key)) throw new Error(`Cannot subscribe to invalid key: ${key}`);
-  if (!listeners.has(key)) listeners.set(key, new Set());
+  const rootKey = key.split(".")[0];
+  if (!allowedKeys.has(rootKey)) throw new Error(`Cannot subscribe to invalid key: ${key}`);
   
+  if (key.includes(".")) {
+    return subscribeDeep(key, fn);
+  }
+
+  if (!listeners.has(key)) listeners.set(key, new Set());
   listeners.get(key).add(fn);
-  return () => {
-    listeners.get(key)?.delete(fn);
-    if (listeners.get(key)?.size === 0) listeners.delete(key);
-  };
+
+  return () => unsubscribe(key, fn);
 }
 
 function unsubscribe(key, fn) {
@@ -174,10 +218,7 @@ function subscribeDeep(path, fn) {
   if (!deepListeners.has(path)) deepListeners.set(path, new Set());
   
   deepListeners.get(path).add(fn);
-  return () => {
-    deepListeners.get(path)?.delete(fn);
-    if (deepListeners.get(path)?.size === 0) deepListeners.delete(path);
-  };
+  return () => unsubscribeDeep(path, fn);
 }
 
 function unsubscribeDeep(path, fn) {
@@ -194,7 +235,7 @@ function clearAllListeners() {
    ROUTE CACHE & STATE
 ========================= */
 function getRouteModule(path) { return state.routeCache.get(path); }
-function setRouteModule(path, module) { state.routeCache.set(path, module); }
+function setRouteModule(path, moduleData) { state.routeCache.set(path, moduleData); }
 function hasRouteModule(path) { return state.routeCache.has(path); }
 
 function clearRouteCache() {
@@ -243,10 +284,16 @@ function clearState(preserveKeys = []) {
       continue;
     }
 
-    if (state[key] !== null) {
-      state[key] = null;
-    }
+    state[key] = typeof rawState[key] === "number" ? 0 : Array.isArray(rawState[key]) ? [] : null;
   }
+
+  // Reset derived auth state
+  state.auth = {
+    isAuthenticated: false,
+    loading: false,
+    roles: [],
+    permissions: []
+  };
 
   for (const [key, value] of Object.entries(preserved)) {
     sessionStorage.setItem(key, value);
@@ -262,25 +309,42 @@ function clearState(preserveKeys = []) {
 /* =========================
    SCROLL & UTILS
 ========================= */
-function saveScroll(container, scrollState) {
-  if (scrollState) scrollState.scrollY = container?.scrollTop ?? 0;
+function saveScroll(container, routeKey) {
+  if (!container || !routeKey) return;
+  const key = typeof routeKey === "string" ? routeKey : window.location.pathname;
+  const route = getRouteState(key);
+  route.scrollY = container.scrollTop ?? container.scrollY ?? 0;
+  route.scrollX = container.scrollLeft ?? container.scrollX ?? 0;
 }
 
-function restoreScroll(container, scrollState) {
-  if (container && scrollState && "scrollY" in scrollState) {
-    container.scrollTop = scrollState.scrollY;
+function restoreScroll(container, routeKey) {
+  if (!container || !routeKey) return;
+  const key = typeof routeKey === "string" ? routeKey : window.location.pathname;
+  const route = state.routeState.get(key);
+  if (route && ("scrollY" in route || "scrollX" in route)) {
+    container.scrollTo({
+      top: route.scrollY || 0,
+      left: route.scrollX || 0,
+      behavior: "instant"
+    });
   }
 }
 
-function hasRole(...roles) {
-  const current = state.userProfile?.role;
-  if (!current) return false;
-  return roles.some(r => (Array.isArray(current) ? current : [current]).includes(r));
+function hasRole(...requiredRoles) {
+  const currentRoles = state.roles || state.auth?.roles || [];
+  if (!currentRoles.length) return false;
+  return requiredRoles.some(r => currentRoles.includes(r));
+}
+
+function hasPermission(...requiredPermissions) {
+  const currentPerms = state.permissions || state.auth?.permissions || [];
+  if (!currentPerms.length) return false;
+  return requiredPermissions.every(p => currentPerms.includes(p));
 }
 
 const isAdmin = () => hasRole("admin");
 const getGlobalSnapshot = () => Object.freeze({ ...state });
-const setLoading = (val) => setState("isLoading", false, val);
+const setLoading = (val) => setState("isLoading", val);
 
 export {
   state, getState, setState, clearState, getGlobalSnapshot,
@@ -288,5 +352,5 @@ export {
   saveScroll, restoreScroll,
   getRouteModule, setRouteModule, hasRouteModule, clearRouteCache,
   getRouteState, setRouteState,
-  hasRole, isAdmin, setLoading
+  hasRole, hasPermission, isAdmin, setLoading
 };

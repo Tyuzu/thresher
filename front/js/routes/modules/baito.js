@@ -1,26 +1,51 @@
-import { safeArgBuilder } from "../safeArgsBuilder.js";
-export const baitoStaticRoutes = {
-  "/baitos": { moduleImport: () => import("../../pages/baitos/baitos.js"), functionName: "Baitos" },
-  "/baitos/dash": { moduleImport: () => import("../../pages/baitos/baitoDash.js"), functionName: "BaitoDash", protected: true },
-  "/baitos/hire": { moduleImport: () => import("../../pages/baitos/hireWorkers.js"), functionName: "HireWorkers" },
-  "/baitos/create-profile": { moduleImport: () => import("../../pages/baitos/createProfile.js"), functionName: "CreateBaitoProfile", protected: true },
-  "/create-baito": { moduleImport: () => import("../../pages/baitos/createNewBaito.js"), functionName: "CreateBaito", protected: true },
-  "/booking": { moduleImport: () => import("../../pages/booking/booking.js"), functionName: "Booking" },
-};
+import { authGuard } from "../../middleware/middleware.js";
 
-export const baitoDynamicRoutes = [
+export const baitoRoutes = [
+  // Static
   {
-    pattern: /^\/baito\/([\w-]+)$/,
-    moduleImport: () => import("../../pages/baitos/displayBaito.js"),
-    functionName: "Baito",
-    protected: false,
-    argBuilder: safeArgBuilder
+    path: "/baitos",
+    component: () => import("../../pages/baitos/baitos.js"),
+    functionName: "Baitos"
   },
   {
-    pattern: /^\/baitos\/worker\/([\w-]+)$/,
-    moduleImport: () => import("../../pages/baitos/displayBaitoWorker.js"),
+    path: "/baitos/dash",
+    component: () => import("../../pages/baitos/baitoDash.js"),
+    functionName: "BaitoDash",
+    middleware: [authGuard]
+  },
+  {
+    path: "/baitos/hire",
+    component: () => import("../../pages/baitos/hireWorkers.js"),
+    functionName: "HireWorkers"
+  },
+  {
+    path: "/baitos/create-profile",
+    component: () => import("../../pages/baitos/createProfile.js"),
+    functionName: "CreateBaitoProfile",
+    middleware: [authGuard]
+  },
+  {
+    path: "/create-baito",
+    component: () => import("../../pages/baitos/createNewBaito.js"),
+    functionName: "CreateBaito",
+    middleware: [authGuard]
+  },
+  {
+    path: "/booking",
+    component: () => import("../../pages/booking/booking.js"),
+    functionName: "Booking"
+  },
+
+  // Dynamic
+  {
+    path: "/baito/:id",
+    component: () => import("../../pages/baitos/displayBaito.js"),
+    functionName: "Baito"
+  },
+  {
+    path: "/baitos/worker/:id",
+    component: () => import("../../pages/baitos/displayBaitoWorker.js"),
     functionName: "Worker",
-    protected: true,
-    argBuilder: safeArgBuilder
-  },
+    middleware: [authGuard]
+  }
 ];

@@ -1,30 +1,43 @@
-import { safeArgBuilder } from "../safeArgsBuilder.js";
-export const chatsStaticRoutes = {
-  "/merechats": { moduleImport: () => import("../../pages/merechats/merechats.js"), functionName: "MeChats", protected: true },
-  "/newchats": { moduleImport: () => import("../../pages/newchats/newchats.js"), functionName: "NewChats", protected: true },
-  "/discord": { moduleImport: () => import("../../pages/discord/discord.js"), functionName: "Discord", protected: true },
-};
+import { authGuard } from "../../middleware/middleware.js";
 
-export const chatsDynamicRoutes = [
+export const chatsRoutes = [
+  // Static
   {
-    pattern: /^\/merechats\/([\w-]+)$/,
-    moduleImport: () => import("../../pages/merechats/merePage.js"),
+    path: "/merechats",
+    component: () => import("../../pages/merechats/merechats.js"),
+    functionName: "MeChats",
+    middleware: [authGuard]
+  },
+  {
+    path: "/newchats",
+    component: () => import("../../pages/newchats/newchats.js"),
+    functionName: "NewChats",
+    middleware: [authGuard]
+  },
+  {
+    path: "/discord",
+    component: () => import("../../pages/discord/discord.js"),
+    functionName: "Discord",
+    middleware: [authGuard]
+  },
+
+  // Dynamic
+  {
+    path: "/merechats/:id",
+    component: () => import("../../pages/merechats/merePage.js"),
     functionName: "OneChatPage",
-    protected: true,
-    argBuilder: safeArgBuilder
+    middleware: [authGuard]
   },
   {
-    pattern: /^\/newchat\/([\w-]+)$/,
-    moduleImport: () => import("../../pages/newchats/newChatPage.js"),
+    path: "/newchat/:id",
+    component: () => import("../../pages/newchats/newChatPage.js"),
     functionName: "NewChatPage",
-    protected: true,
-    argBuilder: safeArgBuilder
+    middleware: [authGuard]
   },
   {
-    pattern: /^\/discord\/([\w-]+)\/([\w-]+)$/,
-    moduleImport: () => import("../../pages/discord/discordChannel.js"),
+    path: "/discord/:guildId/:channelId",
+    component: () => import("../../pages/discord/discordChannel.js"),
     functionName: "DiscordChannel",
-    protected: true,
-    argBuilder: safeArgBuilder
+    middleware: [authGuard]
   }
 ];

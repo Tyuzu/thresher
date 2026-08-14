@@ -1,52 +1,19 @@
 import "../../../css/inistyles/authpage.css";
 import { login, signup } from "../../services/auth/authService.js";
-import { getState, subscribeDeep } from "../../state/state.js";
 import { createElement } from "../../components/createElement.js";
-import { navigate } from "../../routes/index.js";
-
-let unsubscribeToken = null;
-
-// --- Main entry
-export function Auth(isL, contentContainer) {
-  if (typeof unsubscribeToken === "function") {
-    unsubscribeToken();
-    unsubscribeToken = null;
-  }
-
-  if (getState("token")) {
-    navigate("/home");
-    return;
-  }
-
-  clearContainer(contentContainer);
-  renderAuthSection(isL, contentContainer);
-
-  unsubscribeToken = subscribeDeep("token", (token) => {
-    if (token) {
-      if (typeof unsubscribeToken === "function") {
-        unsubscribeToken();
-        unsubscribeToken = null;
-      }
-      navigate("/home");
-    }
-  });
-}
 
 function clearContainer(el) {
   if (!el) return;
-  while (el.firstChild) {
-    el.firstChild.remove();
-  }
+  el.replaceChildren();
 }
 
-function renderAuthSection(isL, contentContainer) {
+// --- Main Entry ---
+export function Auth(isL, contentContainer) {
   clearContainer(contentContainer);
+  renderAuthSection(contentContainer);
+}
 
-  if (getState("token")) {
-    navigate("/home");
-    return;
-  }
-
+function renderAuthSection(contentContainer) {
   const wrapper = createElement("div", { class: "auth-wrapper" }, []);
   const authBox = createElement("div", { class: "auth-box" }, []);
 
