@@ -1,4 +1,3 @@
-// main.go
 package main
 
 import (
@@ -47,7 +46,7 @@ func main() {
 	go hub.Run()
 
 	mehub := mechat.NewHub()
-	go mehub.Run() // Fixed: Previously unstarted goroutine
+	go mehub.Run()
 
 	router := routes.SetupRouter(app, rateLimiter)
 
@@ -77,6 +76,7 @@ func main() {
 			}
 		}
 
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
@@ -86,25 +86,25 @@ func main() {
 		middleware.SecurityHeaders(router),
 	)
 
+	// Explicit CORS Configuration compatible with HttpOnly Cookies and custom headers
 	corsOpts := cors.Options{
 		AllowedOrigins:   cfg.AllowedOrigins,
 		AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization", "Idempotency-Key", "X-Requested-With", "Accept", "Origin"},
-		AllowCredentials: cfg.AllowCredentials,
+		AllowedHeaders:   []string{"Content-Type", "Authorization", "Idempotency-Key", "X-Requested-With", "X-Refresh-Intent", "Accept", "Origin"},
+		ExposedHeaders:   []string{"Authorization", "X-Refresh-Intent"},
+		AllowCredentials: true, // Required for HttpOnly refresh_token cookies
 		MaxAge:           300,
 	}
 
-	// Eliminates redundant http.ServeMux routing
 	corsHandler := cors.New(corsOpts).Handler(handler)
 
 	server := &http.Server{
 		Addr:              cfg.HTTPPort,
 		Handler:           corsHandler,
-		ReadTimeout:       7 * time.Second,
+		ReadTimeout:       10 * time.Second,
 		ReadHeaderTimeout: 2 * time.Second,
 		IdleTimeout:       120 * time.Second,
-		// Omitted WriteTimeout at server level for WebSocket streaming compatibility;
-		// context deadlines should be enforced inside HTTP handlers instead.
+		// WriteTimeout is omitted for WebSocket long-lived connection compatibility
 	}
 
 	go func() {
@@ -129,7 +129,7 @@ func main() {
 
 	logger.L.Sugar().Infow("Shutting down server...")
 
-	// 1. Stop accepting new HTTP requests and wait for current ones to drain
+	// 1. Stop accepting new HTTP requests and wait for in-flight requests to complete
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -144,11 +144,19 @@ func main() {
 	hub.Stop()
 	mehub.Stop()
 
-	// 4. Drain external transport / messaging connections safely after HTTP handlers finish
+	// 4. Drain and close transport / database resources
 	if app.NatsConn != nil {
 		_ = app.NatsConn.Drain()
 		app.NatsConn.Close()
 	}
+
+	// if app.DB != nil {
+	// 	_ = app.DB.Close()
+	// }
+
+	// if app.Cache != nil {
+	// 	_ = app.Cache.Close()
+	// }
 
 	logger.L.Sugar().Infow("Server stopped successfully")
 }
