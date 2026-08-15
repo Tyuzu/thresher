@@ -159,7 +159,10 @@ export async function displayFarm(isLoggedIn, farmId, content) {
     ].filter(Boolean),
     showAd: true,
     page: "farm-detail",
-    adPosition: "aside"
+    adPosition: "aside",
+    adOptions: {
+      layout: "vertical"
+    },
   });
 
   // ─────────── Main Section & Tabs ───────────
@@ -279,7 +282,9 @@ export async function displayFarm(isLoggedIn, farmId, content) {
   const layoutWrapper = createMainLayout({
     mainContent: [mainColumn],
     asideContent,
-    pageClass: "farm-layout"
+    pageClass: "farm-layout",
+    showMainAd:true,
+    mainAdPlacement: "top",
   });
 
   container.append(header, layoutWrapper);

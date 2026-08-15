@@ -1,243 +1,587 @@
-// middleware.js
 import { getState } from "../state/state.js";
 
-/* ==========================================
-   STATE EXTRACTION & NORMALIZATION
-========================================== */
+/* =========================================================
+   AUTH STATE
+========================================================= */
 
-/**
- * Ensures state attributes are hydrated and normalized before guard execution.
- * Handles single string vs. array role declarations safely.
- */
+function normalizeArray(value) {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean);
+  }
+
+  if (
+    typeof value === "string" &&
+    value.trim()
+  ) {
+    return [value];
+  }
+
+  return [];
+}
+
 function getAuthState() {
-  const state = getState() || {};
-  
-  // Account for state structure across auth & userProfile modules
-  const rawRoles = state?.auth?.roles || state?.userProfile?.role || [];
-  const rawPermissions = state?.auth?.permissions || state?.userProfile?.permissions || [];
+  const state =
+    getState() || {};
+
+  const auth =
+    state.auth || {};
+
+  const user =
+    state.user ||
+    auth.user ||
+    state.userProfile ||
+    {};
+
+  const accessToken =
+    auth.accessToken ||
+    state.token ||
+    null;
+
+  const roles =
+    normalizeArray(
+      auth.roles ||
+      user.roles ||
+      user.role ||
+      state.userProfile?.roles ||
+      state.userProfile?.role
+    );
+
+  const permissions =
+    normalizeArray(
+      auth.permissions ||
+      user.permissions ||
+      state.userProfile?.permissions
+    );
+
+  const isAuthenticated =
+    Boolean(
+      auth.isAuthenticated ||
+      accessToken
+    );
 
   return {
-    auth: state?.auth || {},
-    isLoading: state?.auth?.loading ?? false,
-    isAuthenticated: !!state?.auth?.isAuthenticated && !!state?.auth?.accessToken,
-    // Normalize string or array formats into a flat array of strings
-    roles: Array.isArray(rawRoles) 
-      ? rawRoles 
-      : typeof rawRoles === "string" ? [rawRoles] : [],
-    permissions: Array.isArray(rawPermissions) 
-      ? rawPermissions 
-      : typeof rawPermissions === "string" ? [rawPermissions] : [],
-    isProfileComplete: state?.userProfile?.isProfileComplete ?? true
+    state,
+    auth,
+    user,
+
+    accessToken,
+
+    isAuthenticated,
+
+    isLoading:
+      auth.loading === true,
+
+    roles,
+
+    permissions,
+
+    isProfileComplete:
+      user?.isProfileComplete ??
+      state.userProfile
+        ?.isProfileComplete ??
+      true
   };
 }
 
-/* ==========================================
-   AUTHENTICATION & AUTHORIZATION GUARDS
-========================================== */
+/* =========================================================
+   REDIRECT TARGET
+========================================================= */
 
-/**
- * Ensures the user is authenticated.
- * Stores deep-link intent in sessionStorage for post-login redirection.
- */
-export async function authGuard(context) {
-  const { isAuthenticated } = getAuthState();
+function getFullTarget(context) {
+  if (
+    context?.fullPath
+  ) {
+    return context.fullPath;
+  }
+
+  const path =
+    context?.path || "/";
+
+  const search =
+    context?.search || "";
+
+  return `${path}${search}`;
+}
+
+function storeLoginRedirect(
+  context
+) {
+  const target =
+    getFullTarget(context);
+
+  if (
+    target &&
+    target !== "/" &&
+    target !== "/login" &&
+    target !== "/logout"
+  ) {
+    sessionStorage.setItem(
+      "redirectAfterLogin",
+      target
+    );
+  }
+}
+
+/* =========================================================
+   AUTH GUARD
+========================================================= */
+
+export async function authGuard(
+  context
+) {
+  const {
+    isAuthenticated
+  } = getAuthState();
 
   if (!isAuthenticated) {
-    const fullTarget = context.search ? `${context.path}${context.search}` : context.path;
-    sessionStorage.setItem("redirectAfterLogin", fullTarget);
+    storeLoginRedirect(context);
+
     return "/login";
   }
+
+  return true;
 }
 
-/**
- * Prevents authenticated users from reaching guest-only routes (e.g., /login, /signup).
- */
+/* =========================================================
+   GUEST GUARD
+========================================================= */
+
 export async function guestGuard() {
-  const { isAuthenticated } = getAuthState();
+  const {
+    isAuthenticated
+  } = getAuthState();
 
   if (isAuthenticated) {
-    return "/dashboard";
+    return "/";
   }
+
+  return true;
 }
 
-/**
- * Higher-order guard factory for checking user roles.
- * @param {string[]} allowedRoles - Roles allowed to access the route.
- * @param {'ANY' | 'ALL'} [matchMode='ANY'] - Requirement matching strategy.
- */
-export function roleGuard(allowedRoles = [], matchMode = "ANY") {
-  return async (context) => {
-    const { isAuthenticated, roles } = getAuthState();
+/* =========================================================
+   ROLE GUARD
+========================================================= */
+
+export function roleGuard(
+  allowedRoles = [],
+  matchMode = "ANY"
+) {
+  return async (
+    context
+  ) => {
+    const {
+      isAuthenticated,
+      roles
+    } = getAuthState();
 
     if (!isAuthenticated) {
-      const fullTarget = context.search ? `${context.path}${context.search}` : context.path;
-      sessionStorage.setItem("redirectAfterLogin", fullTarget);
+      storeLoginRedirect(
+        context
+      );
+
       return "/login";
     }
 
-    const hasAccess = matchMode === "ALL"
-      ? allowedRoles.every((role) => roles.includes(role))
-      : allowedRoles.some((role) => roles.includes(role));
+    const normalizedRoles =
+      normalizeArray(
+        allowedRoles
+      );
+
+    if (
+      normalizedRoles.length === 0
+    ) {
+      return true;
+    }
+
+    const hasAccess =
+      matchMode === "ALL"
+        ? normalizedRoles.every(
+            (role) =>
+              roles.includes(role)
+          )
+        : normalizedRoles.some(
+            (role) =>
+              roles.includes(role)
+          );
 
     if (!hasAccess) {
       return "/error/403";
     }
+
+    return true;
   };
 }
 
-/**
- * Higher-order guard factory for checking granular permissions.
- * @param {string[]} requiredPermissions - Permissions required.
- * @param {'ANY' | 'ALL'} [matchMode='ALL'] - Defaults to ALL for strict access enforcement.
- */
-export function permissionGuard(requiredPermissions = [], matchMode = "ALL") {
-  return async (context) => {
-    const { isAuthenticated, permissions } = getAuthState();
+/* =========================================================
+   PERMISSION GUARD
+========================================================= */
+
+export function permissionGuard(
+  requiredPermissions = [],
+  matchMode = "ALL"
+) {
+  return async (
+    context
+  ) => {
+    const {
+      isAuthenticated,
+      permissions
+    } = getAuthState();
 
     if (!isAuthenticated) {
-      const fullTarget = context.search ? `${context.path}${context.search}` : context.path;
-      sessionStorage.setItem("redirectAfterLogin", fullTarget);
+      storeLoginRedirect(
+        context
+      );
+
       return "/login";
     }
 
-    const hasAccess = matchMode === "ALL"
-      ? requiredPermissions.every((p) => permissions.includes(p))
-      : requiredPermissions.some((p) => permissions.includes(p));
+    const required =
+      normalizeArray(
+        requiredPermissions
+      );
+
+    if (
+      required.length === 0
+    ) {
+      return true;
+    }
+
+    const hasAccess =
+      matchMode === "ALL"
+        ? required.every(
+            (permission) =>
+              permissions.includes(
+                permission
+              )
+          )
+        : required.some(
+            (permission) =>
+              permissions.includes(
+                permission
+              )
+          );
 
     if (!hasAccess) {
       return "/error/403";
     }
+
+    return true;
   };
 }
 
-/* ==========================================
-   APP WORKFLOW & CONFIGURATION GUARDS
-========================================== */
+/* =========================================================
+   ONBOARDING
+========================================================= */
 
-/**
- * Directs newly registered users to complete onboarding before accessing the rest of the application.
- */
-export async function onboardingGuard(context) {
-  const { isAuthenticated, isProfileComplete } = getAuthState();
+export async function onboardingGuard(
+  context
+) {
+  const {
+    isAuthenticated,
+    isProfileComplete
+  } = getAuthState();
 
-  if (isAuthenticated && !isProfileComplete && context.path !== "/onboarding") {
+  /*
+   * IMPORTANT:
+   *
+   * The old implementation ran onboardingGuard
+   * for every route because:
+   *
+   * meta.requiresOnboarding !== false
+   *
+   * That made onboarding effectively global.
+   *
+   * It is now opt-in through metadata.
+   */
+  if (
+    isAuthenticated &&
+    context.path !== "/onboarding" &&
+    !isProfileComplete
+  ) {
     return "/onboarding";
   }
+
+  return true;
 }
 
-/**
- * Restricts access to routes protected by active feature flags.
- * @param {string} requiredFeature - The key of the feature flag.
- */
-export function featureFlagGuard(requiredFeature) {
-  return async () => {
-    const state = getState() || {};
-    const enabledFeatures = state?.config?.featureFlags || [];
+/* =========================================================
+   FEATURE FLAG
+========================================================= */
 
-    if (!enabledFeatures.includes(requiredFeature)) {
+export function featureFlagGuard(
+  requiredFeature
+) {
+  return async () => {
+    const state =
+      getState() || {};
+
+    const enabledFeatures =
+      state.config
+        ?.featureFlags || [];
+
+    if (
+      !enabledFeatures.includes(
+        requiredFeature
+      )
+    ) {
       return "/404";
     }
+
+    return true;
   };
 }
 
-/**
- * Prevents route transition if unsaved state/forms exist.
- */
+/* =========================================================
+   UNSAVED CHANGES
+========================================================= */
+
 export async function unsavedChangesGuard() {
-  const state = getState() || {};
-  if (state?.ui?.hasUnsavedChanges) {
-    const confirmed = window.confirm("You have unsaved changes. Are you sure you want to leave?");
+  const state =
+    getState() || {};
+
+  if (
+    state.ui?.hasUnsavedChanges
+  ) {
+    const confirmed =
+      window.confirm(
+        "You have unsaved changes. Are you sure you want to leave?"
+      );
+
     if (!confirmed) {
-      return false; // Signals to the router engine to abort transition
+      return false;
     }
   }
+
+  return true;
 }
 
-/* ==========================================
-   SIDE-EFFECT & METADATA MIDDLEWARE
-========================================== */
+/* =========================================================
+   TITLE
+========================================================= */
 
-/**
- * Dynamically updates document head details (Title & Description) on navigation.
- */
-export function titleGuard(context) {
-  const { title, description } = context.route?.meta || {};
-  
-  document.title = title ? `${title} | My App` : "My App";
+export function titleGuard(
+  context
+) {
+  const meta =
+    context.route?.meta || {};
+
+  const {
+    title,
+    description
+  } = meta;
+
+  document.title =
+    title
+      ? `${title} | My App`
+      : "My App";
 
   if (description) {
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement("meta");
-      metaDesc.name = "description";
-      document.head.appendChild(metaDesc);
+    let metaDescription =
+      document.querySelector(
+        'meta[name="description"]'
+      );
+
+    if (!metaDescription) {
+      metaDescription =
+        document.createElement(
+          "meta"
+        );
+
+      metaDescription.name =
+        "description";
+
+      document.head.appendChild(
+        metaDescription
+      );
     }
-    metaDesc.content = description;
+
+    metaDescription.content =
+      description;
   }
 }
 
-/**
- * Reports page views to analytics pipelines on navigation events.
- */
-export function analyticsGuard(context) {
-  if (typeof window.gtag === "function") {
-    window.gtag("event", "page_view", {
-      page_path: context.path,
-      page_title: context.route?.meta?.title || document.title
-    });
+/* =========================================================
+   ANALYTICS
+========================================================= */
+
+export function analyticsGuard(
+  context
+) {
+  if (
+    typeof window.gtag !==
+    "function"
+  ) {
+    return;
   }
+
+  window.gtag(
+    "event",
+    "page_view",
+    {
+      page_path:
+        context.fullPath ||
+        context.path,
+
+      page_title:
+        context.route?.meta
+          ?.title ||
+        document.title
+    }
+  );
 }
 
-/* ==========================================
-   META-DRIVEN PIPELINE ORCHESTRATOR
-========================================== */
+/* =========================================================
+   META PIPELINE
+========================================================= */
 
-/**
- * Meta-Driven Middleware Pipeline
- * Reads `meta` objects defined on route configurations and executes checks sequentially.
- */
-export async function metaGuard(context) {
-  const { meta } = context.route || {};
-  if (!meta) return;
+export async function metaGuard(
+  context
+) {
+  const meta =
+    context.route?.meta ||
+    {};
 
-  // 1. Unsaved Changes Intercept
-  const unsavedResult = await unsavedChangesGuard();
-  if (unsavedResult === false) return false;
+  /* -------------------------------------------------------
+     1. UNSAVED CHANGES
+  ------------------------------------------------------- */
 
-  // 2. Authentication & Guest Guards
+  const unsavedResult =
+    await unsavedChangesGuard();
+
+  if (
+    unsavedResult === false
+  ) {
+    return false;
+  }
+
+  /* -------------------------------------------------------
+     2. AUTH / GUEST
+  ------------------------------------------------------- */
+
   if (meta.requiresAuth) {
-    const authResult = await authGuard(context);
-    if (authResult) return authResult;
-  } else if (meta.guestOnly) {
-    const guestResult = await guestGuard(context);
-    if (guestResult) return guestResult;
+    const result =
+      await authGuard(
+        context
+      );
+
+    if (
+      typeof result === "string" ||
+      result === false
+    ) {
+      return result;
+    }
   }
 
-  // 3. Onboarding Guard
-  if (meta.requiresOnboarding !== false) {
-    const onboardingResult = await onboardingGuard(context);
-    if (onboardingResult) return onboardingResult;
+  if (meta.guestOnly) {
+    const result =
+      await guestGuard(
+        context
+      );
+
+    if (
+      typeof result === "string" ||
+      result === false
+    ) {
+      return result;
+    }
   }
 
-  // 4. Role Authorization
-  if (meta.roles && meta.roles.length > 0) {
-    const roleResult = await roleGuard(meta.roles, meta.roleMatchMode || "ANY")(context);
-    if (roleResult) return roleResult;
+  /* -------------------------------------------------------
+     3. ONBOARDING
+  ------------------------------------------------------- */
+
+  if (
+    meta.requiresOnboarding ===
+    true
+  ) {
+    const result =
+      await onboardingGuard(
+        context
+      );
+
+    if (
+      typeof result === "string" ||
+      result === false
+    ) {
+      return result;
+    }
   }
 
-  // 5. Permission Authorization
-  if (meta.permissions && meta.permissions.length > 0) {
-    const permResult = await permissionGuard(meta.permissions, meta.permMatchMode || "ALL")(context);
-    if (permResult) return permResult;
+  /* -------------------------------------------------------
+     4. ROLES
+  ------------------------------------------------------- */
+
+  if (
+    Array.isArray(meta.roles) &&
+    meta.roles.length > 0
+  ) {
+    const result =
+      await roleGuard(
+        meta.roles,
+        meta.roleMatchMode ||
+          "ANY"
+      )(context);
+
+    if (
+      typeof result === "string" ||
+      result === false
+    ) {
+      return result;
+    }
   }
 
-  // 6. Feature Toggle Verification
-  if (meta.featureFlag) {
-    const featureResult = await featureFlagGuard(meta.featureFlag)();
-    if (featureResult) return featureResult;
+  /* -------------------------------------------------------
+     5. PERMISSIONS
+  ------------------------------------------------------- */
+
+  if (
+    Array.isArray(
+      meta.permissions
+    ) &&
+    meta.permissions.length > 0
+  ) {
+    const result =
+      await permissionGuard(
+        meta.permissions,
+        meta.permMatchMode ||
+          "ALL"
+      )(context);
+
+    if (
+      typeof result === "string" ||
+      result === false
+    ) {
+      return result;
+    }
   }
 
-  // 7. Non-blocking Side-effects (SEO & Tracking)
+  /* -------------------------------------------------------
+     6. FEATURE FLAG
+  ------------------------------------------------------- */
+
+  if (
+    meta.featureFlag
+  ) {
+    const result =
+      await featureFlagGuard(
+        meta.featureFlag
+      )();
+
+    if (
+      typeof result === "string" ||
+      result === false
+    ) {
+      return result;
+    }
+  }
+
+  /* -------------------------------------------------------
+     7. SIDE EFFECTS
+  ------------------------------------------------------- */
+
   titleGuard(context);
   analyticsGuard(context);
+
+  return true;
 }

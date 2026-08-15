@@ -188,7 +188,7 @@ function Sidebar(isLoggedIn, stateRef) {
       showAd: true,
       page: "farms-list",
       adPosition: "aside",
-      adOptions : {
+      adOptions: {
         layout: "vertical"
       },
       asContainer: true
@@ -232,6 +232,7 @@ export async function displayFarms(content, loggedIn) {
     asideContent: sidebar.container,
     pageClass: "farm-page",
     showMainAd: true,
+    mainAdPlacement: "top",
   });
 
   const pageContainer = createElement("div", { class: "farmspage" }, [layout]);

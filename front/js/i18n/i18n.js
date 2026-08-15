@@ -4,22 +4,19 @@ let translations = {};
 let currentLang = "en";
 let activeRequest = 0;
 
-// Cache the Promises rather than data objects to resolve race-condition fetches
 const cache = new Map();
-// Cache the PluralRules instance to save CPU iteration cycles
 let cachedPluralRules = null;
 
 const SUPPORTED_LANGS = ["en", "es", "fr", "hi", "ar", "ja"];
 const FALLBACK_LANG = "en";
 
 function fetchTranslations(lang) {
-  return fetch(`/i18n/${lang}.json`)
+  return fetch(`/i18n/${lang}.json`, { cache: "no-cache" })
     .then(res => {
-      if (!res.ok) throw new Error(`Failed to load ${lang}`);
+      if (!res.ok) throw new Error(`Failed to load ${lang}: ${res.status}`);
       return res.json();
     })
     .catch(err => {
-      // Evict failed requests so future retries can attempt a fresh fetch
       cache.delete(lang);
       throw err;
     });
@@ -29,7 +26,6 @@ async function loadTranslations(lang) {
   const requestId = ++activeRequest;
 
   try {
-    // 1. Store the Promise in cache immediately. Prevents concurrent duplicate fetches.
     if (!cache.has(lang)) {
       cache.set(lang, fetchTranslations(lang));
     }
@@ -37,44 +33,61 @@ async function loadTranslations(lang) {
     const data = await cache.get(lang);
 
     if (requestId !== activeRequest) return;
-    
-    translations = data;
-    
-    if (currentLang !== lang) {
-      currentLang = lang;
-      cachedPluralRules = null; // Flush PluralRules constructor snapshot on update
+
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      throw new Error(`Invalid translation data for ${lang}`);
     }
+
+    translations = data;
+    currentLang = lang;
+    cachedPluralRules = null;
 
     localStorage.setItem("lang", lang);
     setState("lang", lang);
-
   } catch (err) {
+    cache.delete(lang);
+
     if (requestId !== activeRequest) return;
+
+    console.error(`Failed to load translations for "${lang}"`, err);
 
     if (lang !== FALLBACK_LANG) {
       return loadTranslations(FALLBACK_LANG);
     }
 
     translations = {};
+    currentLang = FALLBACK_LANG;
+    cachedPluralRules = null;
   }
 }
 
 export async function setLanguage(lang) {
-  const targetLang = SUPPORTED_LANGS.includes(lang) ? lang : FALLBACK_LANG;
+  const targetLang = SUPPORTED_LANGS.includes(lang)
+    ? lang
+    : FALLBACK_LANG;
+
   await loadTranslations(targetLang);
 }
 
 export function detectLanguage() {
   const saved = localStorage.getItem("lang");
-  if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
+
+  if (saved && SUPPORTED_LANGS.includes(saved)) {
+    return saved;
+  }
 
   const langs = navigator.languages || [navigator.language];
-  for (let i = 0; i < langs.length; i++) {
-    const l = langs[i];
-    if (SUPPORTED_LANGS.includes(l)) return l;
-    
-    const base = l.split("-")[0];
-    if (SUPPORTED_LANGS.includes(base)) return base;
+
+  for (const lang of langs) {
+    if (SUPPORTED_LANGS.includes(lang)) {
+      return lang;
+    }
+
+    const base = lang.split("-")[0];
+
+    if (SUPPORTED_LANGS.includes(base)) {
+      return base;
+    }
   }
 
   return FALLBACK_LANG;
@@ -82,35 +95,65 @@ export function detectLanguage() {
 
 export const getCurrentLanguage = () => currentLang;
 
-// Flatten object string lookups loops cleanly
 function getNested(obj, path) {
-  return path.split(".").reduce((o, k) => o?.[k], obj);
+  if (!obj || typeof obj !== "object") {
+    return undefined;
+  }
+
+  return path.split(".").reduce((value, key) => {
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+
+    return value[key];
+  }, obj);
 }
 
 export function t(key, vars = {}, fallback = "") {
+  if (typeof key !== "string" || !key.trim()) {
+    if (import.meta.env?.DEV) {
+      console.warn("Missing or non-string translation key:", key);
+    }
+
+    return fallback || "";
+  }
+
   let template = getNested(translations, key);
 
   if (typeof vars.count === "number") {
-    // Reuse constructor context to avoid runtime memory thrashing
     if (!cachedPluralRules) {
       cachedPluralRules = new Intl.PluralRules(currentLang);
     }
+
     const rule = cachedPluralRules.select(vars.count);
-    const plural = getNested(translations, `${key}.${rule}`);
-    if (plural) template = plural;
+    const pluralKey = `${key}.${rule}`;
+    const plural = getNested(translations, pluralKey);
+
+    if (typeof plural === "string") {
+      template = plural;
+    }
   }
 
-  // Ensure template is a valid string/number (prevent [object Object] output on parent keys)
-  if (!template || typeof template === "object") {
+  if (typeof template !== "string") {
     if (import.meta.env?.DEV) {
-      console.warn(`Missing or non-string translation key: ${key}`);
+      console.warn(
+        `Missing or non-string translation key: ${key}`,
+        {
+          language: currentLang,
+          value: template,
+          availableRootKeys: Object.keys(translations || {}),
+        }
+      );
     }
+
     template = fallback || key;
   }
 
-  return String(template).replace(/\{(\w+)\}/g, (_, k) =>
-    k in vars ? vars[k] : `{${k}}`
-  );
+  return template.replace(/\{(\w+)\}/g, (_, variable) => {
+    return Object.prototype.hasOwnProperty.call(vars, variable)
+      ? String(vars[variable])
+      : `{${variable}}`;
+  });
 }
 
 export async function initI18n() {

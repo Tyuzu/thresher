@@ -12,379 +12,1103 @@ import {
 } from "../state/state.js";
 
 import Notify from "../components/ui/Notify.mjs";
-import { silentLogout } from "../services/auth/authService.js";
 
-const REFRESH_BUFFER_MS = 2 * 60 * 1000; // 2-minute refresh buffer
-const REFRESH_LOCK_TTL = 10_000;        // 10-second timeout fallback
+const REFRESH_BUFFER_MS =
+  2 * 60 * 1000;
+
+const REFRESH_LOCK_TTL =
+  10_000;
+
+const REFRESH_WAIT_TIMEOUT =
+  12_000;
 
 const TAB_ID =
-  typeof crypto !== "undefined" && crypto.randomUUID
+  typeof crypto !==
+    "undefined" &&
+  crypto.randomUUID
     ? crypto.randomUUID()
     : generateUUID();
 
-const REFRESH_LOCK_KEY = "__refresh_lock__";
-const AUTH_CHANNEL = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("auth_channel") : null;
+const REFRESH_LOCK_KEY =
+  "__refresh_lock__";
 
-// Navigation level request cancellation controller (Feature #19)
-let navigationAbortController = new AbortController();
+const AUTH_CHANNEL =
+  typeof BroadcastChannel !==
+    "undefined"
+    ? new BroadcastChannel(
+        "auth_channel"
+      )
+    : null;
 
-/**
- * Aborts all in-flight API requests triggered by the previous page.
- * Call this inside your router's beforeEnter/beforeLoad navigation lifecycle hooks.
- */
+/* =========================================================
+   NAVIGATION REQUEST CANCELLATION
+========================================================= */
+
+let navigationAbortController =
+  new AbortController();
+
 export function abortInflightApiRequests() {
   navigationAbortController.abort();
-  navigationAbortController = new AbortController();
+
+  navigationAbortController =
+    new AbortController();
 }
+
+/* =========================================================
+   UUID
+========================================================= */
 
 export function generateUUID() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+    /[xy]/g,
+    (character) => {
+      const random =
+        (Math.random() * 16) |
+        0;
+
+      const value =
+        character === "x"
+          ? random
+          : (random & 0x3) | 0x8;
+
+      return value.toString(
+        16
+      );
+    }
+  );
 }
 
-/**
- * Safely parses JWT payload without external library dependencies.
- */
-export function parseJwt(token) {
+/* =========================================================
+   JWT
+========================================================= */
+
+export function parseJwt(
+  token
+) {
   try {
-    const payload = token?.split(".")[1];
-    if (!payload) return null;
+    const payload =
+      token?.split(".")[1];
 
-    const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+    if (!payload) {
+      return null;
+    }
 
-    return JSON.parse(atob(padded));
+    const base64 =
+      payload
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+    const padded =
+      base64 +
+      "=".repeat(
+        (4 -
+          (base64.length % 4)) %
+          4
+      );
+
+    return JSON.parse(
+      atob(padded)
+    );
   } catch {
     return null;
   }
 }
 
-export function isTokenNearExpiry(token, bufferMs = REFRESH_BUFFER_MS) {
-  const payload = parseJwt(token);
-  if (!payload?.exp) return false;
+export function isTokenNearExpiry(
+  token,
+  bufferMs = REFRESH_BUFFER_MS
+) {
+  const payload =
+    parseJwt(token);
 
-  return Date.now() > payload.exp * 1000 - bufferMs;
-}
-
-// Multi-Tab Coordination via Web Locks API with fallback
-async function withRefreshLock(taskCallback) {
-  if (typeof navigator !== "undefined" && navigator.locks) {
-    return await navigator.locks.request("auth_refresh_lock", async () => {
-      return await taskCallback();
-    });
+  if (
+    !payload?.exp
+  ) {
+    return false;
   }
 
-  // Fallback for environments lacking Web Locks API
-  const now = Date.now();
+  return (
+    Date.now() >
+    payload.exp * 1000 -
+      bufferMs
+  );
+}
+
+/* =========================================================
+   REFRESH LOCK
+========================================================= */
+
+async function withRefreshLock(
+  taskCallback
+) {
+  if (
+    typeof navigator !==
+      "undefined" &&
+    navigator.locks
+  ) {
+    return navigator.locks.request(
+      "auth_refresh_lock",
+      async () => {
+        return taskCallback();
+      }
+    );
+  }
+
+  const now =
+    Date.now();
+
   try {
-    const raw = localStorage.getItem(REFRESH_LOCK_KEY);
+    const raw =
+      localStorage.getItem(
+        REFRESH_LOCK_KEY
+      );
+
     if (raw) {
-      const lock = JSON.parse(raw);
-      if (now - (lock.ts || 0) < REFRESH_LOCK_TTL && lock.owner !== TAB_ID) {
-        return false;
+      const lock =
+        JSON.parse(raw);
+
+      const age =
+        now -
+        (lock.ts || 0);
+
+      if (
+        age <
+          REFRESH_LOCK_TTL &&
+        lock.owner !== TAB_ID
+      ) {
+        /*
+         * Another tab owns the lock.
+         * Wait for it rather than reporting
+         * a refresh failure.
+         */
+        return {
+          lockedByOtherTab: true
+        };
       }
     }
-    localStorage.setItem(REFRESH_LOCK_KEY, JSON.stringify({ owner: TAB_ID, ts: now }));
-  } catch {}
+
+    localStorage.setItem(
+      REFRESH_LOCK_KEY,
+      JSON.stringify({
+        owner: TAB_ID,
+        ts: now
+      })
+    );
+  } catch {
+    // Continue without cross-tab lock.
+  }
 
   try {
     return await taskCallback();
   } finally {
     try {
-      const raw = localStorage.getItem(REFRESH_LOCK_KEY);
-      if (raw && JSON.parse(raw).owner === TAB_ID) {
-        localStorage.removeItem(REFRESH_LOCK_KEY);
+      const raw =
+        localStorage.getItem(
+          REFRESH_LOCK_KEY
+        );
+
+      if (!raw) {
+        return;
       }
-    } catch {}
+
+      const lock =
+        JSON.parse(raw);
+
+      if (
+        lock.owner === TAB_ID
+      ) {
+        localStorage.removeItem(
+          REFRESH_LOCK_KEY
+        );
+      }
+    } catch {
+      // Ignore lock cleanup failures.
+    }
   }
 }
 
-// Single-flight token refresh promise (Feature #7 / Auth spec)
+/* =========================================================
+   WAIT FOR ANOTHER TAB
+========================================================= */
+
+function waitForTokenChange(
+  previousToken,
+  timeoutMs =
+    REFRESH_WAIT_TIMEOUT
+) {
+  return new Promise(
+    (resolve) => {
+      const started =
+        Date.now();
+
+      const timer =
+        setInterval(() => {
+          const currentToken =
+            getState(
+              "token"
+            );
+
+          if (
+            currentToken &&
+            currentToken !==
+              previousToken
+          ) {
+            clearInterval(
+              timer
+            );
+
+            resolve(
+              true
+            );
+
+            return;
+          }
+
+          if (
+            Date.now() -
+              started >=
+            timeoutMs
+          ) {
+            clearInterval(
+              timer
+            );
+
+            resolve(
+              false
+            );
+          }
+        }, 100);
+    }
+  );
+}
+
+/* =========================================================
+   TOKEN REFRESH
+========================================================= */
+
 let refreshPromise = null;
+let refreshTimer = null;
 
 export async function refreshToken() {
   if (refreshTimer) {
-    clearTimeout(refreshTimer);
+    clearTimeout(
+      refreshTimer
+    );
+
     refreshTimer = null;
   }
 
-  // Return existing in-flight promise if multiple concurrent calls trigger 401
   if (refreshPromise) {
     return refreshPromise;
   }
 
-  refreshPromise = (async () => {
-    let success = false;
+  const previousToken =
+    getState("token");
 
-    await withRefreshLock(async () => {
-      // Re-check token inside lock scope in case another tab already performed the refresh
-      const currentToken = getState("token");
-      if (currentToken && !isTokenNearExpiry(currentToken)) {
-        success = true;
-        return;
+  refreshPromise =
+    (async () => {
+      let success =
+        false;
+
+      const lockResult =
+        await withRefreshLock(
+          async () => {
+            /*
+             * Re-check after acquiring the lock.
+             * Another request in this tab may already
+             * have refreshed the token.
+             */
+            const currentToken =
+              getState(
+                "token"
+              );
+
+            if (
+              currentToken &&
+              !isTokenNearExpiry(
+                currentToken
+              )
+            ) {
+              success = true;
+              return;
+            }
+
+            try {
+              const controller =
+                new AbortController();
+
+              const timeoutId =
+                setTimeout(
+                  () =>
+                    controller.abort(),
+                  10_000
+                );
+
+              const response =
+                await fetch(
+                  `${API_URL}/auth/refresh`,
+                  {
+                    method:
+                      "POST",
+
+                    credentials:
+                      "include",
+
+                    headers: {
+                      "Content-Type":
+                        "application/json",
+
+                      "X-Refresh-Intent":
+                        "1"
+                    },
+
+                    signal:
+                      controller.signal
+                  }
+                );
+
+              clearTimeout(
+                timeoutId
+              );
+
+              if (
+                !response.ok
+              ) {
+                success =
+                  false;
+
+                return;
+              }
+
+              const data =
+                await response
+                  .json()
+                  .catch(
+                    () => null
+                  );
+
+              const token =
+                data?.data?.token ||
+                data?.token ||
+                data?.Token;
+
+              if (!token) {
+                success =
+                  false;
+
+                return;
+              }
+
+              const parsed =
+                parseJwt(
+                  token
+                );
+
+              if (!parsed) {
+                success =
+                  false;
+
+                return;
+              }
+
+              const userId =
+                parsed.userId ||
+                parsed.userID ||
+                parsed.user_id ||
+                parsed.sub ||
+                "";
+
+              const roles =
+                Array.isArray(
+                  parsed.roles ||
+                    parsed.role
+                )
+                  ? parsed.roles ||
+                    parsed.role
+                  : parsed.role
+                  ? [parsed.role]
+                  : [];
+
+              const permissions =
+                Array.isArray(
+                  parsed.permissions
+                )
+                  ? parsed.permissions
+                  : [];
+
+              const authPayload = {
+                token,
+
+                user:
+                  userId ||
+                  null,
+
+                userId:
+                  userId ||
+                  null,
+
+                username:
+                  parsed.username ||
+                  "",
+
+                roles,
+
+                permissions,
+
+                auth: {
+                  isAuthenticated:
+                    true,
+
+                  accessToken:
+                    token,
+
+                  user:
+                    userId ||
+                    null,
+
+                  roles,
+
+                  permissions
+                }
+              };
+
+              setState(
+                authPayload,
+                true
+              );
+
+              AUTH_CHANNEL?.postMessage(
+                {
+                  type:
+                    "TOKEN_REFRESHED",
+
+                  payload:
+                    authPayload
+                }
+              );
+
+              success =
+                true;
+            } catch (error) {
+              if (
+                error?.name ===
+                "AbortError"
+              ) {
+                console.warn(
+                  "[Auth] Token refresh request timed out."
+                );
+              } else {
+                console.error(
+                  "[Auth] Token refresh request failed:",
+                  error
+                );
+              }
+
+              success =
+                false;
+            }
+          }
+        );
+
+      /*
+       * Web Locks path returns the task result.
+       * localStorage fallback may tell us another
+       * tab owns the lock.
+       */
+      if (
+        lockResult?.lockedByOtherTab
+      ) {
+        success =
+          await waitForTokenChange(
+            previousToken
+          );
       }
 
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        const res = await fetch(`${API_URL}/auth/refresh`, {
-          method: "POST",
-          credentials: "include", // Sends HttpOnly cookie
-          headers: {
-            "Content-Type": "application/json",
-            "X-Refresh-Intent": "1"
-          },
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!res.ok) {
-          success = false;
-          return;
-        }
-
-        const data = await res.json().catch(() => null);
-        const token = data?.data?.token || data?.token || data?.Token;
-
-        if (!token) {
-          success = false;
-          return;
-        }
-
-        const parsed = parseJwt(token);
-        if (!parsed) {
-          success = false;
-          return;
-        }
-
-        const userId = parsed.userId || parsed.userID || parsed.user_id || parsed.sub || "";
-
-        const authPayload = {
-          token,
-          user: userId,
-          userId,
-          username: parsed.username || "",
-          roles: Array.isArray(parsed.roles || parsed.role)
-            ? parsed.roles || parsed.role
-            : parsed.role ? [parsed.role] : [],
-          permissions: Array.isArray(parsed.permissions) ? parsed.permissions : [],
-          isAuthenticated: true
-        };
-
-        setState(authPayload, true);
-
-        AUTH_CHANNEL?.postMessage({
-          type: "TOKEN_REFRESHED",
-          payload: authPayload
-        });
-
-        success = true;
-      } catch (err) {
-        if (err.name === "AbortError") {
-          console.warn("[Auth] Token refresh request timed out.");
-        } else {
-          console.error("[Auth] Token refresh request failed:", err);
-        }
-        success = false;
+      /*
+       * Schedule the next refresh in this tab.
+       */
+      if (success) {
+        scheduleBackgroundRefresh();
       }
-    });
 
-    return success;
-  })();
+      return success;
+    })();
 
   try {
     return await refreshPromise;
   } finally {
-    refreshPromise = null;
+    refreshPromise =
+      null;
   }
 }
 
-let refreshTimer = null;
+/* =========================================================
+   BACKGROUND REFRESH
+========================================================= */
 
 export function scheduleBackgroundRefresh() {
   if (refreshTimer) {
-    clearTimeout(refreshTimer);
+    clearTimeout(
+      refreshTimer
+    );
+
     refreshTimer = null;
   }
 
-  const token = getState("token");
-  if (!token) return;
+  const token =
+    getState("token");
 
-  const payload = parseJwt(token);
-  if (!payload?.exp) return;
-
-  const delay = payload.exp * 1000 - REFRESH_BUFFER_MS - Date.now();
-
-  const handleScheduledRefresh = () => {
-    refreshToken().then((ok) => {
-      if (!ok && getState("token")) {
-        silentLogout();
-      }
-    });
-  };
-
-  if (delay <= 0) {
-    handleScheduledRefresh();
+  if (!token) {
     return;
   }
 
-  refreshTimer = setTimeout(handleScheduledRefresh, delay);
+  const payload =
+    parseJwt(token);
+
+  if (!payload?.exp) {
+    return;
+  }
+
+  const delay =
+    payload.exp * 1000 -
+    REFRESH_BUFFER_MS -
+    Date.now();
+
+  const handleRefresh =
+    async () => {
+      const success =
+        await refreshToken();
+
+      if (
+        !success &&
+        getState("token")
+      ) {
+        window.dispatchEvent(
+          new CustomEvent(
+            "auth:unauthorized"
+          )
+        );
+      }
+    };
+
+  if (
+    delay <= 0
+  ) {
+    handleRefresh();
+    return;
+  }
+
+  refreshTimer =
+    setTimeout(
+      handleRefresh,
+      delay
+    );
 }
 
-// Multi-Tab Synchronization Listeners
-AUTH_CHANNEL?.addEventListener("message", (e) => {
-  if (e.data?.type === "TOKEN_REFRESHED") {
-    if (e.data.payload) {
-      setState(e.data.payload, true);
-    }
-    scheduleBackgroundRefresh();
-  }
+/* =========================================================
+   AUTH CHANNEL
+========================================================= */
 
-  if (e.data?.type === "LOGOUT") {
-    if (refreshTimer) {
-      clearTimeout(refreshTimer);
-      refreshTimer = null;
+AUTH_CHANNEL?.addEventListener(
+  "message",
+  (event) => {
+    if (
+      event.data?.type ===
+      "TOKEN_REFRESHED"
+    ) {
+      if (
+        event.data.payload
+      ) {
+        setState(
+          event.data.payload,
+          true
+        );
+      }
+
+      scheduleBackgroundRefresh();
+    }
+
+    if (
+      event.data?.type ===
+      "LOGOUT"
+    ) {
+      if (refreshTimer) {
+        clearTimeout(
+          refreshTimer
+        );
+
+        refreshTimer =
+          null;
+      }
+
+      window.dispatchEvent(
+        new CustomEvent(
+          "auth:remote-logout"
+        )
+      );
     }
   }
-});
+);
 
-if (typeof document !== "undefined") {
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      const token = getState("token");
-      if (token && isTokenNearExpiry(token)) {
-        refreshToken().then((ok) => {
-          if (!ok) silentLogout();
-        });
+/* =========================================================
+   LOCAL AUTH EVENTS
+========================================================= */
+
+window.addEventListener(
+  "auth:logout",
+  (event) => {
+    if (
+      !event.detail?.broadcast
+    ) {
+      return;
+    }
+
+    AUTH_CHANNEL?.postMessage({
+      type: "LOGOUT"
+    });
+  }
+);
+
+/* =========================================================
+   VISIBILITY REFRESH
+========================================================= */
+
+if (
+  typeof document !==
+  "undefined"
+) {
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+      if (
+        document.visibilityState !==
+        "visible"
+      ) {
+        return;
+      }
+
+      const token =
+        getState(
+          "token"
+        );
+
+      if (
+        token &&
+        isTokenNearExpiry(
+          token
+        )
+      ) {
+        refreshToken().then(
+          (success) => {
+            if (!success) {
+              window.dispatchEvent(
+                new CustomEvent(
+                  "auth:unauthorized"
+                )
+              );
+            }
+          }
+        );
       } else {
         scheduleBackgroundRefresh();
       }
     }
-  });
+  );
 }
+
+/* =========================================================
+   INITIAL REFRESH TIMER
+========================================================= */
 
 scheduleBackgroundRefresh();
 
-/**
- * Base Core Fetching Engine
- */
-async function apixFetch(endpoint, method = "GET", body = null, options = {}, retry = false) {
-  try {
-    const token = getState("token");
-    const nearExpiry = token && isTokenNearExpiry(token);
+/* =========================================================
+   LOW-LEVEL FETCH
+========================================================= */
 
-    if (nearExpiry && !retry) {
-      const ok = await refreshToken();
-      if (!ok) {
-        throw new Error("Unauthorized");
+async function apixFetch(
+  endpoint,
+  method = "GET",
+  body = null,
+  options = {},
+  retry = false
+) {
+  try {
+    const token =
+      getState("token");
+
+    const nearExpiry =
+      token &&
+      isTokenNearExpiry(
+        token
+      );
+
+    /*
+     * Do not refresh for requests explicitly
+     * marked auth:false.
+     */
+    if (
+      options.auth !== false &&
+      nearExpiry &&
+      !retry
+    ) {
+      const refreshed =
+        await refreshToken();
+
+      if (!refreshed) {
+        throw new Error(
+          "Unauthorized"
+        );
       }
     }
 
-    // Attach navigation cancel signal unless overridden (Feature #19)
-    const signal = options.signal || navigationAbortController.signal;
+    const signal =
+      options.signal ||
+      navigationAbortController.signal;
 
     const fetchOptions = {
       method,
-      credentials: options.credentials ?? "include",
-      headers: { ...(options.headers || {}) },
+
+      credentials:
+        options.credentials ??
+        "include",
+
+      headers: {
+        ...(options.headers || {})
+      },
+
       signal
     };
 
-    const currentToken = getState("token");
-    if (options.auth !== false && currentToken) {
-      fetchOptions.headers.Authorization = `Bearer ${currentToken}`;
+    const currentToken =
+      getState("token");
+
+    if (
+      options.auth !== false &&
+      currentToken
+    ) {
+      fetchOptions.headers.Authorization =
+        `Bearer ${currentToken}`;
     }
 
-    if (body) {
-      if (body instanceof FormData) {
-        fetchOptions.body = body;
+    if (body !== null &&
+        body !== undefined) {
+      if (
+        body instanceof
+        FormData
+      ) {
+        fetchOptions.body =
+          body;
       } else {
-        fetchOptions.headers["Content-Type"] = "application/json";
-        fetchOptions.body = JSON.stringify(body);
+        fetchOptions.headers[
+          "Content-Type"
+        ] =
+          "application/json";
+
+        fetchOptions.body =
+          JSON.stringify(
+            body
+          );
       }
     }
 
-    const res = await fetch(endpoint, fetchOptions);
+    const response =
+      await fetch(
+        endpoint,
+        fetchOptions
+      );
 
-    if (res.status === 401 && !retry) {
-      const refreshed = await refreshToken();
+    /* =====================================================
+       401 RETRY
+    ===================================================== */
+
+    if (
+      response.status ===
+        401 &&
+      !retry &&
+      options.auth !== false
+    ) {
+      const refreshed =
+        await refreshToken();
 
       if (refreshed) {
-        return apixFetch(endpoint, method, body, options, true);
+        return apixFetch(
+          endpoint,
+          method,
+          body,
+          options,
+          true
+        );
       }
 
-      throw new Error("Unauthorized");
+      throw new Error(
+        "Unauthorized"
+      );
     }
+
+    /* =====================================================
+       RESPONSE
+    ===================================================== */
 
     let data = null;
 
     try {
-      const text = await res.text();
+      const text =
+        await response.text();
+
       if (text) {
-        data = JSON.parse(text);
+        data =
+          JSON.parse(text);
       }
     } catch {
-      return { success: false, error: "Invalid JSON response" };
+      if (
+        !response.ok
+      ) {
+        throw new Error(
+          `HTTP ${response.status}`
+        );
+      }
+
+      return {
+        success: true
+      };
     }
 
-    if (!res.ok) {
-      throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+    if (
+      !response.ok
+    ) {
+      throw new Error(
+        data?.error ||
+        data?.message ||
+        `HTTP ${response.status}`
+      );
     }
 
-    return data ?? { success: true };
-
-  } catch (err) {
-    if (err.name === "AbortError") {
-      console.warn(`[API] Request aborted: ${endpoint}`);
+    return (
+      data ?? {
+        success: true
+      }
+    );
+  } catch (error) {
+    /*
+     * Navigation cancellation is NOT an auth failure.
+     */
+    if (
+      error?.name ===
+      "AbortError"
+    ) {
+      console.warn(
+        `[API] Request aborted: ${endpoint}`
+      );
     }
-    throw err;
+
+    throw error;
   }
 }
 
-/**
- * Primary API Client Wrapper
- */
-export async function apiFetch(endpoint, method = "GET", body = null, options = {}) {
+/* =========================================================
+   MAIN API WRAPPER
+========================================================= */
+
+export async function apiFetch(
+  endpoint,
+  method = "GET",
+  body = null,
+  options = {}
+) {
   try {
-    return await apixFetch(`${API_URL}${endpoint}`, method, body, options);
-  } catch (err) {
-    if (err?.name === "AbortError") throw err;
-
-    if (err?.message === "Unauthorized") {
-      silentLogout();
-    } else {
-      Notify(err?.message || "Network error", { type: "error" });
+    return await apixFetch(
+      `${API_URL}${endpoint}`,
+      method,
+      body,
+      options
+    );
+  } catch (error) {
+    if (
+      error?.name ===
+      "AbortError"
+    ) {
+      throw error;
     }
-    throw err;
+
+    if (
+      error?.message ===
+      "Unauthorized"
+    ) {
+      /*
+       * Break the api.js <-> authService.js
+       * circular dependency.
+       */
+      window.dispatchEvent(
+        new CustomEvent(
+          "auth:unauthorized"
+        )
+      );
+    } else {
+      Notify(
+        error?.message ||
+          "Network error",
+        {
+          type: "error"
+        }
+      );
+    }
+
+    throw error;
   }
 }
 
-/**
- * HTTP Method Shorthand Layer (Feature #18)
- */
+/* =========================================================
+   HTTP SHORTCUTS
+========================================================= */
+
 export const api = {
-  get: (endpoint, options = {}) => apiFetch(endpoint, "GET", null, options),
-  post: (endpoint, body, options = {}) => apiFetch(endpoint, "POST", body, options),
-  put: (endpoint, body, options = {}) => apiFetch(endpoint, "PUT", body, options),
-  patch: (endpoint, body, options = {}) => apiFetch(endpoint, "PATCH", body, options),
-  delete: (endpoint, options = {}) => apiFetch(endpoint, "DELETE", null, options)
+  get: (
+    endpoint,
+    options = {}
+  ) =>
+    apiFetch(
+      endpoint,
+      "GET",
+      null,
+      options
+    ),
+
+  post: (
+    endpoint,
+    body,
+    options = {}
+  ) =>
+    apiFetch(
+      endpoint,
+      "POST",
+      body,
+      options
+    ),
+
+  put: (
+    endpoint,
+    body,
+    options = {}
+  ) =>
+    apiFetch(
+      endpoint,
+      "PUT",
+      body,
+      options
+    ),
+
+  patch: (
+    endpoint,
+    body,
+    options = {}
+  ) =>
+    apiFetch(
+      endpoint,
+      "PATCH",
+      body,
+      options
+    ),
+
+  delete: (
+    endpoint,
+    options = {}
+  ) =>
+    apiFetch(
+      endpoint,
+      "DELETE",
+      null,
+      options
+    )
 };
 
-// Specialized Domain Endpoints
-export const liveFetch = (e, m, b, o) => apixFetch(`${LIVE_URL}${e}`, m, b, o);
-export const bannerFetch = (e, m, b, o) => apixFetch(`${BANNERDROP_URL}${e}`, m, b, o);
-export const chatFetch = (e, m, b, o) => apixFetch(`${CHAT_URL}${e}`, m, b, o);
-export const mereFetch = (e, m, b, o) => apixFetch(`${MERE_URL}${e}`, m, b, o);
+/* =========================================================
+   DOMAIN ENDPOINTS
+========================================================= */
 
-export const stripeFetch = (e, m, b, o) =>
-  apixFetch(`${STRIPE_URL}${e}`, m, b, { ...o, auth: false });
+export const liveFetch = (
+  endpoint,
+  method,
+  body,
+  options
+) =>
+  apixFetch(
+    `${LIVE_URL}${endpoint}`,
+    method,
+    body,
+    options
+  );
 
-export const musicFetch = (e, m, b, o) =>
-  apixFetch(`${MUSIC_URL}${e}`, m, b, o);
+export const bannerFetch = (
+  endpoint,
+  method,
+  body,
+  options
+) =>
+  apixFetch(
+    `${BANNERDROP_URL}${endpoint}`,
+    method,
+    body,
+    options
+  );
 
-export { apixFetch, API_URL, SRC_URL };
+export const chatFetch = (
+  endpoint,
+  method,
+  body,
+  options
+) =>
+  apixFetch(
+    `${CHAT_URL}${endpoint}`,
+    method,
+    body,
+    options
+  );
+
+export const mereFetch = (
+  endpoint,
+  method,
+  body,
+  options
+) =>
+  apixFetch(
+    `${MERE_URL}${endpoint}`,
+    method,
+    body,
+    options
+  );
+
+export const stripeFetch = (
+  endpoint,
+  method,
+  body,
+  options
+) =>
+  apixFetch(
+    `${STRIPE_URL}${endpoint}`,
+    method,
+    body,
+    {
+      ...options,
+      auth: false
+    }
+  );
+
+export const musicFetch = (
+  endpoint,
+  method,
+  body,
+  options
+) =>
+  apixFetch(
+    `${MUSIC_URL}${endpoint}`,
+    method,
+    body,
+    options
+  );
+
+export {
+  apixFetch,
+  API_URL,
+  SRC_URL
+};
