@@ -1,5 +1,6 @@
+// newRoutes.js
 import { getCurrentAllowedFeatures } from "../config/domainFeatures.js";
-import { authGuard, guestGuard, roleGuard } from "../middleware/middleware.js";
+import { authGuard, guestGuard, roleGuard, metaGuard } from "../middleware/middleware.js";
 
 // Feature module imports
 import { adminRoutes } from "./modules/admin.js";
@@ -10,57 +11,73 @@ import { socialRoutes } from "./modules/social.js";
 import { chatsRoutes } from "./modules/chats.js";
 import { placesRoutes } from "./modules/places.js";
 
-// Core routes accessible across all deployments
+// Core routes
 const coreRoutes = [
-  { path: "/", component: () => import("../pages/home.js"), functionName: "Home" },
-  { path: "/home", component: () => import("../pages/home.js"), functionName: "Home" },
+  { 
+    path: "/", 
+    component: () => import("../pages/home.js"), 
+    functionName: "Home",
+    meta: { title: "Home" }
+  },
+  { 
+    path: "/home", 
+    component: () => import("../pages/home.js"), 
+    functionName: "Home",
+    meta: { title: "Home" }
+  },
   {
     path: "/login",
     component: () => import("../pages/auth/auth.js"),
     functionName: "Auth",
-    middleware: [guestGuard]
+    meta: { guestOnly: true, title: "Login" }
   },
   {
     path: "/profile",
     component: () => import("../pages/profile/userProfile.js"),
     functionName: "MyProfile",
-    middleware: [authGuard]
+    meta: { requiresAuth: true, title: "My Profile" }
   },
   {
     path: "/user/:id",
     component: () => import("../pages/profile/userProfile.js"),
-    functionName: "UserProfile"
+    functionName: "UserProfile",
+    meta: { title: "User Profile" }
   },
   {
     path: "/settings",
     component: () => import("../pages/profile/settings.js"),
     functionName: "Settings",
-    middleware: [authGuard]
+    meta: { requiresAuth: true, title: "Account Settings" }
   },
-  { path: "/map", component: () => import("../pages/gtamap/mapgta.js"), functionName: "MapGTA" },
+  { 
+    path: "/map", 
+    component: () => import("../pages/gtamap/mapgta.js"), 
+    functionName: "MapGTA",
+    meta: { title: "Map" } 
+  },
   {
     path: "/cart",
     component: () => import("../pages/cart/cart.js"),
     functionName: "Cart",
-    middleware: [authGuard]
+    meta: { requiresAuth: true, title: "Shopping Cart" }
   },
   {
     path: "/my-orders",
     component: () => import("../pages/cart/myorders.js"),
     functionName: "MyOrders",
-    middleware: [authGuard]
+    meta: { requiresAuth: true, title: "My Orders" }
   },
   {
     path: "/deliveries",
     component: () => import("../pages/delivery/deliveries.js"),
     functionName: "Deliveries",
-    middleware: [authGuard]
+    meta: { requiresAuth: true, title: "Deliveries" }
   },
   {
     path: "/delivery/create",
     component: () => import("../pages/delivery/createDelivery.js"),
     functionName: "Createdelivery",
-    middleware: [authGuard]
+    meta: { requiresAuth: true, title: "Create Delivery" }
   },
   {
     path: "/delivery/:id",
@@ -76,26 +93,30 @@ const coreRoutes = [
     path: "/dash/driver",
     component: () => import("../pages/delivery/driverDash.js"),
     functionName: "DriverDash",
-    middleware: [authGuard, roleGuard(["driver", "admin"])]
+    meta: { requiresAuth: true, roles: ["driver", "admin"], title: "Driver Dashboard" }
   },
-  { path: "/wallet", component: () => import("../pages/wallet/wallet.js"), functionName: "Wallet" }
+  { 
+    path: "/wallet", 
+    component: () => import("../pages/wallet/wallet.js"), 
+    functionName: "Wallet",
+    meta: { requiresAuth: true, title: "Wallet" }
+  }
 ];
 
 // Legal static pages
 const legalRoutes = [
-  { path: "/about", component: () => import("../legalPages/home.js"), functionName: "About" },
-  { path: "/contact", component: () => import("../legalPages/home.js"), functionName: "Contact" },
-  { path: "/faq", component: () => import("../legalPages/home.js"), functionName: "Faq" },
-  { path: "/terms", component: () => import("../legalPages/home.js"), functionName: "Terms" },
-  { path: "/privacy", component: () => import("../legalPages/home.js"), functionName: "Privacy" },
-  { path: "/refund", component: () => import("../legalPages/home.js"), functionName: "Refund" },
-  { path: "/shipping", component: () => import("../legalPages/home.js"), functionName: "Shipping" },
-  { path: "/returns", component: () => import("../legalPages/home.js"), functionName: "Returns" },
-  { path: "/disclaimer", component: () => import("../legalPages/home.js"), functionName: "Disclaimer" },
-  { path: "/blog", component: () => import("../legalPages/home.js"), functionName: "Blog" }
+  { path: "/about", component: () => import("../legalPages/home.js"), functionName: "About", meta: { title: "About Us" } },
+  { path: "/contact", component: () => import("../legalPages/home.js"), functionName: "Contact", meta: { title: "Contact Us" } },
+  { path: "/faq", component: () => import("../legalPages/home.js"), functionName: "Faq", meta: { title: "FAQ" } },
+  { path: "/terms", component: () => import("../legalPages/home.js"), functionName: "Terms", meta: { title: "Terms of Service" } },
+  { path: "/privacy", component: () => import("../legalPages/home.js"), functionName: "Privacy", meta: { title: "Privacy Policy" } },
+  { path: "/refund", component: () => import("../legalPages/home.js"), functionName: "Refund", meta: { title: "Refund Policy" } },
+  { path: "/shipping", component: () => import("../legalPages/home.js"), functionName: "Shipping", meta: { title: "Shipping Information" } },
+  { path: "/returns", component: () => import("../legalPages/home.js"), functionName: "Returns", meta: { title: "Returns Policy" } },
+  { path: "/disclaimer", component: () => import("../legalPages/home.js"), functionName: "Disclaimer", meta: { title: "Disclaimer" } },
+  { path: "/blog", component: () => import("../legalPages/home.js"), functionName: "Blog", meta: { title: "Blog" } }
 ];
 
-// Mapping feature keys to their respective module route arrays
 const featureModules = {
   admin: adminRoutes,
   farms: farmsRoutes,
@@ -110,24 +131,29 @@ function buildRoutes() {
   const allowedFeatures = getCurrentAllowedFeatures();
   const aggregatedRoutes = [...coreRoutes, ...legalRoutes];
 
-  // Dynamically attach feature modules based on domain permission configuration
   Object.entries(featureModules).forEach(([featureKey, routesList]) => {
     if ((allowedFeatures.includes("ALL") || allowedFeatures.includes(featureKey)) && Array.isArray(routesList)) {
       aggregatedRoutes.push(...routesList);
     }
   });
 
-  // Catch-all admin fallback route
   if (allowedFeatures.includes("ALL") || allowedFeatures.includes("admin")) {
     aggregatedRoutes.push({
       path: "/admin/*path",
       component: () => import("../pages/admin/dashboard.js"),
       functionName: "AdminDashboard",
-      middleware: [authGuard, roleGuard(["admin"])]
+      meta: { requiresAuth: true, roles: ["admin"], title: "Admin Portal" }
     });
   }
 
-  return aggregatedRoutes;
+  // Prepend metaGuard to all middleware stacks automatically
+  return aggregatedRoutes.map(route => {
+    const existingMiddleware = route.middleware || [];
+    return {
+      ...route,
+      middleware: [metaGuard, ...existingMiddleware]
+    };
+  });
 }
 
 export const routes = buildRoutes();

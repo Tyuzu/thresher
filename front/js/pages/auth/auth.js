@@ -1,89 +1,161 @@
 import "../../../css/inistyles/authpage.css";
 import { login, signup } from "../../services/auth/authService.js";
 import { createElement } from "../../components/createElement.js";
+import { navigate } from "../../routes/index.js";
+import { getState } from "../../state/state.js";
+import Notify from "../../components/ui/Notify.mjs";
 
-function clearContainer(el) {
-  if (!el) return;
-  el.replaceChildren();
-}
-
-// --- Main Entry ---
 export function Auth(isL, contentContainer) {
-  clearContainer(contentContainer);
-  renderAuthSection(contentContainer);
-}
+    const isAuthenticated = isL || Boolean(getState("token") || localStorage.getItem("token"));
 
-function renderAuthSection(contentContainer) {
-  const wrapper = createElement("div", { class: "auth-wrapper" }, []);
-  const authBox = createElement("div", { class: "auth-box" }, []);
-
-  const loginForm = createLoginForm();
-  const divider = createElement("div", { class: "auth-divider" }, ["or"]);
-  const signupForm = createSignupForm();
-
-  authBox.append(loginForm, divider, signupForm);
-  wrapper.append(authBox);
-  contentContainer.append(wrapper);
-}
-
-function createLoginForm() {
-  const section = createElement("section", { class: "auth-section" }, []);
-  const title = createElement("h2", { class: "auth-title" }, ["Log In"]);
-
-  const usernameInput = inputField("text", "Username", "login-username", "username");
-  const passwordInput = inputField("password", "Password", "login-password", "current-password");
-  const submitBtn = submitButton("Login");
-
-  const form = createElement("form", { class: "auth-form" }, []);
-  form.append(usernameInput, passwordInput, submitBtn);
-  form.addEventListener("submit", login);
-
-  section.append(title, form);
-  return section;
-}
-
-function createSignupForm() {
-  const section = createElement("section", { class: "auth-section" }, []);
-  const title = createElement("h2", { class: "auth-title" }, ["Sign Up"]);
-
-  const usernameInput = inputField("text", "Username", "signup-username", "username");
-  const emailInput = inputField("email", "Email", "signup-email", "email");
-  const passwordInput = inputField("password", "Password", "signup-password", "new-password");
-
-  const checkbox = createElement("input", { type: "checkbox", id: "signup-terms", required: true }, []);
-  const termsLabel = createElement("label", { class: "auth-terms", htmlFor: "signup-terms" }, [
-    checkbox,
-    " I agree to the Terms & Conditions"
-  ]);
-
-  const submitBtn = submitButton("Signup");
-  const form = createElement("form", { class: "auth-form" }, []);
-  form.append(usernameInput, emailInput, passwordInput, termsLabel, submitBtn);
-
-  form.addEventListener("submit", (e) => {
-    const termsCheck = e.currentTarget.querySelector("#signup-terms");
-    if (!termsCheck?.checked) {
-      e.preventDefault();
-      import("../../components/ui/Notify.mjs").then(({ default: Notify }) => {
-        Notify("You must agree to the Terms & Conditions.", { type: "warning", duration: 3000 });
-      });
-      return;
+    if (isAuthenticated) {
+        navigate("/");
+        return;
     }
-    signup(e);
-  });
 
-  section.append(title, form);
-  return section;
+    if (!contentContainer) return;
+    contentContainer.replaceChildren();
+
+    let isLoginView = true;
+
+    const wrapper = createElement("div", { class: "auth-wrapper" }, []);
+    const authBox = createElement("div", { class: "auth-box" }, []);
+
+    function renderView() {
+        authBox.replaceChildren();
+        const form = isLoginView ? createLoginForm(toggleView) : createSignupForm(toggleView);
+        authBox.appendChild(form);
+    }
+
+    function toggleView() {
+        isLoginView = !isLoginView;
+        renderView();
+    }
+
+    renderView();
+    wrapper.appendChild(authBox);
+    contentContainer.appendChild(wrapper);
+}
+
+/* =========================
+   FORM CREATION HELPERS
+========================= */
+function createLoginForm(onToggleView) {
+    const section = createElement("section", { class: "auth-section" }, []);
+    const title = createElement("h2", { class: "auth-title" }, ["Log In"]);
+
+    const usernameInput = inputField("text", "Username", "login-username", "username");
+    const passwordInput = inputField("password", "Password", "login-password", "current-password");
+    const submitBtn = createElement("button", { type: "submit", class: "btn-primary" }, ["Login"]);
+
+    const toggleText = createElement("p", { class: "auth-toggle" }, [
+        "Don't have an account? ",
+        createElement(
+            "a",
+            {
+                href: "#",
+                events: {
+                    click: (e) => {
+                        e.preventDefault();
+                        onToggleView();
+                    }
+                }
+            },
+            ["Sign Up"]
+        )
+    ]);
+
+    const form = createElement("form", { class: "auth-form" }, [
+        usernameInput,
+        passwordInput,
+        submitBtn,
+        toggleText
+    ]);
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const payload = {
+            username: usernameInput.value.trim(),
+            password: passwordInput.value
+        };
+
+        await login(payload);
+    });
+
+    section.append(title, form);
+    return section;
+}
+
+function createSignupForm(onToggleView) {
+    const section = createElement("section", { class: "auth-section" }, []);
+    const title = createElement("h2", { class: "auth-title" }, ["Sign Up"]);
+
+    const usernameInput = inputField("text", "Username", "signup-username", "username");
+    const emailInput = inputField("email", "Email", "signup-email", "email");
+    const passwordInput = inputField("password", "Password", "signup-password", "new-password");
+
+    const checkbox = createElement("input", { type: "checkbox", id: "signup-terms", required: true }, []);
+    const termsLabel = createElement("label", { class: "auth-terms", htmlFor: "signup-terms" }, [
+        checkbox,
+        " I agree to the Terms & Conditions"
+    ]);
+
+    const submitBtn = createElement("button", { type: "submit", class: "btn-primary" }, ["Sign Up"]);
+
+    const toggleText = createElement("p", { class: "auth-toggle" }, [
+        "Already have an account? ",
+        createElement(
+            "a",
+            {
+                href: "#",
+                events: {
+                    click: (e) => {
+                        e.preventDefault();
+                        onToggleView();
+                    }
+                }
+            },
+            ["Log In"]
+        )
+    ]);
+
+    const form = createElement("form", { class: "auth-form" }, [
+        usernameInput,
+        emailInput,
+        passwordInput,
+        termsLabel,
+        submitBtn,
+        toggleText
+    ]);
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        if (!checkbox.checked) {
+            Notify("You must agree to the Terms & Conditions.", { type: "warning", duration: 3000 });
+            return;
+        }
+
+        const payload = {
+            username: usernameInput.value.trim(),
+            email: emailInput.value.trim(),
+            password: passwordInput.value
+        };
+
+        const success = await signup(payload);
+        if (success) {
+            onToggleView(); // Switches view to Login upon successful registration
+        }
+    });
+
+    section.append(title, form);
+    return section;
 }
 
 function inputField(type, placeholder, id, autocomplete = "") {
-  const attrs = { type, id, placeholder, required: true };
-  if (autocomplete) {
-    attrs.autocomplete = autocomplete;
-  }
-  return createElement("input", attrs, []);
-}
-
-function submitButton(label) {
-  return createElement("button", { type: "submit" }, [label]);
+    const attrs = { type, id, placeholder, required: true };
+    if (autocomplete) {
+        attrs.autocomplete = autocomplete;
+    }
+    return createElement("input", attrs, []);
 }

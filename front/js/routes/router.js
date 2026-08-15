@@ -1,3 +1,4 @@
+// router.js
 import { createElement } from "../components/createElement.js";
 import { getState, subscribe, setRouteModule, getRouteModule, hasRouteModule } from "../state/state.js";
 import { routes } from "./newRoutes.js";
@@ -6,9 +7,6 @@ import { track } from "../services/activity/metrics.js";
 
 let isLoggedIn = Boolean(getState("token"));
 
-/**
- * Extracts route parameters matching `:param` and `*wildcard` tokens.
- */
 function matchRoute(routePath, currentPath) {
   const paramNames = [];
   const regexPath = routePath
@@ -33,16 +31,13 @@ function matchRoute(routePath, currentPath) {
   return params;
 }
 
-/**
- * Executes the route middleware pipeline.
- */
 async function runMiddleware(route, context) {
   const middlewareStack = [...(route.middleware || [])];
 
   for (const fn of middlewareStack) {
     const result = await fn(context);
-    if (result === false) return false;           // Halt navigation
-    if (typeof result === "string") return result; // Redirect URL
+    if (result === false) return false;
+    if (typeof result === "string") return result;
   }
 
   return true;
@@ -52,9 +47,6 @@ function renderError(container, message = "404 Not Found") {
   container.replaceChildren(createElement("h1", { class: "error-heading" }, [message]));
 }
 
-/**
- * Helper to execute component render with or without route parameters.
- */
 function invokeRender(renderFn, auth, params, container) {
   const hasParams = params && Object.keys(params).length > 0;
   return hasParams
@@ -62,9 +54,6 @@ function invokeRender(renderFn, auth, params, container) {
     : renderFn(auth, container);
 }
 
-/**
- * Main route resolver and renderer.
- */
 export async function render(rawPath, contentContainer) {
   let cleanPath = decodeURIComponent(String(rawPath).split(/[?#]/)[0]);
   if (cleanPath.length > 1 && cleanPath.endsWith("/")) {
@@ -91,14 +80,14 @@ export async function render(rawPath, contentContainer) {
 
   const context = { path: cleanPath, params: routeParams, route: matchedRoute };
 
-  // Execute middleware pipeline
+  // 1. Run Middleware Stack (including metaGuard if configured)
   const guardResult = await runMiddleware(matchedRoute, context);
-  if (guardResult === false) return; // Halt rendering
+  if (guardResult === false) return;
   if (typeof guardResult === "string") {
     return navigate(guardResult);
   }
 
-  // Lifecycle Hook: beforeEnter
+  // 2. Run Route Lifecycle Hooks
   if (typeof matchedRoute.beforeEnter === "function") {
     const hookRes = await matchedRoute.beforeEnter(context);
     if (hookRes === false) return;
@@ -108,7 +97,6 @@ export async function render(rawPath, contentContainer) {
   const startTime = performance.now();
 
   try {
-    // Check module cache
     if (hasRouteModule(cleanPath)) {
       const cachedRender = getRouteModule(cleanPath).render;
       contentContainer.replaceChildren();
@@ -134,7 +122,6 @@ export async function render(rawPath, contentContainer) {
     const duration = Math.round(performance.now() - startTime);
     track("route_render_time", { path: cleanPath, duration_ms: duration });
 
-    // Lifecycle Hook: afterEnter
     if (typeof matchedRoute.afterEnter === "function") {
       matchedRoute.afterEnter(context);
     }
@@ -145,26 +132,24 @@ export async function render(rawPath, contentContainer) {
   }
 }
 
-// Reactive auth syncing for route guards
+// Reactive auth syncing for post-login redirects
 subscribe("token", (token) => {
   isLoggedIn = Boolean(token);
   if (!token) return;
 
-  const redirect = localStorage.getItem("redirectAfterLogin");
-  if (!redirect) return;
-
+  // Retrieve stored target from sessionStorage (aligned with middleware.js)
+  const redirect = sessionStorage.getItem("redirectAfterLogin") || localStorage.getItem("redirectAfterLogin");
+  sessionStorage.removeItem("redirectAfterLogin");
   localStorage.removeItem("redirectAfterLogin");
-  const target =
-    redirect.startsWith("/") && redirect !== "/login" && redirect !== "/logout"
-      ? redirect
-      : "/home";
 
-  navigate(target);
+  const target =
+    redirect && redirect.startsWith("/") && redirect !== "/login" && redirect !== "/logout"
+      ? redirect
+      : "/";
+
+  setTimeout(() => navigate(target), 0);
 });
 
-/**
- * Safely extracts regex capture groups and filters out undefined values.
- */
 export function safeArgBuilder(match) {
   if (!match) return [];
   return match.slice(1).filter((val) => val !== undefined);

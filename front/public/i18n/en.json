@@ -22,7 +22,9 @@
     "showLess": "Show less",
     "close": "Close",
     "open": "Open",
-    "advertisement": "Advertisement"
+    "advertisement": "Advertisement",
+    "sponsored": "Sponsored",
+    "learnMore":"Learn More"
   },
   "nav": {
     "farms": "Farms",

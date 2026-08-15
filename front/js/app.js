@@ -2,6 +2,17 @@ import { loadContent, navigate } from "./routes/index.js";
 import { setState } from "./state/state.js";
 import { detectLanguage, setLanguage } from "./i18n/i18n.js";
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      const registration = await navigator.serviceWorker.register("/service-worker.js");
+      console.log("ServiceWorker registration successful with scope: ", registration.scope);
+    } catch (error) {
+      console.error("ServiceWorker registration failed: ", error);
+    }
+  });
+}
+
 // --- Environment Profiling ---
 function profileEnvironment() {
   const ENV_CACHE_KEY = "env-profile-v1";

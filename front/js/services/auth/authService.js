@@ -12,45 +12,44 @@ import { apiFetch } from "../../api/api.js";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.mjs";
 
 /* =========================
+   REACTIVE SUBSCRIPTIONS
+========================= */
+subscribeDeep("userProfile.role", (role) => {
+    const isAdmin = Array.isArray(role) ? role.includes("admin") : role === "admin";
+    document.body.dataset.isAdmin = isAdmin ? "true" : "false";
+});
+
+/* =========================
    SIGNUP
 ========================= */
-async function signup(event) {
-    if (event) event.preventDefault();
+export async function signup(payload) {
+    let username = payload?.username;
+    let email = payload?.email;
+    let password = payload?.password;
 
-    const username = document.getElementById("signup-username")?.value?.trim() || "";
-    const email = document.getElementById("signup-email")?.value?.trim() || "";
-    const password = document.getElementById("signup-password")?.value || "";
+    // Fallback if triggered directly as an event handler
+    if (payload?.preventDefault) {
+        payload.preventDefault();
+        username = document.getElementById("signup-username")?.value?.trim() || "";
+        email = document.getElementById("signup-email")?.value?.trim() || "";
+        password = document.getElementById("signup-password")?.value || "";
+    }
 
     const errors = validateInputs([
-        {
-            value: username,
-            validator: isValidUsername,
-            message: "Username must be between 3 and 20 characters."
-        },
-        {
-            value: email,
-            validator: isValidEmail,
-            message: "Please enter a valid email."
-        },
-        {
-            value: password,
-            validator: isValidPassword,
-            message: "Password must be at least 6 characters long."
-        }
+        { value: username, validator: isValidUsername, message: "Username must be between 3 and 20 characters." },
+        { value: email, validator: isValidEmail, message: "Please enter a valid email." },
+        { value: password, validator: isValidPassword, message: "Password must be at least 6 characters long." }
     ]);
 
     const hasErrors = Array.isArray(errors) ? errors.length > 0 : errors && Object.keys(errors).length > 0;
 
     if (hasErrors) {
-        Notify(Array.isArray(errors) ? errors.join(", ") : errors, {
-            type: "error",
-            duration: 3000,
-            dismissible: true
-        });
-        return;
+        const errorMsg = Array.isArray(errors) ? errors.join(", ") : String(errors);
+        Notify(errorMsg, { type: "error", duration: 3000, dismissible: true });
+        return false;
     }
 
-    const hideSpinner = LoadingSpinner(); 
+    const hideSpinner = LoadingSpinner();
 
     try {
         await apiFetch("/auth/register", "POST", { username, email, password }, { credentials: "include" });
@@ -61,57 +60,40 @@ async function signup(event) {
             dismissible: true
         });
 
-        navigate("/login");
+        return true;
     } catch (err) {
         const errorMsg = typeof err === "string" ? err : err?.message || err?.error || "Signup failed.";
-        Notify(errorMsg, {
-            type: "error",
-            duration: 3000,
-            dismissible: true
-        });
+        Notify(errorMsg, { type: "error", duration: 3000, dismissible: true });
+        return false;
     } finally {
         if (typeof hideSpinner === "function") hideSpinner();
     }
 }
 
 /* =========================
-   REACTIVE SUBSCRIPTIONS
-========================= */
-subscribeDeep("userProfile.role", role => {
-    const isAdmin = Array.isArray(role)
-        ? role.includes("admin")
-        : role === "admin";
-
-    document.body.dataset.isAdmin = isAdmin ? "true" : "false";
-});
-
-/* =========================
    LOGIN
 ========================= */
-async function login(event) {
-    if (event) event.preventDefault();
+export async function login(payload) {
+    let username = payload?.username;
+    let password = payload?.password;
 
-    const username = document.getElementById("login-username")?.value?.trim() || "";
-    const password = document.getElementById("login-password")?.value || "";
+    // Fallback if triggered directly as an event handler
+    if (payload?.preventDefault) {
+        payload.preventDefault();
+        username = document.getElementById("login-username")?.value?.trim() || "";
+        password = document.getElementById("login-password")?.value || "";
+    }
 
     if (!username || !password) {
-        Notify("Username and password are required.", {
-            type: "error",
-            duration: 3000,
-            dismissible: true
-        });
-        return;
+        Notify("Username and password are required.", { type: "error", duration: 3000, dismissible: true });
+        return false;
     }
 
     const hideSpinner = LoadingSpinner();
 
     try {
-        const res = await apiFetch("/auth/login", "POST",
-            { username, password },
-            { credentials: "include" }
-        );
+        const res = await apiFetch("/auth/login", "POST", { username, password }, { credentials: "include" });
 
-        // Standardized extraction supporting all casing variations from Go backend
         const token = res?.token || res?.Token;
         const userId = res?.user_id || res?.userid || res?.userId || res?.UserID;
 
@@ -119,44 +101,54 @@ async function login(event) {
             throw new Error("Invalid response format from server.");
         }
 
-        // Fetch optional user profile before firing reactive token subscribers
         try {
             const profile = await fetchProfile();
             if (profile) {
                 setState({ userProfile: profile }, false);
             }
         } catch {
-            Notify("Logged in, but profile could not be loaded.", {
-                type: "info",
-                duration: 3000,
-                dismissible: true
-            });
+            Notify("Logged in, but profile details could not be loaded.", { type: "info", duration: 3000, dismissible: true });
         }
 
-        // Setting token triggers router.js subscribe("token") which handles redirecting seamlessly
+        // Commit authentication state
         setState({ token, user: userId, username }, true);
 
+        // Determine post-login target route
+        const savedRedirect = localStorage.getItem("redirectAfterLogin");
+        localStorage.removeItem("redirectAfterLogin");
+
+        const target =
+            savedRedirect &&
+            savedRedirect.startsWith("/") &&
+            savedRedirect !== "/login" &&
+            savedRedirect !== "/logout"
+                ? savedRedirect
+                : "/";
+
+        // Defer navigation slightly to break out of layoutState.isNavigating lock
+        setTimeout(() => {
+            navigate(target);
+        }, 0);
+
+        return true;
     } catch (err) {
-        Notify(err?.message || "Login failed.", {
-            type: "error",
-            duration: 3000,
-            dismissible: true
-        });
+        Notify(err?.message || "Login failed.", { type: "error", duration: 3000, dismissible: true });
+        return false;
     } finally {
         if (typeof hideSpinner === "function") hideSpinner();
     }
 }
 
 /* =========================
-   TOKEN REFRESH
+   TOKEN REFRESH & LOGOUT
 ========================= */
-async function refreshAccessToken() {
+export async function refreshAccessToken() {
     try {
         const res = await apiFetch("/auth/refresh", "POST", null, {
             headers: { "X-Refresh-Intent": "1" },
             credentials: "include"
         });
-        
+
         const token = res?.data?.token || res?.token || res?.Token;
         if (token) {
             setState({ token }, true);
@@ -169,10 +161,7 @@ async function refreshAccessToken() {
     }
 }
 
-/* =========================
-   LOGOUT
-========================= */
-async function logout() {
+export async function logout() {
     try {
         await apiFetch("/auth/logout", "POST", null, {
             headers: { "X-Refresh-Intent": "1" },
@@ -185,7 +174,7 @@ async function logout() {
     }
 }
 
-function silentLogout() {
+export function silentLogout() {
     clearState();
     sessionStorage.clear();
     localStorage.removeItem("token");
@@ -196,5 +185,3 @@ function silentLogout() {
         navigate("/login");
     });
 }
-
-export { signup, login, logout, silentLogout, refreshAccessToken };

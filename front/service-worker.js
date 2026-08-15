@@ -1,9 +1,9 @@
 // =====================================================
-// Service Worker
-// Version: v15
+// Service Worker (SPA Optimized)
+// Version: v16
 // =====================================================
 
-const CACHE_VERSION = "v15";
+const CACHE_VERSION = "v16";
 
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
@@ -11,51 +11,45 @@ const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 
 const OFFLINE_URL = "/offline.html";
 
+// Keep list robust. If any single asset fails to fetch, 
+// install will fail. Use relative or absolute core entry points.
 const STATIC_ASSETS = [
   "/",
   "/index.html",
   "/offline.html",
-  "/manifest.json",
-  "/js/app.js",
-  "/js/assets/styles.css",
-  "/assets/icon-128.png",
-  "/assets/icon-192.png",
-  "/assets/icon-512.png",
+  "/manifest.json"
 ];
 
-// Cache limits
 const MAX_DYNAMIC_ITEMS = 100;
 const MAX_IMAGE_ITEMS = 200;
 
 // =====================================================
 // INSTALL
 // =====================================================
-
 self.addEventListener("install", (event) => {
   self.skipWaiting();
-
   event.waitUntil(
-    (async () => {
-      const cache = await caches.open(STATIC_CACHE);
-      await cache.addAll(STATIC_ASSETS);
-    })()
+    caches.open(STATIC_CACHE).then((cache) => {
+      return cache.addAll(STATIC_ASSETS);
+    })
   );
 });
 
 // =====================================================
 // ACTIVATE
 // =====================================================
-
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      // Enable Navigation Preload
       if ("navigationPreload" in self.registration) {
-        await self.registration.navigationPreload.enable();
+        try {
+          await self.registration.navigationPreload.enable();
+        } catch (e) {
+          console.warn("[SW] Navigation preload failed to enable", e);
+        }
       }
 
       const cacheNames = await caches.keys();
-
       await Promise.all(
         cacheNames.map((cacheName) => {
           if (
@@ -70,158 +64,136 @@ self.addEventListener("activate", (event) => {
       );
 
       await self.clients.claim();
-
-      console.log("[SW] Activated:", CACHE_VERSION);
+      console.log("[SW] Activated version:", CACHE_VERSION);
     })()
   );
 });
 
 // =====================================================
-// FETCH
+// FETCH ROUTING
 // =====================================================
-
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
 
   // Ignore cross-origin requests
-  if (url.origin !== self.location.origin) {
-    return;
-  }
+  if (url.origin !== self.location.origin) return;
 
-  // HTML Navigation
+  // 1. HTML Navigation Requests (SPA Shell strategy)
   if (req.mode === "navigate") {
-    event.respondWith(networkFirst(event, req));
+    event.respondWith(handleNavigation(event, req));
     return;
   }
 
-  // API Requests
+  // 2. API Requests (Network First with graceful JSON fallback)
   if (url.pathname.startsWith("/api/")) {
-    event.respondWith(networkFirst(event, req, true));
+    event.respondWith(networkFirstAPI(req));
     return;
   }
 
-  // Images
+  // 3. Images (Stale While Revalidate)
   if (req.destination === "image") {
-    event.respondWith(staleWhileRevalidate(req));
+    event.respondWith(staleWhileRevalidate(req, IMAGE_CACHE, MAX_IMAGE_ITEMS));
     return;
   }
 
-  // Fonts
-  if (req.destination === "font") {
-    event.respondWith(cacheFirst(req, STATIC_CACHE));
-    return;
-  }
-
-  // Static assets
-  if (
-    req.destination === "script" ||
-    req.destination === "style" ||
-    url.pathname.endsWith(".js") ||
-    url.pathname.endsWith(".css") ||
-    url.pathname.endsWith(".json")
-  ) {
-    event.respondWith(cacheFirst(req, STATIC_CACHE));
-    return;
-  }
+  // 4. Static Assets & Scripts/Styles/Fonts (Cache First with network fallback)
+  event.respondWith(cacheFirst(req));
 });
 
 // =====================================================
-// NETWORK FIRST
+// HANDLERS
 // =====================================================
 
-async function networkFirst(event, req, isAPI = false) {
+// SPA Navigation Handler: Try network/preload -> fallback to cached index.html -> fallback to offline.html
+async function handleNavigation(event, req) {
   try {
     const preloadResponse = await event.preloadResponse;
-
     if (preloadResponse) {
       return preloadResponse;
     }
 
-    const fresh = await fetch(req);
-
-    if (fresh.ok) {
-      const cache = await caches.open(DYNAMIC_CACHE);
-      await cache.put(req, fresh.clone());
-
-      limitCacheSize(DYNAMIC_CACHE, MAX_DYNAMIC_ITEMS);
+    const networkResponse = await fetch(req);
+    if (networkResponse && networkResponse.status === 200) {
+      // Optionally cache dynamic navigation page if needed, or let index.html handle it
+      return networkResponse;
     }
-
-    return fresh;
-  } catch {
-    const cache = await caches.open(DYNAMIC_CACHE);
-
-    const cached = await cache.match(req);
-
-    if (cached) {
-      return cached;
+    throw new Error("Network response not 200");
+  } catch (err) {
+    // Check if index.html is cached for SPA routing support
+    const cache = await caches.open(STATIC_CACHE);
+    const cachedIndex = await cache.match("/index.html");
+    if (cachedIndex) {
+      return cachedIndex;
     }
-
-    if (isAPI) {
-      return new Response(
-        JSON.stringify({
-          error: "offline",
-          success: false,
-        }),
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          status: 503,
-        }
-      );
-    }
-
-    return (await caches.match(OFFLINE_URL)) || Response.error();
+    // Absolute fallback if index isn't found
+    return (await cache.match(OFFLINE_URL)) || Response.error();
   }
 }
 
-// =====================================================
-// CACHE FIRST
-// =====================================================
+// Network First for API routes
+async function networkFirstAPI(req) {
+  try {
+    const fresh = await fetch(req);
+    if (fresh.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE);
+      cache.put(req, fresh.clone());
+      limitCacheSize(DYNAMIC_CACHE, MAX_DYNAMIC_ITEMS);
+    }
+    return fresh;
+  } catch (err) {
+    const cache = await caches.open(DYNAMIC_CACHE);
+    const cached = await cache.match(req);
+    if (cached) return cached;
 
-async function cacheFirst(req, cacheName = STATIC_CACHE) {
-  const cache = await caches.open(cacheName);
+    return new Response(
+      JSON.stringify({
+        error: "offline",
+        success: false,
+        message: "You are currently offline. Action cannot be completed."
+      }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+  }
+}
 
+// Cache First for static scripts, styles, fonts
+async function cacheFirst(req) {
+  const cache = await caches.open(STATIC_CACHE);
   const cached = await cache.match(req);
-
   if (cached) {
+    // Background revalidate optional, returning cache immediately for speed
     return cached;
   }
 
   try {
     const fresh = await fetch(req);
-
-    if (fresh.ok) {
-      await cache.put(req, fresh.clone());
+    if (fresh && fresh.status === 200) {
+      cache.put(req, fresh.clone());
     }
-
     return fresh;
-  } catch {
-    return cached || Response.error();
+  } catch (err) {
+    // If it's a script/style asset missing from cache and offline, fail gracefully
+    return Response.error();
   }
 }
 
-// =====================================================
-// STALE WHILE REVALIDATE
-// =====================================================
-
-async function staleWhileRevalidate(req) {
-  const cache = await caches.open(IMAGE_CACHE);
-
+// Stale While Revalidate for images
+async function staleWhileRevalidate(req, cacheName, maxItems) {
+  const cache = await caches.open(cacheName);
   const cached = await cache.match(req);
 
   const networkFetch = fetch(req)
     .then(async (response) => {
-      if (response.ok) {
+      if (response && response.status === 200) {
         await cache.put(req, response.clone());
-
-        limitCacheSize(IMAGE_CACHE, MAX_IMAGE_ITEMS);
+        limitCacheSize(cacheName, maxItems);
       }
-
       return response;
     })
     .catch(() => cached);
@@ -230,32 +202,22 @@ async function staleWhileRevalidate(req) {
 }
 
 // =====================================================
-// CACHE SIZE LIMITER
+// UTILS
 // =====================================================
-
 async function limitCacheSize(cacheName, maxItems) {
   const cache = await caches.open(cacheName);
-
   const keys = await cache.keys();
-
-  if (keys.length <= maxItems) {
-    return;
-  }
-
+  if (keys.length <= maxItems) return;
   await cache.delete(keys[0]);
-
-  return limitCacheSize(cacheName, maxItems);
+  limitCacheSize(cacheName, maxItems);
 }
 
 // =====================================================
-// PUSH NOTIFICATIONS
+// PUSH NOTIFICATIONS & MESSAGING
 // =====================================================
-
 self.addEventListener("push", (event) => {
   if (!event.data) return;
-
   let data = {};
-
   try {
     data = event.data.json();
   } catch {
@@ -266,11 +228,7 @@ self.addEventListener("push", (event) => {
     };
   }
 
-  const {
-    title = "Notification",
-    message = "",
-    url = "/",
-  } = data;
+  const { title = "Notification", message = "", url = "/" } = data;
 
   event.waitUntil(
     self.registration.showNotification(title, {
@@ -278,24 +236,13 @@ self.addEventListener("push", (event) => {
       icon: "/assets/icon-192.png",
       badge: "/assets/icon-128.png",
       data: { url },
-      actions: [
-        {
-          action: "open",
-          title: "Open",
-        },
-      ],
-      requireInteraction: false,
+      actions: [{ action: "open", title: "Open" }],
     })
   );
 });
 
-// =====================================================
-// NOTIFICATION CLICK
-// =====================================================
-
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-
   const targetUrl = event.notification.data?.url || "/";
 
   event.waitUntil(
@@ -312,16 +259,10 @@ self.addEventListener("notificationclick", (event) => {
           return;
         }
       }
-
       await clients.openWindow(targetUrl);
     })()
   );
 });
-
-// =====================================================
-// MESSAGE EVENTS
-// Allows app to force update SW
-// =====================================================
 
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") {

@@ -10,7 +10,6 @@
       --text-color: #333;
       --bg-color: #f8f8f8;
     }
-
     body {
       font-family: sans-serif;
       background: var(--bg-color);
@@ -24,21 +23,9 @@
       justify-content: center;
       height: 100vh;
     }
-
-    h1 {
-      color: var(--accent-color);
-      margin-bottom: 0.5rem;
-    }
-
-    p {
-      max-width: 500px;
-      line-height: 1.5;
-    }
-
-    .offline-actions {
-      margin-top: 2rem;
-    }
-
+    h1 { color: var(--accent-color); margin-bottom: 0.5rem; }
+    p { max-width: 500px; line-height: 1.5; }
+    .offline-actions { margin-top: 2rem; }
     .retry-button {
       background: var(--accent-color);
       color: white;
@@ -48,27 +35,26 @@
       border-radius: 4px;
       cursor: pointer;
     }
-
-    .retry-button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
+    .retry-button:disabled { background: #ccc; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <h1>🔌 You're Offline</h1>
-  <p>
-    It looks like you're not connected to the internet. Some features may not be available.
-  </p>
-
+  <p>It looks like you're not connected to the internet. We'll automatically reconnect once your network is restored.</p>
   <div class="offline-actions">
-    <button class="retry-button" onclick="retry()">🔄 Try Again</button>
+    <button id="retryBtn" class="retry-button" onclick="retry()">🔄 Try Again</button>
   </div>
-
   <script>
     function retry() {
+      const btn = document.getElementById('retryBtn');
+      btn.disabled = true;
+      btn.textContent = 'Checking...';
       location.reload();
     }
+    // Auto-reload when network connectivity returns
+    window.addEventListener('online', () => {
+      location.reload();
+    });
   </script>
 </body>
 </html>
