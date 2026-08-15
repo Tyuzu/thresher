@@ -7,22 +7,34 @@ import "time"
 ============================================================ */
 
 const (
-	ProductCreated = "product.created"
-	ProductUpdated = "product.updated"
-	ProductRemoved = "product.removed"
+	ProductCreatedEvent = "product.created"
+	ProductUpdatedEvent = "product.updated"
+	ProductRemovedEvent = "product.removed"
 )
 
+/* ============================================================
+   PRODUCT CREATED
+============================================================ */
+
 type ProductCreatedPayload struct {
-	ProductID  string    `json:"productid"`
+	ProductID  string    `json:"product_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   PRODUCT UPDATED
+============================================================ */
 
 type ProductUpdatedPayload struct {
-	ProductID  string    `json:"productid"`
+	ProductID  string    `json:"product_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type ProductDeletedPayload struct {
-	ProductID  string    `json:"productid"`
+/* ============================================================
+   PRODUCT REMOVED
+============================================================ */
+
+type ProductRemovedPayload struct {
+	ProductID  string    `json:"product_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

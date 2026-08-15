@@ -3,26 +3,41 @@ package mqevent
 import "time"
 
 /* ============================================================
-   USERDATA EVENTS
+   USER DATA EVENTS
 ============================================================ */
 
 const (
-	UserdataCreated = "userdata.created"
-	UserdataUpdated = "userdata.updated"
-	UserdataRemoved = "userdata.removed"
+	UserDataCreatedEvent = "userdata.created"
+	UserDataUpdatedEvent = "userdata.updated"
+	UserDataRemovedEvent = "userdata.removed"
 )
 
-type UserdataCreatedPayload struct {
-	UserdataID string    `json:"userdataid"`
+/* ============================================================
+   USER DATA CREATED
+============================================================ */
+
+type UserDataCreatedPayload struct {
+	UserDataID string    `json:"user_data_id"`
+	UserID     string    `json:"user_id,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type UserdataUpdatedPayload struct {
-	UserdataID string    `json:"userdataid"`
+/* ============================================================
+   USER DATA UPDATED
+============================================================ */
+
+type UserDataUpdatedPayload struct {
+	UserDataID string    `json:"user_data_id"`
+	UserID     string    `json:"user_id,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type UserdataDeletedPayload struct {
-	UserdataID string    `json:"userdataid"`
+/* ============================================================
+   USER DATA REMOVED
+============================================================ */
+
+type UserDataRemovedPayload struct {
+	UserDataID string    `json:"user_data_id"`
+	UserID     string    `json:"user_id,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

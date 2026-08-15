@@ -3,26 +3,38 @@ package mqevent
 import "time"
 
 /* ============================================================
-   NOTICES EVENTS
+   NOTICE EVENTS
 ============================================================ */
 
 const (
-	NoticesCreatedEvent = "notices.created"
-	NoticesUpdatedEvent = "notices.updated"
-	NoticesRemovedEvent = "notices.removed"
+	NoticeCreatedEvent = "notice.created"
+	NoticeUpdatedEvent = "notice.updated"
+	NoticeRemovedEvent = "notice.removed"
 )
 
-type NoticesCreatedPayload struct {
-	NoticesID  string    `json:"noticesid"`
+/* ============================================================
+   NOTICE CREATED
+============================================================ */
+
+type NoticeCreatedPayload struct {
+	NoticeID   string    `json:"notice_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type NoticesUpdatedPayload struct {
-	NoticesID  string    `json:"noticesid"`
+/* ============================================================
+   NOTICE UPDATED
+============================================================ */
+
+type NoticeUpdatedPayload struct {
+	NoticeID   string    `json:"notice_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type NoticesDeletedPayload struct {
-	NoticesID  string    `json:"noticesid"`
+/* ============================================================
+   NOTICE REMOVED
+============================================================ */
+
+type NoticeRemovedPayload struct {
+	NoticeID   string    `json:"notice_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

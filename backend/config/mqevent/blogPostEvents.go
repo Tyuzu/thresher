@@ -7,27 +7,39 @@ import "time"
 ============================================================ */
 
 const (
-	BlogPostCreatedEvent = "post.created"
-	BlogPostUpdatedEvent = "post.updated"
-	BlogPostDeletedEvent = "post.deleted"
+	PostCreatedEvent = "post.created"
+	PostUpdatedEvent = "post.updated"
+	PostDeletedEvent = "post.deleted"
 )
 
-type BlogPostCreatedPayload struct {
-	PostID     string    `json:"postid"`
-	UserID     string    `json:"userid"`
+/* ============================================================
+   POST CREATED
+============================================================ */
+
+type PostCreatedPayload struct {
+	PostID     string    `json:"post_id"`
+	UserID     string    `json:"user_id"`
 	Username   string    `json:"username"`
-	PostType   string    `json:"posttype"`
+	PostType   string    `json:"post_type"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type BlogPostUpdatedPayload struct {
-	PostID     string    `json:"postid"`
-	UserID     string    `json:"userid"`
+/* ============================================================
+   POST UPDATED
+============================================================ */
+
+type PostUpdatedPayload struct {
+	PostID     string    `json:"post_id"`
+	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type BlogPostDeletedPayload struct {
-	PostID     string    `json:"postid"`
-	UserID     string    `json:"userid"`
+/* ============================================================
+   POST DELETED
+============================================================ */
+
+type PostDeletedPayload struct {
+	PostID     string    `json:"post_id"`
+	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

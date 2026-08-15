@@ -3,26 +3,38 @@ package mqevent
 import "time"
 
 /* ============================================================
-   PLACES EVENTS
+   PLACE EVENTS
 ============================================================ */
 
 const (
-	PlaceCreatedEvent = "places.created"
-	PlaceUpdatedEvent = "places.updated"
-	PlaceRemovedEvent = "places.removed"
+	PlaceCreatedEvent = "place.created"
+	PlaceUpdatedEvent = "place.updated"
+	PlaceRemovedEvent = "place.removed"
 )
 
+/* ============================================================
+   PLACE CREATED
+============================================================ */
+
 type PlaceCreatedPayload struct {
-	PlacesID   string    `json:"placeid"`
+	PlaceID    string    `json:"place_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   PLACE UPDATED
+============================================================ */
 
 type PlaceUpdatedPayload struct {
-	PlacesID   string    `json:"placeid"`
+	PlaceID    string    `json:"place_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type PlaceDeletedPayload struct {
-	PlacesID   string    `json:"placeid"`
+/* ============================================================
+   PLACE REMOVED
+============================================================ */
+
+type PlaceRemovedPayload struct {
+	PlaceID    string    `json:"place_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

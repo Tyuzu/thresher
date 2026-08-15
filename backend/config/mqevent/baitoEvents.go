@@ -12,37 +12,54 @@ const (
 	BaitoRemovedEvent   = "baito.removed"
 	AppliedToBaitoEvent = "baito.applied"
 
-	WorkerProfileCreatedEvent = "worker.created"
-	WorkerProfileUpdatedEvent = "worker.updated"
-	WorkerProfileRemovedEvent = "worker.removed"
+	WorkerProfileCreatedEvent = "worker.profile.created"
+	WorkerProfileUpdatedEvent = "worker.profile.updated"
+	WorkerProfileRemovedEvent = "worker.profile.removed"
 )
 
+/* ============================================================
+   BAITO
+============================================================ */
+
 type BaitoCreatedPayload struct {
-	BaitoID    string    `json:"baitoid"`
+	BaitoID    string    `json:"baito_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type BaitoUpdatedPayload struct {
-	BaitoID    string    `json:"baitoid"`
+	BaitoID    string    `json:"baito_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type BaitoRemovedPayload struct {
-	BaitoID    string    `json:"baitoid"`
+	BaitoID    string    `json:"baito_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type AppliedToBaitoPayload struct {
-	BaitoID    string    `json:"baitoid"`
+	BaitoID    string    `json:"baito_id"`
+	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
+/* ============================================================
+   WORKER PROFILE
+============================================================ */
+
 type WorkerProfileCreatedPayload struct {
-	BaitoID    string    `json:"baitoid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	WorkerProfileID string    `json:"worker_profile_id"`
+	UserID          string    `json:"user_id"`
+	OccurredAt      time.Time `json:"occurred_at"`
 }
 
 type WorkerProfileUpdatedPayload struct {
-	BaitoID    string    `json:"baitoid"`
-	OccurredAt time.Time `json:"occurred_at"`
+	WorkerProfileID string    `json:"worker_profile_id"`
+	UserID          string    `json:"user_id"`
+	OccurredAt      time.Time `json:"occurred_at"`
+}
+
+type WorkerProfileRemovedPayload struct {
+	WorkerProfileID string    `json:"worker_profile_id"`
+	UserID          string    `json:"user_id"`
+	OccurredAt      time.Time `json:"occurred_at"`
 }

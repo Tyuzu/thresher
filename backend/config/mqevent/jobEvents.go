@@ -7,22 +7,34 @@ import "time"
 ============================================================ */
 
 const (
-	JobCreated = "job.created"
-	JobUpdated = "job.updated"
-	JobRemoved = "job.removed"
+	JobCreatedEvent = "job.created"
+	JobUpdatedEvent = "job.updated"
+	JobRemovedEvent = "job.removed"
 )
 
+/* ============================================================
+   JOB CREATED
+============================================================ */
+
 type JobCreatedPayload struct {
-	JobID      string    `json:"jobid"`
+	JobID      string    `json:"job_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   JOB UPDATED
+============================================================ */
 
 type JobUpdatedPayload struct {
-	JobID      string    `json:"jobid"`
+	JobID      string    `json:"job_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type JobDeletedPayload struct {
-	JobID      string    `json:"jobid"`
+/* ============================================================
+   JOB REMOVED
+============================================================ */
+
+type JobRemovedPayload struct {
+	JobID      string    `json:"job_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

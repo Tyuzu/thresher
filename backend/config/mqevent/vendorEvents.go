@@ -7,34 +7,55 @@ import "time"
 ============================================================ */
 
 const (
-	VendorRegisteredEvent    = "vendor.created"
+	VendorRegisteredEvent    = "vendor.registered"
 	VendorUpdatedEvent       = "vendor.updated"
-	VendorDeletedEvent       = "vendor.removed"
-	VendorHiredEvent         = "vendor.created"
-	VendorStatusUpdatedEvent = "vendor.removed"
+	VendorRemovedEvent       = "vendor.removed"
+	VendorHiredEvent         = "vendor.hired"
+	VendorStatusUpdatedEvent = "vendor.status.updated"
 )
 
+/* ============================================================
+   VENDOR REGISTERED
+============================================================ */
+
 type VendorRegisteredPayload struct {
-	VendorID   string    `json:"vendorid"`
+	VendorID   string    `json:"vendor_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   VENDOR UPDATED
+============================================================ */
 
 type VendorUpdatedPayload struct {
-	VendorID   string    `json:"vendorid"`
+	VendorID   string    `json:"vendor_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type VendorDeletedPayload struct {
-	VendorID   string    `json:"vendorid"`
+/* ============================================================
+   VENDOR REMOVED
+============================================================ */
+
+type VendorRemovedPayload struct {
+	VendorID   string    `json:"vendor_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   VENDOR HIRED
+============================================================ */
 
 type VendorHiredPayload struct {
-	VendorID   string    `json:"vendorid"`
+	VendorID   string    `json:"vendor_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
+/* ============================================================
+   VENDOR STATUS
+============================================================ */
+
 type VendorStatusUpdatedPayload struct {
-	VendorID   string    `json:"vendorid"`
+	VendorID   string    `json:"vendor_id"`
+	Status     string    `json:"status"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

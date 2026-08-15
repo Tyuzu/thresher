@@ -12,17 +12,29 @@ const (
 	CommentRemovedEvent = "comment.removed"
 )
 
+/* ============================================================
+   COMMENT CREATED
+============================================================ */
+
 type CommentCreatedPayload struct {
-	CommentID  string    `json:"commentid"`
+	CommentID  string    `json:"comment_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   COMMENT UPDATED
+============================================================ */
 
 type CommentUpdatedPayload struct {
-	CommentID  string    `json:"commentid"`
+	CommentID  string    `json:"comment_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type CommentDeletedPayload struct {
-	CommentID  string    `json:"commentid"`
+/* ============================================================
+   COMMENT REMOVED
+============================================================ */
+
+type CommentRemovedPayload struct {
+	CommentID  string    `json:"comment_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

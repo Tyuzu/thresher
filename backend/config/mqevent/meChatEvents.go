@@ -7,30 +7,46 @@ import "time"
 ============================================================ */
 
 const (
-	MechatCreated        = "mechat.created"
-	MechatUpdated        = "mechat.updated"
-	MechatRemoved        = "mechat.removed"
-	ChatMessageSentEvent = "mechat.removed"
+	MechatCreatedEvent   = "mechat.created"
+	MechatUpdatedEvent   = "mechat.updated"
+	MechatRemovedEvent   = "mechat.removed"
+	ChatMessageSentEvent = "mechat.message.sent"
 )
 
+/* ============================================================
+   MECHAT CREATED
+============================================================ */
+
 type MechatCreatedPayload struct {
-	MechatID   string    `json:"mechatid"`
+	MechatID   string    `json:"mechat_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   MECHAT UPDATED
+============================================================ */
 
 type MechatUpdatedPayload struct {
-	MechatID   string    `json:"mechatid"`
+	MechatID   string    `json:"mechat_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type MechatDeletedPayload struct {
-	MechatID   string    `json:"mechatid"`
+/* ============================================================
+   MECHAT REMOVED
+============================================================ */
+
+type MechatRemovedPayload struct {
+	MechatID   string    `json:"mechat_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   CHAT MESSAGE SENT
+============================================================ */
 
 type ChatMessageSentPayload struct {
-	MessageID  string    `json:"messageid"`
-	UserID     string    `json:"userid"`
-	MechatID   string    `json:"mechatid"`
+	MessageID  string    `json:"message_id"`
+	UserID     string    `json:"user_id"`
+	MechatID   string    `json:"mechat_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

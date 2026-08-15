@@ -12,20 +12,32 @@ const (
 	EventRemovedEvent = "event.removed"
 )
 
+/* ============================================================
+   EVENT CREATED
+============================================================ */
+
 type EventCreatedPayload struct {
-	EventID    string    `json:"eventid"`
-	CreatorID  string    `json:"creatorid"`
+	EventID    string    `json:"event_id"`
+	CreatorID  string    `json:"creator_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   EVENT UPDATED
+============================================================ */
 
 type EventUpdatedPayload struct {
-	EventID    string    `json:"eventid"`
-	UpdatedBy  string    `json:"updatedby"`
+	EventID    string    `json:"event_id"`
+	UpdatedBy  string    `json:"updated_by"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type EventDeletedPayload struct {
-	EventID    string    `json:"eventid"`
-	DeletedBy  string    `json:"deletedby"`
+/* ============================================================
+   EVENT REMOVED
+============================================================ */
+
+type EventRemovedPayload struct {
+	EventID    string    `json:"event_id"`
+	RemovedBy  string    `json:"removed_by"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

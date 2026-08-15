@@ -26,7 +26,7 @@ func HowManyLikes(entityType string, entityID string) string {
 // ToggleLike handles POST /likes/:entitytype/like/:entityid
 func ToggleLike(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 
 		userID := utils.GetUserIDFromRequest(r)
@@ -37,6 +37,10 @@ func ToggleLike(app *infra.Deps) http.HandlerFunc {
 
 		entityType := utils.GetParam(r, "entitytype")
 		entityID := utils.GetParam(r, "entityid")
+		if entityType == "" || entityID == "" {
+			http.Error(w, "Bad Request", http.StatusBadRequest)
+			return
+		}
 
 		filter := bson.M{
 			"user_id":     userID,
@@ -57,6 +61,14 @@ func ToggleLike(app *infra.Deps) http.HandlerFunc {
 			}
 
 			count := decrementRedisOrMongo(ctx, redisKey, entityType, entityID, app)
+
+			// Optional: Publish unliked event if downstream systems need to clean up counts/state
+			_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserUnlikedEvent, mqevent.UserUnlikedPayload{
+				UserID:     userID,
+				EntityType: entityType,
+				EntityID:   entityID,
+			})
+
 			utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 				"liked": false,
 				"count": count,
@@ -64,12 +76,13 @@ func ToggleLike(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		// Not liked → like
+		// Not liked → create like
+		now := time.Now()
 		like := Like{
 			UserID:     userID,
 			EntityType: entityType,
 			EntityID:   entityID,
-			CreatedAt:  time.Now(),
+			CreatedAt:  now,
 		}
 
 		if err := app.DB.Insert(ctx, likesCollection, like); err != nil {
@@ -77,9 +90,17 @@ func ToggleLike(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserLikedEvent, mqevent.UserLikedPayload{})
-
 		count := incrementRedisOrMongo(ctx, redisKey, entityType, entityID, app)
+
+		// 🔔 TRIGGER NOTIFICATION EVENT
+		// Passing full metadata allows the background worker to look up the entity owner and call CreateNotification
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserLikedEvent, mqevent.UserLikedPayload{
+			UserID:     userID,
+			EntityType: entityType,
+			EntityID:   entityID,
+			CreatedAt:  now,
+		})
+
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"liked": true,
 			"count": count,
@@ -95,6 +116,8 @@ func BatchUserLikes(app *infra.Deps) http.HandlerFunc {
 			http.Error(w, "Unauthorized: user not found", http.StatusUnauthorized)
 			return
 		}
+
+		entityType := utils.GetParam(r, "entitytype")
 
 		var req struct {
 			EntityIDs []string `json:"entity_ids"`
@@ -112,7 +135,7 @@ func BatchUserLikes(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 
 		var likes []Like
@@ -120,8 +143,9 @@ func BatchUserLikes(app *infra.Deps) http.HandlerFunc {
 			ctx,
 			likesCollection,
 			bson.M{
-				"user_id":   userID,
-				"entity_id": bson.M{"$in": req.EntityIDs},
+				"user_id":     userID,
+				"entity_type": entityType,
+				"entity_id":   bson.M{"$in": req.EntityIDs},
 			},
 			&likes,
 		)
@@ -140,8 +164,6 @@ func BatchUserLikes(app *infra.Deps) http.HandlerFunc {
 			_, liked := likedSet[eid]
 			result[eid] = liked
 		}
-
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserLikesBatchFlushedEvent, mqevent.UserLikesBatchFlushedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{
 			"data": result,

@@ -11,59 +11,88 @@ const (
 	BookingUpdatedEvent   = "booking.updated"
 	BookingRemovedEvent   = "booking.removed"
 	BookingCancelledEvent = "booking.cancelled"
-	DateCapacitySetEvent  = "booking.capacity.updated"
-	TierCreatedEvent      = "booking.tier.created"
-	SlotCreatedEvent      = "booking.slot.created"
+
+	DateCapacitySetEvent = "booking.capacity.updated"
+
+	TierCreatedEvent = "booking.tier.created"
+	SlotCreatedEvent = "booking.slot.created"
 )
 
+/* ============================================================
+   BOOKING
+============================================================ */
+
 type BookingCreatedPayload struct {
-	BookingID  string    `json:"bookingid"`
-	UserID     string    `json:"userid,omitempty"`
-	EntityID   string    `json:"entityid,omitempty"`
-	EntityType string    `json:"entitytype,omitempty"`
+	BookingID  string    `json:"booking_id"`
+	UserID     string    `json:"user_id,omitempty"`
+	EntityID   string    `json:"entity_id,omitempty"`
+	EntityType string    `json:"entity_type,omitempty"`
+	Status     string    `json:"status,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type BookingUpdatedPayload struct {
-	BookingID  string    `json:"bookingid"`
-	UserID     string    `json:"userid,omitempty"`
+	BookingID  string    `json:"booking_id"`
+	UserID     string    `json:"user_id,omitempty"`
 	Status     string    `json:"status,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type BookingRemovedPayload struct {
-	BookingID  string    `json:"bookingid"`
-	UserID     string    `json:"userid,omitempty"`
+	BookingID  string    `json:"booking_id"`
+	UserID     string    `json:"user_id,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type BookingCancelledPayload struct {
-	BookingID  string    `json:"bookingid"`
-	UserID     string    `json:"userid,omitempty"`
+	BookingID  string    `json:"booking_id"`
+	UserID     string    `json:"user_id,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   CAPACITY
+============================================================ */
 
 type DateCapacitySetPayload struct {
-	EntityID   string    `json:"entityid"`
-	EntityType string    `json:"entitytype"`
-	Date       string    `json:"date"`
-	Capacity   int       `json:"capacity"`
-	OccurredAt time.Time `json:"occurred_at"`
+	EntityID    string    `json:"entity_id"`
+	EntityType  string    `json:"entity_type"`
+	Date        string    `json:"date"`
+	Capacity    int       `json:"capacity"`
+	OccurredAt  time.Time `json:"occurred_at"`
+	OldCapacity int       `json:"old_capacity"`
+	NewCapacity int       `json:"new_capacity"`
 }
+
+/* ============================================================
+   TIERS
+============================================================ */
 
 type TierCreatedPayload struct {
-	TierID     string    `json:"tierid"`
-	EntityID   string    `json:"entityid"`
-	EntityType string    `json:"entitytype"`
+	TierID     string    `json:"tier_id"`
+	EntityID   string    `json:"entity_id"`
+	EntityType string    `json:"entity_type"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
+/* ============================================================
+   SLOTS
+============================================================ */
+
 type SlotCreatedPayload struct {
-	SlotID     string    `json:"slotid"`
-	TierID     string    `json:"tierid,omitempty"`
-	EntityID   string    `json:"entityid"`
-	EntityType string    `json:"entitytype"`
+	SlotID     string    `json:"slot_id"`
+	TierID     string    `json:"tier_id,omitempty"`
+	EntityID   string    `json:"entity_id"`
+	EntityType string    `json:"entity_type"`
 	Date       string    `json:"date"`
 	Start      string    `json:"start"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+const (
+	TierUpdatedEvent = "booking.tier.updated"
+	TierRemovedEvent = "booking.tier.removed"
+
+	SlotUpdatedEvent = "booking.slot.updated"
+	SlotRemovedEvent = "booking.slot.removed"
+)

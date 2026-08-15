@@ -18,42 +18,82 @@ const (
 	OTPRequested = "auth.otp.requested"
 	OTPVerified  = "auth.otp.verified"
 
-	TokenRefreshed = "auth.token_refreshed"
+	TokenRefreshed = "auth.token.refreshed"
 )
 
 /* ============================================================
-   AUTH PAYLOADS
+   USER REGISTERED
 ============================================================ */
 
 type UserRegisteredPayload struct {
-	UserID     string    `json:"userid"`
+	UserID     string    `json:"user_id"`
 	Username   string    `json:"username"`
 	Email      string    `json:"email"`
-	OccurredAt time.Time `json:"occured_at"`
+	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   USER LOGIN
+============================================================ */
 
 type UserLoggedInPayload struct {
-	UserID     string    `json:"userid"`
+	UserID     string    `json:"user_id"`
 	Username   string    `json:"username"`
+	IPAddress  string    `json:"ip_address"`
+	UserAgent  string    `json:"user_agent"`
 	OccurredAt time.Time `json:"occurred_at"`
-	IP         string    `json:"ip"`
 }
+
+/* ============================================================
+   USER LOGOUT
+============================================================ */
 
 type UserLoggedOutPayload struct {
-	UserID     string    `json:"userid"`
+	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type UserOTPPayload struct {
-	UserID     string    `json:"userid"`
-	OTP        string    `json:"otp"`
+type UserLoggedOutAllSessionsPayload struct {
+	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type TokenRefreshPayload struct {
-	UserAgent  string
-	IPAddress  string
-	UserID     string    `json:"userid"`
-	OTP        string    `json:"otp"`
+/* ============================================================
+   PASSWORD RESET
+============================================================ */
+
+type PasswordResetRequestedPayload struct {
+	UserID     string    `json:"user_id"`
+	Email      string    `json:"email"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type PasswordResetCompletedPayload struct {
+	UserID     string    `json:"user_id"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+/* ============================================================
+   OTP
+============================================================ */
+
+type OTPRequestedPayload struct {
+	UserID     string    `json:"user_id"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type OTPVerifiedPayload struct {
+	UserID     string    `json:"user_id"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+/* ============================================================
+   TOKEN REFRESH
+============================================================ */
+
+type TokenRefreshedPayload struct {
+	UserID     string    `json:"user_id"`
+	IPAddress  string    `json:"ip_address"`
+	UserAgent  string    `json:"user_agent"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

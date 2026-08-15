@@ -7,22 +7,34 @@ import "time"
 ============================================================ */
 
 const (
-	MusiconCreated = "musicon.created"
-	MusiconUpdated = "musicon.updated"
-	MusiconRemoved = "musicon.removed"
+	MusiconCreatedEvent = "musicon.created"
+	MusiconUpdatedEvent = "musicon.updated"
+	MusiconRemovedEvent = "musicon.removed"
 )
 
+/* ============================================================
+   MUSICON CREATED
+============================================================ */
+
 type MusiconCreatedPayload struct {
-	MusiconID  string    `json:"musiconid"`
+	MusiconID  string    `json:"musicon_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   MUSICON UPDATED
+============================================================ */
 
 type MusiconUpdatedPayload struct {
-	MusiconID  string    `json:"musiconid"`
+	MusiconID  string    `json:"musicon_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type MusiconDeletedPayload struct {
-	MusiconID  string    `json:"musiconid"`
+/* ============================================================
+   MUSICON REMOVED
+============================================================ */
+
+type MusiconRemovedPayload struct {
+	MusiconID  string    `json:"musicon_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

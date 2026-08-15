@@ -21,7 +21,7 @@ func GetLikers(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 
 		entityType := utils.GetParam(r, "entitytype")
@@ -100,7 +100,6 @@ func GetLikers(app *infra.Deps) http.HandlerFunc {
 }
 
 // GetLikeCount handles GET /likes/:entitytype/count/:entityid
-// GetLikeCount handles GET /likes/:entitytype/count/:entityid
 func GetLikeCount(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := utils.GetUserIDFromRequest(r)
@@ -109,7 +108,7 @@ func GetLikeCount(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
 
 		entityType := utils.GetParam(r, "entitytype")

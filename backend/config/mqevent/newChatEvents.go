@@ -3,38 +3,62 @@ package mqevent
 import "time"
 
 /* ============================================================
-   NEWCHAT EVENTS
+   CHAT EVENTS
 ============================================================ */
 
 const (
-	NewchatCreated          = "newchat.created"
-	NewchatUpdated          = "newchat.updated"
-	NewchatRemoved          = "newchat.removed"
-	ChatMessageCreatedEvent = "newchat.removed"
-	FileAddedToChatEvent    = "newchat.removed"
+	ChatCreatedEvent        = "chat.created"
+	ChatUpdatedEvent        = "chat.updated"
+	ChatRemovedEvent        = "chat.removed"
+	ChatMessageCreatedEvent = "chat.message.created"
+	FileAddedToChatEvent    = "chat.file.added"
 )
 
-type NewchatCreatedPayload struct {
-	NewchatID  string    `json:"newchatid"`
+/* ============================================================
+   CHAT CREATED
+============================================================ */
+
+type ChatCreatedPayload struct {
+	ChatID     string    `json:"chat_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type NewchatUpdatedPayload struct {
-	NewchatID  string    `json:"newchatid"`
+/* ============================================================
+   CHAT UPDATED
+============================================================ */
+
+type ChatUpdatedPayload struct {
+	ChatID     string    `json:"chat_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type NewchatDeletedPayload struct {
-	NewchatID  string    `json:"newchatid"`
+/* ============================================================
+   CHAT REMOVED
+============================================================ */
+
+type ChatRemovedPayload struct {
+	ChatID     string    `json:"chat_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   CHAT MESSAGE CREATED
+============================================================ */
 
 type ChatMessageCreatedPayload struct {
-	NewchatID  string    `json:"newchatid"`
+	MessageID  string    `json:"message_id"`
+	ChatID     string    `json:"chat_id"`
+	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
+/* ============================================================
+   FILE ADDED TO CHAT
+============================================================ */
+
 type FileAddedToChatPayload struct {
-	NewchatID  string    `json:"newchatid"`
+	FileID     string    `json:"file_id"`
+	ChatID     string    `json:"chat_id"`
+	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

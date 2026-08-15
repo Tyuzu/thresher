@@ -9,38 +9,69 @@ import "time"
 const (
 	MerchCreatedEvent               = "merch.created"
 	MerchUpdatedEvent               = "merch.updated"
-	MerchDeletedEvent               = "merch.removed"
-	MerchBoughtEvent                = "merch.removed"
-	MerchPaymentSessionCreatedEvent = "merch.removed"
-	MerchPurchaseConfirmedEvent     = "merch.removed"
+	MerchRemovedEvent               = "merch.removed"
+	MerchBoughtEvent                = "merch.bought"
+	MerchPaymentSessionCreatedEvent = "merch.payment_session.created"
+	MerchPurchaseConfirmedEvent     = "merch.purchase.confirmed"
 )
 
+/* ============================================================
+   MERCH CREATED
+============================================================ */
+
 type MerchCreatedPayload struct {
-	MerchID    string    `json:"merchid"`
+	MerchID    string    `json:"merch_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   MERCH UPDATED
+============================================================ */
 
 type MerchUpdatedPayload struct {
-	MerchID    string    `json:"merchid"`
+	MerchID    string    `json:"merch_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type MerchDeletedPayload struct {
-	MerchID    string    `json:"merchid"`
+/* ============================================================
+   MERCH REMOVED
+============================================================ */
+
+type MerchRemovedPayload struct {
+	MerchID    string    `json:"merch_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   MERCH BOUGHT
+============================================================ */
 
 type MerchBoughtPayload struct {
-	MerchID    string    `json:"merchid"`
+	MerchID    string    `json:"merch_id"`
+	UserID     string    `json:"user_id,omitempty"`
+	Quantity   int       `json:"quantity,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   MERCH PAYMENT SESSION CREATED
+============================================================ */
 
 type MerchPaymentSessionCreatedPayload struct {
-	MerchID    string    `json:"merchid"`
+	MerchID    string    `json:"merch_id"`
+	UserID     string    `json:"user_id,omitempty"`
+	SessionID  string    `json:"session_id,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
+/* ============================================================
+   MERCH PURCHASE CONFIRMED
+============================================================ */
+
 type MerchPurchaseConfirmedPayload struct {
-	MerchID    string    `json:"merchid"`
+	MerchID    string    `json:"merch_id"`
+	UserID     string    `json:"user_id,omitempty"`
+	OrderID    string    `json:"order_id,omitempty"`
+	Quantity   int       `json:"quantity,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

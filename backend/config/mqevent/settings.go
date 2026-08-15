@@ -3,26 +3,38 @@ package mqevent
 import "time"
 
 /* ============================================================
-   REVIEW EVENTS
+   USER SETTINGS EVENTS
 ============================================================ */
 
 const (
-	UserSettingsUpdatedEvent   = "review.created"
-	UserSettingsResetEvent     = "review.updated"
-	UserSettingsInitiatedEvent = "review.removed"
+	UserSettingsUpdatedEvent   = "user.settings.updated"
+	UserSettingsResetEvent     = "user.settings.reset"
+	UserSettingsInitiatedEvent = "user.settings.initiated"
 )
 
+/* ============================================================
+   USER SETTINGS UPDATED
+============================================================ */
+
 type UserSettingsUpdatedPayload struct {
-	ReviewID   string    `json:"reviewid"`
+	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   USER SETTINGS RESET
+============================================================ */
 
 type UserSettingsResetPayload struct {
-	ReviewID   string    `json:"reviewid"`
+	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
+/* ============================================================
+   USER SETTINGS INITIATED
+============================================================ */
+
 type UserSettingsInitiatedPayload struct {
-	ReviewID   string    `json:"reviewid"`
+	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

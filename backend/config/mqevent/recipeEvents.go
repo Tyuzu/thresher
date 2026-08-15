@@ -12,17 +12,29 @@ const (
 	RecipeRemovedEvent = "recipe.removed"
 )
 
+/* ============================================================
+   RECIPE CREATED
+============================================================ */
+
 type RecipeCreatedPayload struct {
-	RecipeID   string    `json:"recipeid"`
+	RecipeID   string    `json:"recipe_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   RECIPE UPDATED
+============================================================ */
 
 type RecipeUpdatedPayload struct {
-	RecipeID   string    `json:"recipeid"`
+	RecipeID   string    `json:"recipe_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type RecipeDeletedPayload struct {
-	RecipeID   string    `json:"recipeid"`
+/* ============================================================
+   RECIPE REMOVED
+============================================================ */
+
+type RecipeRemovedPayload struct {
+	RecipeID   string    `json:"recipe_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

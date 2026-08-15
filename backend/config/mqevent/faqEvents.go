@@ -12,17 +12,29 @@ const (
 	FAQRemovedEvent = "faq.removed"
 )
 
+/* ============================================================
+   FAQ CREATED
+============================================================ */
+
 type FAQCreatedPayload struct {
-	FAQID      string    `json:"faqid"`
+	FAQID      string    `json:"faq_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   FAQ UPDATED
+============================================================ */
 
 type FAQUpdatedPayload struct {
-	FAQID      string    `json:"faqid"`
+	FAQID      string    `json:"faq_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type FAQDeletedPayload struct {
-	FAQID      string    `json:"faqid"`
+/* ============================================================
+   FAQ REMOVED
+============================================================ */
+
+type FAQRemovedPayload struct {
+	FAQID      string    `json:"faq_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

@@ -3,7 +3,7 @@ package mqevent
 import "time"
 
 /* ============================================================
-   FEEDPOST EVENTS
+   FEED POST EVENTS
 ============================================================ */
 
 const (
@@ -12,17 +12,29 @@ const (
 	FeedPostRemovedEvent = "feedpost.removed"
 )
 
+/* ============================================================
+   FEED POST CREATED
+============================================================ */
+
 type FeedPostCreatedPayload struct {
-	FeedPostID string    `json:"feedpostid"`
+	FeedPostID string    `json:"feed_post_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
+
+/* ============================================================
+   FEED POST UPDATED
+============================================================ */
 
 type FeedPostUpdatedPayload struct {
-	FeedPostID string    `json:"feedpostid"`
+	FeedPostID string    `json:"feed_post_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type FeedPostDeletedPayload struct {
-	FeedPostID string    `json:"feedpostid"`
+/* ============================================================
+   FEED POST REMOVED
+============================================================ */
+
+type FeedPostRemovedPayload struct {
+	FeedPostID string    `json:"feed_post_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
