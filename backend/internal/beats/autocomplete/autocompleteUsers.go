@@ -8,7 +8,7 @@ import (
 
 	"naevis/infra"
 	"naevis/internal/auth"
-	"naevis/internal/suggestions"
+	"naevis/internal/beats/suggestions"
 	"naevis/utils"
 )
 

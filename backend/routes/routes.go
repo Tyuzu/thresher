@@ -3,6 +3,7 @@ package routes
 import (
 	"naevis/infra"
 	"naevis/internal/auth"
+	"naevis/internal/beats/suggestions"
 	"naevis/internal/events"
 	"naevis/internal/faqs"
 	"naevis/internal/home"
@@ -15,7 +16,6 @@ import (
 	"naevis/internal/profile"
 	"naevis/internal/search"
 	"naevis/internal/settings"
-	"naevis/internal/suggestions"
 	"naevis/internal/userdata"
 	"naevis/internal/userdata/metadata"
 	"naevis/middleware"

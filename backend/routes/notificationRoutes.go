@@ -1,34 +1,43 @@
 package routes
 
-// // Notifications routes
-// func AddNotificationsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-// 	authmidware := middleware.Authenticate(app)
+import (
+	"naevis/infra"
+	"naevis/internal/notifications"
+	"naevis/middleware"
+	"net/http"
 
-// 	// Create notification
-// 	router.HandlerFunc(http.MethodPost,"/api/v1/notifs", rateLimiter.Limit(authmidware(notifications.CreateNotification(app))))
+	"github.com/julienschmidt/httprouter"
+)
 
-// 	// Bulk create notifications
-// 	router.HandlerFunc(http.MethodPost,"/api/v1/notifs/bulk", rateLimiter.Limit(authmidware(notifications.BulkCreateNotifications(app))))
+// Notifications routes
+func AddNotificationsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
+	authmidware := middleware.Authenticate(app)
 
-// 	// Get user notifications
-// 	router.HandlerFunc(http.MethodGet,"/api/v1/notifs/user/:userid", notifications.GetUserNotifications(app))
+	// Create notification
+	router.HandlerFunc(http.MethodPost, "/api/v1/notifs", rateLimiter.Limit(authmidware(notifications.CreateNotification(app))))
 
-// 	// Get unread count
-// 	router.HandlerFunc(http.MethodGet,"/api/v1/notifs/user/:userid/unread", notifications.GetUnreadCount(app))
+	// Bulk create notifications
+	router.HandlerFunc(http.MethodPost, "/api/v1/notifs/bulk", rateLimiter.Limit(authmidware(notifications.BulkCreateNotifications(app))))
 
-// 	// Mark notification as read
-// 	router.HandlerFunc(http.MethodPut,"/api/v1/notifs/notif/:notificationid/read", rateLimiter.Limit(authmidware(notifications.MarkAsRead(app))))
+	// Get user notifications
+	router.HandlerFunc(http.MethodGet, "/api/v1/notifs", authmidware(notifications.GetUserNotifications(app)))
 
-// 	// Mark all as read
-// 	router.HandlerFunc(http.MethodPut,"/api/v1/notifs/user/:userid/read-all", rateLimiter.Limit(authmidware(notifications.MarkAllAsRead(app))))
+	// Get unread count
+	router.HandlerFunc(http.MethodGet, "/api/v1/notifs/unread", authmidware(notifications.GetUnreadCount(app)))
 
-// 	// Delete notification
-// 	router.HandlerFunc(http.MethodDelete,"/api/v1/notifs/notif/:notificationid", rateLimiter.Limit(authmidware(notifications.DeleteNotification(app))))
+	// Mark notification as read
+	router.HandlerFunc(http.MethodPut, "/api/v1/notifs/notif/:notificationid/read", rateLimiter.Limit(authmidware(notifications.MarkAsRead(app))))
 
-// 	// Clear all notifications
-// 	router.HandlerFunc(http.MethodDelete,"/api/v1/notifs/user/:userid", rateLimiter.Limit(authmidware(notifications.ClearAllNotifications(app))))
+	// Mark all as read
+	router.HandlerFunc(http.MethodPut, "/api/v1/notifs/read-all", rateLimiter.Limit(authmidware(notifications.MarkAllAsRead(app))))
 
-// 	// Notification preferences
-// 	router.HandlerFunc(http.MethodGet,"/api/v1/notifs/user/:userid/preferences", authmidware(notifications.GetPreferences(app)))
-// 	router.HandlerFunc(http.MethodPut,"/api/v1/notifs/user/:userid/preferences", rateLimiter.Limit(authmidware(notifications.UpdatePreferences(app))))
-// }
+	// Delete notification
+	router.HandlerFunc(http.MethodDelete, "/api/v1/notifs/notif/:notificationid", rateLimiter.Limit(authmidware(notifications.DeleteNotification(app))))
+
+	// Clear all notifications
+	router.HandlerFunc(http.MethodDelete, "/api/v1/notifs", rateLimiter.Limit(authmidware(notifications.ClearAllNotifications(app))))
+
+	// Notification preferences
+	router.HandlerFunc(http.MethodGet, "/api/v1/notifs/preferences", authmidware(notifications.GetPreferences(app)))
+	router.HandlerFunc(http.MethodPut, "/api/v1/notifs/preferences", rateLimiter.Limit(authmidware(notifications.UpdatePreferences(app))))
+}

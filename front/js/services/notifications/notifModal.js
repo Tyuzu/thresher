@@ -4,7 +4,7 @@ import {
   getNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
-  clearAllNotifications
+  clearAllNotifications,
 } from "./notifService.js";
 
 // Utility: Modern Relative Time Formatter
@@ -57,8 +57,8 @@ export async function openNotificationsModal() {
     showCloseButton: true,
   });
 
-  // Fetch notifications using extracted API service
-  const notifications = userId ? await getNotifications() : [];
+  // Fetch notifications using extracted API service (Passing userId for backend route matching)
+  const notifications = userId ? await getNotifications(userId) : [];
 
   // Clear loading state
   content.innerHTML = "";
@@ -139,7 +139,7 @@ function createNotificationCard(n, userId, onChange) {
         try {
           await markNotificationAsRead(n.id);
         } catch {
-          // Revert optimistic update on failure if needed
+          // Revert optimistic update on failure
           isRead = false;
           card.style.background = "#e8f4f8";
           card.style.borderColor = "#b3dfe6";
@@ -152,7 +152,9 @@ function createNotificationCard(n, userId, onChange) {
   const children = [leftContent];
   if (!isRead && userId) children.push(markReadBtn);
 
+  // Added data-notif-card attribute so markAllAsRead can select and update styles
   const card = createElement("div", {
+    "data-notif-card": "true",
     style: `padding: 0.75rem 1rem; border-radius: 6px; background: ${isRead ? "#f7f7f7" : "#e8f4f8"}; border: 1px solid ${isRead ? "#ddd" : "#b3dfe6"}; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; transition: all 0.2s ease;`,
   }, children);
 
@@ -172,7 +174,8 @@ function createActionBar(userId, notifications, onClearAll) {
       events: {
         click: async () => {
           try {
-            await markAllNotificationsAsRead();
+            // Pass userId to match backend PUT /api/v1/notifs/user/:userid/read-all
+            await markAllNotificationsAsRead(userId);
             document.querySelectorAll("[data-notif-card]").forEach((el) => {
               el.style.background = "#f7f7f7";
               el.style.borderColor = "#ddd";
@@ -194,7 +197,8 @@ function createActionBar(userId, notifications, onClearAll) {
       click: async () => {
         if (!confirm("Clear all notifications?")) return;
         try {
-          await clearAllNotifications();
+          // Pass userId to match backend DELETE /api/v1/notifs/user/:userid
+          await clearAllNotifications(userId);
           onClearAll();
         } catch (error) {
           console.error("Error clearing all notifications:", error);

@@ -17,12 +17,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Handler holds the dependencies required for notification operations.
 type Handler struct {
 	app *infra.Deps
 }
 
-// NewHandler creates a new notifications handler instance.
 func NewHandler(app *infra.Deps) *Handler {
 	return &Handler{app: app}
 }
@@ -74,7 +72,6 @@ func (h *Handler) CreateNotification(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
-	// Logging or handling error for async operations is recommended instead of raw blank identifier
 	_ = mq.PublishWithMeta(ctx, h.app.MQ, mqevent.OneNotificationCreatedEvent, mqevent.OneNotificationCreatedPayload{})
 
 	utils.RespondWithJSON(w, http.StatusCreated, notification)
@@ -130,7 +127,7 @@ func (h *Handler) BulkCreateNotifications(w http.ResponseWriter, r *http.Request
 	})
 }
 
-// GetUserNotifications retrieves all notifications for a user
+// GetUserNotifications retrieves all notifications for a user (Fixed BSON key to "userId")
 func (h *Handler) GetUserNotifications(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
@@ -141,12 +138,11 @@ func (h *Handler) GetUserNotifications(w http.ResponseWriter, r *http.Request, p
 		return
 	}
 
-	filter := bson.M{"userid": userID}
+	filter := bson.M{"userId": userID}
 	if r.URL.Query().Get("unread") == "true" {
 		filter["isRead"] = false
 	}
 
-	// Pre-allocating an empty slice guarantees an output of `[]` instead of `null` if Mongo returns empty.
 	notifications := make([]Notification, 0)
 	if err := h.app.DB.FindMany(ctx, notificationsCollection, filter, &notifications); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch notifications")
@@ -156,7 +152,7 @@ func (h *Handler) GetUserNotifications(w http.ResponseWriter, r *http.Request, p
 	utils.RespondWithJSON(w, http.StatusOK, notifications)
 }
 
-// GetUnreadCount gets count of unread notifications
+// GetUnreadCount gets count of unread notifications (Fixed BSON key to "userId")
 func (h *Handler) GetUnreadCount(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
@@ -167,7 +163,7 @@ func (h *Handler) GetUnreadCount(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	filter := bson.M{"userid": userID, "isRead": false}
+	filter := bson.M{"userId": userID, "isRead": false}
 	count, err := h.app.DB.CountDocuments(ctx, notificationsCollection, filter)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to count notifications")
@@ -210,7 +206,7 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request, ps httprout
 	})
 }
 
-// MarkAllAsRead marks all notifications as read for a user
+// MarkAllAsRead marks all notifications as read for a user (Fixed BSON key to "userId")
 func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
@@ -221,7 +217,7 @@ func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	filter := bson.M{"userid": userID, "isRead": false}
+	filter := bson.M{"userId": userID, "isRead": false}
 	update := bson.M{
 		"$set": bson.M{
 			"isRead":    true,
@@ -241,7 +237,7 @@ func (h *Handler) MarkAllAsRead(w http.ResponseWriter, r *http.Request, ps httpr
 	})
 }
 
-// DeleteNotification deletes a notification
+// DeleteNotification deletes a single notification
 func (h *Handler) DeleteNotification(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
@@ -265,7 +261,7 @@ func (h *Handler) DeleteNotification(w http.ResponseWriter, r *http.Request, ps 
 	})
 }
 
-// ClearAllNotifications deletes all notifications for a user
+// ClearAllNotifications deletes all notifications for a user (Fixed BSON key to "userId")
 func (h *Handler) ClearAllNotifications(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
@@ -276,7 +272,7 @@ func (h *Handler) ClearAllNotifications(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	filter := bson.M{"userid": userID}
+	filter := bson.M{"userId": userID}
 	if err := h.app.DB.DeleteMany(ctx, notificationsCollection, filter); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete notifications")
 		return

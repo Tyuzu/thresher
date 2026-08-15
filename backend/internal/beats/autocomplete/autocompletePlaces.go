@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"naevis/infra"
+	"naevis/internal/beats/suggestions"
 	"naevis/internal/places"
-	"naevis/internal/suggestions"
 	"naevis/utils"
 )
 

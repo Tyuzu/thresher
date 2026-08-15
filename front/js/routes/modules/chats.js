@@ -1,43 +1,87 @@
-import { authGuard } from "../../middleware/middleware.js";
-
 export const chatsRoutes = [
-  // Static
+  /* =======================================================
+     CHATS
+  ======================================================= */
+
   {
     path: "/merechats",
-    component: () => import("../../pages/merechats/merechats.js"),
+    component: () =>
+      import(
+        "../../pages/merechats/merechats.js"
+      ),
     functionName: "MeChats",
-    middleware: [authGuard]
-  },
-  {
-    path: "/newchats",
-    component: () => import("../../pages/newchats/newchats.js"),
-    functionName: "NewChats",
-    middleware: [authGuard]
-  },
-  {
-    path: "/discord",
-    component: () => import("../../pages/discord/discord.js"),
-    functionName: "Discord",
-    middleware: [authGuard]
+    meta: {
+      requiresAuth: true,
+      title: "My Chats"
+    }
   },
 
-  // Dynamic
+  {
+    path: "/newchats",
+    component: () =>
+      import(
+        "../../pages/newchats/newchats.js"
+      ),
+    functionName: "NewChats",
+    meta: {
+      requiresAuth: true,
+      title: "New Chats"
+    }
+  },
+
+  {
+    path: "/discord",
+    component: () =>
+      import(
+        "../../pages/discord/discord.js"
+      ),
+    functionName: "Discord",
+    meta: {
+      requiresAuth: true,
+      title: "Discord"
+    }
+  },
+
+  /* =======================================================
+     DYNAMIC ROUTES
+  ======================================================= */
+
   {
     path: "/merechats/:id",
-    component: () => import("../../pages/merechats/merePage.js"),
+    component: () =>
+      import(
+        "../../pages/merechats/merePage.js"
+      ),
     functionName: "OneChatPage",
-    middleware: [authGuard]
+    meta: {
+      requiresAuth: true,
+      title: "Chat"
+    }
   },
+
   {
     path: "/newchat/:id",
-    component: () => import("../../pages/newchats/newChatPage.js"),
+    component: () =>
+      import(
+        "../../pages/newchats/newChatPage.js"
+      ),
     functionName: "NewChatPage",
-    middleware: [authGuard]
+    meta: {
+      requiresAuth: true,
+      title: "Chat"
+    }
   },
+
   {
     path: "/discord/:guildId/:channelId",
-    component: () => import("../../pages/discord/discordChannel.js"),
+    component: () =>
+      import(
+        "../../pages/discord/discordChannel.js"
+      ),
     functionName: "DiscordChannel",
-    middleware: [authGuard]
+    meta: {
+      requiresAuth: true,
+      title: "Discord Channel"
+    }
   }
 ];

@@ -16,7 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// GetPreferences gets notification preferences for a user
+// GetPreferences retrieves user notification preferences (or defaults)
 func (h *Handler) GetPreferences(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
@@ -27,14 +27,12 @@ func (h *Handler) GetPreferences(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	filter := bson.M{"userid": userID}
+	filter := bson.M{"userId": userID}
 	var preference NotificationPreference
 
 	err := h.app.DB.FindOne(ctx, notificationsPreferencesCollection, filter, &preference)
 	if err != nil {
 		now := time.Now()
-		// Return defaults immediately. It's more idiomatic to let your Update/Upsert
-		// flow create the record later rather than doing write operations inside a GET route.
 		preference = NotificationPreference{
 			ID:              primitive.NewObjectID().Hex(),
 			UserID:          userID,
@@ -52,7 +50,7 @@ func (h *Handler) GetPreferences(w http.ResponseWriter, r *http.Request, ps http
 	utils.RespondWithJSON(w, http.StatusOK, preference)
 }
 
-// UpdatePreferences updates notification preferences for a user
+// UpdatePreferences updates user notification preferences (Fixed: Upsert logic)
 func (h *Handler) UpdatePreferences(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
@@ -73,7 +71,6 @@ func (h *Handler) UpdatePreferences(w http.ResponseWriter, r *http.Request, ps h
 		"updatedAt": time.Now(),
 	}
 
-	// If allEnabled is provided, override individual rule fields
 	if body.AllEnabled != nil {
 		val := *body.AllEnabled
 		updates["allEnabled"] = val
@@ -100,11 +97,17 @@ func (h *Handler) UpdatePreferences(w http.ResponseWriter, r *http.Request, ps h
 		}
 	}
 
-	filter := bson.M{"userid": userID}
+	filter := bson.M{"userId": userID}
 	update := bson.M{
 		"$set": updates,
+		"$setOnInsert": bson.M{
+			"_id":       primitive.NewObjectID().Hex(),
+			"userId":    userID,
+			"createdAt": time.Now(),
+		},
 	}
 
+	// Use UpsertOne to create preferences if missing for the user
 	if _, err := h.app.DB.UpdateOne(ctx, notificationsPreferencesCollection, filter, update); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update preferences")
 		return
@@ -112,7 +115,6 @@ func (h *Handler) UpdatePreferences(w http.ResponseWriter, r *http.Request, ps h
 
 	_ = mq.PublishWithMeta(ctx, h.app.MQ, mqevent.NotificationPreferencesUpdatedEvent, mqevent.NotificationPreferencesUpdatedPayload{})
 
-	// Fetching fresh records should handle potential query errors safely
 	var updated NotificationPreference
 	if err := h.app.DB.FindOne(ctx, notificationsPreferencesCollection, filter, &updated); err != nil {
 		utils.RespondWithError(w, http.StatusInternalServerError, "Failed to retrieve updated preferences")

@@ -1,16 +1,36 @@
-import { authGuard, roleGuard } from "../../middleware/middleware.js";
-
 export const adminRoutes = [
+  /* =======================================================
+     ADMIN
+  ======================================================= */
+
   {
     path: "/admin",
-    component: () => import("../../pages/admin/admin.js"),
+    component: () =>
+      import(
+        "../../pages/admin/admin.js"
+      ),
     functionName: "Admin",
-    middleware: [authGuard, roleGuard(["admin"])]
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+      title: "Admin"
+    }
   },
+
+  /* =======================================================
+     DASHBOARD
+  ======================================================= */
+
   {
     path: "/dash",
-    component: () => import("../../pages/dash/dash.js"),
+    component: () =>
+      import(
+        "../../pages/dash/dash.js"
+      ),
     functionName: "Dash",
-    middleware: [authGuard]
+    meta: {
+      requiresAuth: true,
+      title: "Dashboard"
+    }
   }
 ];
