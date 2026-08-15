@@ -2,7 +2,7 @@ package routes
 
 import (
 	"naevis/infra"
-	"naevis/internal/notifications"
+	"naevis/internal/beats/notifications"
 	"naevis/middleware"
 	"net/http"
 
