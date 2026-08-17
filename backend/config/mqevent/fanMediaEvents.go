@@ -9,7 +9,7 @@ import "time"
 const (
 	FanMediaCreatedEvent = "fanmedia.created"
 	FanMediaUpdatedEvent = "fanmedia.updated"
-	FanMediaRemovedEvent = "fanmedia.removed"
+	FanMediaDeletedEvent = "fanmedia.deleted"
 )
 
 /* ============================================================
@@ -37,13 +37,13 @@ type FanMediaUpdatedPayload struct {
 }
 
 /* ============================================================
-   FAN MEDIA REMOVED
+   FAN MEDIA DELETED
 ============================================================ */
 
-type FanMediaRemovedPayload struct {
+type FanMediaDeletedPayload struct {
 	FanMediaID string    `json:"fan_media_id"`
 	EntityID   string    `json:"entity_id"`
 	EntityType string    `json:"entity_type"`
-	RemovedBy  string    `json:"removed_by"`
+	DeletedBy  string    `json:"deleted_by"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

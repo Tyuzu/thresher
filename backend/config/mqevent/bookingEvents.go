@@ -9,7 +9,7 @@ import "time"
 const (
 	BookingCreatedEvent   = "booking.created"
 	BookingUpdatedEvent   = "booking.updated"
-	BookingRemovedEvent   = "booking.removed"
+	BookingDeletedEvent   = "booking.deleted"
 	BookingCancelledEvent = "booking.cancelled"
 
 	DateCapacitySetEvent = "booking.capacity.updated"
@@ -38,7 +38,7 @@ type BookingUpdatedPayload struct {
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type BookingRemovedPayload struct {
+type BookingDeletedPayload struct {
 	BookingID  string    `json:"booking_id"`
 	UserID     string    `json:"user_id,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
@@ -91,8 +91,8 @@ type SlotCreatedPayload struct {
 
 const (
 	TierUpdatedEvent = "booking.tier.updated"
-	TierRemovedEvent = "booking.tier.removed"
+	TierDeletedEvent = "booking.tier.deleted"
 
 	SlotUpdatedEvent = "booking.slot.updated"
-	SlotRemovedEvent = "booking.slot.removed"
+	SlotDeletedEvent = "booking.slot.deleted"
 )

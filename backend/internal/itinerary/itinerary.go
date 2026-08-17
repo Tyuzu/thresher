@@ -145,9 +145,9 @@ func DeleteItinerary(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.ItineraryRemovedPayload{})
+		mqpayload, _ := json.Marshal(mqevent.ItineraryDeletedPayload{})
 
-		mq.PublishWithMeta(ctx, app.MQ, mqevent.ItineraryRemovedEvent, mqpayload)
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.ItineraryDeletedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{"message": "Itinerary deleted"})
 	}

@@ -31,7 +31,7 @@ func DeleteBaito(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BaitoRemovedEvent, mqevent.BaitoRemovedPayload{})
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.BaitoDeletedEvent, mqevent.BaitoDeletedPayload{})
 
 		utils.RespondWithJSON(w, http.StatusNoContent, map[string]string{})
 	}

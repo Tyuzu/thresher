@@ -9,7 +9,7 @@ import "time"
 const (
 	JobCreatedEvent = "job.created"
 	JobUpdatedEvent = "job.updated"
-	JobRemovedEvent = "job.removed"
+	JobDeletedEvent = "job.deleted"
 )
 
 /* ============================================================
@@ -31,10 +31,10 @@ type JobUpdatedPayload struct {
 }
 
 /* ============================================================
-   JOB REMOVED
+   JOB DELETED
 ============================================================ */
 
-type JobRemovedPayload struct {
+type JobDeletedPayload struct {
 	JobID      string    `json:"job_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

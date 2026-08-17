@@ -45,8 +45,8 @@ func DeleteMedia(app *infra.Deps) http.HandlerFunc {
 
 		userdata.DelUserData("media", mediaID, requestingUserID, app)
 
-		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FanMediaRemovedEvent, mqevent.FanMediaRemovedPayload{}); err != nil {
-			log.Printf("failed to publish fan media removed event: %v", err)
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.FanMediaDeletedEvent, mqevent.FanMediaDeletedPayload{}); err != nil {
+			log.Printf("failed to publish fan media deleted event: %v", err)
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]any{

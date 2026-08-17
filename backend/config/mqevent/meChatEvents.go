@@ -9,7 +9,7 @@ import "time"
 const (
 	MechatCreatedEvent   = "mechat.created"
 	MechatUpdatedEvent   = "mechat.updated"
-	MechatRemovedEvent   = "mechat.removed"
+	MechatDeletedEvent   = "mechat.deleted"
 	ChatMessageSentEvent = "mechat.message.sent"
 )
 
@@ -32,10 +32,10 @@ type MechatUpdatedPayload struct {
 }
 
 /* ============================================================
-   MECHAT REMOVED
+   MECHAT DELETED
 ============================================================ */
 
-type MechatRemovedPayload struct {
+type MechatDeletedPayload struct {
 	MechatID   string    `json:"mechat_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

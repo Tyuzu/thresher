@@ -67,7 +67,7 @@ func CreateBaitoForEntity(app *infra.Deps) http.HandlerFunc {
 
 		mqpayload, _ := json.Marshal(mqevent.JobCreatedPayload{})
 
-		mq.PublishWithMeta(ctx, app.MQ, mqevent.JobCreated, mqpayload)
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.JobCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, map[string]string{"baitoid": baito.BaitoId})
 	}

@@ -9,7 +9,7 @@ import "time"
 const (
 	FeedPostCreatedEvent = "feedpost.created"
 	FeedPostUpdatedEvent = "feedpost.updated"
-	FeedPostRemovedEvent = "feedpost.removed"
+	FeedPostDeletedEvent = "feedpost.deleted"
 )
 
 /* ============================================================
@@ -31,10 +31,10 @@ type FeedPostUpdatedPayload struct {
 }
 
 /* ============================================================
-   FEED POST REMOVED
+   FEED POST DELETED
 ============================================================ */
 
-type FeedPostRemovedPayload struct {
+type FeedPostDeletedPayload struct {
 	FeedPostID string    `json:"feed_post_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

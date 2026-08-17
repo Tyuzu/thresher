@@ -190,7 +190,7 @@ func (p *PaymentService) Refund(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 
-	if err := mq.PublishWithMeta(ctx, p.app.MQ, mqevent.RefundCompleted, mqevent.RefundCompletedPayload{}); err != nil {
+	if err := mq.PublishWithMeta(ctx, p.app.MQ, mqevent.RefundCompletedEvent, mqevent.RefundCompletedPayload{}); err != nil {
 		log.Printf("failed to publish refund completed event: %v", err)
 	}
 

@@ -83,9 +83,9 @@ func CreateNotice(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.NoticesCreatedPayload{})
+		mqpayload, _ := json.Marshal(mqevent.NoticeCreatedPayload{})
 
-		mq.PublishWithMeta(ctx, app.MQ, mqevent.NoticesCreatedEvent, mqpayload)
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.NoticeCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusCreated, notice)
 	}
@@ -156,9 +156,9 @@ func UpdateNotice(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		mqpayload, _ := json.Marshal(mqevent.NoticesUpdatedPayload{})
+		mqpayload, _ := json.Marshal(mqevent.NoticeUpdatedPayload{})
 
-		mq.PublishWithMeta(ctx, app.MQ, mqevent.NoticesUpdatedEvent, mqpayload)
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.NoticeUpdatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, existing)
 	}

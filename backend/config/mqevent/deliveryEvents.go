@@ -9,7 +9,7 @@ import "time"
 const (
 	DeliveryCreatedEvent = "delivery.created"
 	DeliveryUpdatedEvent = "delivery.updated"
-	DeliveryRemovedEvent = "delivery.removed"
+	DeliveryDeletedEvent = "delivery.deleted"
 
 	DeliveryAssignedEvent   = "delivery.assigned"
 	DeliveryUnassignedEvent = "delivery.unassigned"
@@ -29,7 +29,7 @@ const (
 
 	DeliveryProofCreatedEvent = "delivery.proof.created"
 	DeliveryProofUpdatedEvent = "delivery.proof.updated"
-	DeliveryProofRemovedEvent = "delivery.proof.removed"
+	DeliveryProofDeletedEvent = "delivery.proof.deleted"
 )
 
 /* ============================================================
@@ -57,10 +57,10 @@ type DeliveryUpdatedPayload struct {
 }
 
 /* ============================================================
-   DELIVERY REMOVED
+   DELIVERY DELETED
 ============================================================ */
 
-type DeliveryRemovedPayload struct {
+type DeliveryDeletedPayload struct {
 	DeliveryID string    `json:"delivery_id"`
 	UserID     string    `json:"user_id,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`
@@ -186,7 +186,7 @@ type DeliveryProofUpdatedPayload struct {
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type DeliveryProofRemovedPayload struct {
+type DeliveryProofDeletedPayload struct {
 	DeliveryID string    `json:"delivery_id"`
 	ProofID    string    `json:"proof_id"`
 	DriverID   string    `json:"driver_id,omitempty"`

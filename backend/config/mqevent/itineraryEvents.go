@@ -9,7 +9,7 @@ import "time"
 const (
 	ItineraryCreatedEvent   = "itinerary.created"
 	ItineraryUpdatedEvent   = "itinerary.updated"
-	ItineraryRemovedEvent   = "itinerary.removed"
+	ItineraryDeletedEvent   = "itinerary.deleted"
 	ItineraryForkedEvent    = "itinerary.forked"
 	ItineraryPublishedEvent = "itinerary.published"
 )
@@ -33,10 +33,10 @@ type ItineraryUpdatedPayload struct {
 }
 
 /* ============================================================
-   ITINERARY REMOVED
+   ITINERARY DELETED
 ============================================================ */
 
-type ItineraryRemovedPayload struct {
+type ItineraryDeletedPayload struct {
 	ItineraryID string    `json:"itinerary_id"`
 	OccurredAt  time.Time `json:"occurred_at"`
 }

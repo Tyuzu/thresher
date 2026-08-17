@@ -9,7 +9,7 @@ import "time"
 const (
 	FileCreatedEvent = "file.created"
 	FileUpdatedEvent = "file.updated"
-	FileRemovedEvent = "file.removed"
+	FileDeletedEvent = "file.deleted"
 )
 
 /* ============================================================
@@ -39,10 +39,10 @@ type FileUpdatedPayload struct {
 }
 
 /* ============================================================
-   FILE REMOVED
+   FILE DELETED
 ============================================================ */
 
-type FileRemovedPayload struct {
+type FileDeletedPayload struct {
 	FileID     string    `json:"file_id"`
 	UserID     string    `json:"user_id,omitempty"`
 	EntityType string    `json:"entity_type,omitempty"`
@@ -80,8 +80,8 @@ func NewFileUpdatedPayload(fileID, userID, entityType, entityID string) FileUpda
 	}
 }
 
-func NewFileRemovedPayload(fileID, userID, entityType, entityID string) FileRemovedPayload {
-	return FileRemovedPayload{
+func NewFileDeletedPayload(fileID, userID, entityType, entityID string) FileDeletedPayload {
+	return FileDeletedPayload{
 		FileID:     fileID,
 		UserID:     userID,
 		EntityType: entityType,

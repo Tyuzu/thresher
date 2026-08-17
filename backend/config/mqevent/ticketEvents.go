@@ -9,7 +9,7 @@ import "time"
 const (
 	TicketCreatedEvent     = "ticket.created"
 	TicketUpdatedEvent     = "ticket.updated"
-	TicketRemovedEvent     = "ticket.removed"
+	TicketDeletedEvent     = "ticket.deleted"
 	TicketBoughtEvent      = "ticket.bought"
 	TicketCancelledEvent   = "ticket.cancelled"
 	TicketTransferredEvent = "ticket.transferred"
@@ -34,14 +34,6 @@ const (
 )
 
 /* ============================================================
-   SLOT EVENTS
-============================================================ */
-
-const (
-	SlotDeletedEvent = "ticket.slot.deleted"
-)
-
-/* ============================================================
    TICKET CREATED
 ============================================================ */
 
@@ -63,10 +55,10 @@ type TicketUpdatedPayload struct {
 }
 
 /* ============================================================
-   TICKET REMOVED
+   TICKET DELETED
 ============================================================ */
 
-type TicketRemovedPayload struct {
+type TicketDeletedPayload struct {
 	TicketID   string    `json:"ticket_id"`
 	EventID    string    `json:"event_id,omitempty"`
 	UserID     string    `json:"user_id,omitempty"`
@@ -90,6 +82,7 @@ type TicketBoughtPayload struct {
 
 type TicketCancelledPayload struct {
 	TicketID   string    `json:"ticket_id"`
+	EventID    string    `json:"event_id"`
 	UserID     string    `json:"user_id,omitempty"`
 	Reason     string    `json:"reason,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`

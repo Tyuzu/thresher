@@ -9,7 +9,7 @@ import "time"
 const (
 	MusiconCreatedEvent = "musicon.created"
 	MusiconUpdatedEvent = "musicon.updated"
-	MusiconRemovedEvent = "musicon.removed"
+	MusiconDeletedEvent = "musicon.deleted"
 )
 
 /* ============================================================
@@ -31,10 +31,10 @@ type MusiconUpdatedPayload struct {
 }
 
 /* ============================================================
-   MUSICON REMOVED
+   MUSICON DELETED
 ============================================================ */
 
-type MusiconRemovedPayload struct {
+type MusiconDeletedPayload struct {
 	MusiconID  string    `json:"musicon_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

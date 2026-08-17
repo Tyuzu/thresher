@@ -9,7 +9,7 @@ import "time"
 const (
 	MapCreatedEvent = "map.created"
 	MapUpdatedEvent = "map.updated"
-	MapRemovedEvent = "map.removed"
+	MapDeletedEvent = "map.deleted"
 )
 
 /* ============================================================
@@ -31,10 +31,10 @@ type MapUpdatedPayload struct {
 }
 
 /* ============================================================
-   MAP REMOVED
+   MAP DELETED
 ============================================================ */
 
-type MapRemovedPayload struct {
+type MapDeletedPayload struct {
 	MapID      string    `json:"map_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

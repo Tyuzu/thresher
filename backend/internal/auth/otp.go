@@ -121,7 +121,7 @@ func ProcessOTPRequest(ctx context.Context, app *infra.Deps, rawEmail string) er
 		return errors.New("Failed to send OTP")
 	}
 
-	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.OTPRequested, mqevent.UserOTPPayload{})
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.OTPRequested, mqevent.OTPRequestedPayload{})
 	return nil
 }
 
@@ -146,7 +146,7 @@ func ProcessOTPVerification(ctx context.Context, app *infra.Deps, rawEmail, inpu
 	}
 
 	_ = DeleteOTPCache(ctx, app, email)
-	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.OTPVerified, mqevent.UserOTPPayload{})
+	_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.OTPVerified, mqevent.OTPVerifiedPayload{})
 
 	return nil
 }

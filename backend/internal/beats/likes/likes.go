@@ -63,7 +63,7 @@ func ToggleLike(app *infra.Deps) http.HandlerFunc {
 			count := decrementRedisOrMongo(ctx, redisKey, entityType, entityID, app)
 
 			// Optional: Publish unliked event if downstream systems need to clean up counts/state
-			_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserUnlikedEvent, mqevent.UserUnlikedPayload{
+			_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.UserLikedEvent, mqevent.UserLikedPayload{
 				UserID:     userID,
 				EntityType: entityType,
 				EntityID:   entityID,

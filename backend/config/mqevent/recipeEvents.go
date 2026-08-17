@@ -9,7 +9,7 @@ import "time"
 const (
 	RecipeCreatedEvent = "recipe.created"
 	RecipeUpdatedEvent = "recipe.updated"
-	RecipeRemovedEvent = "recipe.removed"
+	RecipeDeletedEvent = "recipe.deleted"
 )
 
 /* ============================================================
@@ -31,10 +31,10 @@ type RecipeUpdatedPayload struct {
 }
 
 /* ============================================================
-   RECIPE REMOVED
+   RECIPE DELETED
 ============================================================ */
 
-type RecipeRemovedPayload struct {
+type RecipeDeletedPayload struct {
 	RecipeID   string    `json:"recipe_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

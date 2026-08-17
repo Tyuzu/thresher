@@ -9,7 +9,7 @@ import "time"
 const (
 	EventCreatedEvent = "event.created"
 	EventUpdatedEvent = "event.updated"
-	EventRemovedEvent = "event.removed"
+	EventDeletedEvent = "event.deleted"
 )
 
 /* ============================================================
@@ -33,11 +33,11 @@ type EventUpdatedPayload struct {
 }
 
 /* ============================================================
-   EVENT REMOVED
+   EVENT DELETED
 ============================================================ */
 
-type EventRemovedPayload struct {
+type EventDeletedPayload struct {
 	EventID    string    `json:"event_id"`
-	RemovedBy  string    `json:"removed_by"`
+	DeletedBy  string    `json:"deleted_by"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

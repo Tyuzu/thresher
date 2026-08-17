@@ -9,7 +9,7 @@ import "time"
 const (
 	MediaUploadedEvent = "media.uploaded"
 	MediaUpdatedEvent  = "media.updated"
-	MediaRemovedEvent  = "media.removed"
+	MediaDeletedEvent  = "media.deleted"
 )
 
 /* ============================================================
@@ -39,10 +39,10 @@ type MediaUpdatedPayload struct {
 }
 
 /* ============================================================
-   MEDIA REMOVED
+   MEDIA DELETED
 ============================================================ */
 
-type MediaRemovedPayload struct {
+type MediaDeletedPayload struct {
 	EntityType string    `json:"entity_type"`
 	EntityID   string    `json:"entity_id"`
 	FilePath   string    `json:"file_path,omitempty"`

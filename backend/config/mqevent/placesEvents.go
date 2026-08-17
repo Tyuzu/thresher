@@ -9,7 +9,7 @@ import "time"
 const (
 	PlaceCreatedEvent = "place.created"
 	PlaceUpdatedEvent = "place.updated"
-	PlaceRemovedEvent = "place.removed"
+	PlaceDeletedEvent = "place.deleted"
 )
 
 /* ============================================================
@@ -31,10 +31,10 @@ type PlaceUpdatedPayload struct {
 }
 
 /* ============================================================
-   PLACE REMOVED
+   PLACE DELETED
 ============================================================ */
 
-type PlaceRemovedPayload struct {
+type PlaceDeletedPayload struct {
 	PlaceID    string    `json:"place_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

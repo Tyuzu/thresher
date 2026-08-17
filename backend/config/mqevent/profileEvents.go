@@ -9,7 +9,7 @@ import "time"
 const (
 	ProfileCreatedEvent = "profile.created"
 	ProfileUpdatedEvent = "profile.updated"
-	ProfileRemovedEvent = "profile.removed"
+	ProfileDeletedEvent = "profile.deleted"
 )
 
 /* ============================================================
@@ -31,10 +31,10 @@ type ProfileUpdatedPayload struct {
 }
 
 /* ============================================================
-   PROFILE REMOVED
+   PROFILE DELETED
 ============================================================ */
 
-type ProfileRemovedPayload struct {
+type ProfileDeletedPayload struct {
 	ProfileID  string    `json:"profile_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

@@ -9,7 +9,7 @@ import "time"
 const (
 	ProductCreatedEvent = "product.created"
 	ProductUpdatedEvent = "product.updated"
-	ProductRemovedEvent = "product.removed"
+	ProductDeletedEvent = "product.deleted"
 )
 
 /* ============================================================
@@ -31,10 +31,10 @@ type ProductUpdatedPayload struct {
 }
 
 /* ============================================================
-   PRODUCT REMOVED
+   PRODUCT DELETED
 ============================================================ */
 
-type ProductRemovedPayload struct {
+type ProductDeletedPayload struct {
 	ProductID  string    `json:"product_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

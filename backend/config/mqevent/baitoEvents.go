@@ -9,12 +9,12 @@ import "time"
 const (
 	BaitoCreatedEvent   = "baito.created"
 	BaitoUpdatedEvent   = "baito.updated"
-	BaitoRemovedEvent   = "baito.removed"
+	BaitoDeletedEvent   = "baito.deleted"
 	AppliedToBaitoEvent = "baito.applied"
 
 	WorkerProfileCreatedEvent = "worker.profile.created"
 	WorkerProfileUpdatedEvent = "worker.profile.updated"
-	WorkerProfileRemovedEvent = "worker.profile.removed"
+	WorkerProfileDeletedEvent = "worker.profile.deleted"
 )
 
 /* ============================================================
@@ -31,7 +31,7 @@ type BaitoUpdatedPayload struct {
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type BaitoRemovedPayload struct {
+type BaitoDeletedPayload struct {
 	BaitoID    string    `json:"baito_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
@@ -58,7 +58,7 @@ type WorkerProfileUpdatedPayload struct {
 	OccurredAt      time.Time `json:"occurred_at"`
 }
 
-type WorkerProfileRemovedPayload struct {
+type WorkerProfileDeletedPayload struct {
 	WorkerProfileID string    `json:"worker_profile_id"`
 	UserID          string    `json:"user_id"`
 	OccurredAt      time.Time `json:"occurred_at"`

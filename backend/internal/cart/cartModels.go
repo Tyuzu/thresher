@@ -4,22 +4,53 @@ import (
 	"time"
 )
 
-// CartItem represents a single item in the user's cart.
+// // CartItem represents a single item in the user's cart.
+//
+//	type CartItem struct {
+//		CartItemID string    `json:"cartItemId" bson:"_id,omitempty"`
+//		UserID     string    `json:"userId" bson:"userId"`
+//		Category   string    `json:"category" bson:"category"`
+//		ItemID     string    `json:"itemId" bson:"itemId"`
+//		ItemName   string    `json:"itemName" bson:"itemName"`
+//		ItemType   string    `json:"itemType,omitempty" bson:"itemType,omitempty"`
+//		Unit       string    `json:"unit,omitempty" bson:"unit,omitempty"`
+//		Discount   int64     `json:"discount,omitempty" bson:"discount,omitempty"`
+//		EntityID   string    `json:"entityId,omitempty" bson:"entityId,omitempty"`
+//		EntityName string    `json:"entityName,omitempty" bson:"entityName,omitempty"`
+//		EntityType string    `json:"entityType,omitempty" bson:"entityType,omitempty"`
+//		Quantity   int       `json:"quantity" bson:"quantity"`
+//		Price      int64     `json:"price,omitempty" bson:"price,omitempty"` // CRITICAL FIX: Changed from float64 to int64 (stored in paise)
+//		AddedAt    time.Time `json:"addedAt" bson:"addedAt"`
+//	}
 type CartItem struct {
-	CartItemID string    `json:"cartItemId" bson:"_id,omitempty"`
-	UserID     string    `json:"userId" bson:"userId"`
-	Category   string    `json:"category" bson:"category"`
-	ItemID     string    `json:"itemId" bson:"itemId"`
-	ItemName   string    `json:"itemName" bson:"itemName"`
-	ItemType   string    `json:"itemType,omitempty" bson:"itemType,omitempty"`
-	Unit       string    `json:"unit,omitempty" bson:"unit,omitempty"`
-	Discount   int64     `json:"discount,omitempty" bson:"discount,omitempty"`
-	EntityID   string    `json:"entityId,omitempty" bson:"entityId,omitempty"`
-	EntityName string    `json:"entityName,omitempty" bson:"entityName,omitempty"`
-	EntityType string    `json:"entityType,omitempty" bson:"entityType,omitempty"`
-	Quantity   int       `json:"quantity" bson:"quantity"`
-	Price      int64     `json:"price,omitempty" bson:"price,omitempty"` // CRITICAL FIX: Changed from float64 to int64 (stored in paise)
-	AddedAt    time.Time `json:"addedAt" bson:"addedAt"`
+	ID string `bson:"_id,omitempty" json:"id,omitempty"`
+
+	UserID string `bson:"userId" json:"-"`
+
+	ItemID   string `bson:"itemId" json:"itemId"`
+	ItemType string `bson:"itemType" json:"itemType"`
+
+	EntityID   string `bson:"entityId,omitempty" json:"entityId,omitempty"`
+	EntityType string `bson:"entityType,omitempty" json:"entityType,omitempty"`
+
+	ItemName string `bson:"itemName" json:"itemName"`
+
+	Quantity int `bson:"quantity" json:"quantity"`
+
+	/*
+		Price and Discount are stored as integer minor units.
+
+		For example:
+		₹199.50 -> 19950
+	*/
+	Price    int64 `bson:"price" json:"price"`
+	Discount int64 `bson:"discount" json:"discount"`
+
+	Unit     string `bson:"unit,omitempty" json:"unit,omitempty"`
+	Category string `bson:"category,omitempty" json:"category,omitempty"`
+
+	AddedAt   time.Time `bson:"addedAt" json:"addedAt"`
+	UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`
 }
 
 // CheckoutSession represents a pre-order session, grouped by category.

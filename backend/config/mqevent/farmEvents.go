@@ -9,7 +9,7 @@ import "time"
 const (
 	FarmCreatedEvent = "farm.created"
 	FarmUpdatedEvent = "farm.updated"
-	FarmRemovedEvent = "farm.removed"
+	FarmDeletedEvent = "farm.deleted"
 )
 
 /* ============================================================
@@ -19,7 +19,7 @@ const (
 const (
 	CropCreatedEvent = "crop.created"
 	CropUpdatedEvent = "crop.updated"
-	CropRemovedEvent = "crop.removed"
+	CropDeletedEvent = "crop.deleted"
 )
 
 /* ============================================================
@@ -29,7 +29,7 @@ const (
 const (
 	FarmProductCreatedEvent = "farm.product.created"
 	FarmProductUpdatedEvent = "farm.product.updated"
-	FarmProductRemovedEvent = "farm.product.removed"
+	FarmProductDeletedEvent = "farm.product.deleted"
 )
 
 /* ============================================================
@@ -56,7 +56,7 @@ const (
 const (
 	CropAboutCreatedEvent = "crop.about.created"
 	CropAboutUpdatedEvent = "crop.about.updated"
-	CropAboutRemovedEvent = "crop.about.removed"
+	CropAboutDeletedEvent = "crop.about.deleted"
 )
 
 /* ============================================================
@@ -82,10 +82,10 @@ type FarmUpdatedPayload struct {
 }
 
 /* ============================================================
-   FARM REMOVED
+   FARM DELETED
 ============================================================ */
 
-type FarmRemovedPayload struct {
+type FarmDeletedPayload struct {
 	FarmID     string    `json:"farm_id"`
 	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`
@@ -115,10 +115,10 @@ type CropUpdatedPayload struct {
 }
 
 /* ============================================================
-   CROP REMOVED
+   CROP DELETED
 ============================================================ */
 
-type CropRemovedPayload struct {
+type CropDeletedPayload struct {
 	CropID     string    `json:"crop_id"`
 	FarmID     string    `json:"farm_id"`
 	UserID     string    `json:"user_id"`
@@ -151,10 +151,10 @@ type FarmProductUpdatedPayload struct {
 }
 
 /* ============================================================
-   FARM PRODUCT REMOVED
+   FARM PRODUCT DELETED
 ============================================================ */
 
-type FarmProductRemovedPayload struct {
+type FarmProductDeletedPayload struct {
 	ProductID  string    `json:"product_id"`
 	FarmID     string    `json:"farm_id,omitempty"`
 	CropID     string    `json:"crop_id,omitempty"`
@@ -220,10 +220,10 @@ type CropAboutUpdatedPayload struct {
 }
 
 /* ============================================================
-   CROP ABOUT REMOVED
+   CROP ABOUT DELETED
 ============================================================ */
 
-type CropAboutRemovedPayload struct {
+type CropAboutDeletedPayload struct {
 	CropAboutID string    `json:"crop_about_id"`
 	CropID      string    `json:"crop_id"`
 	UserID      string    `json:"user_id"`

@@ -9,7 +9,7 @@ import "time"
 const (
 	CartItemCreatedEvent     = "cart.item.created"
 	CartItemUpdatedEvent     = "cart.item.updated"
-	CartItemRemovedEvent     = "cart.item.removed"
+	CartItemDeletedEvent     = "cart.item.deleted"
 	CartClearedEvent         = "cart.cleared"
 	ItemQuantityUpdatedEvent = "cart.item.quantity.updated"
 )
@@ -51,7 +51,7 @@ type CartItemUpdatedPayload struct {
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type CartItemRemovedPayload struct {
+type CartItemDeletedPayload struct {
 	CartItemID string    `json:"cart_item_id"`
 	UserID     string    `json:"user_id"`
 	OccurredAt time.Time `json:"occurred_at"`

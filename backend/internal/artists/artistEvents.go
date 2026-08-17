@@ -37,7 +37,7 @@ func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Publish MQ event with payload details
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventCreatedEvent, mqevent.ArtistEventCreatePayload{
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventCreatedEvent, mqevent.ArtistEventCreatedPayload{
 			EventID:  artistevent.EventID,
 			ArtistID: artistevent.ArtistID,
 		})
@@ -68,7 +68,7 @@ func UpdateArtistEvent(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Publish MQ event after successful update
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventUpdatedEvent, mqevent.ArtistEventUpdatePayload{
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventUpdatedEvent, mqevent.ArtistEventUpdatedPayload{
 			EventID: artisteventID,
 		})
 
@@ -89,7 +89,7 @@ func DeleteArtistEvent(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Added MQ event trigger for deletion
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventDeletedEvent, mqevent.ArtistEventDeletePayload{
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.ArtistEventDeletedEvent, mqevent.ArtistEventDeletedPayload{
 			EventID: artisteventID,
 		})
 

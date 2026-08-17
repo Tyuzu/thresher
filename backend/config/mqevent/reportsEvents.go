@@ -13,7 +13,7 @@ const (
 
 	ReportCreatedEvent     = "report.created"
 	ReportUpdatedEvent     = "report.updated"
-	ReportRemovedEvent     = "report.removed"
+	ReportDeletedEvent     = "report.deleted"
 	ReportSoftDeletedEvent = "report.soft_deleted"
 
 	/* -------------------------
@@ -22,7 +22,7 @@ const (
 
 	AppealCreatedEvent = "appeal.created"
 	AppealUpdatedEvent = "appeal.updated"
-	AppealRemovedEvent = "appeal.removed"
+	AppealDeletedEvent = "appeal.deleted"
 
 	/* -------------------------
 	   Moderator Applications
@@ -53,7 +53,7 @@ type ReportUpdatedPayload struct {
 	OccurredAt  time.Time `json:"occurred_at"`
 }
 
-type ReportRemovedPayload struct {
+type ReportDeletedPayload struct {
 	ReportID   string    `json:"report_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
@@ -86,7 +86,7 @@ type AppealUpdatedPayload struct {
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type AppealRemovedPayload struct {
+type AppealDeletedPayload struct {
 	AppealID   string    `json:"appeal_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

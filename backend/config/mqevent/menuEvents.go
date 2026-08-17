@@ -9,7 +9,7 @@ import "time"
 const (
 	MenuCreatedEvent                 = "menu.created"
 	MenuUpdatedEvent                 = "menu.updated"
-	MenuRemovedEvent                 = "menu.removed"
+	MenuDeletedEvent                 = "menu.deleted"
 	MenuBoughtEvent                  = "menu.bought"
 	MenuPaymentSessionInitiatedEvent = "menu.payment_session.initiated"
 )
@@ -33,10 +33,10 @@ type MenuUpdatedPayload struct {
 }
 
 /* ============================================================
-   MENU REMOVED
+   MENU DELETED
 ============================================================ */
 
-type MenuRemovedPayload struct {
+type MenuDeletedPayload struct {
 	MenuID     string    `json:"menu_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

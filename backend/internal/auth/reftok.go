@@ -45,7 +45,7 @@ func RefreshToken(app *infra.Deps) http.HandlerFunc {
 			setRefreshCookie(w, result.NewRefresh)
 		}
 
-		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TokenRefreshed, mqevent.TokenRefreshPayload{
+		_ = mq.PublishWithMeta(ctx, app.MQ, mqevent.TokenRefreshed, mqevent.TokenRefreshedPayload{
 			UserID:     result.UserID,
 			UserAgent:  r.UserAgent(),
 			IPAddress:  r.RemoteAddr,

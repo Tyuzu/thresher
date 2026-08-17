@@ -79,7 +79,7 @@ func StartNewChat(app *infra.Deps) http.HandlerFunc {
 
 		mqpayload, _ := json.Marshal(mqevent.MechatCreatedPayload{})
 
-		mq.PublishWithMeta(ctx, app.MQ, mqevent.MechatCreated, mqpayload)
+		mq.PublishWithMeta(ctx, app.MQ, mqevent.MechatCreatedEvent, mqpayload)
 
 		utils.RespondWithJSON(w, http.StatusOK, chat)
 	}

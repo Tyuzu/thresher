@@ -9,7 +9,7 @@ import "time"
 const (
 	ChatCreatedEvent        = "chat.created"
 	ChatUpdatedEvent        = "chat.updated"
-	ChatRemovedEvent        = "chat.removed"
+	ChatDeletedEvent        = "chat.deleted"
 	ChatMessageCreatedEvent = "chat.message.created"
 	FileAddedToChatEvent    = "chat.file.added"
 )
@@ -33,10 +33,10 @@ type ChatUpdatedPayload struct {
 }
 
 /* ============================================================
-   CHAT REMOVED
+   CHAT DELETED
 ============================================================ */
 
-type ChatRemovedPayload struct {
+type ChatDeletedPayload struct {
 	ChatID     string    `json:"chat_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

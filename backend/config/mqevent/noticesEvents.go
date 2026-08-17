@@ -9,7 +9,7 @@ import "time"
 const (
 	NoticeCreatedEvent = "notice.created"
 	NoticeUpdatedEvent = "notice.updated"
-	NoticeRemovedEvent = "notice.removed"
+	NoticeDeletedEvent = "notice.deleted"
 )
 
 /* ============================================================
@@ -31,10 +31,10 @@ type NoticeUpdatedPayload struct {
 }
 
 /* ============================================================
-   NOTICE REMOVED
+   NOTICE DELETED
 ============================================================ */
 
-type NoticeRemovedPayload struct {
+type NoticeDeletedPayload struct {
 	NoticeID   string    `json:"notice_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

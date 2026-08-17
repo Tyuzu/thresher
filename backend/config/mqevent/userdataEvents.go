@@ -9,7 +9,7 @@ import "time"
 const (
 	UserDataCreatedEvent = "userdata.created"
 	UserDataUpdatedEvent = "userdata.updated"
-	UserDataRemovedEvent = "userdata.removed"
+	UserDataDeletedEvent = "userdata.deleted"
 )
 
 /* ============================================================
@@ -33,10 +33,10 @@ type UserDataUpdatedPayload struct {
 }
 
 /* ============================================================
-   USER DATA REMOVED
+   USER DATA DELETED
 ============================================================ */
 
-type UserDataRemovedPayload struct {
+type UserDataDeletedPayload struct {
 	UserDataID string    `json:"user_data_id"`
 	UserID     string    `json:"user_id,omitempty"`
 	OccurredAt time.Time `json:"occurred_at"`

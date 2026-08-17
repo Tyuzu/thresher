@@ -9,7 +9,7 @@ import "time"
 const (
 	VendorRegisteredEvent    = "vendor.registered"
 	VendorUpdatedEvent       = "vendor.updated"
-	VendorRemovedEvent       = "vendor.removed"
+	VendorDeletedEvent       = "vendor.deleted"
 	VendorHiredEvent         = "vendor.hired"
 	VendorStatusUpdatedEvent = "vendor.status.updated"
 )
@@ -33,10 +33,10 @@ type VendorUpdatedPayload struct {
 }
 
 /* ============================================================
-   VENDOR REMOVED
+   VENDOR DELETED
 ============================================================ */
 
-type VendorRemovedPayload struct {
+type VendorDeletedPayload struct {
 	VendorID   string    `json:"vendor_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

@@ -145,7 +145,7 @@ func CreateRefundRequest(app *infra.Deps) http.HandlerFunc {
 			return
 		}
 
-		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundRequested, mqevent.RefundRequestedPayload{}); err != nil {
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundRequestedEvent, mqevent.RefundRequestedPayload{}); err != nil {
 			log.Printf("failed to publish refund event: %v", err)
 		}
 	}
@@ -410,7 +410,7 @@ func ApproveRefundRequest(app *infra.Deps) http.HandlerFunc {
 			log.Printf("failed to publish order refunded event: %v", err)
 		}
 
-		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundAccepted, mqevent.RefundAcceptedPayload{}); err != nil {
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundAcceptedEvent, mqevent.RefundAcceptedPayload{}); err != nil {
 			log.Printf("failed to publish refund accepted event: %v", err)
 		}
 
@@ -499,7 +499,7 @@ func RejectRefundRequest(app *infra.Deps) http.HandlerFunc {
 			log.Printf("failed to publish refund rejected event: %v", err)
 		}
 
-		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundRejected, mqevent.RefundRejectedPayload{}); err != nil {
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.RefundRejectedEvent, mqevent.RefundRejectedPayload{}); err != nil {
 			log.Printf("failed to publish refund rejected mqevent: %v", err)
 		}
 

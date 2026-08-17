@@ -9,7 +9,7 @@ import "time"
 const (
 	CommentCreatedEvent = "comment.created"
 	CommentUpdatedEvent = "comment.updated"
-	CommentRemovedEvent = "comment.removed"
+	CommentDeletedEvent = "comment.deleted"
 )
 
 /* ============================================================
@@ -31,10 +31,10 @@ type CommentUpdatedPayload struct {
 }
 
 /* ============================================================
-   COMMENT REMOVED
+   COMMENT DELETED
 ============================================================ */
 
-type CommentRemovedPayload struct {
+type CommentDeletedPayload struct {
 	CommentID  string    `json:"comment_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 }

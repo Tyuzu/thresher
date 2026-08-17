@@ -224,7 +224,7 @@ func DeleteTicket(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// Optional: Publish message queue event
-		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketDeletedEvent, mqevent.TicketDeletedPayload{
+		if err := mq.PublishWithMeta(ctx, app.MQ, mqevent.TicketCancelledEvent, mqevent.TicketCancelledPayload{
 			TicketID: ticketID,
 			EventID:  eventID,
 		}); err != nil {

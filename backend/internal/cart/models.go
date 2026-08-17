@@ -6,7 +6,8 @@ import (
 
 type removeFromCartRequest struct {
 	ItemID     string `json:"itemId"`
-	Category   string `json:"category"`
+	ItemType   string `json:"itemType"`
+	Category   string `json:"category,omitempty"`
 	EntityID   string `json:"entityId,omitempty"`
 	EntityType string `json:"entityType,omitempty"`
 }
