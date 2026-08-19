@@ -168,19 +168,25 @@ func MarkAllAsRead(app *infra.Deps) http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 		defer cancel()
 
-		userID := utils.GetUserIDFromRequest(r)
-		if userID == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid user ID")
+		// Auth user ID from context/JWT
+		authUserID := utils.GetUserIDFromRequest(r)
+		if authUserID == "" {
+			utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
 
-		reqUserID := utils.GetUserIDFromRequest(r)
-		if reqUserID != "" && reqUserID != userID {
+		// Optional target user ID from path param if administrative overrides exist
+		targetUserID := utils.GetParam(r, "userid")
+		if targetUserID == "" {
+			targetUserID = authUserID
+		}
+
+		if targetUserID != authUserID {
 			utils.RespondWithError(w, http.StatusForbidden, "Forbidden")
 			return
 		}
 
-		if _, err := updateMarkAllAsRead(ctx, app.DB, userID); err != nil {
+		if _, err := updateMarkAllAsRead(ctx, app.DB, targetUserID); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to mark all as read")
 			return
 		}
@@ -229,13 +235,7 @@ func ClearAllNotifications(app *infra.Deps) http.HandlerFunc {
 
 		userID := utils.GetUserIDFromRequest(r)
 		if userID == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid user ID")
-			return
-		}
-
-		reqUserID := utils.GetUserIDFromRequest(r)
-		if reqUserID != "" && reqUserID != userID {
-			utils.RespondWithError(w, http.StatusForbidden, "Forbidden")
+			utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
 

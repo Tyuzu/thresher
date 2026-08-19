@@ -11,6 +11,7 @@ import (
 
 	"naevis/config"
 	"naevis/infra"
+	"naevis/infra/workers"
 	"naevis/internal/mechat"
 	"naevis/internal/newchat"
 	"naevis/middleware"
@@ -36,6 +37,60 @@ func main() {
 	app, err := infra.New(cfg)
 	if err != nil {
 		logger.L.Sugar().Fatalw("Failed to initialize infrastructure", "error", err)
+	}
+
+	// =====================
+	// Application Lifecycle
+	// =====================
+	//
+	// This context is shared by background workers and
+	// MQ subscribers.
+	//
+	// When appCancel() is called during shutdown:
+	//
+	//     appCancel()
+	//          |
+	//          v
+	//     ctx.Done()
+	//          |
+	//          v
+	//     MQ subscribers stop
+	//
+	appCtx, appCancel := context.WithCancel(
+		context.Background(),
+	)
+	defer appCancel()
+
+	// =====================
+	// MQ Subscribers
+	// =====================
+	//
+	// Register all MQ consumers ONCE during application startup.
+	//
+	// Example:
+	//
+	//     chat.message.created
+	//             |
+	//             v
+	//     handleChatMessageCreated()
+	//
+	// We do NOT subscribe every time an event is published.
+	//
+	if app.MQ != nil {
+		if err := workers.RegisterAll(appCtx, app); err != nil {
+			logger.L.Sugar().Fatalw(
+				"failed to register MQ subscribers",
+				"error", err,
+			)
+		}
+
+		logger.L.Sugar().Infow(
+			"MQ subscribers registered",
+		)
+	} else {
+		logger.L.Sugar().Warnw(
+			"MQ is not configured; skipping MQ subscribers",
+		)
 	}
 
 	// Distributed/Redis rate limiter preferred for multi-instance scaling
@@ -136,6 +191,33 @@ func main() {
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		logger.L.Sugar().Errorw("HTTP server shutdown error", "error", err)
 	}
+
+	// =====================
+	// Stop MQ Subscribers
+	// =====================
+	//
+	// This cancels appCtx.
+	//
+	// Your MQ subscription code should be doing:
+	//
+	//     go func() {
+	//         <-ctx.Done()
+	//         sub.Drain()
+	//     }()
+	//
+	// Therefore all subscribers begin shutting down here.
+	logger.L.Sugar().Infow(
+		"Stopping MQ subscribers...",
+	)
+
+	appCancel()
+
+	// =====================
+	// Stop Application Workers
+	// =====================
+	logger.L.Sugar().Infow(
+		"Stopping application workers...",
+	)
 
 	// 2. Stop rate limiter background routines
 	rateLimiter.Stop()

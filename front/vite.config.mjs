@@ -98,16 +98,34 @@ export default defineConfig(({ mode }) => {
       include: ['uuid', 'hls.js'],
     },
 
-    server: {
+server: {
       allowedHosts: ['.trycloudflare.com', 'localhost'],
       https: true,
+      
+      hmr: {
+        protocol: 'wss',
+        host: 'localhost',
+        clientPort: 5173,
+      },
+
       proxy: {
+        // Option A: If your Go WS endpoint is under /api/v1 (e.g., wss://localhost:5173/api/v1/ws)
         '/api/v1': {
           target: BACKEND_TARGET,
           changeOrigin: true,
           secure: false,
+          ws: true, // Enables proxying WebSockets / WSS to BACKEND_TARGET
         },
-        // Catch-all for all static subpaths: /static/uploads, /static/proxy, /static/mediacache
+
+        // Option B: If you have a dedicated WebSocket endpoint like /ws or /socket
+        '/ws': {
+          target: BACKEND_TARGET,
+          changeOrigin: true,
+          secure: false,
+          ws: true, // Upgrades http(s) requests to ws(s)
+        },
+
+        // Static uploads/cache proxy
         '/static': {
           target: BACKEND_TARGET,
           changeOrigin: true,

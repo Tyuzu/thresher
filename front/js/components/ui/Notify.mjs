@@ -2,10 +2,12 @@ import "../../../css/ui/Notify.css";
 import { createElement } from "../../components/createElement.js"; // Adjust path as needed
 import { getState, setState } from "../../state/state.js";
 import { playSoundAlert } from "../../services/notifications/soundAlerts.js";
+import { addSystemLog } from "../../utils/idxDB.js"; // Import IndexedDB persistence helper
 
 const Notify = (message, {
-  type = 'info',
-  duration = 0,              // 0 = auto based on message length
+  title = "",                  // Optional title for better log structure
+  type = 'info',               // 'info', 'success', or 'error'
+  duration = 0,               // 0 = auto based on message length
   dismissible = true,
 } = {}) => {
   // Track timeouts so we can clear them if dismissed early
@@ -62,6 +64,15 @@ const Notify = (message, {
   // Global app state & Side Effects
   setState("unreadNotifications", (getState("unreadNotifications") || 0) + 1);
   playSoundAlert({ type: "notification" });
+
+  // Persistent System Log Storage (Async save to IndexedDB)
+  addSystemLog({
+    title: title || (type.charAt(0).toUpperCase() + type.slice(1) + " Alert"),
+    message: message,
+    type: type
+  }).catch((err) => {
+    console.error("Failed to persist notification to IndexedDB:", err);
+  });
 
   return notify;
 };

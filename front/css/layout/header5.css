@@ -78,7 +78,7 @@
 .iconic-button .icon svg {
   width: 24px;
   height: 24px;
-  stroke: var(--stroke-svg);
+  stroke: currentColor;
   stroke-width: 1.5;
 }
 

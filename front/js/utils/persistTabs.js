@@ -1,8 +1,31 @@
 // tabs.js
 import "../../css/ui/createTabs.css";
 import { createElement } from "../components/createElement.js";
-import { getRouteState, setRouteState } from "../state/state.js";
 import { makeDraggableScroll } from "../components/dragnav.js";
+// Import your actual state management functions
+import { getState, setState } from "../state/state.js"; 
+
+/* =========================================================
+   ROUTE STATE HELPERS
+========================================================= */
+function getRouteState(locationKey) {
+    const state = getState() || {};
+    const routeStates = state.routeState || state.scrollPositions || {};
+    return routeStates[locationKey] || null;
+}
+
+function setRouteState(locationKey, value) {
+    const currentState = getState() || {};
+    const routeStates = currentState.routeState || currentState.scrollPositions || {};
+    
+    setState({
+        ...currentState,
+        routeState: {
+            ...routeStates,
+            [locationKey]: value
+        }
+    });
+}
 
 /**
  * High-order layout helper that handles persisting active tab views via localStorage.
@@ -35,7 +58,7 @@ export function persistTabs(container, tabs, storageKey = null) {
 export function createTabs(tabs, routeKey = null, initialTabId = null, onTabChange = null) {
     if (!Array.isArray(tabs) || tabs.length === 0) return createElement("div", { class: "tabs-empty" });
 
-    // --- Build UI containers with strict Web ARIA compliance ---
+    // --- Build UI containers with Web ARIA compliance ---
     const tabContainer = createElement("div", { class: "tabs-container" });
     const tabButtons = createElement("div", { 
         class: "tab-buttons",
@@ -140,7 +163,7 @@ export function createTabs(tabs, routeKey = null, initialTabId = null, onTabChan
         }
     }
 
-    // Defer initialization execute safely past the engine layout flush pass
+    // Defer initialization past current execution call stack
     if (initial) {
         queueMicrotask(() => activateTab(initial));
     }
