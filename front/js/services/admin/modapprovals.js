@@ -21,7 +21,7 @@ export async function loadModeratorApplications(container) {
         }, "reject-btn");
 
         const item = createElement("div", { "data-id": app.id, style: "margin-bottom:12px;padding:8px;border:1px solid #ccc;" }, [
-            createElement("p", {}, [`User ID: ${app.userId}`]),
+            createElement("p", {}, [`User ID: ${app.userid}`]),
             createElement("p", {}, [`Reason: ${app.reason}`]),
             createElement("p", {}, [`Status: ${app.status}`]),
             createElement("div", { style: "margin-top:6px;display:flex;gap:8px;" }, [approveBtn, rejectBtn])

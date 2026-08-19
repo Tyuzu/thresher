@@ -30,7 +30,7 @@ async function renderMerchPage(isLoggedIn, eventId, container) {
     try {
         container.replaceChildren();
         const eventData = await fetchEventData(eventId);
-        const isCreator = isLoggedIn && getState("user") === eventData.creatorid;
+        const isCreator = isLoggedIn && getState("user").userid === eventData.creatorid;
 
         // === Event Header ===
         const header = createElement("div", { class: "event-header" }, [

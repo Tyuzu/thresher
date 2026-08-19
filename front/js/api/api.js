@@ -188,7 +188,7 @@ export async function refreshToken() {
                     success = false;
                     return;
                 }
-                const userId = parsed.userId || parsed.userID || parsed.user_id || parsed.sub || "";
+                const userId = parsed.userid || parsed.userID || parsed.user_id || parsed.sub || "";
                 const roles = Array.isArray(parsed.roles || parsed.role) ? parsed.roles || parsed.role : parsed.role ? [parsed.role] : [];
                 const permissions = Array.isArray(parsed.permissions) ? parsed.permissions : [];
                 const authPayload = {

@@ -154,7 +154,7 @@ func PlaceOrder(app *infra.Deps) http.HandlerFunc {
 		}
 
 		// 5. Cleanup user's active cart upon success
-		if _, err := app.DB.Delete(ctx, cartCollection, bson.M{"userId": userID}); err != nil {
+		if _, err := app.DB.Delete(ctx, cartCollection, bson.M{"userid": userID}); err != nil {
 			log.Printf("PlaceOrder: cart cleanup error for user %s: %v", userID, err)
 		}
 

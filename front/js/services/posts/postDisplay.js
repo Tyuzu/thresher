@@ -164,7 +164,7 @@ export async function displayPost(isLoggedIn, postId, container) {
 
   frag.append(await renderProfile(post));
 
-  if (isLoggedIn && post.createdBy === getState("user")) {
+  if (isLoggedIn && post.createdBy === getState("user").userid) {
     frag.append(renderPostActions(post.postid, isLoggedIn, page));
   }
 
@@ -391,7 +391,7 @@ function renderComments(post) {
         commentsEl = await createCommentsSection(
           EntityType.BLOGPOST,
           post.postid,
-          getState("user")
+          getState("user").userid
         );
 
         wrapper.appendChild(commentsEl);

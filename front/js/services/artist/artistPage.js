@@ -104,7 +104,7 @@ export async function displayArtist(content, artistID, isLoggedIn) {
       return;
     }
 
-    const user = getState("user");
+    const user = getState("user").userid;
     const isCreator = isLoggedIn && artist.creatorid === user;
     const isSubscribed = artist.subscribed === true;
 

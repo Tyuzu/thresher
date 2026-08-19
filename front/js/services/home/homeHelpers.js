@@ -1,4 +1,4 @@
-import { getState, subscribeDeep } from "../../state/state.js";
+import { getState, subscribe } from "../../state/state.js";
 import { createElement } from "../../components/createElement.js";
 import { navigate } from "../../routes/index.js";
 import { login, signup } from "../auth/authService.js";
@@ -249,7 +249,7 @@ export function createAuthForms() {
     }
 
     // Only subscribe once
-    subscribeDeep("token", render);
+    subscribe("token", render);
 
     render();
     return wrapper;

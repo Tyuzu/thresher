@@ -61,7 +61,7 @@ type Coordinates struct {
 }
 
 type CheckIn struct {
-	UserID    string        `json:"userId,omitempty" bson:"userId,omitempty"`
+	UserID    string        `json:"userid,omitempty" bson:"userid,omitempty"`
 	PlaceID   string        `json:"placeId,omitempty" bson:"placeId,omitempty"`
 	Timestamp time.Time     `json:"timestamp,omitempty" bson:"timestamp,omitempty"`
 	Comment   string        `json:"comment,omitempty" bson:"comment,omitempty"`

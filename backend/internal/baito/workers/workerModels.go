@@ -1,7 +1,7 @@
 package workers
 
 type BaitoWorker struct {
-	UserID        string   `json:"userId" bson:"userId"`
+	UserID        string   `json:"userid" bson:"userid"`
 	BaitoWorkerId string   `json:"baitoWorkerId" bson:"baitoWorkerId"`
 	Name          string   `json:"name" bson:"name"`
 	Age           int      `json:"age" bson:"age"`
@@ -21,7 +21,7 @@ type BaitoWorker struct {
 	UpdatedAt     int64    `json:"updatedAt,omitempty" bson:"updatedAt,omitempty"`
 }
 type BaitoWorkersResponse struct {
-	UserID        string   `json:"userId" bson:"userId"`
+	UserID        string   `json:"userid" bson:"userid"`
 	BaitoWorkerId string   `json:"baitoWorkerId" bson:"baitoWorkerId"`
 	Name          string   `json:"name" bson:"name"`
 	Age           int      `json:"age" bson:"age"`

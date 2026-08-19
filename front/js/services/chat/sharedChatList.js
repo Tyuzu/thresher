@@ -94,7 +94,7 @@ export async function renderSharedChatList({
     const chats = (await fetchChats()) || [];
     
     // FIXED: Safely resolve both potential object user state and raw values
-    const rawUser = getState("user") || "";
+    const rawUser = getState("user").userid || "";
     const currentUser = typeof rawUser === "object" && rawUser !== null 
       ? rawUser.id || rawUser.username || rawUser.email || "" 
       : String(rawUser);

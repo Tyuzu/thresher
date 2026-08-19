@@ -1,7 +1,7 @@
 import {
     setState,
     clearState,
-    subscribeDeep,
+    subscribe,
     getState
 } from "../../state/state.js";
 import {
@@ -22,31 +22,36 @@ import LoadingSpinner from "../../components/ui/LoadingSpinner.mjs";
 /* =========================================================
    REACTIVE ROLE STATE
 ========================================================= */
-subscribeDeep("userProfile.role",
-    (role) => {
-        const roles = Array.isArray(role) ? role : role ? [role] : [];
-        const isAdmin = roles.includes("admin");
+function updateAdminState(roles) {
+    const normalizedRoles = Array.isArray(roles) ? roles : roles ? [roles] : [];
+    const isAdmin = normalizedRoles.includes("admin");
+    if (typeof document !== "undefined") {
         document.body.dataset.isAdmin = isAdmin ? "true" : "false";
-    });
+    }
+}
+subscribe("roles", updateAdminState);
+updateAdminState(getState("roles"));
 /* =========================================================
    HELPERS
 ========================================================= */
 function normalizeRoles(value) {
     if (Array.isArray(value)) {
-        return value.filter(Boolean);
+        return [...new Set(value.filter(
+            (role) => role !== null && role !== undefined && String(role).trim()).map((role) => String(role).trim()))];
     }
     if (typeof value === "string" && value.trim()) {
-        return [value];
+        return [value.trim()];
     }
     return [];
 }
 
 function normalizePermissions(value) {
     if (Array.isArray(value)) {
-        return value.filter(Boolean);
+        return [...new Set(value.filter(
+            (permission) => permission !== null && permission !== undefined && String(permission).trim()).map((permission) => String(permission).trim()))];
     }
     if (typeof value === "string" && value.trim()) {
-        return [value];
+        return [value.trim()];
     }
     return [];
 }
@@ -66,35 +71,55 @@ function parseJwtPayload(token) {
     }
 }
 
-function extractAuthPayload(response, username) {
-    const token = response?.token || response?.Token || response?.data?.token || response?.data?.Token;
+function extractAuthPayload(response, fallbackUsername = "") {
+    const data = response?.data && typeof response.data === "object" ? response.data : response;
+    const token = response?.token ?? response?.Token ?? data?.token ?? data?.Token;
     if (!token) {
         throw new Error("Invalid response format from server.");
     }
     const jwt = parseJwtPayload(token) || {};
-    const userId = response?.user_id || response?.userid || response?.userId || response?.UserID || response?.data?.user_id || response?.data?.userId || jwt.userId || jwt.userID || jwt.user_id || jwt.sub || "";
-    const roles = normalizeRoles(response?.roles || response?.role || response?.data?.roles || response?.data?.role || jwt.roles || jwt.role);
-    const permissions = normalizePermissions(response?.permissions || response?.data?.permissions || jwt.permissions);
+    const userId = response?.user_id ?? response?.userid ?? response?.userid ?? response?.UserID ?? data?.user_id ?? data?.userid ?? data?.userid ?? data?.UserID ?? jwt.userid ?? jwt.userID ?? jwt.user_id ?? jwt.sub ?? "";
+    const username = response?.username ?? data?.username ?? jwt.username ?? fallbackUsername ?? "";
+    const roles = normalizeRoles(response?.roles ?? response?.role ?? data?.roles ?? data?.role ?? jwt.roles ?? jwt.role);
+    const permissions = normalizePermissions(response?.permissions ?? data?.permissions ?? jwt.permissions);
+    /*
+     * Canonical auth.user is an object.
+     * userId remains available separately through the
+     * state compatibility alias.
+     */
+    const user = response?.user && typeof response.user === "object" ? {
+        ...response.user,
+        userid: response.user.id ?? response.user.userid ?? userId,
+        username: response.user.username ?? username
+    } : data?.user && typeof data.user === "object" ? {
+        ...data.user,
+        userid: data.user.id ?? data.user.userid ?? userId,
+        username: data.user.username ?? username
+    } : {
+        userid: userId || null,
+        username: username || ""
+    };
     return {
         token,
-        user: userId || null,
-        userId: userId || null,
-        username: response?.username || response?.data?.username || jwt.username || username || "",
+        user,
+        userId: userId || user?.userid || null,
+        username: user?.username || username || "",
         roles,
         permissions,
         auth: {
             isAuthenticated: true,
             accessToken: token,
-            user: userId || null,
+            user,
             roles,
-            permissions
+            permissions,
+            loading: false
         }
     };
 }
 /* =========================================================
    SIGNUP
 ========================================================= */
-export async function signup(payload) {
+export async function signup(payload = {}) {
     let username = payload?.username;
     let email = payload?.email;
     let password = payload?.password;
@@ -117,7 +142,7 @@ export async function signup(payload) {
         validator: isValidPassword,
         message: "Password must be at least 6 characters long."
     }]);
-    const hasErrors = Array.isArray(errors) ? errors.length > 0 : errors && Object.keys(errors).length > 0;
+    const hasErrors = Array.isArray(errors) ? errors.length > 0 : Boolean(errors && Object.keys(errors).length > 0);
     if (hasErrors) {
         const errorMessage = Array.isArray(errors) ? errors.join(", ") : String(errors);
         Notify(errorMessage, {
@@ -129,10 +154,6 @@ export async function signup(payload) {
     }
     const hideSpinner = LoadingSpinner();
     try {
-        /*
-         * auth:false prevents an old access token
-         * from being attached to registration.
-         */
         await apiFetch("/auth/register", "POST", {
             username,
             email,
@@ -164,7 +185,7 @@ export async function signup(payload) {
 /* =========================================================
    LOGIN
 ========================================================= */
-export async function login(payload) {
+export async function login(payload = {}) {
     let username = payload?.username;
     let password = payload?.password;
     if (payload?.preventDefault) {
@@ -172,6 +193,7 @@ export async function login(payload) {
         username = document.getElementById("login-username")?.value?.trim() || "";
         password = document.getElementById("login-password")?.value || "";
     }
+    username = typeof username === "string" ? username.trim() : "";
     if (!username || !password) {
         Notify("Username and password are required.", {
             type: "error",
@@ -194,24 +216,21 @@ export async function login(payload) {
         });
         const authPayload = extractAuthPayload(response, username);
         /*
-         * IMPORTANT:
-         *
          * Commit the token BEFORE fetching
-         * the profile, so apiFetch() can attach
-         * Authorization: Bearer ...
+         * the profile.
          */
         setState({
             token: authPayload.token,
             user: authPayload.user,
-            userId: authPayload.userId,
+            userid: authPayload.userid,
             username: authPayload.username,
             roles: authPayload.roles,
             permissions: authPayload.permissions,
             auth: authPayload.auth
         }, true);
         /*
-         * Now the profile request can authenticate
-         * using the newly committed access token.
+         * Profile request can now authenticate
+         * using the committed access token.
          */
         try {
             const profile = await fetchProfile();
@@ -219,37 +238,41 @@ export async function login(payload) {
                 setState({
                     userProfile: profile
                 }, true);
-                /*
-                 * If profile supplies roles/permissions,
-                 * synchronize them.
-                 */
-                const profileRoles = normalizeRoles(profile.roles || profile.role);
+                const profileRoles = normalizeRoles(profile.roles ?? profile.role);
                 const profilePermissions = normalizePermissions(profile.permissions);
-                if (profileRoles.length) {
+                if (profileRoles.length > 0) {
                     setState({
                         roles: profileRoles
                     }, true);
                 }
-                if (profilePermissions.length) {
+                if (profilePermissions.length > 0) {
                     setState({
                         permissions: profilePermissions
                     }, true);
                 }
+                /*
+                 * Keep auth.user enriched with profile
+                 * information without losing the ID.
+                 */
+                const currentUser = getState("user");
+                if (currentUser && typeof currentUser === "object") {
+                    setState({
+                        user: {
+                            ...currentUser,
+                            ...profile,
+                            userid: currentUser.userid ?? getState("userid"),
+                            username: profile.username ?? currentUser.username ?? getState("username")
+                        }
+                    }, true);
+                }
             }
-        } catch (error) {
+        } catch {
             Notify("Logged in, but profile details could not be loaded.", {
                 type: "info",
                 duration: 3000,
                 dismissible: true
             });
         }
-        /*
-         * Background refresh is started by api.js
-         * after successful token state updates.
-         *
-         * The token subscription in routes/index.js
-         * handles post-login navigation.
-         */
         return true;
     } catch (error) {
         Notify(error?.message || "Login failed.", {
@@ -277,13 +300,16 @@ export async function refreshAccessToken() {
 export async function logout() {
     try {
         await apiFetch("/auth/logout", "POST", null, {
+            credentials: "include",
             headers: {
                 "X-Refresh-Intent": "1"
-            },
-            credentials: "include"
+            }
         });
     } catch {
-        // Logout should still clear local state.
+        /*
+         * Logout must clear local authentication
+         * even if the server request fails.
+         */
     } finally {
         silentLogout(true);
     }
@@ -300,29 +326,38 @@ export function silentLogout(broadcast = true) {
             }
         }));
     }
+    if (typeof sessionStorage !== "undefined") {
+        try {
+            sessionStorage.removeItem("redirectAfterLogin");
+        } catch {
+            // Ignore storage failures.
+        }
+    }
     /*
-     * Do not preserve stale redirect state.
-     */
-    sessionStorage.removeItem("redirectAfterLogin");
-    /*
-     * Replace rather than push so the
-     * protected page isn't left in history.
+     * Replace rather than push so protected
+     * pages are not left in browser history.
      */
     if (typeof window !== "undefined") {
         queueMicrotask(async () => {
-            const {
-                navigate
-            } = await import("../../routes/index.js");
-            navigate("/login", {
-                replace: true
-            }).catch(console.error);
+            try {
+                const {
+                    navigate
+                } = await import("../../routes/index.js");
+                await navigate("/login", {
+                    replace: true
+                });
+            } catch (error) {
+                console.error("Logout navigation failed:", error);
+            }
         });
     }
 }
 /* =========================================================
    AUTH UNAUTHORIZED EVENT
 ========================================================= */
-window.addEventListener("auth:unauthorized",
-    () => {
-        silentLogout();
-    });
+if (typeof window !== "undefined") {
+    window.addEventListener("auth:unauthorized",
+        () => {
+            silentLogout();
+        });
+}

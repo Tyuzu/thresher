@@ -97,7 +97,7 @@ export const createAddMediaButton = (
 ------------------------------------------------------ */
 export function createMediaActions(media, entityType, entityId, isLoggedIn, deleteHandler, classPrefix = "media") {
   const actions = createElement("div", { class: `${classPrefix}-actions` });
-  const user = getState("user");
+  const user = getState("user").userid;
 
   // Delete (if owner)
   if (isLoggedIn && user === media.creatorid) {

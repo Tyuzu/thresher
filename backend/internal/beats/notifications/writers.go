@@ -26,7 +26,7 @@ func CreateNotification(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		var body struct {
-			UserID  string `json:"userId"`
+			UserID  string `json:"userid"`
 			Title   string `json:"title"`
 			Message string `json:"message"`
 			Type    string `json:"type"`
@@ -38,7 +38,7 @@ func CreateNotification(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if strings.TrimSpace(body.UserID) == "" || strings.TrimSpace(body.Message) == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "userId and message are required")
+			utils.RespondWithError(w, http.StatusBadRequest, "userid and message are required")
 			return
 		}
 
@@ -79,7 +79,7 @@ func BulkCreateNotifications(app *infra.Deps) http.HandlerFunc {
 		defer cancel()
 
 		var body struct {
-			UserIDs []string `json:"userIds"`
+			UserIDs []string `json:"userids"`
 			Title   string   `json:"title"`
 			Message string   `json:"message"`
 			Type    string   `json:"type"`
@@ -91,7 +91,7 @@ func BulkCreateNotifications(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if len(body.UserIDs) == 0 || strings.TrimSpace(body.Message) == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "userIds and message are required")
+			utils.RespondWithError(w, http.StatusBadRequest, "userids and message are required")
 			return
 		}
 
@@ -120,7 +120,7 @@ func BulkCreateNotifications(app *infra.Deps) http.HandlerFunc {
 		}
 
 		if len(notifications) == 0 {
-			utils.RespondWithError(w, http.StatusBadRequest, "No valid userIds provided")
+			utils.RespondWithError(w, http.StatusBadRequest, "No valid userids provided")
 			return
 		}
 

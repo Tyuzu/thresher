@@ -52,7 +52,7 @@ export async function displayFarm(isLoggedIn, farmId, content) {
   }
 
   const normalizedFarmId = String(farm.farmid);
-  const currentUser = getState("user");
+  const currentUser = getState("user").userid;
   const isCreator = Boolean(currentUser && currentUser === farm.createdBy);
 
   // ─────────── Header & Breadcrumb ───────────

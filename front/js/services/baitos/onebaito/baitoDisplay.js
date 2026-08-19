@@ -282,7 +282,7 @@ export async function displayBaito(isLoggedIn, baitoid, contentContainer) {
     }
 
     // Safety: Check if nested user object contains matching ID
-    const loggedInUser = getState("user");
+    const loggedInUser = getState("user").userid;
     const isOwner = loggedInUser && (loggedInUser.id === baito.ownerId || loggedInUser === baito.ownerId);
 
     const section = createElement("div", { class: "baito-detail-wrapper" });

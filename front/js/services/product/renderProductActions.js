@@ -223,7 +223,7 @@ export function renderProductActions(product, productType, productId, container,
   // ------------------------------------------------------------
   // Creator permissions
   // ------------------------------------------------------------
-  const currentUserId = getState("user");
+  const currentUserId = getState("user").userid;
   const isCreator = Boolean(getState("token")) && currentUserId && product.userid === currentUserId;
   if (isCreator) {
     children.push(Button("Edit", `edit-${productType}-${resolvedProductId}`, {

@@ -1,3 +1,5 @@
+// bannerPicture.js
+
 import { getState, setState } from "../../state/state.js";
 import { updateImageWithCrop } from "../../utils/bannerEditor.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
@@ -5,8 +7,13 @@ import { handleError } from "../../utils/utils.js";
 import Notify from "../../components/ui/Notify.mjs";
 import Bannerx from "../../components/base/Bannerx.js";
 
+/* ============================================================
+    UPDATE BANNER
+============================================================ */
+
 export async function updateBanner() {
   const profile = getState("userProfile");
+
   if (!profile?.userid) {
     handleError("No user profile found. Cannot update banner.");
     return false;
@@ -28,13 +35,32 @@ export async function updateBanner() {
     }
 
     const currentProfile = getState("userProfile") || {};
-    setState({ userProfile: { ...currentProfile, banner: response.banner } }, true);
 
-    Notify(`${capitalize("banner")} updated successfully.`, { type: "success", duration: 3000, dismissible: true });
+    setState(
+      {
+        userProfile: {
+          ...currentProfile,
+          banner: response.banner
+        }
+      },
+      true
+    );
+
+    Notify("Banner updated successfully.", {
+      type: "success",
+      duration: 3000,
+      dismissible: true
+    });
 
     const preview = document.getElementById("banner-picture-preview");
     if (preview) {
-      preview.src = resolveImagePath(EntityType.USER, PictureType.BANNER, response.banner) + `?t=${Date.now()}`;
+      const basePath = resolveImagePath(
+        EntityType.USER,
+        PictureType.BANNER,
+        response.banner
+      );
+      const separator = basePath.includes("?") ? "&" : "?";
+      preview.src = `${basePath}${separator}t=${Date.now()}`;
     }
 
     return true;
@@ -45,13 +71,17 @@ export async function updateBanner() {
   }
 }
 
-export function createBanner(profile, isCreator) {
+/* ============================================================
+    BANNER COMPONENT
+============================================================ */
+
+export function createBanner(profile = {}, isCreator = false) {
   return Bannerx({
     isCreator,
-    bannerkey: profile.banner,
+    bannerkey: profile.banner || "",
     banneraltkey: `Banner for ${profile.username || "User"}`,
     bannerentitytype: EntityType.USER,
     stateentitykey: "user",
-    bannerentityid: profile.userid
+    bannerentityid: profile.userid || ""
   });
 }

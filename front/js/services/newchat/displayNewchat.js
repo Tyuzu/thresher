@@ -1,5 +1,5 @@
 import { createElement } from "../../components/createElement.js";
-import { CHAT_WS, getState, setState, state } from "../../state/state.js";
+import { CHAT_WS, getState, setState } from "../../state/state.js";
 import { renderMessage } from "./renderMessage.js";
 import { setupFileUpload } from "./fileUpload.js";
 import { playSoundAlert, setChatSoundPreference, resolveSoundPreference } from "../notifications/soundAlerts.js";
@@ -306,7 +306,7 @@ function disableInputs(elements) {
 }
 
 function createWebSocket(chatid) {
-  const token = state.token ?? "";
+  const token = getState("token") ?? "";
   let base = CHAT_WS.replace(/\/+$/, "");
 
   if (
@@ -364,7 +364,7 @@ function setupSocketListeners(
       const msg = JSON.parse(event.data);
       const isOwn =
         msg?.senderid === currentUserId ||
-        msg?.userId === currentUserId;
+        msg?.userid === currentUserId;
 
       // FIXED: Only increment unread badge count and alert if the message was received in a background chat
       const isWindowHidden = typeof document !== "undefined" && document.visibilityState === "hidden";

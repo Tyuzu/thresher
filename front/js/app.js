@@ -12,87 +12,226 @@ import {
     setLanguage
 } from "./i18n/i18n.js";
 /* =========================================================
+   CONSTANTS
+========================================================= */
+const APP_VERSION = "v18";
+const ENV_CACHE_KEY = "env-profile-v2";
+const UI_TIER_KEY = "ui-tier-v2";
+const ENV_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+let offlineTimer = null;
+let serviceWorkerRefreshing = false;
+/* =========================================================
    SERVICE WORKER
 ========================================================= */
-if ("serviceWorker" in navigator) {
+function setupServiceWorker() {
+    if (!("serviceWorker" in navigator)) {
+        console.warn("[SW] Service workers are not supported.");
+        return;
+    }
+    /*
+     * Register after the page has loaded so SW startup does
+     * not compete unnecessarily with initial application work.
+     */
     window.addEventListener("load", async () => {
         try {
-            const registration = await navigator.serviceWorker.register("/service-worker.js");
-            console.log("ServiceWorker registration successful with scope:", registration.scope);
+            const registration = await navigator.serviceWorker.register("/service-worker.js", {
+                updateViaCache: "none"
+            });
+            console.log("[SW] Registered:", registration.scope);
+            /*
+             * Explicitly check for a newer worker.
+             */
+            try {
+                await registration.update();
+            } catch (error) {
+                console.warn("[SW] Update check failed:", error);
+            }
+            /*
+             * If a new worker is already waiting, ask it
+             * to activate.
+             */
+            if (registration.waiting) {
+                requestServiceWorkerActivation(registration.waiting);
+            }
+            /*
+             * Watch for future updates.
+             */
+            registration.addEventListener("updatefound",
+                () => {
+                    const newWorker = registration.installing;
+                    if (!newWorker) {
+                        return;
+                    }
+                    newWorker.addEventListener("statechange",
+                        () => {
+                            if (newWorker.state === "installed") {
+                                /*
+                                 * If a controller already exists,
+                                 * this is an application update.
+                                 */
+                                if (navigator.serviceWorker.controller) {
+                                    console.log("[SW] New version available.");
+                                    requestServiceWorkerActivation(newWorker);
+                                }
+                            }
+                        });
+                });
         } catch (error) {
-            console.error("ServiceWorker registration failed:", error);
+            console.error("[SW] Registration failed:", error);
         }
     });
+    /*
+     * The new service worker has taken control.
+     *
+     * Reload exactly once to make sure the new application
+     * shell/assets are used.
+     */
+    navigator.serviceWorker.addEventListener("controllerchange",
+        () => {
+            if (serviceWorkerRefreshing) {
+                return;
+            }
+            serviceWorkerRefreshing = true;
+            console.log("[SW] Controller changed. Reloading application.");
+            window.location.reload();
+        });
+    /*
+     * Messages sent by service-worker.js.
+     */
+    navigator.serviceWorker.addEventListener("message", handleServiceWorkerMessage);
+}
+
+function requestServiceWorkerActivation(worker) {
+    if (!worker) {
+        return;
+    }
+    worker.postMessage({
+        type: "SKIP_WAITING"
+    });
+}
+
+function handleServiceWorkerMessage(event) {
+    const data = event.data;
+    if (!data?.type) {
+        return;
+    }
+    switch (data.type) {
+        case "SW_ACTIVATED":
+            console.log("[SW] Active version:", data.version);
+            break;
+        case "SW_VERSION":
+            console.log("[SW] Version:", data.version);
+            break;
+        default:
+            break;
+    }
 }
 /* =========================================================
    ENVIRONMENT PROFILING
 ========================================================= */
 function profileEnvironment() {
-    const ENV_CACHE_KEY = "env-profile-v1";
-    const ENV_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
     const cachedEnv = localStorage.getItem(ENV_CACHE_KEY);
+    /*
+     * Use cached environment information when possible.
+     * Connectivity is always refreshed because it can change
+     * independently of the cached profile.
+     */
     if (cachedEnv) {
         try {
             const parsed = JSON.parse(cachedEnv);
-            if (parsed?.ts && Date.now() - parsed.ts < ENV_CACHE_TTL_MS) {
-                setState({
-                    environment: parsed.data
-                });
-                window.__env = parsed.data;
-                return parsed.data;
+            if (parsed?.ts && parsed?.data && Date.now() - parsed.ts < ENV_CACHE_TTL_MS) {
+                const envData = {
+                    ...parsed.data,
+                    online: navigator.onLine,
+                    networkSpeed: getNetworkSpeed()
+                };
+                setEnvironment(envData);
+                return envData;
             }
-        } catch (_error) {
+        } catch (error) {
+            console.warn("[ENV] Invalid cached profile:", error);
             localStorage.removeItem(ENV_CACHE_KEY);
         }
     }
-    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-    const networkSpeed = navigator.connection?.effectiveType || "unknown";
-    let uiTier = localStorage.getItem("ui-tier-v1");
-    if (!uiTier) {
-        if (isMobile || networkSpeed.includes("2g")) {
-            uiTier = "light";
-        } else if (navigator.deviceMemory && navigator.deviceMemory < 4) {
-            uiTier = "medium";
-        } else {
-            uiTier = "full";
-        }
-        localStorage.setItem("ui-tier-v1", uiTier);
-    }
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const networkSpeed = getNetworkSpeed();
+    const uiTier = determineUITier(isMobile, networkSpeed);
     const envData = {
         deviceType: isMobile ? "mobile" : "desktop",
         networkSpeed,
         online: navigator.onLine,
         cores: navigator.hardwareConcurrency || "unknown",
         memory: navigator.deviceMemory || "unknown",
-        uiTier
+        uiTier,
+        serviceWorker: "serviceWorker" in navigator,
+        touch: "ontouchstart" in window || navigator.maxTouchPoints > 0
     };
-    setState({
-        environment: envData
-    });
-    window.__env = envData;
+    setEnvironment(envData);
     try {
         localStorage.setItem(ENV_CACHE_KEY, JSON.stringify({
             ts: Date.now(),
             data: envData
         }));
     } catch (error) {
-        console.warn("Cannot cache environment profile:", error?.message);
+        console.warn("[ENV] Unable to cache profile:", error?.message);
     }
     return envData;
 }
-/* =========================================================
-   OFFLINE BANNER
-========================================================= */
-let offlineTimer = null;
 
+function setEnvironment(envData) {
+    setState({
+        environment: envData
+    });
+    window.__env = envData;
+}
+
+function getNetworkSpeed() {
+    return (navigator.connection?.effectiveType || "unknown");
+}
+
+function determineUITier(isMobile, networkSpeed) {
+    const cachedTier = localStorage.getItem(UI_TIER_KEY);
+    /*
+     * Preserve an existing user/device decision.
+     */
+    if (cachedTier === "light" || cachedTier === "medium" || cachedTier === "full") {
+        return cachedTier;
+    }
+    let tier = "full";
+    if (isMobile || networkSpeed === "slow-2g" || networkSpeed === "2g") {
+        tier = "light";
+    } else if (navigator.deviceMemory && navigator.deviceMemory < 4) {
+        tier = "medium";
+    }
+    try {
+        localStorage.setItem(UI_TIER_KEY, tier);
+    } catch {
+        // localStorage is optional.
+    }
+    return tier;
+}
+/* =========================================================
+   OFFLINE / ONLINE MONITORING
+========================================================= */
 function toggleOfflineBanner(isOffline) {
+    const currentEnvironment = window.__env || {};
+    const updatedEnvironment = {
+        ...currentEnvironment,
+        online: !isOffline
+    };
+    setEnvironment(updatedEnvironment);
     clearTimeout(offlineTimer);
     offlineTimer = setTimeout(() => {
         let banner = document.getElementById("offline-banner");
         if (isOffline) {
-            if (banner) return;
+            if (banner) {
+                return;
+            }
             banner = document.createElement("div");
             banner.id = "offline-banner";
+            banner.setAttribute("role", "status");
+            banner.setAttribute("aria-live", "polite");
+            banner.setAttribute("data-offline", "true");
             Object.assign(banner.style, {
                 position: "fixed",
                 top: "0",
@@ -101,36 +240,63 @@ function toggleOfflineBanner(isOffline) {
                 background: "#b00020",
                 color: "#fff",
                 textAlign: "center",
-                padding: "0.5rem",
+                padding: "0.6rem 1rem",
                 zIndex: "9999",
                 fontSize: "0.9rem",
-                fontWeight: "600"
+                fontWeight: "600",
+                boxSizing: "border-box"
             });
-            banner.textContent = "You are offline. Some features may not work.";
+            banner.textContent = "You are offline. Some features may not be available.";
             document.body.appendChild(banner);
-        } else if (banner) {
-            banner.remove();
+            /*
+             * Avoid covering application content forever.
+             * The banner remains until connectivity returns.
+             */
+        } else {
+            if (!banner) {
+                return;
+            }
+            /*
+             * Change the message briefly so users know
+             * connectivity actually returned.
+             */
+            banner.textContent = "Connection restored.";
+            banner.style.background = "#137333";
+            setTimeout(() => {
+                banner?.remove();
+            }, 1500);
         }
-    }, 300);
+    }, 250);
 }
 window.addEventListener("offline",
-    () => toggleOfflineBanner(true));
+    () => {
+        toggleOfflineBanner(true);
+    });
 window.addEventListener("online",
-    () => toggleOfflineBanner(false));
+    () => {
+        toggleOfflineBanner(false);
+    });
 /* =========================================================
    GLOBAL ERROR TRACKING
 ========================================================= */
-const trackError = (error, context) => {
-    console.error("Application error:", error, context);
-    if (window.__errorTracker?.track && error) {
-        window.__errorTracker.track(error, context);
+function trackError(error, context = {}) {
+    const normalizedError = error instanceof Error ? error : new Error(String(error || "Unknown error"));
+    console.error("[APP ERROR]", normalizedError, context);
+    if (window.__errorTracker?.track) {
+        try {
+            window.__errorTracker.track(normalizedError, context);
+        } catch (trackingError) {
+            console.warn("[ERROR TRACKER] Failed:", trackingError);
+        }
     }
-};
+}
 window.addEventListener("error",
     (event) => {
         trackError(event.error || new Error(event.message || "Unknown error"), {
             type: "uncaught_error",
-            message: event.message
+            filename: event.filename,
+            line: event.lineno,
+            column: event.colno
         });
     });
 window.addEventListener("unhandledrejection",
@@ -147,38 +313,81 @@ function setupPerformanceMonitoring() {
         return;
     }
     try {
-        const observer = new PerformanceObserver((list) => {
-            for (const entry of list.getEntries()) {
-                if (entry.entryType === "resource" && /\.(png|jpe?g|gif|svg|webp|woff2?)$/i.test(entry.name)) {
-                    continue;
-                }
-                const threshold = entry.entryType === "longtask" ? 200 : 3000;
-                if (entry.duration > threshold) {
-                    const details = {
-                        name: entry.name,
-                        entryType: entry.entryType,
-                        duration: Math.round(entry.duration)
-                    };
-                    console.warn(`Slow performance detected [${entry.entryType}]:`, details);
-                    if (window.__errorTracker?.trackMetric) {
-                        window.__errorTracker.trackMetric("performance_degradation", details);
+        const supportedTypes = PerformanceObserver.supportedEntryTypes || [];
+        /*
+         * Use separate observers for supported
+         * performance entry types.
+         *
+         * This avoids asking the browser to observe
+         * unsupported types.
+         */
+        const types = ["navigation", "longtask", "largest-contentful-paint"];
+        for (const type of types) {
+            if (!supportedTypes.includes(type)) {
+                continue;
+            }
+            const observer = new PerformanceObserver(
+                (list) => {
+                    for (const entry of list.getEntries()) {
+                        processPerformanceEntry(entry);
                     }
-                }
-            }
-        });
-        const typesToObserve = ["navigation", "longtask", "largest-contentful-paint"];
-        for (const type of typesToObserve) {
-            try {
-                observer.observe({
-                    type,
-                    buffered: true
                 });
-            } catch (_error) {
-                // Unsupported entry type.
-            }
+            observer.observe({
+                type,
+                buffered: true
+            });
         }
     } catch (error) {
-        console.warn("Performance monitoring unavailable:", error);
+        console.warn("[PERF] Monitoring unavailable:", error);
+    }
+}
+
+function processPerformanceEntry(entry) {
+    /*
+     * Long tasks above 200ms are meaningful.
+     */
+    if (entry.entryType === "longtask") {
+        if (entry.duration <= 200) {
+            return;
+        }
+        reportPerformanceIssue(entry, 200);
+        return;
+    }
+    /*
+     * LCP above 3 seconds deserves attention.
+     */
+    if (entry.entryType === "largest-contentful-paint") {
+        if (entry.startTime <= 3000) {
+            return;
+        }
+        reportPerformanceIssue(entry, 3000);
+        return;
+    }
+    /*
+     * Navigation above 3 seconds.
+     */
+    if (entry.entryType === "navigation") {
+        if (entry.duration <= 3000) {
+            return;
+        }
+        reportPerformanceIssue(entry, 3000);
+    }
+}
+
+function reportPerformanceIssue(entry, threshold) {
+    const details = {
+        name: entry.name || "unknown",
+        entryType: entry.entryType,
+        duration: Math.round(entry.duration),
+        threshold
+    };
+    console.warn(`[PERF] Slow ${entry.entryType}:`, details);
+    if (window.__errorTracker?.trackMetric) {
+        try {
+            window.__errorTracker.trackMetric("performance_degradation", details);
+        } catch (error) {
+            console.warn("[PERF] Metric tracking failed:", error);
+        }
     }
 }
 /* =========================================================
@@ -190,20 +399,57 @@ function isModifiedClick(event) {
 
 function isSpecialLink(anchor) {
     const href = anchor.getAttribute("href");
-    if (!href) return true;
-    return (anchor.target === "_blank" || anchor.hasAttribute("download") || href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("javascript:") || href.startsWith("http://") || href.startsWith("https://"));
+    if (!href) {
+        return true;
+    }
+    /*
+     * Browser-native navigation should remain browser-native.
+     */
+    if (anchor.target === "_blank" || anchor.hasAttribute("download") || href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("javascript:")) {
+        return true;
+    }
+    /*
+     * Do not hijack external links.
+     */
+    try {
+        const url = new URL(href, window.location.href);
+        if (url.origin !== window.location.origin) {
+            return true;
+        }
+    } catch {
+        return true;
+    }
+    return false;
 }
 
 function isSpaRoute(href) {
-    return (href.startsWith("/") || href.startsWith("#/"));
+    if (!href) {
+        return false;
+    }
+    /*
+     * Absolute same-origin paths.
+     */
+    if (href.startsWith("/")) {
+        return true;
+    }
+    /*
+     * Hash-based SPA routes.
+     */
+    if (href.startsWith("#/")) {
+        return true;
+    }
+    return false;
 }
 
 function setupGlobalNavigation() {
     document.addEventListener("click",
         (event) => {
             const target = event.target;
-            const anchor = target instanceof Element ? target.closest("a") : null;
-            if (!anchor) return;
+            const anchor = target instanceof
+            Element ? target.closest("a") : null;
+            if (!anchor) {
+                return;
+            }
             if (isModifiedClick(event)) {
                 return;
             }
@@ -211,8 +457,17 @@ function setupGlobalNavigation() {
                 return;
             }
             const href = anchor.getAttribute("href");
-            if (!href) return;
-            // Ignore ordinary hash anchors such as #section
+            if (!href) {
+                return;
+            }
+            /*
+             * Normal page anchors such as:
+             *
+             * #features
+             * #pricing
+             *
+             * remain native browser behavior.
+             */
             if (href.startsWith("#") && !href.startsWith("#/")) {
                 return;
             }
@@ -220,12 +475,13 @@ function setupGlobalNavigation() {
                 return;
             }
             event.preventDefault();
-            navigate(href).catch((error) => {
-                trackError(error, {
-                    type: "navigation_failure",
-                    path: href
+            navigate(href).catch(
+                (error) => {
+                    trackError(error, {
+                        type: "navigation_failure",
+                        path: href
+                    });
                 });
-            });
         });
 }
 /* =========================================================
@@ -235,6 +491,7 @@ function setupHistoryNavigation() {
     window.addEventListener("popstate", async () => {
         try {
             await loadContent(getCurrentAppLocation());
+            focusMainContent();
         } catch (error) {
             trackError(error, {
                 type: "popstate_navigation_failure"
@@ -242,9 +499,8 @@ function setupHistoryNavigation() {
         }
     });
     /*
-     * pushState() itself doesn't fire popstate when
-     * this app changes the URL, so navigation() renders
-     * explicitly. This listener is only for traversal.
+     * pageshow fires when returning from browser
+     * back-forward cache.
      */
     window.addEventListener("pageshow", async (event) => {
         if (!event.persisted) {
@@ -253,6 +509,7 @@ function setupHistoryNavigation() {
         try {
             hydrateAuthState(true);
             await loadContent(getCurrentAppLocation());
+            focusMainContent();
         } catch (error) {
             trackError(error, {
                 type: "pageshow_navigation_failure"
@@ -261,56 +518,138 @@ function setupHistoryNavigation() {
     });
 }
 /* =========================================================
-   START APPLICATION
+   ACCESSIBILITY
 ========================================================= */
-window.addEventListener("DOMContentLoaded", async () => {
+function focusMainContent() {
+    const content = document.getElementById("content");
+    if (!content) {
+        return;
+    }
+    /*
+     * Prevent the focus operation from creating
+     * an unwanted browser scroll when possible.
+     */
     try {
+        content.focus({
+            preventScroll: true
+        });
+    } catch {
+        content.focus();
+    }
+}
+/* =========================================================
+   INITIAL APPLICATION STARTUP
+========================================================= */
+async function startApplication() {
+    try {
+        /*
+         * Let the browser manage restoration when appropriate.
+         * We handle SPA route changes ourselves.
+         */
         if ("scrollRestoration" in history) {
             history.scrollRestoration = "manual";
         }
-        /* 1. Language */
+        /*
+         * 1. Language
+         */
         const lang = detectLanguage();
         await setLanguage(lang);
-        /* 2. Auth hydration */
+        /*
+         * 2. Authentication
+         */
         hydrateAuthState(true);
-        /* 3. Environment */
+        /*
+         * 3. Environment
+         */
         profileEnvironment();
-        /* 4. SPA navigation */
+        /*
+         * 4. Navigation
+         */
         setupGlobalNavigation();
         setupHistoryNavigation();
-        /* 5. Initial render */
+        /*
+         * 5. Initial route
+         */
         const initialLocation = getCurrentAppLocation();
         await loadContent(initialLocation || "/");
-        /* 6. Deferred monitoring */
+        /*
+         * 6. Initial connectivity state
+         */
+        if (!navigator.onLine) {
+            toggleOfflineBanner(true);
+        }
+        /*
+         * 7. Deferred performance monitoring
+         */
         const initDeferredTasks = () => {
             setupPerformanceMonitoring();
         };
         if ("requestIdleCallback" in window) {
-            window.requestIdleCallback(initDeferredTasks);
+            window.requestIdleCallback(initDeferredTasks, {
+                timeout: 2000
+            });
         } else {
             setTimeout(initDeferredTasks, 200);
-        }
-        /* 7. Offline state */
-        if (!navigator.onLine) {
-            toggleOfflineBanner(true);
         }
     } catch (error) {
         trackError(error, {
             type: "init_failure"
         });
-        const errEl = document.createElement("div");
-        Object.assign(errEl.style, {
-            padding: "2rem",
-            textAlign: "center",
-            fontFamily: "system-ui, sans-serif"
-        });
-        errEl.innerHTML = `
-        <h1>Application Error</h1>
-        <p>
-          Unable to start the application.
-          Please refresh the page.
-        </p>
-      `;
-        document.body.replaceChildren(errEl);
+        showApplicationError();
     }
-});
+}
+/* =========================================================
+   APPLICATION ERROR UI
+========================================================= */
+function showApplicationError() {
+    const container = document.createElement("div");
+    Object.assign(container.style, {
+        minHeight: "100vh",
+        display: "grid",
+        placeItems: "center",
+        padding: "2rem",
+        boxSizing: "border-box",
+        fontFamily: "system-ui, sans-serif",
+        textAlign: "center"
+    });
+    container.innerHTML = `
+        <main>
+            <h1>Farmium couldn't start</h1>
+            <p>
+                Something went wrong while loading the
+                application. Please refresh the page.
+            </p>
+            <button
+                type="button"
+                id="app-reload-button"
+                style="
+                    padding:0.7rem 1.2rem;
+                    border:0;
+                    border-radius:6px;
+                    cursor:pointer;
+                "
+            >
+                Refresh Farmium
+            </button>
+        </main>
+    `;
+    document.body.replaceChildren(container);
+    document.getElementById("app-reload-button")?.addEventListener("click",
+        () => {
+            window.location.reload();
+        });
+}
+/* =========================================================
+   STARTUP
+========================================================= */
+/*
+ * Service worker registration is intentionally independent
+ * of application startup.
+ */
+setupServiceWorker();
+window.addEventListener("DOMContentLoaded",
+    () => {
+        startApplication();
+    }, {
+        once: true
+    });

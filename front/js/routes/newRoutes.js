@@ -3,7 +3,16 @@ import {
 } from "../config/domainFeatures.js";
 
 import {
-  metaGuard
+  metaGuard,
+  authGuard,
+  guestGuard,
+  roleGuard,
+  permissionGuard,
+  onboardingGuard,
+  featureFlagGuard,
+  unsavedChangesGuard,
+  titleGuard,
+  analyticsGuard
 } from "../middleware/middleware.js";
 
 /* =========================================================
@@ -189,10 +198,8 @@ const coreRoutes = [
     functionName: "DriverDash",
     meta: {
       requiresAuth: true,
-      roles: [
-        "driver",
-        "admin"
-      ],
+      roles: ["driver", "admin"],
+      roleMatchMode: "ANY",
       title: "Driver Dashboard"
     }
   },
@@ -380,34 +387,22 @@ const featureModules = {
 ========================================================= */
 
 function routeSpecificity(route) {
-  const path =
-    String(route.path || "");
-
-  const segments =
-    path
-      .split("/")
-      .filter(Boolean);
+  const path = String(route.path || "");
+  const segments = path.split("/").filter(Boolean);
 
   let score = 0;
 
   for (const segment of segments) {
     if (segment.startsWith("*")) {
       score += 1;
-    } else if (
-      segment.startsWith(":")
-    ) {
+    } else if (segment.startsWith(":")) {
       score += 10;
     } else {
       score += 100;
     }
   }
 
-  /*
-   * Longer route patterns generally represent
-   * more specific matches.
-   */
   score += segments.length;
-
   return score;
 }
 
@@ -416,8 +411,7 @@ function routeSpecificity(route) {
 ========================================================= */
 
 function buildRoutes() {
-  const allowedFeatures =
-    getCurrentAllowedFeatures();
+  const allowedFeatures = getCurrentAllowedFeatures();
 
   const aggregatedRoutes = [
     ...coreRoutes,
@@ -425,45 +419,25 @@ function buildRoutes() {
     ...errorRoutes
   ];
 
-  Object.entries(
-    featureModules
-  ).forEach(
-    ([featureKey, routesList]) => {
-      const enabled =
-        allowedFeatures.includes(
-          "ALL"
-        ) ||
-        allowedFeatures.includes(
-          featureKey
-        );
+  Object.entries(featureModules).forEach(([featureKey, routesList]) => {
+    const enabled =
+      allowedFeatures.includes("ALL") ||
+      allowedFeatures.includes(featureKey);
 
-      if (
-        enabled &&
-        Array.isArray(routesList)
-      ) {
-        aggregatedRoutes.push(
-          ...routesList
-        );
-      }
+    if (enabled && Array.isArray(routesList)) {
+      aggregatedRoutes.push(...routesList);
     }
-  );
+  });
 
   if (
-    allowedFeatures.includes(
-      "ALL"
-    ) ||
-    allowedFeatures.includes(
-      "admin"
-    )
+    allowedFeatures.includes("ALL") ||
+    allowedFeatures.includes("admin")
   ) {
     aggregatedRoutes.push({
       path: "/admin/*path",
       component: () =>
-        import(
-          "../pages/admin/dashboard.js"
-        ),
-      functionName:
-        "AdminDashboard",
+        import("../pages/admin/dashboard.js"),
+      functionName: "AdminDashboard",
       meta: {
         requiresAuth: true,
         roles: ["admin"],
@@ -473,33 +447,38 @@ function buildRoutes() {
   }
 
   /*
-   * Metadata guard is the common first pipeline
-   * for every route.
+   * Attach middleware stack.
+   * Uses metaGuard as the root orchestrator for declaring declarative route rules,
+   * while allowing custom route-level guards to be appended if present.
    */
-  const withMiddleware =
-    aggregatedRoutes.map(
-      (route) => ({
-        ...route,
-        middleware: [
-          metaGuard,
-          ...(route.middleware || [])
-        ]
-      })
-    );
+  const withMiddleware = aggregatedRoutes.map((route) => ({
+    ...route,
+    middleware: [
+      metaGuard,
+      ...(route.middleware || [])
+    ]
+  }));
 
   /*
-   * More specific routes must be tested before
-   * generic dynamic/wildcard routes.
-   *
-   * Stable sort preserves declaration order
-   * among equally specific routes.
+   * Sort by route specificity (more specific patterns match first).
    */
   return withMiddleware.sort(
-    (a, b) =>
-      routeSpecificity(b) -
-      routeSpecificity(a)
+    (a, b) => routeSpecificity(b) - routeSpecificity(a)
   );
 }
 
-export const routes =
-  buildRoutes();
+export const routes = buildRoutes();
+
+// Export granular middleware helpers for standalone usage if needed
+export {
+  metaGuard,
+  authGuard,
+  guestGuard,
+  roleGuard,
+  permissionGuard,
+  onboardingGuard,
+  featureFlagGuard,
+  unsavedChangesGuard,
+  titleGuard,
+  analyticsGuard
+};

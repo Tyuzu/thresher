@@ -40,9 +40,9 @@ export function initializeErrorTracking() {
   const token = localStorage.getItem("token");
   if (token) {
     const decoded = safeDecodeJWT(token);
-    errorTracker.userId = decoded?.userId || decoded?.sub || "anonymous";
+    errorTracker.userid = decoded?.userid || decoded?.sub || "anonymous";
   } else {
-    errorTracker.userId = "anonymous";
+    errorTracker.userid = "anonymous";
   }
 
   const isDev = window.location.hostname.includes("localhost");

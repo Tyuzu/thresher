@@ -125,7 +125,7 @@ async function displayEvent(isLoggedIn, eventId, content) {
 
     try {
         const eventData = await fetchEventData(eventId);
-        const isCreator = getState("user") === eventData.creatorid && isLoggedIn;
+        const isCreator = getState("user").userid === eventData.creatorid && isLoggedIn;
 
         await displayEventDetails(container, eventData, isCreator, isLoggedIn);
 

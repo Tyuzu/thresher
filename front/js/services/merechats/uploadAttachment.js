@@ -52,7 +52,7 @@ function createOptimisticMessage(file, mediaId, clientId) {
     previewUrl,
     message: {
       messageid: clientId,
-      sender: getState("user"),
+      sender: getState("user").userid,
       createdAt: new Date().toISOString(),
       media: {
         mediaId,

@@ -22,7 +22,7 @@ type placeOrderRequest struct {
 type combinedOrder struct {
 	OrderID       string                `bson:"orderId" json:"orderId"`
 	OrderType     string                `json:"orderType"` // "regular" or "farm"
-	UserID        string                `bson:"userId" json:"userId"`
+	UserID        string                `bson:"userid" json:"userid"`
 	FarmID        string                `json:"farmId,omitempty"`
 	Items         map[string][]CartItem `bson:"items" json:"items,omitempty"`
 	Address       string                `bson:"address" json:"address,omitempty"`

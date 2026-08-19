@@ -30,7 +30,7 @@ export async function userNewChatInit(
 ) {
   try {
     const currentUserId =
-      getState("user");
+      getState("user").userid;
 
     if (
       !currentUserId ||

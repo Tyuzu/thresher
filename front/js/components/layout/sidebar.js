@@ -32,7 +32,7 @@ let activeControlCenter = null;
 /* ---------------------------------- */
 
 function buildPersonalHub() {
-  const avatarUrl = getState("user") ? resolveImagePath(EntityType.USER, PictureType.THUMB, `${getState("user")}.jpg`) : "";
+  const avatarUrl = getState("user").userid ? resolveImagePath(EntityType.USER, PictureType.THUMB, `${getState("user").userid}.jpg`) : "";
 
   const avatarImage = Imagex({ src: avatarUrl, alt: "User avatar", classes: "chat-message-avatar" });
 

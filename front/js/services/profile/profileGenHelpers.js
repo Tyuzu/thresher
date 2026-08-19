@@ -59,7 +59,7 @@ function createProfileActions(profile, isLoggedIn) {
     const profileActions = document.createElement("div");
     profileActions.className = "profile-actions";
 
-    const currentUser = getState("user");
+    const currentUser = getState("user").userid;
 
     // Owner Actions (Logout, Edit Profile)
     if (profile.userid === currentUser) {

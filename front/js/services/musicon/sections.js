@@ -11,7 +11,7 @@ import { createSongRow } from "./songUI.js";
  * - keeps internal allSongs array and updates player queue when load more appends
  */
 export function renderSongsSection(title, songs, container, player = null, batchSelection = null, loadMore = null) {
-    const isL = Boolean(getState("user"));
+    const isL = Boolean(getState("user").userid);
     if (!songs?.length) {
 return;
 }

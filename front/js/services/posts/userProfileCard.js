@@ -34,7 +34,7 @@ export async function userProfileCard(
 
   const elements = [avatar, name, bio];
 
-  const currentUser = getState("user");
+  const currentUser = getState("user").userid;
 
   // Funding button (only if not the logged-in user)
   if (profile.username !== currentUser) {

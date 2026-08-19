@@ -1,87 +1,83 @@
+// displayFollowSugg.js
+
 import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/index.js";
-// import { toggleFollow } from "./toggleFollow.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { createElement } from "../../components/createElement.js";
 import Notify from "../../components/ui/Notify.mjs";
 import Imagex from "../../components/base/Imagex.js";
 
+/* ============================================================
+    DISPLAY FOLLOW SUGGESTIONS
+============================================================ */
+
+/**
+ * Renders follow suggestions into the designated section
+ * @param {string|number} userid 
+ * @param {HTMLElement} suggestionsSection 
+ */
 async function displayFollowSuggestions(userid, suggestionsSection) {
-    suggestionsSection.replaceChildren(); // Clear previous content
+  if (!suggestionsSection) return;
 
-    try {
-        const suggestions = await apiFetch(`/suggestions/follow?userid=${userid}`);
+  suggestionsSection.replaceChildren(); // Clear previous content
 
-        if (suggestions && suggestions.length > 0) {
-            const heading = document.createElement("h3");
-            heading.textContent = "Suggested Users to Follow:";
-            suggestionsSection.appendChild(heading);
+  try {
+    const suggestions = await apiFetch(`/suggestions/follow?userid=${userid}`);
 
-            const suggestionsList = document.createElement("div");
-            suggestionsList.id = "suggestions-list";
+    if (Array.isArray(suggestions) && suggestions.length > 0) {
+      const heading = createElement("h3", {}, ["Suggested Users to Follow:"]);
+      const suggestionsList = createElement("div", { id: "suggestions-list" });
 
-            suggestions.forEach(user => {
-                const listItem = document.createElement("div");
-                listItem.className = "suggestion-item";
+      suggestions.forEach((user) => {
+        const listItem = createElement("div", { class: "suggestion-item" });
 
-                // Profile Picture
-                const profilePic = Imagex({
-                    src: resolveImagePath(EntityType.USER, PictureType.THUMB, `${user.userid}.jpg`),
-                    class: "circle padd-4",
-                });
-                profilePic.alt = `${user.username}'s profile`;
-                profilePic.setAttribute("loading", "lazy");
-                
-                // listItem.addEventListener("click", () => navigate(`/user/${user.username}`));
+        // Profile Picture
+        const profilePic = Imagex({
+          src: resolveImagePath(EntityType.USER, PictureType.THUMB, user.userid),
+          class: "circle padd-4"
+        });
+        profilePic.alt = `${user.username || "User"}'s profile`;
+        profilePic.setAttribute("loading", "lazy");
 
-                // Username
-                const username = document.createElement("span");
-                username.className = "username";
-                username.textContent = `@${user.username}`;
+        // Username
+        const username = createElement("span", { class: "username" }, [
+          `@${user.username || "user"}`
+        ]);
 
-                // Bio
-                const bio = document.createElement("span");
-                bio.className = "bio";
-                bio.textContent = user.bio;
+        // Bio
+        const bio = createElement("span", { class: "bio" }, [user.bio || ""]);
 
-                // // Follow Button
-                // const followButton = document.createElement("button");
-                // followButton.className = "follow-btn";
-                // followButton.textContent = user.is_following ? "Following" : "Follow";
-                // followButton.dataset.userid = user.userid;
-                // // followButton.onclick = () => toggleFollow(user.userid, followButton, profile);
-                
-                // Follow Button
-                const followButton = document.createElement("button");
-                followButton.className = "follow-btn";
-                followButton.textContent = "View Profile";
-                followButton.dataset.userid = user.userid;
-                followButton.addEventListener("click", () => navigate(`/user/${user.username}`));
+        // Action Button
+        const profileBtn = createElement(
+          "button",
+          { class: "follow-btn", "data-userid": user.userid },
+          ["View Profile"]
+        );
+        profileBtn.addEventListener("click", () =>
+          navigate(`/user/${user.username}`)
+        );
 
-                
-                // Append elements
-                listItem.appendChild(profilePic);
-                listItem.appendChild(username);
-                listItem.appendChild(bio);
-                listItem.appendChild(followButton);
-                suggestionsList.appendChild(listItem);
-            });
+        // Append elements
+        listItem.append(profilePic, username, bio, profileBtn);
+        suggestionsList.appendChild(listItem);
+      });
 
-            suggestionsSection.appendChild(suggestionsList);
-        } else {
-            const noSuggestionsMessage = document.createElement("p");
-            // noSuggestionsMessage.textContent = "No follow suggestions available.";
-            noSuggestionsMessage.textContent = "";
-            suggestionsSection.appendChild(noSuggestionsMessage);
-        }
-    } catch (error) {
-        console.error("Error loading follow suggestions:", error);
-
-        const errorMessage = document.createElement("p");
-        errorMessage.textContent = "Failed to load suggestions.";
-        suggestionsSection.appendChild(errorMessage);
-
-        Notify("Error loading follow suggestions.", {type:"error",duration:3000, dismissible:true});
+      suggestionsSection.append(heading, suggestionsList);
     }
+  } catch (error) {
+    console.error("Error loading follow suggestions:", error);
+
+    const errorMessage = createElement("p", { class: "error-message" }, [
+      "Failed to load suggestions."
+    ]);
+    suggestionsSection.appendChild(errorMessage);
+
+    Notify("Error loading follow suggestions.", {
+      type: "error",
+      duration: 3000,
+      dismissible: true
+    });
+  }
 }
 
 export { displayFollowSuggestions };

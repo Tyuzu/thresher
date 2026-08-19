@@ -48,7 +48,7 @@ type UpdateReportPayload struct {
 }
 
 type CreateAppealPayload struct {
-	UserID     string `json:"userId"`
+	UserID     string `json:"userid"`
 	TargetType string `json:"targetType"`
 	TargetID   string `json:"targetId"`
 	Reason     string `json:"reason"`
@@ -264,7 +264,7 @@ func CreateAppeal(app *infra.Deps) http.HandlerFunc {
 		}
 
 		filter := bson.M{
-			"userId":     payload.UserID,
+			"userid":     payload.UserID,
 			"targetType": payload.TargetType,
 			"targetId":   payload.TargetID,
 			"status":     bson.M{"$in": []string{"pending", "submitted"}},
@@ -281,7 +281,7 @@ func CreateAppeal(app *infra.Deps) http.HandlerFunc {
 
 		appeal := bson.M{
 			"appealid":    appealID,
-			"userId":      payload.UserID,
+			"userid":      payload.UserID,
 			"targetType":  payload.TargetType,
 			"targetId":    payload.TargetID,
 			"reason":      payload.Reason,

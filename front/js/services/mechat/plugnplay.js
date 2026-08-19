@@ -5,7 +5,7 @@ import { userNewChatInit } from "../newchat/newchats.js";
 
 
 export async function meChat(otherUserId, entityType, entityId) {
-    const userId = getState("user");
+    const userId = getState("user").userid;
     if (!userId || !otherUserId) {
         return;
     }

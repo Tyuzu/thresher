@@ -4,7 +4,7 @@ import "time"
 
 type Notification struct {
 	NotificationID string    `json:"id" bson:"notificationid"`
-	UserID         string    `json:"userId" bson:"userid"`
+	UserID         string    `json:"userid" bson:"userid"`
 	Title          string    `json:"title" bson:"title"`
 	Message        string    `json:"message" bson:"message"`
 	Type           string    `json:"type" bson:"type"` // e.g., "system", "like", "comment"
@@ -14,7 +14,7 @@ type Notification struct {
 }
 
 type NotificationPreferences struct {
-	UserID      string    `json:"userId" bson:"userid"`
+	UserID      string    `json:"userid" bson:"userid"`
 	EmailNotifs bool      `json:"emailNotifs" bson:"email_notifs"`
 	PushNotifs  bool      `json:"pushNotifs" bson:"push_notifs"`
 	InAppNotifs bool      `json:"inAppNotifs" bson:"in_app_notifs"`

@@ -224,7 +224,7 @@ export function renderItemCard(item, type, isLoggedIn, container, refresh) {
      *
      * Used only for determining whether edit controls should be shown.
      */
-    const currentUserId = getState("user");
+    const currentUserId = getState("user").userid;
     const isCreator = Boolean(isLoggedIn) && Boolean(currentUserId) && item.userid === currentUserId;
     // ------------------------------------------------------------
     // IMAGE SECTION

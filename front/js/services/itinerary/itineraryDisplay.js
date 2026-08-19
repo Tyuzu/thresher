@@ -87,7 +87,7 @@ function displayItinerary(isLoggedIn, root) {
   }
 
   function createListItem(it = {}) {
-    const isCreator = getState("user") === it.userid;
+    const isCreator = getState("user").userid === it.userid;
 
     const li = createElement("li", { class: "itinerary-list-item" }, [
       createElement("strong", {}, [it.name || "Untitled"]),

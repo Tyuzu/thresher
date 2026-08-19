@@ -1,51 +1,62 @@
 import { createElement } from "../../components/createElement.js";
 import { createAvatar, updateAvatar } from "./avatarPicture.js";
-import { createBanner, updateBanner } from "./bannerPicture.js";
 
-export {
-  createAvatar,
-  createBanner,
-  updateAvatar,
-  updateBanner
+export { createAvatar, updateAvatar };
+
+/* ============================================================
+    PICTURE DISPATCH
+============================================================ */
+
+const PICTURE_HANDLERS = {
+  avatar: updateAvatar
 };
 
-// Optional unified function if you still want type-based dispatch:
+/**
+ * Unified picture update handler
+ * @param {'avatar'} type 
+ * @returns {Promise<boolean>}
+ */
 export async function updateUserPicture(type) {
-  if (type === "avatar") {
-return updateAvatar();
-}
-  if (type === "banner") {
-return updateBanner();
-}
-  console.error(`Unknown picture type: ${type}`);
-  return false;
+  const handler = PICTURE_HANDLERS[type];
+
+  if (!handler) {
+    console.error(`Unknown picture type: ${type}`);
+    return false;
+  }
+
+  return handler();
 }
 
+/* ============================================================
+    FORM HELPERS
+============================================================ */
+
+/**
+ * Generates a form group element containing a label and input/textarea
+ * @param {string} label 
+ * @param {string} id 
+ * @param {string} type 
+ * @param {string} [value=""] 
+ * @returns {HTMLElement}
+ */
 export function generateFormField(label, id, type, value = "") {
   const wrapper = createElement("div", { class: "form-group" });
-
   const labelEl = createElement("label", { for: id }, [label]);
 
-  let inputEl;
-  if (type === "textarea") {
-    inputEl = createElement("textarea", {
-      id,
-      name: id,
-      rows: 4
-    });
-    inputEl.value = value;
-  } else {
-    inputEl = createElement("input", {
-      id,
-      name: id,
-      type,
-      value
-    });
-  }
+  const isTextArea = type === "textarea";
+  const elementTag = isTextArea ? "textarea" : "input";
+  
+  const attributes = {
+    id,
+    name: id,
+    ...(isTextArea ? { rows: 4 } : { type })
+  };
+
+  const inputEl = createElement(elementTag, attributes);
+  inputEl.value = value;
 
   wrapper.appendChild(labelEl);
   wrapper.appendChild(inputEl);
 
   return wrapper;
 }
-

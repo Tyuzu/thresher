@@ -1,6 +1,6 @@
 import "../../../css/layout/header5.css";
-import { getState, isAdmin, subscribeDeep } from "../../state/state.js";
-import {webSiteName} from "../../config/env.js";
+import { getState, subscribe } from "../../state/state.js";
+import { webSiteName } from "../../config/env.js";
 import { navigate } from "../../routes/index.js";
 import { logout } from "../../services/auth/authService.js";
 import { settingsSVG, moonSVG, profileSVG, shopBagSVG, logoutSVG, cardSVG } from "../svgs.js";
@@ -31,11 +31,11 @@ function createDropdownMenu(id, labelText, items) {
   const menu = createElement("div", { class: "menu-content", "aria-label": labelText }, []);
 
   items.forEach(({ href, text }) => {
-    const link = createElement("a", { class: "profile-menu-item", href: `${text}` }, [text]);
+    const link = createElement("a", { class: "profile-menu-item", href }, [text]);
     link.addEventListener("click", (e) => {
       e.preventDefault();
       navigate(href);
-      menu.classList.toggle("open");
+      menu.classList.remove("open");
     });
     menu.append(link);
   });
@@ -48,12 +48,14 @@ function createDropdownMenu(id, labelText, items) {
   return createElement("div", { class: "header-content-dropdown" }, [toggle, menu]);
 }
 
-export function createProfileSection(userId) {
-  const user = getState("user") || {};
-  const username = user.username || "Profile";
+export function createProfileSection() {
+  const user = getState("user");
+  const userid = getState("user").userid;
+  const username = user?.username || user?.name || "Profile";
+  const imageSrc = userid ? `${userid}.jpg` : "default.jpg";
 
   const img = Imagex({
-    src: resolveImagePath(EntityType.USER, PictureType.THUMB, `${userId}.jpg`),
+    src: resolveImagePath(EntityType.USER, PictureType.THUMB, imageSrc),
     alt: username,
     classes: "profile-pic"
   });
@@ -63,7 +65,6 @@ export function createProfileSection(userId) {
   const links = [
     { href: "/profile", text: username, icon: profileSVG },
     { href: "/my-orders", text: "My Orders", icon: shopBagSVG },
-    ...(isAdmin() ? [{ href: "/admin", text: "Admin", icon: settingsSVG }] : []),
     { href: "/wallet", text: "Wallet", icon: cardSVG },
     { href: "/settings", text: "Settings", icon: settingsSVG }
   ];
@@ -81,6 +82,7 @@ export function createProfileSection(userId) {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       navigate(href);
+      menu.classList.remove("open");
     });
 
     menu.append(link);
@@ -89,7 +91,10 @@ export function createProfileSection(userId) {
   const logoutBtn = createElement("button", { class: "profile-menu-item logout" }, []);
   logoutBtn.innerHTML = logoutSVG;
   logoutBtn.append(createElement("span", {}, ["Logout"]));
-  logoutBtn.addEventListener("click", logout);
+  logoutBtn.addEventListener("click", () => {
+    menu.classList.remove("open");
+    logout();
+  });
   menu.append(logoutBtn);
 
   toggle.addEventListener("click", (e) => {
@@ -115,10 +120,11 @@ function renderUserSection() {
   function update() {
     container.replaceChildren();
     const token = getState("token");
-    const userId = getState("user");
+    const user = getState("user");
+    const userid = user?.id || user?.userid || null;
 
-    if (token && userId) {
-      container.append(createProfileSection(userId));
+    if (token && userid) {
+      container.append(createProfileSection());
     } else {
       const loginBtn = Button("Login", "login-button", {
         click: () => {
@@ -130,8 +136,9 @@ function renderUserSection() {
     }
   }
 
-  subscribeDeep("token", update);
-  subscribeDeep("userProfile.role", update);
+  subscribe("token", update);
+  subscribe("user", update);
+  subscribe("userProfile.role", update);
 
   update();
   return container;
@@ -143,12 +150,6 @@ function buildNav() {
 
   if (token) {
     const createLinks = [
-     /* { href: "/create-event", text: "Event" },
-      { href: "/create-place", text: "Place" },
-      { href: "/create-artist", text: "Artist" },
-      { href: "/create-post", text: "Post" },
-      { href: "/create-baito", text: "Baito" },
-      { href: "/create-itinerary", text: "Itinerary" },*/
       { href: "/create-farm", text: "Farm" },
       { href: "/create-recipe", text: "Recipe" }
     ];
@@ -163,15 +164,18 @@ function buildNav() {
   return nav;
 }
 
-function enableNavAutoUpdate(navRef) {
+function enableNavAutoUpdate(initialNavRef) {
+  let navRef = initialNavRef;
+
   function updateNav() {
+    if (!navRef || !navRef.parentNode) return;
     const newNav = buildNav();
     navRef.replaceWith(newNav);
     navRef = newNav;
   }
 
-  subscribeDeep("token", updateNav);
-  subscribeDeep("userProfile.role", updateNav);
+  subscribe("token", updateNav);
+  subscribe("userProfile.role", updateNav);
 }
 
 function createHeader() {
@@ -186,11 +190,13 @@ function createHeader() {
     createElement("a", { href: "/home", class: "logo-link" }, [webSiteName])
   ]);
 
+  const userid = getState("user")?.id || getState("user")?.userid || "default";
+
   const sky = createElement("div", { class: "hflexcen" }, []);
   sky.append(
     sticky({
       imglink: Imagex({
-        src: resolveImagePath(EntityType.USER, PictureType.THUMB, `${getState("user")}.jpg`),
+        src: resolveImagePath(EntityType.USER, PictureType.THUMB, `${userid}.jpg`),
         alt: "Profile",
         classes: "profile-pic"
       })

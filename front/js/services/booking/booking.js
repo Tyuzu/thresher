@@ -53,7 +53,7 @@ function createBookingsList(api, userId, isAdmin) {
 
         const activeBookings = bookings.filter(b => b.status !== "cancelled");
         bookings.sort((a, b) => new Date(`${a.date}T${a.start}`) - new Date(`${b.date}T${b.start}`));
-        const userIds = [...new Set(bookings.map(b => b.userId))].filter(id => id && id !== "guest");
+        const userIds = [...new Set(bookings.map(b => b.userid))].filter(id => id && id !== "guest");
         const userMeta = await fetchUserMeta(userIds);
         const totalSeats = activeBookings.reduce((s, b) => s + (b.seats || 1), 0);
 
@@ -82,8 +82,8 @@ function createBookingsList(api, userId, isAdmin) {
                 return;
             }
 
-            const isCurrentUser = b.userId === userId;
-            const username = b.userId === "guest" ? "Guest" : (userMeta[b.userId]?.username || b.userId);
+            const isCurrentUser = b.userid === userId;
+            const username = b.userid === "guest" ? "Guest" : (userMeta[b.userid]?.username || b.userid);
             const timeRange = b.end && b.end !== b.start ? `${b.start} - ${b.end}` : b.start;
             const seatsNote = (b.seats && b.seats > 1) ? ` (${b.seats} seats)` : "";
             const statusNote = b.status === "cancelled" ? " [CANCELLED]" : "";

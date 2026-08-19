@@ -72,7 +72,7 @@ function addAutoConListeners(eventPlaceInput) {
 
 /** Submit or update event */
 async function submitEvent(form, isLoggedIn, eventId = null) {
-    if (!isLoggedIn || !getState("user")) {
+    if (!isLoggedIn || !getState("user").userid) {
         navigate('/login');
         return;
     }

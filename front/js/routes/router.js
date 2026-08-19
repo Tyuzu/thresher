@@ -2,10 +2,7 @@ import {
     createElement
 } from "../components/createElement.js";
 import {
-    getState,
-    setRouteModule,
-    getRouteModule,
-    hasRouteModule
+    getState
 } from "../state/state.js";
 import {
     routes
@@ -13,6 +10,26 @@ import {
 import {
     track
 } from "../services/activity/metrics.js";
+
+/* =========================================================
+   ROUTE CACHE HELPERS
+========================================================= */
+function getRouteCacheMap() {
+    return getState("routeCache") || new Map();
+}
+
+function hasRouteModule(path) {
+    return getRouteCacheMap().has(path);
+}
+
+function getRouteModule(path) {
+    return getRouteCacheMap().get(path);
+}
+
+function setRouteModule(path, moduleData) {
+    getRouteCacheMap().set(path, moduleData);
+}
+
 /* =========================================================
    PATH UTILITIES
 ========================================================= */
@@ -27,6 +44,7 @@ function normalizePath(path) {
 function escapeRegex(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
 /* =========================================================
    ROUTE COMPILATION
 ========================================================= */
@@ -84,6 +102,7 @@ function compileRoute(routePath) {
     compiledRoutes.set(routePath, compiled);
     return compiled;
 }
+
 /* =========================================================
    ROUTE MATCHING
 ========================================================= */
@@ -113,6 +132,7 @@ export function matchRoute(routePath, currentPath) {
         });
     return params;
 }
+
 /* =========================================================
    QUERY STRING
 ========================================================= */
@@ -127,6 +147,7 @@ function parseQuery(search) {
     }
     return query;
 }
+
 /* =========================================================
    ROUTE INPUT PARSING
 ========================================================= */
@@ -159,6 +180,7 @@ function parseRouteInput(rawPath) {
         fullPath: path + search
     };
 }
+
 /* =========================================================
    MIDDLEWARE
 ========================================================= */
@@ -185,6 +207,7 @@ async function runMiddleware(route, context) {
         type: "allow"
     };
 }
+
 /* =========================================================
    ERROR RENDER
 ========================================================= */
@@ -194,27 +217,18 @@ function renderError(container, message = "404 Not Found") {
         },
         [message]));
 }
+
 /* =========================================================
    RENDER INVOCATION
 ========================================================= */
 function invokeRender(renderFn, auth, params, container, context) {
     const hasParams = params && Object.keys(params).length > 0;
-    /*
-     * Preserve your existing function
-     * signatures while making context
-     * available as an optional argument.
-     *
-     * With parameters:
-     *   fn(auth, params, container, context)
-     *
-     * Without parameters:
-     *   fn(auth, container, context)
-     */
     if (hasParams) {
         return renderFn(auth, params, container, context);
     }
     return renderFn(auth, container, context);
 }
+
 /* =========================================================
    AUTH SNAPSHOT
 ========================================================= */
@@ -223,6 +237,7 @@ function getIsAuthenticated() {
     const auth = state.auth || {};
     return Boolean(auth.isAuthenticated || auth.accessToken || state.token);
 }
+
 /* =========================================================
    MAIN ROUTER
 ========================================================= */
@@ -246,6 +261,7 @@ export async function render(rawPath, contentContainer) {
         query,
         fullPath
     } = parsed;
+
     /* =======================================================
        ROUTE MATCH
     ======================================================= */
@@ -270,6 +286,7 @@ export async function render(rawPath, contentContainer) {
             path: cleanPath
         };
     }
+
     /* =======================================================
        ROUTE CONTEXT
     ======================================================= */
@@ -281,6 +298,7 @@ export async function render(rawPath, contentContainer) {
         params: routeParams,
         route: matchedRoute
     };
+
     /* =======================================================
        MIDDLEWARE
     ======================================================= */
@@ -297,6 +315,7 @@ export async function render(rawPath, contentContainer) {
             redirect: middlewareResult.target
         };
     }
+
     /* =======================================================
        BEFORE ENTER
     ======================================================= */
@@ -315,6 +334,7 @@ export async function render(rawPath, contentContainer) {
             };
         }
     }
+
     /* =======================================================
        RENDER
     ======================================================= */
@@ -346,6 +366,7 @@ export async function render(rawPath, contentContainer) {
             path: cleanPath,
             duration_ms: duration
         });
+
         /* =====================================================
            AFTER ENTER
         ===================================================== */
@@ -374,6 +395,7 @@ export async function render(rawPath, contentContainer) {
         };
     }
 }
+
 /* =========================================================
    LEGACY HELPER
 ========================================================= */

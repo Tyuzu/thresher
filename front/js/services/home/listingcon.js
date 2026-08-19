@@ -5,7 +5,7 @@ import Button from "../../components/base/Button.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import Imagex from "../../components/base/Imagex.js";
 import { createTabs } from "../../utils/persistTabs.js";
-import { subscribeDeep } from "../../state/state.js";
+import { subscribe } from "../../state/state.js";
 
 export const clearElement = (el) => {
  while (el.firstChild) {
@@ -151,8 +151,8 @@ export function createListingTabs() {
     wrapper.append(createTabs(tabs, "homeTabs", "Places"));
   }
 
-  subscribeDeep("token", render);
-  subscribeDeep("userProfile.role", render);
+  subscribe("token", render);
+  subscribe("userProfile.role", render);
 
   render();
 

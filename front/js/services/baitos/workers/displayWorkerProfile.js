@@ -82,9 +82,9 @@ export async function displayWorkerProfile(contentContainer, isLoggedIn, workerI
 
   layout.append(main, aside);
   container.replaceChildren(layout);
-  const currentUser = getState("user");
+  const currentUser = getState("user").userid;
   // Determine if the visitor owns this profile or is an authorized administrator
-  const isOwnerOrAdmin = worker.userId === currentUser;
+  const isOwnerOrAdmin = worker.userid === currentUser;
   // Load booking widget
   try {
     displayBooking(
@@ -198,7 +198,7 @@ function createSidebarActions(worker, isLoggedIn) {
           Notify("Login required", { type: "warning" });
           return;
         }
-        meChat(worker.userId, "worker", worker.baitoWorkerId);
+        meChat(worker.userid, "worker", worker.baitoWorkerId);
       }
     }, "secondary")
   );

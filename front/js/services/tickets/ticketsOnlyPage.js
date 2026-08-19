@@ -40,7 +40,7 @@ async function renderTicksPage(isLoggedIn, eventId, containerx) {
   try {
     const eventData = await fetchEventData(eventId);
 
-    const currentUserId = getState("user");
+    const currentUserId = getState("user").userid;
     const isCreator =
       isLoggedIn &&
       currentUserId &&

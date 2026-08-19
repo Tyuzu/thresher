@@ -40,7 +40,7 @@ export default async function displayPlace(isLoggedIn, placeId, contentContainer
       throw new Error("Invalid place data received.");
     }
 
-    const isCreator = isLoggedIn && getState("user") === placeData.createdBy;
+    const isCreator = isLoggedIn && getState("user").userid === placeData.createdBy;
     contentContainer.replaceChildren();
 
     // 1. Render Header
@@ -174,7 +174,7 @@ function renderBookingSection(editSection, placeId, placeData, isCreator) {
             entityType: "place",
             entityId: placeId,
             entityCategory: placeData.category,
-            userId: getState("user") || "guest",
+            userId: getState("user").userid || "guest",
             isAdmin: isCreator
           },
           bookingContainer

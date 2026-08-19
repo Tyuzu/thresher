@@ -56,7 +56,7 @@ export async function renderMessage(
 
   const isOwn =
     msg.senderid === currentUserId ||
-    msg.userId === currentUserId;
+    msg.userid === currentUserId;
 
   wrapper.classList.toggle(
     "chat-message-own",

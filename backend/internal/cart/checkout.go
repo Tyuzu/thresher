@@ -266,7 +266,7 @@ func CreateCheckoutSession(app *infra.Deps) http.HandlerFunc {
 			"total":     total,
 			"address":   payload.Address,
 			"createdAt": time.Now(),
-			"userId":    userID,
+			"userid":    userID,
 		}
 
 		if err := mq.PublishWithMeta(

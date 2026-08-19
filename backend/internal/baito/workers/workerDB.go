@@ -50,7 +50,7 @@ func getUniqueWorkerSkillsFromDB(ctx context.Context, app *infra.Deps) ([]string
 }
 
 func findExistingWorkerProfile(ctx context.Context, app *infra.Deps, userID string, result any) error {
-	err := app.DB.FindOne(ctx, BaitoWorkersCollection, bson.M{"userId": userID}, result)
+	err := app.DB.FindOne(ctx, BaitoWorkersCollection, bson.M{"userid": userID}, result)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return nil
 	}
@@ -64,7 +64,7 @@ func createWorkerProfileRecord(ctx context.Context, app *infra.Deps, worker Bait
 func updateWorkerProfileRecord(ctx context.Context, app *infra.Deps, workerID, userID string, update bson.M) error {
 	_, err := app.DB.UpdateOne(ctx, BaitoWorkersCollection, bson.M{
 		"baitoWorkerId": workerID,
-		"userId":        userID,
+		"userid":        userID,
 	}, update)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return nil

@@ -39,7 +39,7 @@ func getCartItemsFromDB(
 	err := app.DB.FindMany(
 		ctx,
 		cartCollection,
-		bson.M{"userId": userID},
+		bson.M{"userid": userID},
 		&items,
 	)
 
@@ -76,7 +76,7 @@ func replaceCartItemsInDB(
 	if _, err := app.DB.Delete(
 		ctx,
 		cartCollection,
-		bson.M{"userId": userID},
+		bson.M{"userid": userID},
 	); err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func upsertCartItemInDB(
 			"quantity": item.Quantity,
 		},
 		"$set": bson.M{
-			"userId":     userID,
+			"userid":     userID,
 			"itemId":     item.ItemID,
 			"itemName":   item.ItemName,
 			"itemType":   item.ItemType,
@@ -233,7 +233,7 @@ func clearCartForUser(
 	_, err := app.DB.Delete(
 		ctx,
 		cartCollection,
-		bson.M{"userId": userID},
+		bson.M{"userid": userID},
 	)
 
 	return err
@@ -278,7 +278,7 @@ func fetchUserOrdersFromDB(
 	if err := app.DB.FindMany(
 		ctx,
 		ordersCollection,
-		bson.M{"userId": userID},
+		bson.M{"userid": userID},
 		&regularOrders,
 	); err != nil {
 		return nil, nil, err
@@ -651,7 +651,7 @@ func buildCartFilter(
 	entityType string,
 ) bson.M {
 	filter := bson.M{
-		"userId": userID,
+		"userid": userID,
 		"itemId": itemID,
 	}
 

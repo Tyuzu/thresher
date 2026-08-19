@@ -13,7 +13,7 @@ const REPORT_REASONS = [
 ];
 
 export function reportEntity(targetId, targetType, parentType = "", parentId = "") {
-  const userId = getState("user");
+  const userId = getState("user").userid;
   if (!userId) {
     Notify("You must be logged in to report content.", { type: "error" });
     return;
@@ -112,7 +112,7 @@ export function reportEntity(targetId, targetType, parentType = "", parentId = "
 }
 
 export function appealContent(targetId, targetType) {
-  const userId = getState("user");
+  const userId = getState("user").userid;
   if (!userId) {
     Notify("You must be logged in to submit an appeal.", { type: "error" });
     return;

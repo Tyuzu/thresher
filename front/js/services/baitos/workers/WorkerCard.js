@@ -9,7 +9,7 @@ import { openHireWorkerModal } from "./WorkerModal.js"; // Import it!
 export function HireWorkerCard(worker, isLoggedIn) {
   // Use passed param or fallback to global state
   const userLoggedIn = isLoggedIn !== undefined ? isLoggedIn : Boolean(getState("token"));
-  const isSelf = getState("user") === worker.userId;
+  const isSelf = getState("user").userid === worker.userid;
 
   const card = createElement("div", { class: "worker-card" });
 

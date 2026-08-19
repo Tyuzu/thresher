@@ -4,7 +4,7 @@ import { getState } from "../../state/state.js";
 
 async function NewChatPage(isLoggedIn,  chatid, contentContainer) {
     contentContainer.innerHTML = '';
-    const user = getState("user");
+    const user = getState("user").userid;
     displayNewChat(contentContainer, chatid, isLoggedIn, user);
 }
 

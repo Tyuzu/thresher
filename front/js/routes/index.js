@@ -11,7 +11,6 @@ import {
 import {
     getState,
     setState,
-    getRouteState,
     saveScroll,
     restoreScroll,
     subscribe
@@ -28,6 +27,16 @@ import {
 import {
     abortInflightApiRequests
 } from "../api/api.js";
+
+/* =========================================================
+   ROUTE STATE HELPER
+========================================================= */
+function getRouteStateHelper(location) {
+    const state = getState() || {};
+    const routeStates = state.routeState || state.scrollPositions || {};
+    return routeStates[location] || null;
+}
+
 /* =========================================================
    LAYOUT STATE
 ========================================================= */
@@ -44,6 +53,7 @@ const elements = {
     main: null,
     footer: null
 };
+
 /* =========================================================
    ELEMENT LOOKUP
 ========================================================= */
@@ -56,6 +66,7 @@ function getElements() {
     }
     return elements;
 }
+
 /* =========================================================
    LOCATION HELPERS
 ========================================================= */
@@ -74,6 +85,7 @@ export function getCurrentAppLocation() {
     }
     return (window.location.pathname + window.location.search);
 }
+
 /**
  * Parse any supported application URL.
  */
@@ -105,6 +117,7 @@ export function parseAppLocation(rawLocation) {
         fullPath: normalizedPath + search
     };
 }
+
 /**
  * Convert an internal route target into a browser URL.
  */
@@ -119,6 +132,7 @@ function toBrowserTarget(target, mode = "history") {
     }
     return rawTarget;
 }
+
 /* =========================================================
    AUTH HYDRATION
 ========================================================= */
@@ -156,6 +170,7 @@ export function hydrateAuthState(force = false) {
     }, true);
     layoutState.isHydrated = true;
 }
+
 /* =========================================================
    STATIC LAYOUT
 ========================================================= */
@@ -209,6 +224,7 @@ function refreshStaticLayout() {
         }
     }
 }
+
 /* =========================================================
    CONTENT LOADING
 ========================================================= */
@@ -255,7 +271,7 @@ export async function loadContent(rawLocation = getCurrentAppLocation(), {
     /* =======================================================
        SCROLL RESTORATION
     ======================================================= */
-    const routeState = getRouteState(getCurrentAppLocation());
+    const routeState = getRouteStateHelper(getCurrentAppLocation());
     if (routeState) {
         requestAnimationFrame(() => {
             restoreScroll(main, routeState);
@@ -263,6 +279,7 @@ export async function loadContent(rawLocation = getCurrentAppLocation(), {
     }
     return result;
 }
+
 /* =========================================================
    NAVIGATION
 ========================================================= */
@@ -336,6 +353,7 @@ export async function navigate(path, {
         layoutState.isNavigating = false;
     }
 }
+
 /* =========================================================
    INITIAL RENDER API
 ========================================================= */
@@ -343,6 +361,7 @@ export async function renderPage() {
     startPerfMonitoring();
     await loadContent(getCurrentAppLocation());
 }
+
 /* =========================================================
    AUTH REACTIVITY
 ========================================================= */
@@ -374,6 +393,7 @@ subscribe("token",
             });
         });
     });
+
 /* =========================================================
    CROSS-TAB AUTH SYNC
 ========================================================= */

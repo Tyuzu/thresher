@@ -69,7 +69,7 @@ export function renderVendorActions({ eventId, vendorId, vendorName, vendor, hir
                         entityType: "vendor", 
                         entityId: vendorId, 
                         entityCategory: vendorName, 
-                        userId: getState("user") || "guest" 
+                        userId: getState("user").userid || "guest" 
                     }, bookingContainer);
 
                     const action = bookingContainer.querySelector(".btn-primary");

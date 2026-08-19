@@ -8,7 +8,7 @@ class ErrorTracker {
     this.enabled = options.enabled ?? true;
     this.trackingEndpoint = options.trackingEndpoint || null;
     this.environment = options.environment || "unknown";
-    this.userId = options.userId || "anonymous";
+    this.userid = options.userid || "anonymous";
     this.version = options.version || "1.0.0";
     this.errorLog = [];
     this.maxErrorLog = options.maxErrorLog || 50;
@@ -68,7 +68,7 @@ return;
       stack,
       type: error?.constructor?.name || "Error",
       environment: this.environment,
-      userId: this.userId,
+      userId: this.userid,
       version: this.version,
       context,
       userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "unknown",

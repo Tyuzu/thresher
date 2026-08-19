@@ -3,91 +3,196 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Responsive / mobile browser configuration -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <!-- Primary document metadata -->
   <title>Farmium</title>
   <meta name="description"
-    content="Farmium provides fast client-side navigation, lightweight components, and excellent performance using only vanilla JavaScript." />
-  <meta name="keywords" content="vanilla js, spa, mongodb, golang, frontend, webapp, router, farmium, js application" />
+    content="Farmium is a fast, lightweight web application designed for responsive client-side navigation and reliable performance." />
   <meta name="author" content="Farmium Team" />
   <meta name="theme-color" content="#ffffff" />
+
+  <!-- Prevent automatic phone/email detection from changing the UI -->
+  <meta name="format-detection" content="telephone=no" />
 
   <!-- Canonical URL -->
   <link rel="canonical" href="https://indium.netlify.app/" />
 
-  <!-- Open Graph / Facebook -->
+  <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://indium.netlify.app/" />
   <meta property="og:title" content="Farmium" />
-  <meta property="og:description" content="A fast single-page application built without heavy frameworks." />
+  <meta property="og:description"
+    content="A fast, lightweight web application built for responsive navigation and reliable performance." />
   <meta property="og:image" content="https://indium.netlify.app/assets/preview.png" />
+  <meta property="og:image:alt" content="Farmium application preview" />
+  <meta property="og:site_name" content="Farmium" />
 
-  <!-- Twitter -->
+  <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:url" content="https://indium.netlify.app/" />
   <meta name="twitter:title" content="Farmium" />
-  <meta name="twitter:description" content="A performance-focused SPA built in pure JavaScript." />
+  <meta name="twitter:description"
+    content="A fast, lightweight web application built for responsive navigation and reliable performance." />
   <meta name="twitter:image" content="https://indium.netlify.app/assets/preview.png" />
+  <meta name="twitter:image:alt" content="Farmium application preview" />
 
-  <!-- Icons & Web App Manifest -->
+  <!-- PWA / application -->
   <link rel="manifest" href="/manifest.json" />
-  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
-  <link rel="icon" href="/assets/favicon.ico" sizes="any" />
-  <link rel="apple-touch-icon" href="/assets/icon-192.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Farmium" />
 
-  <!-- Network Performance Optimization -->
+  <!-- Icons -->
+  <link rel="icon" href="/assets/favicon.ico" sizes="any" />
+  <link rel="icon" href="/assets/icon-192.png" type="image/png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="/assets/icon-192.png" sizes="192x192" />
+
+  <!-- Sitemap -->
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+
+  <!-- Backend connection -->
   <link rel="dns-prefetch" href="https://thresher-o6i4.onrender.com" />
   <link rel="preconnect" href="https://thresher-o6i4.onrender.com" crossorigin />
 
-  <!-- modulepreload Essential Assets -->
-  <link rel="preload" href="/css/style.css" as="style" />
-  <link rel="modulepreload" href="/js/app.js" as="script" crossorigin="anonymous" />
-
-  <!-- Stylesheets -->
+  <!-- Critical stylesheet -->
   <link rel="stylesheet" href="/css/style.css" />
 
-  <!-- Robust Dynamic Head Update Utility for Vanilla SPA Routing -->
+  <!-- Main application module -->
+  <script type="module" src="/js/app.js"></script>
+
+  <!--
+    Dynamic SPA head utility.
+
+    Supports:
+      updateHeadTag("title", "Dashboard", "textContent")
+      updateHeadTag("description", "...")
+      updateHeadTag("og:title", "...")
+      updateHeadTag("twitter:title", "...")
+      updateHeadTag("canonical", "/dashboard", "href")
+  -->
   <script>
-    window.updateHeadTag = (selectorOrKey, value, attr = "content") => {
-      let el = document.querySelector(selectorOrKey);
+    (() => {
+      const META_SELECTOR_PREFIXES = ["og:", "twitter:"];
 
-      if (!el) {
-        // Fallback for meta name or property attributes
-        el = document.querySelector(`meta[name="${selectorOrKey}"], meta[property="${selectorOrKey}"]`);
-      }
+      window.updateHeadTag = (
+        selectorOrKey,
+        value,
+        attr = "content"
+      ) => {
+        if (!selectorOrKey || value == null) {
+          return;
+        }
 
-      if (el) {
-        el.setAttribute(attr, value);
-      } else if (selectorOrKey.startsWith("og:") || selectorOrKey.startsWith("twitter:")) {
-        // Dynamically create OpenGraph or Twitter meta tag if missing
-        const meta = document.createElement("meta");
-        meta.setAttribute(selectorOrKey.startsWith("og:") ? "property" : "name", selectorOrKey);
-        meta.setAttribute(attr, value);
-        document.head.appendChild(meta);
-      }
-    };
+        const key = String(selectorOrKey);
+        const stringValue = String(value);
+
+        let element = null;
+
+        /*
+         * Direct selector support.
+         *
+         * Avoid treating arbitrary keys as CSS selectors when possible.
+         */
+        try {
+          element = document.querySelector(key);
+        } catch {
+          element = null;
+        }
+
+        /*
+         * Common metadata-key support.
+         */
+        if (!element) {
+          if (key === "title") {
+            element = document.querySelector("title");
+          } else if (key === "canonical") {
+            element = document.querySelector('link[rel="canonical"]');
+          } else {
+            const escapedKey =
+              window.CSS?.escape
+                ? CSS.escape(key)
+                : key.replace(/"/g, '\\"');
+
+            element = document.querySelector(
+              `meta[name="${escapedKey}"], meta[property="${escapedKey}"]`
+            );
+          }
+        }
+
+        /*
+         * Create missing OG/Twitter metadata when required.
+         */
+        if (
+          !element &&
+          META_SELECTOR_PREFIXES.some((prefix) => key.startsWith(prefix))
+        ) {
+          element = document.createElement("meta");
+
+          element.setAttribute(
+            key.startsWith("og:") ? "property" : "name",
+            key
+          );
+
+          document.head.appendChild(element);
+        }
+
+        if (!element) {
+          return;
+        }
+
+        /*
+         * Title uses textContent rather than an attribute.
+         */
+        if (element.tagName === "TITLE") {
+          element.textContent = stringValue;
+          return;
+        }
+
+        element.setAttribute(attr, stringValue);
+      };
+    })();
   </script>
 </head>
 
 <body>
   <noscript>
-    <div style="padding: 20px; text-align: center; background-color: #f8d7da; color: #721c24;">
-      <p><strong>JavaScript is required.</strong> Please enable JavaScript in your browser settings to access Farmium.
+    <div class="noscript-message" role="alert">
+      <h1>JavaScript is required</h1>
+      <p>
+        Please enable JavaScript in your browser settings to use Farmium.
       </p>
     </div>
   </noscript>
 
+  <!--
+    Application shell.
+
+    The layout containers are intentionally empty because
+    the SPA renderer populates them after initialization.
+  -->
   <div id="app" class="app">
-    <header id="pageheader" class="pageheader"></header>
-    <nav id="primary-nav" class="primary-nav" aria-label="Main Navigation"></nav>
-    <div id="secnav" class="secnav" role="region" aria-label="Secondary Navigation"></div>
-    <main id="content" class="content-main" tabindex="-1"></main>
-    <div id="modalcon" role="region" aria-live="polite"></div>
-    <footer id="pagefooter" class="pagefooter"></footer>
+    <header id="pageheader" class="pageheader" role="banner"></header>
+
+    <nav id="primary-nav" class="primary-nav" aria-label="Main navigation"></nav>
+
+    <div id="secnav" class="secnav" role="region" aria-label="Secondary navigation" aria-live="polite"></div>
+
+    <main id="content" class="content-main" tabindex="-1" aria-live="polite"></main>
+
+    <!--
+      Screen-reader announcements can be placed here
+      without visually disrupting the application.
+    -->
+    <div id="announcer" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="modalcon" role="region" aria-live="polite" aria-atomic="true"></div>
+
+    <footer id="pagefooter" class="pagefooter" role="contentinfo"></footer>
   </div>
-  
-  <!-- Main Application Bundle -->
-  <script type="module" src="/js/app.js"></script>
 </body>
 
 </html>

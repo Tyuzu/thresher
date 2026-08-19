@@ -119,7 +119,7 @@ function renderBody(data, msg) {
    Message Renderer
 --------------------------*/
 export function renderMessage(msg) {
-  const user = getState("user");
+  const user = getState("user").userid;
   const data = normalizeMessage(msg, user);
 
   const avatar = renderAvatar(msg, {

@@ -1,9 +1,9 @@
 import "../../../css/inistyles/profilexx.css";
 import "../../../css/inistyles/udata.css";
-import { displayProfile  } from "../../services/profile/userProfileService";
-import { displayUserProfile  } from "../../services/profile/otherUserProfileService";
+import { displayProfile  } from "../../services/profile/displayMyProfile";
+import { displayUserProfile  } from "../../services/profile/displayOtherUserProfile";
 
-async function MyProfile(isLoggedIn, contentContainer) {
+async function MyProfile(isLoggedIn, contentContainer, k) {
     contentContainer.innerHTML = "";
     const content = document.createElement("div");
     content.classList = "profilepage";

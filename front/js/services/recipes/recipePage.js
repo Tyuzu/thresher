@@ -30,7 +30,7 @@ export async function displayRecipe(content, isLoggedIn, recipeid) {
   const container = createElement("div", { class: "recipepage" });
   content.appendChild(container);
 
-  const currentUser = getState("user");
+  const currentUser = getState("user").userid;
 
   let recipe;
 
@@ -44,7 +44,7 @@ export async function displayRecipe(content, isLoggedIn, recipeid) {
   }
 
   const isFavorite = getFavorites().includes(recipeid);
-  // const isCreator = currentUser && recipe.userId === currentUser;
+  // const isCreator = currentUser && recipe.userid === currentUser;
 
   /* HEADER */
   const titleEl = createElement("h2", {}, [

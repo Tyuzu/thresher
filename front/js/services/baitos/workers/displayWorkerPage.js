@@ -8,7 +8,7 @@ import { displayCreateOrEditBaitoProfile } from "../create/createBaitoProfile.js
  * Main entry point - routes to correct interface based on user role
  */
 export async function displayWorkerPage(contentContainer, isLoggedIn, workerId) {
-  const currentUser = getState("user");
+  const currentUser = getState("user").userid;
   
   // Fetch worker to check ownership
   let worker = null;
@@ -24,7 +24,7 @@ export async function displayWorkerPage(contentContainer, isLoggedIn, workerId) 
   }
 
   // Route based on ownership
-  if (worker.userId === currentUser) {
+  if (worker.userid === currentUser) {
     // Worker viewing their own profile - show management interface
     displayManageWorkerProfile(contentContainer, isLoggedIn, workerId);
   } else {

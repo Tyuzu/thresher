@@ -1,0 +1,651 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <title>OffWork | Farmium</title>
+
+  <meta name="description" content="Farmium's offline lounge with a quick game and local scratchpad." />
+
+  <meta name="theme-color" content="#f4f6f8" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="OffWork" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/assets/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/assets/icon-192.png" sizes="192x192" />
+
+  <style>
+    :root {
+      color-scheme: light dark;
+
+      --background: #f4f6f8;
+      --surface: #ffffff;
+      --surface-hover: #f8f9fa;
+
+      --text: #202124;
+      --muted: #5f6368;
+      --border: #dadce0;
+
+      --primary: #4285f4;
+      --primary-dark: #3367d6;
+
+      --success: #34a853;
+      --danger: #d93025;
+
+      --radius: 14px;
+      --shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+
+      margin: 0;
+      padding:
+        max(1.25rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left));
+
+      font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+      color: var(--text);
+      background: var(--background);
+      line-height: 1.5;
+    }
+
+    .page {
+      width: min(100%, 760px);
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .brand {
+      margin: 0;
+      font-size: clamp(2rem, 7vw, 3rem);
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      max-width: 580px;
+      margin: 0.75rem auto 0;
+      color: var(--muted);
+    }
+
+    .connection {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+
+      margin-top: 1rem;
+      padding: 0.4rem 0.75rem;
+
+      border: 1px solid var(--border);
+      border-radius: 999px;
+
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+    }
+
+    .connection.online .connection-dot {
+      background: var(--success);
+    }
+
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .card {
+      padding: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.25rem;
+    }
+
+    .card-description {
+      margin: 0 0 1.25rem;
+      color: var(--muted);
+    }
+
+    /* Quick Tap */
+
+    .game {
+      text-align: center;
+    }
+
+    .score {
+      margin: 1rem 0;
+      font-size: 3rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .game-status {
+      min-height: 1.5em;
+      margin: 0.75rem 0 1rem;
+      color: var(--muted);
+    }
+
+    .game-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    /* Scratchpad */
+
+    .notes-wrapper {
+      position: relative;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+
+      padding: 1rem;
+
+      border: 1px solid var(--border);
+      border-radius: 10px;
+
+      color: var(--text);
+      background: var(--surface);
+
+      font: inherit;
+      line-height: 1.5;
+    }
+
+    textarea:focus {
+      outline: 3px solid rgba(66, 133, 244, 0.2);
+      border-color: var(--primary);
+    }
+
+    .notes-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.5rem;
+
+      margin-top: 0.65rem;
+
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .saved-status {
+      color: var(--success);
+    }
+
+    /* Buttons */
+
+    .button {
+      min-height: 44px;
+      padding: 0.65rem 1rem;
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+
+      border: 0;
+      border-radius: 9px;
+
+      font: inherit;
+      font-weight: 600;
+
+      text-decoration: none;
+      cursor: pointer;
+
+      transition:
+        transform 0.15s ease,
+        opacity 0.15s ease,
+        background-color 0.15s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .button:focus-visible {
+      outline: 3px solid rgba(66, 133, 244, 0.35);
+      outline-offset: 2px;
+    }
+
+    .button-primary {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .button-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .button-secondary {
+      color: var(--text);
+      background: var(--surface-hover);
+      border: 1px solid var(--border);
+    }
+
+    .button-danger {
+      color: #fff;
+      background: var(--danger);
+    }
+
+    .navigation {
+      display: flex;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+
+    .navigation a {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .navigation a:hover {
+      text-decoration: underline;
+    }
+
+    .privacy-note {
+      margin-top: 1.25rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (min-width: 680px) {
+      .grid {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+
+      .card:last-child {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .button {
+        transition: none;
+      }
+
+      .button:hover,
+      .button:active {
+        transform: none;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #202124;
+        --surface: #292a2d;
+        --surface-hover: #303134;
+
+        --text: #f1f3f4;
+        --muted: #bdc1c6;
+        --border: #3c4043;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+
+    <header>
+      <h1 class="brand">🎮 OffWork</h1>
+
+      <p class="subtitle">
+        A small offline lounge for when the network decides to take
+        an unscheduled vacation.
+      </p>
+
+      <div id="connection" class="connection" role="status" aria-live="polite">
+        <span class="connection-dot" aria-hidden="true"></span>
+
+        <span id="connectionText">
+          Offline mode
+        </span>
+      </div>
+    </header>
+
+    <div class="grid">
+
+      <!-- Quick Tap -->
+      <section class="card game" aria-labelledby="game-title">
+        <h2 id="game-title">⚡ Quick Tap</h2>
+
+        <p class="card-description">
+          How many clicks can you make before boredom wins?
+        </p>
+
+        <div id="score" class="score" aria-live="polite" aria-label="Score">
+          0
+        </div>
+
+        <p id="gameStatus" class="game-status" aria-live="polite">
+          Ready when you are.
+        </p>
+
+        <div class="game-actions">
+          <button id="tapButton" class="button button-primary" type="button">
+            ⚡ Tap!
+          </button>
+
+          <button id="resetGame" class="button button-secondary" type="button">
+            Reset
+          </button>
+        </div>
+      </section>
+
+      <!-- Scratchpad -->
+      <section class="card" aria-labelledby="notes-title">
+        <h2 id="notes-title">📝 Offline Scratchpad</h2>
+
+        <p class="card-description">
+          Your notes are saved locally in this browser.
+        </p>
+
+        <div class="notes-wrapper">
+          <label class="sr-only" for="notes">
+            Offline notes
+          </label>
+
+          <textarea id="notes" maxlength="10000" placeholder="Jot down quick thoughts..." spellcheck="true"
+            autocomplete="off"></textarea>
+        </div>
+
+        <div class="notes-meta">
+          <span id="characterCount">
+            0 characters
+          </span>
+
+          <span id="savedStatus" class="saved-status" aria-live="polite">
+            Saved locally
+          </span>
+        </div>
+
+        <div class="game-actions" style="margin-top: 1rem;">
+          <button id="clearNotes" class="button button-danger" type="button">
+            Clear notes
+          </button>
+        </div>
+      </section>
+
+    </div>
+
+    <nav class="navigation" aria-label="Offline navigation">
+      <a href="/">
+        ← Return to Farmium
+      </a>
+    </nav>
+
+    <p class="privacy-note">
+      Scratchpad content stays in this browser using local storage.
+    </p>
+
+    <div id="announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const NOTES_KEY = "offwork_notes";
+      const MAX_NOTES_LENGTH = 10000;
+
+      const scoreElement = document.getElementById("score");
+      const gameStatus = document.getElementById("gameStatus");
+      const tapButton = document.getElementById("tapButton");
+      const resetGame = document.getElementById("resetGame");
+
+      const notes = document.getElementById("notes");
+      const characterCount = document.getElementById("characterCount");
+      const savedStatus = document.getElementById("savedStatus");
+      const clearNotes = document.getElementById("clearNotes");
+
+      const connection = document.getElementById("connection");
+      const connectionText = document.getElementById("connectionText");
+
+      const announcer = document.getElementById("announcer");
+
+      let score = 0;
+      let saveTimer = null;
+
+      /* =====================================================
+         ACCESSIBLE ANNOUNCEMENTS
+      ===================================================== */
+
+      function announce(message) {
+        announcer.textContent = "";
+
+        requestAnimationFrame(() => {
+          announcer.textContent = message;
+        });
+      }
+
+      /* =====================================================
+         QUICK TAP GAME
+      ===================================================== */
+
+      function updateScore() {
+        scoreElement.textContent = String(score);
+      }
+
+      function tapGame() {
+        score += 1;
+        updateScore();
+
+        if (score === 1) {
+          gameStatus.textContent = "Keep going!";
+        } else if (score === 10) {
+          gameStatus.textContent = "Nice. Double digits.";
+        } else if (score === 25) {
+          gameStatus.textContent = "Okay, now you're committed.";
+        } else if (score === 50) {
+          gameStatus.textContent = "50 taps. Humanity survives another day.";
+        } else if (score === 100) {
+          gameStatus.textContent = "100! You have defeated the button.";
+        }
+      }
+
+      function resetGameScore() {
+        score = 0;
+        updateScore();
+        gameStatus.textContent = "Ready when you are.";
+        announce("Game reset.");
+      }
+
+      tapButton.addEventListener("click", tapGame);
+      resetGame.addEventListener("click", resetGameScore);
+
+      /* =====================================================
+         SCRATCHPAD
+      ===================================================== */
+
+      function updateCharacterCount() {
+        const count = notes.value.length;
+
+        characterCount.textContent =
+          `${count.toLocaleString()} character${count === 1 ? "" : "s"}`;
+      }
+
+      function saveNotes() {
+        try {
+          localStorage.setItem(
+            NOTES_KEY,
+            notes.value.slice(0, MAX_NOTES_LENGTH)
+          );
+
+          savedStatus.textContent = "Saved locally";
+        } catch (error) {
+          console.warn(
+            "Unable to save offline notes:",
+            error?.message || error
+          );
+
+          savedStatus.textContent = "Could not save locally";
+        }
+      }
+
+      function scheduleSave() {
+        savedStatus.textContent = "Saving…";
+
+        clearTimeout(saveTimer);
+
+        saveTimer = setTimeout(saveNotes, 250);
+      }
+
+      function loadNotes() {
+        try {
+          const savedNotes = localStorage.getItem(NOTES_KEY);
+
+          if (savedNotes) {
+            notes.value = savedNotes.slice(0, MAX_NOTES_LENGTH);
+          }
+        } catch (error) {
+          console.warn(
+            "Unable to load offline notes:",
+            error?.message || error
+          );
+        }
+
+        updateCharacterCount();
+      }
+
+      function clearSavedNotes() {
+        if (!notes.value) {
+          return;
+        }
+
+        const confirmed = window.confirm(
+          "Clear all saved scratchpad notes?"
+        );
+
+        if (!confirmed) {
+          return;
+        }
+
+        notes.value = "";
+
+        try {
+          localStorage.removeItem(NOTES_KEY);
+        } catch (error) {
+          console.warn(
+            "Unable to clear offline notes:",
+            error?.message || error
+          );
+        }
+
+        updateCharacterCount();
+        savedStatus.textContent = "Notes cleared";
+        announce("Scratchpad cleared.");
+      }
+
+      notes.addEventListener("input", () => {
+        updateCharacterCount();
+        scheduleSave();
+      });
+
+      clearNotes.addEventListener("click", clearSavedNotes);
+
+      /* =====================================================
+         CONNECTION STATUS
+      ===================================================== */
+
+      function updateConnectionStatus(isOnline) {
+        connection.classList.toggle("online", isOnline);
+
+        connectionText.textContent =
+          isOnline ? "Connection restored" : "Offline mode";
+      }
+
+      window.addEventListener("online", () => {
+        updateConnectionStatus(true);
+
+        /*
+         * Do not automatically redirect.
+         *
+         * The user may be writing notes or playing the game.
+         */
+        announce(
+          "Connection restored. Your offline tools are still available."
+        );
+      });
+
+      window.addEventListener("offline", () => {
+        updateConnectionStatus(false);
+
+        announce(
+          "Connection lost. Offline tools remain available."
+        );
+      });
+
+      /* =====================================================
+         INITIALIZATION
+      ===================================================== */
+
+      loadNotes();
+      updateConnectionStatus(navigator.onLine);
+      updateScore();
+    })();
+  </script>
+</body>
+
+</html>
+```

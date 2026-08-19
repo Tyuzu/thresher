@@ -68,7 +68,7 @@ func CreateRefundRequest(app *infra.Deps) http.HandlerFunc {
 		}
 		err := app.DB.FindOne(ctx, ordersCollection, bson.M{
 			"orderId": req.OrderID,
-			"userId":  userID,
+			"userid":  userID,
 		}, &regularOrder)
 
 		switch {

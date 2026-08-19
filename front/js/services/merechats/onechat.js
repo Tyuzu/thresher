@@ -57,7 +57,7 @@ export function sendMessage(chatid, content, targetContainer = getMessageContain
 
   const optimistic = {
     messageid: clientId,
-    sender: getState("user"),
+    sender: getState("user").userid,
     content,
     createdAt: new Date().toISOString()
   };

@@ -67,7 +67,7 @@ export function renderProductGallery(product, refresh) {
 
     gallerySection.appendChild(galleryContainer);
 
-    const currentUserId = getState("user");
+    const currentUserId = getState("user").userid;
 
     const isCreator =
       Boolean(getState("token")) &&

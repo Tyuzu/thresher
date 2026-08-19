@@ -155,9 +155,9 @@ export function bookingApi(entityType, entityId, storage, userId) {
             const seatsToBook = Math.max(1, parseInt(payload.seats || 1, 10));
 
             // Enforce one booking per user per date locally
-            if (payload.userId && payload.date) {
+            if (payload.userid && payload.date) {
                 const userHasBookingThisDate = bookings.some(
-                    b => b.userId === payload.userId && b.date === payload.date && b.status !== "cancelled"
+                    b => b.userid === payload.userid && b.date === payload.date && b.status !== "cancelled"
                 );
                 if (userHasBookingThisDate) {
                     return { ok: false, reason: "one-per-day" };
@@ -179,7 +179,7 @@ export function bookingApi(entityType, entityId, storage, userId) {
                 }
 
                 const userAlready = bookings.some(
-                    b => b.userId === payload.userId && b.slotId === slot.id && b.status !== "cancelled"
+                    b => b.userid === payload.userid && b.slotId === slot.id && b.status !== "cancelled"
                 );
                 if (userAlready) return { ok: false, reason: "already-slot" };
             } else if (payload.tierId) {
@@ -199,7 +199,7 @@ export function bookingApi(entityType, entityId, storage, userId) {
                 id: genId(),
                 slotId: payload.slotId || null,
                 tierId: payload.tierId || null,
-                userId: payload.userId,
+                userId: payload.userid,
                 date: payload.date,
                 start: payload.start,
                 end: payload.end || payload.start,
@@ -368,7 +368,7 @@ export function bookingStorage(entityType, entityId) {
 
         const before = all[entityType][entityId].length;
         all[entityType][entityId] = all[entityType][entityId].map(b =>
-            b.id === bookingId && b.userId === userIdArg ? { ...b, status: "cancelled" } : b
+            b.id === bookingId && b.userid === userIdArg ? { ...b, status: "cancelled" } : b
         );
         writeJson(BOOKING_KEY, all);
         return all[entityType][entityId].length === before;

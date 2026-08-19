@@ -1,5 +1,5 @@
 import { apiFetch } from "../../../api/api.js";
-import { FILEDROP_URL, state } from "../../../state/state.js";
+import { FILEDROP_URL, getState } from "../../../state/state.js";
 import { UploadStore } from "../store/uploadStore.js";
 
 /* -------------------------
@@ -134,7 +134,7 @@ export function uploadFile(u) {
 
     xhr.open("POST", FILEDROP_URL);
 
-    const token = state?.token;
+    const token = getState("token");
 
     if (token) {
       xhr.setRequestHeader(

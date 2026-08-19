@@ -42,11 +42,11 @@ onSave(newVal);
 export function renderAuthor(recipe, currentUser) {
   const container = createElement("p", { class: "author-info" }, ["Loading author..."]);
 
-  fetchUserMeta([recipe.userId]).then(userx => {
-    recipe.username = userx[recipe.userId]?.username || "Anonymous";
+  fetchUserMeta([recipe.userid]).then(userx => {
+    recipe.username = userx[recipe.userid]?.username || "Anonymous";
 
     container.replaceChildren(
-      ...(currentUser?.id === recipe.userId
+      ...(currentUser?.id === recipe.userid
         ? ["By You"]
         : ["By ", createElement("a", { href: `/user/${recipe.username}` }, [recipe.username])])
     );
@@ -57,7 +57,7 @@ export function renderAuthor(recipe, currentUser) {
 
 // --- Banner ---
 export function createRecipeBannerSection(recipe, currentUser) {
-  const isCreator = recipe.userId === currentUser;
+  const isCreator = recipe.userid === currentUser;
   return Bannerx({
     isCreator,
     bannerkey: recipe.banner,

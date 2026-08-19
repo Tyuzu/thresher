@@ -144,7 +144,7 @@ function renderNotModerator(container) {
     const form = createElement("form", { class: "moderator-apply-form" });
     const userIdInput = createElement("input", {
         type: "text",
-        name: "userId",
+        name: "userid",
         placeholder: "Your user ID",
         style: "display:block;margin:0.5rem 0;"
     });

@@ -80,7 +80,7 @@ func CreateBooking(app *infra.Deps) http.HandlerFunc {
 		count, err := CountBookings(ctx, app.DB, bson.M{
 			"entityType": req.EntityType,
 			"entityId":   req.EntityId,
-			"userId":     req.UserId,
+			"userid":     req.UserId,
 			"date":       req.Date,
 			"status":     bson.M{"$ne": StatusCancelled},
 		})

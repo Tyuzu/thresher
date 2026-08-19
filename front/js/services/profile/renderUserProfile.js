@@ -1,71 +1,77 @@
-// import { state } from "../../state/state.js";
+// profilGen.js
+
 import Button from "../../components/base/Button.js";
 import { getState } from "../../state/state.js";
-import { displayUserProfileData } from "./otherUserProfileService.js";
-// import { displayFollowSuggestions } from "./displayFollowSugg.js";
-import {  createProfileDetails, createStatistics } from "./profileGenHelpers.js";
-import { createBanner, createAvatar } from "./generators.js";
+import { displayUserProfileData } from "./displayOtherUserProfile.js";
+import { createProfileDetails, createStatistics } from "./profileGenHelpers.js";
+import { createBanner } from "./bannerPicture.js";
+import { createAvatar } from "./avatarPicture.js";
 import { othusrdata } from "../userdata/otheruserdata.js";
 import { createElement } from "../../components/createElement.js";
 
-// /* Utility function to append multiple children */
-// function appendChildren(parent, ...children) {
-//     children.forEach(child => parent.appendChild(child));
-// }
+/* ============================================================
+    HELPERS
+============================================================ */
 
+/** Helper function to append multiple child nodes safely */
 function appendChildren(parent, ...children) {
-    children.forEach(child => {
-        if (child instanceof Node) {
-            parent.appendChild(child);
-        } else {
-            console.error("Invalid child passed to appendChildren:", child);
-        }
-    });
-}
+  if (!parent) return;
 
-
-function profilGen(profile, isLoggedIn) {
-    const isCreator = profile.userid === getState("user");
-
-    const profileContainer = document.createElement("div");
-    profileContainer.className = "profile-container hflex";
-
-    const section = document.createElement("section");
-    section.className = "channel vflex";
-
-    const suggs = document.createElement("section");
-    suggs.className = "followcon hflex";
-    // displayFollowSuggestions(profile.userid, suggs);
-
-    appendChildren(
-        section,
-        createBanner(profile, isCreator),
-        createAvatar(profile),
-        createProfileDetails(profile, isLoggedIn),
-        createStatistics(profile),
-        suggs
-    );
-
-    if (profile.userid === getState("user")) {
-        // Load User Data Button
-        const udata = document.createElement("div");
-        udata.className = "udata-info";
-        const loadUserDataButton = Button("Load UserData", "load-user-data", {
-            click: () => displayUserProfileData(isLoggedIn, udata, profile.userid),
-        });
-
-        appendChildren(section, loadUserDataButton, udata);
-
-    } else {
-        const kc = createElement('div');
-        othusrdata(kc, profile.userid);
-        appendChildren(section, kc);
+  children.flat().forEach((child) => {
+    if (child instanceof Node) {
+      parent.appendChild(child);
+    } else if (child) {
+      console.error("Invalid child passed to appendChildren:", child);
     }
-
-    profileContainer.appendChild(section);
-    return profileContainer;
+  });
 }
 
-// export { displayFollowSuggestions };
+/* ============================================================
+    PROFILE GENERATOR COMPONENT
+============================================================ */
+
+function profilGen(profile = {}, isLoggedIn = false) {
+  const currentUserId = getState("user")?.userid;
+  const isCreator = Boolean(profile.userid && profile.userid === currentUserId);
+
+  const profileContainer = createElement("div", {
+    class: "profile-container hflex"
+  });
+
+  const section = createElement("section", {
+    class: "channel vflex"
+  });
+
+  const suggs = createElement("section", {
+    class: "followcon hflex"
+  });
+
+  // Append primary profile header elements
+  appendChildren(
+    section,
+    createBanner(profile, isCreator),
+    createAvatar(profile),
+    createProfileDetails(profile, isLoggedIn),
+    createStatistics(profile),
+    suggs
+  );
+
+  // Render role-specific action or profile data sections
+  if (isCreator) {
+    const udata = createElement("div", { class: "udata-info" });
+    const loadUserDataButton = Button("Load UserData", "load-user-data", {
+      click: () => displayUserProfileData(isLoggedIn, udata, profile.userid)
+    });
+
+    appendChildren(section, loadUserDataButton, udata);
+  } else {
+    const kc = createElement("div");
+    othusrdata(kc, profile.userid);
+    appendChildren(section, kc);
+  }
+
+  profileContainer.appendChild(section);
+  return profileContainer;
+}
 
 export default profilGen;

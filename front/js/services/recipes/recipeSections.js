@@ -43,7 +43,7 @@ function getCurrentUserId() {
   if (typeof user === "string" || typeof user === "number") {
     return String(user);
   }
-  return (user.id ?? user.userid ?? user.userId ?? null);
+  return (user.id ?? user.userid ?? user.userid ?? null);
 }
 /**
  * Check whether the current user owns the recipe.
@@ -56,7 +56,7 @@ function isRecipeOwner(recipe) {
   if (!currentUserId) {
     return false;
   }
-  const recipeUserId = recipe.userId ?? recipe.userid ?? recipe.user_id;
+  const recipeUserId = recipe.userid ?? recipe.userid ?? recipe.user_id;
   if (recipeUserId === null || recipeUserId === undefined) {
     return false;
   }
@@ -427,7 +427,7 @@ export function renderComments(recipe) {
     loading = true;
     toggle.disabled = true;
     try {
-      commentsEl = await createCommentsSection("recipe", recipe.recipeid, getState("user"));
+      commentsEl = await createCommentsSection("recipe", recipe.recipeid, getState("user").userid);
       if (!commentsEl) {
         throw new Error("Comments component returned no element.");
       }
@@ -533,8 +533,8 @@ export function renderActions(recipe, currentUser, contentContainer, isFavorite,
   // ----------------------------------------------------------
   // Author edit
   // ----------------------------------------------------------
-  const resolvedCurrentUserId = currentUser?.id ?? currentUser?.userid ?? currentUser?.userId ?? currentUser;
-  const resolvedRecipeUserId = recipe?.userId ?? recipe?.userid ?? recipe?.user_id;
+  const resolvedCurrentUserId = currentUser?.id ?? currentUser?.userid ?? currentUser?.userid ?? currentUser;
+  const resolvedRecipeUserId = recipe?.userid ?? recipe?.userid ?? recipe?.user_id;
   const isOwner = resolvedCurrentUserId !== null && resolvedCurrentUserId !== undefined && resolvedRecipeUserId !== null && resolvedRecipeUserId !== undefined && String(resolvedCurrentUserId) === String(resolvedRecipeUserId);
   if (isOwner) {
     const editBtn = Button("Edit", "", {}, "buttonx secondary");
