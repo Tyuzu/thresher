@@ -14,10 +14,10 @@ func AddNotificationsRoutes(router *httprouter.Router, app *infra.Deps, rateLimi
 	authmidware := middleware.Authenticate(app)
 
 	// Create notification
-	router.HandlerFunc(http.MethodPost, "/api/v1/notifs", rateLimiter.Limit(authmidware(notifications.CreateNotification(app))))
+	// router.HandlerFunc(http.MethodPost, "/api/v1/notifs", rateLimiter.Limit(authmidware(notifications.CreateNotification(app))))
 
 	// Bulk create notifications
-	router.HandlerFunc(http.MethodPost, "/api/v1/notifs/bulk", rateLimiter.Limit(authmidware(notifications.BulkCreateNotifications(app))))
+	// router.HandlerFunc(http.MethodPost, "/api/v1/notifs/bulk", rateLimiter.Limit(authmidware(notifications.BulkCreateNotifications(app))))
 
 	// Get user notifications
 	router.HandlerFunc(http.MethodGet, "/api/v1/notifs", authmidware(notifications.GetUserNotifications(app)))

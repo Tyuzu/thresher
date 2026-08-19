@@ -54,7 +54,7 @@ func New(cfg *config.Config) (*Deps, error) {
 
 	/* -------- NATS JetStream (optional) -------- */
 
-	var mqLayer mq.MQ = mq.NewJetStreamMQ(nil)
+	var mqLayer mq.MQ
 	var nc *nats.Conn
 
 	natsURL := env("NATS_URL", "")

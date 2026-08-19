@@ -194,7 +194,7 @@ export async function refreshToken() {
                 const authPayload = {
                     token,
                     user: userId || null,
-                    userId: userId || null,
+                    userid: userId || null,
                     username: parsed.username || "",
                     roles,
                     permissions,

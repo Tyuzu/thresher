@@ -58,7 +58,6 @@ func AddActivityRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *
 }
 
 func AddAnalyticsRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
-	// Example: /api/v1/antics/events/123 or /api/v1/analytics/places/456
 	router.HandlerFunc(http.MethodGet, "/api/v1/antics/:entityType/:entityId", rateLimiter.Limit(analytics.GetEntityAnalytics))
 }
 

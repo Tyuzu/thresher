@@ -5,6 +5,7 @@ import { navigate } from "../../routes/index.js";
 import Imagex from "../base/Imagex.js"; // Adjust the import path if needed
 import { getState } from "../../state/state.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { silentLogout } from "../../services/auth/authService.js";
 
 /* ---------------------------------- */
 /* Config                             */
@@ -187,6 +188,7 @@ function attachHandlers(dialog, closeFn) {
 function handleLogout() {
   console.log("Logging out user...");
   // Connect your auth provider logout logic here
+  silentLogout();
 }
 
 /* ---------------------------------- */

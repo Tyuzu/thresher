@@ -2,23 +2,20 @@ package notifications
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-
 	"naevis/infra"
-	"naevis/infra/db"
+	db "naevis/infra/db"
 	"naevis/utils"
 )
 
 /* =========================
-   GET USER NOTIFICATIONS
+   HTTP HANDLERS
 ========================= */
 
+// GET USER NOTIFICATIONS
 func GetUserNotifications(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -51,15 +48,25 @@ func GetUserNotifications(app *infra.Deps) http.HandlerFunc {
 		opts := db.FindManyOptions{
 			Limit: limit,
 			Skip:  skip,
-			Sort: bson.D{
-				{Key: "created_at", Value: -1},
-				{Key: "notificationid", Value: -1},
-			},
+			Sort:  notificationSort(),
 		}
 
 		var notifs []Notification
-		if err := findNotificationsByUser(ctx, app.DB, userID, opts, &notifs); err != nil {
-			utils.RespondWithJSON(w, http.StatusInternalServerError, map[string]string{"message": "Failed to fetch notifications"})
+
+		if err := findNotificationsByUser(
+			ctx,
+			app.DB,
+			userID,
+			opts,
+			&notifs,
+		); err != nil {
+			utils.RespondWithJSON(
+				w,
+				http.StatusInternalServerError,
+				map[string]string{
+					"message": "Failed to fetch notifications",
+				},
+			)
 			return
 		}
 
@@ -71,10 +78,7 @@ func GetUserNotifications(app *infra.Deps) http.HandlerFunc {
 	}
 }
 
-/* =========================
-   GET UNREAD COUNT
-========================= */
-
+// GET UNREAD COUNT
 func GetUnreadCount(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -88,18 +92,23 @@ func GetUnreadCount(app *infra.Deps) http.HandlerFunc {
 
 		count, err := countUnreadNotifications(ctx, app.DB, userID)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to count unread notifications")
+			utils.RespondWithError(
+				w,
+				http.StatusInternalServerError,
+				"Failed to count unread notifications",
+			)
 			return
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, map[string]int64{"unreadCount": count})
+		utils.RespondWithJSON(
+			w,
+			http.StatusOK,
+			map[string]int64{"unreadCount": count},
+		)
 	}
 }
 
-/* =========================
-   GET PREFERENCES
-========================= */
-
+// GET PREFERENCES
 func GetPreferences(app *infra.Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -112,10 +121,11 @@ func GetPreferences(app *infra.Deps) http.HandlerFunc {
 		}
 
 		var pref NotificationPreferences
+
 		err := findPreferencesByUser(ctx, app.DB, userID, &pref)
+
 		if err != nil {
-			if errors.Is(err, mongo.ErrNoDocuments) {
-				// Default preferences
+			if isNoDocumentsError(err) {
 				pref = NotificationPreferences{
 					UserID:      userID,
 					EmailNotifs: true,
@@ -123,10 +133,16 @@ func GetPreferences(app *infra.Deps) http.HandlerFunc {
 					InAppNotifs: true,
 					UpdatedAt:   time.Now(),
 				}
+
 				utils.RespondWithJSON(w, http.StatusOK, pref)
 				return
 			}
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to fetch preferences")
+
+			utils.RespondWithError(
+				w,
+				http.StatusInternalServerError,
+				"Failed to fetch preferences",
+			)
 			return
 		}
 

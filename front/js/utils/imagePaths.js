@@ -178,6 +178,6 @@ export function resolveImagePath(
         break;
     }
   }
-console.log(`${baseUrl}/uploads/${entityType}/${folder}/${finalName}`);
+  
   return `${baseUrl}/uploads/${entityType}/${folder}/${finalName}`;
 }

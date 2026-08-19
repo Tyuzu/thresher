@@ -1,3 +1,4 @@
+// models.go
 package notifications
 
 import "time"
