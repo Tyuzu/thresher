@@ -17,18 +17,26 @@ import (
 )
 
 func AddBeatRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *middleware.RateLimiter) {
+
 	authmidware := middleware.Authenticate(app)
-	// User must be logged in to like/unlike
-	router.HandlerFunc(http.MethodPut, "/api/v1/likes/:entitytype/like/:entityid", rateLimiter.Limit(authmidware(likes.ToggleLike(app))))
 
-	// Get users who liked a post/beat
-	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/users/:entityid", rateLimiter.Limit(authmidware(likes.GetLikers(app))))
+	// Like
+	router.HandlerFunc(http.MethodPut, "/api/v1/likes/:entitytype/:entityid", rateLimiter.Limit(authmidware(likes.LikeEntity(app))))
 
-	// Batch check user likes
-	router.HandlerFunc(http.MethodPost, "/api/v1/likes/:entitytype/batch/users", rateLimiter.Limit(authmidware(likes.BatchUserLikes(app))))
+	// Unlike
+	router.HandlerFunc(http.MethodDelete, "/api/v1/likes/:entitytype/:entityid", rateLimiter.Limit(authmidware(likes.UnlikeEntity(app))))
 
-	// Like count is public
+	// Check whether the current user liked the entity
+	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/:entityid", rateLimiter.Limit(authmidware(likes.GetUserLike(app))))
+
+	// Public like count
 	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/count/:entityid", rateLimiter.Limit(likes.GetLikeCount(app)))
+
+	// Public likers
+	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/users/:entityid", rateLimiter.Limit(likes.GetLikers(app)))
+
+	// Batch current-user likes
+	router.HandlerFunc(http.MethodPost, "/api/v1/likes/:entitytype/batch/users", rateLimiter.Limit(authmidware(likes.BatchUserLikes(app))))
 
 	// Follows
 	router.HandlerFunc(http.MethodPut, "/api/v1/follows/:id", rateLimiter.Limit(authmidware(follows.ToggleFollow(app))))

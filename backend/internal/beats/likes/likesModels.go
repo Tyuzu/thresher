@@ -7,9 +7,23 @@ import (
 )
 
 type Like struct {
-	ID         primitive.ObjectID `bson:"_id,omitempty"`
-	UserID     string             `bson:"userid"`
-	EntityType string             `bson:"entity_type"` // e.g. "post"
-	EntityID   string             `bson:"entity_id"`   // e.g. post ID
-	CreatedAt  time.Time          `bson:"created_at"`
+	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	UserID     string             `bson:"user_id" json:"user_id"`
+	EntityType string             `bson:"entity_type" json:"entity_type"`
+	EntityID   string             `bson:"entity_id" json:"entity_id"`
+	CreatedAt  time.Time          `bson:"created_at" json:"created_at"`
+}
+
+const (
+	EntityTypePost = "post"
+	EntityTypeBeat = "beat"
+)
+
+func IsValidEntityType(entityType string) bool {
+	switch entityType {
+	case EntityTypePost, EntityTypeBeat:
+		return true
+	default:
+		return false
+	}
 }

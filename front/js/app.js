@@ -1,39 +1,11 @@
-import {
-    loadContent,
-    navigate,
-    getCurrentAppLocation,
-    hydrateAuthState
-} from "./routes/index.js";
-import {
-    setState
-} from "./state/state.js";
-import {
-    detectLanguage,
-    setLanguage
-} from "./i18n/i18n.js";
-import {
-    profileEnvironment,
-    setEnvironment,
-    getNetworkSpeed,
-    determineUITier
-} from "./utils/app/env.js";
-import {
-    trackError,
-    showApplicationError,
-    initGlobalErrorListeners
-} from "./utils/app/errors.js";
-import {
-    setupPerformanceMonitoring,
-    processPerformanceEntry,
-    reportPerformanceIssue
-} from "./utils/app/performance.js";
-import {
-    setupServiceWorker
-} from "./utils/app/sw-register.js";
-import {
-    setupHistoryNavigation,
-    setupGlobalNavigation
-} from "./routes/navigation.js";
+import { loadContent, navigate, getCurrentAppLocation, hydrateAuthState } from "./routes/index.js";
+import { setState } from "./state/state.js";
+import { detectLanguage, setLanguage } from "./i18n/i18n.js";
+import { profileEnvironment, setEnvironment, getNetworkSpeed, determineUITier } from "./utils/app/env.js";
+import { trackError, showApplicationError, initGlobalErrorListeners } from "./utils/app/errors.js";
+import { setupPerformanceMonitoring, processPerformanceEntry, reportPerformanceIssue } from "./utils/app/performance.js";
+//import {    setupServiceWorker} from "./utils/app/sw-register.js";
+import { setupHistoryNavigation, setupGlobalNavigation } from "./routes/navigation.js";
 
 /* =========================================================
    CONSTANTS
@@ -158,7 +130,7 @@ async function startApplication() {
 /* =========================================================
    STARTUP
 ========================================================= */
-setupServiceWorker();
+// setupServiceWorker();
 
 if (document.readyState === "loading") {
     window.addEventListener("DOMContentLoaded", () => startApplication(), { once: true });
