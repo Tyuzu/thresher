@@ -111,7 +111,4 @@
 
 /* Ensures ad spaces naturally push toward the bottom of the container */
 .layout-aside > .advert,
-.layout-aside > .advert-aside {
-  margin-top: auto;
-  width: 100%;
-}
+.layout-aside > 

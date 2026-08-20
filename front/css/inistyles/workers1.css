@@ -195,11 +195,7 @@
    5. ASIDE ACTIONS & BUTTONS
    ========================================================================== */
 
-.workers-aside {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
+
 
 .workers-aside h2 {
   font-size: var(--font-size-xl);

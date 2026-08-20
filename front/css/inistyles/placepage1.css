@@ -97,14 +97,7 @@
    BANNER & MEDIA
    ========================================================================== */
 
-.place-banner {
-  position: relative;
-  width: 100%;
-  height: 260px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background-color: var(--color-bg-tertiary);
-}
+
 
 .place-banner img {
   width: 100%;

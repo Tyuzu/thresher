@@ -68,14 +68,9 @@ hr {
   gap: var(--space-md);
 }
 
-.flex-column {
-  flex-direction: column;
-}
 
-.flex-center {
-  align-items: center;
-  justify-content: center;
-}
+
+
 
 video{width: 100%;}
 
@@ -96,24 +91,13 @@ textarea {
   gap: 10px;
 }
 
-.pad10 {
-  padding: 10px;
-}
+
 
 /* For text containers like <div>, <p>, <span>, etc. */
-.word-safe {
-  word-break: break-word;
-  /* Break long words if needed */
-  overflow-wrap: anywhere;
-  /* Wrap anywhere as a last resort */
-}
+
 
 /* Optional layout control */
-.word-safe {
-  max-width: 100%;
-  white-space: normal;
-  /* Ensure it wraps */
-}
+
 
 .vflex {
   display: flex;

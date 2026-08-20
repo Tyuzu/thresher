@@ -15,11 +15,7 @@
   }
 }
 
-.events-main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
+
 
 .events-main h1 {
   font-weight: var(--font-weight-bold);
@@ -121,16 +117,7 @@
 }
 
 /* --- Aside Sidebar --- */
-.events-aside {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  height: fit-content;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
+
 
 .events-aside h2 {
   font-size: var(--font-size-lg);

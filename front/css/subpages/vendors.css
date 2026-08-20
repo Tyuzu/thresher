@@ -363,13 +363,7 @@ textarea.form-input {
    Loading State
 ========================================== */
 
-.vendor-loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
 
-    min-height: 200px;
-}
 
 /* ==========================================
    Responsive

@@ -65,12 +65,7 @@
 }
 
 /* Toggle Buttons */
-.toggle-controls {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 10px;
-}
+
 
 .toggle-controls button {
   flex: 1;

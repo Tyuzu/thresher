@@ -59,11 +59,11 @@ export async function openNotificationsModal() {
 
   const activityTabBtn = createElement("button", {
     style: "flex: 1; padding: 0.6rem; border: none; background: transparent; font-weight: 600; cursor: pointer; border-bottom: 2px solid #007bff; color: #007bff; transition: all 0.2s ease;",
-  }, ["👥 Activity"]);
+  }, ["Activity"]);
 
   const systemTabBtn = createElement("button", {
     style: "flex: 1; padding: 0.6rem; border: none; background: transparent; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: #64748b; transition: all 0.2s ease;",
-  }, ["⚙️ System Logs"]);
+  }, ["System Logs"]);
 
   tabHeader.appendChild(activityTabBtn);
   tabHeader.appendChild(systemTabBtn);

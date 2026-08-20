@@ -159,17 +159,13 @@
 
 /* Playback Speed and Subtitle Selector */
 .playback-speed,
-.subtitle-selector {
-  margin-right: 10px;
-}
+
 
 .playback-speed {
   width: 80px;
 }
 
-.subtitle-selector {
-  width: 120px;
-}
+
 
 
 .sightbox.fade-out {

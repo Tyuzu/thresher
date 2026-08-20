@@ -41,22 +41,9 @@
    Recipe Banner & Image Edit Trigger
    ========================================================================== */
 
-.recipe-banner {
-    position: relative;
-    width: 100%;
-    border-radius: var(--radius-card);
-    overflow: hidden;
-    margin-bottom: var(--space-md);
-    box-shadow: var(--shadow-card);
-}
 
-img.recipe-banner {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    display: block;
-    background-color: var(--color-bg-tertiary);
-}
+
+img
 
 /* ==========================================================================
    Recipe Info Box & Details

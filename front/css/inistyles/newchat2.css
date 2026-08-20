@@ -6,11 +6,7 @@
   padding: var(--space-sm);
 }
 
-.chat-topbar {
-  background-color: var(--color-space);
-  padding: var(--space-sm);
-  border-bottom: 1px solid var(--color-border);
-}
+
 
 .chat-list {
   display: flex;

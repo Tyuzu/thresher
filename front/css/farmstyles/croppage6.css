@@ -152,21 +152,13 @@
 
 /* Status badges */
 .stock-badge,
-.featured-badge {
-  display: inline-block;
-  padding: 0.25rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
+
 
 .stock-badge {
   border: 1px solid #ccc;
 }
 
-.featured-badge {
-  border: 1px solid #ccc;
-}
+
 
 /* Controls */
 .listing-controls {
@@ -208,30 +200,13 @@
 }
 
 /* Extra metadata blocks */
-.listing-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
-}
 
-.listing-tag {
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid #ddd;
-  font-size: 0.8rem;
-}
 
-.rating-row {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
 
-.inventory-value {
-  font-weight: 600;
-}
+
+
+
+
 
 /* Responsive */
 @media (max-width: 900px) {

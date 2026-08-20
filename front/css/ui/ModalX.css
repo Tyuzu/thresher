@@ -13,18 +13,7 @@
 }
 
 /* Container */
-.modal-container {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 90%;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  animation: modal-fade-in 0.25s ease;
-}
+
 
 /* Title */
 .modal-title {

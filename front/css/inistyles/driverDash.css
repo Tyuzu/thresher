@@ -139,17 +139,9 @@
   font-size: var(--font-size-sm);
 }
 
-.job-pickup {
-  margin-bottom: var(--space-xs);
-  color: var(--color-fg);
-  font-size: var(--font-size-sm);
-}
 
-.job-dropoff {
-  margin-bottom: var(--space-md);
-  color: var(--color-fg);
-  font-size: var(--font-size-sm);
-}
+
+
 
 .job-actions-row {
   display: flex;

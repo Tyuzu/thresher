@@ -17,12 +17,7 @@
   }
   
   /* Legend */
-  .seating-legend {
-    margin-left: auto;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
+  
   
   .legend-item {
     display: flex;
@@ -31,12 +26,7 @@
     font-size: 0.9rem;
   }
   
-  .legend-color {
-    width: 14px;
-    height: 14px;
-    border-radius: 2px;
-    display: inline-block;
-  }
+  
   
   /* SVG container */
   .seating-svg-wrap {
@@ -48,16 +38,9 @@
   }
   
   /* Stage */
-  .stage-rect {
-    fill: #111;
-    opacity: 0.08;
-  }
   
-  .stage-label {
-    fill: #333;
-    font-size: 14px;
-    font-weight: bold;
-  }
+  
+  
   
   /* Seats */
   .seat {
@@ -82,11 +65,7 @@
   }
   
   /* Seat labels */
-  .seat-label {
-    font-size: 8px;
-    fill: #fff;
-    pointer-events: none;
-  }
+  
   
   /* Tooltip */
   .seating-tooltip {

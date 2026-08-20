@@ -113,10 +113,7 @@
   padding: 0.4rem;
 }
 
- .chipscon {
-  margin-bottom: 1rem;
-  display: grid;
-} 
+  
 
 .category-chips {
   flex-wrap: nowrap;
@@ -137,15 +134,7 @@
   text-align: center;
 }
 
-.chipper {
-  margin: 0;
-  line-height: 1;
-  display: block;
-  font-weight: 600;
-  transition: background-color .15s ease-in-out;
-  text-decoration: none;
-  padding: 10px;
-}
+
 
 .category-chip:hover {
   background-color: #e0e0e0;

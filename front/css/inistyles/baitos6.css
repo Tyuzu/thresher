@@ -171,11 +171,7 @@
    4. ASIDE ACTIONS & CONTROLS
    ========================================================================== */
 
-.baitos-aside {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
+
 
 .baitos-aside h2 {
   font-size: var(--font-size-xl);

@@ -11,22 +11,11 @@
   font-weight: bold;
 }
 
-.delete-media-btn {
-  background: #e74c3c;
-  color: white;
-}
 
-.report-btn, .delete-media-btn {
-  border: none;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  border-radius: 4px;
-}
 
-.hashtag-posts {
-  display: grid;
-  gap: 1rem;
-}
+.report-btn, 
+
+
 /* Hashtag grid container */
 .hashtag-grid {
   display: grid;

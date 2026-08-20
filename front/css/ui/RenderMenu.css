@@ -1,8 +1,4 @@
-.menu-section {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-}
+
 
 .menu-item {
     max-width: 250px;

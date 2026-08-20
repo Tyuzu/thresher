@@ -15,11 +15,7 @@
   }
 }
 
-.places-main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
+
 
 .places-main h1 {
   font-size: var(--font-size-2xl);
@@ -89,16 +85,7 @@
 }
 
 /* --- Aside Sidebar --- */
-.places-aside {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  height: fit-content;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
+
 
 .places-aside h2 {
   font-size: var(--font-size-lg);

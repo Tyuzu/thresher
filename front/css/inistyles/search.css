@@ -13,15 +13,7 @@
     width: 100%;
 }
 
-.srchicon {
-    stroke: #ffffff;
-    display: block;
-    height: 2rem;
-    margin: 0rem 0.1rem;
-    width: 2.6rem;
-    margin-top: 0.1rem;
-    stroke-width: 2px;
-}
+
 
 .d3 {
     display: flex;

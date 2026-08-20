@@ -1,12 +1,5 @@
 /* Timeline Container */
-.event-timeline {
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
+
 
 /* Timeline Item */
 .timeline-item {
@@ -28,11 +21,7 @@
 }
 
 /* Description Styling */
-.timeline-description {
-  margin: 0;
-  flex-grow: 1;
-  color: #333;
-}
+
 
 /* Circle Indicator */
 .timeline-item::before {
