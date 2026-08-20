@@ -2,15 +2,15 @@
 import {
   apiFetch
 } from "../../api/api.ts";
-import MerchCard from "../../components/ui/MerchCard.mjs";
+import MerchCard from "../../components/ui/MerchCard.ts";
 import {
   Button
 } from "../../components/base/Button.ts";
 import {
   createElement
 } from "../../components/createElement.ts";
-import Modal from "../../components/ui/Modal.mjs";
-import Notify from "../../components/ui/Notify.mjs";
+import Modal from "../../components/ui/Modal.ts";
+import Notify from "../../components/ui/Notify.ts";
 import {
   EntityType,
   PictureType,

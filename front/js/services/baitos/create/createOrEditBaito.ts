@@ -4,7 +4,7 @@ import { createElement } from "../../../components/createElement.ts";
 import { navigate } from "../../../routes/index.ts";
 import { apiFetch } from "../../../api/api.ts";
 import { createFormGroup } from "../../../components/createFormGroupEnhanced.ts";
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 
 // --- Category Data ---
 const categoryMap = {

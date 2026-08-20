@@ -1,7 +1,7 @@
 import { apiFetch } from "../../api/api.ts";
 import { navigate } from "../../routes/index.ts";
 import { generateEventForm } from "./createOrEditEvent.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 /** Create a new event */
 function createEvent(isLoggedIn, container) {

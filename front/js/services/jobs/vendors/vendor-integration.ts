@@ -11,7 +11,7 @@ import {
 import { VENDOR_EVENTS } from "./vendorEvents.ts";
 import { apiFetch } from "../../../api/api.ts";
 import { deleteVendor } from "./vendorService.ts";
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 import { createElement } from "../../../components/createElement.ts";
 
 async function renderEventVendorSummary(eventId, container, options = {}) {

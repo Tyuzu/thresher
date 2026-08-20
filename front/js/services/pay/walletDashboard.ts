@@ -4,7 +4,7 @@ import { WalletTransfer } from "./walletTransfer.ts";
 import { createElement } from "../../components/createElement.ts";
 import { Button } from "../../components/base/Button.ts";
 import { apiFetch } from "../../api/api.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 export function WalletDashboard() {
     const container = createElement("div", { id: "wallet-dashboard", class: "wallet-dashboard" });

@@ -1,6 +1,6 @@
 import { createElement } from "../../../components/createElement.ts";
 import Button from "../../../components/base/Button.ts";
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 import { apiFetch } from "../../../api/api.ts";
 import { generateStadiumLayout } from "./stadiumLayout.ts";
 

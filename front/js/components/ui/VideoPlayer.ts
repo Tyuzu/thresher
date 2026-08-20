@@ -1,5 +1,5 @@
 import "../../../css/ui/VideoPlayer.css";
-import Vidpop from "./Vidpop.mjs";
+import Vidpop from "./Vidpop.ts";
 import { createIconButton } from "../../utils/svgIconButton";
 import { maximizeSVG, muteSVG, vol2SVG, playSVG, pauseSVG } from "../svgs.ts";
 import { setupSubtitles } from "./vidpopHelpers/subtitles.ts";

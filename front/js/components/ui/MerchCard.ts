@@ -1,6 +1,6 @@
 import "../../../css/ui/MerchCard.css";
 import { createElement } from "../createElement.ts";
-import Sightbox from "./Sightbox_zoom.mjs";
+import Sightbox from "./Sightbox_zoom.ts";
 
 const MerchCard = ({
     name,

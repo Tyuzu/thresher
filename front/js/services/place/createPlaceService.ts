@@ -1,7 +1,7 @@
 import { createElement } from "../../components/createElement.ts";
 import { navigate } from "../../routes/index.ts";
 import { createPlace } from "./placeService.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
 
 const categoryMap = {

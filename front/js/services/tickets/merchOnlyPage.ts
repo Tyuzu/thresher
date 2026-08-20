@@ -2,7 +2,7 @@ import { displayMerchandise } from "../merch/merchService.ts";
 import { createElement } from "../../components/createElement.ts";
 import { apiFetch } from "../../api/api.ts";
 import { getState } from "../../state/state.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import Datex from "../../components/base/Datex.ts";
 
 async function fetchEventData(eventId) {

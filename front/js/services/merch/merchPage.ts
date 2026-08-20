@@ -20,8 +20,8 @@ import {
 } from "../../utils/imagePaths.ts";
 import Imagex from "../../components/base/Imagex.ts";
 import Datex from "../../components/base/Datex.ts";
-import Modal from "../../components/ui/Modal.mjs";
-import Notify from "../../components/ui/Notify.mjs";
+import Modal from "../../components/ui/Modal.ts";
+import Notify from "../../components/ui/Notify.ts";
 import {
     showPaymentModal
 } from "../pay/pay.ts";

@@ -2,7 +2,7 @@ import { displayTickets } from "../tickets/displayTickets.ts";
 import { createElement } from "../../components/createElement.ts";
 import { apiFetch } from "../../api/api.ts";
 import { getState } from "../../state/state.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import Datex from "../../components/base/Datex.ts";
 import { createMainLayout } from "../../components/layout/mainLayout.ts";
 import { createAsideContent } from "../../components/layout/asideLayout.ts";

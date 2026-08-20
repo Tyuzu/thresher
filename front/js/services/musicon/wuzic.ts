@@ -1,7 +1,7 @@
 // wuzic.js
 
 import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { MusicAPI } from "./fetchers.ts";
 import { initPlayer } from "./player.ts";
 import { getContentContainer, showLoadingOverlay, hideLoadingOverlay } from "./uiHelpers.ts";

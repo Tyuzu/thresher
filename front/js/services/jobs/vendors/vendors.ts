@@ -1,4 +1,4 @@
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 import { loadVendors } from "./loadVendors.ts";
 import { vendorForm } from "./vendorForm.ts";
 import { createElement } from "../../../components/createElement.ts";

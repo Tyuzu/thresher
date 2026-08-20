@@ -1,7 +1,7 @@
 // onboarding/baitoOnboard.js
 import { createElement } from "../../components/createElement.ts";
 import { Button } from "../../components/base/Button.ts";
-import Modal from "../../components/ui/Modal.mjs";
+import Modal from "../../components/ui/Modal.ts";
 
 /**
  * Onboarding step configurations.

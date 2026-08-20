@@ -1,8 +1,8 @@
 import "../../../../css/subpages/mediaup.css";
-import Modal from "../../../components/ui/Modal.mjs";
+import Modal from "../../../components/ui/Modal.ts";
 import { Button } from "../../../components/base/Button.ts";
 import { createElement } from "../../../components/createElement.ts";
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 import Imagex from "../../../components/base/Imagex.ts";
 import { UploadStore } from "../store/uploadStore.ts";
 import { uploadFile, postMedia } from "../api/mediaApi.ts";

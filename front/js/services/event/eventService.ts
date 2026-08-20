@@ -3,7 +3,7 @@ import { getState } from "../../state/state.ts";
 import { apiFetch } from "../../api/api.ts";
 import { navigate } from "../../routes/index.ts";
 import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 import { displayEventDetails } from "./displayEventDetails.ts";
 import { displayEventVenue, displayEventFAQ, displayEventReviews, displayLostAndFound, displayContactDetails } from "./eventTabs.ts";

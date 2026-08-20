@@ -1,8 +1,8 @@
 import { getState } from "../../state/state.ts";
 import { apiFetch } from "../../api/api.ts";
 import { createElement } from "../../components/createElement.ts";
-import Modal from "../../components/ui/Modal.mjs";
-import Notify from "../../components/ui/Notify.mjs";
+import Modal from "../../components/ui/Modal.ts";
+import Notify from "../../components/ui/Notify.ts";
 
 const REPORT_REASONS = [
   { value: "", label: "Select a reason…" },

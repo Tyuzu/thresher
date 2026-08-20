@@ -1,6 +1,6 @@
 import { createElement } from "../../components/createElement.ts";
 import Imagex from "../base/Imagex.ts";
-import ZoomBox from "./ZoomBox.mjs";
+import ZoomBox from "./ZoomBox.ts";
 
 function getMediaType(src) {
   const lower = src.toLowerCase();

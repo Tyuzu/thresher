@@ -4,7 +4,7 @@ import {
   PictureType
 } from "../../utils/imagePaths.ts";
 
-import Notify from "../ui/Notify.mjs";
+import Notify from "../ui/Notify.ts";
 
 const Galleryx = ({
   isCreator = false,

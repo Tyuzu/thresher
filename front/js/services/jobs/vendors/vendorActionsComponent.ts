@@ -1,4 +1,4 @@
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 import { hireVendor } from "./hireVendorAction.ts";
 import { displayBooking } from "../../booking/booking.ts";
 import { getState } from "../../../state/state.ts";

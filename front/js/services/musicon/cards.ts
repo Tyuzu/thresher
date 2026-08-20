@@ -1,7 +1,7 @@
 // cards.js
 
 import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { MusicAPI } from "./fetchers.ts";
 import { loadPlaylistSongs, loadAlbumSongs } from "./loaders.ts";
 

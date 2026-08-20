@@ -8,8 +8,8 @@ import {
 } from "../../utils/imagePaths.ts";
 import { createElement } from "../../components/createElement.ts";
 import { handleError } from "../../utils/utils.ts";
-import SightBox from "../../components/ui/Sightbox_zoom.mjs";
-import Notify from "../../components/ui/Notify.mjs";
+import SightBox from "../../components/ui/Sightbox_zoom.ts";
+import Notify from "../../components/ui/Notify.ts";
 import { updateImageWithCrop } from "../../utils/bannerEditor.ts";
 
 /* ============================================================

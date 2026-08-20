@@ -1,8 +1,8 @@
 import "../../css/inistyles/cropper.css";
 import "../../css/inistyles/imagecropper1.css";
-import Modal from "../components/ui/Modal.mjs";
+import Modal from "../components/ui/Modal.ts";
 import { createElement } from "../components/createElement.ts";
-import Notify from "../components/ui/Notify.mjs";
+import Notify from "../components/ui/Notify.ts";
 import { openCropper } from "./cropper/index.ts";
 import { bannerFetch } from "../api/api.ts";
 import { resolveImagePath } from "./imagePaths.ts";

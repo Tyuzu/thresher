@@ -9,7 +9,7 @@ import {
 import {
   getState
 } from "../../state/state.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 
 export function Auth(isLoggedIn, contentContainer) {

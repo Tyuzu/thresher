@@ -13,8 +13,8 @@ import {
 import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.ts";
 import Imagex from "../../../components/base/Imagex.ts";
 import { generateVideoPlayer } from "../../../components/ui/vidpopHelpers.ts";
-import LightBox from "../../../components/ui/Lightbox.mjs";
-import Sightbox from "../../../components/ui/Sightbox_zoom.mjs";
+import LightBox from "../../../components/ui/Lightbox.ts";
+import Sightbox from "../../../components/ui/Sightbox_zoom.ts";
 
 function buildMediaFragment(mediaData, entityType, entityId, isLoggedIn, prefix = "media") {
   const frag = document.createDocumentFragment();

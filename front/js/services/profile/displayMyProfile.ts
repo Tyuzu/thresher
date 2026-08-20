@@ -5,7 +5,7 @@ import { logout } from "../auth/authService.ts";
 import { fetchProfile } from "./fetchProfile.ts";
 import profilGen from "./renderUserProfile.ts";
 import { editProfile } from "./editProfile.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 /* ============================================================
     DISPLAY PROFILE

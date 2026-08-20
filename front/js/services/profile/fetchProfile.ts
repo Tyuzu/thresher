@@ -2,7 +2,7 @@
 
 import { getState, setState } from "../../state/state.ts";
 import { apiFetch } from "../../api/api.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 /* ============================================================
     HELPERS

@@ -2,9 +2,9 @@
 import { apiFetch } from "../../api/api.ts";
 import { createElement } from "../../components/createElement.ts";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import Modal from "../../components/ui/Modal.mjs";
+import Modal from "../../components/ui/Modal.ts";
 import Imagex from "../../components/base/Imagex.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { uploadFile } from "../media/api/mediaApi.ts";
 
 

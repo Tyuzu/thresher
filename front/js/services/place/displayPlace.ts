@@ -21,7 +21,7 @@ import {
   displayPlaceDetailsFallback,
 } from "./customTabs.ts";
 import { displayPlaceJobs } from "../jobs/jobs.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { displayBooking } from "../booking/booking.ts";
 // import { displayPlacesMap } from "./placeRemap.ts";
 

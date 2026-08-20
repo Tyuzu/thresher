@@ -1,4 +1,4 @@
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 import { fetchEventVendors, fetchVendors } from "./vendorService.ts";
 import { getVendorId, getVendorName, normalizeVendorList } from "./vendorUtils.ts";
 import { renderVendorCard } from "./vendorCardComponent.ts";

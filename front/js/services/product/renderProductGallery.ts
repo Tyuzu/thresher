@@ -4,7 +4,7 @@ import {
   EntityType,
   PictureType,
 } from "../../utils/imagePaths.ts";
-import { ImageGallery } from "../../components/ui/IMageGallery.mjs";
+import { ImageGallery } from "../../components/ui/IMageGallery.ts";
 import Button from "../../components/base/Button.ts";
 import { getState } from "../../state/state.ts";
 import { updateImageWithCrop } from "../../utils/bannerEditor.ts";

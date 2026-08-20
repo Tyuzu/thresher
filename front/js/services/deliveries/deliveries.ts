@@ -1,7 +1,7 @@
 import { createElement } from "../../components/createElement.ts";
 import Button from "../../components/base/Button.ts";
 import Datex from "../../components/base/Datex.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { navigate } from "../../routes/index.ts";
 import { createMainLayout } from "../../components/layout/mainLayout.ts";
 import { createAsideContent } from "../../components/layout/asideLayout.ts";

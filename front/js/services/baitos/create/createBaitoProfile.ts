@@ -5,7 +5,7 @@ import { navigate } from "../../../routes/index.ts";
 import { apiFetch } from "../../../api/api.ts";
 import { createFormGroup } from "../../../components/createFormGroupEnhanced.ts";
 import Button from "../../../components/base/Button.ts";
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 
 
 export async function displayCreateBaitoProfile(isLoggedIn, contentContainer) {

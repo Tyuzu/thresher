@@ -1,4 +1,4 @@
-import Modal from "../../components/ui/Modal.mjs";
+import Modal from "../../components/ui/Modal.ts";
 import { apiFetch } from "../../api/api.ts";
 import { createElement } from "../../components/createElement.ts";
 import { Button } from "../../components/base/Button.ts";

@@ -8,7 +8,7 @@ import Imagex from "../../../components/base/Imagex.ts";
 import { displayBooking } from "../../booking/booking.ts";
 import { getState } from "../../../state/state.ts";
 import { meChat } from "../../mechat/plugnplay.ts";
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 
 export async function displayWorkerProfile(contentContainer, isLoggedIn, workerId) {
   const container = createElement("div", { id: "worker-profile-page", class: "worker-profile-page" });

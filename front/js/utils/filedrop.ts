@@ -2,7 +2,7 @@
 import { apiFetch } from "../api/api";
 import { createElement } from "../components/createElement";
 import { FILEDROP_URL } from "../state/state";
-import Notify from "../components/ui/Notify.mjs";
+import Notify from "../components/ui/Notify.ts";
 
 const CHUNK_SIZE = 256 * 1024; // 256KB
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];

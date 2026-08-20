@@ -7,7 +7,7 @@ import { navigate } from "../../../routes/index.ts";
 import Imagex from "../../../components/base/Imagex.ts";
 import { updateImageWithCrop } from "../../../utils/bannerEditor.ts";
 import { displayCreateOrEditBaitoProfile } from "../create/createBaitoProfile.ts";
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 import { createTabs } from "../../../utils/persistTabs.ts";
 
 export async function displayManageWorkerProfile(contentContainer, isLoggedIn, workerId) {

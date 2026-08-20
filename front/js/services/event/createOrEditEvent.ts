@@ -4,7 +4,7 @@ import { navigate } from "../../routes/index.ts";
 import { createElement } from "../../components/createElement.ts";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
 import Button from "../../components/base/Button.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { debounce } from "../../utils/deutils.ts";
 
 /** Add autocomplete listeners for the place input */

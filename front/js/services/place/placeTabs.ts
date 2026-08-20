@@ -2,8 +2,8 @@ import "../../../css/subpages/accessiservice.css";
 import { createElement } from "../../components/createElement.ts";
 import Button from "../../components/base/Button.ts";
 import Datex from "../../components/base/Datex.ts";
-import Modal from "../../components/ui/Modal.mjs";
-import MultiSelect from "../../components/ui/MultiSelect.mjs";
+import Modal from "../../components/ui/Modal.ts";
+import MultiSelect from "../../components/ui/MultiSelect.ts";
 import { apiFetch } from "../../api/api.ts";
 
 // Predefined options

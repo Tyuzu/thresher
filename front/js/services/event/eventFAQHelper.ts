@@ -1,8 +1,8 @@
 import { Button } from "../../components/base/Button.ts";
-import Modal from "../../components/ui/Modal.mjs";
+import Modal from "../../components/ui/Modal.ts";
 import { createElement } from "../../components/createElement.ts";
 import { apiFetch } from "../../api/api.ts";
-import { Accordion } from "../../components/ui/Accordion.mjs";
+import { Accordion } from "../../components/ui/Accordion.ts";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
 
 async function displayEventFAQs(isCreator, faqContainer, eventId, faques) {

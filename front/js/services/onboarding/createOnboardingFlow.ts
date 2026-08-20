@@ -1,6 +1,6 @@
 import { createElement } from "../components/createElement.ts";
 import { Button } from "../components/base/Button.ts";
-import Modal from "../components/ui/Modal.mjs";
+import Modal from "../components/ui/Modal.ts";
 import { buildLabelMap } from "./onboardingConfig.ts";
 
 /**

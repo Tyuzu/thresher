@@ -4,7 +4,7 @@ import { fetchUserProfile } from "./fetchProfile.ts";
 import profilGen from "./renderUserProfile.ts";
 import { attachProfileEventListeners } from "./displayMyProfile.ts";
 import { displayUserProfileData } from "../userdata/displayProfileData.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 /* ============================================================
     DISPLAY OTHER USER PROFILE

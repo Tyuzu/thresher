@@ -1,6 +1,6 @@
 import { createElement } from "../../components/createElement.ts";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { fetchUserMeta } from "../../utils/usersMeta.ts";
 import { genId, bookingStorage, bookingApi } from "./bookingApi.ts";
 

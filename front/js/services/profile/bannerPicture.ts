@@ -4,7 +4,7 @@ import { getState, setState } from "../../state/state.ts";
 import { updateImageWithCrop } from "../../utils/bannerEditor.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
 import { handleError } from "../../utils/utils.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import Bannerx from "../../components/base/Bannerx.ts";
 
 /* ============================================================

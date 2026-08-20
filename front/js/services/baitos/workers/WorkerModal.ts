@@ -1,4 +1,4 @@
-import Modal from "../../../components/ui/Modal.mjs";
+import Modal from "../../../components/ui/Modal.ts";
 import { createElement } from "../../../components/createElement.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
 import Imagex from "../../../components/base/Imagex.ts";

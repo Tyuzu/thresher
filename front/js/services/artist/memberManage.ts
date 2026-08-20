@@ -8,7 +8,7 @@ import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePath
 import Imagex from "../../components/base/Imagex.ts";
 import { uploadFile } from "../media/api/mediaApi.ts";
 import { uid } from "../media/ui/mediaUploadForm.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 export function renderBandMembers(artist, isCreator) {
     const cards = artist.members.map(member => {

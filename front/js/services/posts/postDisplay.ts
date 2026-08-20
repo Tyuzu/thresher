@@ -9,10 +9,10 @@ import { createCommentsSection } from "../comments/comments.ts";
 import { getState } from "../../state/state.ts";
 import { userProfileCard } from "./userProfileCard.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import Imagex from "../../components/base/Imagex.ts";
 import { fetchUserMeta } from "../../utils/usersMeta.ts";
-import ZoomBox from "../../components/ui/ZoomBox.mjs";
+import ZoomBox from "../../components/ui/ZoomBox.ts";
 import { renderRelatedPosts } from "./relatedPosts.ts";
 
 // --- Shared constants ---

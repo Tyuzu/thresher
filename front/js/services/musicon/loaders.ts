@@ -1,6 +1,6 @@
 // loaders.js
 import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { MusicAPI } from "./fetchers.ts";
 import { getContentContainer, showLoadingOverlay, hideLoadingOverlay } from "./uiHelpers.ts";
 import { renderSongsSection } from "./sections.ts";

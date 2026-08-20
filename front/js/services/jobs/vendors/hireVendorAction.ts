@@ -1,4 +1,4 @@
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 import { hireEventVendor, removeEventVendor } from "./vendorService.ts";
 import { dispatchVendorEvent, VENDOR_EVENTS } from "./vendorEvents.ts";
 import { normalizeErrorMessage } from "./vendorUtils.ts";

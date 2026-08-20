@@ -1,5 +1,5 @@
 import "../../../css/subpages/payoptions.css";
-import Modal from "../../components/ui/Modal.mjs";
+import Modal from "../../components/ui/Modal.ts";
 import { stripeFetch } from "../../api/api.ts";
 import { createElement } from "../../components/createElement.ts";
 import { STRIPE_PUB_KEY } from "./pubkey.ts";

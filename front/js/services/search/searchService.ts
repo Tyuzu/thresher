@@ -1,5 +1,5 @@
 import { SEARCH_URL } from "../../state/state.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { createTabs } from "../../utils/persistTabs.ts";
 import { createElement } from "../../components/createElement.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";

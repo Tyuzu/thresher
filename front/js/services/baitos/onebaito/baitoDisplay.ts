@@ -8,7 +8,7 @@ import { createOrEditBaito } from "../create/createOrEditBaito.ts";
 import Button from "../../../components/base/Button.ts";
 import { showApplicantsModal } from "../dash/BaitoDash.ts";
 import { displayReviews } from "../../reviews/displayReviews.ts";
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 import { meChat } from "../../mechat/plugnplay.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
 import Imagex from "../../../components/base/Imagex.ts";

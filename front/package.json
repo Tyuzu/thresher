@@ -7,14 +7,15 @@
   "scripts": {
     "dev": "vite",
     "preview": "vite preview",
-    "prebuild": "node scripts/generate-manifest.mjs",
+    "prebuild": "node scripts/generate-manifest.ts",
     "build": "npm run generate-sitemap && vite build",
     "build:analyze": "vite build --analyze",
-    "generate-sitemap": "node scripts/generate-sitemap.mjs",
+    "generate-sitemap": "node scripts/generate-sitemap.ts",
     "lint": "eslint js/ --fix",
     "lint:check": "eslint js/",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "ts-migrate": "ts-migrate"
   },
   "author": "",
   "license": "ISC",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "eslint": "^9.39.5",
     "prettier": "^3.2.5",
+    "ts-migrate": "^0.0.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.67.0",
     "vite-plugin-mkcert": "^2.0.0"

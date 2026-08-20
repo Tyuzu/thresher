@@ -19,7 +19,7 @@ import {
   makeInlineEditable,
   getStepKey,
 } from "./recipeRenderers.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 const MAX_CART_QUANTITY = 99;
 /* ============================================================
    HELPERS

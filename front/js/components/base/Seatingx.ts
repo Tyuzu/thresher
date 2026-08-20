@@ -2,7 +2,7 @@ import { resolveImagePath } from "../../utils/imagePaths.ts";
 import { createElement } from "../createElement.ts";
 import Imagex from "./Imagex.ts";
 import { updateImageWithCrop } from "../../utils/bannerEditor.ts";
-import Sightbox from "../ui/Sightbox_zoom.mjs";
+import Sightbox from "../ui/Sightbox_zoom.ts";
 
 const Seatingx = ({
   isCreator = false,

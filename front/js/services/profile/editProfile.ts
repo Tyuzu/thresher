@@ -9,7 +9,7 @@ import { generateFormField } from "./generators.ts";
 import { deleteProfile } from "./displayMyProfile.ts";
 import { createElement } from "../../components/createElement.ts";
 import Button from "../../components/base/Button.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 /* ============================================================
     EDIT PROFILE VIEW

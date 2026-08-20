@@ -1,8 +1,8 @@
 import { apiFetch } from "../../api/api.ts";
 import { clearTicketForm } from "./editTicket.ts";
 import { displayNewTicket } from "./displayTickets.ts";
-import Modal from "../../components/ui/Modal.mjs";
-import Notify from "../../components/ui/Notify.mjs";
+import Modal from "../../components/ui/Modal.ts";
+import Notify from "../../components/ui/Notify.ts";
 import { createElement } from "../../components/createElement.ts";
 import Button from "../../components/base/Button.ts";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";

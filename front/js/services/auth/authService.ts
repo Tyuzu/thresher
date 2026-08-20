@@ -13,12 +13,12 @@ import {
 import {
     fetchProfile
 } from "../profile/fetchProfile.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import {
     apiFetch,
     refreshToken
 } from "../../api/api.ts";
-import LoadingSpinner from "../../components/ui/LoadingSpinner.mjs";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.ts";
 /* =========================================================
    REACTIVE ROLE STATE
 ========================================================= */

@@ -15,11 +15,11 @@ import { displayNotices } from "../../notices/notices.ts";
 import { displayFanMedia } from "../../fanmade/ui/mediaGallery.ts";
 import { renderWeatherDetails } from "../weather/weather.ts";
 import { createCrop } from "../crop/createCrop.ts";
-import Modal from "../../../components/ui/Modal.mjs";
-import { renderAvailabilityWidget } from "../../../components/ui/Availability.mjs";
+import Modal from "../../../components/ui/Modal.ts";
+import { renderAvailabilityWidget } from "../../../components/ui/Availability.ts";
 import { createMainLayout } from "../../../components/layout/mainLayout.ts";
 import { createAsideContent } from "../../../components/layout/asideLayout.ts";
-import { createBreadcrumb } from "../../../components/ui/Breadcrumb.mjs";
+import { createBreadcrumb } from "../../../components/ui/Breadcrumb.ts";
 
 /**
  * Main view renderer for individual farm pages.

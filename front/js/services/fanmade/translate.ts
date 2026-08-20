@@ -1,5 +1,5 @@
 import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 /* ------------------------------------------------------
    TRANSLATION HELPERS

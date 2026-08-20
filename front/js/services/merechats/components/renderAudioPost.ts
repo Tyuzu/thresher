@@ -1,5 +1,5 @@
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import AudioPlayer from "../../../components/ui/AudioPlayer.mjs";
+import AudioPlayer from "../../../components/ui/AudioPlayer.ts";
 
 async function RenderAudioPost(container, id = "") {
   const src = resolveImagePath(EntityType.CHAT, PictureType.AUDIO, `${id}.mp3`);

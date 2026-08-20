@@ -1,6 +1,6 @@
 import { createElement } from "../../components/createElement.ts";
 import { apiFetch } from "../../api/api.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import Datex from "../../components/base/Datex.ts";
 
 /* ────────────────────── Utility Helpers ────────────────────── */

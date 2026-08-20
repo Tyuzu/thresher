@@ -4,7 +4,7 @@ import { Button } from "../../components/base/Button.ts";
 import { formatCurrency } from "../../types/api.types.ts";
 import { v4 as uuidv4 } from "https://jspm.dev/uuid";
 import Datex from "../../components/base/Datex.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 export function WalletTransactions({ onBalanceChange }) {
     const container = createElement("div", { id: "wallet-transactions", class: "wallet-card" }, [

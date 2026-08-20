@@ -3,7 +3,7 @@ import { Button } from "../../components/base/Button.ts";
 import { apiFetch } from "../../api/api.ts";
 import { formatCurrency } from "../../types/api.types.ts";
 import { v4 as uuidv4 } from "https://jspm.dev/uuid";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 function parseAmountToPaise(value) {
     const amount = Number(value);

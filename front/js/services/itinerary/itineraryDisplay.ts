@@ -1,7 +1,7 @@
 import { apiFetch } from "../../api/api.ts";
 import Button from "../../components/base/Button.ts";
 import { createElement } from "../../components/createElement.ts";
-import Modal from "../../components/ui/Modal.mjs";
+import Modal from "../../components/ui/Modal.ts";
 import { navigate } from "../../routes/index.ts";
 import { getState } from "../../state/state.ts";
 import { editItinerary } from "./itineraryEdit.ts";

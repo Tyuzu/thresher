@@ -5,7 +5,7 @@ import Button from "../../components/base/Button.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
 import Imagex from "../../components/base/Imagex.ts";
 import { initPlayer, setSongQueue, resetPlayer, createPlayerFooter } from "./player.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { openSongModal } from "./songModal.ts";
 
 // ------------------------ Helpers ------------------------

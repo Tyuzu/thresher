@@ -1,5 +1,5 @@
 import "../../../css/subpages/sidebar.css";
-import Modal from "../ui/Modal.mjs";
+import Modal from "../ui/Modal.ts";
 import { createElement } from "../createElement.ts";
 import { navigate } from "../../routes/index.ts";
 import Imagex from "../base/Imagex.ts"; // Adjust the import path if needed

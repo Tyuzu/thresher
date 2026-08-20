@@ -4,7 +4,7 @@ import { apiFetch } from "../../../api/api.ts";
 import { navigate } from "../../../routes/index.ts";
 import Imagex from "../../../components/base/Imagex.ts";
 import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.ts";
-import Notify from "../../../components/ui/Notify.mjs";
+import Notify from "../../../components/ui/Notify.ts";
 import Button from "../../../components/base/Button.ts";
 
 /**

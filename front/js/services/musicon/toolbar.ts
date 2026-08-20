@@ -1,7 +1,7 @@
 // toolbar.js
 
 import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { MusicAPI } from "./fetchers.ts";
 import { displayMusic } from "./wuzic.ts";
 import { createPlaylistCard } from "./cards.ts";

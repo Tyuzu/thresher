@@ -6,7 +6,7 @@ import { capitalize } from "../profile/profileHelpers.ts";
 import { resolveImagePath, PictureType, EntityType } from "../../utils/imagePaths.ts";
 import { navigate } from "../../routes/index.ts";
 import { uploadFile } from "../media/api/mediaApi.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { getUploadKey } from "../newchat/fileUpload.ts";
 
 /* ---------------------- BLOCK PLUGINS ---------------------- */

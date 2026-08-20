@@ -2,7 +2,7 @@ import "../../../css/inistyles/deliverypage.css";
 import { createElement } from "../../components/createElement.ts";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
 import Button from "../../components/base/Button.ts";
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 import { createDeliveryRequest } from "../../services/deliveries/deliveriesApi.ts";
 import { navigate } from "../../routes/index.ts";
 

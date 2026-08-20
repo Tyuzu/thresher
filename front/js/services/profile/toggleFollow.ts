@@ -1,7 +1,7 @@
 import { setState, getState } from '../../state/state.js';
 import { apiFetch } from "../../api/api.ts";
 import { fetchProfile } from './fetchProfile.js';
-import Notify from "../../components/ui/Notify.mjs";
+import Notify from "../../components/ui/Notify.ts";
 
 /* ============================================================
     GENERIC TOGGLE ACTION
