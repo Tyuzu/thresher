@@ -1,5 +1,5 @@
 // components/ui/confirmModal.js
-import { createElement } from "../createElement";
+import { createElement } from "../createElement.ts";
 import Button from "../base/Button.ts";
 import Modal from "./Modal.ts";
 

@@ -3,7 +3,7 @@ import { createElement } from "../../../components/createElement.ts";
 import { Button } from "../../../components/base/Button.ts";
 import { apiFetch } from "../../../api/api.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import { navigate } from "../../../routes/index.ts";
+import { navigate } from "../../../routes/navigate.ts";
 import Imagex from "../../../components/base/Imagex.ts";
 import { updateImageWithCrop } from "../../../utils/bannerEditor.ts";
 import { displayCreateOrEditBaitoProfile } from "../create/createBaitoProfile.ts";

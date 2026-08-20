@@ -1,5 +1,5 @@
 import "../../../css/ui/Breadcrumb.css";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 
 /** Map static paths or route prefixes to user-friendly titles */
 const ROUTE_NAME_MAP = {

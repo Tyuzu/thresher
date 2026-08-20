@@ -3,7 +3,7 @@ import { displayMerchandise } from "../merch/merchService.ts";
 import { createElement } from "../../components/createElement.ts";
 import Modal from "../../components/ui/Modal.ts";
 import Button from "../../components/base/Button.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 
 
 export async function renderAlbumsTab(artistID, isCreator) {

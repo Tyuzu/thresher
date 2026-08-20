@@ -3,7 +3,7 @@ import { createElement } from "../../components/createElement.ts";
 import Button from "../../components/base/Button.ts";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
 import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 
 export function createRecipe(container) {
   renderRecipeForm(container, "create", null);

@@ -1,7 +1,7 @@
 // displayFollowSugg.js
 
 import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
 import { createElement } from "../../components/createElement.ts";
 import Notify from "../../components/ui/Notify.ts";

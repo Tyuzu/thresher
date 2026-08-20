@@ -1,6 +1,6 @@
 import { apiFetch } from "../../api/api";
-import { createElement } from "../../components/createElement";
-import { navigate } from "../../routes/index.ts";
+import { createElement } from "../../components/createElement.ts";
+import { navigate } from "../../routes/navigate.ts";
 
 export async function renderRelatedPosts(post) {
   const container = createElement("div", { class: "related-posts" }, [

@@ -1,7 +1,7 @@
 // ContextMenu.mjs
 import "../../../css/ui/ContextMenu.css";
 
-import { createElement } from "../../components/createElement";
+import { createElement } from "../../components/createElement.ts";
 
 const ContextMenu = (() => {
   let menu = null;

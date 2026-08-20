@@ -1,7 +1,7 @@
 import { apiFetch } from "../../../api/api.ts";
 import { createElement } from "../../../components/createElement.ts";
 import Button from "../../../components/base/Button.ts";
-import { navigate } from "../../../routes/index.ts";
+import { navigate } from "../../../routes/navigate.ts";
 import { getState } from "../../../state/state.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
 import { updateImageWithCrop } from "../../../utils/bannerEditor.ts";
@@ -9,7 +9,6 @@ import { renderFarmDetails, renderCropSummary, renderCropEmojiMap, renderCrops, 
 import { displayReviews } from "../../reviews/displayReviews.ts";
 import { farmChat } from "./farmchat.ts";
 import Imagex from "../../../components/base/Imagex.ts";
-import NoLink from "../../../components/base/NoLink.ts";
 import { persistTabs } from "../../../utils/persistTabs.ts";
 import { displayNotices } from "../../notices/notices.ts";
 import { displayFanMedia } from "../../fanmade/ui/mediaGallery.ts";

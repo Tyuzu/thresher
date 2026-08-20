@@ -1,6 +1,6 @@
 import { chatFetch } from "../../api/api.ts";
 import { getState } from "../../state/state.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { displayNewChat } from "./displayNewchat.ts";
 import { renderSharedChatList } from "../chat/sharedChatList.ts";
 

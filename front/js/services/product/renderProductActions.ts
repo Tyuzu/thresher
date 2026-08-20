@@ -1,6 +1,6 @@
 import {
   createElement
-} from "../../components/createElement";
+} from "../../components/createElement.ts";
 import Button from "../../components/base/Button.ts";
 import {
   addToCart,

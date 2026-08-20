@@ -1,6 +1,6 @@
 import "../../../css/layout/footer.css";
 import { setLanguage } from "../../i18n/i18n.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { webSiteName } from "../../config/env.ts";
 import { userFeedbackGlobal } from "../../services/reporting/feedback/feedback.ts";
 import { createElement } from "../createElement.ts";

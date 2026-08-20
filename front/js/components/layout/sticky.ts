@@ -1,7 +1,7 @@
 import "../../../css/layout/sticky5.css";
 import { createElement } from "../createElement.ts";
 import { notifSVG, cartSVG, chatSVG, menuSVG } from "../svgs.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { getState, subscribe } from "../../state/state.ts";
 import { openNotificationsModal } from "../../services/notifications/notifModal.ts";
 import { toggleSidebar } from "./sidebar.ts";

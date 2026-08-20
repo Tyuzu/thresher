@@ -1,4 +1,4 @@
-import { createElement } from "../../../components/createElement";
+import { createElement } from "../../../components/createElement.ts";
 import { navigate } from "../../../routes";
 
 const normalizedCategoryMap = new Map([

@@ -1,9 +1,8 @@
-import { loadContent, navigate, getCurrentAppLocation, hydrateAuthState } from "./routes/index.ts";
-import { setState } from "./state/state.ts";
+import { loadContent, getCurrentAppLocation, hydrateAuthState } from "./routes/index.ts";
 import { detectLanguage, setLanguage } from "./i18n/i18n.ts";
-import { profileEnvironment, setEnvironment, getNetworkSpeed, determineUITier } from "./utils/app/env.ts";
-import { trackError, showApplicationError, initGlobalErrorListeners } from "./utils/app/errors.ts";
-import { setupPerformanceMonitoring, processPerformanceEntry, reportPerformanceIssue } from "./utils/app/performance.ts";
+import { profileEnvironment, setEnvironment } from "./utils/app/env.ts";
+import { trackError, showApplicationError } from "./utils/app/errors.ts";
+import { setupPerformanceMonitoring } from "./utils/app/performance.ts";
 //import {    setupServiceWorker} from "./utils/app/sw-register.ts";
 import { setupHistoryNavigation, setupGlobalNavigation } from "./routes/navigation.ts";
 

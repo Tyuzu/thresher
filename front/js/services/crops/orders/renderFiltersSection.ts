@@ -1,6 +1,6 @@
 import "../../../../css/filters.css";
 
-import { createElement } from "../../../components/createElement";
+import { createElement } from "../../../components/createElement.ts";
 import Button from "../../../components/base/Button.ts";
 
 export function renderFiltersSection(onApplyFilters) {

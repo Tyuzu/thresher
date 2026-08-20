@@ -1,7 +1,7 @@
 import { createElement } from "../../../components/createElement.ts";
 import { apiFetch } from "../../../api/api.ts";
 import { guessCategoryFromName } from "./displayCropshelpers.ts";
-import { navigate } from "../../../routes/index.ts";
+import { navigate } from "../../../routes/navigate.ts";
 import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.ts";
 import Imagex from "../../../components/base/Imagex.ts";
 import { debounce } from "../../../utils/deutils.ts";

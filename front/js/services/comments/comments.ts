@@ -5,7 +5,7 @@ import { createElement } from "../../components/createElement.ts";
 import { fetchUserMeta } from "../../utils/usersMeta.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
 import Imagex from "../../components/base/Imagex.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { debounce } from "../../utils/deutils.ts";
 import Datex from "../../components/base/Datex.ts";
 import { reportEntity } from "../reporting/reporting.ts";

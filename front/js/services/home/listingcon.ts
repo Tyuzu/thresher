@@ -1,6 +1,6 @@
 import { createElement } from "../../components/createElement.ts";
 import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import Button from "../../components/base/Button.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
 import Imagex from "../../components/base/Imagex.ts";

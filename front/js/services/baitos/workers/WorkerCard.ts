@@ -1,7 +1,7 @@
 import { createElement } from "../../../components/createElement.ts";
 import { Button } from "../../../components/base/Button.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import { navigate } from "../../../routes/index.ts";
+import { navigate } from "../../../routes/navigate.ts";
 import { getState } from "../../../state/state.ts";
 import Imagex from "../../../components/base/Imagex.ts";
 import { openHireWorkerModal } from "./WorkerModal.ts"; // Import it!

@@ -3,7 +3,7 @@ import Vidpop from "./Vidpop.ts";
 import { createIconButton } from "../../utils/svgIconButton";
 import { maximizeSVG, muteSVG, vol2SVG, playSVG, pauseSVG } from "../svgs.ts";
 import { setupSubtitles } from "./vidpopHelpers/subtitles.ts";
-import { createElement } from "../../components/createElement";
+import { createElement } from "../../components/createElement.ts";
 
 // All supported video resolutions ordered descending
 const ALL_QUALITIES = [1440, 1080, 720, 480, 360, 240, 144];

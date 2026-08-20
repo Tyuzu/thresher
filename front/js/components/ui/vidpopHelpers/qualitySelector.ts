@@ -1,4 +1,4 @@
-import { createElement } from "../../createElement";
+import { createElement } from "../../createElement.ts";
 
 export function createQualitySelector(video, qualities) {
   const container = createElement("div", {}, []);

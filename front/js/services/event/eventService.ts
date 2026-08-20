@@ -1,7 +1,7 @@
 // --- Imports ---
 import { getState } from "../../state/state.ts";
 import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { createElement } from "../../components/createElement.ts";
 import Notify from "../../components/ui/Notify.ts";
 

@@ -1,6 +1,6 @@
 import { createElement } from "../../../components/createElement.ts";
 import Button from "../../../components/base/Button.ts";
-import { navigate } from "../../../routes/index.ts";
+import { navigate } from "../../../routes/navigate.ts";
 import { formatRelativeTime } from "../../../utils/dateUtils.ts";
 import { saveJob } from "./utils.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";

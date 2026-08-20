@@ -1,5 +1,5 @@
 import Button from "../../../components/base/Button";
-import { createElement } from "../../../components/createElement";
+import { createElement } from "../../../components/createElement.ts";
 import { apiFetch } from "../../../api/api.ts";
 
 export async function renderCategoryChips(container, selectedCategory, onSelect, type = "product") {

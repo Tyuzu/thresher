@@ -1,10 +1,10 @@
 import { apiFetch } from "../../api/api";
-import { createElement } from "../../components/createElement";
+import { createElement } from "../../components/createElement.ts";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
 import Button from "../../components/base/Button.ts";
 import { capitalize } from "../profile/profileHelpers.ts";
 import { resolveImagePath, PictureType, EntityType } from "../../utils/imagePaths.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { uploadFile } from "../media/api/mediaApi.ts";
 import Notify from "../../components/ui/Notify.ts";
 import { getUploadKey } from "../newchat/fileUpload.ts";

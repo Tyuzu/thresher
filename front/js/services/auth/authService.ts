@@ -342,7 +342,7 @@ export function silentLogout(broadcast = true) {
             try {
                 const {
                     navigate
-                } = await import("../../routes/index.ts");
+                } = await import("../../routes/navigate.ts");
                 await navigate("/login", {
                     replace: true
                 });

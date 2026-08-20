@@ -3,7 +3,7 @@
 import { getState, setState } from "../../state/state.ts";
 import { apiFetch } from "../../api/api.ts";
 import { handleError } from "../../utils/utils.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { showLoadingMessage, removeLoadingMessage } from "./profileHelpers.ts";
 import { generateFormField } from "./generators.ts";
 import { deleteProfile } from "./displayMyProfile.ts";

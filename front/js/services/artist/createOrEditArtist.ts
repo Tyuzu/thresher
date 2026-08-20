@@ -1,4 +1,4 @@
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { apiFetch } from "../../api/api.ts";
 import Button from "../../components/base/Button.ts";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";

@@ -3,7 +3,7 @@ import Button from "../../../components/base/Button";
 import Imagex from "../../../components/base/Imagex.ts";
 import {
     createElement
-} from "../../../components/createElement";
+} from "../../../components/createElement.ts";
 import {
     navigate
 } from "../../../routes";

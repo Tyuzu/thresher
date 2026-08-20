@@ -1,4 +1,4 @@
-import { createElement } from "../../createElement"
+import { createElement } from "../../createElement.ts"
 
 const hkl = `<div id="hotkey-help" style="display:none; position:fixed; bottom:10px; right:10px; background:#111; color:#fff; padding:1rem; z-index:9999; font-size:0.9rem; max-width:300px; border-radius:6px;">
   <strong>Hotkeys</strong><br><br>

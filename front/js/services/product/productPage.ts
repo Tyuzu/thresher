@@ -1,7 +1,7 @@
 // productPage.js
 
 import { renderProduct } from "./renderProduct.ts";
-import { createElement } from "../../components/createElement";
+import { createElement } from "../../components/createElement.ts";
 import { fetchProduct } from "./productHelpers.ts";
 
 export async function displayProduct(

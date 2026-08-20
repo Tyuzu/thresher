@@ -1,7 +1,7 @@
 import "../../../css/subpages/sidebar.css";
 import Modal from "../ui/Modal.ts";
 import { createElement } from "../createElement.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import Imagex from "../base/Imagex.ts"; // Adjust the import path if needed
 import { getState } from "../../state/state.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";

@@ -1,6 +1,6 @@
 // renderProductBasicInfo.js
 
-import { createElement } from "../../components/createElement";
+import { createElement } from "../../components/createElement.ts";
 import { getProductAvailability } from "./productHelpers.ts";
 
 export function renderProductBasicInfo(product) {

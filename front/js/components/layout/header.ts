@@ -1,7 +1,7 @@
 import "../../../css/layout/header5.css";
 import { getState, subscribe } from "../../state/state.ts";
 import { webSiteName } from "../../config/env.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { logout } from "../../services/auth/authService.ts";
 import { settingsSVG, moonSVG, profileSVG, shopBagSVG, logoutSVG, cardSVG } from "../svgs.ts";
 import { createElement } from "../createElement.ts";

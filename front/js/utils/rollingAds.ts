@@ -1,7 +1,7 @@
 // rollingAds.js (module)
 import { apiFetch } from "../api/api";
 import Imagex from "../components/base/Imagex";
-import { createElement } from "../components/createElement";
+import { createElement } from "../components/createElement.ts";
 import { resolveImagePath, EntityType, PictureType } from "./imagePaths.ts";
 
 const adCache = {};

@@ -1,7 +1,7 @@
 // createOrEditBaito.js
 
 import { createElement } from "../../../components/createElement.ts";
-import { navigate } from "../../../routes/index.ts";
+import { navigate } from "../../../routes/navigate.ts";
 import { apiFetch } from "../../../api/api.ts";
 import { createFormGroup } from "../../../components/createFormGroupEnhanced.ts";
 import Notify from "../../../components/ui/Notify.ts";

@@ -5,7 +5,7 @@ import Notify from "../../components/ui/Notify.ts";
 import { createMainLayout } from "../../components/layout/mainLayout.ts";
 import { createAsideContent } from "../../components/layout/asideLayout.ts";
 import { adspace } from "../../services/ads/newads.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import {
   fetchDriverStatus,
   setDriverOnline,

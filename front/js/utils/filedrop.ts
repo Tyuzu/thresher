@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { apiFetch } from "../api/api";
-import { createElement } from "../components/createElement";
+import { createElement } from "../components/createElement.ts";
 import { FILEDROP_URL } from "../state/state";
 import Notify from "../components/ui/Notify.ts";
 

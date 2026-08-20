@@ -1,5 +1,5 @@
 import { mereFetch } from "../../api/api";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { getState } from "../../state/state";
 import { userNewChatInit } from "../newchat/newchats.ts";
 

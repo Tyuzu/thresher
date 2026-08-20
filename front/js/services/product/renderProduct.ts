@@ -1,6 +1,6 @@
 // renderProduct.js
 
-import { createElement } from "../../components/createElement";
+import { createElement } from "../../components/createElement.ts";
 import { normalizeProduct } from "./productHelpers.ts";
 import { renderProductGallery } from "./renderProductGallery.ts";
 import { renderProductBasicInfo } from "./renderProductBasicInfo.ts";

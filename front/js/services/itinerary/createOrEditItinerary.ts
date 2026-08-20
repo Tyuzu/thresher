@@ -2,7 +2,7 @@ import { apiFetch } from "../../api/api.ts";
 import Button from "../../components/base/Button.ts";
 import { createElement } from "../../components/createElement.ts";
 import Notify from "../../components/ui/Notify.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 
 let dayCount = 0;
 

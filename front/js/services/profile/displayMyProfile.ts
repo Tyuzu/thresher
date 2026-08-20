@@ -1,6 +1,6 @@
 import { getState } from "../../state/state.ts";
 import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { logout } from "../auth/authService.ts";
 import { fetchProfile } from "./fetchProfile.ts";
 import profilGen from "./renderUserProfile.ts";

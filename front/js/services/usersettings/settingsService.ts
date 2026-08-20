@@ -1,5 +1,5 @@
 import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import ToggleSwitch from "../../components/ui/ToggleSwitch.ts";
 
 // --- UI Helpers ---

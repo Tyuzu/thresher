@@ -1,5 +1,5 @@
 import "../../../css/layout/navi.css";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { getCurrentAllowedFeatures } from "../../config/domainFeatures.ts";
 
 /** Highlight current active link */

@@ -1,4 +1,4 @@
-// src/config/domainFeatures.js
+// src/config/domainFeatures.ts
 
 export const DOMAIN_FEATURE_MAP = {
   "farms.myapp.com": ["core", "farms", "chats"],

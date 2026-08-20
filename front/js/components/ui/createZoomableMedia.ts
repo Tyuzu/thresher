@@ -1,5 +1,5 @@
 import Imagex from "../base/Imagex";
-import { createElement } from "../../components/createElement";
+import { createElement } from "../../components/createElement.ts";
 
 // === ZOOMABLE MEDIA FACTORY ===
 export const createZoomableMedia = (src, type = "image") => {

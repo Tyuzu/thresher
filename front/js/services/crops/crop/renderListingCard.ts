@@ -1,5 +1,5 @@
 // renderListingCard.js
-import { createElement } from "../../../components/createElement";
+import { createElement } from "../../../components/createElement.ts";
 import Button from "../../../components/base/Button";
 import { navigate } from "../../../routes";
 import { addToCart, isValidCartQuantity } from "../../cart/addToCart.ts";

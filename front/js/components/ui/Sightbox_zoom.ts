@@ -1,6 +1,6 @@
 import "../../../css/ui/SightboxZoom.css";
 import { createZoomableMedia } from "./createZoomableMedia";
-import { createElement } from "../../components/createElement";
+import { createElement } from "../../components/createElement.ts";
 import { createIconButton } from "../../utils/svgIconButton";
 import { xSVG } from "../svgs";
 

@@ -1,6 +1,6 @@
 import { createElement } from "../../../components/createElement.ts";
 import { Button } from "../../../components/base/Button.ts";
-import { navigate } from "../../../routes/index.ts";
+import { navigate } from "../../../routes/navigate.ts";
 import { renderWorkerList } from "./WorkerList.ts";
 import { apiFetch } from "../../../api/api.ts";
 import { adspace } from "../../../services/ads/newads.ts";

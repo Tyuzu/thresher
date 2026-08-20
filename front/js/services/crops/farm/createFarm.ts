@@ -1,5 +1,5 @@
 import { apiFetch } from "../../../api/api.ts";
-import { navigate } from "../../../routes/index.ts";
+import { navigate } from "../../../routes/navigate.ts";
 import { createFarmForm } from "./createOrEditFarm.ts";
 
 export function createFarm(isLoggedIn, container) {

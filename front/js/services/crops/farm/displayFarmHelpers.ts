@@ -10,7 +10,7 @@ import {
 } from "../crop/editCrop.ts";
 import {
     navigate
-} from "../../../routes/index.ts";
+} from "../../../routes/navigate.ts";
 import {
     addToCart,
     isValidCartQuantity

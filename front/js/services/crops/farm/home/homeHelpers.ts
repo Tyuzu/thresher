@@ -1,6 +1,6 @@
 // YoHome.js
 import { createElement } from "../../components/createElement.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { login, signup } from "../auth/authService.ts";
 
 // --- helpers ---

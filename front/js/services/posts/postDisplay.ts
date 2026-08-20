@@ -2,7 +2,7 @@
 import { createElement } from "../../components/createElement.ts";
 import { apiFetch } from "../../api/api.ts";
 import Button from "../../components/base/Button.ts";
-import { navigate } from "../../routes/index.ts";
+import { navigate } from "../../routes/navigate.ts";
 import { formatRelativeTime } from "../../utils/dateUtils.ts";
 import { editPost } from "./createOrEditPost.ts";
 import { createCommentsSection } from "../comments/comments.ts";

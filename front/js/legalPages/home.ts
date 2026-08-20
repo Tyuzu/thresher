@@ -1,4 +1,4 @@
-import { createElement } from "../components/createElement";
+import { createElement } from "../components/createElement.ts";
 
 function section(title, text) {
   return createElement("section", {}, [
