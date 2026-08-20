@@ -1,7 +1,6 @@
 import { apiFetch } from "../../api/api.ts";
 import { createElement } from "../../components/createElement.ts";
 import { navigate } from "../../routes/navigate.ts";
-import displayPlace from "./displayPlace.ts";
 import Notify from "../../components/ui/Notify.ts";
 import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
 
@@ -24,7 +23,6 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
     const place = await apiFetch(`/places/place/${placeId}`);
     content.innerHTML = "";
 
-    // Detect main category
     const detectedMainCategory =
       Object.entries(categoryMap).find(([_, subs]) =>
         subs.includes(place.category)
@@ -32,7 +30,6 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
 
     const tags = Array.isArray(place.tags) ? [...place.tags] : [];
 
-    // Main Form Declaration with Submit Event
     const form = createElement("form", {
       id: "edit-place-form",
       events: {
@@ -43,7 +40,6 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
       },
     });
 
-    // Main category form group with change event listener
     const mainCategoryGroup = createFormGroup({
       label: "Place Type",
       type: "select",
@@ -69,7 +65,6 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
     });
     form.appendChild(mainCategoryGroup);
 
-    // Subcategory form group
     form.appendChild(
       createFormGroup({
         label: "Category",
@@ -84,7 +79,6 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
       })
     );
 
-    // Other fields
     const fields = [
       {
         label: "Place Name",
@@ -121,7 +115,6 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
     ];
     fields.forEach((field) => form.appendChild(createFormGroup(field)));
 
-    // TAGS FIELD
     const tagInput = createElement("input", {
       type: "text",
       id: "tag-input",
@@ -195,7 +188,6 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
     form.appendChild(tagWrapper);
     renderTags();
 
-    // Submit button
     const updateButton = createElement(
       "button",
       { type: "submit", class: "btn btn-primary" },
@@ -254,7 +246,9 @@ async function updatePlace(isLoggedIn, placeId, tags = []) {
       duration: 3000,
       dismissible: true,
     });
-    displayPlace(isLoggedIn, placeId);
+    
+    // Triggers router update safely without requiring displayPlace import
+    navigate(`/place/${placeId}`);
   } catch (error) {
     Notify(`Error updating place: ${error.message}`, {
       type: "error",

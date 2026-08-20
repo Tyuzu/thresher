@@ -1,8 +1,7 @@
 import { apiFetch } from "../../../api/api.ts";
 import { createFarmForm } from "./createOrEditFarm.ts";
-import { displayFarm } from "./farmDisplay.ts";
 
-export function editFarm(isLoggedIn, farm, container) {
+export function editFarm(isLoggedIn, farm, container, onSuccess = null) {
     container.textContent = "";
 
     if (!isLoggedIn) {
@@ -16,7 +15,9 @@ export function editFarm(isLoggedIn, farm, container) {
         onSubmit: async (formData) => {
             const res = await apiFetch(`/farms/farm/${farm.farmid}`, "PUT", formData, true);
             if (res.success) {
-                displayFarm(isLoggedIn, farm.farmid, container);
+                if (typeof onSuccess === "function") {
+                    onSuccess();
+                }
             } else {
                 container.textContent = "❌ Failed to update farm.";
             }

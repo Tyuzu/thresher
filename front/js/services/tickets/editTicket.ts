@@ -1,9 +1,8 @@
 import { apiFetch } from "../../api/api.ts";
-import { displayTickets } from "./displayTickets.ts";
 import { createElement } from "../../components/createElement.ts";
 
 /* ────────── Edit Ticket ────────── */
-async function editTicket(ticketId, eventId) {
+async function editTicket(ticketId: string, eventId: string, onRefresh?: () => void) {
     try {
         const ticketData = await apiFetch(
             `/ticket/event/${eventId}/${ticketId}`,
@@ -16,9 +15,11 @@ async function editTicket(ticketId, eventId) {
         }
 
         const editEventDiv = document.getElementById("edittabs");
+        if (!editEventDiv) return;
+
         editEventDiv.replaceChildren();
 
-        const form = createElement("form", { id: "edit-ticket-form" });
+        const form = createElement("form", { id: "edit-ticket-form" }) as HTMLFormElement;
 
         const fields = [
             { label: "Name", id: "ticket-name", type: "text", value: ticketData.name },
@@ -51,10 +52,10 @@ async function editTicket(ticketId, eventId) {
         });
 
         ["USD", "EUR", "GBP", "CAD", "AUD", "JPY"].forEach(c => {
-            const opt = createElement("option", { value: c }, [c]);
+            const opt = createElement("option", { value: c }, [c]) as HTMLOptionElement;
             if (ticketData.currency === c) {
-opt.selected = true;
-}
+                opt.selected = true;
+            }
             currencySelect.append(opt);
         });
 
@@ -85,7 +86,7 @@ opt.selected = true;
 
         form.addEventListener("submit", async e => {
             e.preventDefault();
-            await updateTicket(ticketId, eventId);
+            await updateTicket(ticketId, eventId, onRefresh);
         });
     } catch (err) {
         console.error(err);
@@ -94,15 +95,15 @@ opt.selected = true;
 }
 
 /* ────────── Update Ticket ────────── */
-async function updateTicket(ticketId, eventId) {
+async function updateTicket(ticketId: string, eventId: string, onRefresh?: () => void) {
     const payload = {
-        name: document.getElementById("ticket-name").value.trim(),
-        price: Number(document.getElementById("ticket-price").value),
-        quantity: Number(document.getElementById("ticket-quantity").value),
-        currency: document.getElementById("ticket-currency").value,
-        color: document.getElementById("ticket-color").value,
-        seatstart: Number(document.getElementById("seat-start").value),
-        seatend: Number(document.getElementById("seat-end").value)
+        name: (document.getElementById("ticket-name") as HTMLInputElement).value.trim(),
+        price: Number((document.getElementById("ticket-price") as HTMLInputElement).value),
+        quantity: Number((document.getElementById("ticket-quantity") as HTMLInputElement).value),
+        currency: (document.getElementById("ticket-currency") as HTMLSelectElement).value,
+        color: (document.getElementById("ticket-color") as HTMLInputElement).value,
+        seatstart: Number((document.getElementById("seat-start") as HTMLInputElement).value),
+        seatend: Number((document.getElementById("seat-end") as HTMLInputElement).value)
     };
 
     if (
@@ -123,7 +124,7 @@ async function updateTicket(ticketId, eventId) {
         );
 
         clearTicketForm();
-        refreshTicketList(eventId);
+        triggerRefresh(onRefresh);
     } catch (err) {
         console.error(err);
         alert("Failed to update ticket.");
@@ -133,28 +134,22 @@ async function updateTicket(ticketId, eventId) {
 /* ────────── Helpers ────────── */
 function clearTicketForm() {
     const editEventDiv = document.getElementById("edittabs");
-    editEventDiv.replaceChildren();
+    if (editEventDiv) editEventDiv.replaceChildren();
 }
 
-async function refreshTicketList(eventId) {
-    const ticketList = document.getElementById("ticket-list");
-    if (!ticketList) {
-return;
-}
-
-    const tickets = await apiFetch(
-        `/ticket/event/${eventId}`,
-        "GET"
-    );
-
-    displayTickets(ticketList, tickets, eventId, true, true);
+function triggerRefresh(onRefresh?: () => void) {
+    if (typeof onRefresh === "function") {
+        onRefresh();
+    } else {
+        document.dispatchEvent(new CustomEvent("tickets:updated"));
+    }
 }
 
 /* ────────── Delete Ticket ────────── */
-async function deleteTicket(ticketId, eventId) {
+async function deleteTicket(ticketId: string, eventId: string, onRefresh?: () => void) {
     if (!confirm("Delete this ticket?")) {
-return;
-}
+        return;
+    }
 
     try {
         await apiFetch(
@@ -162,7 +157,7 @@ return;
             "DELETE"
         );
 
-        refreshTicketList(eventId);
+        triggerRefresh(onRefresh);
     } catch (err) {
         console.error(err);
         alert("Failed to delete ticket.");

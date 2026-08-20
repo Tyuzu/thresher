@@ -1,7 +1,6 @@
 import { createElement } from "../../components/createElement.ts";
 import { Button } from "../../components/base/Button.ts";
 import { editEvent } from "./creadit.ts";
-import { deleteEvent } from "./eventService.ts";
 import { viewEventAnalytics } from "./eventAnalytics.ts";
 import { reportEntity } from "../reporting/reporting.ts";
 import { EntityType } from "../../utils/imagePaths.ts";
@@ -230,4 +229,18 @@ export async function displayEventDetails(content, eventData, isCreator, isLogge
     wrapper.appendChild(card);
     content.appendChild(wrapper);
     content.appendChild(createElement("div", { id: "edittabs" }, []));
+}
+
+// Delete Event
+async function deleteEvent(isLoggedIn, eventId) {
+    if (!isLoggedIn) {
+        Notify("Please log in to delete your event.", { type: "warning", duration: 3000, dismissible: true });
+        return;
+    }
+    await confirmAndExecute(
+        "Are you sure you want to delete this event?",
+        () => apiFetch(`/events/event/${eventId}`, "DELETE").then(() => navigate("/events")),
+        "Event deleted successfully.",
+        "Error deleting event"
+    );
 }

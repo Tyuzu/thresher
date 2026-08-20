@@ -1,12 +1,9 @@
-// editProfile.js
-
 import { getState, setState } from "../../state/state.ts";
 import { apiFetch } from "../../api/api.ts";
 import { handleError } from "../../utils/utils.ts";
 import { navigate } from "../../routes/navigate.ts";
 import { showLoadingMessage, removeLoadingMessage } from "./profileHelpers.ts";
 import { generateFormField } from "./generators.ts";
-import { deleteProfile } from "./displayMyProfile.ts";
 import { createElement } from "../../components/createElement.ts";
 import Button from "../../components/base/Button.ts";
 import Notify from "../../components/ui/Notify.ts";
@@ -18,8 +15,9 @@ import Notify from "../../components/ui/Notify.ts";
 /**
  * Renders the edit profile form into the target container
  * @param {HTMLElement} content 
+ * @param {Function} [onDelete] Optional delete handler callback
  */
-async function editProfile(content) {
+async function editProfile(content, onDelete) {
   if (!content) return;
 
   content.replaceChildren(); // Clear existing content
@@ -100,7 +98,11 @@ async function editProfile(content) {
     {
       click: (e) => {
         e.preventDefault();
-        deleteProfile();
+        if (typeof onDelete === "function") {
+          onDelete();
+        } else {
+          content.dispatchEvent(new CustomEvent("edit-profile:delete", { bubbles: true }));
+        }
       }
     },
     "btn delete-btn"

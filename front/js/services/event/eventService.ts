@@ -63,20 +63,6 @@ const createVenue = async (container, eventId, seating, isLoggedIn) => {
 
 // --- Core Functions ---
 
-// Delete Event
-async function deleteEvent(isLoggedIn, eventId) {
-    if (!isLoggedIn) {
-        Notify("Please log in to delete your event.", { type: "warning", duration: 3000, dismissible: true });
-        return;
-    }
-    await confirmAndExecute(
-        "Are you sure you want to delete this event?",
-        () => apiFetch(`/events/event/${eventId}`, "DELETE").then(() => navigate("/events")),
-        "Event deleted successfully.",
-        "Error deleting event"
-    );
-}
-
 
 // Fetch Event Data
 async function fetchEventData(eventId) {
@@ -163,5 +149,4 @@ export {
     editEvent,
     fetchEventData,
     displayEvent,
-    deleteEvent,
 };

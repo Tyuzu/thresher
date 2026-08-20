@@ -1,45 +1,55 @@
-import TicketCard from '../../components/ui/TicketCard.mjs';
-import { Button } from "../../components/base/Button.ts";
+import TicketCard from "../../components/ui/TicketCard.ts";
+import Button from "../../components/base/Button.ts";
+import Modal from "../../components/ui/Modal.ts";
+import Notify from "../../components/ui/Notify.ts";
 import { createElement } from "../../components/createElement.ts";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
 import { apiFetch } from "../../api/api.ts";
 
-import { deleteTicket, editTicket } from "./editTicket.ts";
-import { addTicketForm } from './ticketService.js';
-import { printTicket } from './printTicket.js';
+import { deleteTicket, editTicket, clearTicketForm } from "./editTicket.ts";
+import { printTicket } from "./printTicket.ts";
+import { listMyTickets } from "./listmyTickets.ts";
+import { showPaymentModal } from "../pay/pay.ts";
 import {
   verifyTicketAndShowModal,
   cancelTicket,
   transferTicket
 } from "./ticketTransfer.ts";
-import { listMyTickets } from './listmyTickets.js';
-import { showPaymentModal } from '../pay/pay.js';
-import Modal from '../../components/ui/Modal.mjs';
 
-// DYNAMIC FIX: Format currency properly according to chosen ISO code
-function formatCurrency(minorValue, currencyCode = 'INR') {
+/* ────────── Helpers ────────── */
+function formatCurrency(minorValue: number, currencyCode = "INR"): string {
   const code = currencyCode.toUpperCase();
-  // JPY does not use minor units/sub-units
-  const divisor = code === 'JPY' ? 1 : 100;
+  const divisor = code === "JPY" ? 1 : 100;
 
-  // Fallback locale map for standard clean formatting
-  const localeMap = { 'INR': 'en-IN', 'USD': 'en-US', 'EUR': 'de-DE', 'GBP': 'en-GB' };
-  const locale = localeMap[code] || navigator.language || 'en-US';
+  const localeMap: Record<string, string> = {
+    INR: "en-IN",
+    USD: "en-US",
+    EUR: "de-DE",
+    GBP: "en-GB"
+  };
+  const locale = localeMap[code] || navigator.language || "en-US";
 
   return new Intl.NumberFormat(locale, {
-    style: 'currency',
+    style: "currency",
     currency: code
   }).format((minorValue || 0) / divisor);
 }
 
 /* ────────── Ticket Card ────────── */
-function createTicketCard(ticket, eventId, isCreator, isLoggedIn) {
+function createTicketCard(
+  ticket: any,
+  eventId: string,
+  isCreator: boolean,
+  isLoggedIn: boolean,
+  onRefresh?: () => void
+) {
   const card = TicketCard({
     isl: isLoggedIn,
     seatstart: ticket.seatstart,
     seatend: ticket.seatend,
     creator: isCreator,
     name: ticket.name,
-    price: formatCurrency(ticket.price, ticket.currency), // Dynamically target currency
+    price: formatCurrency(ticket.price, ticket.currency),
     quantity: ticket.quantity,
     color: ticket.color || "#a3a3a349",
     attributes: { "data-ticket-id": ticket.ticketid },
@@ -66,14 +76,20 @@ function createTicketCard(ticket, eventId, isCreator, isLoggedIn) {
               "",
               {
                 click: async () => {
-                  const quantity = parseInt(quantityInput.value, 10);
+                  const quantity = parseInt(
+                    (quantityInput as HTMLInputElement).value,
+                    10
+                  );
 
                   if (
                     !Number.isInteger(quantity) ||
                     quantity < 1 ||
                     quantity > ticket.quantity
                   ) {
-                    return alert(`⚠️ Enter a valid quantity (1-${ticket.quantity}).`);
+                    return Notify(
+                      `Enter a valid quantity (1-${ticket.quantity}).`,
+                      { type: "warning", dismissible: true }
+                    );
                   }
 
                   modal.close();
@@ -86,8 +102,11 @@ function createTicketCard(ticket, eventId, isCreator, isLoggedIn) {
                       entityName: ticket.name
                     });
 
-                    if (!paymentResult || paymentResult.success !== true) {
-                      return alert("❌ Payment cancelled or failed.");
+                    if (!paymentResult?.success) {
+                      return Notify("Payment cancelled or failed.", {
+                        type: "error",
+                        dismissible: true
+                      });
                     }
 
                     const resp = await apiFetch(
@@ -96,18 +115,27 @@ function createTicketCard(ticket, eventId, isCreator, isLoggedIn) {
                       { quantity }
                     );
 
-                    if (resp.success) {
-                      alert("✅ Ticket purchased successfully!");
+                    if (resp?.success) {
+                      Notify("Ticket purchased successfully!", {
+                        type: "success",
+                        dismissible: true
+                      });
                     } else {
-                      alert(resp.message || "❌ Purchase failed.");
+                      Notify(resp?.message || "Purchase failed.", {
+                        type: "error",
+                        dismissible: true
+                      });
                     }
-                  } catch (err) {
+                  } catch (err: any) {
                     console.error("Ticket purchase failed:", err);
-                    alert(`❌ Purchase failed: ${err.message}`);
+                    Notify(`Purchase failed: ${err.message}`, {
+                      type: "error",
+                      dismissible: true
+                    });
                   }
                 }
               },
-              "buttonx"
+              "buttonx primary"
             ),
             Button(
               "Cancel",
@@ -121,10 +149,24 @@ function createTicketCard(ticket, eventId, isCreator, isLoggedIn) {
   });
 
   if (isCreator) {
-    const actions = createElement("div", { class: "hflex-sb", style: "padding:0 0.5rem;" });
+    const actions = createElement("div", {
+      class: "hflex-sb",
+      style: "padding: 0 0.5rem;"
+    });
+
     actions.append(
-      Button("Edit", "", { click: () => editTicket(ticket.ticketid, eventId) }, "buttonx primary"),
-      Button("Delete", "", { click: () => deleteTicket(ticket.ticketid, eventId) }, "buttonx delete-btn")
+      Button(
+        "Edit",
+        "",
+        { click: () => editTicket(ticket.ticketid, eventId, onRefresh) },
+        "buttonx primary"
+      ),
+      Button(
+        "Delete",
+        "",
+        { click: () => deleteTicket(ticket.ticketid, eventId, onRefresh) },
+        "buttonx delete-btn"
+      )
     );
     card.append(actions);
   }
@@ -132,27 +174,42 @@ function createTicketCard(ticket, eventId, isCreator, isLoggedIn) {
   return card;
 }
 
-export function displayNewTicket(ticketData, ticketList, isCreator = false, isLoggedIn = false, eventId) {
-  ticketList.append(createTicketCard(ticketData, eventId, isCreator, isLoggedIn));
+export function displayNewTicket(
+  ticketData: any,
+  ticketList: HTMLElement,
+  isCreator = false,
+  isLoggedIn = false,
+  eventId: string,
+  onRefresh?: () => void
+) {
+  ticketList.append(createTicketCard(ticketData, eventId, isCreator, isLoggedIn, onRefresh));
 }
 
-export async function displayTickets(ticketContainer, eventId, isCreator, isLoggedIn) {
-  let tickets = [];
+export async function displayTickets(
+  ticketContainer: HTMLElement,
+  eventId: string,
+  isCreator: boolean,
+  isLoggedIn: boolean
+) {
+  let tickets: any[] = [];
+
+  const handleRefresh = () => displayTickets(ticketContainer, eventId, isCreator, isLoggedIn);
 
   try {
     const resp = await apiFetch(`/ticket/event/${eventId}`);
     tickets = resp?.data ?? [];
   } catch (err) {
     console.error("Failed to load tickets:", err);
-    const msg = createElement("p", {}, ["Error loading tickets."]);
-    ticketContainer.replaceChildren(msg);
+    ticketContainer.replaceChildren(
+      createElement("p", {}, ["Error loading tickets."])
+    );
     return;
   }
 
   ticketContainer.replaceChildren(createElement("h2", {}, ["Tickets"]));
   const actionsCon = createElement("div", { class: "hvflex" });
 
-  if (!isCreator && tickets?.length > 0) {
+  if (!isCreator && tickets.length > 0) {
     actionsCon.append(
       Button("Verify Ticket", "", { click: () => verifyTicketAndShowModal(eventId) }, "buttonx action-btn"),
       Button("Print Ticket", "", { click: () => printTicket(eventId) }, "buttonx action-btn"),
@@ -162,19 +219,152 @@ export async function displayTickets(ticketContainer, eventId, isCreator, isLogg
     );
   }
 
-  const ticketListDiv = createElement("div", { class: "hvflex gap20" });
+  const ticketListDiv = createElement("div", { class: "hvflex gap20", id: "ticket-list" });
 
   if (isCreator) {
     ticketContainer.append(
-      Button("Add Tickets", "add-ticket-btn", { click: () => addTicketForm(eventId, ticketListDiv) }, "buttonx")
+      Button(
+        "Add Tickets",
+        "add-ticket-btn",
+        { click: () => addTicketForm(eventId, ticketListDiv) },
+        "buttonx"
+      )
     );
   }
 
-  if (tickets?.length > 0) {
-    tickets.forEach(t => ticketListDiv.append(createTicketCard(t, eventId, isCreator, isLoggedIn)));
+  if (tickets.length > 0) {
+    tickets.forEach((t) =>
+      ticketListDiv.append(createTicketCard(t, eventId, isCreator, isLoggedIn, handleRefresh))
+    );
   } else {
-    ticketListDiv.append(createElement("p", {}, ["No tickets available for this event."]));
+    ticketListDiv.append(
+      createElement("p", {}, ["No tickets available for this event."])
+    );
   }
 
   ticketContainer.append(actionsCon, ticketListDiv);
+}
+
+/* ────────── Add Ticket API & Form ────────── */
+async function handleAddTicketSubmit(
+  form: HTMLFormElement,
+  eventId: string,
+  ticketList: HTMLElement,
+  modalInstance: any
+) {
+  const formData = new FormData(form);
+
+  const payload = {
+    name: String(formData.get("name") || "").trim(),
+    price: Number(formData.get("price")),
+    quantity: Number(formData.get("quantity")),
+    currency: String(formData.get("currency")),
+    color: String(formData.get("color") || "#f3f3f3"),
+    seatstart: Number(formData.get("seatstart") || 0),
+    seatend: Number(formData.get("seatend") || 0)
+  };
+
+  if (
+    !payload.name ||
+    payload.price <= 0 ||
+    payload.quantity <= 0 ||
+    payload.seatstart > payload.seatend
+  ) {
+    return Notify("Please enter valid ticket details.", {
+      type: "warning",
+      dismissible: true,
+      duration: 3000
+    });
+  }
+
+  try {
+    const ticket = await apiFetch(`/ticket/event/${eventId}`, "POST", payload);
+
+    if (ticket?.ticketid) {
+      Notify("Ticket added successfully.", {
+        type: "success",
+        dismissible: true,
+        duration: 3000
+      });
+
+      displayNewTicket(ticket, ticketList, true, true, eventId);
+      clearTicketForm();
+      modalInstance?.close?.();
+    } else {
+      Notify("Failed to add ticket.", { type: "error", dismissible: true });
+    }
+  } catch (err) {
+    console.error("Error adding ticket:", err);
+    Notify("Error adding ticket.", { type: "error", dismissible: true });
+  }
+}
+
+export function addTicketForm(eventId: string, ticketList: HTMLElement) {
+  const form = createElement("form", { id: "add-ticket-form" }) as HTMLFormElement;
+
+  const fields = [
+    { label: "Ticket Name", type: "text", id: "ticket-name", name: "name", required: true },
+    { label: "Ticket Price (minor unit)", type: "number", id: "ticket-price", name: "price", required: true },
+    { label: "Quantity", type: "number", id: "ticket-quantity", name: "quantity", required: true },
+    { label: "Seat Start", type: "number", id: "seat-start", name: "seatstart" },
+    { label: "Seat End", type: "number", id: "seat-end", name: "seatend" }
+  ];
+
+  fields.forEach((f) => form.append(createFormGroup(f)));
+
+  /* Currency Select */
+  const currencySelect = createElement("select", {
+    id: "ticket-currency",
+    name: "currency",
+    required: true
+  });
+
+  ["INR", "USD", "EUR", "GBP", "CAD", "AUD", "JPY"].forEach((c) =>
+    currencySelect.append(createElement("option", { value: c }, [c]))
+  );
+
+  form.append(
+    createElement("div", { class: "form-group" }, [
+      createElement("label", { for: "ticket-currency" }, ["Currency"]),
+      currencySelect
+    ])
+  );
+
+  /* Color Input */
+  form.append(
+    createElement("div", { class: "form-group" }, [
+      createElement("label", { for: "ticket-color" }, ["Ticket Color"]),
+      createElement("input", {
+        id: "ticket-color",
+        name: "color",
+        type: "color",
+        value: "#f3f3f3"
+      })
+    ])
+  );
+
+  const modal = Modal({
+    title: "Add Ticket",
+    content: form,
+    actions: () =>
+      createElement("div", { class: "modal-actions" }, [
+        Button(
+          "Add Ticket",
+          "",
+          { click: () => form.requestSubmit() },
+          "buttonx primary"
+        ),
+        Button(
+          "Cancel",
+          "",
+          { click: () => modal.close() },
+          "buttonx"
+        )
+      ])
+  });
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    handleAddTicketSubmit(form, eventId, ticketList, modal);
+  });
 }

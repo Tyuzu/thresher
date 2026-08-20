@@ -1,10 +1,8 @@
-// otherUserProfileService.js
-
-import { fetchUserProfile } from "./fetchProfile.ts";
+import { fetchUserProfile } from "./fetchProfile.js";
 import profilGen from "./renderUserProfile.ts";
-import { attachProfileEventListeners } from "./displayMyProfile.ts";
-import { displayUserProfileData } from "../userdata/displayProfileData.ts";
-import Notify from "../../components/ui/Notify.ts";
+import { attachProfileEventListeners } from "./displayMyProfile.js";
+import { displayUserProfileData } from "../userdata/displayProfileData.js";
+import Notify from "../../components/ui/Notify.js";
 
 /* ============================================================
     DISPLAY OTHER USER PROFILE
@@ -25,7 +23,8 @@ async function displayUserProfile(isLoggedIn, content, username) {
     const userProfile = await fetchUserProfile(username);
 
     if (userProfile) {
-      const profileElement = profilGen(userProfile, isLoggedIn);
+      // Pass displayUserProfileData directly as the callback dependency
+      const profileElement = profilGen(userProfile, isLoggedIn, displayUserProfileData);
       content.appendChild(profileElement);
       attachProfileEventListeners(content);
     } else {

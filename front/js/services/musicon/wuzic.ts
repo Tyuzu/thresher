@@ -1,5 +1,3 @@
-// wuzic.js
-
 import { createElement } from "../../components/createElement.ts";
 import Notify from "../../components/ui/Notify.ts";
 import { MusicAPI } from "./fetchers.ts";
@@ -8,13 +6,14 @@ import { getContentContainer, showLoadingOverlay, hideLoadingOverlay } from "./u
 import { ensureToolbar, ensureBackButton } from "./toolbar.ts";
 import { createPlaylistCard, createAlbumCard } from "./cards.ts";
 import { renderSongsSection } from "./sections.ts";
+import { renderCardGrid } from "./cardGrid.ts";
 
 let currentRenderToken = 0;
 
 export async function displayMusic(rootContainer, isLoggedIn) {
     if (!rootContainer) {
-return;
-}
+        return;
+    }
 
     rootContainer.replaceChildren();
 
@@ -52,42 +51,36 @@ return;
         ]);
 
         if (renderToken !== currentRenderToken) {
-return;
-}
+            return;
+        }
 
         content.replaceChildren();
 
         if (artistSongs.length) {
-renderSongsSection("Artist Songs", artistSongs, content, player);
-}
+            renderSongsSection("Artist Songs", artistSongs, content, player);
+        }
 
         if (personalized.length) {
-renderSongsSection("Because You Listened", personalized, content, player);
-}
+            renderSongsSection("Because You Listened", personalized, content, player);
+        }
 
         if (recommended.length) {
-renderSongsSection("Recommended for You", recommended, content, player);
-}
-
-        if (playlists.length) {
-            const section = createElement("div", { class: "music-section" }, [
-                createElement("h3", {}, ["Your Playlists"])
-            ]);
-            const frag = document.createDocumentFragment();
-            playlists.forEach(pl => frag.append(createPlaylistCard(pl, container, player, isLoggedIn)));
-            section.append(frag);
-            content.append(section);
+            renderSongsSection("Recommended for You", recommended, content, player);
         }
 
-        if (albums.length) {
-            const section = createElement("div", { class: "music-section" }, [
-                createElement("h3", {}, ["Albums"])
-            ]);
-            const frag = document.createDocumentFragment();
-            albums.forEach(a => frag.append(createAlbumCard(a, container, player)));
-            section.append(frag);
-            content.append(section);
-        }
+        renderCardGrid(
+            "Your Playlists",
+            playlists,
+            content,
+            pl => createPlaylistCard(pl, container, player, isLoggedIn)
+        );
+
+        renderCardGrid(
+            "Albums",
+            albums,
+            content,
+            a => createAlbumCard(a, container, player)
+        );
 
         if (!content.children.length) {
             content.append(createElement("p", {}, ["No music available."]));

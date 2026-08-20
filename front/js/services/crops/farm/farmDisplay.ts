@@ -1,7 +1,7 @@
 import { apiFetch } from "../../../api/api.ts";
 import { createElement } from "../../../components/createElement.ts";
 import Button from "../../../components/base/Button.ts";
-import { navigate } from "../../../routes/navigate.ts";
+import { editFarm } from "./editFarm.ts";
 import { getState } from "../../../state/state.ts";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
 import { updateImageWithCrop } from "../../../utils/bannerEditor.ts";
@@ -175,7 +175,13 @@ export async function displayFarm(isLoggedIn, farmId, content) {
       title: "Info",
       id: "info-tab",
       render: (tabContainer) => {
-        tabContainer.replaceChildren(renderFarmDetails(farm, isCreator));
+        tabContainer.replaceChildren(
+          renderFarmDetails(farm, isCreator, (farmData) => {
+            editFarm(isLoggedIn, farmData, editContainer, () => {
+              displayFarm(isLoggedIn, farm.farmid, content);
+            });
+          })
+        );
       }
     },
     {
@@ -282,7 +288,7 @@ export async function displayFarm(isLoggedIn, farmId, content) {
     mainContent: [mainColumn],
     asideContent,
     pageClass: "farm-layout",
-    showMainAd:true,
+    showMainAd: true,
     mainAdPlacement: "top",
   });
 

@@ -32,8 +32,6 @@ function validateFormData(formData) {
             throw new Error("Banner must be an image file.");
         }
     }
-
-    // Optional: you can also validate zipCode length, phone pattern, etc.
 }
 
 /**
@@ -42,7 +40,6 @@ function validateFormData(formData) {
  */
 async function createPlace(formData) {
     try {
-        // client-side validation
         validateFormData(formData);
 
         Notify("Creating place...", { type: "info", dismissible: true, duration: 3000 });
@@ -53,9 +50,8 @@ async function createPlace(formData) {
     } catch (error) {
         Notify(error.message || "Error creating place", { type: "error", dismissible: true, duration: 3000 });
         console.error(error);
-        throw error; // re-throw to allow calling function to handle if needed
+        throw error;
     }
 }
 
-
-export { createPlace, editPlaceForm, updatePlace, displayPlace, deletePlace, };
+export { createPlace, editPlaceForm, updatePlace, displayPlace, deletePlace };

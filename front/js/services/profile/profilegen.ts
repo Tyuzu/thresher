@@ -1,13 +1,10 @@
-// profilGen.js
-
-import Button from "../../components/base/Button.ts";
-import { getState } from "../../state/state.ts";
-import { displayUserProfileData } from "./displayOtherUserProfile.ts";
-import { createProfileDetails, createStatistics } from "./profileGenHelpers.ts";
-import { createBanner } from "./bannerPicture.ts";
-import { createAvatar } from "./avatarPicture.ts";
-import { othusrdata } from "../userdata/otheruserdata.ts";
-import { createElement } from "../../components/createElement.ts";
+import Button from "../../components/base/Button.js";
+import { getState } from "../../state/state.js";
+import { createProfileDetails, createStatistics } from "./profileGenHelpers.js";
+import { createBanner } from "./bannerPicture.js";
+import { createAvatar } from "./avatarPicture.js";
+import { othusrdata } from "../userdata/otheruserdata.js";
+import { createElement } from "../../components/createElement.js";
 
 /* ============================================================
     HELPERS
@@ -30,7 +27,7 @@ function appendChildren(parent, ...children) {
     PROFILE GENERATOR COMPONENT
 ============================================================ */
 
-function profilGen(profile = {}, isLoggedIn = false) {
+function profilGen(profile = {}, isLoggedIn = false, onLoadUserData = null) {
   const currentUserId = getState("user")?.userid;
   const isCreator = Boolean(profile.userid && profile.userid === currentUserId);
 
@@ -60,7 +57,11 @@ function profilGen(profile = {}, isLoggedIn = false) {
   if (isCreator) {
     const udata = createElement("div", { class: "udata-info" });
     const loadUserDataButton = Button("Load UserData", "load-user-data", {
-      click: () => displayUserProfileData(isLoggedIn, udata, profile.userid)
+      click: () => {
+        if (typeof onLoadUserData === "function") {
+          onLoadUserData(isLoggedIn, udata, profile.userid);
+        }
+      }
     });
 
     appendChildren(section, loadUserDataButton, udata);

@@ -1,11 +1,11 @@
 import { createElement } from "../../components/createElement.ts";
-import { editPlaceForm, deletePlace } from "./placeService.ts";
+// Fixed: Direct import from editPlace.ts to avoid barrel export cycle
+import { editPlaceForm, deletePlace } from "./editPlace.ts"; 
 import { analyticsPlace } from "./placeAnanlytics.ts";
 import Button from "../../components/base/Button.ts";
 import { reportEntity } from "../reporting/reporting.ts";
 import Datex from "../../components/base/Datex.ts";
 import Bannerx from "../../components/base/Bannerx.ts";
-// Added missing EntityType import (verify relative path matches your directory structure)
 import { EntityType } from "../../utils/imagePaths.ts"; 
 
 /**

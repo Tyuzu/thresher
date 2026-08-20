@@ -1,31 +1,14 @@
-import {
-    apiFetch
-} from "../../../api/api.ts";
-import {
-    createElement
-} from "../../../components/createElement.ts";
+import { apiFetch } from "../../../api/api.ts";
+import { createElement } from "../../../components/createElement.ts";
 import Button from "../../../components/base/Button.ts";
-import {
-    editCrop
-} from "../crop/editCrop.ts";
-import {
-    navigate
-} from "../../../routes/navigate.ts";
-import {
-    addToCart,
-    isValidCartQuantity
-} from "../../cart/addToCart.ts";
-import {
-    getState
-} from "../../../state/state.ts";
-import {
-    EntityType
-} from "../../../utils/imagePaths.ts";
-import {
-    editFarm
-} from "./editFarm.ts";
+import { navigate } from "../../../routes/navigate.ts";
+import { addToCart, isValidCartQuantity } from "../../cart/addToCart.ts";
+import { getState } from "../../../state/state.ts";
+import { EntityType } from "../../../utils/imagePaths.ts";
 import Bannerx from "../../../components/base/Bannerx.ts";
+
 const MAX_CART_QUANTITY = 99;
+
 // ─────────── Date utility ───────────
 function getAgeInDays(dateStr) {
     if (!dateStr) return 0;
@@ -84,67 +67,55 @@ export function renderAvailabilityWidget(availability) {
         ]);
 }
 // ─────────── Farm details ───────────
-export function renderFarmDetails(farm = {}, isCreator = false) {
+export function renderFarmDetails(farm = {}, isCreator = false, onEditFarm = null) {
     const daysAgo = getAgeInDays(farm.updatedAt);
     const freshness = daysAgo < 2 ? "🟢 Updated today" : daysAgo < 7 ? "🟡 Updated this week" : `🔴 Updated ${daysAgo} days ago`;
     const actions = [];
     if (isCreator) {
-        actions.push(Button("✏️ Edit", `edit-${farm.farmid}`, {
-            click: () => editFarm(true, farm)
-        }, "buttonx"), Button("🗑️ Delete", `delete-${farm.farmid}`, {
-            click: async () => {
-                const ok = window.confirm?.(`Delete farm "${farm.name}"?`);
-                if (!ok) {
-                    return;
+        actions.push(
+            Button("✏️ Edit", `edit-${farm.farmid}`, {
+                click: () => {
+                    if (typeof onEditFarm === "function") {
+                        onEditFarm(farm);
+                    }
                 }
-                const res = await apiFetch(`/farms/farm/${farm.farmid}`, "DELETE");
-                if (res?.success) {
-                    navigate("/farms");
+            }, "buttonx"),
+            Button("🗑️ Delete", `delete-${farm.farmid}`, {
+                click: async () => {
+                    const ok = window.confirm?.(`Delete farm "${farm.name}"?`);
+                    if (!ok) return;
+
+                    const res = await apiFetch(`/farms/farm/${farm.farmid}`, "DELETE");
+                    if (res?.success) {
+                        navigate("/farms");
+                    }
                 }
-            }
-        }, "buttonx"));
+            }, "buttonx")
+        );
     }
     const detailChildren = [
-        createElement("h2", {},
-            [
-                farm.name || "Farm"
-            ]),
-        createElement("p", {},
-            [`📍 Location: ${farm.location || "N/A"
-                }`]),
-        createElement("p", {},
-            [`📃 Description: ${farm.description || "N/A"
-                }`]),
-        createElement("p", {},
-            [`👤 Owner: ${farm.owner || "N/A"
-                }`]),
-        createElement("p", {},
-            [`📞 Contact: ${farm.contact || "N/A"
-                }`]),
-        farm.practice ? createElement("p", {},
-            [`🌱 Practice: ${farm.practice}`]) : null,
+        createElement("h2", {}, [farm.name || "Farm"]),
+        createElement("p", {}, [`📍 Location: ${farm.location || "N/A"}`]),
+        createElement("p", {}, [`📃 Description: ${farm.description || "N/A"}`]),
+        createElement("p", {}, [`👤 Owner: ${farm.owner || "N/A"}`]),
+        createElement("p", {}, [`📞 Contact: ${farm.contact || "N/A"}`]),
+        farm.practice ? createElement("p", {}, [`🌱 Practice: ${farm.practice}`]) : null,
         renderAvailabilityWidget(farm.availability),
-        farm.social ? createElement("p", {},
-            ["🔗 ",
-                createElement("a", {
-                    href: farm.social,
-                    target: "_blank",
-                    rel: "noopener noreferrer"
-                },
-                    ["Visit farm page"])
-            ]) : null,
-        createElement("p", {},
-            [
-                freshness
-            ]),
-        actions.length ? createElement("div", {
-            class: "farm-actions"
-        }, actions) : null
+        farm.social ? createElement("p", {}, [
+            "🔗 ",
+            createElement("a", {
+                href: farm.social,
+                target: "_blank",
+                rel: "noopener noreferrer"
+            }, ["Visit farm page"])
+        ]) : null,
+        createElement("p", {}, [freshness]),
+        actions.length ? createElement("div", { class: "farm-actions" }, actions) : null
     ].filter(Boolean);
-    return createElement("div", {
-        class: "farm-detail"
-    }, detailChildren);
+
+    return createElement("div", { class: "farm-detail" }, detailChildren);
 }
+
 // ─────────── Crop summary ───────────
 export function renderCropSummary(crops = []) {
     const total = crops.length;
@@ -181,7 +152,7 @@ export function renderCropEmojiMap(crops = []) {
         ([name, count], index) => createElement("p", {},
             [`${emoji[
                 index % emoji.length
-                ]
+            ]
                 } ${name}: ${count}`]));
     return createElement("div", {
         class: "crop-distribution"

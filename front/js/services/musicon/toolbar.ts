@@ -1,18 +1,16 @@
-// toolbar.js
-
 import { createElement } from "../../components/createElement.ts";
 import Notify from "../../components/ui/Notify.ts";
 import { MusicAPI } from "./fetchers.ts";
-import { displayMusic } from "./wuzic.ts";
 import { createPlaylistCard } from "./cards.ts";
 import { renderSongsSection } from "./sections.ts";
 import { getContentContainer, showLoadingOverlay, hideLoadingOverlay } from "./uiHelpers.ts";
+import { renderCardGrid } from "./cardGrid.ts";
 
 export function ensureToolbar(container, player, isLoggedIn) {
     let toolbar = container.querySelector(".music-toolbar");
     if (toolbar) {
-return toolbar;
-}
+        return toolbar;
+    }
 
     toolbar = createElement("div", { class: "music-toolbar" });
     container.prepend(toolbar);
@@ -24,16 +22,15 @@ return toolbar;
         showLoadingOverlay(content, "Loading playlists...");
         const playlists = isLoggedIn ? await MusicAPI.playlists(true) : [];
         hideLoadingOverlay(content);
+        
         content.replaceChildren();
-
-        if (!playlists.length) {
-            content.append(createElement("p", {}, ["No playlists found."]));
-            return;
-        }
-
-        const frag = document.createDocumentFragment();
-        playlists.forEach(pl => frag.append(createPlaylistCard(pl, container, player, isLoggedIn)));
-        content.append(frag);
+        renderCardGrid(
+            "Playlists",
+            playlists,
+            content,
+            pl => createPlaylistCard(pl, container, player, isLoggedIn),
+            "No playlists found."
+        );
     });
 
     const createPlaylistBtn = createElement("button", {}, ["Create Playlist"]);
@@ -45,15 +42,17 @@ return toolbar;
 
         const name = prompt("Enter playlist name:");
         if (!name) {
-return;
-}
+            return;
+        }
 
         createPlaylistBtn.disabled = true;
         try {
             const res = await MusicAPI.createPlaylist({ name });
             if (res?.success) {
                 MusicAPI.invalidate();
-                displayMusic(container.parentElement, isLoggedIn);
+                Notify("Playlist created successfully", { type: "success" });
+                // Re-fetch playlists directly to avoid importing displayMusic
+                viewPlaylistsBtn.click();
             } else {
                 Notify("Failed to create playlist", { type: "error" });
             }
@@ -88,8 +87,8 @@ return;
 
 export function ensureBackButton(container, onClick) {
     if (container.querySelector(".back-btn")) {
-return;
-}
+        return;
+    }
 
     const backBtn = createElement("button", { class: "back-btn" }, ["⬅ Back"]);
     backBtn.addEventListener("click", onClick);

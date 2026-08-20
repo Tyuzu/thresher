@@ -3,7 +3,7 @@ import { apiFetch } from "../../api/api.ts";
 import { navigate } from "../../routes/navigate.ts";
 import { logout } from "../auth/authService.ts";
 import { fetchProfile } from "./fetchProfile.ts";
-import profilGen from "./renderUserProfile.ts";
+import profilGen from "./profilegen.js";
 import { editProfile } from "./editProfile.ts";
 import Notify from "../../components/ui/Notify.ts";
 
@@ -61,12 +61,15 @@ function attachProfileEventListeners(content) {
   const deleteButton = content.querySelector('[data-action="delete-profile"]');
 
   if (editButton) {
-    editButton.addEventListener("click", () => editProfile(content));
+    editButton.addEventListener("click", () => editProfile(content, deleteProfile));
   }
 
   if (deleteButton) {
     deleteButton.addEventListener("click", deleteProfile);
   }
+
+  // Fallback listener for decoupled event execution
+  content.addEventListener("edit-profile:delete", deleteProfile);
 }
 
 /* ============================================================
