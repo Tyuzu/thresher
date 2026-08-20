@@ -30,10 +30,10 @@ func AddBeatRoutes(router *httprouter.Router, app *infra.Deps, rateLimiter *midd
 	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/:entityid", rateLimiter.Limit(authmidware(likes.GetUserLike(app))))
 
 	// Public like count
-	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/count/:entityid", rateLimiter.Limit(likes.GetLikeCount(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/:entityid/count", rateLimiter.Limit(likes.GetLikeCount(app)))
 
 	// Public likers
-	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/users/:entityid", rateLimiter.Limit(likes.GetLikers(app)))
+	router.HandlerFunc(http.MethodGet, "/api/v1/likes/:entitytype/:entityid/users", rateLimiter.Limit(likes.GetLikers(app)))
 
 	// Batch current-user likes
 	router.HandlerFunc(http.MethodPost, "/api/v1/likes/:entitytype/batch/users", rateLimiter.Limit(authmidware(likes.BatchUserLikes(app))))

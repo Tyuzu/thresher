@@ -1,0 +1,42 @@
+/* Router - Directs to appropriate interface */
+import { getState } from "../../../state/state.ts";
+import { displayWorkerProfile } from "./displayWorkerProfile.ts";
+import { displayManageWorkerProfile } from "./displayManageWorkerProfile.ts";
+import { displayCreateOrEditBaitoProfile } from "../create/createBaitoProfile.ts";
+
+/**
+ * Main entry point - routes to correct interface based on user role
+ */
+export async function displayWorkerPage(contentContainer, isLoggedIn, workerId) {
+  const currentUser = getState("user").userid;
+  
+  // Fetch worker to check ownership
+  let worker = null;
+  try {
+    const { apiFetch } = await import("../../../api/api.ts");
+    worker = await apiFetch(`/baitos/worker/${workerId}`);
+  } catch (_e) {
+    const { createElement } = await import("../../../components/createElement.ts");
+    contentContainer.replaceChildren(
+      createElement("p", { class: "error-msg" }, ["⚠️ Failed to load worker profile."])
+    );
+    return;
+  }
+
+  // Route based on ownership
+  if (worker.userid === currentUser) {
+    // Worker viewing their own profile - show management interface
+    displayManageWorkerProfile(contentContainer, isLoggedIn, workerId);
+  } else {
+    // Other user viewing this worker - show hirer interface
+    displayWorkerProfile(contentContainer, isLoggedIn, workerId);
+  }
+}
+
+export function displayCreateBaitoProfile(isLoggedIn, contentContainer) {
+  return displayCreateOrEditBaitoProfile(isLoggedIn, contentContainer, "create");
+}
+
+export function displayEditBaitoProfile(isLoggedIn, contentContainer, workerId) {
+  return displayCreateOrEditBaitoProfile(isLoggedIn, contentContainer, "edit", workerId);
+}

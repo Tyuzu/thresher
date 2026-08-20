@@ -25,7 +25,7 @@ Create standalone HTML entry points (e.g., `farms.html`, `events.html`, `admin.h
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/entries/farms.js"></script>
+    <script type="module" src="/src/entries/farms.ts"></script>
   </body>
 </html>
 

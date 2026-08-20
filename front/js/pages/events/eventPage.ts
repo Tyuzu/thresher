@@ -1,0 +1,10 @@
+import "../../../css/inistyles/eventpage4.css";
+import "../../../css/subpages/tickscon.css";
+import { displayEvent } from "../../services/event/eventService.ts";
+
+async function Event(isLoggedIn,  eventid, contentContainer) {
+    displayEvent(isLoggedIn, eventid, contentContainer);
+}
+
+
+export { Event };

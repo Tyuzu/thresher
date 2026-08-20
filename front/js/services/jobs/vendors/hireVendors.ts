@@ -1,0 +1,1 @@
+export { hireVendors } from "./vendors.ts";

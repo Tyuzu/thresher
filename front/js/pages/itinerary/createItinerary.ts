@@ -1,0 +1,14 @@
+import "../../../css/inistyles/itinerary5.css";
+import { createItinerary } from "../../services/itinerary/itineraryCreate.ts";
+
+async function CreateItinerary(isLoggedIn, contentContainer) {
+    
+    contentContainer.innerHTML = '';
+    const content = document.createElement("div");
+    content.classList = "create-section";
+    contentContainer.appendChild(content);
+
+    createItinerary(isLoggedIn, content) 
+}
+
+export { CreateItinerary };

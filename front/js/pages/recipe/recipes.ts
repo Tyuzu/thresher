@@ -1,0 +1,9 @@
+import "../../../css/farmstyles/recipes3.css";
+import { displayRecipes } from "../../services/recipes/recipes.ts";
+
+async function Recipes(isLoggedIn, contentContainer) {
+    contentContainer.innerHTML = '';
+    displayRecipes(contentContainer, isLoggedIn);
+}
+
+export { Recipes };
