@@ -1,6 +1,44 @@
-// src/utils/activityLogger.js
-import { API_URL, generateUUID } from "../../api/api.ts";
+// src/utils/activityLogger.ts
+import { API_URL, generateUUID } from "../../api/api.js";
 
+// --- Types & Interfaces ---
+export type EventType =
+  | "pageview"
+  | "click"
+  | "scroll"
+  | "input_focus"
+  | "time_on_page"
+  | "button_click"
+  | "purchase"
+  | (string & {});
+
+export interface AnalyticsEvent {
+  type: EventType;
+  data?: Record<string, unknown>;
+  ts?: number;
+}
+
+export interface EnqueuedEvent extends AnalyticsEvent {
+  ts: number;
+}
+
+export interface BatchMetadata {
+  lang: string;
+  platform: string;
+  referrer: string;
+  url: string;
+  ua: string;
+  screen: string;
+  session: string;
+  user: string;
+}
+
+export interface BatchPayload {
+  meta: BatchMetadata;
+  events: EnqueuedEvent[];
+}
+
+// --- Constants ---
 const ENDPOINT = "/scitylana/event";
 const STORAGE_KEY = "__analytics_queue_v2__";
 const INTERVAL_MS = 10000;
@@ -10,7 +48,7 @@ const RETRY_MULTIPLIER = 2;
 const MAX_DEDUP_SIZE = 100;
 
 // --- IDs ---
-const SESSION_ID = (() => {
+const SESSION_ID: string = (() => {
   const key = "__session_id__";
   let id = sessionStorage.getItem(key);
   if (!id) {
@@ -20,7 +58,7 @@ const SESSION_ID = (() => {
   return id;
 })();
 
-const USER_ID = (() => {
+const USER_ID: string = (() => {
   const key = "__user_id__";
   let id = localStorage.getItem(key);
   if (!id) {
@@ -31,26 +69,27 @@ const USER_ID = (() => {
 })();
 
 // --- Safe Storage Wrapper ---
-function getStorageQueue() {
+function getStorageQueue(): EnqueuedEvent[] {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const item = localStorage.getItem(STORAGE_KEY);
+    return item ? (JSON.parse(item) as EnqueuedEvent[]) : [];
   } catch {
     return [];
   }
 }
 
-function setStorageQueue(queue) {
+function setStorageQueue(queue: EnqueuedEvent[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
-  } catch (_) {
+  } catch {
     // Handle QuotaExceededError gracefully
   }
 }
 
 // Safely remove specifically flushed items (prevents multi-tab race conditions)
-function removeFlushedItems(sentEvents) {
+function removeFlushedItems(sentEvents: EnqueuedEvent[]): void {
   const currentQueue = getStorageQueue();
-  const sentTimestamps = new Set(sentEvents.map((e) => e.ts));
+  const sentTimestamps = new Set<number>(sentEvents.map((e) => e.ts));
   const remaining = currentQueue.filter((item) => !sentTimestamps.has(item.ts));
   setStorageQueue(remaining);
 }
@@ -58,12 +97,12 @@ function removeFlushedItems(sentEvents) {
 // --- Queue Management ---
 let isSyncing = false;
 let retryDelay = 1000;
-let retryTimer = null;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-function getBatchMetadata() {
+function getBatchMetadata(): BatchMetadata {
   return {
     lang: navigator.language,
-    platform: navigator.platform,
+    platform: (navigator as { userAgentData?: { platform: string }; platform?: string }).platform || "unknown",
     referrer: document.referrer || "Direct",
     url: window.location.href,
     ua: navigator.userAgent,
@@ -74,19 +113,19 @@ function getBatchMetadata() {
 }
 
 // --- Queueing ---
-function enqueue(event) {
+function enqueue(event: AnalyticsEvent): void {
   const queue = getStorageQueue();
   queue.push({ ...event, ts: Date.now() });
   setStorageQueue(queue);
 
   if (queue.length >= MAX_BATCH) {
-    flush();
+    void flush();
   }
 }
 
 // --- Core Sync ---
-async function flush(isUnloading = false) {
-  let queue = getStorageQueue();
+async function flush(isUnloading = false): Promise<void> {
+  const queue = getStorageQueue();
 
   if (!queue.length || (!navigator.onLine && !isUnloading) || (isSyncing && !isUnloading)) {
     return;
@@ -102,10 +141,12 @@ async function flush(isUnloading = false) {
   const batchSize = Math.min(queue.length, MAX_BATCH);
   const eventsToSend = queue.slice(0, batchSize);
 
-  const payload = JSON.stringify({
+  const payload: BatchPayload = {
     meta: getBatchMetadata(),
     events: eventsToSend,
-  });
+  };
+
+  const jsonPayload = JSON.stringify(payload);
 
   // Modern unload mechanism: sendBeacon -> keepalive fetch
   if (isUnloading) {
@@ -113,15 +154,15 @@ async function flush(isUnloading = false) {
     let sent = false;
 
     if (navigator.sendBeacon) {
-      const blob = new Blob([payload], { type: "application/json" });
+      const blob = new Blob([jsonPayload], { type: "application/json" });
       sent = navigator.sendBeacon(endpointUrl, blob);
     }
 
     if (!sent) {
-      fetch(endpointUrl, {
+      void fetch(endpointUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: payload,
+        body: jsonPayload,
         keepalive: true,
       }).catch(() => {});
     }
@@ -134,7 +175,7 @@ async function flush(isUnloading = false) {
     const res = await fetch(`${API_URL}${ENDPOINT}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: payload,
+      body: jsonPayload,
     });
 
     if (res.ok) {
@@ -144,35 +185,37 @@ async function flush(isUnloading = false) {
       isSyncing = false;
 
       if (getStorageQueue().length >= MAX_BATCH) {
-        flush();
+        void flush();
       }
     } else {
       throw new Error(`HTTP ${res.status}`);
     }
-  } catch (err) {
+  } catch {
     isSyncing = false;
     if (!navigator.onLine) return;
 
     retryDelay = Math.min(retryDelay * RETRY_MULTIPLIER, MAX_RETRY_DELAY);
     retryTimer = setTimeout(() => {
-      if (navigator.onLine) flush();
+      if (navigator.onLine) void flush();
     }, retryDelay);
   }
 }
 
 // --- Tracking ---
-function track(type, data = {}) {
+function track(type: EventType, data: Record<string, unknown> = {}): void {
   enqueue({ type, data });
 }
 
 // Bounded Deduplicated tracking
-const seenEvents = new Set();
-function dedupTrack(key, type, data = {}) {
+const seenEvents = new Set<string>();
+function dedupTrack(key: string, type: EventType, data: Record<string, unknown> = {}): void {
   if (seenEvents.has(key)) return;
 
   if (seenEvents.size >= MAX_DEDUP_SIZE) {
     const firstKey = seenEvents.values().next().value;
-    seenEvents.delete(firstKey);
+    if (firstKey !== undefined) {
+      seenEvents.delete(firstKey);
+    }
   }
 
   seenEvents.add(key);
@@ -180,9 +223,9 @@ function dedupTrack(key, type, data = {}) {
 }
 
 // Throttle helper
-function throttle(fn, delay) {
+function throttle<T extends (...args: unknown[]) => void>(fn: T, delay: number): (...args: Parameters<T>) => void {
   let last = 0;
-  return (...args) => {
+  return (...args: Parameters<T>) => {
     const now = Date.now();
     if (now - last >= delay) {
       last = now;
@@ -194,13 +237,16 @@ function throttle(fn, delay) {
 // --- Automatic Event Handlers ---
 track("pageview");
 
-document.addEventListener("click", (e) => {
-  const el = e.target.closest("a, button");
+document.addEventListener("click", (e: MouseEvent) => {
+  const target = e.target as Element | null;
+  if (!target) return;
+
+  const el = target.closest<HTMLAnchorElement | HTMLButtonElement>("a, button");
   if (!el) return;
 
   const tag = el.tagName.toLowerCase();
   const label = el.getAttribute("aria-label") || el.getAttribute("data-analytics-label") || "";
-  const href = el.href || null;
+  const href = el instanceof HTMLAnchorElement ? el.href : null;
 
   track("click", { tag, label, href });
 });
@@ -214,8 +260,10 @@ document.addEventListener(
   }, 5000)
 );
 
-document.addEventListener("focusin", (e) => {
-  const el = e.target;
+document.addEventListener("focusin", (e: FocusEvent) => {
+  const el = e.target as HTMLInputElement | HTMLTextAreaElement | null;
+  if (!el || !el.tagName) return;
+
   if ((el.tagName === "INPUT" || el.tagName === "TEXTAREA") && el.type !== "password") {
     track("input_focus", { name: el.name || el.id || "unnamed", type: el.type || "text" });
   }
@@ -224,11 +272,11 @@ document.addEventListener("focusin", (e) => {
 // --- Tab Lifecycle Handling ---
 const pageStart = Date.now();
 
-function handleVisibilityOrPageHide(e) {
+function handleVisibilityOrPageHide(e: Event): void {
   if (e.type === "pagehide" || document.visibilityState === "hidden") {
     const duration = Math.round((Date.now() - pageStart) / 1000);
     track("time_on_page", { duration_sec: duration });
-    flush(true);
+    void flush(true);
   }
 }
 
@@ -238,14 +286,14 @@ window.addEventListener("pagehide", handleVisibilityOrPageHide);
 // --- Network & Timers ---
 window.addEventListener("online", () => {
   retryDelay = 1000;
-  flush();
+  void flush();
 });
 
-setInterval(flush, INTERVAL_MS);
+setInterval(() => void flush(), INTERVAL_MS);
 
 // --- Public API ---
-export const trackPageView = () => track("pageview");
-export const trackButtonClick = (buttonName) => track("button_click", { button: buttonName });
-export const trackPurchase = (itemId, price) => track("purchase", { itemId, price });
+export const trackPageView = (): void => track("pageview");
+export const trackButtonClick = (buttonName: string): void => track("button_click", { button: buttonName });
+export const trackPurchase = (itemId: string | number, price: number): void => track("purchase", { itemId, price });
 
 export { track, dedupTrack, flush };

@@ -1,14 +1,14 @@
-import { apiFetch } from "../../api/api.ts";
+import { apiFetch } from "../../api/api.js";
 import MenuCard from '../../components/ui/MenuCard.mjs';
-import { Button } from "../../components/base/Button.ts";
-import { createElement } from "../../components/createElement.ts";
-import Modal from "../../components/ui/Modal.ts";
-import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import { uploadFile } from "../media/api/mediaApi.ts";
-import { uid } from "../media/ui/mediaUploadForm.ts";
-import { showPaymentModal } from "../pay/pay.ts";
+import { Button } from "../../components/base/Button.js";
+import { createElement } from "../../components/createElement.js";
+import Modal from "../../components/ui/Modal.js";
+import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
+import Notify from "../../components/ui/Notify.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { uploadFile } from "../media/api/mediaApi.js";
+import { uid } from "../media/ui/mediaUploadForm.js";
+import { showPaymentModal } from "../pay/pay.js";
 /** Add a menu item */
 async function addMenu(form, placeId, menuList) {
 

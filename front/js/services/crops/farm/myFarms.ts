@@ -1,5 +1,5 @@
-import { createElement } from "../../../components/createElement.ts";
-import { apiFetch } from "../../../api/api.ts";
+import { createElement } from "../../../components/createElement.js";
+import { apiFetch } from "../../../api/api.js";
 
 export async function displayMyFarm(container) {
   container.replaceChildren();

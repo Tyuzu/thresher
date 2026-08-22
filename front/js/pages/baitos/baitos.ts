@@ -1,5 +1,5 @@
 import "../../../css/inistyles/baitos6.css";
-import { displayBaitos } from "../../services/baitos/DisplayBaitos.ts";
+import { displayBaitos } from "../../services/baitos/DisplayBaitos.js";
 
 async function Baitos(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

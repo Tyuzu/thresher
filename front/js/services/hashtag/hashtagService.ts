@@ -1,9 +1,9 @@
-import { createElement } from "../../components/createElement.ts";
-import { reportEntity } from "../reporting/reporting.ts";
-import { apiFetch } from "../../api/api.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import { createTabs } from "../../utils/persistTabs.ts";
-import Imagex from "../../components/base/Imagex.ts";
+import { createElement } from "../../components/createElement.js";
+import { reportEntity } from "../reporting/reporting.js";
+import { apiFetch } from "../../api/api.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { createTabs } from "../../utils/persistTabs.js";
+import Imagex from "../../components/base/Imagex.js";
 
 // --- Helpers ---
 const DEFAULT_LIMIT = 20;

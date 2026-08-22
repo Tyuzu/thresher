@@ -1,6 +1,6 @@
-import { SRC_URL } from "../state/state";
+import { SRC_URL } from "../state/state.js";
 
-export const EntityType = Object.freeze({
+export const EntityType = {
   ARTIST: "artist",
   BAITO: "baito",
   BLOGPOST: "blogpost",
@@ -23,9 +23,11 @@ export const EntityType = Object.freeze({
   USER: "user",
   VENDOR: "vendor",
   WORKER: "worker",
-});
+} as const;
 
-export const PictureType = Object.freeze({
+export type EntityType = (typeof EntityType)[keyof typeof EntityType];
+
+export const PictureType = {
   AUDIO: "audio",
   BANNER: "banner",
   DOCUMENT: "document",
@@ -37,9 +39,11 @@ export const PictureType = Object.freeze({
   SONG: "song",
   THUMB: "thumb",
   VIDEO: "video",
-});
+} as const;
 
-const PictureSubfolders = Object.freeze({
+export type PictureType = (typeof PictureType)[keyof typeof PictureType];
+
+const PictureSubfolders: Record<PictureType, string> = {
   [PictureType.AUDIO]: "audio",
   [PictureType.BANNER]: "banner",
   [PictureType.DOCUMENT]: "docs",
@@ -51,26 +55,26 @@ const PictureSubfolders = Object.freeze({
   [PictureType.SONG]: "song",
   [PictureType.THUMB]: "thumb",
   [PictureType.VIDEO]: "videos",
-});
+};
 
-const VALID_ENTITY_TYPES = new Set(Object.values(EntityType));
-const VALID_PICTURE_TYPES = new Set(Object.values(PictureType));
+const VALID_ENTITY_TYPES = new Set<string>(Object.values(EntityType));
+const VALID_PICTURE_TYPES = new Set<string>(Object.values(PictureType));
 
-function isImageType(pictureType) {
-  return [
-    PictureType.BANNER,
-    PictureType.MEMBER,
-    PictureType.PHOTO,
-    PictureType.POSTER,
-    PictureType.SEATING,
-    PictureType.THUMB,
-  ].includes(pictureType);
+function isImageType(pictureType: PictureType): boolean {
+  return (
+    pictureType === PictureType.BANNER ||
+    pictureType === PictureType.MEMBER ||
+    pictureType === PictureType.PHOTO ||
+    pictureType === PictureType.POSTER ||
+    pictureType === PictureType.SEATING ||
+    pictureType === PictureType.THUMB
+  );
 }
 
 /**
  * Checks if a hostname points to private networks or localhost.
  */
-function isLocalOrPrivateHost(host) {
+function isLocalOrPrivateHost(host: string): boolean {
   const cleanHost = host.toLowerCase().trim();
 
   const absoluteMatches = ["localhost", "127.0.0.1", "::1", "0.0.0.0"];
@@ -99,18 +103,13 @@ function isLocalOrPrivateHost(host) {
 
 /**
  * Resolves safe asset paths or converts remote URLs into proxied asset paths.
- * 
- * @param {string} entityType - Context module identifier
- * @param {string} pictureType - Subfolder target type
- * @param {string} filename - Filename token or target URL
- * @param {string} fallback - Fallback asset path
  */
 export function resolveImagePath(
-  entityType,
-  pictureType,
-  filename,
-  fallback = "/assets/fallbacks.png"
-) {
+  entityType: EntityType,
+  pictureType: PictureType,
+  filename: string,
+  fallback: string = "/assets/fallbacks.png"
+): string {
   if (
     !entityType ||
     !pictureType ||
@@ -178,6 +177,6 @@ export function resolveImagePath(
         break;
     }
   }
-  
+
   return `${baseUrl}/uploads/${entityType}/${folder}/${finalName}`;
 }

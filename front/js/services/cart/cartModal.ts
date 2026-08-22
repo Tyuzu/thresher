@@ -1,7 +1,7 @@
-import Modal from "../../components/ui/Modal.ts";
-import { createElement } from "../../components/createElement.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { apiFetch } from "../../api/api.ts";
+import Modal from "../../components/ui/Modal.js";
+import { createElement } from "../../components/createElement.js";
+import { navigate } from "../../routes/navigate.js";
+import { apiFetch } from "../../api/api.js";
 
 /**
  * Opens a robust cart preview drawer modal container.

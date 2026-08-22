@@ -1,6 +1,81 @@
 import "../../css/form5.css";
 import "../../css/form2.css";
-import { createElement } from "./createElement.ts";
+import { createElement } from "./createElement.js";
+
+export type FormInputType =
+  | "text"
+  | "textarea"
+  | "select"
+  | "multiselect"
+  | "number"
+  | "file"
+  | "availability"
+  | "password"
+  | "email"
+  | "hidden"
+  | "checkbox"
+  | "radio"
+  | string;
+
+export type ValidationTrigger = "blur" | "change" | "both";
+
+export interface OptionObject {
+  value: string;
+  label: string;
+}
+
+export type SelectOption = string | OptionObject;
+
+export interface AvailabilityDayConfig {
+  enabled?: boolean;
+  from?: string;
+  to?: string;
+}
+
+export type AvailabilityValue = Record<string, AvailabilityDayConfig>;
+
+export type ValidatorFn = (
+  value: string | HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+) => string | null | false | void;
+
+export type OnValidationChangeFn = (isValid: boolean) => void;
+
+export interface ValidatableElement {
+  validate: () => boolean;
+  isValid: () => boolean;
+  getError: () => string | null;
+}
+
+export type CustomInputElement = (
+  | HTMLInputElement
+  | HTMLSelectElement
+  | HTMLTextAreaElement
+) &
+  ValidatableElement;
+
+export interface FormGroupConfig {
+  type?: FormInputType;
+  id?: string;
+  name?: string;
+  label?: string;
+  value?: unknown;
+  placeholder?: string;
+  required?: boolean;
+  accept?: string;
+  options?: SelectOption[];
+  multiple?: boolean;
+  validator?: ValidatorFn | null;
+  validationTrigger?: ValidationTrigger;
+  additionalProps?: Record<string, unknown>;
+  additionalNodes?: Node[];
+  onValidationChange?: OnValidationChangeFn | null;
+}
+
+interface DayState {
+  enabled: boolean;
+  from: string;
+  to: string;
+}
 
 export function createFormGroupWithValidation({
   type = "text",
@@ -14,14 +89,14 @@ export function createFormGroupWithValidation({
   options = [],
   multiple = false,
   validator = null,
-  validationTrigger = "blur", // "blur", "change", or "both"
+  validationTrigger = "blur",
   additionalProps = {},
   additionalNodes = [],
-  onValidationChange = null, // Callback when validation state changes
-}) {
+  onValidationChange = null,
+}: FormGroupConfig = {}): HTMLDivElement {
   const group = createElement("div", { class: "form-group" });
   const inputName = name || id || "";
-  let inputElement;
+  let inputElement: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
   // --- 1. Create Label ---
   if (label) {
@@ -36,36 +111,39 @@ export function createFormGroupWithValidation({
 
   // --- 2. Create Input Elements ---
   switch (type) {
-    case "textarea":
-      inputElement = createElement("textarea", {
+    case "textarea": {
+      const textarea = createElement("textarea", {
         id: id || undefined,
         name: inputName || undefined,
         placeholder: placeholder || ""
       });
       if (value !== undefined && value !== null) {
-        inputElement.value = String(value);
+        textarea.value = String(value);
       }
+      inputElement = textarea;
       break;
+    }
 
     case "select":
-    case "multiselect":
-      inputElement = createElement("select", {
+    case "multiselect": {
+      const select = createElement("select", {
         id: id || undefined,
         name: inputName || undefined
       });
       if (type === "multiselect" || multiple) {
-        inputElement.multiple = true;
+        select.multiple = true;
       }
 
       if (placeholder) {
-        inputElement.appendChild(createElement("option", {
-          value: "",
-          disabled: true,
-          selected: !value
-        }, [placeholder]));
+        select.appendChild(
+          createElement("option", {
+            value: "",
+            disabled: true,
+            selected: !value
+          }, [placeholder])
+        );
       }
 
-      // Optimize: Pre-compute search keys outside loop
       const targetValues = new Set(
         Array.isArray(value)
           ? value.map(v => String(v).toLowerCase())
@@ -76,7 +154,7 @@ export function createFormGroupWithValidation({
         const { value: optValue, label: optLabel } =
           typeof opt === "string" ? { value: opt, label: opt } : opt;
 
-        const optionAttrs = { value: optValue };
+        const optionAttrs: Record<string, unknown> = { value: optValue };
         if (optValue === "" && !placeholder) {
           optionAttrs.disabled = true;
         }
@@ -87,11 +165,13 @@ export function createFormGroupWithValidation({
           option.selected = true;
         }
 
-        inputElement.appendChild(option);
+        select.appendChild(option);
       });
+      inputElement = select;
       break;
+    }
 
-    case "number":
+    case "number": {
       inputElement = createElement("input", {
         type: "number",
         id: id || "",
@@ -100,17 +180,19 @@ export function createFormGroupWithValidation({
         value: (value !== null && value !== undefined && value !== "") ? Number(value) : ""
       });
       break;
+    }
 
-    case "file":
-      inputElement = createElement("input", {
+    case "file": {
+      const fileInput = createElement("input", {
         type: "file",
         id: id || undefined,
         name: inputName || undefined,
         accept: accept || undefined
       });
-      if (multiple) inputElement.multiple = true;
+      if (multiple) fileInput.multiple = true;
+      inputElement = fileInput;
       break;
-
+    }
 
     case "availability": {
       const days = [
@@ -124,7 +206,7 @@ export function createFormGroupWithValidation({
       ];
 
       const availability =
-        typeof value === "object" && value !== null ? value : {};
+        typeof value === "object" && value !== null ? (value as AvailabilityValue) : {};
 
       const wrapper = createElement("div", {
         class: "availability-picker"
@@ -136,7 +218,7 @@ export function createFormGroupWithValidation({
         name: inputName || undefined
       });
 
-      const state = {};
+      const state: Record<string, DayState> = {};
 
       const updateValue = () => {
         hiddenInput.value = JSON.stringify(state);
@@ -218,17 +300,19 @@ export function createFormGroupWithValidation({
       break;
     }
 
-    default:
-      inputElement = createElement("input", {
+    default: {
+      const defaultInput = createElement("input", {
         type,
         id: id || undefined,
         name: inputName || undefined,
         placeholder: placeholder || "",
         value: (value !== null && value !== undefined) ? String(value) : ""
       });
-      if (accept) inputElement.accept = accept;
-      if (type === "file" && multiple) inputElement.multiple = true;
+      if (accept) defaultInput.accept = accept;
+      if (type === "file" && multiple) defaultInput.multiple = true;
+      inputElement = defaultInput;
       break;
+    }
   }
 
   if (required) inputElement.required = true;
@@ -237,7 +321,7 @@ export function createFormGroupWithValidation({
   Object.entries(additionalProps).forEach(([key, val]) => {
     try {
       if (key in inputElement) {
-        inputElement[key] = val;
+        (inputElement as unknown as Record<string, unknown>)[key] = val;
       } else {
         inputElement.setAttribute(key, String(val));
       }
@@ -257,12 +341,11 @@ export function createFormGroupWithValidation({
   validationStateInput.className = "form-validation-state";
   validationStateInput.value = "valid";
 
-  // Fixed ReferenceError Bug: Execute the provided validator closure callback
-  const validateInput = () => {
+  const validateInput = (): boolean => {
     if (!validator) return true;
 
     const fieldValue = type === "file" ? inputElement : inputElement.value;
-    const error = validator(fieldValue); // Standard execution interface wrapper
+    const error = validator(fieldValue);
 
     if (error) {
       errorElement.textContent = error;
@@ -285,7 +368,7 @@ export function createFormGroupWithValidation({
 
   // --- 4. Event Subscriptions & Debouncing ---
   if (validator) {
-    let debounceTimeout = null;
+    let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const validateWithDebounce = () => {
       if (debounceTimeout) clearTimeout(debounceTimeout);
@@ -306,9 +389,10 @@ export function createFormGroupWithValidation({
   }
 
   // Bind utilities onto element API references
-  inputElement.validate = validateInput;
-  inputElement.isValid = () => validationStateInput.value === "valid";
-  inputElement.getError = () => errorElement.textContent;
+  const validatableInput = inputElement as CustomInputElement;
+  validatableInput.validate = validateInput;
+  validatableInput.isValid = () => validationStateInput.value === "valid";
+  validatableInput.getError = () => errorElement.textContent;
 
   group.appendChild(inputElement);
   group.appendChild(errorElement);
@@ -321,6 +405,6 @@ export function createFormGroupWithValidation({
   return group;
 }
 
-export function createFormGroup(config) {
+export function createFormGroup(config?: FormGroupConfig): HTMLDivElement {
   return createFormGroupWithValidation(config);
 }

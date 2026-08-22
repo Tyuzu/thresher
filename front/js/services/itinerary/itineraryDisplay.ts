@@ -1,10 +1,10 @@
-import { apiFetch } from "../../api/api.ts";
-import Button from "../../components/base/Button.ts";
-import { createElement } from "../../components/createElement.ts";
-import Modal from "../../components/ui/Modal.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { getState } from "../../state/state.ts";
-import { editItinerary } from "./itineraryEdit.ts";
+import { apiFetch } from "../../api/api.js";
+import Button from "../../components/base/Button.js";
+import { createElement } from "../../components/createElement.js";
+import Modal from "../../components/ui/Modal.js";
+import { navigate } from "../../routes/navigate.js";
+import { getState } from "../../state/state.js";
+import { editItinerary } from "./itineraryEdit.js";
 
 function clear(node) {
   while (node.firstChild) {

@@ -1,7 +1,28 @@
-import { createElement } from "../createElement.ts";
-import { makeDraggableScroll } from "../dragnav.ts"; // Import your drag-scroll helper
+import { createElement } from "../createElement.js";
+import { makeDraggableScroll } from "../dragnav.js";
 
-function createMenuItem(itemConfig, onSelect) {
+export interface NavItemConfig {
+  label: string;
+  href?: string;
+  callback?: (config: NavItemConfig) => void;
+  active?: boolean;
+}
+
+export interface MenuItemResult {
+  element: HTMLLIElement;
+  isActive: boolean;
+}
+
+export interface SecondaryNavElement extends HTMLElement {
+  _cleanupDrag?: () => void;
+}
+
+type OnSelectHandler = (selectedLi: HTMLLIElement, selectedLink: HTMLAnchorElement) => void;
+
+function createMenuItem(
+  itemConfig: NavItemConfig,
+  onSelect: OnSelectHandler
+): MenuItemResult {
   const { label, callback, href, active } = itemConfig;
 
   const link = createElement(
@@ -12,15 +33,15 @@ function createMenuItem(itemConfig, onSelect) {
       "aria-current": active ? "page" : "false"
     },
     [label]
-  );
+  ) as HTMLAnchorElement;
 
   const li = createElement(
     "li",
     { class: `nav-item${active ? " active" : ""}` },
     [link]
-  );
+  ) as HTMLLIElement;
 
-  link.addEventListener("click", (e) => {
+  link.addEventListener("click", (e: MouseEvent) => {
     e.preventDefault();
 
     onSelect(li, link);
@@ -36,15 +57,15 @@ function createMenuItem(itemConfig, onSelect) {
   return { element: li, isActive: Boolean(active) };
 }
 
-export function createSecondaryNav(items = []) {
+export function createSecondaryNav(items: NavItemConfig[] = []): SecondaryNavElement | null {
   if (!Array.isArray(items) || items.length === 0) {
     return null;
   }
 
   const currentPath = window.location.pathname;
-  let activeItemEl = null;
+  let activeItemEl: HTMLLIElement | null = null;
 
-  const handleActive = (selectedLi, selectedLink) => {
+  const handleActive: OnSelectHandler = (selectedLi, selectedLink) => {
     if (activeItemEl) {
       activeItemEl.classList.remove("active");
       activeItemEl.querySelector("a")?.setAttribute("aria-current", "false");
@@ -57,7 +78,7 @@ export function createSecondaryNav(items = []) {
 
   const menuItems = items.map((item) => {
     const isMatchingPath = item.href && item.href === currentPath;
-    const config = {
+    const config: NavItemConfig = {
       ...item,
       active: item.active ?? isMatchingPath
     };
@@ -71,12 +92,12 @@ export function createSecondaryNav(items = []) {
 
   const menuList = createElement("ul", { class: "menu-list" }, menuItems);
   const nav = createElement("nav", { class: "secnav-nav", "aria-label": "Secondary navigation" }, [menuList]);
-  const container = createElement("section", { class: "secnav" }, [nav]);
+  const container = createElement("section", { class: "secnav" }, [nav]) as SecondaryNavElement;
 
-  // Attach drag-to-scroll to the scrollable container (usually the <nav> or <ul>)
+  // Attach drag-to-scroll to the scrollable container
   const destroyDrag = makeDraggableScroll(nav);
 
-  // Optional: Store the cleanup method on the returned element in case you unmount/destroy it later
+  // Store cleanup method safely using custom HTMLElement interface extension
   container._cleanupDrag = destroyDrag;
 
   return container;

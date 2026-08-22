@@ -1,8 +1,8 @@
-import { chatFetch } from "../../api/api.ts";
-import { getState } from "../../state/state.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { displayNewChat } from "./displayNewchat.ts";
-import { renderSharedChatList } from "../chat/sharedChatList.ts";
+import { chatFetch } from "../../api/api.js";
+import { getState } from "../../state/state.js";
+import { navigate } from "../../routes/navigate.js";
+import { displayNewChat } from "./displayNewchat.js";
+import { renderSharedChatList } from "../chat/sharedChatList.js";
 
 export async function displayChats(
   contentContainer,

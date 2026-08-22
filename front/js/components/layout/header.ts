@@ -1,32 +1,58 @@
 import "../../../css/layout/header5.css";
-import { getState, subscribe } from "../../state/state.ts";
-import { webSiteName } from "../../config/env.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { logout } from "../../services/auth/authService.ts";
-import { settingsSVG, moonSVG, profileSVG, shopBagSVG, logoutSVG, cardSVG } from "../svgs.ts";
-import { createElement } from "../createElement.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import Imagex from "../base/Imagex.ts";
-import { sticky } from "./sticky.ts";
-import Button from "../base/Button.ts";
-import { loadTheme, toggleTheme } from "./themeManager.ts";
+import { getState, subscribe } from "../../state/state.js";
+import { webSiteName } from "../../config/env.js";
+import { navigate } from "../../routes/navigate.js";
+import { logout } from "../../services/auth/authService.js";
+import { settingsSVG, moonSVG, profileSVG, shopBagSVG, logoutSVG, cardSVG } from "../svgs.js";
+import { createElement } from "../createElement.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import Imagex from "../base/Imagex.js";
+import { sticky } from "./sticky.js";
+import Button from "../base/Button.js";
+import { loadTheme, toggleTheme } from "./themeManager.js";
 
-function createIconButton(svg, href, onClick) {
+export interface DropdownMenuItem {
+  href: string;
+  text: string;
+}
+
+export interface ProfileMenuItem extends DropdownMenuItem {
+  icon?: string;
+}
+
+export interface UserState {
+  id?: string;
+  userid?: string;
+  username?: string;
+  name?: string;
+  role?: string;
+  [key: string]: unknown;
+}
+
+function createIconButton(
+  svg: string,
+  href?: string | null,
+  onClick?: (e: MouseEvent) => void
+): HTMLDivElement {
   const icon = createElement("span", { class: "icon" }, []);
   icon.innerHTML = svg;
 
-  const anchor = createElement("div", { class: "iconic-button" }, [icon]);
+  const anchor = createElement("div", { class: "iconic-button" }, [icon]) as HTMLDivElement;
   if (href) {
-    anchor.href = href;
+    (anchor as unknown as Record<string, unknown>).href = href;
   }
   if (onClick) {
-    anchor.addEventListener("click", onClick);
+    anchor.addEventListener("click", onClick as EventListener);
   }
 
   return anchor;
 }
 
-function createDropdownMenu(id, labelText, items) {
+function createDropdownMenu(
+  id: string,
+  labelText: string,
+  items: DropdownMenuItem[]
+): HTMLDivElement {
   const toggle = createElement("button", { id, class: "menu-toggle" }, [labelText]);
   const menu = createElement("div", { class: "menu-content", "aria-label": labelText }, []);
 
@@ -45,13 +71,13 @@ function createDropdownMenu(id, labelText, items) {
     menu.classList.toggle("open");
   });
 
-  return createElement("div", { class: "header-content-dropdown" }, [toggle, menu]);
+  return createElement("div", { class: "header-content-dropdown" }, [toggle, menu]) as HTMLDivElement;
 }
 
-export function createProfileSection() {
-  const user = getState("user");
-  const userid = getState("user").userid;
-  const username = user?.username || user?.name || "Profile";
+export function createProfileSection(): HTMLDivElement {
+  const user = (getState("user") || {}) as UserState;
+  const userid = user.userid || user.id;
+  const username = user.username || user.name || "Profile";
   const imageSrc = userid ? `${userid}.jpg` : "default.jpg";
 
   const img = Imagex({
@@ -62,7 +88,7 @@ export function createProfileSection() {
 
   const toggle = createElement("div", { class: "profile-toggle", tabIndex: 0 }, [img]);
 
-  const links = [
+  const links: ProfileMenuItem[] = [
     { href: "/profile", text: username, icon: profileSVG },
     { href: "/my-orders", text: "My Orders", icon: shopBagSVG },
     { href: "/wallet", text: "Wallet", icon: cardSVG },
@@ -102,26 +128,27 @@ export function createProfileSection() {
     menu.classList.toggle("open");
   });
 
-  toggle.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
+  toggle.addEventListener("keydown", (e: Event) => {
+    const keyboardEvent = e as KeyboardEvent;
+    if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
+      keyboardEvent.preventDefault();
       menu.classList.toggle("open");
     }
   });
 
   document.addEventListener("click", () => menu.classList.remove("open"));
 
-  return createElement("div", { class: "dropdown" }, [toggle, menu]);
+  return createElement("div", { class: "dropdown" }, [toggle, menu]) as HTMLDivElement;
 }
 
-function renderUserSection() {
-  const container = createElement("div", { class: "user-area" }, []);
+function renderUserSection(): HTMLDivElement {
+  const container = createElement("div", { class: "user-area" }, []) as HTMLDivElement;
 
-  function update() {
+  function update(): void {
     container.replaceChildren();
     const token = getState("token");
-    const user = getState("user");
-    const userid = user?.id || user?.userid || null;
+    const user = (getState("user") || {}) as UserState;
+    const userid = user.id || user.userid || null;
 
     if (token && userid) {
       container.append(createProfileSection());
@@ -144,12 +171,12 @@ function renderUserSection() {
   return container;
 }
 
-function buildNav() {
-  const nav = createElement("div", { class: "header-content" }, []);
+function buildNav(): HTMLDivElement {
+  const nav = createElement("div", { class: "header-content" }, []) as HTMLDivElement;
   const token = getState("token");
 
   if (token) {
-    const createLinks = [
+    const createLinks: DropdownMenuItem[] = [
       { href: "/create-farm", text: "Farm" },
       { href: "/create-recipe", text: "Recipe" }
     ];
@@ -164,10 +191,10 @@ function buildNav() {
   return nav;
 }
 
-function enableNavAutoUpdate(initialNavRef) {
-  let navRef = initialNavRef;
+function enableNavAutoUpdate(initialNavRef: HTMLDivElement): void {
+  let navRef: HTMLDivElement = initialNavRef;
 
-  function updateNav() {
+  function updateNav(): void {
     if (!navRef || !navRef.parentNode) return;
     const newNav = buildNav();
     navRef.replaceWith(newNav);
@@ -178,7 +205,7 @@ function enableNavAutoUpdate(initialNavRef) {
   subscribe("userProfile.role", updateNav);
 }
 
-function createHeader() {
+function createHeader(): void {
   const header = document.getElementById("pageheader");
   if (!header || header.hasChildNodes()) {
     return;
@@ -190,7 +217,8 @@ function createHeader() {
     createElement("a", { href: "/home", class: "logo-link" }, [webSiteName])
   ]);
 
-  const userid = getState("user")?.id || getState("user")?.userid || "default";
+  const user = (getState("user") || {}) as UserState;
+  const userid = user.id || user.userid || "default";
 
   const sky = createElement("div", { class: "hflexcen" }, []);
   sky.append(

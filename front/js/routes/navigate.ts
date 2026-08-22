@@ -1,6 +1,6 @@
-import { abortInflightApiRequests } from "../api/api.ts";
-import { saveScroll } from "../state/state.ts";
-import { track } from "../services/activity/metrics.ts";
+import { abortInflightApiRequests } from "../api/api.js";
+import { saveScroll } from "../state/state.js";
+import { track } from "../services/activity/metrics.js";
 
 /* =========================================================
    TYPES & NAVIGATION STATE

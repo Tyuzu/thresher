@@ -1,4 +1,4 @@
-import { apiFetch } from "../../../api/api.ts";
+import { apiFetch } from "../../../api/api.js";
 
 function requireId(value, label) {
     if (value === null || value === undefined || value === "") {

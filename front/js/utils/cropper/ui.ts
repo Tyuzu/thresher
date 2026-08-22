@@ -1,7 +1,7 @@
 // ui.js
 
-import { createElement } from "../../components/createElement.ts";
-import { CROP_SIZES } from "./constants.ts";
+import { createElement } from "../../components/createElement.js";
+import { CROP_SIZES } from "./constants.js";
 
 export function getCropConfig(type = "avatar") {
   const config = CROP_SIZES[type] || CROP_SIZES.avatar;

@@ -3,9 +3,9 @@
  * Production-optimized error tracking, lifecycle diagnostics, and execution monitoring.
  */
 
-import { errorTracker } from "../api/errorHandler.ts";
-import { PerformanceMonitor } from "../utils/performanceMonitor.ts";
-import { deferNonCritical } from "../utils/lazyLoad.ts";
+import { errorTracker } from "../api/errorHandler.js";
+import { PerformanceMonitor } from "../utils/performanceMonitor.js";
+import { deferNonCritical } from "../utils/lazyLoad.js";
 
 /**
  * Cleanly decodes JWT signatures supporting unicode payload sets safely

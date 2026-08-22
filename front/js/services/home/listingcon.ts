@@ -1,11 +1,11 @@
-import { createElement } from "../../components/createElement.ts";
-import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/navigate.ts";
-import Button from "../../components/base/Button.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import { createTabs } from "../../utils/persistTabs.ts";
-import { subscribe } from "../../state/state.ts";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import { navigate } from "../../routes/navigate.js";
+import Button from "../../components/base/Button.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import Imagex from "../../components/base/Imagex.js";
+import { createTabs } from "../../utils/persistTabs.js";
+import { subscribe } from "../../state/state.js";
 
 export const clearElement = (el) => {
  while (el.firstChild) {

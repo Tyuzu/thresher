@@ -1,4 +1,4 @@
-import { displayChannelPage } from "../../services/discord/displayChannelPage.ts";
+import { displayChannelPage } from "../../services/discord/displayChannelPage.js";
 
 async function DiscordChannel(isLoggedIn,  serverid, channelid, contentContainer) {
     contentContainer.innerHTML = '';

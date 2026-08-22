@@ -1,5 +1,5 @@
-import { navigate, loadContent, getCurrentAppLocation, hydrateAuthState } from "./index.ts";
-import { trackError } from "../utils/app/errors.ts";
+import { navigate, loadContent, getCurrentAppLocation, hydrateAuthState } from "./index.js";
+import { trackError } from "../utils/app/errors.js";
 
 
 

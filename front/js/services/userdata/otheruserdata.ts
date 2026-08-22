@@ -1,6 +1,6 @@
-import { createElement } from "../../components/createElement.ts";
-import { apiFetch } from "../../api/api.ts";
-import Imagex from "../../components/base/Imagex.ts";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import Imagex from "../../components/base/Imagex.js";
 
 // Fetch user profile data for a specific entity type
 async function fetchUserProfileData(username, entityType) {

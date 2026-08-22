@@ -1,18 +1,30 @@
 import "../../../css/layout/sticky5.css";
-import { createElement } from "../createElement.ts";
-import { notifSVG, cartSVG, chatSVG, menuSVG } from "../svgs.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { getState, subscribe } from "../../state/state.ts";
-import { openNotificationsModal } from "../../services/notifications/notifModal.ts";
-import { toggleSidebar } from "./sidebar.ts";
-import { createIconButton } from "../../utils/svgIconButton.ts";
+import { createElement } from "../createElement.js";
+import { notifSVG, cartSVG, chatSVG, menuSVG } from "../svgs.js";
+import { navigate } from "../../routes/navigate.js";
+import { getState, subscribe } from "../../state/state.js";
+import { openNotificationsModal } from "../../services/notifications/notifModal.js";
+import { toggleSidebar } from "./sidebar.js";
+import { createIconButton } from "../../utils/svgIconButton.js";
+
+/* =========================================================
+   TYPES & INTERFACES
+========================================================= */
+
+export type ImgLinkOption = Node | (() => Node) | null;
+
+export interface StickyExtraOptions {
+    imglink?: ImgLinkOption;
+}
+
+type UnsubscribeFn = () => void;
 
 /* =========================================================
    BADGE HELPER
 ========================================================= */
 
-function createBadge(count) {
-    const displayCount = count > 99 ? "99+" : String(count);
+function createBadge(count: number): HTMLElement {
+    const displayCount: string = count > 99 ? "99+" : String(count);
 
     return createElement(
         "span",
@@ -28,13 +40,13 @@ function createBadge(count) {
    NAV UPDATE LOGIC
 ========================================================= */
 
-function updateNav(container, extraOptions = {}) {
-    const isLoggedIn = !!getState("user") || !!getState("token");
-    const unreadMessages = getState("unreadMessages") || 0;
-    const unreadNotifications = getState("unreadNotifications") || 0;
+function updateNav(container: HTMLElement, extraOptions: StickyExtraOptions = {}): void {
+    const isLoggedIn: boolean = !!getState("user") || !!getState("token");
+    const unreadMessages: number = (getState("unreadMessages") as number) || 0;
+    const unreadNotifications: number = (getState("unreadNotifications") as number) || 0;
 
     // Custom image/profile element passed from caller
-    const imglink = extraOptions?.imglink || null;
+    const imglink: ImgLinkOption = extraOptions?.imglink || null;
 
     // State key snapshot to prevent redundant DOM re-renders
     const nextStateKey = `${isLoggedIn}-${unreadMessages}-${unreadNotifications}-${!!imglink}`;
@@ -43,7 +55,7 @@ function updateNav(container, extraOptions = {}) {
     }
     container.dataset.stateKey = nextStateKey;
 
-    const fragment = document.createDocumentFragment();
+    const fragment: DocumentFragment = document.createDocumentFragment();
 
     // 1. Sidebar Toggle Button
     fragment.appendChild(
@@ -67,7 +79,7 @@ function updateNav(container, extraOptions = {}) {
     // 3. Authenticated Navigation Action Buttons
     if (isLoggedIn) {
         // Chat / Messages Button
-        const chatBtn = createIconButton({
+        const chatBtn: HTMLElement = createIconButton({
             classSuffix: "stickychat",
             svgMarkup: chatSVG,
             onClick: () => navigate("/newchats"),
@@ -90,7 +102,7 @@ function updateNav(container, extraOptions = {}) {
         );
 
         // Notifications Button
-        const notifBtn = createIconButton({
+        const notifBtn: HTMLElement = createIconButton({
             classSuffix: "notif",
             svgMarkup: notifSVG,
             onClick: openNotificationsModal,
@@ -111,18 +123,18 @@ function updateNav(container, extraOptions = {}) {
    STICKY COMPONENT
 ========================================================= */
 
-export function Sticky(divs = {}) {
+export function Sticky(divs: StickyExtraOptions = {}): HTMLDivElement {
     const container = createElement("div", {
         class: "plypzstp"
-    });
+    }) as HTMLDivElement;
 
     // Initial render
     updateNav(container, divs);
 
-    let renderAnimationFrame = null;
+    let renderAnimationFrame: number | null = null;
 
-    const scheduleUpdate = () => {
-        if (renderAnimationFrame) {
+    const scheduleUpdate = (): void => {
+        if (renderAnimationFrame !== null) {
             cancelAnimationFrame(renderAnimationFrame);
         }
         renderAnimationFrame = requestAnimationFrame(() => {
@@ -131,16 +143,16 @@ export function Sticky(divs = {}) {
     };
 
     // Subscriptions
-    const unsubToken = subscribe("token", scheduleUpdate);
-    const unsubUser = subscribe("user", scheduleUpdate);
-    const unsubMessages = subscribe("unreadMessages", scheduleUpdate);
-    const unsubNotifications = subscribe("unreadNotifications", scheduleUpdate);
+    const unsubToken: UnsubscribeFn = subscribe("token", scheduleUpdate);
+    const unsubUser: UnsubscribeFn = subscribe("user", scheduleUpdate);
+    const unsubMessages: UnsubscribeFn = subscribe("unreadMessages", scheduleUpdate);
+    const unsubNotifications: UnsubscribeFn = subscribe("unreadNotifications", scheduleUpdate);
 
     // MutationObserver cleanup strategy from the old implementation
     const observer = new MutationObserver(() => {
         Promise.resolve().then(() => {
             if (!document.body.contains(container)) {
-                if (renderAnimationFrame) {
+                if (renderAnimationFrame !== null) {
                     cancelAnimationFrame(renderAnimationFrame);
                 }
                 unsubToken?.();

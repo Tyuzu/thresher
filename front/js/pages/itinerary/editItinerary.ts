@@ -1,5 +1,5 @@
 import "../../../css/inistyles/itinerary5.css";
-import { editItinerary } from "../../services/itinerary/itineraryEdit.ts";
+import { editItinerary } from "../../services/itinerary/itineraryEdit.js";
 
 async function EditItinerary(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

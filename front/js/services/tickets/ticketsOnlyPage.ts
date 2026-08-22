@@ -1,11 +1,11 @@
-import { displayTickets } from "../tickets/displayTickets.ts";
-import { createElement } from "../../components/createElement.ts";
-import { apiFetch } from "../../api/api.ts";
-import { getState } from "../../state/state.ts";
-import Notify from "../../components/ui/Notify.ts";
-import Datex from "../../components/base/Datex.ts";
-import { createMainLayout } from "../../components/layout/mainLayout.ts";
-import { createAsideContent } from "../../components/layout/asideLayout.ts";
+import { displayTickets } from "../tickets/displayTickets.js";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import { getState } from "../../state/state.js";
+import Notify from "../../components/ui/Notify.js";
+import Datex from "../../components/base/Datex.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../components/layout/asideLayout.js";
 
 /* ────────── Fetch Event ────────── */
 async function fetchEventData(eventId) {

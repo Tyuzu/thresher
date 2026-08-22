@@ -1,4 +1,4 @@
-import { createElement } from "../../../components/createElement.ts";
+import { createElement } from "../../../components/createElement.js";
 
 const PRICE_DATA = [
     { crop: "Wheat", category: "Grains", market: "Pune APMC", district: "Pune", state: "Maharashtra", min: 2350, modal: 2450, max: 2550, trend: 2.4, updated: "10 mins ago" },

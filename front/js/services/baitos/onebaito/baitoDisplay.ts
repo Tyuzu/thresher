@@ -1,19 +1,19 @@
 // baitoDisplay.js
 
-import { createElement } from "../../../components/createElement.ts";
-import { SRC_URL, apiFetch } from "../../../api/api.ts";
-import { getState } from "../../../state/state.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import { createOrEditBaito } from "../create/createOrEditBaito.ts";
-import Button from "../../../components/base/Button.ts";
-import { showApplicantsModal } from "../dash/BaitoDash.ts";
-import { displayReviews } from "../../reviews/displayReviews.ts";
-import Notify from "../../../components/ui/Notify.ts";
-import { meChat } from "../../mechat/plugnplay.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import Imagex from "../../../components/base/Imagex.ts";
-import Bannerx from "../../../components/base/Bannerx.ts";
-import Datex from "../../../components/base/Datex.ts";
+import { createElement } from "../../../components/createElement.js";
+import { SRC_URL, apiFetch } from "../../../api/api.js";
+import { getState } from "../../../state/state.js";
+import { navigate } from "../../../routes/navigate.js";
+import { createOrEditBaito } from "../create/createOrEditBaito.js";
+import Button from "../../../components/base/Button.js";
+import { showApplicantsModal } from "../dash/BaitoDash.js";
+import { displayReviews } from "../../reviews/displayReviews.js";
+import Notify from "../../../components/ui/Notify.js";
+import { meChat } from "../../mechat/plugnplay.js";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import Imagex from "../../../components/base/Imagex.js";
+import Bannerx from "../../../components/base/Bannerx.js";
+import Datex from "../../../components/base/Datex.js";
 
 /** Open chat with employer */
 function startChatWithEmployer(userId, baitoId) {

@@ -1,10 +1,20 @@
 import "../../../css/ui/Sightbox.css";
-import { createElement } from "../../components/createElement.ts"; // Adjust path as needed
-import { createIconButton } from "../../utils/svgIconButton";
-import Imagex from "../base/Imagex";
-import { xSVG } from "../svgs";
+import { createElement } from "../../components/createElement.js"; // Adjust path as needed
+import { createIconButton } from "../../utils/svgIconButton.js";
+import Imagex from "../base/Imagex.js";
+import { xSVG } from "../svgs.js";
 
-const Sightbox = (mediaSrc, mediaType = "image") => {
+// ---- Types & Interfaces ----
+
+export type SightboxMediaType = "image" | "video";
+
+/**
+ * Creates and displays a lightbox modal for images or videos.
+ */
+const Sightbox = (
+  mediaSrc: string,
+  mediaType: SightboxMediaType = "image"
+): HTMLDivElement | void => {
   // Prevent duplicate instance
   if (document.getElementById("sightbox")) {
     return;
@@ -14,25 +24,25 @@ const Sightbox = (mediaSrc, mediaType = "image") => {
   const closeButton = createIconButton({
     classSuffix: "sightbox-close",
     svgMarkup: xSVG,
-    onClick: closeSightbox,
+    onClick: () => closeSightbox(),
     label: "",
-    ariaLabel: "Close"
-  });
+    ariaLabel: "Close",
+  }) as HTMLElement;
 
   // --- Media Element ---
-  let mediaEl;
+  let mediaEl: HTMLElement | undefined;
   if (mediaType === "image") {
     mediaEl = Imagex({
       src: mediaSrc,
       alt: "Sightbox Image",
       classes: "zoomable-image",
-    });
+    }) as HTMLElement;
   } else if (mediaType === "video") {
     mediaEl = createElement("video", {
       src: mediaSrc,
       controls: true,
-      muted: true
-    });
+      muted: true,
+    }) as HTMLVideoElement;
   }
 
   // --- Shell Layout Construction ---
@@ -40,26 +50,26 @@ const Sightbox = (mediaSrc, mediaType = "image") => {
     "div",
     {
       class: "sightbox-content",
-      tabindex: "-1"
+      tabindex: "-1",
     },
-    [mediaEl, closeButton]
-  );
+    mediaEl ? [mediaEl, closeButton] : [closeButton]
+  ) as HTMLDivElement;
 
   const overlay = createElement("div", {
     class: "sightbox-overlay",
     events: {
-      click: closeSightbox
-    }
+      click: () => closeSightbox(),
+    },
   });
 
   const sightbox = createElement(
     "div",
     {
       id: "sightbox",
-      class: "sightbox"
+      class: "sightbox",
     },
     [overlay, content]
-  );
+  ) as HTMLDivElement;
 
   // Append DOM
   const appRoot = document.getElementById("app") || document.body;
@@ -72,14 +82,14 @@ const Sightbox = (mediaSrc, mediaType = "image") => {
   history.pushState({ sightboxOpen: true }, "");
 
   // ESC + focus trap listener
-  function onKeyDown(e) {
+  function onKeyDown(e: KeyboardEvent): void {
     if (e.key === "Escape") {
       e.preventDefault();
       closeSightbox();
     } else if (e.key === "Tab") {
       // Trap focus inside content
-      const focusable = [closeButton];
-      const currentIndex = focusable.indexOf(document.activeElement);
+      const focusable: HTMLElement[] = [closeButton];
+      const currentIndex = focusable.indexOf(document.activeElement as HTMLElement);
       if (e.shiftKey && currentIndex === 0) {
         e.preventDefault();
         focusable[focusable.length - 1].focus();
@@ -91,14 +101,14 @@ const Sightbox = (mediaSrc, mediaType = "image") => {
   }
 
   // Back button listener
-  function onPopState(e) {
-    if (e.state && e.state.sightboxOpen) {
+  function onPopState(e: PopStateEvent): void {
+    if (e.state && (e.state as { sightboxOpen?: boolean }).sightboxOpen) {
       closeSightbox(true);
     }
   }
 
   // Clean close
-  function closeSightbox(fromPop = false) {
+  function closeSightbox(fromPop = false): void {
     if (!document.body.contains(sightbox)) {
       return;
     }

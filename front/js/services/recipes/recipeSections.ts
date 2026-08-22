@@ -1,25 +1,25 @@
 import {
   createElement
-} from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
+} from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
 import {
   addToCart,
   isValidCartQuantity,
-} from "../cart/addToCart.ts";
+} from "../cart/addToCart.js";
 import {
   getState
-} from "../../state/state.ts";
+} from "../../state/state.js";
 import {
   createCommentsSection
-} from "../comments/comments.ts";
+} from "../comments/comments.js";
 import {
   editRecipe
-} from "./createOrEditRecipe.ts";
+} from "./createOrEditRecipe.js";
 import {
   makeInlineEditable,
   getStepKey,
-} from "./recipeRenderers.ts";
-import Notify from "../../components/ui/Notify.ts";
+} from "./recipeRenderers.js";
+import Notify from "../../components/ui/Notify.js";
 const MAX_CART_QUANTITY = 99;
 /* ============================================================
    HELPERS

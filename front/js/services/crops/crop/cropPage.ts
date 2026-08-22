@@ -1,11 +1,11 @@
-import { createUserControls } from "../farm/displayFarmHelpers.ts";
-import { createElement } from "../../../components/createElement.ts";
-import { apiFetch } from "../../../api/api.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import Imagex from "../../../components/base/Imagex.ts";
-import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.ts";
-import Notify from "../../../components/ui/Notify.ts";
-import Button from "../../../components/base/Button.ts";
+import { createUserControls } from "../farm/displayFarmHelpers.js";
+import { createElement } from "../../../components/createElement.js";
+import { apiFetch } from "../../../api/api.js";
+import { navigate } from "../../../routes/navigate.js";
+import Imagex from "../../../components/base/Imagex.js";
+import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.js";
+import Notify from "../../../components/ui/Notify.js";
+import Button from "../../../components/base/Button.js";
 
 /**
  * Creates a lightweight debounced function wrapper.

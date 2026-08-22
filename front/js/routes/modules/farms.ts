@@ -7,7 +7,7 @@ export const farmsRoutes = [
     path: "/dash",
     component: () =>
       import(
-        "../../pages/dash/dash.ts"
+        "../../pages/dash/dash.js"
       ),
     functionName: "Dash",
     meta: {
@@ -24,7 +24,7 @@ export const farmsRoutes = [
     path: "/farms",
     component: () =>
       import(
-        "../../pages/farm/farms.ts"
+        "../../pages/farm/farms.js"
       ),
     functionName: "Farms",
     meta: {
@@ -36,7 +36,7 @@ export const farmsRoutes = [
     path: "/create-farm",
     component: () =>
       import(
-        "../../pages/farm/createNewFarm.ts"
+        "../../pages/farm/createNewFarm.js"
       ),
     functionName: "CreateFarm",
     meta: {
@@ -53,7 +53,7 @@ export const farmsRoutes = [
     path: "/tools",
     component: () =>
       import(
-        "../../pages/farm/tools.ts"
+        "../../pages/farm/tools.js"
       ),
     functionName: "Tools",
     meta: {
@@ -65,7 +65,7 @@ export const farmsRoutes = [
     path: "/products",
     component: () =>
       import(
-        "../../pages/farm/products.ts"
+        "../../pages/farm/products.js"
       ),
     functionName: "Products",
     meta: {
@@ -77,7 +77,7 @@ export const farmsRoutes = [
     path: "/crops",
     component: () =>
       import(
-        "../../pages/crop/crops.ts"
+        "../../pages/crop/crops.js"
       ),
     functionName: "Crops",
     meta: {
@@ -89,7 +89,7 @@ export const farmsRoutes = [
     path: "/bazarbhav",
     component: () =>
       import(
-        "../../pages/crop/bazaar.ts"
+        "../../pages/crop/bazaar.js"
       ),
     functionName: "BazaarBhav",
     meta: {
@@ -101,7 +101,7 @@ export const farmsRoutes = [
     path: "/grocery",
     component: () =>
       import(
-        "../../pages/crop/crops.ts"
+        "../../pages/crop/crops.js"
       ),
     functionName: "Crops",
     meta: {
@@ -113,7 +113,7 @@ export const farmsRoutes = [
     path: "/recipes",
     component: () =>
       import(
-        "../../pages/recipe/recipes.ts"
+        "../../pages/recipe/recipes.js"
       ),
     functionName: "Recipes",
     meta: {
@@ -125,7 +125,7 @@ export const farmsRoutes = [
     path: "/create-recipe",
     component: () =>
       import(
-        "../../pages/recipe/createNewRecipe.ts"
+        "../../pages/recipe/createNewRecipe.js"
       ),
     functionName: "CreateRecipe",
     meta: {
@@ -142,7 +142,7 @@ export const farmsRoutes = [
     path: "/products/:type/:id",
     component: () =>
       import(
-        "../../pages/product/product.ts"
+        "../../pages/product/product.js"
       ),
     functionName: "Product",
     meta: {
@@ -154,7 +154,7 @@ export const farmsRoutes = [
     path: "/crop/:id",
     component: () =>
       import(
-        "../../pages/crop/cropPage.ts"
+        "../../pages/crop/cropPage.js"
       ),
     functionName: "Crop",
     meta: {
@@ -166,7 +166,7 @@ export const farmsRoutes = [
     path: "/aboutcrop/:id",
     component: () =>
       import(
-        "../../pages/crop/aboutCropPage.ts"
+        "../../pages/crop/aboutCropPage.js"
       ),
     functionName: "AboutCrop",
     meta: {
@@ -178,7 +178,7 @@ export const farmsRoutes = [
     path: "/farm/:id",
     component: () =>
       import(
-        "../../pages/crop/displayFarm.ts"
+        "../../pages/crop/displayFarm.js"
       ),
     functionName: "Farm",
     meta: {
@@ -190,7 +190,7 @@ export const farmsRoutes = [
     path: "/recipe/:id",
     component: () =>
       import(
-        "../../pages/recipe/recipePage.ts"
+        "../../pages/recipe/recipePage.js"
       ),
     functionName: "Recipe",
     meta: {

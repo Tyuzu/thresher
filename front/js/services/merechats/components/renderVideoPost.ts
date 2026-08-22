@@ -1,5 +1,5 @@
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import VideoPlayer from "../../../components/ui/VideoPlayer.ts";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import VideoPlayer from "../../../components/ui/VideoPlayer.js";
 
 function RenderVideoPost(container, videos, _id = "", ext = "") {
   videos.forEach(v => {

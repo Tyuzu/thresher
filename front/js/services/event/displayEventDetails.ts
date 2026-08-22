@@ -1,14 +1,14 @@
-import { createElement } from "../../components/createElement.ts";
-import { Button } from "../../components/base/Button.ts";
-import { editEvent } from "./creadit.ts";
-import { viewEventAnalytics } from "./eventAnalytics.ts";
-import { reportEntity } from "../reporting/reporting.ts";
-import { EntityType } from "../../utils/imagePaths.ts";
-import { starEmptySVG, starFilledSVG } from "../../components/svgs.ts";
-import { createIconButton } from "../../utils/svgIconButton.ts";
-import { hireVendors } from "../jobs/vendors/vendors.ts";
-import Bannerx from "../../components/base/Bannerx.ts";
-import Datex from "../../components/base/Datex.ts";
+import { createElement } from "../../components/createElement.js";
+import { Button } from "../../components/base/Button.js";
+import { editEvent } from "./creadit.js";
+import { viewEventAnalytics } from "./eventAnalytics.js";
+import { reportEntity } from "../reporting/reporting.js";
+import { EntityType } from "../../utils/imagePaths.js";
+import { starEmptySVG, starFilledSVG } from "../../components/svgs.js";
+import { createIconButton } from "../../utils/svgIconButton.js";
+import { hireVendors } from "../jobs/vendors/vendors.js";
+import Bannerx from "../../components/base/Bannerx.js";
+import Datex from "../../components/base/Datex.js";
 
 // Config for displaying event details
 const fieldConfig = [

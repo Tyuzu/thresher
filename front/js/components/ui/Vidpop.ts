@@ -1,12 +1,44 @@
 import "../../../css/ui/vidpop.css";
 import "../../../css/ui/Sightbox.css";
-import { createElement } from "../createElement.ts"; // Adjust path as needed
-import { createIconButton } from "../../utils/svgIconButton";
-import { xSVG } from "../svgs";
-import { generateVideoPlayer } from "./vidpopHelpers";
+import { createElement } from "../createElement.js";
+import { createIconButton } from "../../utils/svgIconButton.js";
+import { xSVG } from "../svgs.js";
+import { generateVideoPlayer } from "./vidpopHelpers.js";
 
-const Vidpop = (mediaSrc, videoid, options = {}) => {
-  const { poster = null, theme = "light", qualities = [], subtitles = [] } = options;
+export interface QualityOption {
+  label: string;
+  src: string;
+}
+
+export interface SubtitleOption {
+  label: string;
+  src: string;
+  srclang: string;
+  default?: boolean;
+}
+
+export interface VidpopOptions {
+  poster?: string | null;
+  theme?: "light" | "dark" | string;
+  qualities?: QualityOption[];
+  subtitles?: SubtitleOption[];
+}
+
+export interface CleanableElement extends HTMLElement {
+  cleanup?: () => void;
+}
+
+const Vidpop = (
+  mediaSrc: string,
+  videoid?: string,
+  options: VidpopOptions = {}
+): CleanableElement => {
+  const {
+    poster = null,
+    theme = "light",
+    qualities = [],
+    subtitles = []
+  } = options;
 
   // 1. Instantiate the Close Button
   const closeButton = createIconButton({
@@ -18,7 +50,9 @@ const Vidpop = (mediaSrc, videoid, options = {}) => {
   });
 
   // 2. Build DOM layout tree declaratively using createElement
-  const content = createElement("div", { class: "sightbox-content" }, [closeButton]);
+  const content = createElement("div", { class: "sightbox-content" }, [
+    closeButton
+  ]);
 
   const overlay = createElement("div", {
     class: "sightbox-overlay",
@@ -27,16 +61,17 @@ const Vidpop = (mediaSrc, videoid, options = {}) => {
     }
   });
 
-  const sightbox = createElement("div", { class: `sightbox theme-${theme}` }, [
-    overlay,
-    content
-  ]);
+  const sightbox: CleanableElement = createElement(
+    "div",
+    { class: `sightbox theme-${theme}` },
+    [overlay, content]
+  );
 
-  let loadedVideoPlayer = null;
+  let loadedVideoPlayer: CleanableElement | null = null;
 
   // 3. Append the generated video player asynchronously
   generateVideoPlayer(mediaSrc, poster, qualities, subtitles, videoid)
-    .then((videoPlayer) => {
+    .then((videoPlayer: CleanableElement) => {
       // Edge case safety verification
       if (!sightbox.parentNode) {
         if (videoPlayer && typeof videoPlayer.cleanup === "function") {
@@ -48,7 +83,7 @@ const Vidpop = (mediaSrc, videoid, options = {}) => {
       // Insert before closeButton to preserve target DOM order
       content.insertBefore(videoPlayer, closeButton);
     })
-    .catch((err) => {
+    .catch((err: unknown) => {
       console.error("Failed to compile target theater stream engine:", err);
     });
 
@@ -63,7 +98,10 @@ const Vidpop = (mediaSrc, videoid, options = {}) => {
   // 5. Attach isolated component lifecycle destructor hook
   sightbox.cleanup = () => {
     if (loadedVideoPlayer) {
-      const videoElement = loadedVideoPlayer.querySelector("video") || loadedVideoPlayer;
+      const videoElement =
+        loadedVideoPlayer.querySelector<HTMLVideoElement>("video") ||
+        (loadedVideoPlayer as unknown as HTMLVideoElement);
+
       if (videoElement && typeof videoElement.pause === "function") {
         videoElement.pause();
       }
@@ -76,7 +114,7 @@ const Vidpop = (mediaSrc, videoid, options = {}) => {
   return sightbox;
 };
 
-function removePopup(popupElement) {
+function removePopup(popupElement: CleanableElement | null): void {
   if (!popupElement || !popupElement.parentNode) {
     return;
   }
@@ -84,7 +122,7 @@ function removePopup(popupElement) {
   if (typeof popupElement.cleanup === "function") {
     popupElement.cleanup();
   } else {
-    const video = popupElement.querySelector("video");
+    const video = popupElement.querySelector<HTMLVideoElement>("video");
     video?.pause?.();
   }
 
@@ -98,3 +136,4 @@ function removePopup(popupElement) {
 }
 
 export default Vidpop;
+export { Vidpop, removePopup };

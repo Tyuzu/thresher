@@ -1,5 +1,5 @@
-import { showLoading, showError } from "./helpers.ts";
-import { apiFetch } from "../../../api/api.ts";
+import { showLoading, showError } from "./helpers.js";
+import { apiFetch } from "../../../api/api.js";
 
 
 

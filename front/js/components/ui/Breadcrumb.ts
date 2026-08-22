@@ -1,33 +1,38 @@
 import "../../../css/ui/Breadcrumb.css";
-import { navigate } from "../../routes/navigate.ts";
+import { navigate } from "../../routes/navigate.js";
+
+export interface BreadcrumbSegment {
+  label: string;
+  path: string;
+}
 
 /** Map static paths or route prefixes to user-friendly titles */
-const ROUTE_NAME_MAP = {
+const ROUTE_NAME_MAP: Record<string, string> = {
   "": "Home",
-  "home": "Home",
-  "farms": "Farms",
-  "grocery": "Grocery",
-  "recipes": "Recipes",
-  "places": "Places",
-  "events": "Events",
-  "artists": "Artists",
-  "posts": "Posts",
-  "baitos": "Baito Jobs",
-  "hire": "Hire",
-  "profile": "My Profile",
-  "settings": "Settings",
-  "cart": "Shopping Cart",
+  home: "Home",
+  farms: "Farms",
+  grocery: "Grocery",
+  recipes: "Recipes",
+  places: "Places",
+  events: "Events",
+  artists: "Artists",
+  posts: "Posts",
+  baitos: "Baito Jobs",
+  hire: "Hire",
+  profile: "My Profile",
+  settings: "Settings",
+  cart: "Shopping Cart",
   "my-orders": "My Orders",
-  "deliveries": "Deliveries",
-  "booking": "Bookings",
-  "wallet": "Wallet",
-  "search": "Search"
+  deliveries: "Deliveries",
+  booking: "Bookings",
+  wallet: "Wallet",
+  search: "Search",
 };
 
 /**
  * Capitalizes and formats raw URL identifiers (e.g. "user-profile" -> "User Profile")
  */
-function formatSegmentLabel(segment) {
+function formatSegmentLabel(segment: string): string {
   if (ROUTE_NAME_MAP[segment]) {
     return ROUTE_NAME_MAP[segment];
   }
@@ -37,22 +42,24 @@ function formatSegmentLabel(segment) {
   }
   return segment
     .replace(/[-_]/g, " ")
-    .replace(/\b\w/g, char => char.toUpperCase());
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 /**
  * Parses current location path into structured breadcrumb trail array
  */
-export function getBreadcrumbSegments(pathname = window.location.pathname) {
+export function getBreadcrumbSegments(
+  pathname: string = window.location.pathname
+): BreadcrumbSegment[] {
   const parts = pathname.split("/").filter(Boolean);
-  const segments = [{ label: "Home", path: "/" }];
+  const segments: BreadcrumbSegment[] = [{ label: "Home", path: "/" }];
 
   let accumulatedPath = "";
   parts.forEach((part) => {
     accumulatedPath += `/${part}`;
     segments.push({
       label: formatSegmentLabel(part),
-      path: accumulatedPath
+      path: accumulatedPath,
     });
   });
 
@@ -62,9 +69,11 @@ export function getBreadcrumbSegments(pathname = window.location.pathname) {
 /**
  * Renders the DOM element for Breadcrumbs
  */
-export function createBreadcrumb(customSegments = null) {
+export function createBreadcrumb(
+  customSegments: BreadcrumbSegment[] | null = null
+): HTMLElement {
   const nav = document.createElement("nav");
-  nav.ariaLabel = "Breadcrumb";
+  nav.setAttribute("aria-label", "Breadcrumb");
   nav.className = "breadcrumb";
 
   const ol = document.createElement("ol");
@@ -88,7 +97,7 @@ export function createBreadcrumb(customSegments = null) {
       anchor.className = "breadcrumb__link";
       anchor.href = item.path;
       anchor.textContent = item.label;
-      anchor.addEventListener("click", (e) => {
+      anchor.addEventListener("click", (e: MouseEvent) => {
         e.preventDefault();
         navigate(item.path);
       });
@@ -108,19 +117,3 @@ export function createBreadcrumb(customSegments = null) {
   nav.appendChild(ol);
   return nav;
 }
-
-/*
-import { createBreadcrumb } from "./components/breadcrumb.ts";
-
-// Basic auto-parsed generation based on window.location.pathname:
-const container = document.getElementById("app-header");
-container.appendChild(createBreadcrumb());
-
-// Or pass custom segment overrides for dynamic resource pages (e.g., /farms/123):
-const customSegments = [
-  { label: "Home", path: "/" },
-  { label: "Farms", path: "/farms" },
-  { label: "Green Valley Farm", path: "/farms/123" }
-];
-container.appendChild(createBreadcrumb(customSegments));
-*/

@@ -1,7 +1,7 @@
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-// import ZoomBox from "../../../components/ui/ZoomBox.ts";
-import Imagex from "../../../components/base/Imagex.ts";
-import Sightbox from "../../../components/ui/Sightbox_zoom.ts";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+// import ZoomBox from "../../../components/ui/ZoomBox.js";
+import Imagex from "../../../components/base/Imagex.js";
+import Sightbox from "../../../components/ui/Sightbox_zoom.js";
 
 async function RenderImagePost(mediaContainer, media) {
     const mediaClasses = [

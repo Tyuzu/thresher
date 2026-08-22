@@ -1,5 +1,5 @@
 import "../../../css/inistyles/deliveries.css";
-import { displayDeliveries } from "../../services/deliveries/deliveries.ts";
+import { displayDeliveries } from "../../services/deliveries/deliveries.js";
 
 async function Deliveries(isLoggedIn, contentContainer) {
   contentContainer.innerHTML = "";

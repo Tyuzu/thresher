@@ -1,7 +1,7 @@
-import { RenderImagePost } from "./renders/renderImagePost.ts";
-import { RenderVideoPost } from "./renders/renderVideoPost.ts";
-import { RenderAudioPost } from "./renders/renderAudioPost.ts";
-import { createElement } from "../../components/createElement.ts";
+import { RenderImagePost } from "./renders/renderImagePost.js";
+import { RenderVideoPost } from "./renders/renderVideoPost.js";
+import { RenderAudioPost } from "./renders/renderAudioPost.js";
+import { createElement } from "../../components/createElement.js";
 
 function createChatContent(
   post,

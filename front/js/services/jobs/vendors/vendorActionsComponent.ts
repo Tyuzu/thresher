@@ -1,9 +1,9 @@
-import Notify from "../../../components/ui/Notify.ts";
-import { hireVendor } from "./hireVendorAction.ts";
-import { displayBooking } from "../../booking/booking.ts";
-import { getState } from "../../../state/state.ts";
-import { formatRequestStatus } from "./vendorUtils.ts";
-import { createElement } from "../../../components/createElement.ts";
+import Notify from "../../../components/ui/Notify.js";
+import { hireVendor } from "./hireVendorAction.js";
+import { displayBooking } from "../../booking/booking.js";
+import { getState } from "../../../state/state.js";
+import { formatRequestStatus } from "./vendorUtils.js";
+import { createElement } from "../../../components/createElement.js";
 
 /**
  * Creates the action button group (Hire & Book) strictly for organizers.

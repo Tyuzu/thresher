@@ -1,8 +1,8 @@
-import { createElement } from "../../components/createElement.ts";
-import { apiFetch } from "../../api/api.ts";
-import { getState } from "../../state/state.ts";
-import { persistTabs } from "../../utils/persistTabs.ts";
-import { displayMedia } from "../media/ui/mediaGallery.ts";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import { getState } from "../../state/state.js";
+import { persistTabs } from "../../utils/persistTabs.js";
+import { displayMedia } from "../media/ui/mediaGallery.js";
 
 import {
   getFavorites,
@@ -10,14 +10,14 @@ import {
   createRecipeBannerSection,
   renderInfoBox,
   renderTags
-} from "./recipeRenderers.ts";
+} from "./recipeRenderers.js";
 
 import {
   renderIngredients,
   renderSteps,
   renderComments,
   renderActions
-} from "./recipeSections.ts";
+} from "./recipeSections.js";
 
 
 /* =========================

@@ -1,9 +1,9 @@
 // renderItemCard.js
 import Button from "../../../components/base/Button";
-import Imagex from "../../../components/base/Imagex.ts";
+import Imagex from "../../../components/base/Imagex.js";
 import {
     createElement
-} from "../../../components/createElement.ts";
+} from "../../../components/createElement.js";
 import {
     navigate
 } from "../../../routes";
@@ -11,20 +11,20 @@ import {
     resolveImagePath,
     EntityType,
     PictureType,
-} from "../../../utils/imagePaths.ts";
+} from "../../../utils/imagePaths.js";
 import {
     updateImageWithCrop
-} from "../../../utils/bannerEditor.ts";
+} from "../../../utils/bannerEditor.js";
 import {
     addToCart,
     isValidCartQuantity
-} from "../../cart/addToCart.ts";
+} from "../../cart/addToCart.js";
 import {
     getState
-} from "../../../state/state.ts";
+} from "../../../state/state.js";
 import {
     renderItemForm
-} from "./createOrEdit.ts";
+} from "./createOrEdit.js";
 const MAX_CART_QUANTITY = 99;
 /**
  * Convert stock into a safe positive integer.

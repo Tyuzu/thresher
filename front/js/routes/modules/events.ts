@@ -7,7 +7,7 @@ export const eventsRoutes = [
     path: "/events",
     component: () =>
       import(
-        "../../pages/events/events.ts"
+        "../../pages/events/events.js"
       ),
     functionName: "Events",
     meta: {
@@ -19,7 +19,7 @@ export const eventsRoutes = [
     path: "/create-event",
     component: () =>
       import(
-        "../../pages/events/createEvent.ts"
+        "../../pages/events/createEvent.js"
       ),
     functionName: "CreateEvent",
     meta: {
@@ -36,7 +36,7 @@ export const eventsRoutes = [
     path: "/artists",
     component: () =>
       import(
-        "../../pages/artist/artists.ts"
+        "../../pages/artist/artists.js"
       ),
     functionName: "Artists",
     meta: {
@@ -48,7 +48,7 @@ export const eventsRoutes = [
     path: "/create-artist",
     component: () =>
       import(
-        "../../pages/artist/createArtist.ts"
+        "../../pages/artist/createArtist.js"
       ),
     functionName: "CreateArtist",
     meta: {
@@ -65,7 +65,7 @@ export const eventsRoutes = [
     path: "/vendors",
     component: () =>
       import(
-        "../../pages/vendors/vendors.ts"
+        "../../pages/vendors/vendors.js"
       ),
     functionName: "Vendors",
     meta: {
@@ -77,7 +77,7 @@ export const eventsRoutes = [
     path: "/music",
     component: () =>
       import(
-        "../../pages/music/musiv.ts"
+        "../../pages/music/musiv.js"
       ),
     functionName: "Music",
     meta: {
@@ -93,7 +93,7 @@ export const eventsRoutes = [
     path: "/event/:id/tickets",
     component: () =>
       import(
-        "../../pages/events/eventTicketsPage.ts"
+        "../../pages/events/eventTicketsPage.js"
       ),
     functionName: "EventTickets",
     meta: {
@@ -106,7 +106,7 @@ export const eventsRoutes = [
     path: "/event/:id",
     component: () =>
       import(
-        "../../pages/events/eventPage.ts"
+        "../../pages/events/eventPage.js"
       ),
     functionName: "Event",
     meta: {
@@ -118,7 +118,7 @@ export const eventsRoutes = [
     path: "/artist/:id",
     component: () =>
       import(
-        "../../pages/artist/artistPage.ts"
+        "../../pages/artist/artistPage.js"
       ),
     functionName: "Artist",
     meta: {

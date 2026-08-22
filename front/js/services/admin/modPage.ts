@@ -1,7 +1,7 @@
-import { apiFetch } from "../../api/api.ts";
-import Datex from "../../components/base/Datex.ts";
-import { createElement } from "../../components/createElement.ts";
-import { debounce } from "../../utils/deutils.ts";
+import { apiFetch } from "../../api/api.js";
+import Datex from "../../components/base/Datex.js";
+import { createElement } from "../../components/createElement.js";
+import { debounce } from "../../utils/deutils.js";
 
 /*
   Streamlined moderator panel module.

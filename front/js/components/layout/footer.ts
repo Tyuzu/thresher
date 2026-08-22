@@ -1,21 +1,27 @@
 import "../../../css/layout/footer.css";
-import { setLanguage } from "../../i18n/i18n.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { webSiteName } from "../../config/env.ts";
-import { userFeedbackGlobal } from "../../services/reporting/feedback/feedback.ts";
-import { createElement } from "../createElement.ts";
-import { Button } from "../base/Button.ts"; // Import the Button component
+import { setLanguage } from "../../i18n/i18n.js";
+import { navigate } from "../../routes/navigate.js";
+import { webSiteName } from "../../config/env.js";
+import { userFeedbackGlobal } from "../../services/reporting/feedback/feedback.js";
+import { createElement } from "../createElement.js";
+import { Button } from "../base/Button.js";
 
-const handleNavigation = (event, href) => {
+interface NavPage {
+  href: string;
+  label: string;
+}
+
+const handleNavigation = (event: MouseEvent, href: string): void => {
   event.preventDefault();
   if (!href) {
-    return console.error("handleNavigation received null href");
+    console.error("handleNavigation received null href");
+    return;
   }
   navigate(href);
 };
 
-const Footer = () => {
-  const pages = [
+const Footer = (): HTMLElement => {
+  const pages: NavPage[] = [
     { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact Us" },
     { href: "/faq", label: "FAQ" },
@@ -29,43 +35,50 @@ const Footer = () => {
   ];
 
   const navLinks = pages.map(({ href, label }) => {
-    return createElement("a", {
-      href,
-      class: "footer-link",
-      events: {
-        click: (e) => handleNavigation(e, href)
-      }
-    }, [label]);
+    return createElement(
+      "a",
+      {
+        href,
+        class: "footer-link",
+        events: {
+          click: ((e: MouseEvent) => handleNavigation(e, href)) as EventListener
+        }
+      },
+      [label]
+    );
   });
 
   const nav = createElement("nav", { class: "footer-nav" }, navLinks);
 
-  const langSelect = createElement("select", {
-    name: "lang-select",
-    class: "lang-select",
-    "aria-label": "Select Page Language",
-    events: {
-      change: async (e) => {
-        const lang = e.target.value;
-        if (lang) {
-          await setLanguage(lang);
-        }
+  const langSelect = createElement(
+    "select",
+    {
+      name: "lang-select",
+      class: "lang-select",
+      "aria-label": "Select Page Language",
+      events: {
+        change: (async (e: Event) => {
+          const target = e.target as HTMLSelectElement | null;
+          const lang = target?.value;
+          if (lang) {
+            await setLanguage(lang);
+          }
+        }) as EventListener
       }
-    }
-  }, [
-    createElement("option", { value: "en" }, ["English"]),
-    createElement("option", { value: "es" }, ["Español"]),
-    createElement("option", { value: "fr" }, ["Français"]),
-    createElement("option", { value: "hi" }, ["हिन्दी"]),
-    createElement("option", { value: "ar" }, ["العربية"]),
-    createElement("option", { value: "jp" }, ["日本語"])
-  ]);
+    },
+    [
+      createElement("option", { value: "en" }, ["English"]),
+      createElement("option", { value: "es" }, ["Español"]),
+      createElement("option", { value: "fr" }, ["Français"]),
+      createElement("option", { value: "hi" }, ["हिन्दी"]),
+      createElement("option", { value: "ar" }, ["العربية"]),
+      createElement("option", { value: "jp" }, ["日本語"])
+    ]
+  ) as HTMLSelectElement;
 
   const savedLang = localStorage.getItem("lang") || "en";
   langSelect.value = savedLang;
 
-  // Refactored to use the Button component matching positional parameters:
-  // Button(title, id, events, classes, styles, ...rest)
   const feedbackButton = Button(
     "Feedback",
     "feedback-btn",

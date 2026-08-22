@@ -1,7 +1,7 @@
-import Notify from "../../../components/ui/Notify.ts";
-import { loadVendors } from "./loadVendors.ts";
-import { vendorForm } from "./vendorForm.ts";
-import { createElement } from "../../../components/createElement.ts";
+import Notify from "../../../components/ui/Notify.js";
+import { loadVendors } from "./loadVendors.js";
+import { vendorForm } from "./vendorForm.js";
+import { createElement } from "../../../components/createElement.js";
 
 /**
  * Builds the marketplace top header section.

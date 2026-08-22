@@ -1,5 +1,5 @@
-import { createElement } from "../../components/createElement.ts";
-import { displayGenericMap } from "../remap/displayGenericMap.ts";
+import { createElement } from "../../components/createElement.js";
+import { displayGenericMap } from "../remap/displayGenericMap.js";
 
 export function displayPlacesMap(options = {}) {
   const defaultOptions = {

@@ -1,4 +1,4 @@
-import { renderTabContent } from "./tabRenderer.ts";
+import { renderTabContent } from "./tabRenderer.js";
 
 /**
  * Creates a tab structure for a given section.

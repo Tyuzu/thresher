@@ -1,6 +1,6 @@
 import {
   getCurrentAllowedFeatures
-} from "../config/domainFeatures.ts";
+} from "../config/domainFeatures.js";
 
 import {
   metaGuard,
@@ -13,7 +13,7 @@ import {
   unsavedChangesGuard,
   titleGuard,
   analyticsGuard
-} from "../middleware/middleware.ts";
+} from "../middleware/middleware.js";
 
 /* =========================================================
    FEATURE ROUTES
@@ -21,31 +21,31 @@ import {
 
 import {
   adminRoutes
-} from "./modules/admin.ts";
+} from "./modules/admin.js";
 
 import {
   farmsRoutes
-} from "./modules/farms.ts";
+} from "./modules/farms.js";
 
 import {
   eventsRoutes
-} from "./modules/events.ts";
+} from "./modules/events.js";
 
 import {
   baitoRoutes
-} from "./modules/baito.ts";
+} from "./modules/baito.js";
 
 import {
   socialRoutes
-} from "./modules/social.ts";
+} from "./modules/social.js";
 
 import {
   chatsRoutes
-} from "./modules/chats.ts";
+} from "./modules/chats.js";
 
 import {
   placesRoutes
-} from "./modules/places.ts";
+} from "./modules/places.js";
 
 /* =========================================================
    CORE ROUTES
@@ -55,7 +55,7 @@ const coreRoutes = [
   {
     path: "/",
     component: () =>
-      import("../pages/home.ts"),
+      import("../pages/home.js"),
     functionName: "Home",
     meta: {
       title: "Home"
@@ -65,7 +65,7 @@ const coreRoutes = [
   {
     path: "/home",
     component: () =>
-      import("../pages/home.ts"),
+      import("../pages/home.js"),
     functionName: "Home",
     meta: {
       title: "Home"
@@ -75,7 +75,7 @@ const coreRoutes = [
   {
     path: "/login",
     component: () =>
-      import("../pages/auth/auth.ts"),
+      import("../pages/auth/auth.js"),
     functionName: "Auth",
     meta: {
       guestOnly: true,
@@ -86,7 +86,7 @@ const coreRoutes = [
   {
     path: "/profile",
     component: () =>
-      import("../pages/profile/userProfile.ts"),
+      import("../pages/profile/userProfile.js"),
     functionName: "MyProfile",
     meta: {
       requiresAuth: true,
@@ -97,7 +97,7 @@ const coreRoutes = [
   {
     path: "/user/:id",
     component: () =>
-      import("../pages/profile/userProfile.ts"),
+      import("../pages/profile/userProfile.js"),
     functionName: "UserProfile",
     meta: {
       title: "User Profile"
@@ -107,7 +107,7 @@ const coreRoutes = [
   {
     path: "/settings",
     component: () =>
-      import("../pages/profile/settings.ts"),
+      import("../pages/profile/settings.js"),
     functionName: "Settings",
     meta: {
       requiresAuth: true,
@@ -118,7 +118,7 @@ const coreRoutes = [
   {
     path: "/map",
     component: () =>
-      import("../pages/gtamap/mapgta.ts"),
+      import("../pages/gtamap/mapgta.js"),
     functionName: "MapGTA",
     meta: {
       title: "Map"
@@ -128,7 +128,7 @@ const coreRoutes = [
   {
     path: "/cart",
     component: () =>
-      import("../pages/cart/cart.ts"),
+      import("../pages/cart/cart.js"),
     functionName: "Cart",
     meta: {
       requiresAuth: true,
@@ -139,7 +139,7 @@ const coreRoutes = [
   {
     path: "/my-orders",
     component: () =>
-      import("../pages/cart/myorders.ts"),
+      import("../pages/cart/myorders.js"),
     functionName: "MyOrders",
     meta: {
       requiresAuth: true,
@@ -150,7 +150,7 @@ const coreRoutes = [
   {
     path: "/deliveries",
     component: () =>
-      import("../pages/delivery/deliveries.ts"),
+      import("../pages/delivery/deliveries.js"),
     functionName: "Deliveries",
     meta: {
       requiresAuth: true,
@@ -161,7 +161,7 @@ const coreRoutes = [
   {
     path: "/delivery/create",
     component: () =>
-      import("../pages/delivery/createDelivery.ts"),
+      import("../pages/delivery/createDelivery.js"),
     functionName: "Createdelivery",
     meta: {
       requiresAuth: true,
@@ -172,7 +172,7 @@ const coreRoutes = [
   {
     path: "/delivery/track/:id",
     component: () =>
-      import("../pages/delivery/trackDelivery.ts"),
+      import("../pages/delivery/trackDelivery.js"),
     functionName: "TrackDelivery",
     meta: {
       requiresAuth: true,
@@ -183,7 +183,7 @@ const coreRoutes = [
   {
     path: "/delivery/:id",
     component: () =>
-      import("../pages/delivery/displayDelivery.ts"),
+      import("../pages/delivery/displayDelivery.js"),
     functionName: "Delivery",
     meta: {
       requiresAuth: true,
@@ -194,7 +194,7 @@ const coreRoutes = [
   {
     path: "/dash/driver",
     component: () =>
-      import("../pages/delivery/driverDash.ts"),
+      import("../pages/delivery/driverDash.js"),
     functionName: "DriverDash",
     meta: {
       requiresAuth: true,
@@ -207,7 +207,7 @@ const coreRoutes = [
   {
     path: "/wallet",
     component: () =>
-      import("../pages/wallet/wallet.ts"),
+      import("../pages/wallet/wallet.js"),
     functionName: "Wallet",
     meta: {
       requiresAuth: true,
@@ -224,7 +224,7 @@ const legalRoutes = [
   {
     path: "/about",
     component: () =>
-      import("../legalPages/home.ts"),
+      import("../legalPages/home.js"),
     functionName: "About",
     meta: {
       title: "About Us"
@@ -234,7 +234,7 @@ const legalRoutes = [
   {
     path: "/contact",
     component: () =>
-      import("../legalPages/home.ts"),
+      import("../legalPages/home.js"),
     functionName: "Contact",
     meta: {
       title: "Contact Us"
@@ -244,7 +244,7 @@ const legalRoutes = [
   {
     path: "/faq",
     component: () =>
-      import("../legalPages/home.ts"),
+      import("../legalPages/home.js"),
     functionName: "Faq",
     meta: {
       title: "FAQ"
@@ -254,7 +254,7 @@ const legalRoutes = [
   {
     path: "/terms",
     component: () =>
-      import("../legalPages/home.ts"),
+      import("../legalPages/home.js"),
     functionName: "Terms",
     meta: {
       title: "Terms of Service"
@@ -264,7 +264,7 @@ const legalRoutes = [
   {
     path: "/privacy",
     component: () =>
-      import("../legalPages/home.ts"),
+      import("../legalPages/home.js"),
     functionName: "Privacy",
     meta: {
       title: "Privacy Policy"
@@ -274,7 +274,7 @@ const legalRoutes = [
   {
     path: "/refund",
     component: () =>
-      import("../legalPages/home.ts"),
+      import("../legalPages/home.js"),
     functionName: "Refund",
     meta: {
       title: "Refund Policy"
@@ -284,7 +284,7 @@ const legalRoutes = [
   {
     path: "/shipping",
     component: () =>
-      import("../legalPages/home.ts"),
+      import("../legalPages/home.js"),
     functionName: "Shipping",
     meta: {
       title: "Shipping Information"
@@ -294,7 +294,7 @@ const legalRoutes = [
   {
     path: "/returns",
     component: () =>
-      import("../legalPages/home.ts"),
+      import("../legalPages/home.js"),
     functionName: "Returns",
     meta: {
       title: "Returns Policy"
@@ -304,7 +304,7 @@ const legalRoutes = [
   {
     path: "/disclaimer",
     component: () =>
-      import("../legalPages/home.ts"),
+      import("../legalPages/home.js"),
     functionName: "Disclaimer",
     meta: {
       title: "Disclaimer"
@@ -314,7 +314,7 @@ const legalRoutes = [
   {
     path: "/blog",
     component: () =>
-      import("../legalPages/home.ts"),
+      import("../legalPages/home.js"),
     functionName: "Blog",
     meta: {
       title: "Blog"
@@ -330,7 +330,7 @@ const errorRoutes = [
   {
     path: "/404",
     component: () =>
-      import("../pages/errors/error.ts"),
+      import("../pages/errors/error.js"),
     functionName: "NotFound",
     meta: {
       title: "Page Not Found"
@@ -340,7 +340,7 @@ const errorRoutes = [
   {
     path: "/error/404",
     component: () =>
-      import("../pages/errors/error.ts"),
+      import("../pages/errors/error.js"),
     functionName: "NotFound",
     meta: {
       title: "Page Not Found"
@@ -350,7 +350,7 @@ const errorRoutes = [
   {
     path: "/403",
     component: () =>
-      import("../pages/errors/error.ts"),
+      import("../pages/errors/error.js"),
     functionName: "Forbidden",
     meta: {
       title: "Access Denied"
@@ -360,7 +360,7 @@ const errorRoutes = [
   {
     path: "/error/403",
     component: () =>
-      import("../pages/errors/error.ts"),
+      import("../pages/errors/error.js"),
     functionName: "Forbidden",
     meta: {
       title: "Access Denied"
@@ -436,7 +436,7 @@ function buildRoutes() {
     aggregatedRoutes.push({
       path: "/admin/*path",
       component: () =>
-        import("../pages/admin/dashboard.ts"),
+        import("../pages/admin/dashboard.js"),
       functionName: "AdminDashboard",
       meta: {
         requiresAuth: true,

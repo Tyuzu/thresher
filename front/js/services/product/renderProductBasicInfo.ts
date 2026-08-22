@@ -1,7 +1,7 @@
 // renderProductBasicInfo.js
 
-import { createElement } from "../../components/createElement.ts";
-import { getProductAvailability } from "./productHelpers.ts";
+import { createElement } from "../../components/createElement.js";
+import { getProductAvailability } from "./productHelpers.js";
 
 export function renderProductBasicInfo(product) {
   // Safety checks for required fields

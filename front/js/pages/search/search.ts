@@ -1,5 +1,5 @@
 import "../../../css/inistyles/search.css";
-import { displaySearch } from "../../services/search/searchService.ts";
+import { displaySearch } from "../../services/search/searchService.js";
 
 async function Search(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

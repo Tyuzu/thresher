@@ -1,4 +1,4 @@
-import { createElement } from "../../createElement.ts";
+import { createElement } from "../../createElement.js";
 
 export function createSpeedDropdown(video) {
   const container = createElement("div", { class: "playback-speed-container" }, []);

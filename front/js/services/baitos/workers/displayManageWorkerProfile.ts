@@ -1,14 +1,14 @@
 /* Worker's Interface - Manage own worker profile */
-import { createElement } from "../../../components/createElement.ts";
-import { Button } from "../../../components/base/Button.ts";
-import { apiFetch } from "../../../api/api.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import Imagex from "../../../components/base/Imagex.ts";
-import { updateImageWithCrop } from "../../../utils/bannerEditor.ts";
-import { displayCreateOrEditBaitoProfile } from "../create/createBaitoProfile.ts";
-import Notify from "../../../components/ui/Notify.ts";
-import { createTabs } from "../../../utils/persistTabs.ts";
+import { createElement } from "../../../components/createElement.js";
+import { Button } from "../../../components/base/Button.js";
+import { apiFetch } from "../../../api/api.js";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import { navigate } from "../../../routes/navigate.js";
+import Imagex from "../../../components/base/Imagex.js";
+import { updateImageWithCrop } from "../../../utils/bannerEditor.js";
+import { displayCreateOrEditBaitoProfile } from "../create/createBaitoProfile.js";
+import Notify from "../../../components/ui/Notify.js";
+import { createTabs } from "../../../utils/persistTabs.js";
 
 export async function displayManageWorkerProfile(contentContainer, isLoggedIn, workerId) {
     const container = createElement("div", { id: "manage-worker-profile-page", class: "manage-worker-profile-page" });

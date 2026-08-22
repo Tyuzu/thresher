@@ -1,9 +1,9 @@
 // cards.js
 
-import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { MusicAPI } from "./fetchers.ts";
-import { loadPlaylistSongs, loadAlbumSongs } from "./loaders.ts";
+import { createElement } from "../../components/createElement.js";
+import Notify from "../../components/ui/Notify.js";
+import { MusicAPI } from "./fetchers.js";
+import { loadPlaylistSongs, loadAlbumSongs } from "./loaders.js";
 
 export function createPlaylistCard(playlist, container, player, isLoggedIn) {
 

@@ -1,13 +1,13 @@
-import { createElement } from "../../components/createElement.ts";
-import { Button } from "../../components/base/Button.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import { apiFetch } from "../../api/api.ts";
-import { adspace } from "../../services/ads/newads.ts";
-import Datex from "../../components/base/Datex.ts";
-import { createMainLayout } from "../../components/layout/mainLayout.ts";
-import { createAsideContent } from "../../components/layout/asideLayout.ts";
+import { createElement } from "../../components/createElement.js";
+import { Button } from "../../components/base/Button.js";
+import Imagex from "../../components/base/Imagex.js";
+import { navigate } from "../../routes/navigate.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { apiFetch } from "../../api/api.js";
+import { adspace } from "../../services/ads/newads.js";
+import Datex from "../../components/base/Datex.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../components/layout/asideLayout.js";
 
 export async function displayEvents(isLoggedIn, container) {
   container.replaceChildren();

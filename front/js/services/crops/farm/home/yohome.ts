@@ -1,13 +1,13 @@
-import { createElement } from "../../components/createElement.ts";
-import { clearElement, createListingTabs } from "./listingcon.ts";
+import { createElement } from "../../components/createElement.js";
+import { clearElement, createListingTabs } from "./listingcon.js";
 import {
   createWeatherInfoWidget,
   createSearchBar,
   createNavWrapper,
   createAuthForms
-} from "./homeHelpers.ts";
-import { adspace } from "../../services/ads/newads.ts";
-import { createMainLayout } from "../../components/layout/mainLayout.ts";
+} from "./homeHelpers.js";
+import { adspace } from "../../services/ads/newads.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
 
 // --- MAIN HOME ---
 export function YoHome(isLoggedIn, container) {

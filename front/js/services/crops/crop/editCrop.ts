@@ -1,5 +1,5 @@
-import { createCommonCropForm } from "./createOrEditCrop.ts";
-import { apiFetch } from "../../../api/api.ts";
+import { createCommonCropForm } from "./createOrEditCrop.js";
+import { apiFetch } from "../../../api/api.js";
 
 export async function editCrop(farmId, crop, container) {
     const form = createCommonCropForm({

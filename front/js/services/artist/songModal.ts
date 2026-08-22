@@ -1,11 +1,11 @@
 // songsTab.js
-import { apiFetch } from "../../api/api.ts";
-import { createElement } from "../../components/createElement.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import Modal from "../../components/ui/Modal.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { uploadFile } from "../media/api/mediaApi.ts";
+import { apiFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import Modal from "../../components/ui/Modal.js";
+import Imagex from "../../components/base/Imagex.js";
+import Notify from "../../components/ui/Notify.js";
+import { uploadFile } from "../media/api/mediaApi.js";
 
 
 function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {

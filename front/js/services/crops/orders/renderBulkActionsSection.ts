@@ -1,5 +1,5 @@
-import { createElement } from "../../../components/createElement.ts";
-import Button from "../../../components/base/Button.ts";
+import { createElement } from "../../../components/createElement.js";
+import Button from "../../../components/base/Button.js";
 
 export function renderBulkActionsSection(onAccept, onReject, onMarkDelivered) {
   const acceptBtn = Button(

@@ -1,11 +1,11 @@
-import { Button } from "../../components/base/Button.ts";
-import { Imagex } from "../../components/base/Imagex.ts";
-import { API_URL, apiFetch } from "../../api/api.ts";
-import { createElement } from "../../components/createElement.ts";
-import { displayReviews } from "../reviews/displayReviews.ts";
-import { displayEventFAQs } from "./eventFAQHelper.ts";
-// import { displaySeatingMap } from "./seatingMap.ts";
-import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.ts";
+import { Button } from "../../components/base/Button.js";
+import { Imagex } from "../../components/base/Imagex.js";
+import { API_URL, apiFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import { displayReviews } from "../reviews/displayReviews.js";
+import { displayEventFAQs } from "./eventFAQHelper.js";
+// import { displaySeatingMap } from "./seatingMap.js";
+import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
 
 
 async function displayEventReviews(reviewsContainer, eventId, isCreator, isLoggedIn) {

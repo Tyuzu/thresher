@@ -1,5 +1,5 @@
-import { createElement } from "../../components/createElement.ts";
-import { CONTROL_CONFIG, PRESETS } from "./constants.ts";
+import { createElement } from "../../components/createElement.js";
+import { CONTROL_CONFIG, PRESETS } from "./constants.js";
 
 function makeButton(className, text) {
   return createElement(

@@ -1,14 +1,14 @@
 import "../../../css/subpages/comments.css";
-import { apiFetch } from "../../api/api.ts";
-import Button from "../../components/base/Button.ts";
-import { createElement } from "../../components/createElement.ts";
-import { fetchUserMeta } from "../../utils/usersMeta.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { debounce } from "../../utils/deutils.ts";
-import Datex from "../../components/base/Datex.ts";
-import { reportEntity } from "../reporting/reporting.ts";
+import { apiFetch } from "../../api/api.js";
+import Button from "../../components/base/Button.js";
+import { createElement } from "../../components/createElement.js";
+import { fetchUserMeta } from "../../utils/usersMeta.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import Imagex from "../../components/base/Imagex.js";
+import { navigate } from "../../routes/navigate.js";
+import { debounce } from "../../utils/deutils.js";
+import Datex from "../../components/base/Datex.js";
+import { reportEntity } from "../reporting/reporting.js";
 
 /* =========================
    CONFIG

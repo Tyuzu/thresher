@@ -1,4 +1,4 @@
-import { displayMerch } from "../../services/merch/merchPage.ts";
+import { displayMerch } from "../../services/merch/merchPage.js";
 
 async function Merch(isLoggedIn, merchid, contentContainer) {
     contentContainer.innerHTML = '';

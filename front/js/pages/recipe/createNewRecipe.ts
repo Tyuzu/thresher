@@ -1,4 +1,4 @@
-import { createRecipe } from "../../services/recipes/createOrEditRecipe.ts";
+import { createRecipe } from "../../services/recipes/createOrEditRecipe.js";
 
 async function CreateRecipe(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

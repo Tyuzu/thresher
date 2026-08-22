@@ -1,6 +1,6 @@
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
-import Datex from "../../components/base/Datex.ts";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
+import Datex from "../../components/base/Datex.js";
 
 // Dummy apiFetch
 export async function apiFetch(endpoint, method = "GET") {

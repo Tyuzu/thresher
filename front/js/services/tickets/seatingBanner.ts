@@ -1,6 +1,6 @@
-import Seatingx from "../../components/base/Seatingx.ts";
-import { createElement } from "../../components/createElement.ts";
-import { EntityType, PictureType } from "../../utils/imagePaths.ts";
+import Seatingx from "../../components/base/Seatingx.js";
+import { createElement } from "../../components/createElement.js";
+import { EntityType, PictureType } from "../../utils/imagePaths.js";
 
 /** Saeting section */
 function createEventSeatmap(eventdata, isCreator) {

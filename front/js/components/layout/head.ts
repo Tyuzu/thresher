@@ -1,4 +1,4 @@
-import { DOMAIN_METADATA } from "../../config/domainFeatures.ts";
+import { DOMAIN_METADATA } from "../../config/domainFeatures.js";
 
 /** Default fallback metadata */
 const DEFAULT_META = {

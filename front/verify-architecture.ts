@@ -12,7 +12,7 @@ const verify = async () => {
 
   // 1. Check config/env.js exists and loads
   try {
-    const { apiConfig } = await import("./js/config/env.ts");
+    const { apiConfig } = await import("./js/config/env.js");
     console.log("✅ Environment Config");
     console.log(`   - Environment: ${apiConfig.environment}`);
     console.log(`   - API URL: ${apiConfig.API_URL}`);
@@ -25,7 +25,7 @@ const verify = async () => {
 
   // 2. Check state/selectors.js exists
   try {
-    const { isAuthenticated, getUserId, createSelector } = await import("./js/state/selectors.ts");
+    const { isAuthenticated, getUserId, createSelector } = await import("./js/state/selectors.js");
     console.log("✅ State Selectors");
     console.log(`   - isAuthenticated: ${typeof isAuthenticated}`);
     console.log(`   - getUserId: ${typeof getUserId}`);
@@ -38,9 +38,9 @@ const verify = async () => {
 
   // 3. Check API layer
   try {
-    const { HTTPClient } = await import("./js/api/httpClient.ts");
-    const { RequestCache, RequestDeduplicator } = await import("./js/api/cache.ts");
-    const { ErrorTracker, HTTPError } = await import("./js/api/errorHandler.ts");
+    const { HTTPClient } = await import("./js/api/httpClient.js");
+    const { RequestCache, RequestDeduplicator } = await import("./js/api/cache.js");
+    const { ErrorTracker, HTTPError } = await import("./js/api/errorHandler.js");
     console.log("✅ API Layer");
     console.log(`   - HTTPClient: ${typeof HTTPClient}`);
     console.log(`   - RequestCache: ${typeof RequestCache}`);
@@ -55,8 +55,8 @@ const verify = async () => {
 
   // 4. Check utils
   try {
-    const { lazyLoad, preloadModules, deferNonCritical, TaskBatcher } = await import("./js/utils/lazyLoad.ts");
-    const { PerformanceMonitor } = await import("./js/utils/performanceMonitor.ts");
+    const { lazyLoad, preloadModules, deferNonCritical, TaskBatcher } = await import("./js/utils/lazyLoad.js");
+    const { PerformanceMonitor } = await import("./js/utils/performanceMonitor.js");
     console.log("✅ Utilities");
     console.log(`   - lazyLoad: ${typeof lazyLoad}`);
     console.log(`   - PerformanceMonitor: ${typeof PerformanceMonitor}`);

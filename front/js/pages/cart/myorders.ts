@@ -1,5 +1,5 @@
 import "../../../css/farmstyles/myorders.css";
-import { displayMyOrders } from "../../services/cart/myOrdersPage.ts";
+import { displayMyOrders } from "../../services/cart/myOrdersPage.js";
 
 async function MyOrders(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

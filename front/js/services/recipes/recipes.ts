@@ -1,14 +1,14 @@
-import { createElement } from "../../components/createElement.ts";
-import { Button } from "../../components/base/Button.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import { apiFetch } from "../../api/api.ts";
-import { createRecipe } from "./createOrEditRecipe.ts";
-import { adspace } from "../../services/ads/newads.ts";
-import { t } from "../../i18n/i18n.ts";
-import { createMainLayout } from "../../components/layout/mainLayout.ts";
-import { createAsideContent } from "../../components/layout/asideLayout.ts";
+import { createElement } from "../../components/createElement.js";
+import { Button } from "../../components/base/Button.js";
+import Imagex from "../../components/base/Imagex.js";
+import { navigate } from "../../routes/navigate.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { apiFetch } from "../../api/api.js";
+import { createRecipe } from "./createOrEditRecipe.js";
+import { adspace } from "../../services/ads/newads.js";
+import { t } from "../../i18n/i18n.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../components/layout/asideLayout.js";
 
 export async function displayRecipes(container, isLoggedIn) {
   container.replaceChildren();

@@ -1,5 +1,5 @@
-import { createElement } from "../../components/createElement.ts";
-import { createAvatar, updateAvatar } from "./avatarPicture.ts";
+import { createElement } from "../../components/createElement.js";
+import { createAvatar, updateAvatar } from "./avatarPicture.js";
 
 export { createAvatar, updateAvatar };
 

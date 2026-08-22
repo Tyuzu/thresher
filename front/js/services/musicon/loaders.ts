@@ -1,9 +1,9 @@
 // loaders.js
-import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { MusicAPI } from "./fetchers.ts";
-import { getContentContainer, showLoadingOverlay, hideLoadingOverlay } from "./uiHelpers.ts";
-import { renderSongsSection } from "./sections.ts";
+import { createElement } from "../../components/createElement.js";
+import Notify from "../../components/ui/Notify.js";
+import { MusicAPI } from "./fetchers.js";
+import { getContentContainer, showLoadingOverlay, hideLoadingOverlay } from "./uiHelpers.js";
+import { renderSongsSection } from "./sections.js";
 
 // Generic loadSongs function to handle common logic
 async function loadSongs(fetchFunction, fetchParams, container, player, options = {}) {

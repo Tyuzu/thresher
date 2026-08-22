@@ -7,7 +7,7 @@ export const socialRoutes = [
     path: "/posts",
     component: () =>
       import(
-        "../../pages/posts/posts.ts"
+        "../../pages/posts/posts.js"
       ),
     functionName: "Posts",
     meta: {
@@ -19,7 +19,7 @@ export const socialRoutes = [
     path: "/create-post",
     component: () =>
       import(
-        "../../pages/posts/createNewPost.ts"
+        "../../pages/posts/createNewPost.js"
       ),
     functionName: "CreatePost",
     meta: {
@@ -36,7 +36,7 @@ export const socialRoutes = [
     path: "/post/:id",
     component: () =>
       import(
-        "../../pages/posts/displayPost.ts"
+        "../../pages/posts/displayPost.js"
       ),
     functionName: "Post",
     meta: {
@@ -48,7 +48,7 @@ export const socialRoutes = [
     path: "/hashtag/:tag",
     component: () =>
       import(
-        "../../pages/hashtag/hashtagPage.ts"
+        "../../pages/hashtag/hashtagPage.js"
       ),
     functionName: "Hashtag",
     meta: {

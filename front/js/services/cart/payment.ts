@@ -1,10 +1,10 @@
 /* eslint-disable no-console */
-import { createElement } from "../../components/createElement.ts";
-import { apiFetch } from "../../api/api.ts";
-import { showPaymentModal } from "../pay/pay.ts";
-import Notify from "../../components/ui/Notify.ts";
-import Button from "../../components/base/Button.ts";
-import { printInvoice } from "./invoice.ts";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import { showPaymentModal } from "../pay/pay.js";
+import Notify from "../../components/ui/Notify.js";
+import Button from "../../components/base/Button.js";
+import { printInvoice } from "./invoice.js";
 
 /* ────────────────────── Helpers ────────────────────── */
 

@@ -1,4 +1,4 @@
-import { apiFetch } from "../../../../api/api.ts";
+import { apiFetch } from "../../../../api/api.js";
 
 export async function getCropAbout(cropID) {
     const response = await apiFetch(`/crops/about/${cropID}`);

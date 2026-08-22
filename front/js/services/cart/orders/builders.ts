@@ -7,9 +7,9 @@ import {
     formatINR,
     capitalize,
     downloadReceipt,
-} from "./orderutils.ts";
-import { createElement } from "../../../components/createElement.ts";
-import { Button } from "../../../components/base/Button.ts"; // Adjust import path as needed
+} from "./orderutils.js";
+import { createElement } from "../../../components/createElement.js";
+import { Button } from "../../../components/base/Button.js"; // Adjust import path as needed
 
 const PAGE_SIZE = 5;
 

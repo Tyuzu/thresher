@@ -1,12 +1,12 @@
 // songsTab.js (refactored for immutable song objects)
-import { apiFetch } from "../../api/api.ts";
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import { initPlayer, setSongQueue, resetPlayer, createPlayerFooter } from "./player.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { openSongModal } from "./songModal.ts";
+import { apiFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import Imagex from "../../components/base/Imagex.js";
+import { initPlayer, setSongQueue, resetPlayer, createPlayerFooter } from "./player.js";
+import Notify from "../../components/ui/Notify.js";
+import { openSongModal } from "./songModal.js";
 
 // ------------------------ Helpers ------------------------
 async function fetchSongs(artistID) {

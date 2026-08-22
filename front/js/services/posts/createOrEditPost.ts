@@ -1,13 +1,13 @@
 import { apiFetch } from "../../api/api";
-import { createElement } from "../../components/createElement.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import Button from "../../components/base/Button.ts";
-import { capitalize } from "../profile/profileHelpers.ts";
-import { resolveImagePath, PictureType, EntityType } from "../../utils/imagePaths.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { uploadFile } from "../media/api/mediaApi.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { getUploadKey } from "../newchat/fileUpload.ts";
+import { createElement } from "../../components/createElement.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import Button from "../../components/base/Button.js";
+import { capitalize } from "../profile/profileHelpers.js";
+import { resolveImagePath, PictureType, EntityType } from "../../utils/imagePaths.js";
+import { navigate } from "../../routes/navigate.js";
+import { uploadFile } from "../media/api/mediaApi.js";
+import Notify from "../../components/ui/Notify.js";
+import { getUploadKey } from "../newchat/fileUpload.js";
 
 /* ---------------------- BLOCK PLUGINS ---------------------- */
 const BlockPlugins = {

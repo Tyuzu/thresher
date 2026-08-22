@@ -1,5 +1,5 @@
 // src/ui/cart/printInvoice.js
-import Notify from "../../components/ui/Notify.ts";
+import Notify from "../../components/ui/Notify.js";
 
 /* ────────────────────── Core Functional Helpers ────────────────────── */
 

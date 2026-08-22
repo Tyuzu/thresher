@@ -1,18 +1,18 @@
-import { createElement } from "../../../components/createElement.ts";
-import { apiFetch } from "../../../api/api.ts";
+import { createElement } from "../../../components/createElement.js";
+import { apiFetch } from "../../../api/api.js";
 import {
   renderFarmCards,
   renderFeaturedFarm,
   renderCTAFarm,
   renderWeatherWidget,
   renderFarmStats,
-} from "./farmListHelpers.ts";
+} from "./farmListHelpers.js";
 import {
   createFilterControls,
   applyFiltersAndSort,
-} from "./farmFilters.ts";
-import { createMainLayout } from "../../../components/layout/mainLayout.ts";
-import { createAsideContent } from "../../../components/layout/asideLayout.ts";
+} from "./farmFilters.js";
+import { createMainLayout } from "../../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../../components/layout/asideLayout.js";
 
 // Config
 const PAGE_SIZE = 10;

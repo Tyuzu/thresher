@@ -1,6 +1,6 @@
-import { apiFetch } from "../../api/api.ts";
-import { createElement } from "../../components/createElement.ts";
-import { createGroupedCard } from "./modPage.ts";
+import { apiFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import { createGroupedCard } from "./modPage.js";
 
 export async function fetchAndRenderReports(listContainer, entityPreview, summaryContainer, filters, state, undoBtn, prevBtn, pageIndicator, nextBtn) {
     if (state.isLoading) {

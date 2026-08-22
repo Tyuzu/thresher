@@ -1,7 +1,7 @@
-import Modal from "../../components/ui/Modal.ts";
-import { apiFetch } from "../../api/api.ts";
-import { createElement } from "../../components/createElement.ts";
-import { Button } from "../../components/base/Button.ts";
+import Modal from "../../components/ui/Modal.js";
+import { apiFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import { Button } from "../../components/base/Button.js";
 
 /* ────────── Download PDF ────────── */
 const printTicketPDF = async (eventId, uniqueCode) => {

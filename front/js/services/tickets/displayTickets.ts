@@ -1,20 +1,20 @@
-import TicketCard from "../../components/ui/TicketCard.ts";
-import Button from "../../components/base/Button.ts";
-import Modal from "../../components/ui/Modal.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { createElement } from "../../components/createElement.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import { apiFetch } from "../../api/api.ts";
+import TicketCard from "../../components/ui/TicketCard.js";
+import Button from "../../components/base/Button.js";
+import Modal from "../../components/ui/Modal.js";
+import Notify from "../../components/ui/Notify.js";
+import { createElement } from "../../components/createElement.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { apiFetch } from "../../api/api.js";
 
-import { deleteTicket, editTicket, clearTicketForm } from "./editTicket.ts";
-import { printTicket } from "./printTicket.ts";
-import { listMyTickets } from "./listmyTickets.ts";
-import { showPaymentModal } from "../pay/pay.ts";
+import { deleteTicket, editTicket, clearTicketForm } from "./editTicket.js";
+import { printTicket } from "./printTicket.js";
+import { listMyTickets } from "./listmyTickets.js";
+import { showPaymentModal } from "../pay/pay.js";
 import {
   verifyTicketAndShowModal,
   cancelTicket,
   transferTicket
-} from "./ticketTransfer.ts";
+} from "./ticketTransfer.js";
 
 /* ────────── Helpers ────────── */
 function formatCurrency(minorValue: number, currencyCode = "INR"): string {

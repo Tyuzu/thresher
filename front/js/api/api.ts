@@ -9,8 +9,8 @@ import {
     MUSIC_URL,
     getState,
     setState
-} from "../state/state.ts";
-import Notify from "../components/ui/Notify.ts";
+} from "../state/state.js";
+import Notify from "../components/ui/Notify.js";
 const REFRESH_BUFFER_MS = 2 * 60 * 1000;
 const REFRESH_LOCK_TTL = 10_000;
 const REFRESH_WAIT_TIMEOUT = 12_000;

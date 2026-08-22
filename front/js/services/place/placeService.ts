@@ -1,8 +1,8 @@
-import { apiFetch } from "../../api/api.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { navigate } from "../../routes/navigate.ts";
-import displayPlace from "./displayPlace.ts";
-import { editPlaceForm, updatePlace, deletePlace } from "./editPlace.ts";
+import { apiFetch } from "../../api/api.js";
+import Notify from "../../components/ui/Notify.js";
+import { navigate } from "../../routes/navigate.js";
+import displayPlace from "./displayPlace.js";
+import { editPlaceForm, updatePlace, deletePlace } from "./editPlace.js";
 
 /**
  * Client-side validation of the FormData before sending to backend.

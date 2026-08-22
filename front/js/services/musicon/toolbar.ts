@@ -1,10 +1,10 @@
-import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { MusicAPI } from "./fetchers.ts";
-import { createPlaylistCard } from "./cards.ts";
-import { renderSongsSection } from "./sections.ts";
-import { getContentContainer, showLoadingOverlay, hideLoadingOverlay } from "./uiHelpers.ts";
-import { renderCardGrid } from "./cardGrid.ts";
+import { createElement } from "../../components/createElement.js";
+import Notify from "../../components/ui/Notify.js";
+import { MusicAPI } from "./fetchers.js";
+import { createPlaylistCard } from "./cards.js";
+import { renderSongsSection } from "./sections.js";
+import { getContentContainer, showLoadingOverlay, hideLoadingOverlay } from "./uiHelpers.js";
+import { renderCardGrid } from "./cardGrid.js";
 
 export function ensureToolbar(container, player, isLoggedIn) {
     let toolbar = container.querySelector(".music-toolbar");

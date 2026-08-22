@@ -1,10 +1,10 @@
-import { apiFetch } from "../../api/api.ts";
-import { createElement } from "../../components/createElement.ts";
-import { Button } from "../../components/base/Button.ts";
-import { formatCurrency } from "../../types/api.types.ts";
+import { apiFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import { Button } from "../../components/base/Button.js";
+import { formatCurrency } from "../../types/api.types.js";
 import { v4 as uuidv4 } from "https://jspm.dev/uuid";
-import Datex from "../../components/base/Datex.ts";
-import Notify from "../../components/ui/Notify.ts";
+import Datex from "../../components/base/Datex.js";
+import Notify from "../../components/ui/Notify.js";
 
 export function WalletTransactions({ onBalanceChange }) {
     const container = createElement("div", { id: "wallet-transactions", class: "wallet-card" }, [

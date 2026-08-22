@@ -1,5 +1,5 @@
 // uiHelpers.js
-import { createElement } from "../../components/createElement.ts";
+import { createElement } from "../../components/createElement.js";
 
 
 // ------------------------ Utilities: content wrapper & loading overlay ------------------------

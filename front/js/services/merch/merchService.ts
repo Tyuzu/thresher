@@ -5,9 +5,9 @@ export {
     deleteMerch,
     editMerchForm,
     displayNewMerchandise
-} from "./merchAPI.ts";
+} from "./merchAPI.js";
 
 export {
     addMerchForm,
     displayMerchandise
-} from "./merchUI.ts";
+} from "./merchUI.js";

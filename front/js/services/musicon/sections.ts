@@ -1,8 +1,8 @@
 // sections.js
-import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { getState } from "../../state/state.ts";
-import { createSongRow } from "./songUI.ts";
+import { createElement } from "../../components/createElement.js";
+import Notify from "../../components/ui/Notify.js";
+import { getState } from "../../state/state.js";
+import { createSongRow } from "./songUI.js";
 
 
 /**

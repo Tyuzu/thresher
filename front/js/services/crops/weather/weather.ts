@@ -1,5 +1,5 @@
-import { apiFetch } from "../../../api/api.ts";
-import { createElement } from "../../../components/createElement.ts";
+import { apiFetch } from "../../../api/api.js";
+import { createElement } from "../../../components/createElement.js";
 
 async function fetchWeather() {
     const res = await apiFetch("/weather");

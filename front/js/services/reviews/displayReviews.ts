@@ -1,10 +1,10 @@
 import "../../../css/subpages/reviews.css";
-import { Button } from "../../components/base/Button.ts";
-import { createElement } from "../../components/createElement.ts";
-import { apiFetch } from "../../api/api.ts";
-import { handleAddReview, handleEditReview, handleDeleteReview } from "./createReview.ts";
-import { fetchUserMeta } from "../../utils/usersMeta.ts";
-import Datex from "../../components/base/Datex.ts";
+import { Button } from "../../components/base/Button.js";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import { handleAddReview, handleEditReview, handleDeleteReview } from "./createReview.js";
+import { fetchUserMeta } from "../../utils/usersMeta.js";
+import Datex from "../../components/base/Datex.js";
 
 function clearElement(el) {
     while (el.firstChild) {

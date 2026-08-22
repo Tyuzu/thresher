@@ -1,5 +1,5 @@
-import { createElement } from "../../../../components/createElement.ts";
-import { getCropAbout } from "./cropAbout.api.ts";
+import { createElement } from "../../../../components/createElement.js";
+import { getCropAbout } from "./cropAbout.api.js";
 import {
     createHeaderSection,
     createImageSection,
@@ -11,8 +11,8 @@ import {
     createVarietiesSection,
     createUsageSection,
     createFunFactsSection
-} from "./cropAbout.helpers.ts";
-import { createAdminActions } from "./cropAbout.list.ts";
+} from "./cropAbout.helpers.js";
+import { createAdminActions } from "./cropAbout.list.js";
 
 export async function displayAboutCrop(contentContainer, cropID, isLoggedIn) {
     contentContainer.textContent = "";

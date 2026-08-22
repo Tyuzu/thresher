@@ -1,4 +1,4 @@
-import { displayBazarBhav } from "../../services/crops/bazarbhav/bazaarBhav.ts";
+import { displayBazarBhav } from "../../services/crops/bazarbhav/bazaarBhav.js";
 
 async function BazaarBhav(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

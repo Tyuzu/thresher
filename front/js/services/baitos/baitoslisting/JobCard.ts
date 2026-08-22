@@ -1,10 +1,10 @@
-import { createElement } from "../../../components/createElement.ts";
-import Button from "../../../components/base/Button.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import { formatRelativeTime } from "../../../utils/dateUtils.ts";
-import { saveJob } from "./utils.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import Imagex from "../../../components/base/Imagex.ts";
+import { createElement } from "../../../components/createElement.js";
+import Button from "../../../components/base/Button.js";
+import { navigate } from "../../../routes/navigate.js";
+import { formatRelativeTime } from "../../../utils/dateUtils.js";
+import { saveJob } from "./utils.js";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import Imagex from "../../../components/base/Imagex.js";
 
 export function buildCard(job) {
   const bannerFilename = job.banner || "placeholder.jpg";

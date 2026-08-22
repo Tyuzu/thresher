@@ -1,8 +1,8 @@
-import { createElement } from "../../../components/createElement.ts";
-import { getState } from "../../../state/state.ts";
-import { renderAvatar } from "./renderAvatar.ts";
-import { renderMedia } from "./renderMedia.ts";
-import { renderMenu } from "./renderMenu.ts";
+import { createElement } from "../../../components/createElement.js";
+import { getState } from "../../../state/state.js";
+import { renderAvatar } from "./renderAvatar.js";
+import { renderMedia } from "./renderMedia.js";
+import { renderMenu } from "./renderMenu.js";
 
 /* -------------------------
    Normalize Message

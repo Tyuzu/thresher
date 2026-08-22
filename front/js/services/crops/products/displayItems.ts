@@ -1,13 +1,13 @@
-import { apiFetch } from "../../../api/api.ts";
-import { createElement } from "../../../components/createElement.ts";
-import Button from "../../../components/base/Button.ts";
-import { renderItemForm } from "./createOrEdit.ts";
-import { renderItemCard } from "./renderItemCard.ts";
-import { renderCategoryChips } from "./renderCategoryChips.ts";
-import { capitalize } from "../../profile/profileHelpers.ts";
-import { renderSearchAndSortUI } from "./renderSearchAndSortUI.ts";
-import { sortItems } from "./sortItems.ts";
-import { renderPagination } from "./renderPagination.ts";
+import { apiFetch } from "../../../api/api.js";
+import { createElement } from "../../../components/createElement.js";
+import Button from "../../../components/base/Button.js";
+import { renderItemForm } from "./createOrEdit.js";
+import { renderItemCard } from "./renderItemCard.js";
+import { renderCategoryChips } from "./renderCategoryChips.js";
+import { capitalize } from "../../profile/profileHelpers.js";
+import { renderSearchAndSortUI } from "./renderSearchAndSortUI.js";
+import { sortItems } from "./sortItems.js";
+import { renderPagination } from "./renderPagination.js";
 
 export async function displayItems(
   type,

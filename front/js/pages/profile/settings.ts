@@ -1,5 +1,5 @@
 import "../../../css/inistyles/settings.css";
-import { displaySettings } from "../../services/usersettings/settingsService.ts";
+import { displaySettings } from "../../services/usersettings/settingsService.js";
 
 async function Settings(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

@@ -2,26 +2,26 @@ import {
   renderMerchTab,
   renderEventsTab,
   renderAlbumsTab
-} from "./artistTabs.ts";
-import { renderSongsTab } from "./artistSongsTab.ts";
-import { apiFetch } from "../../api/api.ts";
-import { deleteArtistForm } from "./createOrEditArtist.ts";
-import { createOrEditArtist } from "./createOrEditArtist.ts";
-import { createElement } from "../../components/createElement.ts";
-import { reportEntity } from "../reporting/reporting.ts";
-import Button from "../../components/base/Button.ts";
-import { toggleAction } from "../beats/toggleFollows.ts";
-import { getState } from "../../state/state.ts";
-import { persistTabs } from "../../utils/persistTabs.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import { updateImageWithCrop } from "../../utils/bannerEditor.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import { renderPostsTab } from "./moretabs.ts";
-import { displayNotices } from "../notices/notices.ts";
-import { renderBandMembers, renderManageMembersButton } from "./memberManage.ts";
-import { blueskySVG, facebookSVG, instagramSVG, soundcloudSVG, spotifySVG, tiktokSVG, twitterSVG, xitterSVG, youtubeSVG } from "../../components/socialSVGs.ts";
-import { createIconButton } from "../../utils/svgIconButton.ts";
-import { payViaStripe } from "../pay/pay.ts";
+} from "./artistTabs.js";
+import { renderSongsTab } from "./artistSongsTab.js";
+import { apiFetch } from "../../api/api.js";
+import { deleteArtistForm } from "./createOrEditArtist.js";
+import { createOrEditArtist } from "./createOrEditArtist.js";
+import { createElement } from "../../components/createElement.js";
+import { reportEntity } from "../reporting/reporting.js";
+import Button from "../../components/base/Button.js";
+import { toggleAction } from "../beats/toggleFollows.js";
+import { getState } from "../../state/state.js";
+import { persistTabs } from "../../utils/persistTabs.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { updateImageWithCrop } from "../../utils/bannerEditor.js";
+import Imagex from "../../components/base/Imagex.js";
+import { renderPostsTab } from "./moretabs.js";
+import { displayNotices } from "../notices/notices.js";
+import { renderBandMembers, renderManageMembersButton } from "./memberManage.js";
+import { blueskySVG, facebookSVG, instagramSVG, soundcloudSVG, spotifySVG, tiktokSVG, twitterSVG, xitterSVG, youtubeSVG } from "../../components/socialSVGs.js";
+import { createIconButton } from "../../utils/svgIconButton.js";
+import { payViaStripe } from "../pay/pay.js";
 
 // --- CREATOR-ONLY BANNER SECTION ---
 function createArtistBannerSection(artist, isCreator) {

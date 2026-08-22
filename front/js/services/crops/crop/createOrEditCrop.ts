@@ -1,6 +1,6 @@
-import { createElement } from "../../../components/createElement.ts";
-import { createFormGroup } from "../../../components/createFormGroupEnhanced.ts";
-import { cropCategoryMap } from "./cropCategories.ts";
+import { createElement } from "../../../components/createElement.js";
+import { createFormGroup } from "../../../components/createFormGroupEnhanced.js";
+import { cropCategoryMap } from "./cropCategories.js";
 
 export function createCommonCropForm({ crop = {}, currentFarmName = "", isEdit = false, onSubmit }) {
     const form = createElement("form", { class: isEdit ? "crop-edit-form create-section" : "crop-create-form create-section" });

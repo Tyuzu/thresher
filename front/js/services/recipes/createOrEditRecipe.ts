@@ -1,9 +1,9 @@
 // js/services/recipes/createOrEditRecipe.js
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/navigate.ts";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { apiFetch } from "../../api/api.js";
+import { navigate } from "../../routes/navigate.js";
 
 export function createRecipe(container) {
   renderRecipeForm(container, "create", null);

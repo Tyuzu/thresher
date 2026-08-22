@@ -1,4 +1,4 @@
-import { createElement } from "../../components/createElement.ts";
+import { createElement } from "../../components/createElement.js";
 
 export function setupMessageActions(msg, socket) {
   const messageId = msg.id || msg.messageid;

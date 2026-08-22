@@ -1,7 +1,7 @@
 import {
     apiFetch
-} from "../../api/api.ts";
-import Notify from "../../components/ui/Notify.ts";
+} from "../../api/api.js";
+import Notify from "../../components/ui/Notify.js";
 /**
  * Cart configuration.
  *

@@ -1,4 +1,4 @@
-import { secnav } from "../../components/secNav.ts";
+import { secnav } from "../../components/secNav.js";
 
 const navItems = [
   { label: "Overview", href: "/dash/overview", active: true },

@@ -268,9 +268,9 @@ this.state.audio = audio;
     }
 }
 
-import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { getContentContainer } from "./uiHelpers.ts";
+import { createElement } from "../../components/createElement.js";
+import Notify from "../../components/ui/Notify.js";
+import { getContentContainer } from "./uiHelpers.js";
 
 // ------------------------ Player (encapsulated) ------------------------
 let activePlayer = null; // tracks most recent player

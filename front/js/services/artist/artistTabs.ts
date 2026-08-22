@@ -1,9 +1,9 @@
-import { apiFetch } from "../../api/api.ts";
-import { displayMerchandise } from "../merch/merchService.ts";
-import { createElement } from "../../components/createElement.ts";
-import Modal from "../../components/ui/Modal.ts";
-import Button from "../../components/base/Button.ts";
-import { navigate } from "../../routes/navigate.ts";
+import { apiFetch } from "../../api/api.js";
+import { displayMerchandise } from "../merch/merchService.js";
+import { createElement } from "../../components/createElement.js";
+import Modal from "../../components/ui/Modal.js";
+import Button from "../../components/base/Button.js";
+import { navigate } from "../../routes/navigate.js";
 
 
 export async function renderAlbumsTab(artistID, isCreator) {

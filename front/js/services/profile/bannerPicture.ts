@@ -1,11 +1,11 @@
 // bannerPicture.js
 
-import { getState, setState } from "../../state/state.ts";
-import { updateImageWithCrop } from "../../utils/bannerEditor.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import { handleError } from "../../utils/utils.ts";
-import Notify from "../../components/ui/Notify.ts";
-import Bannerx from "../../components/base/Bannerx.ts";
+import { getState, setState } from "../../state/state.js";
+import { updateImageWithCrop } from "../../utils/bannerEditor.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { handleError } from "../../utils/utils.js";
+import Notify from "../../components/ui/Notify.js";
+import Bannerx from "../../components/base/Bannerx.js";
 
 /* ============================================================
     UPDATE BANNER

@@ -1,20 +1,26 @@
 import "../../../css/ui/SightboxZoom.css";
-import { createZoomableMedia } from "./createZoomableMedia";
-import { createElement } from "../../components/createElement.ts";
-import { createIconButton } from "../../utils/svgIconButton";
-import { xSVG } from "../svgs";
+import { createZoomableMedia, ZoomableMediaType } from "./createZoomableMedia.js";
+import { createElement } from "../../components/createElement.js";
+import { createIconButton } from "../../utils/svgIconButton.js";
+import { xSVG } from "../svgs.js";
 
-const Sightbox = (mediaSrc, mediaType = "image") => {
+/**
+ * Creates and displays an accessible, zoomable media lightbox modal with a focus trap.
+ */
+const Sightbox = (
+  mediaSrc: string,
+  mediaType: ZoomableMediaType = "image"
+): HTMLDivElement | void => {
   if (document.getElementById("sightbox")) {
     return;
   }
 
   // Preserve reference to whichever element opened the modal
-  const previouslyFocusedElement = document.activeElement;
+  const previouslyFocusedElement = document.activeElement as HTMLElement | null;
 
-  const overlay = createElement("div", { 
-    class: "sightboxz-overlay", 
-    events: { click: () => closeSightbox() } 
+  const overlay = createElement("div", {
+    class: "sightboxz-overlay",
+    events: { click: () => closeSightbox() },
   });
 
   const { container, resetZoomBtn } = createZoomableMedia(mediaSrc, mediaType);
@@ -22,25 +28,35 @@ const Sightbox = (mediaSrc, mediaType = "image") => {
   const closeButton = createIconButton({
     classSuffix: "sightboxz-close bonw",
     svgMarkup: xSVG,
-    onClick: closeSightbox,
+    onClick: () => closeSightbox(),
     label: "",
-    ariaLabel: "Close"
-  });
+    ariaLabel: "Close",
+  }) as HTMLElement;
 
-  const content = createElement("div", { 
-    class: "sightboxz-content", 
-    tabindex: "-1" 
-  }, [container, closeButton, resetZoomBtn]);
+  const contentChildren: HTMLElement[] = [container, closeButton];
+  if (resetZoomBtn) {
+    contentChildren.push(resetZoomBtn as HTMLElement);
+  }
 
-  const sightbox = createElement("div", { 
-    id: "sightbox", 
-    class: "sightboxz",
-    role: "dialog",
-    "aria-modal": "true"
-  }, [
-    overlay,
-    content
-  ]);
+  const content = createElement(
+    "div",
+    {
+      class: "sightboxz-content",
+      tabindex: "-1",
+    },
+    contentChildren
+  ) as HTMLDivElement;
+
+  const sightbox = createElement(
+    "div",
+    {
+      id: "sightbox",
+      class: "sightboxz",
+      role: "dialog",
+      "aria-modal": "true",
+    },
+    [overlay, content]
+  ) as HTMLDivElement;
 
   const appContainer = document.getElementById("app") || document.body;
   appContainer.appendChild(sightbox);
@@ -48,17 +64,20 @@ const Sightbox = (mediaSrc, mediaType = "image") => {
   // Focus the modal content shell on start
   content.focus();
 
-  function onKeyDown(e) {
+  function onKeyDown(e: KeyboardEvent): void {
     if (e.key === "Escape") {
       e.preventDefault();
       closeSightbox();
       return;
-    } 
-    
+    }
+
     if (e.key === "Tab") {
       // Included 'content' as it holds initial focus before user interaction
-      const focusableElements = [content, closeButton, resetZoomBtn].filter(Boolean);
-      const currentIndex = focusableElements.indexOf(document.activeElement);
+      const focusableElements = ([content, closeButton, resetZoomBtn] as (HTMLElement | null)[]).filter(
+        (el): el is HTMLElement => Boolean(el)
+      );
+      
+      const currentIndex = focusableElements.indexOf(document.activeElement as HTMLElement);
 
       if (e.shiftKey) {
         // Backward navigation: if at the beginning, loop to the end
@@ -76,11 +95,11 @@ const Sightbox = (mediaSrc, mediaType = "image") => {
     }
   }
 
-  function closeSightbox() {
+  function closeSightbox(): void {
     if (!document.body.contains(sightbox)) {
       return;
     }
-    
+
     window.removeEventListener("keydown", onKeyDown);
     sightbox.remove();
 

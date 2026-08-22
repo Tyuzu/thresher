@@ -1,7 +1,7 @@
-import { getState, subscribe } from "../../state/state.ts";
-import { createElement } from "../../components/createElement.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { login, signup } from "../auth/authService.ts";
+import { getState, subscribe } from "../../state/state.js";
+import { createElement } from "../../components/createElement.js";
+import { navigate } from "../../routes/navigate.js";
+import { login, signup } from "../auth/authService.js";
 
 /* ---------------------------------- */
 /* Utils */

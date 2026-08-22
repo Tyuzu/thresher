@@ -13,7 +13,7 @@ export function setupServiceWorker() {
 
     window.addEventListener("load", async () => {
         try {
-            const registration = await navigator.serviceWorker.register("/service-worker.ts", {
+            const registration = await navigator.serviceWorker.register("/service-worker.js", {
                 updateViaCache: "none"
             });
             console.log("[SW] Registered:", registration.scope);

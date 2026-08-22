@@ -1,5 +1,5 @@
-import { createElement } from "../../../components/createElement.ts";
-import Button from "../../../components/base/Button.ts";
+import { createElement } from "../../../components/createElement.js";
+import Button from "../../../components/base/Button.js";
 import {
   capitalize,
   contactBuyer,
@@ -8,13 +8,13 @@ import {
   getPaymentStatusClass,
   getOrderValue,
   normalizeOrderId,
-} from "./orderHelpers.ts";
+} from "./orderHelpers.js";
 import {
   markOrderDelivered,
   markOrderPaid,
   rejectOrder,
   acceptOrder,
-} from "./orderUtils.ts";
+} from "./orderUtils.js";
 
 function canAccept(status) {
   return String(status || "").toLowerCase() === "pending";

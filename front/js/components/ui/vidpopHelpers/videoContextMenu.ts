@@ -1,5 +1,5 @@
-import ContextMenu from "../ContextMenu.ts";
-import { togglePictureInPicture } from "./vutils.ts";
+import ContextMenu from "../ContextMenu.js";
+import { togglePictureInPicture } from "./vutils.js";
 
 const CONTEXT_HANDLER = Symbol("videoContextHandler");
 
@@ -89,8 +89,8 @@ export function setupVideoContextMenu(video, _videoId = "") {
   video.addEventListener("contextmenu", handler);
 }
 
-// import ContextMenu from "../ContextMenu.ts";
-// import { togglePictureInPicture } from "./vutils.ts";
+// import ContextMenu from "../ContextMenu.js";
+// import { togglePictureInPicture } from "./vutils.js";
 
 // export function setupVideoContextMenu(video, videoId) {
 //   let statsVisible = false;

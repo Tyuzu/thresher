@@ -1,4 +1,4 @@
-import {generateVideoPlayer} from "./vidpopHelpers/index.ts";
+import {generateVideoPlayer} from "./vidpopHelpers/index.js";
 
 
 export {generateVideoPlayer};

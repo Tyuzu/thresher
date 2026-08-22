@@ -1,8 +1,8 @@
 // fetchProfile.js
 
-import { getState, setState } from "../../state/state.ts";
-import { apiFetch } from "../../api/api.ts";
-import Notify from "../../components/ui/Notify.ts";
+import { getState, setState } from "../../state/state.js";
+import { apiFetch } from "../../api/api.js";
+import Notify from "../../components/ui/Notify.js";
 
 /* ============================================================
     HELPERS

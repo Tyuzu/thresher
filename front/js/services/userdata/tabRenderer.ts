@@ -1,6 +1,6 @@
-import { fetchUserProfileData } from "../profile/fetchProfile.ts";
-import { renderEntityData } from "./entityRenderer.ts";
-import Notify from "../../components/ui/Notify.ts";
+import { fetchUserProfileData } from "../profile/fetchProfile.js";
+import { renderEntityData } from "./entityRenderer.js";
+import Notify from "../../components/ui/Notify.js";
 
 /** Fetch and render data only when the tab is first opened. */
 async function renderTabContent(container, username, entityType) {

@@ -1,4 +1,4 @@
-import { apiFetch } from "../../api/api.ts";
+import { apiFetch } from "../../api/api.js";
 
 // ---------- Small helpers ----------
 export function genId() {

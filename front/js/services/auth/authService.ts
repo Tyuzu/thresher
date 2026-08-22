@@ -3,22 +3,22 @@ import {
     clearState,
     subscribe,
     getState
-} from "../../state/state.ts";
+} from "../../state/state.js";
 import {
     validateInputs,
     isValidUsername,
     isValidEmail,
     isValidPassword
-} from "../../utils/utils.ts";
+} from "../../utils/utils.js";
 import {
     fetchProfile
-} from "../profile/fetchProfile.ts";
-import Notify from "../../components/ui/Notify.ts";
+} from "../profile/fetchProfile.js";
+import Notify from "../../components/ui/Notify.js";
 import {
     apiFetch,
     refreshToken
-} from "../../api/api.ts";
-import LoadingSpinner from "../../components/ui/LoadingSpinner.ts";
+} from "../../api/api.js";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.js";
 /* =========================================================
    REACTIVE ROLE STATE
 ========================================================= */
@@ -342,7 +342,7 @@ export function silentLogout(broadcast = true) {
             try {
                 const {
                     navigate
-                } = await import("../../routes/navigate.ts");
+                } = await import("../../routes/navigate.js");
                 await navigate("/login", {
                     replace: true
                 });

@@ -1,7 +1,7 @@
-import Modal from "../../../components/ui/Modal.ts";
-import { createElement } from "../../../components/createElement.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import Imagex from "../../../components/base/Imagex.ts";
+import Modal from "../../../components/ui/Modal.js";
+import { createElement } from "../../../components/createElement.js";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import Imagex from "../../../components/base/Imagex.js";
 
 export function openHireWorkerModal(worker) {
   const wrapper = createElement("div", { class: "hire-worker-modal" });

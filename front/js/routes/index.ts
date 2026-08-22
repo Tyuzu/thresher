@@ -1,20 +1,20 @@
-import { createheader } from "../components/layout/header.ts";
-import { createNav, highlightActiveNav } from "../components/layout/navigation.ts";
-import { Footer } from "../components/layout/footer.ts";
-import { render } from "./router.ts";
-import { getState, setState, restoreScroll, subscribe } from "../state/state.ts";
-import { track } from "../services/activity/metrics.ts";
-import { startPerfMonitoring } from "../services/activity/perfMonitor.ts";
+import { createheader } from "../components/layout/header.js";
+import { createNav, highlightActiveNav } from "../components/layout/navigation.js";
+import { Footer } from "../components/layout/footer.js";
+import { render } from "./router.js";
+import { getState, setState, restoreScroll, subscribe } from "../state/state.js";
+import { track } from "../services/activity/metrics.js";
+import { startPerfMonitoring } from "../services/activity/perfMonitor.js";
 import {
     getCurrentAppLocation,
     parseAppLocation,
     toBrowserTarget,
     navigate,
     registerContentLoader
-} from "./navigate.ts";
+} from "./navigate.js";
 
 /* Re-export navigation utilities for external modules */
-export { getCurrentAppLocation, parseAppLocation, navigate } from "./navigate.ts";
+export { getCurrentAppLocation, parseAppLocation, navigate } from "./navigate.js";
 
 /* =========================================================
    ROUTE STATE HELPER

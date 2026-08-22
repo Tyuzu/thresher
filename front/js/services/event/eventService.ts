@@ -1,20 +1,20 @@
 // --- Imports ---
-import { getState } from "../../state/state.ts";
-import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.ts";
+import { getState } from "../../state/state.js";
+import { apiFetch } from "../../api/api.js";
+import { navigate } from "../../routes/navigate.js";
+import { createElement } from "../../components/createElement.js";
+import Notify from "../../components/ui/Notify.js";
 
-import { displayEventDetails } from "./displayEventDetails.ts";
-import { displayEventVenue, displayEventFAQ, displayEventReviews, displayLostAndFound, displayContactDetails } from "./eventTabs.ts";
-import { editEvent } from "./creadit.ts";
-import { displayTickets } from "../tickets/displayTickets.ts";
-import { displayMerchandise } from "../merch/merchService.ts";
-import { displayMedia } from "../media/ui/mediaGallery.ts";
-// import { persistTabs } from "../../utils/persistTabs.ts";
-import { createTabs } from "../../utils/persistTabs.ts";
-import { showSeatingBanner } from "../tickets/seatingBanner.ts";
-import { displayEventNews } from "./eventMoreTabs.ts";
+import { displayEventDetails } from "./displayEventDetails.js";
+import { displayEventVenue, displayEventFAQ, displayEventReviews, displayLostAndFound, displayContactDetails } from "./eventTabs.js";
+import { editEvent } from "./creadit.js";
+import { displayTickets } from "../tickets/displayTickets.js";
+import { displayMerchandise } from "../merch/merchService.js";
+import { displayMedia } from "../media/ui/mediaGallery.js";
+// import { persistTabs } from "../../utils/persistTabs.js";
+import { createTabs } from "../../utils/persistTabs.js";
+import { showSeatingBanner } from "../tickets/seatingBanner.js";
+import { displayEventNews } from "./eventMoreTabs.js";
 
 
 async function displayEventMerch(container, eventID, isCreator, isLoggedIn) {

@@ -1,5 +1,5 @@
-import Imagex from "../../../../components/base/Imagex.ts";
-import { createElement } from "../../../../components/createElement.ts";
+import Imagex from "../../../../components/base/Imagex.js";
+import { createElement } from "../../../../components/createElement.js";
 
 export function splitLines(text) {
     return String(text || "")

@@ -1,16 +1,16 @@
-import { createElement } from "../../components/createElement.ts";
-import Datex from "../../components/base/Datex.ts";
-import Button from "../../components/base/Button.ts";
-import { createMainLayout } from "../../components/layout/mainLayout.ts";
-import { createAsideContent } from "../../components/layout/asideLayout.ts";
-import { adspace } from "../../services/ads/newads.ts";
-import { navigate } from "../../routes/navigate.ts";
+import { createElement } from "../../components/createElement.js";
+import Datex from "../../components/base/Datex.js";
+import Button from "../../components/base/Button.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../components/layout/asideLayout.js";
+import { adspace } from "../../services/ads/newads.js";
+import { navigate } from "../../routes/navigate.js";
 import {
   fetchDeliveryTracking,
   fetchDeliveryEvents,
   fetchStatusHistory,
   getProofOfDelivery
-} from "../../services/deliveries/deliveriesApi.ts";
+} from "../../services/deliveries/deliveriesApi.js";
 
 export async function DeliveryTracking(container, deliveryId, isLoggedIn) {
   const contentContainer = (container && typeof container === "object" && container.nodeType)

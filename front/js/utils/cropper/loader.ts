@@ -1,5 +1,5 @@
-import { JS_SRC, CSS_HREF } from "./constants.ts";
-import { createElement } from "../../components/createElement.ts";
+import { JS_SRC, CSS_HREF } from "./constants.js";
+import { createElement } from "../../components/createElement.js";
 
 let scriptPromise = null;
 let cssPromise = null;

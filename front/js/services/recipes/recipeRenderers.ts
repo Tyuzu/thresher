@@ -1,8 +1,8 @@
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
-import Bannerx from "../../components/base/Bannerx.ts";
-import { fetchUserMeta } from "../../utils/usersMeta.ts";
-import { EntityType } from "../../utils/imagePaths.ts";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
+import Bannerx from "../../components/base/Bannerx.js";
+import { fetchUserMeta } from "../../utils/usersMeta.js";
+import { EntityType } from "../../utils/imagePaths.js";
 
 // --- LocalStorage Helpers ---
 export function getStepKey(recipeid) {

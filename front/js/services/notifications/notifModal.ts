@@ -1,12 +1,12 @@
-import Modal from "../../components/ui/Modal.ts";
-import { createElement } from "../../components/createElement.ts";
+import Modal from "../../components/ui/Modal.js";
+import { createElement } from "../../components/createElement.js";
 import {
   getNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
   clearAllNotifications,
-} from "./notifService.ts";
-import * as idxDB from "../../utils/idxDB.ts";
+} from "./notifService.js";
+import * as idxDB from "../../utils/idxDB.js";
 
 /**
  * Formats a given date string/timestamp into relative human-readable time.

@@ -7,7 +7,7 @@ export const chatsRoutes = [
     path: "/merechats",
     component: () =>
       import(
-        "../../pages/merechats/merechats.ts"
+        "../../pages/merechats/merechats.js"
       ),
     functionName: "MeChats",
     meta: {
@@ -20,7 +20,7 @@ export const chatsRoutes = [
     path: "/newchats",
     component: () =>
       import(
-        "../../pages/newchats/newchats.ts"
+        "../../pages/newchats/newchats.js"
       ),
     functionName: "NewChats",
     meta: {
@@ -33,7 +33,7 @@ export const chatsRoutes = [
     path: "/discord",
     component: () =>
       import(
-        "../../pages/discord/discord.ts"
+        "../../pages/discord/discord.js"
       ),
     functionName: "Discord",
     meta: {
@@ -50,7 +50,7 @@ export const chatsRoutes = [
     path: "/merechats/:id",
     component: () =>
       import(
-        "../../pages/merechats/merePage.ts"
+        "../../pages/merechats/merePage.js"
       ),
     functionName: "OneChatPage",
     meta: {
@@ -63,7 +63,7 @@ export const chatsRoutes = [
     path: "/newchat/:id",
     component: () =>
       import(
-        "../../pages/newchats/newChatPage.ts"
+        "../../pages/newchats/newChatPage.js"
       ),
     functionName: "NewChatPage",
     meta: {
@@ -76,7 +76,7 @@ export const chatsRoutes = [
     path: "/discord/:guildId/:channelId",
     component: () =>
       import(
-        "../../pages/discord/discordChannel.ts"
+        "../../pages/discord/discordChannel.js"
       ),
     functionName: "DiscordChannel",
     meta: {

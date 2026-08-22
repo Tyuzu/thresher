@@ -1,22 +1,56 @@
 import "../../css/inistyles/cropper.css";
 import "../../css/inistyles/imagecropper1.css";
-import Modal from "../components/ui/Modal.ts";
-import { createElement } from "../components/createElement.ts";
-import Notify from "../components/ui/Notify.ts";
-import { openCropper } from "./cropper/index.ts";
-import { bannerFetch } from "../api/api.ts";
-import { resolveImagePath } from "./imagePaths.ts";
-import { SRC_URL } from "../state/state.ts";
-import { showLoadingMessage, removeLoadingMessage, capitalize } from "../services/profile/profileHelpers.ts";
-import { handleError } from "./utils.ts";
-import Button from "../components/base/Button.ts";
+import Modal from "../components/ui/Modal.js";
+import { createElement } from "../components/createElement.js";
+import Notify from "../components/ui/Notify.js";
+import { openCropper } from "./cropper/index.js";
+import { bannerFetch } from "../api/api.js";
+import { resolveImagePath, PictureType } from "./imagePaths.js";
+import { SRC_URL } from "../state/state.js";
+import { showLoadingMessage, removeLoadingMessage, capitalize } from "../services/profile/profileHelpers.js";
+import { handleError } from "./utils.js";
+import Button from "../components/base/Button.js";
+
+/* ────────── Types & Interfaces ────────── */
+
+export interface UpdateImageOptions {
+    entityType: string;
+    imageType: string;
+    stateKey: string;
+    stateEntityKey: string;
+    previewElementId: string;
+    pictureType: PictureType;
+    entityId: string | number;
+}
+
+export type UpdateMethodChoice = "upload" | "url" | "url-crop" | false;
+
+export interface RemotePayload {
+    type: "remote";
+    url: string;
+}
+
+export type ImagePayload = Blob | RemotePayload | null;
+
+export interface UploadImageParams {
+    entityType: string;
+    entityId: string | number;
+    stateKey: string;
+    payload: ImagePayload;
+}
+
+interface ImageAttachment {
+    key?: string;
+    Key?: string;
+    filename?: string;
+}
 
 /* ────────── Security & Helper Utilities ────────── */
 
 /**
  * Validates remote image URLs to prevent basic client-side misuse/SSRF attempts.
  */
-function isValidPublicUrl(rawUrl) {
+function isValidPublicUrl(rawUrl: string): boolean {
     try {
         const parsed = new URL(rawUrl);
         if (!["http:", "https:"].includes(parsed.protocol)) return false;
@@ -47,15 +81,16 @@ export async function updateImageWithCrop({
     entityType,
     imageType,
     stateKey,
+    stateEntityKey,
     previewElementId,
     pictureType,
     entityId
-}) {
+}: UpdateImageOptions): Promise<any | false> {
     const choice = await askUpdateMethod(imageType);
     if (!choice) return false;
 
     try {
-        let payload = null;
+        let payload: ImagePayload = null;
 
         if (choice === "upload") {
             payload = await getCroppedImage(imageType);
@@ -76,17 +111,17 @@ export async function updateImageWithCrop({
             payload
         });
 
-        const attachments = Array.isArray(response)
+        const attachments: ImageAttachment[] = Array.isArray(response)
             ? response
-            : Array.isArray(response?.data)
-                ? response.data
+            : Array.isArray((response as any)?.data)
+                ? (response as any).data
                 : [];
 
         const attachment = attachments.find(a =>
             (a.key || a.Key) === stateKey || a.filename
         );
 
-        if (!attachment) {
+        if (!attachment || !attachment.filename) {
             throw new Error("Upload succeeded but no matching file record was returned.");
         }
 
@@ -104,7 +139,7 @@ export async function updateImageWithCrop({
 
         return response;
 
-    } catch (err) {
+    } catch (err: any) {
         console.error(`[ImageUpdate Error]:`, err);
         handleError(err.message || `Error updating ${imageType} picture.`);
         return false;
@@ -115,11 +150,11 @@ export async function updateImageWithCrop({
 
 /* ────────── UI Modal Dialogs ────────── */
 
-function askUpdateMethod(imageType) {
+function askUpdateMethod(imageType: string): Promise<UpdateMethodChoice> {
     return new Promise(resolve => {
-        let modalInstance = null;
+        let modalInstance: any = null;
 
-        const handleChoice = (action) => {
+        const handleChoice = (action: UpdateMethodChoice) => {
             modalInstance?.close?.();
             resolve(action);
         };
@@ -140,11 +175,11 @@ function askUpdateMethod(imageType) {
     });
 }
 
-function promptUrlInput() {
+function promptUrlInput(): Promise<string | null> {
     return new Promise(resolve => {
-        let modalInstance = null;
+        let modalInstance: any = null;
 
-        const handleDone = (val) => {
+        const handleDone = (val: string | null) => {
             modalInstance?.close?.();
             resolve(val);
         };
@@ -154,10 +189,10 @@ function promptUrlInput() {
             placeholder: "https://example.com/image.jpg",
             class: "input-field",
             style: "width: 100%; margin: 10px 0;"
-        });
+        }) as HTMLInputElement;
 
         // Submit on Enter key press
-        input.addEventListener("keydown", (e) => {
+        input.addEventListener("keydown", (e: KeyboardEvent) => {
             if (e.key === "Enter") {
                 e.preventDefault();
                 handleDone(input.value.trim());
@@ -190,14 +225,14 @@ function promptUrlInput() {
 
 /* ────────── Image Sourcing Helpers ────────── */
 
-async function getCroppedImage(imageType) {
+async function getCroppedImage(imageType: string): Promise<Blob | null> {
     const file = await pickFile();
     if (!file) return null;
 
     return openCropper({ file, type: imageType });
 }
 
-async function getImageFromUrl({ crop = false, imageType = "" } = {}) {
+async function getImageFromUrl({ crop = false, imageType = "" } = {}): Promise<ImagePayload> {
     const url = await promptUrlInput();
     if (!url) return null;
 
@@ -240,17 +275,17 @@ async function getImageFromUrl({ crop = false, imageType = "" } = {}) {
 /**
  * File picker supporting native file selection and clean event teardown.
  */
-function pickFile() {
+function pickFile(): Promise<File | null> {
     return new Promise(resolve => {
         const input = createElement("input", {
             type: "file",
             accept: "image/*",
             style: "display: none"
-        });
+        }) as HTMLInputElement;
 
         let isSettled = false;
 
-        const cleanup = (file) => {
+        const cleanup = (file: File | null) => {
             if (isSettled) return;
             isSettled = true;
 
@@ -286,16 +321,16 @@ export async function uploadImage({
     entityId,
     stateKey,
     payload
-}) {
+}: UploadImageParams): Promise<any> {
     const endpoint = "/api/v1/filedrop";
     const formData = new FormData();
 
     formData.append("entityType", entityType);
-    formData.append("entityId", entityId);
+    formData.append("entityId", String(entityId));
 
     if (payload instanceof Blob) {
         formData.append(stateKey, payload, "upload.jpg");
-    } else if (payload?.type === "remote") {
+    } else if (payload && typeof payload === "object" && payload.type === "remote") {
         formData.append("remoteUrl", payload.url);
         formData.append("remoteKey", stateKey);
     } else {
@@ -308,12 +343,12 @@ export async function uploadImage({
 /* ────────── Preview Update ────────── */
 
 function updatePreview(
-    previewElementId,
-    entityType,
-    pictureType,
-    imageName
-) {
-    const preview = document.getElementById(previewElementId);
+    previewElementId: string,
+    entityType: string,
+    pictureType: PictureType,
+    imageName: string
+): void {
+    const preview = document.getElementById(previewElementId) as HTMLImageElement | null;
     if (!preview || !imageName) return;
 
     const newSrc = resolveImagePath(

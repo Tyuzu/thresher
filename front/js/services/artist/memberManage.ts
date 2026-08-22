@@ -1,14 +1,14 @@
 // manageMembers.js
 
-import { apiFetch } from "../../api/api.ts";
-import { manageBandMembers } from "./createOrEditMembers.ts";
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import { uploadFile } from "../media/api/mediaApi.ts";
-import { uid } from "../media/ui/mediaUploadForm.ts";
-import Notify from "../../components/ui/Notify.ts";
+import { apiFetch } from "../../api/api.js";
+import { manageBandMembers } from "./createOrEditMembers.js";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import Imagex from "../../components/base/Imagex.js";
+import { uploadFile } from "../media/api/mediaApi.js";
+import { uid } from "../media/ui/mediaUploadForm.js";
+import Notify from "../../components/ui/Notify.js";
 
 export function renderBandMembers(artist, isCreator) {
     const cards = artist.members.map(member => {

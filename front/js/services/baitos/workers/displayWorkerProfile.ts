@@ -1,14 +1,14 @@
 /* Hirer's Interface - View worker profile and book */
-import { createElement } from "../../../components/createElement.ts";
-import { Button } from "../../../components/base/Button.ts";
-import { apiFetch } from "../../../api/api.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import Imagex from "../../../components/base/Imagex.ts";
-import { displayBooking } from "../../booking/booking.ts";
-import { getState } from "../../../state/state.ts";
-import { meChat } from "../../mechat/plugnplay.ts";
-import Notify from "../../../components/ui/Notify.ts";
+import { createElement } from "../../../components/createElement.js";
+import { Button } from "../../../components/base/Button.js";
+import { apiFetch } from "../../../api/api.js";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import { navigate } from "../../../routes/navigate.js";
+import Imagex from "../../../components/base/Imagex.js";
+import { displayBooking } from "../../booking/booking.js";
+import { getState } from "../../../state/state.js";
+import { meChat } from "../../mechat/plugnplay.js";
+import Notify from "../../../components/ui/Notify.js";
 
 export async function displayWorkerProfile(contentContainer, isLoggedIn, workerId) {
   const container = createElement("div", { id: "worker-profile-page", class: "worker-profile-page" });

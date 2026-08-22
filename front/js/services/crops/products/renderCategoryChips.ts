@@ -1,6 +1,6 @@
 import Button from "../../../components/base/Button";
-import { createElement } from "../../../components/createElement.ts";
-import { apiFetch } from "../../../api/api.ts";
+import { createElement } from "../../../components/createElement.js";
+import { apiFetch } from "../../../api/api.js";
 
 export async function renderCategoryChips(container, selectedCategory, onSelect, type = "product") {
   container.replaceChildren();

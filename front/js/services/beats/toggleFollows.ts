@@ -1,6 +1,6 @@
 import { getState } from '../../state/state.js';
-import { apiFetch } from "../../api/api.ts";
-import Notify from "../../components/ui/Notify.ts";
+import { apiFetch } from "../../api/api.js";
+import Notify from "../../components/ui/Notify.js";
 
 /**
  * Generic toggle action for follow/subscribe actions

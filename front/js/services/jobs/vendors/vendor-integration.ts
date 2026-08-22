@@ -1,18 +1,18 @@
-import { hireVendors } from "./vendors.ts";
-import { vendorForm } from "./vendorForm.ts";
-import { createModal } from "./modal.ts";
-import { fetchEventVendors, fetchAvailability, createAvailability, deleteAvailability, getMyVendorRequests, updateVendorHiringStatus } from "./vendorService.ts";
-import { removeVendor } from "./hireVendorAction.ts";
+import { hireVendors } from "./vendors.js";
+import { vendorForm } from "./vendorForm.js";
+import { createModal } from "./modal.js";
+import { fetchEventVendors, fetchAvailability, createAvailability, deleteAvailability, getMyVendorRequests, updateVendorHiringStatus } from "./vendorService.js";
+import { removeVendor } from "./hireVendorAction.js";
 import {
     getVendorId,
     getVendorName,
     normalizeVendorList
-} from "./vendorUtils.ts";
-import { VENDOR_EVENTS } from "./vendorEvents.ts";
-import { apiFetch } from "../../../api/api.ts";
-import { deleteVendor } from "./vendorService.ts";
-import Notify from "../../../components/ui/Notify.ts";
-import { createElement } from "../../../components/createElement.ts";
+} from "./vendorUtils.js";
+import { VENDOR_EVENTS } from "./vendorEvents.js";
+import { apiFetch } from "../../../api/api.js";
+import { deleteVendor } from "./vendorService.js";
+import Notify from "../../../components/ui/Notify.js";
+import { createElement } from "../../../components/createElement.js";
 
 async function renderEventVendorSummary(eventId, container, options = {}) {
     const {

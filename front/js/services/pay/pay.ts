@@ -1,9 +1,9 @@
 import "../../../css/subpages/payoptions.css";
-import Modal from "../../components/ui/Modal.ts";
-import { stripeFetch } from "../../api/api.ts";
-import { createElement } from "../../components/createElement.ts";
-import { STRIPE_PUB_KEY } from "./pubkey.ts";
-import { Button } from "../../components/base/Button.ts"; // FIXED: Added missing import
+import Modal from "../../components/ui/Modal.js";
+import { stripeFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import { STRIPE_PUB_KEY } from "./pubkey.js";
+import { Button } from "../../components/base/Button.js"; // FIXED: Added missing import
 
 /* ───────────────────────────────────────── */
 /* Payment Contract Configs */

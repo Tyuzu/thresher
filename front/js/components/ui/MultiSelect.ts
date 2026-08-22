@@ -1,48 +1,63 @@
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
 
-function MultiSelect({ options = [], selected = [], placeholder = "", onChange }) {
-  // Work with a local copy of state to avoid parent reference contamination
-  let localSelected = [...selected];
-  let open = false;
+export interface MultiSelectProps {
+  options?: string[];
+  selected?: string[];
+  placeholder?: string;
+  onChange?: (selected: string[]) => void;
+}
+
+export interface MultiSelectResult {
+  element: HTMLDivElement;
+  destroy: () => void;
+}
+
+function MultiSelect({
+  options = [],
+  selected = [],
+  placeholder = "",
+  onChange,
+}: MultiSelectProps): MultiSelectResult {
+  // Local state copy
+  let localSelected: string[] = [...selected];
+  let open: boolean = false;
 
   // DOM Composition Assembly
-  const wrapper = createElement("div", { class: "multiselect-wrapper" });
+  const wrapper = createElement("div", { class: "multiselect-wrapper" }) as HTMLDivElement;
   
-  // Custom interactive wrapper for structural layout alignment
   const controlBox = createElement("div", { class: "multiselect-control" });
   const chipsContainer = createElement("div", { class: "multiselect-chips" });
   const input = createElement("input", { 
     type: "text", 
     placeholder: localSelected.length === 0 ? placeholder : "",
     class: "multiselect-input"
-  });
+  }) as HTMLInputElement;
   
   controlBox.append(chipsContainer, input);
 
   const dropdown = createElement("div", { 
     class: "multiselect-dropdown",
     style: "display: none;" 
-  });
+  }) as HTMLDivElement;
 
   // ---------------------------
   // DROPDOWN OPERATIONS
   // ---------------------------
-  const openDropdown = () => {
+  const openDropdown = (): void => {
     dropdown.style.display = "block";
     open = true;
     refreshDropdown();
   };
 
-  const closeDropdown = () => {
+  const closeDropdown = (): void => {
     dropdown.style.display = "none";
     open = false;
     input.value = "";
   };
 
-  // Safe Document-wide reference click toggle
-  const handleOutsideClick = (e) => {
-    if (!wrapper.contains(e.target)) {
+  const handleOutsideClick = (e: MouseEvent): void => {
+    if (!wrapper.contains(e.target as Node)) {
       closeDropdown();
     }
   };
@@ -53,7 +68,7 @@ function MultiSelect({ options = [], selected = [], placeholder = "", onChange }
   // ---------------------------
   // RENDER DROPDOWN OPTIONS
   // ---------------------------
-  const refreshDropdown = () => {
+  const refreshDropdown = (): void => {
     dropdown.replaceChildren();
 
     if (!open) return;
@@ -75,14 +90,14 @@ function MultiSelect({ options = [], selected = [], placeholder = "", onChange }
         role: "option"
       }, [opt]);
 
-      item.addEventListener("click", (e) => {
+      item.addEventListener("click", (e: MouseEvent) => {
         e.stopPropagation();
         localSelected = [...localSelected, opt];
         
         onChange?.(localSelected);
         refreshChips();
         input.value = "";
-        input.focus(); // Keep focus for fast sequential entry
+        input.focus();
         refreshDropdown();
       });
 
@@ -93,28 +108,30 @@ function MultiSelect({ options = [], selected = [], placeholder = "", onChange }
   // ---------------------------
   // RENDER SELECTED SELECTIONS
   // ---------------------------
-  const refreshChips = () => {
+  const refreshChips = (): void => {
     chipsContainer.replaceChildren();
     
-    // Manage input placeholder visibility depending on chosen tag volumes
     input.placeholder = localSelected.length === 0 ? placeholder : "";
 
     localSelected.forEach((val) => {
       const chip = createElement("div", { class: "chip" }, [
         createElement("span", { class: "chip-label" }, [val]),
-        Button("×", "", {
-          click: (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Non-destructive removal loop processing
-            localSelected = localSelected.filter(item => item !== val);
-            
-            onChange?.(localSelected);
-            refreshChips();
-            refreshDropdown();
+        Button({
+          title: "×",
+          classes: "chip-remove-btn",
+          events: {
+            click: (e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              localSelected = localSelected.filter(item => item !== val);
+              
+              onChange?.(localSelected);
+              refreshChips();
+              refreshDropdown();
+            }
           }
-        }, "chip-remove-btn")
+        })
       ]);
 
       chipsContainer.append(chip);
@@ -122,12 +139,11 @@ function MultiSelect({ options = [], selected = [], placeholder = "", onChange }
   };
 
   // ---------------------------
-  // KEYBOARD UTILITIES & ENTRY TRACKS
+  // KEYBOARD UTILITIES
   // ---------------------------
   input.addEventListener("input", refreshDropdown);
 
-  input.addEventListener("keydown", (e) => {
-    // Enable backspace clearing tracking if input buffer is empty
+  input.addEventListener("keydown", (e: KeyboardEvent) => {
     if (e.key === "Backspace" && input.value === "" && localSelected.length > 0) {
       localSelected.pop();
       onChange?.(localSelected);
@@ -139,13 +155,10 @@ function MultiSelect({ options = [], selected = [], placeholder = "", onChange }
     }
   });
 
-  // Structural Append Ordering: Control Container sits directly above the dropdown options
   wrapper.append(controlBox, dropdown);
 
-  // Initialize view layers
   refreshChips();
 
-  // Return DOM tree root paired alongside explicit destructor routine
   return {
     element: wrapper,
     destroy: () => {

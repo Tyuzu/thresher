@@ -1,7 +1,7 @@
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
-import { apiFetch } from "../../api/api.ts";
-import { displayMenu } from "../menu/menuService.ts";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
+import { apiFetch } from "../../api/api.js";
+import { displayMenu } from "../menu/menuService.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -777,12 +777,12 @@ export {
 
 export {
   displayPlaceEvents,
-} from "./tabscond/events.ts";
+} from "./tabscond/events.js";
 
 export {
   displayPlaceProducts,
-} from "./tabscond/products.ts";
+} from "./tabscond/products.js";
 
 export {
   displayPlaceNearby,
-} from "./tabscond/nearbyPlaces.ts";
+} from "./tabscond/nearbyPlaces.js";

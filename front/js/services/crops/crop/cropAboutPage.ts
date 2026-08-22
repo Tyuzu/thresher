@@ -1,6 +1,6 @@
 
-import Imagex from "../../../components/base/Imagex.ts";
-import { createElement } from "../../../components/createElement.ts";
+import Imagex from "../../../components/base/Imagex.js";
+import { createElement } from "../../../components/createElement.js";
 
 export async function displayAboutCrop(contentContainer, _cropID, _isLoggedIn) {
     contentContainer.textContent = "";

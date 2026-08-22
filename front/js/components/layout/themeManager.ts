@@ -1,6 +1,6 @@
-import { getActiveDomainMetadata } from "../../config/domainFeatures.ts";
+import { getActiveDomainMetadata } from "../../config/domainFeatures.js";
 
-const themes = [
+export const themes = [
   "light",
   "dark",
   "dimmed",
@@ -16,17 +16,19 @@ const themes = [
   "latte",
   "rose-pine",
   "high-contrast"
-];
+] as const;
+
+export type Theme = typeof themes[number];
 
 let currentThemeIndex = 0;
 
 /**
  * Applies a user theme mode and coordinates domain branding classes
  * 
- * @param {string} theme - The user theme key (e.g., 'dark', 'light')
- * @param {boolean} [save=true] - Whether to persist to localStorage
+ * @param theme - The user theme key (e.g., 'dark', 'light')
+ * @param save - Whether to persist to localStorage
  */
-export function applyTheme(theme, save = true) {
+export function applyTheme(theme: Theme, save: boolean = true): void {
   if (!themes.includes(theme)) return;
 
   const root = document.documentElement;
@@ -36,7 +38,7 @@ export function applyTheme(theme, save = true) {
   currentThemeIndex = themes.indexOf(theme);
 
   // 2. Sync domain branding class from domainFeatures.js (e.g. 'theme-green', 'theme-purple')
-  const domainMeta = getActiveDomainMetadata();
+  const domainMeta = getActiveDomainMetadata() as { theme?: string } | undefined;
   if (domainMeta?.theme) {
     // Keep domain theme branding class on <html> without stripping user data-theme
     root.classList.add(domainMeta.theme);
@@ -51,15 +53,15 @@ export function applyTheme(theme, save = true) {
 /**
  * Loads stored theme, falls back to OS preference, and applies domain theme
  */
-export function loadTheme() {
+export function loadTheme(): void {
   const saved = localStorage.getItem("theme");
 
-  if (saved && themes.includes(saved)) {
-    applyTheme(saved, false);
+  if (saved && themes.includes(saved as Theme)) {
+    applyTheme(saved as Theme, false);
   } else {
     // Fall back to OS preference if no theme saved
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const defaultTheme = prefersDark ? "dark" : "light";
+    const defaultTheme: Theme = prefersDark ? "dark" : "light";
     applyTheme(defaultTheme, false);
   }
 }
@@ -67,21 +69,19 @@ export function loadTheme() {
 /**
  * Cycles through available themes
  */
-export function toggleTheme() {
+export function toggleTheme(): void {
   currentThemeIndex = (currentThemeIndex + 1) % themes.length;
   const theme = themes[currentThemeIndex];
   applyTheme(theme, true);
 }
 
 /**
- * Reacts to system dark/light mode changes if the user hasn't set a explicit override
+ * Reacts to system dark/light mode changes if the user hasn't set an explicit override
  */
-export function listenForSystemThemeChanges() {
+export function listenForSystemThemeChanges(): void {
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
     if (!localStorage.getItem("theme")) {
       applyTheme(e.matches ? "dark" : "light", false);
     }
   });
 }
-
-export { themes };

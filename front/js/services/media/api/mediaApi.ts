@@ -1,6 +1,6 @@
-import { apiFetch } from "../../../api/api.ts";
-import { FILEDROP_URL, getState } from "../../../state/state.ts";
-import { UploadStore } from "../store/uploadStore.ts";
+import { apiFetch } from "../../../api/api.js";
+import { FILEDROP_URL, getState } from "../../../state/state.js";
+import { UploadStore } from "../store/uploadStore.js";
 
 /* -------------------------
    API - Service endpoint factory

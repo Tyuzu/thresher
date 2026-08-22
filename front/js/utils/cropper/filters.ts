@@ -1,4 +1,4 @@
-import { DEFAULT_ADJUSTMENTS, CONTROL_CONFIG, PRESETS } from "./constants.ts";
+import { DEFAULT_ADJUSTMENTS, CONTROL_CONFIG, PRESETS } from "./constants.js";
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));

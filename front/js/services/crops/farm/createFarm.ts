@@ -1,6 +1,6 @@
-import { apiFetch } from "../../../api/api.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import { createFarmForm } from "./createOrEditFarm.ts";
+import { apiFetch } from "../../../api/api.js";
+import { navigate } from "../../../routes/navigate.js";
+import { createFarmForm } from "./createOrEditFarm.js";
 
 export function createFarm(isLoggedIn, container) {
     container.textContent = "";

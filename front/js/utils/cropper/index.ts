@@ -1,7 +1,7 @@
-import { ensureCropper } from "./loader.ts";
-import { buildUI, mountOverlay, lockBodyScroll, unlockBodyScroll, resizeStage } from "./ui.ts";
-import { createControls } from "./controls.ts";
-import { FilterManager } from "./filters.ts";
+import { ensureCropper } from "./loader.js";
+import { buildUI, mountOverlay, lockBodyScroll, unlockBodyScroll, resizeStage } from "./ui.js";
+import { createControls } from "./controls.js";
+import { FilterManager } from "./filters.js";
 import {
   createCropper,
   destroyCropper,
@@ -10,13 +10,19 @@ import {
   zoomIn,
   zoomOut,
   centerCropBox
-} from "./cropperCore.ts";
-import { exportBlob } from "./export.ts";
+} from "./cropperCore.js";
+import { exportBlob } from "./export.js";
+import { debounce } from "../../utils/deutils.js";
 
-export function openCropperWithCropperJSBoundedFixedBox({ file, type = "avatar" }) {
+export interface OpenCropperOptions {
+  file: File;
+  type?: string;
+}
+
+export function openCropperWithCropperJSBoundedFixedBox({ file, type = "avatar" }: OpenCropperOptions): Promise<Blob | null> {
   return new Promise(async (resolve) => {
-    let cropper = null;
-    let objectUrl = null;
+    let cropper: any = null;
+    let objectUrl: string | null = null;
 
     const previousOverflow = lockBodyScroll();
     const filterManager = new FilterManager();
@@ -57,7 +63,7 @@ export function openCropperWithCropperJSBoundedFixedBox({ file, type = "avatar" 
       }
     }, 100);
 
-    function onKeyDown(e) {
+    function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
         cleanup();
@@ -77,7 +83,6 @@ export function openCropperWithCropperJSBoundedFixedBox({ file, type = "avatar" 
       return;
     }
 
-    // FIX 1: Correct key names matching controls.js output
     const {
       rotateLeft: rotateLeftBtn,
       rotateRight: rotateRightBtn,
@@ -110,7 +115,7 @@ export function openCropperWithCropperJSBoundedFixedBox({ file, type = "avatar" 
       return;
     }
 
-    // FIX 2: Attach toolbar actions checking for valid cropper instance
+    // Attach toolbar actions checking for valid cropper instance
     rotateLeftBtn?.addEventListener("click", () => {
       if (cropper) rotateLeft(cropper);
     });
@@ -149,12 +154,12 @@ export function openCropperWithCropperJSBoundedFixedBox({ file, type = "avatar" 
   });
 }
 
-function debounce(func, wait) {
-  let timeout;
-  return function (...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
-}
+// function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
+//   let timeout: number | undefined;
+//   return function (this: any, ...args: Parameters<T>) {
+//     if (timeout) clearTimeout(timeout);
+//     timeout = window.setTimeout(() => func.apply(this, args), wait);
+//   };
+// }
 
 export { openCropperWithCropperJSBoundedFixedBox as openCropper };

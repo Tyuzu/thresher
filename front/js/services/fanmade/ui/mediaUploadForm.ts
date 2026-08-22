@@ -1,19 +1,19 @@
-import Modal from "../../../components/ui/Modal.ts";
-import { Button } from "../../../components/base/Button.ts";
-import { createElement } from "../../../components/createElement.ts";
-import Notify from "../../../components/ui/Notify.ts";
-import Imagex from "../../../components/base/Imagex.ts";
+import Modal from "../../../components/ui/Modal.js";
+import { Button } from "../../../components/base/Button.js";
+import { createElement } from "../../../components/createElement.js";
+import Notify from "../../../components/ui/Notify.js";
+import Imagex from "../../../components/base/Imagex.js";
 
-import { UploadStore } from "../store/uploadStore.ts";
+import { UploadStore } from "../store/uploadStore.js";
 
 import {
   uploadFile,
   postMedia
-} from "../api/mediaApi.ts";
+} from "../api/mediaApi.js";
 
 import {
   detectCaptionLang
-} from "../../media/mediaCommon.ts";
+} from "../../media/mediaCommon.js";
 
 // ---------------------------------
 // UID

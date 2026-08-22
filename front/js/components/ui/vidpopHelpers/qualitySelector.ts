@@ -1,13 +1,22 @@
-import { createElement } from "../../createElement.ts";
+import { createElement } from "../../createElement.js";
 
-export function createQualitySelector(video, qualities) {
-  const container = createElement("div", {}, []);
+export interface QualityOption {
+  label: string;
+  src: string;
+  [key: string]: unknown;
+}
+
+export function createQualitySelector(
+  video: HTMLVideoElement,
+  qualities: QualityOption[]
+): HTMLElement {
+  const container = createElement("div", {}, []) as HTMLElement;
 
   const label = createElement(
     "label",
     { for: "quality-selector" },
     ["Quality:"]
-  );
+  ) as HTMLLabelElement;
 
   const select = createElement(
     "select",
@@ -16,7 +25,7 @@ export function createQualitySelector(video, qualities) {
       class: "quality-selector",
     },
     []
-  );
+  ) as HTMLSelectElement;
 
   // Infer current quality from video src
   const currentSrc = video.currentSrc || video.src;
@@ -26,14 +35,17 @@ export function createQualitySelector(video, qualities) {
   const stored = localStorage.getItem("videoQuality");
   const initial = inferred || stored || qualities[0]?.label;
 
-  qualities.forEach(({ label }) => {
-    const opt = createElement("option", { value: label }, [label]);
-    opt.selected = label === initial;
+  qualities.forEach(({ label: qualityLabel }) => {
+    const opt = createElement("option", { value: qualityLabel }, [
+      qualityLabel,
+    ]) as HTMLOptionElement;
+    opt.selected = qualityLabel === initial;
     select.appendChild(opt);
   });
 
-  select.addEventListener("change", (e) => {
-    const selected = qualities.find((q) => q.label === e.target.value);
+  select.addEventListener("change", (e: Event) => {
+    const target = e.target as HTMLSelectElement;
+    const selected = qualities.find((q) => q.label === target.value);
 
     if (!selected) {
       return;

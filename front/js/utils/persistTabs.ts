@@ -1,9 +1,9 @@
 // tabs.js
 import "../../css/ui/createTabs.css";
-import { createElement } from "../components/createElement.ts";
-import { makeDraggableScroll } from "../components/dragnav.ts";
+import { createElement } from "../components/createElement.js";
+import { makeDraggableScroll } from "../components/dragnav.js";
 // Import your actual state management functions
-import { getState, setState } from "../state/state.ts"; 
+import { getState, setState } from "../state/state.js"; 
 
 /* =========================================================
    ROUTE STATE HELPERS

@@ -1,7 +1,7 @@
-import { createElement } from "../components/createElement.ts";
-import { Button } from "../components/base/Button.ts";
-import Modal from "../components/ui/Modal.ts";
-import { buildLabelMap } from "./onboardingConfig.ts";
+import { createElement } from "../components/createElement.js";
+import { Button } from "../components/base/Button.js";
+import Modal from "../components/ui/Modal.js";
+import { buildLabelMap } from "./onboardingConfig.js";
 
 /**
  * Core engine to build and display an interactive onboarding flow.

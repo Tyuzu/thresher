@@ -1,4 +1,4 @@
-import { createPost } from "../../services/posts/createOrEditPost.ts";
+import { createPost } from "../../services/posts/createOrEditPost.js";
 
 async function CreatePost(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

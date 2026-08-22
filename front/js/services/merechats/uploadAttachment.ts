@@ -1,11 +1,11 @@
-import { MERE_URL, getState } from "../../state/state.ts";
-import { uploadFile } from "../media/api/mediaApi.ts";
-import { uid } from "../media/ui/mediaUploadForm.ts";
+import { MERE_URL, getState } from "../../state/state.js";
+import { uploadFile } from "../media/api/mediaApi.js";
+import { uid } from "../media/ui/mediaUploadForm.js";
 import {
   pendingMap,
   mountMessage,
   reconcilePending
-} from "./chatSocket.ts";
+} from "./chatSocket.js";
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 

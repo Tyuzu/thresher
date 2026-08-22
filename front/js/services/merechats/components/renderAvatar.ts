@@ -1,5 +1,5 @@
-import Imagex from "../../../components/base/Imagex.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
+import Imagex from "../../../components/base/Imagex.js";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 
 export function renderAvatar(msg, { isMine }) {
   if (isMine || !msg.sender) {

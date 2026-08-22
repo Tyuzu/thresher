@@ -4,7 +4,7 @@ import sys
 from collections import defaultdict
 
 # Extensions to analyze
-TARGET_EXTS = (".ts", ".tsx", ".js", ".jsx", ".mjs")
+TARGET_EXTS = (".js", ".tsx", ".js", ".jsx", ".mjs")
 
 # Directories to ignore
 IGNORE_DIRS = {".git", "node_modules", "dist", "build", ".cache", "_audit_backups"}

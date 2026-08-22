@@ -1,6 +1,6 @@
 
-import { displayNewChat } from "../../services/newchat/displayNewchat.ts";
-import { getState } from "../../state/state.ts";
+import { displayNewChat } from "../../services/newchat/displayNewchat.js";
+import { getState } from "../../state/state.js";
 
 async function NewChatPage(isLoggedIn,  chatid, contentContainer) {
     contentContainer.innerHTML = '';

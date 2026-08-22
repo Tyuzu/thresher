@@ -1,5 +1,5 @@
-import { createElement } from "../../../components/createElement.ts";
-import { HireWorkerCard } from "./WorkerCard.ts";
+import { createElement } from "../../../components/createElement.js";
+import { HireWorkerCard } from "./WorkerCard.js";
 
 export function renderWorkerList(listEl, workers, isGridView, isLoggedIn) {
   listEl.replaceChildren();

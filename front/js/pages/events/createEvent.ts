@@ -1,4 +1,4 @@
-import { createEvent } from "../../services/event/creadit.ts";
+import { createEvent } from "../../services/event/creadit.js";
 
 async function CreateEvent(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

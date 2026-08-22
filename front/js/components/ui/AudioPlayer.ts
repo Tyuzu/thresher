@@ -1,44 +1,65 @@
 import "../../../css/ui/AudioPlayer.css";
-import { createElement } from "../../components/createElement.ts"; // Adjust path as needed
-import Imagex from "../base/Imagex";
+import { createElement } from "../../components/createElement.js";
+import Imagex from "../base/Imagex.js";
 
-function AudioPlayer(audioSrc) {
+export interface LyricLine {
+  time: number;
+  text: string;
+}
+
+export interface AudioSourceOptions {
+  src: string;
+  poster?: string;
+  lyricsData?: LyricLine[];
+}
+
+function AudioPlayer(audioSrc: AudioSourceOptions): HTMLDivElement {
   // === POSTER IMAGE ===
-  const img = Imagex({ src: audioSrc.poster || "" });
-  img.alt = "Audio Thumbnail";
-  img.className = "audio-poster";
+  const img = Imagex({
+    src: audioSrc.poster || "",
+    alt: "Audio Thumbnail",
+    class: "audio-poster",
+  }) as HTMLImageElement;
 
   // === AUDIO ELEMENT ===
   const audio = createElement("audio", {
     src: audioSrc.src,
     controls: false,
-    preload: "metadata"
-  });
+    preload: "metadata",
+  }) as HTMLAudioElement;
   audio.playbackRate = 1;
 
   // === CONTROLS CONTAINER ===
-  const playButton = createElement("button", {
-    events: {
-      click: () => {
-        if (audio.paused) {
-          audio.play();
-          playButton.textContent = "Pause";
-        } else {
-          audio.pause();
-          playButton.textContent = "Play";
-        }
-      }
-    }
-  }, ["Play"]);
+  const playButton = createElement(
+    "button",
+    {
+      events: {
+        click: () => {
+          if (audio.paused) {
+            audio.play();
+            playButton.textContent = "Pause";
+          } else {
+            audio.pause();
+            playButton.textContent = "Play";
+          }
+        },
+      },
+    },
+    ["Play"]
+  ) as HTMLButtonElement;
 
-  const muteButton = createElement("button", {
-    events: {
-      click: () => {
-        audio.muted = !audio.muted;
-        muteButton.textContent = audio.muted ? "Unmute" : "Mute";
-      }
-    }
-  }, ["Mute"]);
+  const muteButton = createElement(
+    "button",
+    {
+      events: {
+        click: () => {
+          audio.muted = !audio.muted;
+          muteButton.textContent = audio.muted ? "Unmute" : "Mute";
+        },
+      },
+    },
+    ["Mute"]
+  ) as HTMLButtonElement;
 
   const seekBar = createElement("input", {
     type: "range",
@@ -51,9 +72,9 @@ function AudioPlayer(audioSrc) {
         if (!isNaN(audio.duration)) {
           audio.currentTime = (parseFloat(seekBar.value) / 100) * audio.duration;
         }
-      }
-    }
-  });
+      },
+    },
+  }) as HTMLInputElement;
 
   const volumeSlider = createElement("input", {
     type: "range",
@@ -65,31 +86,39 @@ function AudioPlayer(audioSrc) {
     events: {
       input: () => {
         audio.volume = parseFloat(volumeSlider.value);
-      }
-    }
-  });
+      },
+    },
+  }) as HTMLInputElement;
 
   const speedSelectOptions = [0.5, 1, 1.5, 2].map((speed) =>
     createElement("option", { value: speed.toString() }, [`${speed}x`])
   );
 
-  const speedSelect = createElement("select", {
-    class: "speed-select",
-    value: "1",
-    events: {
-      change: () => {
-        audio.playbackRate = parseFloat(speedSelect.value);
-      }
-    }
-  }, speedSelectOptions);
+  const speedSelect = createElement(
+    "select",
+    {
+      class: "speed-select",
+      value: "1",
+      events: {
+        change: () => {
+          audio.playbackRate = parseFloat(speedSelect.value);
+        },
+      },
+    },
+    speedSelectOptions
+  ) as HTMLSelectElement;
   speedSelect.value = "1";
 
-  const timeDisplay = createElement("span", {
-    class: "time-display"
-  }, ["00:00 / 00:00"]);
+  const timeDisplay = createElement(
+    "span",
+    {
+      class: "time-display",
+    },
+    ["00:00 / 00:00"]
+  ) as HTMLSpanElement;
 
-  const updateTimeDisplay = () => {
-    const format = (s) => {
+  const updateTimeDisplay = (): void => {
+    const format = (s: number): string => {
       const m = Math.floor(s / 60);
       const sec = Math.floor(s % 60);
       return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
@@ -99,10 +128,14 @@ function AudioPlayer(audioSrc) {
     }
   };
 
-  const bufferingIndicator = createElement("span", {
-    class: "buffering-indicator",
-    style: { display: "none" }
-  }, ["Loading..."]);
+  const bufferingIndicator = createElement(
+    "span",
+    {
+      class: "buffering-indicator",
+      style: { display: "none" },
+    },
+    ["Loading..."]
+  ) as HTMLSpanElement;
 
   audio.addEventListener("timeupdate", () => {
     if (!isNaN(audio.duration)) {
@@ -111,10 +144,18 @@ function AudioPlayer(audioSrc) {
     updateTimeDisplay();
   });
 
-  audio.addEventListener("waiting", () => { bufferingIndicator.style.display = "inline-block"; });
-  audio.addEventListener("playing", () => { bufferingIndicator.style.display = "none"; });
-  audio.addEventListener("seeking", () => { bufferingIndicator.style.display = "inline-block"; });
-  audio.addEventListener("seeked", () => { bufferingIndicator.style.display = "none"; });
+  audio.addEventListener("waiting", () => {
+    bufferingIndicator.style.display = "inline-block";
+  });
+  audio.addEventListener("playing", () => {
+    bufferingIndicator.style.display = "none";
+  });
+  audio.addEventListener("seeking", () => {
+    bufferingIndicator.style.display = "inline-block";
+  });
+  audio.addEventListener("seeked", () => {
+    bufferingIndicator.style.display = "none";
+  });
 
   const controlsContainer = createElement("div", { class: "controls-container" }, [
     playButton,
@@ -123,20 +164,26 @@ function AudioPlayer(audioSrc) {
     timeDisplay,
     bufferingIndicator,
     volumeSlider,
-    speedSelect
+    speedSelect,
   ]);
 
   // === LYRICS ENGINE ===
-  const linesData = Array.isArray(audioSrc.lyricsData) ? audioSrc.lyricsData : [];
-  const lineElements = linesData.map((lyric) => createElement("p", {}, [lyric.text]));
+  const linesData: LyricLine[] = Array.isArray(audioSrc.lyricsData) ? audioSrc.lyricsData : [];
+  const lineElements = linesData.map((lyric) =>
+    createElement("p", {}, [lyric.text])
+  ) as HTMLParagraphElement[];
 
-  const lyricsContainer = createElement("div", {
-    id: "lyrics-container"
-  }, lineElements);
+  const lyricsContainer = createElement(
+    "div",
+    {
+      id: "lyrics-container",
+    },
+    lineElements
+  );
 
   let lastActiveIndex = -1;
 
-  function updateLyrics() {
+  function updateLyrics(): void {
     const currentTime = audio.currentTime;
     let currentActiveIndex = -1;
 
@@ -164,27 +211,35 @@ function AudioPlayer(audioSrc) {
   }
 
   audio.addEventListener("timeupdate", updateLyrics);
-  audio.addEventListener("seeking", () => { lastActiveIndex = -1; });
+  audio.addEventListener("seeking", () => {
+    lastActiveIndex = -1;
+  });
 
   // === DARK MODE TOGGLE ===
-  let player;
-  const themeToggle = createElement("button", {
-    class: "theme-toggle",
-    events: {
-      click: () => {
-        player.classList.toggle("dark-mode");
-        themeToggle.textContent = player.classList.contains("dark-mode") ? "☀️ Light Mode" : "🌙 Dark Mode";
-      }
-    }
-  }, ["🌙 Dark Mode"]);
+  let player: HTMLDivElement;
+  const themeToggle = createElement(
+    "button",
+    {
+      class: "theme-toggle",
+      events: {
+        click: () => {
+          player.classList.toggle("dark-mode");
+          themeToggle.textContent = player.classList.contains("dark-mode")
+            ? "☀️ Light Mode"
+            : "🌙 Dark Mode";
+        },
+      },
+    },
+    ["🌙 Dark Mode"]
+  ) as HTMLButtonElement;
 
   // === ROOT CONTAINER ===
   player = createElement("div", {
     id: "audio-player-container",
     class: "mini-mode",
     role: "region",
-    "aria-label": "Audio Player"
-  }, [img, audio, controlsContainer, lyricsContainer, themeToggle]);
+    "aria-label": "Audio Player",
+  }, [img, audio, controlsContainer, lyricsContainer, themeToggle]) as HTMLDivElement;
 
   return player;
 }

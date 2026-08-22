@@ -1,6 +1,6 @@
-import Imagex from "../../../components/base/Imagex.ts";
-import { createElement } from "../../../components/createElement.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
+import Imagex from "../../../components/base/Imagex.js";
+import { createElement } from "../../../components/createElement.js";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 
 export function displayCropCard(crop) {
     const card = createElement("div", { class: "crop-card" });

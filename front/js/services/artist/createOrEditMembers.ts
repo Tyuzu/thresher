@@ -1,11 +1,11 @@
 // createOrEditMembers.js
 
-import { navigate } from "../../routes/navigate.ts";
-import { apiFetch } from "../../api/api.ts";
-import Button from "../../components/base/Button.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.ts";
+import { navigate } from "../../routes/navigate.js";
+import { apiFetch } from "../../api/api.js";
+import Button from "../../components/base/Button.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { createElement } from "../../components/createElement.js";
+import Notify from "../../components/ui/Notify.js";
 
 // ENTRY
 export async function manageBandMembers(artistID, container) {

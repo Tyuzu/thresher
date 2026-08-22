@@ -1,8 +1,8 @@
 // songUI.js
-import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import { MusicAPI } from "./fetchers.ts";
+import { createElement } from "../../components/createElement.js";
+import Notify from "../../components/ui/Notify.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { MusicAPI } from "./fetchers.js";
 
 
 

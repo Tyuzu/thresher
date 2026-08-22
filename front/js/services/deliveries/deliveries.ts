@@ -1,12 +1,12 @@
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
-import Datex from "../../components/base/Datex.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { createMainLayout } from "../../components/layout/mainLayout.ts";
-import { createAsideContent } from "../../components/layout/asideLayout.ts";
-import { adspace } from "../../services/ads/newads.ts";
-import { fetchAllDeliveries, claimDelivery, cancelDelivery } from "../../services/deliveries/deliveriesApi.ts";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
+import Datex from "../../components/base/Datex.js";
+import Notify from "../../components/ui/Notify.js";
+import { navigate } from "../../routes/navigate.js";
+import { createMainLayout } from "../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../components/layout/asideLayout.js";
+import { adspace } from "../../services/ads/newads.js";
+import { fetchAllDeliveries, claimDelivery, cancelDelivery } from "../../services/deliveries/deliveriesApi.js";
 
 export async function displayDeliveries(isLoggedIn, container, options = {}) {
   const contentContainer = (container && typeof container === "object" && container.nodeType)

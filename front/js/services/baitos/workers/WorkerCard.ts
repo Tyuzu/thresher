@@ -1,10 +1,10 @@
-import { createElement } from "../../../components/createElement.ts";
-import { Button } from "../../../components/base/Button.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import { getState } from "../../../state/state.ts";
-import Imagex from "../../../components/base/Imagex.ts";
-import { openHireWorkerModal } from "./WorkerModal.ts"; // Import it!
+import { createElement } from "../../../components/createElement.js";
+import { Button } from "../../../components/base/Button.js";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import { navigate } from "../../../routes/navigate.js";
+import { getState } from "../../../state/state.js";
+import Imagex from "../../../components/base/Imagex.js";
+import { openHireWorkerModal } from "./WorkerModal.js"; // Import it!
 
 export function HireWorkerCard(worker, isLoggedIn) {
   // Use passed param or fallback to global state

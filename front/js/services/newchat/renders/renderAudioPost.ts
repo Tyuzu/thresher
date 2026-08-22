@@ -1,4 +1,4 @@
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 import AudioPlayer from '../../../components/ui/AudioPlayer.mjs';
 
 async function RenderAudioPost(mediaContainer, media_url = "", resolution) {

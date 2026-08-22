@@ -1,5 +1,5 @@
 import { apiFetch } from "../../api/api";
-import Notify from "../../components/ui/Notify.ts";
+import Notify from "../../components/ui/Notify.js";
 
 /**
  * Fetch paginated places with optional filters.

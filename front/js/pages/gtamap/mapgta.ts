@@ -1,6 +1,6 @@
 import "../../../css/inistyles/maps.css";
-import { createElement } from "../../components/createElement.ts";
-import { displayGtaMap } from "../../services/GTAmap/gtamap.ts";
+import { createElement } from "../../components/createElement.js";
+import { displayGtaMap } from "../../services/GTAmap/gtamap.js";
 
 async function MapGTA(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

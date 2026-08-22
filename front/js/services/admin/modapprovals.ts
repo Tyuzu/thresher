@@ -1,6 +1,6 @@
-import { apiFetch } from "../../api/api.ts";
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
+import { apiFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
 
 export async function loadModeratorApplications(container) {
     container.replaceChildren(); // clear existing content
@@ -48,7 +48,7 @@ async function handleApproval(id, approve, container) {
 
 /*
 
-import { loadModeratorApplications } from "./moderatorList.ts";
+import { loadModeratorApplications } from "./moderatorList.js";
 
 const container = document.getElementById("moderator-list");
 loadModeratorApplications(container);

@@ -1,9 +1,9 @@
 import { apiFetch } from "../../../api/api";
-import { createElement } from "../../../components/createElement.ts";
+import { createElement } from "../../../components/createElement.js";
 import Button from "../../../components/base/Button";
 import { navigate } from "../../../routes";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import Imagex from "../../../components/base/Imagex.ts";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import Imagex from "../../../components/base/Imagex.js";
 
 let allPlaces = [];
 let activeCategory = "All";

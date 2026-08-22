@@ -1,7 +1,7 @@
 // src/ui/cart/checkoutPage.js
-import { createElement } from "../../components/createElement.ts";
-import { apiFetch } from "../../api/api.ts";
-import { displayPayment } from "./payment.ts";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import { displayPayment } from "./payment.js";
 
 /* ────────────────────── Helpers ────────────────────── */
 

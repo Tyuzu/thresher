@@ -1,8 +1,8 @@
 import "../../../../css/subpages/medialist.css";
 import "../../../../css/subpages/media.css";
-import { createElement } from "../../../components/createElement.ts";
-import { fetchMedia } from "../api/mediaApi.ts";
-import { showMediaUploadForm } from "./mediaUploadForm.ts";
+import { createElement } from "../../../components/createElement.js";
+import { fetchMedia } from "../api/mediaApi.js";
+import { showMediaUploadForm } from "./mediaUploadForm.js";
 import {
   lazyMediaObserver,
   clear,
@@ -10,13 +10,13 @@ import {
   createAddMediaButton,
   createMediaActions,
   confirmDelete
-} from "../mediaCommon.ts";
-import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.ts";
-import Imagex from "../../../components/base/Imagex.ts";
-import { handleTranslationToggle } from "../../fanmade/translate.ts";
-import Sightbox from "../../../components/ui/Sightbox_zoom.ts";
-import LightBox from "../../../components/ui/Lightbox.ts";
-import { generateVideoPlayer } from "../../../components/ui/vidpopHelpers.ts";
+} from "../mediaCommon.js";
+import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.js";
+import Imagex from "../../../components/base/Imagex.js";
+import { handleTranslationToggle } from "../../fanmade/translate.js";
+import Sightbox from "../../../components/ui/Sightbox_zoom.js";
+import LightBox from "../../../components/ui/Lightbox.js";
+import { generateVideoPlayer } from "../../../components/ui/vidpopHelpers.js";
 
 /* ------------------------------------------------------
    Helper: Determine media type

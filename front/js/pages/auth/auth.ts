@@ -2,14 +2,14 @@ import "../../../css/inistyles/authpage.css";
 import {
   login,
   signup
-} from "../../services/auth/authService.ts";
+} from "../../services/auth/authService.js";
 import {
   createElement
-} from "../../components/createElement.ts";
+} from "../../components/createElement.js";
 import {
   getState
-} from "../../state/state.ts";
-import Notify from "../../components/ui/Notify.ts";
+} from "../../state/state.js";
+import Notify from "../../components/ui/Notify.js";
 
 
 export function Auth(isLoggedIn, contentContainer) {

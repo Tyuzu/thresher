@@ -1,5 +1,5 @@
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
 import {
   ChatState,
   pendingMap,
@@ -9,12 +9,12 @@ import {
   getMessageContainer,
   setMessageContainer,
   mountMessage
-} from "./chatSocket.ts";
-import { mereFetch } from "../../api/api.ts";
-import { throttle } from "../../utils/deutils.ts";
-import { getState } from "../../state/state.ts";
-import { t } from "./i18n.ts";
-import { uploadAttachment } from "./uploadAttachment.ts";
+} from "./chatSocket.js";
+import { mereFetch } from "../../api/api.js";
+import { throttle } from "../../utils/deutils.js";
+import { getState } from "../../state/state.js";
+import { t } from "./i18n.js";
+import { uploadAttachment } from "./uploadAttachment.js";
 
 /* -------------------------
    Safe fetch

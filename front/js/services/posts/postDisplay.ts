@@ -1,19 +1,19 @@
 /* eslint-disable no-unused-vars */
-import { createElement } from "../../components/createElement.ts";
-import { apiFetch } from "../../api/api.ts";
-import Button from "../../components/base/Button.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { formatRelativeTime } from "../../utils/dateUtils.ts";
-import { editPost } from "./createOrEditPost.ts";
-import { createCommentsSection } from "../comments/comments.ts";
-import { getState } from "../../state/state.ts";
-import { userProfileCard } from "./userProfileCard.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import Notify from "../../components/ui/Notify.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import { fetchUserMeta } from "../../utils/usersMeta.ts";
-import ZoomBox from "../../components/ui/ZoomBox.ts";
-import { renderRelatedPosts } from "./relatedPosts.ts";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import Button from "../../components/base/Button.js";
+import { navigate } from "../../routes/navigate.js";
+import { formatRelativeTime } from "../../utils/dateUtils.js";
+import { editPost } from "./createOrEditPost.js";
+import { createCommentsSection } from "../comments/comments.js";
+import { getState } from "../../state/state.js";
+import { userProfileCard } from "./userProfileCard.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import Notify from "../../components/ui/Notify.js";
+import Imagex from "../../components/base/Imagex.js";
+import { fetchUserMeta } from "../../utils/usersMeta.js";
+import ZoomBox from "../../components/ui/ZoomBox.js";
+import { renderRelatedPosts } from "./relatedPosts.js";
 
 // --- Shared constants ---
 const PLACEHOLDER =

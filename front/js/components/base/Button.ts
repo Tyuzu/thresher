@@ -1,48 +1,28 @@
 import "../../../css/ui/Button.css";
-import { createElement } from '../createElement'; // Adjust path as needed
+import { createElement } from "../createElement.js";
 
-// Button component with enhanced functionality
-const Button = (
-  title = "Click Me",
-  id = "",
-  events = {},
-  classes = "",
-  styles = {},
-  ...rest // Captures anything else like dataset, disabled status, etc.
-) => {
-  // Input validation
-  if (typeof title !== "string" || title.trim() === "") {
-    throw new Error("A valid 'title' is required for the Button component.");
-  }
+export interface ButtonOptions {
+  title?: string;
+  id?: string;
+  events?: Record<string, (event: Event) => void>;
+  classes?: string;
+  styles?: Partial<CSSStyleDeclaration> | Record<string, string>;
+  disabled?: boolean;
+  type?: "button" | "submit" | "reset";
+  [key: string]: unknown;
+}
 
-  // Use the helper! All style, event, and class loops are handled automatically now.
-  return createElement(
-    "button", 
-    {
-      id,
-      class: `button ${classes}`.trim(), // Combine default and custom classes
-      style: styles,
-      events,
-      ...rest
-    }, 
-    title
-  );
-};
-
-export default Button;
-export { Button };
-
-/*
-import { createElement } from '../createElement'; // Adjust path as needed
-
+/**
+ * Button component with enhanced functionality
+ */
 const Button = ({
   title = "Click Me",
   id = "",
   events = {},
   classes = "",
   styles = {},
-  ...rest // Captures anything else like dataset, disabled status, etc.
-} = {}) => {
+  ...rest
+}: ButtonOptions = {}): HTMLElement => {
   // Input validation
   if (typeof title !== "string" || title.trim() === "") {
     throw new Error("A valid 'title' is required for the Button component.");
@@ -50,18 +30,17 @@ const Button = ({
 
   // Use the helper! All style, event, and class loops are handled automatically now.
   return createElement(
-    "button", 
+    "button",
     {
       id,
-      class: `button ${classes}`.trim(), // Combine default and custom classes
+      class: `button ${classes}`.trim(),
       style: styles,
       events,
       ...rest
-    }, 
+    },
     title
   );
 };
 
 export default Button;
 export { Button };
-*/

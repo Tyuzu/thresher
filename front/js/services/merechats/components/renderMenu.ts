@@ -1,6 +1,6 @@
-import Button from "../../../components/base/Button.ts";
-import { createElement } from "../../../components/createElement.ts";
-import { mereFetch } from "../../../api/api.ts";
+import Button from "../../../components/base/Button.js";
+import { createElement } from "../../../components/createElement.js";
+import { mereFetch } from "../../../api/api.js";
 
 export function renderMenu(msg) {
   // hard guards

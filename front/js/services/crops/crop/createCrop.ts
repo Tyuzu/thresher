@@ -1,7 +1,7 @@
-import { createCommonCropForm } from "./createOrEditCrop.ts";
-import { apiFetch } from "../../../api/api.ts";
-import Notify from "../../../components/ui/Notify.ts";
-import { navigate } from "../../../routes/navigate.ts";
+import { createCommonCropForm } from "./createOrEditCrop.js";
+import { apiFetch } from "../../../api/api.js";
+import Notify from "../../../components/ui/Notify.js";
+import { navigate } from "../../../routes/navigate.js";
 
 export async function createCrop(farmId, closeModal) {
     const wrapper = document.createElement("div");

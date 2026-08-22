@@ -1,15 +1,15 @@
 import {
     createElement
-} from "../components/createElement.ts";
+} from "../components/createElement.js";
 import {
     getState
-} from "../state/state.ts";
+} from "../state/state.js";
 import {
     routes
-} from "./newRoutes.ts";
+} from "./newRoutes.js";
 import {
     track
-} from "../services/activity/metrics.ts";
+} from "../services/activity/metrics.js";
 
 /* =========================================================
    ROUTE CACHE HELPERS

@@ -1,8 +1,8 @@
 // productPage.js
 
-import { renderProduct } from "./renderProduct.ts";
-import { createElement } from "../../components/createElement.ts";
-import { fetchProduct } from "./productHelpers.ts";
+import { renderProduct } from "./renderProduct.js";
+import { createElement } from "../../components/createElement.js";
+import { fetchProduct } from "./productHelpers.js";
 
 export async function displayProduct(
   isLoggedIn,

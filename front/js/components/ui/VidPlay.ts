@@ -1,38 +1,63 @@
-import { createElement } from "../createElement.ts"; 
+import { createElement } from "../createElement.js";
 import "../../../css/ui/VidPlay.css";
-import { generateVideoPlayer } from "./vidpopHelpers";
+import { generateVideoPlayer } from "./vidpopHelpers.js";
+import { QualityOption, SubtitleOption, CleanableElement } from "./Vidpop.js";
 
-const VidPlay = (videoSrc, poster, qualities, subtitles, videoid) => {
+interface HistoryState {
+  isVidPlayOpen?: boolean;
+  instanceId?: string;
+}
+
+const VidPlay = (
+  videoSrc: string,
+  poster?: string | null,
+  qualities: QualityOption[] = [],
+  subtitles: SubtitleOption[] = [],
+  videoid?: string
+): CleanableElement => {
   // Create a predictable unique instance key
-  const instanceId = `vidplay-${videoid}-${Date.now()}`;
+  const instanceId: string = `vidplay-${videoid || "default"}-${Date.now()}`;
 
   // Establish modal state context flags
-  history.pushState({ isVidPlayOpen: true, instanceId }, "");
+  const stateData: HistoryState = { isVidPlayOpen: true, instanceId };
+  history.pushState(stateData, "");
 
   // Declare close button with event handlers and attributes via createElement
-  const closeButton = createElement("button", {
-    class: "video-close-btn",
-    events: {
-      click: () => closeVidPlay(true)
-    }
-  }, ["X"]);
+  const closeButton = createElement(
+    "button",
+    {
+      class: "video-close-btn",
+      events: {
+        click: () => closeVidPlay(true)
+      }
+    },
+    ["X"]
+  );
 
   // Build root container with the close button attached initially
-  const player = createElement("div", {
-    class: "video-player-container"
-  }, [closeButton]);
+  const player: CleanableElement = createElement(
+    "div",
+    {
+      class: "video-player-container"
+    },
+    [closeButton]
+  );
 
   // Variable to store dynamic video player shell for clean disposal
-  let activeVideoElement = null;
+  let activeVideoElement: CleanableElement | null = null;
 
   // Append the generated video player asynchronously
-  generateVideoPlayer(videoSrc, poster, qualities, subtitles, videoid).then((videoPlayer) => {
-    activeVideoElement = videoPlayer;
-    player.appendChild(videoPlayer);
-  });
+  generateVideoPlayer(videoSrc, poster, qualities, subtitles, videoid)
+    .then((videoPlayer: CleanableElement) => {
+      activeVideoElement = videoPlayer;
+      player.appendChild(videoPlayer);
+    })
+    .catch((err: unknown) => {
+      console.error("Failed to generate player container:", err);
+    });
 
   // Master modal destructor engine
-  function closeVidPlay(triggerBack = false) {
+  function closeVidPlay(triggerBack: boolean = false): void {
     window.removeEventListener("popstate", onPopState);
 
     // Safely execute component internal cleanups if exposed
@@ -55,8 +80,11 @@ const VidPlay = (videoSrc, poster, qualities, subtitles, videoid) => {
   }
 
   // Close when the modal state marker is no longer active in the window stack
-  function onPopState(event) {
-    const isModalActive = event.state && event.state.isVidPlayOpen && event.state.instanceId === instanceId;
+  function onPopState(event: PopStateEvent): void {
+    const state = event.state as HistoryState | null;
+    const isModalActive =
+      state && state.isVidPlayOpen && state.instanceId === instanceId;
+
     if (!isModalActive) {
       closeVidPlay(false);
     }
@@ -71,3 +99,4 @@ const VidPlay = (videoSrc, poster, qualities, subtitles, videoid) => {
 };
 
 export default VidPlay;
+export { VidPlay };

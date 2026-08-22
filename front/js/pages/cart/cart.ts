@@ -1,7 +1,7 @@
 import "../../../css/farmstyles/cart3.css";
 import "../../../css/farmstyles/checkout.css";
 
-import { displayCart } from "../../services/cart/cartPage.ts";
+import { displayCart } from "../../services/cart/cartPage.js";
 
 async function Cart(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

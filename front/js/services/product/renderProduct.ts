@@ -1,10 +1,10 @@
 // renderProduct.js
 
-import { createElement } from "../../components/createElement.ts";
-import { normalizeProduct } from "./productHelpers.ts";
-import { renderProductGallery } from "./renderProductGallery.ts";
-import { renderProductBasicInfo } from "./renderProductBasicInfo.ts";
-import { renderProductActions } from "./renderProductActions.ts";
+import { createElement } from "../../components/createElement.js";
+import { normalizeProduct } from "./productHelpers.js";
+import { renderProductGallery } from "./renderProductGallery.js";
+import { renderProductBasicInfo } from "./renderProductBasicInfo.js";
+import { renderProductActions } from "./renderProductActions.js";
 
 export function renderProduct(
   productOriginal,

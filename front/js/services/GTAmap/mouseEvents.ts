@@ -1,11 +1,11 @@
-import { createElement } from "../../components/createElement.ts";
-import { Imagex } from "../../components/base/Imagex.ts";
-import { apiFetch, SRC_URL } from "../../api/api.ts";
+import { createElement } from "../../components/createElement.js";
+import { Imagex } from "../../components/base/Imagex.js";
+import { apiFetch, SRC_URL } from "../../api/api.js";
 import {
     updateTransform,
     resetTransformState
-} from "../../components/ui/zoomboxHelpers.ts";
-import {dispatchZoomBoxEvent} from "../../utils/eventDispatcher.ts";
+} from "../../components/ui/zoomboxHelpers.js";
+import {dispatchZoomBoxEvent} from "../../utils/eventDispatcher.js";
 
 /**
  * Standalone mouse move handler for panning zoomed images

@@ -1,13 +1,13 @@
 // BaitoDash.js
 
-import { apiFetch } from "../../../api/api.ts";
-import { createElement } from "../../../components/createElement.ts";
-import { formatRelativeTime } from "../../../utils/dateUtils.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import Notify from "../../../components/ui/Notify.ts";
-import Modal from "../../../components/ui/Modal.ts";
-import Button from "../../../components/base/Button.ts";
-import Datex from "../../../components/base/Datex.ts";
+import { apiFetch } from "../../../api/api.js";
+import { createElement } from "../../../components/createElement.js";
+import { formatRelativeTime } from "../../../utils/dateUtils.js";
+import { navigate } from "../../../routes/navigate.js";
+import Notify from "../../../components/ui/Notify.js";
+import Modal from "../../../components/ui/Modal.js";
+import Button from "../../../components/base/Button.js";
+import Datex from "../../../components/base/Datex.js";
 
 // ---------------- Applicant Dashboard ----------------
 export async function baitoApplicantDash(container) {

@@ -1,8 +1,11 @@
-import { setupHotkeys } from "./hotkeys.ts";
-import { setupGestures } from "./gestureHandlers.ts";
-import { saveVideoProgress } from "./progressSaver.ts";
+import { setupHotkeys } from "./hotkeys.js";
+import { setupGestures } from "./gestureHandlers.js";
+import { saveVideoProgress } from "./progressSaver.js";
 
-export function setupVideoUtilityFunctions(video, videoid) {
+export function setupVideoUtilityFunctions(
+  video: HTMLVideoElement,
+  videoid?: string | number
+): void {
   setupGestures(video);
   setupHotkeys(video);
 

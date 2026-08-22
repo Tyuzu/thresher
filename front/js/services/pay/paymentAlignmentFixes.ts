@@ -1,5 +1,5 @@
-import { formatCurrency } from "../../types/api.types.ts";
-import { apiFetch } from "../../api/api.ts";
+import { formatCurrency } from "../../types/api.types.js";
+import { apiFetch } from "../../api/api.js";
 
 export function formatTransactionAmount(amount) {
   return formatCurrency(amount);

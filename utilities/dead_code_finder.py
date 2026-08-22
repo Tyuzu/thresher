@@ -28,4 +28,4 @@ def find_unused_assets(root_dir, asset_extensions, src_extensions):
     return unused
 
 # Example usage:
-# unused = find_unused_assets(".", (".png", ".svg", ".jpg"), (".ts", ".js", ".html", ".css"))
+# unused = find_unused_assets(".", (".png", ".svg", ".jpg"), (".js", ".js", ".html", ".css"))

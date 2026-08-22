@@ -1,8 +1,8 @@
-import Notify from "../../../components/ui/Notify.ts";
-import { fetchEventVendors, fetchVendors } from "./vendorService.ts";
-import { getVendorId, getVendorName, normalizeVendorList } from "./vendorUtils.ts";
-import { renderVendorCard } from "./vendorCardComponent.ts";
-import { createElement } from "../../../components/createElement.ts";
+import Notify from "../../../components/ui/Notify.js";
+import { fetchEventVendors, fetchVendors } from "./vendorService.js";
+import { getVendorId, getVendorName, normalizeVendorList } from "./vendorUtils.js";
+import { renderVendorCard } from "./vendorCardComponent.js";
+import { createElement } from "../../../components/createElement.js";
 
 function getVendorHiringRecord(vendorId, eventVendors) {
     return eventVendors.find((eventVendor) => String(getVendorId(eventVendor)) === String(vendorId));

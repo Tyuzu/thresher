@@ -7,7 +7,7 @@ export const adminRoutes = [
     path: "/admin",
     component: () =>
       import(
-        "../../pages/admin/admin.ts"
+        "../../pages/admin/admin.js"
       ),
     functionName: "Admin",
     meta: {
@@ -25,7 +25,7 @@ export const adminRoutes = [
     path: "/dash",
     component: () =>
       import(
-        "../../pages/dash/dash.ts"
+        "../../pages/dash/dash.js"
       ),
     functionName: "Dash",
     meta: {

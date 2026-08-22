@@ -1,4 +1,4 @@
-import { createFarm } from "../../services/crops/createFarm.ts";
+import { createFarm } from "../../services/crops/createFarm.js";
 
 async function Create(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

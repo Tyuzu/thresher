@@ -7,7 +7,7 @@ export const baitoRoutes = [
     path: "/baitos",
     component: () =>
       import(
-        "../../pages/baitos/baitos.ts"
+        "../../pages/baitos/baitos.js"
       ),
     functionName: "Baitos",
     meta: {
@@ -19,7 +19,7 @@ export const baitoRoutes = [
     path: "/baitos/dash",
     component: () =>
       import(
-        "../../pages/baitos/baitoDash.ts"
+        "../../pages/baitos/baitoDash.js"
       ),
     functionName: "BaitoDash",
     meta: {
@@ -32,7 +32,7 @@ export const baitoRoutes = [
     path: "/baitos/hire",
     component: () =>
       import(
-        "../../pages/baitos/hireWorkers.ts"
+        "../../pages/baitos/hireWorkers.js"
       ),
     functionName: "HireWorkers",
     meta: {
@@ -44,7 +44,7 @@ export const baitoRoutes = [
     path: "/baitos/create-profile",
     component: () =>
       import(
-        "../../pages/baitos/createProfile.ts"
+        "../../pages/baitos/createProfile.js"
       ),
     functionName: "CreateBaitoProfile",
     meta: {
@@ -57,7 +57,7 @@ export const baitoRoutes = [
     path: "/create-baito",
     component: () =>
       import(
-        "../../pages/baitos/createNewBaito.ts"
+        "../../pages/baitos/createNewBaito.js"
       ),
     functionName: "CreateBaito",
     meta: {
@@ -74,7 +74,7 @@ export const baitoRoutes = [
     path: "/booking",
     component: () =>
       import(
-        "../../pages/booking/booking.ts"
+        "../../pages/booking/booking.js"
       ),
     functionName: "Booking",
     meta: {
@@ -90,7 +90,7 @@ export const baitoRoutes = [
     path: "/baito/:id",
     component: () =>
       import(
-        "../../pages/baitos/displayBaito.ts"
+        "../../pages/baitos/displayBaito.js"
       ),
     functionName: "Baito",
     meta: {
@@ -102,7 +102,7 @@ export const baitoRoutes = [
     path: "/baitos/worker/:id",
     component: () =>
       import(
-        "../../pages/baitos/displayBaitoWorker.ts"
+        "../../pages/baitos/displayBaitoWorker.js"
       ),
     functionName: "Worker",
     meta: {

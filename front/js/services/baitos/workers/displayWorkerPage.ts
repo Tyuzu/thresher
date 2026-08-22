@@ -1,8 +1,8 @@
 /* Router - Directs to appropriate interface */
-import { getState } from "../../../state/state.ts";
-import { displayWorkerProfile } from "./displayWorkerProfile.ts";
-import { displayManageWorkerProfile } from "./displayManageWorkerProfile.ts";
-import { displayCreateOrEditBaitoProfile } from "../create/createBaitoProfile.ts";
+import { getState } from "../../../state/state.js";
+import { displayWorkerProfile } from "./displayWorkerProfile.js";
+import { displayManageWorkerProfile } from "./displayManageWorkerProfile.js";
+import { displayCreateOrEditBaitoProfile } from "../create/createBaitoProfile.js";
 
 /**
  * Main entry point - routes to correct interface based on user role
@@ -13,10 +13,10 @@ export async function displayWorkerPage(contentContainer, isLoggedIn, workerId) 
   // Fetch worker to check ownership
   let worker = null;
   try {
-    const { apiFetch } = await import("../../../api/api.ts");
+    const { apiFetch } = await import("../../../api/api.js");
     worker = await apiFetch(`/baitos/worker/${workerId}`);
   } catch (_e) {
-    const { createElement } = await import("../../../components/createElement.ts");
+    const { createElement } = await import("../../../components/createElement.js");
     contentContainer.replaceChildren(
       createElement("p", { class: "error-msg" }, ["⚠️ Failed to load worker profile."])
     );

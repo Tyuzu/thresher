@@ -1,5 +1,5 @@
-import { apiFetch } from "../../../api/api.ts";
-import { displayCropCard } from "../crop/displayCropCard.ts";
+import { apiFetch } from "../../../api/api.js";
+import { displayCropCard } from "../crop/displayCropCard.js";
 
 /**
  * Renders items for a specific category into a container element with filtering support.

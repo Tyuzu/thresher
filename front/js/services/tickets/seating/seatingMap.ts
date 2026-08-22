@@ -1,8 +1,8 @@
-import { createElement } from "../../../components/createElement.ts";
-import Button from "../../../components/base/Button.ts";
-import Notify from "../../../components/ui/Notify.ts";
-import { apiFetch } from "../../../api/api.ts";
-import { generateStadiumLayout } from "./stadiumLayout.ts";
+import { createElement } from "../../../components/createElement.js";
+import Button from "../../../components/base/Button.js";
+import Notify from "../../../components/ui/Notify.js";
+import { apiFetch } from "../../../api/api.js";
+import { generateStadiumLayout } from "./stadiumLayout.js";
 
 /**
  * Configurable globals

@@ -1,4 +1,4 @@
-import { createElement } from "../../../components/createElement.ts";
+import { createElement } from "../../../components/createElement.js";
 
 /* ───────────────── Filtering / Sorting ───────────────── */
 

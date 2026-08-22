@@ -1,5 +1,5 @@
-import { initializeMainTabs, activateMainTab } from "./mainTabs.ts";
-import { createTabStructure, activateChildTab } from "./subTabs.ts";
+import { initializeMainTabs, activateMainTab } from "./mainTabs.js";
+import { createTabStructure, activateChildTab } from "./subTabs.js";
 
 /**
  * Displays user profile data and initializes the tab system.

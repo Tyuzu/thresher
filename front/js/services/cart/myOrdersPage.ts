@@ -1,7 +1,7 @@
-import { createElement } from "../../components/createElement.ts";
-import { apiFetch } from "../../api/api.ts";
-import { buildOrdersPage } from "./orders/builders.ts";
-import { normalizeOrders } from "./orders/orderutils.ts";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import { buildOrdersPage } from "./orders/builders.js";
+import { normalizeOrders } from "./orders/orderutils.js";
 
 /**
  * Renders and coordinates the User Orders page.

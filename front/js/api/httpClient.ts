@@ -8,9 +8,9 @@
  * - Retry logic
  */
 
-import { RequestCache, RequestDeduplicator } from "./cache.ts";
-import { ErrorTracker, HTTPError, NetworkError } from "./errorHandler.ts";
-import { getState, setState } from "../state/state.ts";
+import { RequestCache, RequestDeduplicator } from "./cache.js";
+import { ErrorTracker, HTTPError, NetworkError } from "./errorHandler.js";
+import { getState, setState } from "../state/state.js";
 
 const requestCache = new RequestCache(100, 5 * 60 * 1000); // 5 min cache
 const requestDedup = new RequestDeduplicator();

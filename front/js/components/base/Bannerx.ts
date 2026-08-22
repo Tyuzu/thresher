@@ -1,20 +1,29 @@
-import { resolveImagePath, PictureType } from "../../utils/imagePaths.ts";
-import { createElement } from "../../components/createElement.ts";
-import Imagex from "./Imagex.ts";
-import { updateImageWithCrop } from "../../utils/bannerEditor.ts";
-import Sightbox from "../ui/Sightbox_zoom.ts";
+import { resolveImagePath, PictureType } from "../../utils/imagePaths.js";
+import { createElement } from "../../components/createElement.js";
+import Imagex from "./Imagex.js";
+import { updateImageWithCrop } from "../../utils/bannerEditor.js";
+import Sightbox from "../ui/Sightbox_zoom.js";
 
-const Bannerx = ({
+export interface BannerxProps {
+    isCreator?: boolean;
+    bannerkey?: string;
+    banneraltkey?: string;
+    bannerentitytype?: string;
+    stateentitykey?: string;
+    bannerentityid?: string | number;
+}
+
+export function Bannerx({
     isCreator = false,
     bannerkey = "",
     banneraltkey = "",
     bannerentitytype = "",
     stateentitykey = "",
     bannerentityid = ""
-} = {}) => {
+}: BannerxProps = {}): HTMLElement {
     const bannerSection = createElement("div", {
         class: `${stateentitykey}-banner`
-    });
+    }) as HTMLElement;
 
     const bannerSrc = resolveImagePath(
         bannerentitytype,
@@ -63,13 +72,12 @@ const Bannerx = ({
                 }
             },
             ["Edit Banner"]
-        );
+        ) as HTMLElement;
 
         bannerSection.appendChild(bannerEditButton);
     }
 
     return bannerSection;
-};
+}
 
 export default Bannerx;
-export { Bannerx };

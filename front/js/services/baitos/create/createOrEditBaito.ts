@@ -1,10 +1,10 @@
 // createOrEditBaito.js
 
-import { createElement } from "../../../components/createElement.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import { apiFetch } from "../../../api/api.ts";
-import { createFormGroup } from "../../../components/createFormGroupEnhanced.ts";
-import Notify from "../../../components/ui/Notify.ts";
+import { createElement } from "../../../components/createElement.js";
+import { navigate } from "../../../routes/navigate.js";
+import { apiFetch } from "../../../api/api.js";
+import { createFormGroup } from "../../../components/createFormGroupEnhanced.js";
+import Notify from "../../../components/ui/Notify.js";
 
 // --- Category Data ---
 const categoryMap = {

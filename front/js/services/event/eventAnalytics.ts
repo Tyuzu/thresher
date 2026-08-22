@@ -1,5 +1,5 @@
 
-import Notify from "../../components/ui/Notify.ts";
+import Notify from "../../components/ui/Notify.js";
 import { renderAnalyticsPage } from "../analytics/analyticsService";
 
 

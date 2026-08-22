@@ -1,11 +1,11 @@
-import { getState } from "../../state/state.ts";
-import { apiFetch } from "../../api/api.ts";
-import { createElement } from "../../components/createElement.ts";
-import { renderPlaceDetails } from "./renderPlaceDetails.ts";
-import { displayMedia } from "../media/ui/mediaGallery.ts";
-import { displayReviews } from "../reviews/displayReviews.ts";
-import { persistTabs } from "../../utils/persistTabs.ts";
-import { displayPlaceInfo } from "./placeTabs.ts";
+import { getState } from "../../state/state.js";
+import { apiFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import { renderPlaceDetails } from "./renderPlaceDetails.js";
+import { displayMedia } from "../media/ui/mediaGallery.js";
+import { displayReviews } from "../reviews/displayReviews.js";
+import { persistTabs } from "../../utils/persistTabs.js";
+import { displayPlaceInfo } from "./placeTabs.js";
 import {
   displayPlaceNearby,
   displayPlaceMenu,
@@ -19,11 +19,11 @@ import {
   displaySaloonSlots,
   displayPlaceEvents,
   displayPlaceDetailsFallback,
-} from "./customTabs.ts";
-import { displayPlaceJobs } from "../jobs/jobs.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { displayBooking } from "../booking/booking.ts";
-// import { displayPlacesMap } from "./placeRemap.ts";
+} from "./customTabs.js";
+import { displayPlaceJobs } from "../jobs/jobs.js";
+import Notify from "../../components/ui/Notify.js";
+import { displayBooking } from "../booking/booking.js";
+// import { displayPlacesMap } from "./placeRemap.js";
 
 /**
  * Main entry point to fetch and render a place page

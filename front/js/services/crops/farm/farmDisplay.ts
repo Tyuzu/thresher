@@ -1,24 +1,24 @@
-import { apiFetch } from "../../../api/api.ts";
-import { createElement } from "../../../components/createElement.ts";
-import Button from "../../../components/base/Button.ts";
-import { editFarm } from "./editFarm.ts";
-import { getState } from "../../../state/state.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import { updateImageWithCrop } from "../../../utils/bannerEditor.ts";
-import { renderFarmDetails, renderCropSummary, renderCropEmojiMap, renderCrops, createSortDropdown } from "./displayFarmHelpers.ts";
-import { displayReviews } from "../../reviews/displayReviews.ts";
-import { farmChat } from "./farmchat.ts";
-import Imagex from "../../../components/base/Imagex.ts";
-import { persistTabs } from "../../../utils/persistTabs.ts";
-import { displayNotices } from "../../notices/notices.ts";
-import { displayFanMedia } from "../../fanmade/ui/mediaGallery.ts";
-import { renderWeatherDetails } from "../weather/weather.ts";
-import { createCrop } from "../crop/createCrop.ts";
-import Modal from "../../../components/ui/Modal.ts";
-import { renderAvailabilityWidget } from "../../../components/ui/Availability.ts";
-import { createMainLayout } from "../../../components/layout/mainLayout.ts";
-import { createAsideContent } from "../../../components/layout/asideLayout.ts";
-import { createBreadcrumb } from "../../../components/ui/Breadcrumb.ts";
+import { apiFetch } from "../../../api/api.js";
+import { createElement } from "../../../components/createElement.js";
+import Button from "../../../components/base/Button.js";
+import { editFarm } from "./editFarm.js";
+import { getState } from "../../../state/state.js";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import { updateImageWithCrop } from "../../../utils/bannerEditor.js";
+import { renderFarmDetails, renderCropSummary, renderCropEmojiMap, renderCrops, createSortDropdown } from "./displayFarmHelpers.js";
+import { displayReviews } from "../../reviews/displayReviews.js";
+import { farmChat } from "./farmchat.js";
+import Imagex from "../../../components/base/Imagex.js";
+import { persistTabs } from "../../../utils/persistTabs.js";
+import { displayNotices } from "../../notices/notices.js";
+import { displayFanMedia } from "../../fanmade/ui/mediaGallery.js";
+import { renderWeatherDetails } from "../weather/weather.js";
+import { createCrop } from "../crop/createCrop.js";
+import Modal from "../../../components/ui/Modal.js";
+import { renderAvailabilityWidget } from "../../../components/ui/Availability.js";
+import { createMainLayout } from "../../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../../components/layout/asideLayout.js";
+import { createBreadcrumb } from "../../../components/ui/Breadcrumb.js";
 
 /**
  * Main view renderer for individual farm pages.

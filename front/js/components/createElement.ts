@@ -1,8 +1,33 @@
+type ChildInput =
+  | Node
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | ChildInput[]
+  | NodeList
+  | HTMLCollection;
+
+type FlatChild = Node | string | number;
+
+export interface ElementAttributes {
+  events?: Record<string, EventListenerOrEventListenerObject>;
+  style?: Partial<CSSStyleDeclaration> | Record<string, string>;
+  styles?: Partial<CSSStyleDeclaration> | Record<string, string>;
+  class?: string;
+  dataset?: Record<string, string>;
+  [key: string]: unknown;
+}
+
 /**
  * Recursively normalizes variant children layouts into a single flat array
  */
-function flattenChildren(items, targetArray = []) {
-  if (items === null || items === undefined || items === false) {
+function flattenChildren(
+  items: ChildInput,
+  targetArray: FlatChild[] = []
+): FlatChild[] {
+  if (items === null || items === undefined || typeof items === "boolean") {
     return targetArray;
   }
 
@@ -14,7 +39,7 @@ function flattenChildren(items, targetArray = []) {
   if (Array.isArray(items) || items instanceof NodeList || items instanceof HTMLCollection) {
     const len = items.length;
     for (let i = 0; i < len; i++) {
-      flattenChildren(items[i], targetArray);
+      flattenChildren((items as ArrayLike<ChildInput>)[i], targetArray);
     }
     return targetArray;
   }
@@ -23,7 +48,21 @@ function flattenChildren(items, targetArray = []) {
   return targetArray;
 }
 
-export function createElement(tag, attributes = {}, children = []) {
+export function createElement<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  attributes?: ElementAttributes | null,
+  children?: ChildInput
+): HTMLElementTagNameMap[K];
+export function createElement<T extends HTMLElement = HTMLElement>(
+  tag: string,
+  attributes?: ElementAttributes | null,
+  children?: ChildInput
+): T;
+export function createElement(
+  tag: string,
+  attributes: ElementAttributes | null = {},
+  children: ChildInput = []
+): HTMLElement {
   const element = document.createElement(tag);
   const safeAttributes = attributes || {};
 
@@ -34,10 +73,9 @@ export function createElement(tag, attributes = {}, children = []) {
 
     // 1. Event Subscriptions
     if (key === "events" && typeof value === "object") {
-      for (const eventName in value) {
-        if (typeof value[eventName] === "function") {
-          element.addEventListener(eventName, value[eventName]);
-        }
+      const eventsObj = value as Record<string, EventListenerOrEventListenerObject>;
+      for (const eventName in eventsObj) {
+        element.addEventListener(eventName, eventsObj[eventName]);
       }
       continue;
     }
@@ -62,20 +100,20 @@ export function createElement(tag, attributes = {}, children = []) {
 
     // 5. Direct Property vs Attribute Binding
     if (key in element && key !== "list" && key !== "type" && key !== "draggable") {
-      element[key] = value;
+      // ✅ Fixed with double assertion:
+      (element as unknown as Record<string, unknown>)[key] = value;
     } else {
       element.setAttribute(key, String(value));
     }
   }
 
   // Inject Children Flatly
-  const flatChildren = [];
+  const flatChildren: FlatChild[] = [];
   flattenChildren(children, flatChildren);
   const childLength = flatChildren.length;
 
   for (let i = 0; i < childLength; i++) {
     const child = flatChildren[i];
-    if (child === null || child === undefined || child === false) continue;
 
     if (child instanceof Node) {
       element.appendChild(child);

@@ -1,4 +1,4 @@
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 import VideoPlayer from '../../../components/ui/VideoPlayer.mjs';
 
 async function RenderVideoPost(mediaContainer, media, media_url = "", resolution) {

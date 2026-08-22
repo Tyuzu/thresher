@@ -1,4 +1,4 @@
-import { createElement } from "../../createElement.ts";
+import { createElement } from "../../createElement.js";
 
 export function createProgressBar() {
   const bar = createElement("div", { class: "progress-bar" }, []);

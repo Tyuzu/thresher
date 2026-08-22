@@ -1,9 +1,9 @@
 // renderListingCard.js
-import { createElement } from "../../../components/createElement.ts";
+import { createElement } from "../../../components/createElement.js";
 import Button from "../../../components/base/Button";
 import { navigate } from "../../../routes";
-import { addToCart, isValidCartQuantity } from "../../cart/addToCart.ts";
-import { getState } from "../../../state/state.ts";
+import { addToCart, isValidCartQuantity } from "../../cart/addToCart.js";
+import { getState } from "../../../state/state.js";
 const MAX_QUANTITY = 99;
 export function renderListingCard(listing) {
   let quantity = 1;

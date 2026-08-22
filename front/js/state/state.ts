@@ -1,6 +1,44 @@
-import {
-    apiConfig
-} from "../config/env.ts";
+import { apiConfig } from "../config/env.js";
+
+/* =========================================================
+   TYPES & INTERFACES
+========================================================= */
+export interface User {
+    id?: string | number;
+    userid?: string | number;
+    username?: string;
+    name?: string;
+    [key: string]: any;
+}
+
+export interface AuthState {
+    isAuthenticated: boolean;
+    loading: boolean;
+    accessToken: string | null;
+    user: User | null;
+    roles: string[];
+    permissions: string[];
+}
+
+export interface AppState {
+    auth: AuthState;
+    userProfile: Record<string, any>;
+    socket: any | null;
+    environment: Record<string, any>;
+    lang: string;
+    lastPath: string;
+    currentRoute: any | null;
+    routeCache: Map<any, any>;
+    routeState: Map<any, any>;
+    currentChatId: string | number | null;
+    isLoading: boolean;
+    unreadMessages: number;
+    unreadNotifications: number;
+    [key: string]: any; // To allow fallback for dynamically accessed properties
+}
+
+export type StateListener = (value: any, state: AppState) => void;
+
 /* =========================================================
    API CONFIG EXPORTS
 ========================================================= */
@@ -26,22 +64,22 @@ export const {
 /* =========================================================
    STATE KEYS
 ========================================================= */
-const allowedKeys = new Set([
-    "token", "user", "username", "userProfile", "socket", 
-    "roles", "permissions", "auth", "environment", "lang", 
-    "lastPath", "currentRoute", "routeCache", "routeState", 
-    "currentChatId", "isLoading", "userid", "unreadMessages", 
+const allowedKeys = new Set<string>([
+    "token", "user", "username", "userProfile", "socket",
+    "roles", "permissions", "auth", "environment", "lang",
+    "lastPath", "currentRoute", "routeCache", "routeState",
+    "currentChatId", "isLoading", "userid", "unreadMessages",
     "unreadNotifications"
 ]);
 
-const PERSISTED_KEYS = new Set([
-    "userProfile", "user", "roles", "permissions", 
+const PERSISTED_KEYS = new Set<string>([
+    "userProfile", "user", "roles", "permissions",
     "unreadMessages", "unreadNotifications"
 ]);
 
-const SESSION_KEYS = new Set(["token"]);
+const SESSION_KEYS = new Set<string>(["token"]);
 
-const AUTH_ALIAS_KEYS = new Set([
+const AUTH_ALIAS_KEYS = new Set<string>([
     "token", "user", "roles", "permissions", "username", "userid"
 ]);
 
@@ -51,7 +89,7 @@ const ROUTE_STATE_KEY = "routeState";
 /* =========================================================
    STORAGE
 ========================================================= */
-function readSessionStorage(key) {
+function readSessionStorage(key: string): string | null {
     try {
         return sessionStorage.getItem(key);
     } catch {
@@ -59,7 +97,7 @@ function readSessionStorage(key) {
     }
 }
 
-function readLocalStorage(key) {
+function readLocalStorage(key: string): string | null {
     try {
         return localStorage.getItem(key);
     } catch {
@@ -67,14 +105,14 @@ function readLocalStorage(key) {
     }
 }
 
-function readStorage(key) {
+function readStorage(key: string): string | null {
     if (SESSION_KEYS.has(key)) {
         return readSessionStorage(key);
     }
     return readLocalStorage(key);
 }
 
-function serializeValue(value) {
+function serializeValue(value: any): string | null {
     if (typeof value === "string") {
         return value;
     }
@@ -86,7 +124,7 @@ function serializeValue(value) {
     }
 }
 
-function writeSessionStorage(key, value) {
+function writeSessionStorage(key: string, value: any): boolean {
     try {
         if (value === null || value === undefined) {
             sessionStorage.removeItem(key);
@@ -104,7 +142,7 @@ function writeSessionStorage(key, value) {
     }
 }
 
-function writeLocalStorage(key, value) {
+function writeLocalStorage(key: string, value: any): boolean {
     try {
         if (value === null || value === undefined) {
             localStorage.removeItem(key);
@@ -122,7 +160,7 @@ function writeLocalStorage(key, value) {
     }
 }
 
-function writeStorage(key, value) {
+function writeStorage(key: string, value: any): boolean {
     if (SESSION_KEYS.has(key)) {
         return writeSessionStorage(key, value);
     }
@@ -132,7 +170,7 @@ function writeStorage(key, value) {
     return false;
 }
 
-function removeStorage(key) {
+function removeStorage(key: string): void {
     try {
         sessionStorage.removeItem(key);
     } catch {
@@ -145,7 +183,7 @@ function removeStorage(key) {
     }
 }
 
-function safeParseFromStorage(key, fallback = null) {
+function safeParseFromStorage<T = any>(key: string, fallback: T | null = null): T | string | null {
     const raw = readStorage(key);
     if (raw === null || raw === "") {
         return fallback;
@@ -157,7 +195,7 @@ function safeParseFromStorage(key, fallback = null) {
     }
 }
 
-function readPersistentJSON(key, fallback = null) {
+function readPersistentJSON<T = any>(key: string, fallback: T | null = null): T | null {
     const raw = readLocalStorage(key);
     if (raw === null || raw === "") {
         return fallback;
@@ -169,7 +207,7 @@ function readPersistentJSON(key, fallback = null) {
     }
 }
 
-function readPersistentNumber(key, fallback = 0) {
+function readPersistentNumber(key: string, fallback = 0): number {
     const value = readPersistentJSON(key, fallback);
     const number = Number(value);
     return Number.isFinite(number) ? number : fallback;
@@ -178,7 +216,7 @@ function readPersistentNumber(key, fallback = 0) {
 /* =========================================================
    LEGACY TOKEN MIGRATION
 ========================================================= */
-function migrateLegacyToken() {
+function migrateLegacyToken(): void {
     const sessionToken = readSessionStorage("token");
     const localToken = readLocalStorage("token");
     if (!sessionToken && localToken) {
@@ -199,11 +237,11 @@ migrateLegacyToken();
 /* =========================================================
    ROUTE CACHE & SCROLL STATE
 ========================================================= */
-const routeCache = new Map();
-const routeState = new Map();
-const scrollPositions = new Map();
+const routeCache = new Map<any, any>();
+const routeState = new Map<any, any>();
+const scrollPositions = new Map<any, { top: number; left: number }>();
 
-export function saveScroll(container, location) {
+export function saveScroll(container: HTMLElement | null, location: any): void {
     if (!container) return;
     scrollPositions.set(location, {
         top: container.scrollTop || window.scrollY || 0,
@@ -211,7 +249,7 @@ export function saveScroll(container, location) {
     });
 }
 
-export function restoreScroll(container, location) {
+export function restoreScroll(container: HTMLElement | null, location: any): void {
     if (!container) return;
     const pos = scrollPositions.get(location);
     if (pos) {
@@ -230,26 +268,25 @@ export function restoreScroll(container, location) {
 /* =========================================================
    LISTENERS
 ========================================================= */
-const listeners = new Map();
-const deepListeners = new Map();
-const notifyQueue = new Set();
+const listeners = new Map<string, Set<StateListener>>();
+const deepListeners = new Map<string, Set<StateListener>>();
+const notifyQueue = new Set<string>();
 let notifyPending = false;
 
 /* =========================================================
    PATH ACCESS
 ========================================================= */
-function getValueByPath(path, source = state) {
+function getValueByPath(path: string, source: any = state): any {
     if (!path) {
         return source;
     }
-    return path.split(".").reduce(
-        (current, part) => current?.[part], source);
+    return path.split(".").reduce((current, part) => current?.[part], source);
 }
 
 /* =========================================================
    NOTIFICATION QUEUE
 ========================================================= */
-function scheduleNotify(key) {
+function scheduleNotify(key: string): void {
     if (!key) {
         return;
     }
@@ -277,7 +314,7 @@ function scheduleNotify(key) {
                 }
             }
 
-            const deepCalls = new Map();
+            const deepCalls = new Map<string, Set<StateListener>>();
             for (const [path, fns] of deepListeners) {
                 let affected = false;
                 for (const queueKey of queuedKeys) {
@@ -312,7 +349,7 @@ function scheduleNotify(key) {
 /* =========================================================
    AUTH NORMALIZATION
 ========================================================= */
-function normalizeRoles(roles) {
+function normalizeRoles(roles: any): string[] {
     if (!Array.isArray(roles)) {
         return roles == null ? [] : [roles];
     }
@@ -320,7 +357,7 @@ function normalizeRoles(roles) {
         (role) => role !== null && role !== undefined && String(role).length > 0))];
 }
 
-function normalizePermissions(permissions) {
+function normalizePermissions(permissions: any): string[] {
     if (!Array.isArray(permissions)) {
         return permissions == null ? [] : [permissions];
     }
@@ -328,14 +365,14 @@ function normalizePermissions(permissions) {
         (permission) => permission !== null && permission !== undefined && String(permission).length > 0))];
 }
 
-function normalizeAuth(authValue = {}, previousAuth = {}) {
+function normalizeAuth(authValue: Partial<AuthState> = {}, previousAuth: Partial<AuthState> = {}): AuthState {
     const source = authValue && typeof authValue === "object" ? authValue : {};
     const previous = previousAuth && typeof previousAuth === "object" ? previousAuth : {};
     const accessToken = Object.prototype.hasOwnProperty.call(source, "accessToken") ? source.accessToken || null : previous.accessToken || null;
     const user = Object.prototype.hasOwnProperty.call(source, "user") ? source.user || null : previous.user || null;
     const roles = normalizeRoles(Object.prototype.hasOwnProperty.call(source, "roles") ? source.roles : previous.roles);
     const permissions = normalizePermissions(Object.prototype.hasOwnProperty.call(source, "permissions") ? source.permissions : previous.permissions);
-    
+
     return {
         isAuthenticated: Object.prototype.hasOwnProperty.call(source, "isAuthenticated") ? Boolean(accessToken || source.isAuthenticated) : Boolean(accessToken),
         loading: Object.prototype.hasOwnProperty.call(source, "loading") ? Boolean(source.loading) : Boolean(previous.loading),
@@ -350,8 +387,8 @@ function normalizeAuth(authValue = {}, previousAuth = {}) {
    INITIAL STATE
 ========================================================= */
 const initialToken = readSessionStorage("token");
-const initialUser = readPersistentJSON("user", null);
-const initialProfile = readPersistentJSON("userProfile", {});
+const initialUser = readPersistentJSON<User>("user", null);
+const initialProfile = readPersistentJSON<Record<string, any>>("userProfile", {});
 const initialRoles = normalizeRoles(readPersistentJSON("roles", []));
 const initialPermissions = normalizePermissions(readPersistentJSON("permissions", []));
 const initialUnreadMessages = readPersistentNumber("unreadMessages", 0);
@@ -366,7 +403,7 @@ const initialAuth = normalizeAuth({
     loading: false
 });
 
-const rawState = {
+const rawState: AppState = {
     auth: initialAuth,
     userProfile: initialProfile && typeof initialProfile === "object" ? initialProfile : {},
     socket: null,
@@ -385,7 +422,7 @@ const rawState = {
 /* =========================================================
    AUTH ALIAS HELPERS
 ========================================================= */
-function getAuthAlias(key) {
+function getAuthAlias(key: string): any {
     switch (key) {
         case "token":
             return (rawState.auth?.accessToken || null);
@@ -414,7 +451,7 @@ function getAuthAlias(key) {
     }
 }
 
-function updateAuthUserProperty(property, value) {
+function updateAuthUserProperty(property: string, value: any): void {
     const currentUser = rawState.auth?.user;
     if (currentUser && typeof currentUser === "object" && !Array.isArray(currentUser)) {
         rawState.auth.user = {
@@ -428,7 +465,7 @@ function updateAuthUserProperty(property, value) {
     }
 }
 
-function setAuthAlias(key, value) {
+function setAuthAlias(key: string, value: any): void {
     const currentAuth = rawState.auth;
     switch (key) {
         case "token": {
@@ -495,9 +532,9 @@ function setAuthAlias(key, value) {
 /* =========================================================
    REACTIVE PROXY
 ========================================================= */
-const proxyCache = new WeakMap();
+const proxyCache = new WeakMap<object, Map<string, any>>();
 
-function getCachedProxy(target, path) {
+function getCachedProxy<T extends object>(target: T, path: string[]): T {
     let pathMap = proxyCache.get(target);
     if (!pathMap) {
         pathMap = new Map();
@@ -513,28 +550,33 @@ function getCachedProxy(target, path) {
     return proxy;
 }
 
-function isObjectLike(value) {
+function isObjectLike(value: any): boolean {
     return (value !== null && typeof value === "object");
 }
 
-function shouldProxy(value) {
+function shouldProxy(value: any): boolean {
     return (isObjectLike(value) && !(value instanceof Map) && !(value instanceof Set) && !(value instanceof Date) && !(value instanceof RegExp));
 }
-
-function createReactiveObject(obj, path = []) {
+function createReactiveObject<T extends object>(obj: T, path: string[] = []): T {
     if (!shouldProxy(obj)) {
         return obj;
     }
+
     return new Proxy(obj, {
         get(target, prop, receiver) {
             const key = String(prop);
+
             if (path.length === 0 && AUTH_ALIAS_KEYS.has(key)) {
                 return getAuthAlias(key);
             }
+
             const value = Reflect.get(target, prop, receiver);
-            if (shouldProxy(value)) {
-                return getCachedProxy(value, path.concat(String(prop)));
+
+            // Fixed: cast value to 'any'
+            if (shouldProxy(value as any)) {
+                return getCachedProxy(value as any, path.concat(String(prop)));
             }
+
             return value;
         },
         set(target, prop, value, receiver) {
@@ -544,8 +586,8 @@ function createReactiveObject(obj, path = []) {
                 return true;
             }
             if (path.length === 0 && key === "auth") {
-                const previous = target.auth;
-                target.auth = normalizeAuth(value, previous);
+                const previous = (target as any).auth;
+                (target as any).auth = normalizeAuth(value, previous);
                 scheduleNotify("auth");
                 scheduleNotify("token");
                 scheduleNotify("user");
@@ -556,15 +598,15 @@ function createReactiveObject(obj, path = []) {
                 return true;
             }
             if (path.length === 0 && key === "isLoading") {
-                const changed = target[key] !== Boolean(value);
+                const changed = (target as any)[key] !== Boolean(value);
                 if (!changed) {
                     return true;
                 }
                 Reflect.set(target, prop, Boolean(value), receiver);
-                target.auth = normalizeAuth({
-                    ...target.auth,
+                (target as any).auth = normalizeAuth({
+                    ...(target as any).auth,
                     loading: Boolean(value)
-                }, target.auth);
+                }, (target as any).auth);
                 scheduleNotify("isLoading");
                 scheduleNotify("auth");
                 return true;
@@ -626,12 +668,12 @@ function createReactiveObject(obj, path = []) {
 /* =========================================================
    CREATE PUBLIC STATE
 ========================================================= */
-const state = getCachedProxy(rawState, []);
+const state = getCachedProxy(rawState, []) as AppState;
 
 /* =========================================================
    PUBLIC STATE READ
 ========================================================= */
-function getStateValue(key) {
+function getStateValue(key: string): any {
     if (AUTH_ALIAS_KEYS.has(key)) {
         return getAuthAlias(key);
     }
@@ -647,7 +689,7 @@ function getStateValue(key) {
 /* =========================================================
    SET STATE
 ========================================================= */
-function persistStateKey(key, value) {
+function persistStateKey(key: string, value: any): void {
     if (SESSION_KEYS.has(key)) {
         writeSessionStorage(key, value);
         return;
@@ -657,7 +699,7 @@ function persistStateKey(key, value) {
     }
 }
 
-function broadcastAuthChange(reason = "updated") {
+function broadcastAuthChange(reason = "updated"): void {
     try {
         localStorage.setItem("auth:changed", JSON.stringify({
             reason,
@@ -669,7 +711,7 @@ function broadcastAuthChange(reason = "updated") {
     }
 }
 
-function setAuthState(value, persist = false) {
+function setAuthState(value: Partial<AuthState>, persist = false): void {
     const previous = rawState.auth;
     const next = normalizeAuth(value, previous);
     rawState.auth = next;
@@ -689,13 +731,13 @@ function setAuthState(value, persist = false) {
     }
 }
 
-function setState(keyOrObject, persistOrValue = false, maybeValue = undefined) {
-    const updates = typeof keyOrObject === "object" && keyOrObject !== null ? keyOrObject : {
-        [keyOrObject]: persistOrValue
+function setState(keyOrObject: string | Record<string, any>, persistOrValue: boolean | any = false, maybeValue: any = undefined): void {
+    const updates: Record<string, any> = typeof keyOrObject === "object" && keyOrObject !== null ? keyOrObject : {
+        [keyOrObject as string]: persistOrValue
     };
     const persist = typeof keyOrObject === "object" && keyOrObject !== null ? Boolean(persistOrValue) : Boolean(maybeValue);
-    
-    const authUpdates = {};
+
+    const authUpdates: Partial<AuthState> = {};
     let hasAuthUpdate = false;
 
     for (const [key, value] of Object.entries(updates)) {
@@ -784,7 +826,7 @@ function setState(keyOrObject, persistOrValue = false, maybeValue = undefined) {
 /* =========================================================
    GET STATE
 ========================================================= */
-function buildPublicSnapshot() {
+function buildPublicSnapshot(): Partial<AppState> & Record<string, any> {
     return {
         token: getAuthAlias("token"),
         user: getAuthAlias("user"),
@@ -808,7 +850,7 @@ function buildPublicSnapshot() {
     };
 }
 
-function getState(key) {
+function getState(key?: string | null): any {
     if (key === undefined || key === null || key === "") {
         return buildPublicSnapshot();
     }
@@ -825,7 +867,7 @@ function getState(key) {
 /* =========================================================
    SUBSCRIPTIONS
 ========================================================= */
-function subscribe(key, fn) {
+function subscribe(key: string, fn: StateListener): () => void {
     if (typeof fn !== "function") {
         throw new TypeError("State subscriber must be a function.");
     }
@@ -839,11 +881,11 @@ function subscribe(key, fn) {
     if (!listeners.has(key)) {
         listeners.set(key, new Set());
     }
-    listeners.get(key).add(fn);
+    listeners.get(key)!.add(fn);
     return () => unsubscribe(key, fn);
 }
 
-function unsubscribe(key, fn) {
+function unsubscribe(key: string, fn: StateListener): void {
     const set = listeners.get(key);
     if (!set) {
         return;
@@ -854,18 +896,18 @@ function unsubscribe(key, fn) {
     }
 }
 
-function subscribeDeep(path, fn) {
+function subscribeDeep(path: string, fn: StateListener): () => void {
     if (typeof fn !== "function") {
         throw new TypeError("State subscriber must be a function.");
     }
     if (!deepListeners.has(path)) {
         deepListeners.set(path, new Set());
     }
-    deepListeners.get(path).add(fn);
+    deepListeners.get(path)!.add(fn);
     return () => unsubscribeDeep(path, fn);
 }
 
-function unsubscribeDeep(path, fn) {
+function unsubscribeDeep(path: string, fn: StateListener): void {
     const set = deepListeners.get(path);
     if (!set) {
         return;
@@ -876,14 +918,14 @@ function unsubscribeDeep(path, fn) {
     }
 }
 
-function clearAllListeners() {
+function clearAllListeners(): void {
     listeners.clear();
     deepListeners.clear();
     notifyQueue.clear();
     notifyPending = false;
 }
 
-function clearState(persist = true) {
+function clearState(persist = true): void {
     setState({
         token: null,
         user: null,

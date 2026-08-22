@@ -1,11 +1,11 @@
-import { createControls } from "./controls.ts";
-import { setupSubtitles } from "./subtitles.ts";
-import { createVideoElement } from "./createVideo.ts";
-import { setupQualitySwitch } from "./setupQualitySwitch.ts";
-import { setupProgress } from "./setupProgress.ts";
-import { setupFullscreenOrientation } from "./setupOrientation.ts";
-import { setupVideoUtilityFunctions } from "../video-utils/index.ts";
-import { setupVideoContextMenu } from "./videoContextMenu.ts";
+import { createControls } from "./controls.js";
+import { setupSubtitles } from "./subtitles.js";
+import { createVideoElement } from "./createVideo.js";
+import { setupQualitySwitch } from "./setupQualitySwitch.js";
+import { setupProgress } from "./setupProgress.js";
+import { setupFullscreenOrientation } from "./setupOrientation.js";
+import { setupVideoUtilityFunctions } from "../video-utils/index.js";
+import { setupVideoContextMenu } from "./videoContextMenu.js";
 
 // ---- Core Setup Helpers ----
 export function setupClickToPlay(video) {

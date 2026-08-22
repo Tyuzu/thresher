@@ -1,5 +1,5 @@
-import { createElement } from "../../components/createElement.ts";
-import { getState } from "../../state/state.ts";
+import { createElement } from "../../components/createElement.js";
+import { getState } from "../../state/state.js";
 
 /* ────────────────────── Utility Helpers ────────────────────── */
 

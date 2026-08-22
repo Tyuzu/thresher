@@ -1,13 +1,13 @@
-import { createElement } from "../../../components/createElement.ts";
-import { apiFetch } from "../../../api/api.ts";
-import { guessCategoryFromName } from "./displayCropshelpers.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.ts";
-import Imagex from "../../../components/base/Imagex.ts";
-import { debounce } from "../../../utils/deutils.ts";
-import Button from "../../../components/base/Button.ts";
-import { createMainLayout } from "../../../components/layout/mainLayout.ts";
-import { createAsideContent } from "../../../components/layout/asideLayout.ts";
+import { createElement } from "../../../components/createElement.js";
+import { apiFetch } from "../../../api/api.js";
+import { guessCategoryFromName } from "./displayCropshelpers.js";
+import { navigate } from "../../../routes/navigate.js";
+import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.js";
+import Imagex from "../../../components/base/Imagex.js";
+import { debounce } from "../../../utils/deutils.js";
+import Button from "../../../components/base/Button.js";
+import { createMainLayout } from "../../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../../components/layout/asideLayout.js";
 
 /**
  * Creates formatted promo items/list configuration for createAsideContent sections.

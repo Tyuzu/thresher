@@ -1,6 +1,6 @@
-import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/navigate.ts";
-import ToggleSwitch from "../../components/ui/ToggleSwitch.ts";
+import { apiFetch } from "../../api/api.js";
+import { navigate } from "../../routes/navigate.js";
+import ToggleSwitch from "../../components/ui/ToggleSwitch.js";
 
 // --- UI Helpers ---
 

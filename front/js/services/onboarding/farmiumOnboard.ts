@@ -1,7 +1,7 @@
 // onboarding/farmiumOnboard.js
-import { createElement } from "../../components/createElement.ts";
-import { Button } from "../../components/base/Button.ts";
-import Modal from "../../components/ui/Modal.ts";
+import { createElement } from "../../components/createElement.js";
+import { Button } from "../../components/base/Button.js";
+import Modal from "../../components/ui/Modal.js";
 
 /**
  * Onboarding step configurations.

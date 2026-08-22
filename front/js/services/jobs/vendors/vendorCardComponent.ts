@@ -1,6 +1,6 @@
-import { renderVendorActions } from "./vendorActionsComponent.ts";
-import { formatRequestStatus } from "./vendorUtils.ts";
-import { createElement } from "../../../components/createElement.ts";
+import { renderVendorActions } from "./vendorActionsComponent.js";
+import { formatRequestStatus } from "./vendorUtils.js";
+import { createElement } from "../../../components/createElement.js";
 
 /**
  * Renders an isolated standalone structural card template container block for a vendor profile record.

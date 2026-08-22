@@ -1,30 +1,30 @@
 // merchPage.js
 import {
     createElement
-} from "../../components/createElement.ts";
+} from "../../components/createElement.js";
 import {
     apiFetch
-} from "../../api/api.ts";
-import Button from "../../components/base/Button.ts";
+} from "../../api/api.js";
+import Button from "../../components/base/Button.js";
 import {
     addToCart,
     isValidCartQuantity
-} from "../cart/addToCart.ts";
+} from "../cart/addToCart.js";
 import {
     getState
-} from "../../state/state.ts";
+} from "../../state/state.js";
 import {
     EntityType,
     PictureType,
     resolveImagePath
-} from "../../utils/imagePaths.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import Datex from "../../components/base/Datex.ts";
-import Modal from "../../components/ui/Modal.ts";
-import Notify from "../../components/ui/Notify.ts";
+} from "../../utils/imagePaths.js";
+import Imagex from "../../components/base/Imagex.js";
+import Datex from "../../components/base/Datex.js";
+import Modal from "../../components/ui/Modal.js";
+import Notify from "../../components/ui/Notify.js";
 import {
     showPaymentModal
-} from "../pay/pay.ts";
+} from "../pay/pay.js";
 const MAX_CART_QUANTITY = 99;
 /**
  * Normalize stock for frontend UI purposes.

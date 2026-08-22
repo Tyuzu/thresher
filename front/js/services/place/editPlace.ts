@@ -1,8 +1,8 @@
-import { apiFetch } from "../../api/api.ts";
-import { createElement } from "../../components/createElement.ts";
-import { navigate } from "../../routes/navigate.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
+import { apiFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import { navigate } from "../../routes/navigate.js";
+import Notify from "../../components/ui/Notify.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
 
 const categoryMap = {
   "Food & Beverage": ["Restaurant", "Cafe", "Bakery"],

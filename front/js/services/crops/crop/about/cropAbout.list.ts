@@ -1,6 +1,6 @@
-import { createElement } from "../../../../components/createElement.ts";
-import { deleteCropAbout, getAllCropAbouts } from "./cropAbout.api.ts";
-import { displayCropForm } from "./cropAbout.form.ts";
+import { createElement } from "../../../../components/createElement.js";
+import { deleteCropAbout, getAllCropAbouts } from "./cropAbout.api.js";
+import { displayCropForm } from "./cropAbout.form.js";
 
 export async function displayCropList(container) {
     container.textContent = "";

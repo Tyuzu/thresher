@@ -1,42 +1,44 @@
 import "../../../css/ui/Sightbox.css";
-import { createElement } from "../../components/createElement.ts"; // Adjust path as needed
-import { createIconButton } from "../../utils/svgIconButton";
-import { xSVG } from "../svgs";
+import { createElement } from "../../components/createElement.js";
+import { createIconButton } from "../../utils/svgIconButton.js";
+import { xSVG } from "../svgs.js";
 
-const LightBox = (div) => {
+export type LightBoxContent = HTMLElement | DocumentFragment | Node;
+
+const LightBox = (div: LightBoxContent): HTMLDivElement | undefined => {
   // Prevent duplicate instance
   if (document.getElementById("sightbox")) {
-    return;
+    return undefined;
   }
 
   // --- Close Button ---
   const closeButton = createIconButton({
     classSuffix: "sightbox-close",
     svgMarkup: xSVG,
-    onClick: closeLightBox,
+    onClick: () => closeLightBox(),
     label: "",
-    ariaLabel: "Close"
-  });
+    ariaLabel: "Close",
+  }) as HTMLElement;
 
   // --- Content Container ---
   const content = createElement("div", {
     class: "sightbox-content",
-    tabindex: "-1"
-  }, [div, closeButton]);
+    tabindex: "-1",
+  }, [div, closeButton]) as HTMLDivElement;
 
   // --- Overlay ---
   const overlay = createElement("div", {
     class: "sightbox-overlay",
     events: {
-      click: closeLightBox
-    }
+      click: () => closeLightBox(),
+    },
   });
 
   // --- Root LightBox Container ---
   const lightbox = createElement("div", {
     id: "sightbox",
-    class: "sightbox"
-  }, [overlay, content]);
+    class: "sightbox",
+  }, [overlay, content]) as HTMLDivElement;
 
   // Append DOM
   const appRoot = document.getElementById("app") || document.body;
@@ -49,14 +51,14 @@ const LightBox = (div) => {
   history.pushState({ lightboxOpen: true }, "");
 
   // ESC + focus trap listener
-  function onKeyDown(e) {
+  function onKeyDown(e: KeyboardEvent): void {
     if (e.key === "Escape") {
       e.preventDefault();
       closeLightBox();
     } else if (e.key === "Tab") {
       // Trap focus inside content
       const focusable = [closeButton];
-      const currentIndex = focusable.indexOf(document.activeElement);
+      const currentIndex = focusable.indexOf(document.activeElement as HTMLElement);
       if (e.shiftKey && currentIndex === 0) {
         e.preventDefault();
         focusable[focusable.length - 1].focus();
@@ -68,14 +70,14 @@ const LightBox = (div) => {
   }
 
   // Back button listener
-  function onPopState(e) {
-    if (e.state && e.state.lightboxOpen) {
+  function onPopState(e: PopStateEvent): void {
+    if (e.state && (e.state as { lightboxOpen?: boolean }).lightboxOpen) {
       closeLightBox(true);
     }
   }
 
   // Clean close
-  function closeLightBox(fromPop = false) {
+  function closeLightBox(fromPop = false): void {
     if (!document.body.contains(lightbox)) {
       return;
     }

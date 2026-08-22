@@ -1,6 +1,6 @@
-import { displayFanMedia } from "../fanmade/ui/mediaGallery.ts";
-import { displayMedia } from "../media/ui/mediaGallery.ts";
-import { persistTabs } from "../../utils/persistTabs.ts";
+import { displayFanMedia } from "../fanmade/ui/mediaGallery.js";
+import { displayMedia } from "../media/ui/mediaGallery.js";
+import { persistTabs } from "../../utils/persistTabs.js";
 
 
 export async function renderPostsTab(container, artistID, isLoggedIn) {

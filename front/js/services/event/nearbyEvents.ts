@@ -1,4 +1,4 @@
-import { displayDynamicMap } from "../maps/genericMap.ts";
+import { displayDynamicMap } from "../maps/genericMap.js";
 
 const container = document.getElementById("map-root");
 

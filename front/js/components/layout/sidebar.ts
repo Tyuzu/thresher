@@ -1,24 +1,51 @@
 import "../../../css/subpages/sidebar.css";
-import Modal from "../ui/Modal.ts";
-import { createElement } from "../createElement.ts";
-import { navigate } from "../../routes/navigate.ts";
-import Imagex from "../base/Imagex.ts"; // Adjust the import path if needed
-import { getState } from "../../state/state.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import { silentLogout } from "../../services/auth/authService.ts";
+import Modal from "../ui/Modal.js";
+import { createElement } from "../createElement.js";
+import { navigate } from "../../routes/navigate.js";
+import Imagex from "../base/Imagex.js";
+import { getState } from "../../state/state.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { silentLogout } from "../../services/auth/authService.js";
+
+/* ---------------------------------- */
+/* Types & Interfaces                 */
+/* ---------------------------------- */
+
+export interface NavLinkConfig {
+  href: string;
+  label: string;
+}
+
+export interface TileConfig {
+  label: string;
+  value: string;
+}
+
+export interface UserState {
+  id?: string;
+  userid?: string;
+  username?: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
+export interface ActiveControlCenter {
+  dialog: HTMLElement;
+  close: () => void;
+}
 
 /* ---------------------------------- */
 /* Config                             */
 /* ---------------------------------- */
 
-const LINKS = [
+const LINKS: NavLinkConfig[] = [
   { href: "/grocery", label: "Grocery" },
   { href: "/recipes", label: "Recipes" },
   { href: "/farms", label: "Farms" },
   { href: "/dash", label: "Dash" }
 ];
 
-const TILES = [
+const TILES: TileConfig[] = [
   { label: "Weather", value: "Clear, 22°C" }
 ];
 
@@ -26,14 +53,19 @@ const TILES = [
 /* State                              */
 /* ---------------------------------- */
 
-let activeControlCenter = null;
+let activeControlCenter: ActiveControlCenter | null = null;
 
 /* ---------------------------------- */
 /* Component Builders                 */
 /* ---------------------------------- */
 
-function buildPersonalHub() {
-  const avatarUrl = getState("user").userid ? resolveImagePath(EntityType.USER, PictureType.THUMB, `${getState("user").userid}.jpg`) : "";
+function buildPersonalHub(): HTMLDivElement {
+  const user = (getState("user") || {}) as UserState;
+  const userid = user.userid || user.id;
+
+  const avatarUrl = userid
+    ? resolveImagePath(EntityType.USER, PictureType.THUMB, `${userid}.jpg`)
+    : "";
 
   const avatarImage = Imagex({ src: avatarUrl, alt: "User avatar", classes: "chat-message-avatar" });
 
@@ -43,10 +75,9 @@ function buildPersonalHub() {
     [avatarImage]
   );
 
-
   return createElement("div", { class: "cc-personal-hub" }, [
     avatarContainer,
-    createElement("div", { class: "cc-profile-name" }, ["Guest User"]),
+    createElement("div", { class: "cc-profile-name" }, [user.name || user.username || "Guest User"]),
     createElement("div", { class: "cc-btn-row" }, [
       createElement(
         "button",
@@ -59,10 +90,10 @@ function buildPersonalHub() {
         ["Logout"]
       )
     ])
-  ]);
+  ]) as HTMLDivElement;
 }
 
-function buildTiles() {
+function buildTiles(): HTMLDivElement {
   const tiles = TILES.map(tile =>
     createElement("div", { class: "cc-live-tile", role: "region", "aria-label": tile.label }, [
       createElement("div", { class: "cc-tile-label" }, [tile.label]),
@@ -70,10 +101,10 @@ function buildTiles() {
     ])
   );
 
-  return createElement("div", { class: "cc-tiles" }, tiles);
+  return createElement("div", { class: "cc-tiles" }, tiles) as HTMLDivElement;
 }
 
-function buildNavGrid() {
+function buildNavGrid(): HTMLDivElement {
   const buttons = LINKS.map(link =>
     createElement(
       "button",
@@ -86,10 +117,10 @@ function buildNavGrid() {
     )
   );
 
-  return createElement("div", { class: "cc-nav-grid", role: "navigation" }, buttons);
+  return createElement("div", { class: "cc-nav-grid", role: "navigation" }, buttons) as HTMLDivElement;
 }
 
-function buildControlCenterContent() {
+function buildControlCenterContent(): HTMLDivElement {
   const handle = createElement("div", { class: "cc-handle", "aria-hidden": "true" });
   const personalHub = buildPersonalHub();
   const liveTiles = buildTiles();
@@ -100,24 +131,32 @@ function buildControlCenterContent() {
     personalHub,
     liveTiles,
     navGrid
-  ]);
+  ]) as HTMLDivElement;
 }
 
 /* ---------------------------------- */
 /* Event & Gesture Delegation         */
 /* ---------------------------------- */
 
-function attachHandlers(dialog, closeFn) {
+function handleLogout(): void {
+  console.log("Logging out user...");
+  silentLogout();
+}
+
+function attachHandlers(dialog: HTMLElement, closeFn: () => void): void {
   // Delegate click navigation & custom actions
-  dialog.addEventListener("click", e => {
-    const navTarget = e.target.closest("[data-nav]");
-    if (navTarget) {
+  dialog.addEventListener("click", (e: MouseEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+
+    const navTarget = target.closest<HTMLElement>("[data-nav]");
+    if (navTarget && navTarget.dataset.nav) {
       navigate(navTarget.dataset.nav);
       closeFn();
       return;
     }
 
-    const actionTarget = e.target.closest("[data-action]");
+    const actionTarget = target.closest<HTMLElement>("[data-action]");
     if (actionTarget?.dataset.action === "logout") {
       handleLogout();
       closeFn();
@@ -130,11 +169,14 @@ function attachHandlers(dialog, closeFn) {
   let currentY = 0;
   let isDragging = false;
 
-  const onPointerDown = e => {
+  const onPointerDown = (e: PointerEvent): void => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+
     // Avoid initiating drag on interactive elements or if inner area is scrolled down
-    const isInteractive = e.target.closest("button, a, input, select, textarea");
-    const scrollContainer = dialog.querySelector(".cc-scroll");
-    const isScrolled = scrollContainer && scrollContainer.scrollTop > 0;
+    const isInteractive = target.closest("button, a, input, select, textarea");
+    const scrollContainer = dialog.querySelector<HTMLElement>(".cc-scroll");
+    const isScrolled = Boolean(scrollContainer && scrollContainer.scrollTop > 0);
 
     if (isInteractive || isScrolled) return;
 
@@ -149,7 +191,7 @@ function attachHandlers(dialog, closeFn) {
     }
   };
 
-  const onPointerMove = e => {
+  const onPointerMove = (e: PointerEvent): void => {
     if (!isDragging) return;
 
     currentY = e.clientY;
@@ -160,12 +202,16 @@ function attachHandlers(dialog, closeFn) {
     }
   };
 
-  const endDrag = e => {
+  const endDrag = (e: PointerEvent): void => {
     if (!isDragging) return;
     isDragging = false;
 
     if (dialog.releasePointerCapture && e.pointerId) {
-      try { dialog.releasePointerCapture(e.pointerId); } catch (_) { }
+      try {
+        dialog.releasePointerCapture(e.pointerId);
+      } catch {
+        // Pointer capture release safeguard
+      }
     }
 
     dialog.style.transition = "transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)";
@@ -179,23 +225,17 @@ function attachHandlers(dialog, closeFn) {
     }
   };
 
-  dialog.addEventListener("pointerdown", onPointerDown);
-  dialog.addEventListener("pointermove", onPointerMove);
-  dialog.addEventListener("pointerup", endDrag);
-  dialog.addEventListener("pointercancel", endDrag);
-}
-
-function handleLogout() {
-  console.log("Logging out user...");
-  // Connect your auth provider logout logic here
-  silentLogout();
+  dialog.addEventListener("pointerdown", onPointerDown as EventListener);
+  dialog.addEventListener("pointermove", onPointerMove as EventListener);
+  dialog.addEventListener("pointerup", endDrag as EventListener);
+  dialog.addEventListener("pointercancel", endDrag as EventListener);
 }
 
 /* ---------------------------------- */
 /* Public API                         */
 /* ---------------------------------- */
 
-export function toggleControlCenter() {
+export function toggleControlCenter(): void {
   if (activeControlCenter) {
     activeControlCenter.close();
     return;

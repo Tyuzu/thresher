@@ -1,5 +1,5 @@
 import "../../../css/inistyles/wallet1.css";
-import { displayWallet } from "../../services/pay/walletService.ts";
+import { displayWallet } from "../../services/pay/walletService.js";
 
 async function Wallet(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

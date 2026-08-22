@@ -1,4 +1,4 @@
-import { displayDiscord} from "../../services/discord/discord.ts";
+import { displayDiscord} from "../../services/discord/discord.js";
 
 async function Discord(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

@@ -1,4 +1,4 @@
-import { CreateDelivery } from "../../services/deliveries/createDelivery.ts";
+import { CreateDelivery } from "../../services/deliveries/createDelivery.js";
 
 async function Createdelivery(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

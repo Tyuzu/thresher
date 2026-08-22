@@ -1,4 +1,4 @@
-import { createElement } from "../../../components/createElement.ts";
+import { createElement } from "../../../components/createElement.js";
 
 /**
  * Creates a simple debounce wrapper to avoid triggering rapid API calls on keystrokes.

@@ -1,11 +1,11 @@
-import { API_URL, getState } from "../../state/state.ts";
-import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { createElement } from "../../components/createElement.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import Button from "../../components/base/Button.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { debounce } from "../../utils/deutils.ts";
+import { API_URL, getState } from "../../state/state.js";
+import { apiFetch } from "../../api/api.js";
+import { navigate } from "../../routes/navigate.js";
+import { createElement } from "../../components/createElement.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import Button from "../../components/base/Button.js";
+import Notify from "../../components/ui/Notify.js";
+import { debounce } from "../../utils/deutils.js";
 
 /** Add autocomplete listeners for the place input */
 function addAutoConListeners(eventPlaceInput) {

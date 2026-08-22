@@ -1,9 +1,9 @@
 // src/ui/cart/cartPage.js
-import { createElement } from "../../components/createElement.ts";
-import { renderCartCategory } from "./cartUtils.ts";
-import { apiFetch } from "../../api/api.ts";
-import { displayCheckout } from "./checkout.ts";
-import Button from "../../components/base/Button.ts";
+import { createElement } from "../../components/createElement.js";
+import { renderCartCategory } from "./cartUtils.js";
+import { apiFetch } from "../../api/api.js";
+import { displayCheckout } from "./checkout.js";
+import Button from "../../components/base/Button.js";
 
 /**
  * Display the user's cart dynamically.

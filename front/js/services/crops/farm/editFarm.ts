@@ -1,5 +1,5 @@
-import { apiFetch } from "../../../api/api.ts";
-import { createFarmForm } from "./createOrEditFarm.ts";
+import { apiFetch } from "../../../api/api.js";
+import { createFarmForm } from "./createOrEditFarm.js";
 
 export function editFarm(isLoggedIn, farm, container, onSuccess = null) {
     container.textContent = "";

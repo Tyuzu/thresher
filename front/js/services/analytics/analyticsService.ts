@@ -1,7 +1,7 @@
-import { createElement } from "../../components/createElement.ts";
-import { apiFetch } from "../../api/api.ts";
-import Notify from "../../components/ui/Notify.ts";
-import Datex from "../../components/base/Datex.ts";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import Notify from "../../components/ui/Notify.js";
+import Datex from "../../components/base/Datex.js";
 
 /* ────────────────────── Utility Helpers ────────────────────── */
 

@@ -1,14 +1,14 @@
-import { createElement } from "../../../components/createElement.ts";
+import { createElement } from "../../../components/createElement.js";
 import {
   fetchIncomingOrders,
   bulkAcceptOrders,
   bulkRejectOrders,
   bulkMarkOrdersDelivered,
-} from "./orderUtils.ts";
-import { renderFiltersSection } from "./renderFiltersSection.ts";
-import { renderBulkActionsSection } from "./renderBulkActionsSection.ts";
-import { renderOrderCard } from "./renderOrderCard.ts";
-import { renderOrdersTable } from "./renderOrdersTable.ts";
+} from "./orderUtils.js";
+import { renderFiltersSection } from "./renderFiltersSection.js";
+import { renderBulkActionsSection } from "./renderBulkActionsSection.js";
+import { renderOrderCard } from "./renderOrderCard.js";
+import { renderOrdersTable } from "./renderOrdersTable.js";
 
 let currentFilters = {};
 let allOrders = [];

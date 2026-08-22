@@ -1,5 +1,5 @@
-import { apiFetch } from "../../api/api.ts";
-import { uploadFiles } from "../media/api/mediaApi.ts";
+import { apiFetch } from "../../api/api.js";
+import { uploadFiles } from "../media/api/mediaApi.js";
 
 export function getUploadKey(file) {
   if (file.type.startsWith("image/")) {

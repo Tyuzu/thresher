@@ -1,8 +1,8 @@
-import { createElement } from "../../components/createElement.ts";
-import { CHAT_WS, getState, setState } from "../../state/state.ts";
-import { renderMessage } from "./renderMessage.ts";
-import { setupFileUpload } from "./fileUpload.ts";
-import { playSoundAlert, setChatSoundPreference, resolveSoundPreference } from "../notifications/soundAlerts.ts";
+import { createElement } from "../../components/createElement.js";
+import { CHAT_WS, getState, setState } from "../../state/state.js";
+import { renderMessage } from "./renderMessage.js";
+import { setupFileUpload } from "./fileUpload.js";
+import { playSoundAlert, setChatSoundPreference, resolveSoundPreference } from "../notifications/soundAlerts.js";
 
 let activeSocket = null;
 

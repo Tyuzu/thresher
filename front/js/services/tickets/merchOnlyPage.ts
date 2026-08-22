@@ -1,9 +1,9 @@
-import { displayMerchandise } from "../merch/merchService.ts";
-import { createElement } from "../../components/createElement.ts";
-import { apiFetch } from "../../api/api.ts";
-import { getState } from "../../state/state.ts";
-import Notify from "../../components/ui/Notify.ts";
-import Datex from "../../components/base/Datex.ts";
+import { displayMerchandise } from "../merch/merchService.js";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import { getState } from "../../state/state.js";
+import Notify from "../../components/ui/Notify.js";
+import Datex from "../../components/base/Datex.js";
 
 async function fetchEventData(eventId) {
     const eventData = await apiFetch(`/events/event/${eventId}`);

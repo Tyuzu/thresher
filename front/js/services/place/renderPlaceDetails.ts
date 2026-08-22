@@ -1,12 +1,12 @@
-import { createElement } from "../../components/createElement.ts";
+import { createElement } from "../../components/createElement.js";
 // Fixed: Direct import from editPlace.ts to avoid barrel export cycle
-import { editPlaceForm, deletePlace } from "./editPlace.ts"; 
-import { analyticsPlace } from "./placeAnanlytics.ts";
-import Button from "../../components/base/Button.ts";
-import { reportEntity } from "../reporting/reporting.ts";
-import Datex from "../../components/base/Datex.ts";
-import Bannerx from "../../components/base/Bannerx.ts";
-import { EntityType } from "../../utils/imagePaths.ts"; 
+import { editPlaceForm, deletePlace } from "./editPlace.js"; 
+import { analyticsPlace } from "./placeAnanlytics.js";
+import Button from "../../components/base/Button.js";
+import { reportEntity } from "../reporting/reporting.js";
+import Datex from "../../components/base/Datex.js";
+import Bannerx from "../../components/base/Bannerx.js";
+import { EntityType } from "../../utils/imagePaths.js"; 
 
 /**
  * Renders the top-level hero banner for the place

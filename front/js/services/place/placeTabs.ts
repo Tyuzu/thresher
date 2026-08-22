@@ -1,10 +1,10 @@
 import "../../../css/subpages/accessiservice.css";
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
-import Datex from "../../components/base/Datex.ts";
-import Modal from "../../components/ui/Modal.ts";
-import MultiSelect from "../../components/ui/MultiSelect.ts";
-import { apiFetch } from "../../api/api.ts";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
+import Datex from "../../components/base/Datex.js";
+import Modal from "../../components/ui/Modal.js";
+import MultiSelect from "../../components/ui/MultiSelect.js";
+import { apiFetch } from "../../api/api.js";
 
 // Predefined options
 const defaultAccessibilityOptions = [

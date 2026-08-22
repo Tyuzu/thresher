@@ -1,11 +1,11 @@
 // displayFollowSugg.js
 
-import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import { createElement } from "../../components/createElement.ts";
-import Notify from "../../components/ui/Notify.ts";
-import Imagex from "../../components/base/Imagex.ts";
+import { apiFetch } from "../../api/api.js";
+import { navigate } from "../../routes/navigate.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { createElement } from "../../components/createElement.js";
+import Notify from "../../components/ui/Notify.js";
+import Imagex from "../../components/base/Imagex.js";
 
 /* ============================================================
     DISPLAY FOLLOW SUGGESTIONS

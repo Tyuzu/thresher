@@ -1,10 +1,10 @@
-import { loadContent, getCurrentAppLocation, hydrateAuthState } from "./routes/index.ts";
-import { detectLanguage, setLanguage } from "./i18n/i18n.ts";
-import { profileEnvironment, setEnvironment } from "./utils/app/env.ts";
-import { trackError, showApplicationError } from "./utils/app/errors.ts";
-import { setupPerformanceMonitoring } from "./utils/app/performance.ts";
-//import {    setupServiceWorker} from "./utils/app/sw-register.ts";
-import { setupHistoryNavigation, setupGlobalNavigation } from "./routes/navigation.ts";
+import { loadContent, getCurrentAppLocation, hydrateAuthState } from "./routes/index.js";
+import { detectLanguage, setLanguage } from "./i18n/i18n.js";
+import { profileEnvironment, setEnvironment } from "./utils/app/env.js";
+import { trackError, showApplicationError } from "./utils/app/errors.js";
+import { setupPerformanceMonitoring } from "./utils/app/performance.js";
+//import {    setupServiceWorker} from "./utils/app/sw-register.js";
+import { setupHistoryNavigation, setupGlobalNavigation } from "./routes/navigation.js";
 
 /* =========================================================
    CONSTANTS

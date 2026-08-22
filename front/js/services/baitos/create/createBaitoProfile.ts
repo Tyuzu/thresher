@@ -1,11 +1,11 @@
 // createBaitoProfile.js
 
-import { createElement } from "../../../components/createElement.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import { apiFetch } from "../../../api/api.ts";
-import { createFormGroup } from "../../../components/createFormGroupEnhanced.ts";
-import Button from "../../../components/base/Button.ts";
-import Notify from "../../../components/ui/Notify.ts";
+import { createElement } from "../../../components/createElement.js";
+import { navigate } from "../../../routes/navigate.js";
+import { apiFetch } from "../../../api/api.js";
+import { createFormGroup } from "../../../components/createFormGroupEnhanced.js";
+import Button from "../../../components/base/Button.js";
+import Notify from "../../../components/ui/Notify.js";
 
 
 export async function displayCreateBaitoProfile(isLoggedIn, contentContainer) {

@@ -1,6 +1,6 @@
 // fetchers.js
 
-import { musicFetch } from "../../api/api.ts";
+import { musicFetch } from "../../api/api.js";
 
 async function apiRequest(endpoint, method = "GET", body = null) {
     try {

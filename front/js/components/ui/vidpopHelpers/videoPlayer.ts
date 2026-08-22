@@ -1,5 +1,5 @@
-import { createControls } from "./controls.ts";
-import { setupSubtitles } from "./subtitles.ts";
+import { createControls } from "./controls.js";
+import { setupSubtitles } from "./subtitles.js";
 
 /**
  * Generates a video player with quality selection, subtitles, and advanced controls.

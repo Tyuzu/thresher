@@ -1,25 +1,31 @@
 import "../../../css/ui/MiniAudio.css";
-import { pauseSVG, playSVG } from "../svgs.ts";
-import { createElement } from "../createElement.ts";
-import Imagex from "../base/Imagex.ts";
+import { pauseSVG, playSVG } from "../svgs.js";
+import { createElement } from "../createElement.js";
+import Imagex from "../base/Imagex.js";
 
-function MiniAudio({ audioUrl, poster = "", title = "" }) {
+export interface MiniAudioProps {
+  audioUrl: string;
+  poster?: string;
+  title?: string;
+}
+
+function MiniAudio({ audioUrl, poster = "", title = "" }: MiniAudioProps): HTMLDivElement {
   // Main Player Containers
-  const player = createElement("div", { class: "mini-audio horizontal" });
+  const player = createElement("div", { class: "mini-audio horizontal" }) as HTMLDivElement;
   
   // State variables
-  let audio = null; 
+  let audio: HTMLAudioElement | null = null; 
   let isLoaded = false;
 
   // --- Left Section (Play Button & Poster) ---
-  const playBtn = createElement("button", { class: "play-btn" });
+  const playBtn = createElement("button", { class: "play-btn" }) as HTMLButtonElement;
   playBtn.innerHTML = playSVG;
 
   const posterImg = Imagex({
     src: poster,
     alt: "Poster",
     classes: "mini-poster",
-  });
+  }) as HTMLElement;
   
   const left = createElement("div", { class: "left-controls" }, [playBtn, posterImg]);
 
@@ -32,10 +38,10 @@ function MiniAudio({ audioUrl, poster = "", title = "" }) {
     min: "0",
     max: "100",
     value: "0",
-  });
+  }) as HTMLInputElement;
 
-  const currentTimeDisplay = createElement("span", { class: "current-time" }, ["00:00"]);
-  const durationDisplay = createElement("span", { class: "duration-time" }, ["00:00"]);
+  const currentTimeDisplay = createElement("span", { class: "current-time" }, ["00:00"]) as HTMLSpanElement;
+  const durationDisplay = createElement("span", { class: "duration-time" }, ["00:00"]) as HTMLSpanElement;
   const timeDivider = createElement("span", { class: "time-divider" }, [" / "]);
   
   const timeContainer = createElement("div", { class: "time-container" }, [
@@ -47,7 +53,7 @@ function MiniAudio({ audioUrl, poster = "", title = "" }) {
   const center = createElement("div", { class: "center-controls" }, [titleText, seekBar, timeContainer]);
 
   // --- Right Section (Volume, Speed, Loop) ---
-  const muteBtn = createElement("button", { class: "btn mute-btn" }, ["🔊"]);
+  const muteBtn = createElement("button", { class: "btn mute-btn" }, ["🔊"]) as HTMLButtonElement;
   const volumeSlider = createElement("input", {
     type: "range",
     class: "volume-slider",
@@ -55,23 +61,23 @@ function MiniAudio({ audioUrl, poster = "", title = "" }) {
     max: "1",
     step: "0.05",
     value: "1",
-  });
+  }) as HTMLInputElement;
 
-  const speedControl = createElement("select", { class: "speed-select" });
+  const speedControl = createElement("select", { class: "speed-select" }) as HTMLSelectElement;
   [0.5, 1, 1.5, 2].forEach((rate) => {
-    const opt = createElement("option", { value: rate.toString() }, [`${rate}x`]);
+    const opt = createElement("option", { value: rate.toString() }, [`${rate}x`]) as HTMLOptionElement;
     if (rate === 1) opt.selected = true;
     speedControl.appendChild(opt);
   });
 
-  const loopBtn = createElement("button", { class: "btn loop-btn" }, ["🔁"]);
+  const loopBtn = createElement("button", { class: "btn loop-btn" }, ["🔁"]) as HTMLButtonElement;
 
   const volcon = createElement("div", { class: "hflex volume-container" }, [muteBtn, volumeSlider]);
   const loopcon = createElement("div", { class: "hflex macro-container" }, [speedControl, loopBtn]);
   const right = createElement("div", { class: "right-controls vflex" }, [volcon, loopcon]);
 
   // --- Audio Engine Initialization (Lazy Loaded) ---
-  function initAudio() {
+  function initAudio(): void {
     if (isLoaded) return;
     
     audio = new Audio(audioUrl);
@@ -85,17 +91,19 @@ function MiniAudio({ audioUrl, poster = "", title = "" }) {
 
     // Event Listeners
     audio.addEventListener("loadedmetadata", () => {
-      durationDisplay.textContent = formatTime(audio.duration);
+      if (audio) {
+        durationDisplay.textContent = formatTime(audio.duration);
+      }
     });
 
     audio.addEventListener("timeupdate", () => {
-      if (!audio.duration) return;
+      if (!audio || !audio.duration) return;
       seekBar.value = ((audio.currentTime / audio.duration) * 100).toString();
       currentTimeDisplay.textContent = formatTime(audio.currentTime);
     });
 
     audio.addEventListener("ended", () => {
-      if (!audio.loop) {
+      if (audio && !audio.loop) {
         playBtn.innerHTML = playSVG;
       }
     });
@@ -104,6 +112,7 @@ function MiniAudio({ audioUrl, poster = "", title = "" }) {
   // --- UI Interaction Event Listeners ---
   playBtn.addEventListener("click", () => {
     if (!isLoaded) initAudio();
+    if (!audio) return;
 
     if (audio.paused) {
       audio.play();
@@ -120,20 +129,22 @@ function MiniAudio({ audioUrl, poster = "", title = "" }) {
   });
 
   seekBar.addEventListener("input", () => {
-    if (isLoaded && audio.duration) {
+    if (isLoaded && audio && audio.duration) {
       audio.currentTime = (parseFloat(seekBar.value) / 100) * audio.duration;
     }
   });
 
   muteBtn.addEventListener("click", () => {
     if (!isLoaded) initAudio();
+    if (!audio) return;
+    
     audio.muted = !audio.muted;
     muteBtn.textContent = audio.muted ? "🔇" : "🔊";
   });
 
   volumeSlider.addEventListener("input", () => {
     const val = parseFloat(volumeSlider.value);
-    if (isLoaded) {
+    if (isLoaded && audio) {
       audio.volume = val;
       audio.muted = val === 0;
     }
@@ -141,14 +152,14 @@ function MiniAudio({ audioUrl, poster = "", title = "" }) {
   });
 
   speedControl.addEventListener("change", () => {
-    if (isLoaded) {
+    if (isLoaded && audio) {
       audio.playbackRate = parseFloat(speedControl.value);
     }
   });
 
   loopBtn.addEventListener("click", () => {
     loopBtn.classList.toggle("active");
-    if (isLoaded) {
+    if (isLoaded && audio) {
       audio.loop = loopBtn.classList.contains("active");
     }
   });
@@ -158,7 +169,7 @@ function MiniAudio({ audioUrl, poster = "", title = "" }) {
   return player;
 }
 
-function formatTime(seconds) {
+function formatTime(seconds: number): string {
   if (isNaN(seconds)) return "00:00";
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
   const s = Math.floor(seconds % 60).toString().padStart(2, "0");

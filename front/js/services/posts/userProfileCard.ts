@@ -1,11 +1,11 @@
-import { createElement } from "../../components/createElement.ts";
-import { Button } from "../../components/base/Button.ts";
-import { payViaStripe } from "../pay/pay.ts";
+import { createElement } from "../../components/createElement.js";
+import { Button } from "../../components/base/Button.js";
+import { payViaStripe } from "../pay/pay.js";
 
-import { getState } from "../../state/state.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import { EntityType } from "../../utils/imagePaths.ts";
-// import { fetchUserMeta } from "../../utils/usersMeta.ts";
+import { getState } from "../../state/state.js";
+import Imagex from "../../components/base/Imagex.js";
+import { EntityType } from "../../utils/imagePaths.js";
+// import { fetchUserMeta } from "../../utils/usersMeta.js";
 
 export async function userProfileCard(
   profile = {

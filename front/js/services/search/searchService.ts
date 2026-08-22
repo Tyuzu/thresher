@@ -1,10 +1,10 @@
-import { SEARCH_URL } from "../../state/state.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { createTabs } from "../../utils/persistTabs.ts";
-import { createElement } from "../../components/createElement.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.ts";
-import { createIconButton } from "../../utils/svgIconButton.ts";
-import { searchSVG } from "../../components/svgs.ts";
+import { SEARCH_URL } from "../../state/state.js";
+import Notify from "../../components/ui/Notify.js";
+import { createTabs } from "../../utils/persistTabs.js";
+import { createElement } from "../../components/createElement.js";
+import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
+import { createIconButton } from "../../utils/svgIconButton.js";
+import { searchSVG } from "../../components/svgs.js";
 
 let currentTab = "all";
 let searchQuery = "";

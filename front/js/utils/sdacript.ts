@@ -1,4 +1,4 @@
-import { AD_URL } from "../state/state.ts";
+import { AD_URL } from "../state/state.js";
 
 (function () {
     // 1. Unified State Management Systems

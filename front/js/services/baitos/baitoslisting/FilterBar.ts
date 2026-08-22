@@ -1,6 +1,6 @@
-import { categoryMap } from "./utils.ts";
-import Button from "../../../components/base/Button.ts";
-import { createElement } from "../../../components/createElement.ts";
+import { categoryMap } from "./utils.js";
+import Button from "../../../components/base/Button.js";
+import { createElement } from "../../../components/createElement.js";
 
 /**
  * buildFilterBar(onFilterChange, onClear)

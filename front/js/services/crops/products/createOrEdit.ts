@@ -1,7 +1,7 @@
-import { apiFetch } from "../../../api/api.ts";
-import { createElement } from "../../../components/createElement.ts";
-import { createFormGroup } from "../../../components/createFormGroupEnhanced.ts";
-import Button from "../../../components/base/Button.ts";
+import { apiFetch } from "../../../api/api.js";
+import { createElement } from "../../../components/createElement.js";
+import { createFormGroup } from "../../../components/createFormGroupEnhanced.js";
+import Button from "../../../components/base/Button.js";
 
 export function renderItemForm(container, mode, itemData, type, onDone) {
   container.replaceChildren();

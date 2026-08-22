@@ -1,6 +1,6 @@
 import {
     setState
-} from "../state/state.ts";
+} from "../state/state.js";
 let translations = {};
 let currentLang = "en";
 let activeRequest = 0;

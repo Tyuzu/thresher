@@ -1,1 +1,1 @@
-export { hireVendors } from "./vendors.ts";
+export { hireVendors } from "./vendors.js";

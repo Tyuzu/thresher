@@ -1,8 +1,8 @@
-import { createElement } from "../../components/createElement.ts";
-import { closeExistingSocket } from "./chatSocket.ts";
-import { t } from "./i18n.ts";
-import { safemereFetch, displayOneChat } from "./onechat.ts";
-import { renderSharedChatList } from "../chat/sharedChatList.ts";
+import { createElement } from "../../components/createElement.js";
+import { closeExistingSocket } from "./chatSocket.js";
+import { t } from "./i18n.js";
+import { safemereFetch, displayOneChat } from "./onechat.js";
+import { renderSharedChatList } from "../chat/sharedChatList.js";
 
 export async function displayChats(contentContainer, isLoggedIn) {
   // Add a base class to container for layout styling

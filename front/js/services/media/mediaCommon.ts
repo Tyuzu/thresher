@@ -1,11 +1,11 @@
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { getState } from "../../state/state.ts";
-import { reportEntity } from "../reporting/reporting.ts";
-import { deleteMedia } from "./api/mediaApi.ts";
-import { apiFetch } from "../../api/api.ts";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
+import Imagex from "../../components/base/Imagex.js";
+import Notify from "../../components/ui/Notify.js";
+import { getState } from "../../state/state.js";
+import { reportEntity } from "../reporting/reporting.js";
+import { deleteMedia } from "./api/mediaApi.js";
+import { apiFetch } from "../../api/api.js";
 
 /* ------------------------------------------------------
    Lazy Loading for Images & Videos

@@ -1,7 +1,7 @@
-import { createElement } from "../../../components/createElement.ts";
-import { RenderImagePost } from "./renderImagePost.ts";
-import { RenderAudioPost } from "./renderAudioPost.ts";
-import { RenderVideoPost } from "./renderVideoPost.ts";
+import { createElement } from "../../../components/createElement.js";
+import { RenderImagePost } from "./renderImagePost.js";
+import { RenderAudioPost } from "./renderAudioPost.js";
+import { RenderVideoPost } from "./renderVideoPost.js";
 
 export function renderMedia(msg) {
   const media = msg?.media;

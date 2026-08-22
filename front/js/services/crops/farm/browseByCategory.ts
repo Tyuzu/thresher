@@ -1,8 +1,8 @@
-import { createElement } from "../../../components/createElement.ts";
-import { createTabs } from "../../utils/persistTabs.ts";
-import { renderCategoryItems } from "./renderCategoryItems.ts";
-import { createFilterPanel } from "./createFilterPanel.ts";
-import { debounce } from "../../../utils/deutils.ts";
+import { createElement } from "../../../components/createElement.js";
+import { createTabs } from "../../utils/persistTabs.js";
+import { renderCategoryItems } from "./renderCategoryItems.js";
+import { createFilterPanel } from "./createFilterPanel.js";
+import { debounce } from "../../../utils/deutils.js";
 
 /**
  * Renders the category browser tab layout with interactive filtering.

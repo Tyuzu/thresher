@@ -1,5 +1,12 @@
 import "../../../css/ui/Accordion.css";
-const Accordion = (sections = []) => {
+
+export interface AccordionSection {
+  title: string;
+  content: string | HTMLElement;
+  open?: boolean;
+}
+
+const Accordion = (sections: AccordionSection[] = []): HTMLDivElement => {
   const container = document.createElement("div");
   container.className = "accordion";
 
@@ -7,8 +14,8 @@ const Accordion = (sections = []) => {
     const details = document.createElement("details");
     details.className = "accordion-section";
     if (open) {
-details.open = true;
-}
+      details.open = true;
+    }
 
     const summary = document.createElement("summary");
     summary.className = "accordion-header";
@@ -18,7 +25,7 @@ details.open = true;
     abody.className = "accordion-body";
 
     if (typeof content === "string") {
-      abody.textContent = content; // safer than innerHTML
+      abody.textContent = content;
     } else if (content instanceof HTMLElement) {
       abody.appendChild(content);
     }

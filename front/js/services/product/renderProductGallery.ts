@@ -1,13 +1,13 @@
-import { createElement } from "../../components/createElement.ts";
+import { createElement } from "../../components/createElement.js";
 import {
   resolveImagePath,
   EntityType,
   PictureType,
-} from "../../utils/imagePaths.ts";
-import { ImageGallery } from "../../components/ui/IMageGallery.ts";
-import Button from "../../components/base/Button.ts";
-import { getState } from "../../state/state.ts";
-import { updateImageWithCrop } from "../../utils/bannerEditor.ts";
+} from "../../utils/imagePaths.js";
+import { ImageGallery } from "../../components/ui/IMageGallery.js";
+import Button from "../../components/base/Button.js";
+import { getState } from "../../state/state.js";
+import { updateImageWithCrop } from "../../utils/bannerEditor.js";
 
 export function renderProductGallery(product, refresh) {
   const gallerySection = createElement(

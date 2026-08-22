@@ -1,10 +1,10 @@
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
-import { apiFetch } from "../../api/api.ts";
-import Modal from "../../components/ui/Modal.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import { buildCard } from "../baitos/baitoslisting/JobCard.ts";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
+import { apiFetch } from "../../api/api.js";
+import Modal from "../../components/ui/Modal.js";
+import Notify from "../../components/ui/Notify.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { buildCard } from "../baitos/baitoslisting/JobCard.js";
 
 // --- Category → Roles Map (light version) ---
 const jobCategoryMap = {

@@ -7,7 +7,7 @@ export const placesRoutes = [
     path: "/map",
     component: () =>
       import(
-        "../../pages/gtamap/mapgta.ts"
+        "../../pages/gtamap/mapgta.js"
       ),
     functionName: "MapGTA",
     meta: {
@@ -19,7 +19,7 @@ export const placesRoutes = [
     path: "/places",
     component: () =>
       import(
-        "../../pages/places/places.ts"
+        "../../pages/places/places.js"
       ),
     functionName: "Places",
     meta: {
@@ -31,7 +31,7 @@ export const placesRoutes = [
     path: "/create-place",
     component: () =>
       import(
-        "../../pages/places/createPlace.ts"
+        "../../pages/places/createPlace.js"
       ),
     functionName: "CreatePlace",
     meta: {
@@ -48,7 +48,7 @@ export const placesRoutes = [
     path: "/itinerary",
     component: () =>
       import(
-        "../../pages/itinerary/itinerary.ts"
+        "../../pages/itinerary/itinerary.js"
       ),
     functionName: "Itinerary",
     meta: {
@@ -60,7 +60,7 @@ export const placesRoutes = [
     path: "/create-itinerary",
     component: () =>
       import(
-        "../../pages/itinerary/createItinerary.ts"
+        "../../pages/itinerary/createItinerary.js"
       ),
     functionName: "CreateItinerary",
     meta: {
@@ -73,7 +73,7 @@ export const placesRoutes = [
     path: "/edit-itinerary",
     component: () =>
       import(
-        "../../pages/itinerary/editItinerary.ts"
+        "../../pages/itinerary/editItinerary.js"
       ),
     functionName: "EditItinerary",
     meta: {
@@ -90,7 +90,7 @@ export const placesRoutes = [
     path: "/place/:id",
     component: () =>
       import(
-        "../../pages/places/placePage.ts"
+        "../../pages/places/placePage.js"
       ),
     functionName: "Place",
     meta: {
@@ -102,7 +102,7 @@ export const placesRoutes = [
     path: "/itinerary/:id",
     component: () =>
       import(
-        "../../pages/itinerary/itineraryDisplay.ts"
+        "../../pages/itinerary/itineraryDisplay.js"
       ),
     functionName: "Itinerary",
     meta: {

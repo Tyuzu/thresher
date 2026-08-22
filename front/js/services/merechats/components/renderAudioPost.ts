@@ -1,5 +1,5 @@
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
-import AudioPlayer from "../../../components/ui/AudioPlayer.ts";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import AudioPlayer from "../../../components/ui/AudioPlayer.js";
 
 async function RenderAudioPost(container, id = "") {
   const src = resolveImagePath(EntityType.CHAT, PictureType.AUDIO, `${id}.mp3`);
@@ -18,7 +18,7 @@ async function RenderAudioPost(container, id = "") {
 export { RenderAudioPost };
 
 // // renderAudioPost.js
-// import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
+// import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 // import AudioPlayer from '../../../components/ui/AudioPlayer.mjs';
 
 // async function RenderAudioPost(mediaContainer, media_url = "", resolution) {

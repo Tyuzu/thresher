@@ -1,13 +1,13 @@
-import { apiFetch } from "../../api/api.ts";
-import Modal from "../../components/ui/Modal.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { createElement } from "../../components/createElement.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import { Button } from "../../components/base/Button.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.ts";
-import { uploadFile } from "../media/api/mediaApi.ts";
-import { uid } from "../media/ui/mediaUploadForm.ts";
+import { apiFetch } from "../../api/api.js";
+import Modal from "../../components/ui/Modal.js";
+import Notify from "../../components/ui/Notify.js";
+import { createElement } from "../../components/createElement.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { Button } from "../../components/base/Button.js";
+import Imagex from "../../components/base/Imagex.js";
+import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
+import { uploadFile } from "../media/api/mediaApi.js";
+import { uid } from "../media/ui/mediaUploadForm.js";
 
 // --- Add Merchandise ---
 async function addMerchandise(

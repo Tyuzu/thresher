@@ -1,7 +1,7 @@
 // src/utils/newads.js
 import "../../../css/subpages/sda.css";
-import { createElement } from "../../components/createElement.ts";
-import { t } from "../../i18n/i18n.ts";
+import { createElement } from "../../components/createElement.js";
+import { t } from "../../i18n/i18n.js";
 
 let adCounter = 0;
 

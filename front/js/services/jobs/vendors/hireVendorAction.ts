@@ -1,7 +1,7 @@
-import Notify from "../../../components/ui/Notify.ts";
-import { hireEventVendor, removeEventVendor } from "./vendorService.ts";
-import { dispatchVendorEvent, VENDOR_EVENTS } from "./vendorEvents.ts";
-import { normalizeErrorMessage } from "./vendorUtils.ts";
+import Notify from "../../../components/ui/Notify.js";
+import { hireEventVendor, removeEventVendor } from "./vendorService.js";
+import { dispatchVendorEvent, VENDOR_EVENTS } from "./vendorEvents.js";
+import { normalizeErrorMessage } from "./vendorUtils.js";
 
 function isAlreadyHiredMessage(message) {
     const lower = String(message || "").toLowerCase();

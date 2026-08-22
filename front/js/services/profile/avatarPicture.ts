@@ -1,16 +1,16 @@
 // profileAvatar.js
 
-import { getState, setState } from "../../state/state.ts";
+import { getState, setState } from "../../state/state.js";
 import {
   resolveImagePath,
   EntityType,
   PictureType
-} from "../../utils/imagePaths.ts";
-import { createElement } from "../../components/createElement.ts";
-import { handleError } from "../../utils/utils.ts";
-import SightBox from "../../components/ui/Sightbox_zoom.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { updateImageWithCrop } from "../../utils/bannerEditor.ts";
+} from "../../utils/imagePaths.js";
+import { createElement } from "../../components/createElement.js";
+import { handleError } from "../../utils/utils.js";
+import SightBox from "../../components/ui/Sightbox_zoom.js";
+import Notify from "../../components/ui/Notify.js";
+import { updateImageWithCrop } from "../../utils/bannerEditor.js";
 
 /* ============================================================
     HELPERS

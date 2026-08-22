@@ -1,10 +1,10 @@
 import "../../../css/inistyles/deliverypage.css";
-import { createElement } from "../../components/createElement.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import Button from "../../components/base/Button.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { createDeliveryRequest } from "../../services/deliveries/deliveriesApi.ts";
-import { navigate } from "../../routes/navigate.ts";
+import { createElement } from "../../components/createElement.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import Button from "../../components/base/Button.js";
+import Notify from "../../components/ui/Notify.js";
+import { createDeliveryRequest } from "../../services/deliveries/deliveriesApi.js";
+import { navigate } from "../../routes/navigate.js";
 
 async function CreateDelivery(container, isLoggedIn) {
   const contentContainer = (container && typeof container === "object" && container.nodeType)

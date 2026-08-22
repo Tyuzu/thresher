@@ -1,9 +1,9 @@
-import { apiFetch } from "../../api/api.ts";
-import Datex from "../../components/base/Datex.ts";
-import { createElement } from "../../components/createElement.ts";
-import Modal from "../../components/ui/Modal.ts";
-import { Button } from "../../components/base/Button.ts";
-import { printTicketPDF } from "./printTicket.ts";
+import { apiFetch } from "../../api/api.js";
+import Datex from "../../components/base/Datex.js";
+import { createElement } from "../../components/createElement.js";
+import Modal from "../../components/ui/Modal.js";
+import { Button } from "../../components/base/Button.js";
+import { printTicketPDF } from "./printTicket.js";
 
 export async function listMyTickets(eventid) {
     const container = createElement("div", {}, []);

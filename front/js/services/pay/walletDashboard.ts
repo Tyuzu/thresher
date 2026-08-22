@@ -1,10 +1,10 @@
-import { WalletManager } from "./WalletManager.ts";
-import { WalletTransactions } from "./walletTransactions.ts";
-import { WalletTransfer } from "./walletTransfer.ts";
-import { createElement } from "../../components/createElement.ts";
-import { Button } from "../../components/base/Button.ts";
-import { apiFetch } from "../../api/api.ts";
-import Notify from "../../components/ui/Notify.ts";
+import { WalletManager } from "./WalletManager.js";
+import { WalletTransactions } from "./walletTransactions.js";
+import { WalletTransfer } from "./walletTransfer.js";
+import { createElement } from "../../components/createElement.js";
+import { Button } from "../../components/base/Button.js";
+import { apiFetch } from "../../api/api.js";
+import Notify from "../../components/ui/Notify.js";
 
 export function WalletDashboard() {
     const container = createElement("div", { id: "wallet-dashboard", class: "wallet-dashboard" });

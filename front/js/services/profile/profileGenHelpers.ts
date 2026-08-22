@@ -1,11 +1,11 @@
-import { getState } from "../../state/state.ts";
-import { formatDate } from "./profileHelpers.ts";
-import { logout } from "../auth/authService.ts";
-import { reportEntity } from "../reporting/reporting.ts";
-import Button from "../../components/base/Button.ts";
+import { getState } from "../../state/state.js";
+import { formatDate } from "./profileHelpers.js";
+import { logout } from "../auth/authService.js";
+import { reportEntity } from "../reporting/reporting.js";
+import Button from "../../components/base/Button.js";
 
-import { toggleAction } from "../beats/toggleFollows.ts";
-import { meChat } from "../mechat/plugnplay.ts";
+import { toggleAction } from "../beats/toggleFollows.js";
+import { meChat } from "../mechat/plugnplay.js";
 
 // Reuse appendChildren from profileImages.js or redefine here if needed
 function appendChildren(parent, ...children) {

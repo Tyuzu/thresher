@@ -1,8 +1,8 @@
-import { SRC_URL, apiFetch } from "../../../api/api.ts";
-import Button from "../../../components/base/Button.ts";
-import Datex from "../../../components/base/Datex.ts";
-import { createElement } from "../../../components/createElement.ts";
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.ts";
+import { SRC_URL, apiFetch } from "../../../api/api.js";
+import Button from "../../../components/base/Button.js";
+import Datex from "../../../components/base/Datex.js";
+import { createElement } from "../../../components/createElement.js";
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 
 // ─── Events (Arena) ────────────────────────────────────────────────────────────
 let allEvents = [];

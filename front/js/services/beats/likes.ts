@@ -1,4 +1,4 @@
-import { apiFetch } from "../../api/api.ts";
+import { apiFetch } from "../../api/api.js";
 
 
 // Toggle like: POST /likes/:entitytype/like/:entityid

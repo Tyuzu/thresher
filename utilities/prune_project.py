@@ -7,9 +7,9 @@ from collections import defaultdict
 # --- CONFIGURATION ---
 PROJECT_ROOT = "."
 ASSET_EXTS = (".png", ".jpg", ".jpeg", ".svg", ".webp", ".ico", ".woff", ".woff2", ".ttf")
-SOURCE_EXTS = (".ts", ".js", ".mjs", ".html", ".css")
+SOURCE_EXTS = (".js", ".js", ".mjs", ".html", ".css")
 STYLE_EXTS = (".css",)
-MARKUP_EXTS = (".ts", ".js", ".html")
+MARKUP_EXTS = (".js", ".js", ".html")
 
 # Paths/Directories to ignore entirely
 IGNORE_DIRS = {".git", "node_modules", "dist", "build", ".cache", "_audit_backups"}

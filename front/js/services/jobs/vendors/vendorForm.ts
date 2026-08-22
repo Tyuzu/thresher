@@ -1,8 +1,8 @@
-import Notify from "../../../components/ui/Notify.ts";
-import { createVendor, updateVendor } from "./vendorService.ts";
-import { dispatchVendorEvent, VENDOR_EVENTS } from "./vendorEvents.ts";
-import { isValidEmail, normalizeErrorMessage } from "./vendorUtils.ts";
-import { createElement } from "../../../components/createElement.ts";
+import Notify from "../../../components/ui/Notify.js";
+import { createVendor, updateVendor } from "./vendorService.js";
+import { dispatchVendorEvent, VENDOR_EVENTS } from "./vendorEvents.js";
+import { isValidEmail, normalizeErrorMessage } from "./vendorUtils.js";
+import { createElement } from "../../../components/createElement.js";
 
 export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, options = {}) {
     const mode = options.mode === "edit" ? "edit" : "create";

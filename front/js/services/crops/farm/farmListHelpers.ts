@@ -1,12 +1,12 @@
-import { createElement } from "../../../components/createElement.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import Button from "../../../components/base/Button.ts";
+import { createElement } from "../../../components/createElement.js";
+import { navigate } from "../../../routes/navigate.js";
+import Button from "../../../components/base/Button.js";
 import {
   resolveImagePath,
   PictureType,
   EntityType
-} from "../../../utils/imagePaths.ts";
-import Imagex from "../../../components/base/Imagex.ts";
+} from "../../../utils/imagePaths.js";
+import Imagex from "../../../components/base/Imagex.js";
 
 // ---------- Farm Cards ----------
 

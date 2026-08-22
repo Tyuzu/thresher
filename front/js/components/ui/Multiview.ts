@@ -1,12 +1,18 @@
 import "../../../css/ui/MultiView.css";
-import { createElement } from "../../components/createElement.ts"; // Adjust path as needed
-import { SRC_URL } from "../../api/api.ts";
+// @ts-ignore - Assuming createElement doesn't have strict type definitions exported
+import { createElement } from "../../components/createElement.js"; 
+import { SRC_URL } from "../../api/api.js";
 
-const MultiView = (images) => {
+export interface MultiViewResult {
+  element: HTMLDivElement;
+  destroy: () => void;
+}
+
+const MultiView = (images: string[]): MultiViewResult | null => {
   if (!images || images.length < 2) return null;
 
-  let isSliderDragging = false;
-  let currentPercentage = 50;
+  let isSliderDragging: boolean = false;
+  let currentPercentage: number = 50;
 
   // Base image layer
   const bottomImg = createElement("img", {
@@ -17,7 +23,7 @@ const MultiView = (images) => {
       width: "100%",
       height: "auto"
     }
-  });
+  }) as HTMLImageElement;
 
   // Comparison image layer
   const topImg = createElement("img", {
@@ -33,7 +39,7 @@ const MultiView = (images) => {
       pointerEvents: "none",
       clipPath: "inset(0 50% 0 0)"
     }
-  });
+  }) as HTMLImageElement;
 
   // Interactive split slider handle
   const slider = createElement("div", {
@@ -52,9 +58,10 @@ const MultiView = (images) => {
       height: "100%",
       background: "#ffffff",
       cursor: "ew-resize",
-      transform: "translateX(-50%)"
+      transform: "translateX(-50%)",
+      zIndex: "2"
     }
-  });
+  }) as HTMLDivElement;
 
   // Container holding media & slider
   const multiContainer = createElement("div", {
@@ -63,7 +70,7 @@ const MultiView = (images) => {
       position: "relative",
       overflow: "hidden"
     }
-  }, [bottomImg, topImg, slider]);
+  }, [bottomImg, topImg, slider]) as HTMLDivElement;
 
   // Close button setup
   const closeButton = createElement("button", {
@@ -72,32 +79,35 @@ const MultiView = (images) => {
     events: {
       click: () => destroy()
     }
-  }, ["✖"]);
+  }, ["✖"]) as HTMLButtonElement;
 
   // Overlay inner content shell
   const content = createElement("div", {
     class: "multiview-content"
-  }, [multiContainer, closeButton]);
+  }, [multiContainer, closeButton]) as HTMLDivElement;
 
   // Root overlay container
-  const isDarkMode = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  const isDarkMode: boolean = window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
   const multiview = createElement("div", {
     class: `multiview-overlay${isDarkMode ? " dark-mode" : ""}`,
     style: {
       opacity: "0",
-      transition: "opacity 0.3s ease"
+      transition: "opacity 0.3s ease",
+      position: "fixed",
+      inset: "0",
+      zIndex: "9999"
     }
-  }, [content]);
+  }, [content]) as HTMLDivElement;
 
   // Dynamic layout calculation handlers
-  const updateSplitPosition = (percentage) => {
+  const updateSplitPosition = (percentage: number): void => {
     currentPercentage = Math.max(0, Math.min(100, percentage));
     slider.style.left = `${currentPercentage}%`;
     topImg.style.clipPath = `inset(0 ${100 - currentPercentage}% 0 0)`;
     slider.setAttribute("aria-valuenow", Math.round(currentPercentage).toString());
   };
 
-  const handleMove = (clientX) => {
+  const handleMove = (clientX: number): void => {
     const containerRect = multiContainer.getBoundingClientRect();
     if (containerRect.width === 0) return;
     const percentage = ((clientX - containerRect.left) / containerRect.width) * 100;
@@ -105,16 +115,25 @@ const MultiView = (images) => {
   };
 
   // Event listeners
-  const onMouseMove = (e) => { if (isSliderDragging) handleMove(e.clientX); };
-  const onMouseUp = () => { isSliderDragging = false; };
-  const onMouseDown = () => { isSliderDragging = true; };
+  const onMouseMove = (e: MouseEvent): void => { 
+    if (isSliderDragging) handleMove(e.clientX); 
+  };
+  
+  const onMouseUp = (): void => { 
+    isSliderDragging = false; 
+  };
+  
+  const onMouseDown = (): void => { 
+    isSliderDragging = true; 
+  };
 
-  const onTouchMove = (e) => {
+  const onTouchMove = (e: TouchEvent): void => {
     if (!isSliderDragging) return;
+    e.preventDefault(); 
     if (e.touches.length > 0) handleMove(e.touches[0].clientX);
   };
 
-  const onKeyDown = (e) => {
+  const onSliderKeyDown = (e: KeyboardEvent): void => {
     if (e.key === "ArrowLeft") {
       e.preventDefault();
       updateSplitPosition(currentPercentage - 5);
@@ -124,17 +143,25 @@ const MultiView = (images) => {
     }
   };
 
+  const onGlobalKeyDown = (e: KeyboardEvent): void => {
+    if (e.key === "Escape") {
+      destroy();
+    }
+  };
+
   // Bind Event Listeners
   slider.addEventListener("mousedown", onMouseDown);
   document.addEventListener("mousemove", onMouseMove);
   document.addEventListener("mouseup", onMouseUp);
 
   slider.addEventListener("touchstart", onMouseDown, { passive: true });
-  document.addEventListener("touchmove", onTouchMove, { passive: true });
+  document.addEventListener("touchmove", onTouchMove, { passive: false }); 
   document.addEventListener("touchend", onMouseUp);
-  slider.addEventListener("keydown", onKeyDown);
+  slider.addEventListener("keydown", onSliderKeyDown);
+  
+  document.addEventListener("keydown", onGlobalKeyDown);
 
-  const destroy = () => {
+  const destroy = (): void => {
     multiview.style.opacity = "0";
     setTimeout(() => {
       // Explicit cleanup to prevent memory leaks
@@ -144,7 +171,8 @@ const MultiView = (images) => {
       slider.removeEventListener("touchstart", onMouseDown);
       document.removeEventListener("touchmove", onTouchMove);
       document.removeEventListener("touchend", onMouseUp);
-      slider.removeEventListener("keydown", onKeyDown);
+      slider.removeEventListener("keydown", onSliderKeyDown);
+      document.removeEventListener("keydown", onGlobalKeyDown);
 
       if (multiview.parentNode) {
         multiview.parentNode.removeChild(multiview);
@@ -152,7 +180,7 @@ const MultiView = (images) => {
     }, 300);
   };
 
-  const appRoot = document.getElementById("app");
+  const appRoot: HTMLElement | null = document.getElementById("app");
   if (appRoot) {
     appRoot.appendChild(multiview);
   }
@@ -160,6 +188,7 @@ const MultiView = (images) => {
   // Smooth entry transition execution
   requestAnimationFrame(() => {
     multiview.style.opacity = "1";
+    slider.focus(); 
   });
 
   return {

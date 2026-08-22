@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
 import { apiFetch } from "../api/api";
-import { createElement } from "../components/createElement.ts";
+import { createElement } from "../components/createElement.js";
 import { FILEDROP_URL } from "../state/state";
-import Notify from "../components/ui/Notify.ts";
+import Notify from "../components/ui/Notify.js";
 
 const CHUNK_SIZE = 256 * 1024; // 256KB
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];

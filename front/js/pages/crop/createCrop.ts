@@ -1,4 +1,4 @@
-import { createCrop } from "../../services/crops/crop/createCrop.ts";
+import { createCrop } from "../../services/crops/crop/createCrop.js";
 
 async function Create(isLoggedIn, contentContainer) {
     contentContainer.innerHTML = '';

@@ -1,5 +1,5 @@
-import { setState } from "../../state/state.ts";
-import { ENV_CACHE_KEY, UI_TIER_KEY, ENV_CACHE_TTL_MS } from "../../config/appConstants.ts";
+import { setState } from "../../state/state.js";
+import { ENV_CACHE_KEY, UI_TIER_KEY, ENV_CACHE_TTL_MS } from "../../config/appConstants.js";
 
 /* =========================================================
    ENVIRONMENT PROFILING

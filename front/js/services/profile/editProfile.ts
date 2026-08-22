@@ -1,12 +1,12 @@
-import { getState, setState } from "../../state/state.ts";
-import { apiFetch } from "../../api/api.ts";
-import { handleError } from "../../utils/utils.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { showLoadingMessage, removeLoadingMessage } from "./profileHelpers.ts";
-import { generateFormField } from "./generators.ts";
-import { createElement } from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
-import Notify from "../../components/ui/Notify.ts";
+import { getState, setState } from "../../state/state.js";
+import { apiFetch } from "../../api/api.js";
+import { handleError } from "../../utils/utils.js";
+import { navigate } from "../../routes/navigate.js";
+import { showLoadingMessage, removeLoadingMessage } from "./profileHelpers.js";
+import { generateFormField } from "./generators.js";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
+import Notify from "../../components/ui/Notify.js";
 
 /* ============================================================
     EDIT PROFILE VIEW

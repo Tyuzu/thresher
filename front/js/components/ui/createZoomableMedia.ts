@@ -1,9 +1,41 @@
-import Imagex from "../base/Imagex";
-import { createElement } from "../../components/createElement.ts";
+import Imagex from "../base/Imagex.js";
+import { createElement } from "../../components/createElement.js";
+
+// ---- Types & Interfaces ----
+
+export type ZoomableMediaType = "image" | "video";
+
+export interface ZoomState {
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+  isDragging: boolean;
+  isPinching: boolean;
+  startX: number;
+  startY: number;
+  velocityX: number;
+  velocityY: number;
+  lastMoveX: number;
+  lastMoveY: number;
+  momentum: boolean;
+  pinchDistance: number;
+  zoomLevels: number[];
+  zoomIndex: number;
+}
+
+export interface ZoomableMediaResult {
+  container: HTMLDivElement & { cleanup?: () => void };
+  mediaEl: HTMLElement;
+  resetZoomBtn: HTMLButtonElement;
+  destroy: () => void;
+}
 
 // === ZOOMABLE MEDIA FACTORY ===
-export const createZoomableMedia = (src, type = "image") => {
-  const state = {
+export const createZoomableMedia = (
+  src: string,
+  type: ZoomableMediaType = "image"
+): ZoomableMediaResult => {
+  const state: ZoomState = {
     scale: 1,
     offsetX: 0,
     offsetY: 0,
@@ -22,43 +54,45 @@ export const createZoomableMedia = (src, type = "image") => {
   };
 
   const zoomLabel = createElement("div", { class: "zoom-label" }, [
-    document.createTextNode("Zoom: 1.0x")
-  ]);
+    document.createTextNode("Zoom: 1.0x"),
+  ]) as HTMLDivElement;
 
   const resetZoomBtn = createElement("button", { 
     class: "reset-zoom-btn",
     "aria-label": "Reset Zoom State"
-  }, [document.createTextNode("Reset Zoom")]);
+  }, [document.createTextNode("Reset Zoom")]) as HTMLButtonElement;
 
   resetZoomBtn.addEventListener("click", () => {
     resetZoom();
   });
 
-  let mediaEl;
+  let mediaEl: HTMLElement;
   if (type === "image") {
     mediaEl = Imagex({
       src: src,
       alt: "Zoomable Image",
       classes: "zoomable-image",
-    });
+    }) as HTMLElement;
   } else if (type === "video") {
     mediaEl = createElement("video", { 
       src: src, 
       controls: true, 
       class: "zoomable-image" 
-    });
+    }) as HTMLVideoElement;
+  } else {
+    mediaEl = createElement("div", {}) as HTMLElement;
   }
 
   const container = createElement("div", { class: "zoom-container" }, [
     mediaEl,
     zoomLabel,
     resetZoomBtn
-  ]);
+  ]) as HTMLDivElement & { cleanup?: () => void };
 
   let lastTap = 0;
-  let momentumFrameId = null;
+  let momentumFrameId: number | null = null;
 
-  function resetZoom() {
+  function resetZoom(): void {
     state.scale = 1;
     state.offsetX = 0;
     state.offsetY = 0;
@@ -69,7 +103,7 @@ export const createZoomableMedia = (src, type = "image") => {
   }
 
   // === Computational Bounds Engine ===
-  function getConstraints() {
+  function getConstraints(): { limitX: number; limitY: number } {
     const width = mediaEl.offsetWidth || 0;
     const height = mediaEl.offsetHeight || 0;
     return {
@@ -78,7 +112,7 @@ export const createZoomableMedia = (src, type = "image") => {
     };
   }
 
-  function applyTransform(snap = false) {
+  function applyTransform(snap = false): void {
     const { limitX, limitY } = getConstraints();
 
     if (snap || state.scale === 1) {
@@ -92,7 +126,7 @@ export const createZoomableMedia = (src, type = "image") => {
     zoomLabel.replaceChildren(document.createTextNode(`Zoom: ${state.scale.toFixed(1)}x`));
   }
 
-  function momentumScroll() {
+  function momentumScroll(): void {
     if (!state.momentum) return;
 
     state.offsetX += state.velocityX * 0.92;
@@ -119,21 +153,21 @@ export const createZoomableMedia = (src, type = "image") => {
   }
 
   // === Focal Point Multi-Touch Tracking Geometry ===
-  function getTouchCenter(touches) {
+  function getTouchCenter(touches: TouchList): { x: number; y: number } {
     return {
       x: (touches[0].clientX + touches[1].clientX) / 2,
       y: (touches[0].clientY + touches[1].clientY) / 2
     };
   }
 
-  function getPinchDistance(touches) {
+  function getPinchDistance(touches: TouchList): number {
     const dx = touches[0].clientX - touches[1].clientX;
     const dy = touches[0].clientY - touches[1].clientY;
     return Math.sqrt(dx * dx + dy * dy);
   }
 
   // === Combined Touch Event Handlers ===
-  mediaEl.addEventListener("touchstart", (e) => {
+  mediaEl.addEventListener("touchstart", (e: TouchEvent) => {
     state.momentum = false;
     if (momentumFrameId) cancelAnimationFrame(momentumFrameId);
 
@@ -156,7 +190,7 @@ export const createZoomableMedia = (src, type = "image") => {
     }
   });
 
-  const onTouchMove = (e) => {
+  const onTouchMove = (e: TouchEvent): void => {
     if (state.isPinching && e.touches.length === 2) {
       e.preventDefault();
       const newDist = getPinchDistance(e.touches);
@@ -193,7 +227,7 @@ export const createZoomableMedia = (src, type = "image") => {
   };
   mediaEl.addEventListener("touchmove", onTouchMove, { passive: false });
 
-  mediaEl.addEventListener("touchend", (e) => {
+  mediaEl.addEventListener("touchend", (e: TouchEvent) => {
     const now = Date.now();
     const isDoubleTap = (now - lastTap < 300);
     lastTap = now;
@@ -226,7 +260,7 @@ export const createZoomableMedia = (src, type = "image") => {
   });
 
   // === Desktop Event Management ===
-  const onMouseMove = (e) => {
+  const onMouseMove = (e: MouseEvent): void => {
     if (!state.isDragging) return;
     state.velocityX = e.clientX - state.lastMoveX;
     state.velocityY = e.clientY - state.lastMoveY;
@@ -237,7 +271,7 @@ export const createZoomableMedia = (src, type = "image") => {
     applyTransform();
   };
 
-  const onMouseUp = () => {
+  const onMouseUp = (): void => {
     if (!state.isDragging) return;
     state.isDragging = false;
     if (Math.abs(state.velocityX) > 2 || Math.abs(state.velocityY) > 2) {
@@ -248,7 +282,7 @@ export const createZoomableMedia = (src, type = "image") => {
     }
   };
 
-  mediaEl.addEventListener("mousedown", (e) => {
+  mediaEl.addEventListener("mousedown", (e: MouseEvent) => {
     if (state.scale > 1) {
       state.momentum = false;
       if (momentumFrameId) cancelAnimationFrame(momentumFrameId);
@@ -266,7 +300,7 @@ export const createZoomableMedia = (src, type = "image") => {
   window.addEventListener("mousemove", onMouseMove);
   window.addEventListener("mouseup", onMouseUp);
 
-  mediaEl.addEventListener("wheel", (e) => {
+  mediaEl.addEventListener("wheel", (e: WheelEvent) => {
     e.preventDefault();
     const oldScale = state.scale;
     const delta = e.deltaY > 0 ? -0.25 : 0.25;
@@ -292,13 +326,15 @@ export const createZoomableMedia = (src, type = "image") => {
   }
 
   // Fixed: Expose clean structural destruction pathway tied to the container lifetime
-  container.cleanup = () => {
+  const destroy = (): void => {
     state.momentum = false;
     if (momentumFrameId) cancelAnimationFrame(momentumFrameId);
     window.removeEventListener("mousemove", onMouseMove);
     window.removeEventListener("mouseup", onMouseUp);
-    mediaEl.removeEventListener("touchmove", onTouchMove);
+    mediaEl.removeEventListener("touchmove", onTouchMove as EventListener);
   };
 
-  return { container, mediaEl, resetZoomBtn, destroy: container.cleanup };
+  container.cleanup = destroy;
+
+  return { container, mediaEl, resetZoomBtn, destroy };
 };

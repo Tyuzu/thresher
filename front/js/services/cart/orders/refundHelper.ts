@@ -1,5 +1,5 @@
-import { createElement } from "../../../components/createElement.ts";
-import { apiFetch } from "../../../api/api.ts";
+import { createElement } from "../../../components/createElement.js";
+import { apiFetch } from "../../../api/api.js";
 
 /**
  * Renders an isolated refund request form node.

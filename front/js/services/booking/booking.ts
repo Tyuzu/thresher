@@ -1,8 +1,8 @@
-import { createElement } from "../../components/createElement.ts";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.ts";
-import Notify from "../../components/ui/Notify.ts";
-import { fetchUserMeta } from "../../utils/usersMeta.ts";
-import { genId, bookingStorage, bookingApi } from "./bookingApi.ts";
+import { createElement } from "../../components/createElement.js";
+import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import Notify from "../../components/ui/Notify.js";
+import { fetchUserMeta } from "../../utils/usersMeta.js";
+import { genId, bookingStorage, bookingApi } from "./bookingApi.js";
 
 // ---------- Helpers ----------
 function confirmAction(message, action) {

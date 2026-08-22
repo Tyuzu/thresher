@@ -1,5 +1,5 @@
-import { createElement } from "../../../components/createElement.ts";
-import { createOption } from "../../../components/ui/createOption.ts";
+import { createElement } from "../../../components/createElement.js";
+import { createOption } from "../../../components/ui/createOption.js";
 
 /**
  * Creates a lightweight debounced wrapper for input handlers.

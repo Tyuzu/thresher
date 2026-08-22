@@ -1,5 +1,5 @@
-import Datex from "../../components/base/Datex.ts";
-import { createElement } from "../../components/createElement.ts";
+import Datex from "../../components/base/Datex.js";
+import { createElement } from "../../components/createElement.js";
 
 // Label mapping dictionary
 const ENTITY_LABELS = {

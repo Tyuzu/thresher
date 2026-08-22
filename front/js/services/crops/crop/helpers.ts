@@ -1,4 +1,4 @@
-import { createElement } from "../../../components/createElement.ts";
+import { createElement } from "../../../components/createElement.js";
 export function clearElement(el) {
   while (el.firstChild) {
     el.removeChild(el.firstChild);

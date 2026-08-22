@@ -1,6 +1,6 @@
-import { createElement } from "../../../components/createElement.ts";
-import { fetchMedia } from "../api/mediaApi.ts";
-import { showMediaUploadForm } from "./mediaUploadForm.ts";
+import { createElement } from "../../../components/createElement.js";
+import { fetchMedia } from "../api/mediaApi.js";
+import { showMediaUploadForm } from "./mediaUploadForm.js";
 import {
   lazyMediaObserver,
   clear,
@@ -9,12 +9,12 @@ import {
   createMediaActions,
   confirmDelete,
   buildTranslationSection
-} from "../../media/mediaCommon.ts";
-import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.ts";
-import Imagex from "../../../components/base/Imagex.ts";
-import { generateVideoPlayer } from "../../../components/ui/vidpopHelpers.ts";
-import LightBox from "../../../components/ui/Lightbox.ts";
-import Sightbox from "../../../components/ui/Sightbox_zoom.ts";
+} from "../../media/mediaCommon.js";
+import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.js";
+import Imagex from "../../../components/base/Imagex.js";
+import { generateVideoPlayer } from "../../../components/ui/vidpopHelpers.js";
+import LightBox from "../../../components/ui/Lightbox.js";
+import Sightbox from "../../../components/ui/Sightbox_zoom.js";
 
 function buildMediaFragment(mediaData, entityType, entityId, isLoggedIn, prefix = "media") {
   const frag = document.createDocumentFragment();

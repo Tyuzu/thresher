@@ -1,9 +1,9 @@
-import { createElement } from "../../../../components/createElement.ts";
+import { createElement } from "../../../../components/createElement.js";
 import {
     createCropAbout,
     updateCropAbout
-} from "./cropAbout.api.ts";
-import { splitLines } from "./cropAbout.helpers.ts";
+} from "./cropAbout.api.js";
+import { splitLines } from "./cropAbout.helpers.js";
 
 export function displayCropForm(container, crop = null) {
     container.textContent = "";

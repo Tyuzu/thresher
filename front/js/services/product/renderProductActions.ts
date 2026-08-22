@@ -1,17 +1,17 @@
 import {
   createElement
-} from "../../components/createElement.ts";
-import Button from "../../components/base/Button.ts";
+} from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
 import {
   addToCart,
   isValidCartQuantity,
-} from "../cart/addToCart.ts";
+} from "../cart/addToCart.js";
 import {
   getState
-} from "../../state/state.ts";
+} from "../../state/state.js";
 import {
   renderItemForm
-} from "../crops/products/createOrEdit.ts";
+} from "../crops/products/createOrEdit.js";
 const MAX_CART_QUANTITY = 99;
 /**
  * Normalize product stock for UI purposes.

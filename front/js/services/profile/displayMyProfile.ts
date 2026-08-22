@@ -1,11 +1,11 @@
-import { getState } from "../../state/state.ts";
-import { apiFetch } from "../../api/api.ts";
-import { navigate } from "../../routes/navigate.ts";
-import { logout } from "../auth/authService.ts";
-import { fetchProfile } from "./fetchProfile.ts";
+import { getState } from "../../state/state.js";
+import { apiFetch } from "../../api/api.js";
+import { navigate } from "../../routes/navigate.js";
+import { logout } from "../auth/authService.js";
+import { fetchProfile } from "./fetchProfile.js";
 import profilGen from "./profilegen.js";
-import { editProfile } from "./editProfile.ts";
-import Notify from "../../components/ui/Notify.ts";
+import { editProfile } from "./editProfile.js";
+import Notify from "../../components/ui/Notify.js";
 
 /* ============================================================
     DISPLAY PROFILE

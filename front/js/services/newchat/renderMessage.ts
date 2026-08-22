@@ -1,12 +1,12 @@
-import { createElement } from "../../components/createElement.ts";
+import { createElement } from "../../components/createElement.js";
 import {
   resolveImagePath,
   EntityType,
   PictureType
-} from "../../utils/imagePaths.ts";
-import Imagex from "../../components/base/Imagex.ts";
-import { setupMessageActions } from "./setupMessageActions.ts";
-import { renderMedia } from "../merechats/components/renderMedia.ts";
+} from "../../utils/imagePaths.js";
+import Imagex from "../../components/base/Imagex.js";
+import { setupMessageActions } from "./setupMessageActions.js";
+import { renderMedia } from "../merechats/components/renderMedia.js";
 
 export async function renderMessage(
   msg,

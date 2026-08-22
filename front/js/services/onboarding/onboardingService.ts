@@ -1,5 +1,5 @@
-import { createOnboardingFlow } from "./createOnboardingFlow.ts";
-import { BASE_ONBOARDING_STEPS } from "./onboardingConfig.ts";
+import { createOnboardingFlow } from "./createOnboardingFlow.js";
+import { BASE_ONBOARDING_STEPS } from "./onboardingConfig.js";
 
 /**
  * Triggers the Farmium onboarding flow.

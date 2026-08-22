@@ -1,6 +1,6 @@
-import { createElement } from "../../createElement.ts"
+import { createElement } from "../../createElement.js";
 
-const hkl = `<div id="hotkey-help" style="display:none; position:fixed; bottom:10px; right:10px; background:#111; color:#fff; padding:1rem; z-index:9999; font-size:0.9rem; max-width:300px; border-radius:6px;">
+const hkl: string = `<div id="hotkey-help" style="display:none; position:fixed; bottom:10px; right:10px; background:#111; color:#fff; padding:1rem; z-index:9999; font-size:0.9rem; max-width:300px; border-radius:6px;">
   <strong>Hotkeys</strong><br><br>
   <kbd>H</kbd> Flip Video<br>
   <kbd>+</kbd> Zoom In<br>
@@ -17,25 +17,23 @@ const hkl = `<div id="hotkey-help" style="display:none; position:fixed; bottom:1
   <kbd>R</kbd> Rotate<br>
   <kbd>Alt+R</kbd> Reset Rotation<br>
   <kbd>?</kbd> Toggle this help
-</div>`
+</div>`;
 
-const hklegends = createElement("div",{},[]);
-hklegends.innerhtml = hkl;
+const hklegends: HTMLElement = createElement("div", {}, []);
+hklegends.innerHTML = hkl;
 
-export {hklegends};
-
+export { hklegends };
 
 /*
-
 document.body.appendChild(hklegends);
-window.addEventListener("keydown", async (e) => {
+window.addEventListener("keydown", async (e: KeyboardEvent): Promise<void> => {
   if (e.key === "?") {
-    const help = document.getElementById("hotkey-help");
-    if (help) help.style.display = help.style.display === "none" ? "block" : "none";
+    const help = document.getElementById("hotkey-help") as HTMLElement | null;
+    if (help) {
+      help.style.display = help.style.display === "none" ? "block" : "none";
+    }
     e.preventDefault();
     return;
   }
 });
-
-
 */

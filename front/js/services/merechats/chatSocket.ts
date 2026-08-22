@@ -1,6 +1,6 @@
-import { getState, setState, MERE_WS } from "../../state/state.ts";
-import { renderMessage } from "./components/index.ts";
-import { playSoundAlert } from "../notifications/soundAlerts.ts";
+import { getState, setState, MERE_WS } from "../../state/state.js";
+import { renderMessage } from "./components/index.js";
+import { playSoundAlert } from "../notifications/soundAlerts.js";
 
 /* -------------------------
    Module state

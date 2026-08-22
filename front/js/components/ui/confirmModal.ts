@@ -1,32 +1,44 @@
-// components/ui/confirmModal.js
-import { createElement } from "../createElement.ts";
-import Button from "../base/Button.ts";
-import Modal from "./Modal.ts";
+import { createElement } from "../createElement.js";
+import Button from "../base/Button.js";
+import Modal from "./Modal.js";
 
-export function confirmModal({ title = "Confirm", message = "" }) {
-    return new Promise(resolve => {
-        const modal = Modal({
-            title,
-            content: () =>
-                createElement("p", {}, [message]),
-            actions: () => {
-                const footer = createElement("div", {});
-                footer.append(
-                    Button("Cancel", "", {
-                        click: () => {
-                            modal.close();
-                            resolve(false);
-                        }
-                    }),
-                    Button("Confirm", "", {
-                        click: () => {
-                            modal.close();
-                            resolve(true);
-                        }
-                    })
-                );
-                return footer;
-            }
-        });
+export interface ConfirmModalOptions {
+  title?: string;
+  message?: string;
+}
+
+export function confirmModal({
+  title = "Confirm",
+  message = "",
+}: ConfirmModalOptions = {}): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    const modal = Modal({
+      title,
+      content: () => createElement("p", {}, [message]),
+      actions: () => {
+        const footer = createElement("div", {}) as HTMLDivElement;
+        footer.append(
+          Button({
+            title: "Cancel",
+            events: {
+              click: () => {
+                modal.close();
+                resolve(false);
+              },
+            },
+          }),
+          Button({
+            title: "Confirm",
+            events: {
+              click: () => {
+                modal.close();
+                resolve(true);
+              },
+            },
+          })
+        );
+        return footer;
+      },
     });
+  });
 }

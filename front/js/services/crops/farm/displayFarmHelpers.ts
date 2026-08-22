@@ -1,11 +1,11 @@
-import { apiFetch } from "../../../api/api.ts";
-import { createElement } from "../../../components/createElement.ts";
-import Button from "../../../components/base/Button.ts";
-import { navigate } from "../../../routes/navigate.ts";
-import { addToCart, isValidCartQuantity } from "../../cart/addToCart.ts";
-import { getState } from "../../../state/state.ts";
-import { EntityType } from "../../../utils/imagePaths.ts";
-import Bannerx from "../../../components/base/Bannerx.ts";
+import { apiFetch } from "../../../api/api.js";
+import { createElement } from "../../../components/createElement.js";
+import Button from "../../../components/base/Button.js";
+import { navigate } from "../../../routes/navigate.js";
+import { addToCart, isValidCartQuantity } from "../../cart/addToCart.js";
+import { getState } from "../../../state/state.js";
+import { EntityType } from "../../../utils/imagePaths.js";
+import Bannerx from "../../../components/base/Bannerx.js";
 
 const MAX_CART_QUANTITY = 99;
 

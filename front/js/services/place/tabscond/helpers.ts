@@ -1,4 +1,4 @@
-import { createElement } from "../../../components/createElement.ts";
+import { createElement } from "../../../components/createElement.js";
 
 // ─── Helpers (same as Part 1) ──────────────────────────────────────────────────
 

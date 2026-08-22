@@ -1,40 +1,40 @@
 // merchPage.js
 import {
   apiFetch
-} from "../../api/api.ts";
-import MerchCard from "../../components/ui/MerchCard.ts";
+} from "../../api/api.js";
+import MerchCard from "../../components/ui/MerchCard.js";
 import {
   Button
-} from "../../components/base/Button.ts";
+} from "../../components/base/Button.js";
 import {
   createElement
-} from "../../components/createElement.ts";
-import Modal from "../../components/ui/Modal.ts";
-import Notify from "../../components/ui/Notify.ts";
+} from "../../components/createElement.js";
+import Modal from "../../components/ui/Modal.js";
+import Notify from "../../components/ui/Notify.js";
 import {
   EntityType,
   PictureType,
   resolveImagePath
-} from "../../utils/imagePaths.ts";
+} from "../../utils/imagePaths.js";
 import {
   reportEntity
-} from "../reporting/reporting.ts";
+} from "../reporting/reporting.js";
 import {
   createFormGroup
-} from "../../components/createFormGroupEnhanced.ts";
+} from "../../components/createFormGroupEnhanced.js";
 import {
   addToCart,
   isValidCartQuantity
-} from "../cart/addToCart.ts";
+} from "../cart/addToCart.js";
 import {
   getState
-} from "../../state/state.ts";
+} from "../../state/state.js";
 import {
   showPaymentModal
-} from "../pay/pay.ts";
+} from "../pay/pay.js";
 import {
   addMerchandise
-} from "./merchAPI.ts";
+} from "./merchAPI.js";
 const MAX_CART_QUANTITY = 99;
 const MAX_PURCHASE_NOTE_LENGTH = 1000;
 /**
