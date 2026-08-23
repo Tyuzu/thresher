@@ -1,9 +1,11 @@
 import "../../../css/farmstyles/protools2.css";
 import { displayItems } from "../../services/crops/products/displayItems.js";
 
-async function Products(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayItems("product", contentContainer, isLoggedIn);
-}
 
-export { Products };
+export async function Products(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayItems("product", contentContainer, isLoggedIn);
+}

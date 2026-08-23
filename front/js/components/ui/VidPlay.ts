@@ -1,7 +1,8 @@
 import { createElement } from "../createElement.js";
 import "../../../css/ui/VidPlay.css";
-import { generateVideoPlayer } from "./vidpopHelpers.js";
-import { QualityOption, SubtitleOption, CleanableElement } from "./Vidpop.js";
+import { generateVideoPlayer, QualityOption } from "./vidpopHelpers/index.js";
+import { SubtitleSource as SubtitleOption } from "./vidpopHelpers/subtitles.js";
+import { CleanableElement } from "./Vidpop.js";
 
 interface HistoryState {
   isVidPlayOpen?: boolean;
@@ -47,7 +48,13 @@ const VidPlay = (
   let activeVideoElement: CleanableElement | null = null;
 
   // Append the generated video player asynchronously
-  generateVideoPlayer(videoSrc, poster, qualities, subtitles, videoid)
+  generateVideoPlayer(
+    videoSrc,
+    poster || "",
+    qualities,
+    subtitles,
+    videoid || "default"
+  )
     .then((videoPlayer: CleanableElement) => {
       activeVideoElement = videoPlayer;
       player.appendChild(videoPlayer);

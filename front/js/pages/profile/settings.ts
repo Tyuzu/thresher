@@ -1,9 +1,11 @@
+
 import "../../../css/inistyles/settings.css";
 import { displaySettings } from "../../services/usersettings/settingsService.js";
 
-async function Settings(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    displaySettings(isLoggedIn, contentContainer);
+export async function Settings(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displaySettings(isLoggedIn, contentContainer);
 }
-
-export { Settings };

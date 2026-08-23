@@ -12,7 +12,7 @@ import {
 } from "../../media/mediaCommon.js";
 import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.js";
 import Imagex from "../../../components/base/Imagex.js";
-import { generateVideoPlayer } from "../../../components/ui/vidpopHelpers.js";
+import { generateVideoPlayer } from "../../../components/ui/vidpopHelpers/index.js";
 import LightBox from "../../../components/ui/Lightbox.js";
 import Sightbox from "../../../components/ui/Sightbox_zoom.js";
 

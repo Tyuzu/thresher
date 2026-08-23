@@ -1,9 +1,19 @@
+
 import "../../../css/farmstyles/protools2.css";
 import { displayItems } from "../../services/crops/products/displayItems.js";
 
-async function Tools(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayItems("tool", contentContainer, isLoggedIn);
+export async function Products(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayItems("product", contentContainer, isLoggedIn);
 }
 
-export { Tools };
+export async function Tools(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayItems("tool", contentContainer, isLoggedIn);
+}

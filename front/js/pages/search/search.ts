@@ -1,9 +1,11 @@
+
 import "../../../css/inistyles/search.css";
 import { displaySearch } from "../../services/search/searchService.js";
 
-async function Search(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    displaySearch(contentContainer, isLoggedIn);
+export async function Search(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displaySearch(contentContainer);
 }
-
-export { Search };

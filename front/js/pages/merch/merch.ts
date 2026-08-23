@@ -1,8 +1,10 @@
 import { displayMerch } from "../../services/merch/merchPage.js";
 
-async function Merch(isLoggedIn, merchid, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayMerch(contentContainer, merchid, isLoggedIn);
+export async function Merch(
+  isLoggedIn: boolean,
+  merchid: string,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayMerch(contentContainer, merchid, isLoggedIn,"","");
 }
-
-export { Merch };

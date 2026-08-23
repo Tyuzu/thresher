@@ -1,11 +1,21 @@
-// Span component with enhanced functionality
+export interface NoLinkOptions {
+  title?: string;
+  id?: string;
+  events?: Record<string, EventListenerOrEventListenerObject>;
+  classes?: string;
+  styles?: Partial<CSSStyleDeclaration> | Record<string, string>;
+}
+
+/**
+ * Span component with enhanced functionality
+ */
 const NoLink = (
-  title = "Click Me", // Default title
-  id = "", // Default empty ID
-  events = {}, // Event handlers
-  classes = "",
-  styles = {"cursor":"pointer"} // Inline styles
-) => {
+  title: string = "Click Me",
+  id: string = "",
+  events: Record<string, EventListenerOrEventListenerObject> = {},
+  classes: string = "",
+  styles: Record<string, string> = { cursor: "pointer" }
+): HTMLSpanElement => {
   // Input validation
   if (typeof title !== "string" || title.trim() === "") {
     throw new Error("A valid 'title' is required for the Span component.");
@@ -18,12 +28,12 @@ const NoLink = (
 
   // Apply inline styles dynamically
   for (const [key, value] of Object.entries(styles)) {
-    span.style[key] = value;
+    span.style.setProperty(key, value);
   }
 
   // Add classes dynamically
   if (classes) {
-    span.classList.add(...classes.split(" "));
+    span.classList.add(...classes.split(" ").filter(Boolean));
   }
 
   // Add default class
@@ -31,13 +41,10 @@ const NoLink = (
 
   // Attach custom event listeners
   for (const [event, handler] of Object.entries(events)) {
-    if (typeof handler === "function") {
+    if (typeof handler === "function" || typeof handler === "object") {
       span.addEventListener(event, handler);
     }
   }
-
-  // // Add fallback for missing functionality
-  // span.onclick = span.onclick || (() => alert(`${title} span clicked!`));
 
   return span;
 };

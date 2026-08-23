@@ -1,10 +1,10 @@
 import "../../../css/inistyles/places6.css";
-import { displayPlaces } from '../../services/place/displayPlaces.js';
+import { displayPlaces } from "../../services/place/displayPlaces.js";
 
-async function Places(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-
-    displayPlaces(isLoggedIn, contentContainer)
+export async function Places(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayPlaces(isLoggedIn, contentContainer);
 }
-
-export { Places };

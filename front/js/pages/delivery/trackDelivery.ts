@@ -1,9 +1,12 @@
+
 import "../../../css/inistyles/deliveryTrack.css";
-import { DeliveryTracking } from '../../services/deliveries/DeliveryTracking.js';
+import { DeliveryTracking } from "../../services/deliveries/DeliveryTracking.js";
 
-async function TrackDelivery(isLoggedIn, er, deliveryid, contentContainer) {
-    await DeliveryTracking(contentContainer, deliveryid, isLoggedIn);
+export async function TrackDelivery(
+  isLoggedIn: boolean,
+  er: unknown,
+  deliveryid: string,
+  contentContainer: HTMLElement
+): Promise<void> {
+  await DeliveryTracking(contentContainer, deliveryid, isLoggedIn);
 }
-
-export { TrackDelivery };
-export default TrackDelivery;

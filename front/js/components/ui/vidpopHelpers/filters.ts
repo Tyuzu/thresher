@@ -1,4 +1,4 @@
-const filters = {
+export const filters: Record<string, string> = {
   "Filters": "none",
   "Grayscale": "grayscale(100%)",
   "Sepia": "sepia(100%)",
@@ -36,7 +36,7 @@ const filters = {
   "Night Vision": "brightness(120%) contrast(140%) hue-rotate(90deg)",
 };
 
-function createFilterSelector(video) {
+export function createFilterSelector(video: HTMLVideoElement): HTMLDivElement {
   const container = document.createElement("div");
 
   const label = document.createElement("label");
@@ -54,8 +54,9 @@ function createFilterSelector(video) {
     filterSelect.appendChild(option);
   });
 
-  filterSelect.addEventListener("change", (e) => {
-    video.style.filter = e.target.value;
+  filterSelect.addEventListener("change", (e: Event) => {
+    const target = e.target as HTMLSelectElement;
+    video.style.filter = target.value;
   });
 
   container.appendChild(label);
@@ -63,5 +64,3 @@ function createFilterSelector(video) {
 
   return container;
 }
-
-export { createFilterSelector };

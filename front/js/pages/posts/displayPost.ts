@@ -1,9 +1,12 @@
+
 import "../../../css/inistyles/postpage6.css";
 import "../../../css/inistyles/postpage6_new.css";
-import { displayPost } from '../../services/posts/postDisplay.js';
+import { displayPost } from "../../services/posts/postDisplay.js";
 
-async function Post(isLoggedIn, postid, contentContainer) {
-    displayPost(isLoggedIn, postid, contentContainer)
+export async function Post(
+  isLoggedIn: boolean,
+  postid: string,
+  contentContainer: HTMLElement
+): Promise<void> {
+  displayPost(isLoggedIn, postid, contentContainer);
 }
-
-export { Post };

@@ -1,9 +1,12 @@
+
 import "../../../css/inistyles/deliverypage.css";
-import { displayDelivery } from '../../services/deliveries/displayDelivery.js';
+import { displayDelivery } from "../../services/deliveries/displayDelivery.js";
 
-async function Delivery(isLoggedIn, er, deliveryid, contentContainer) {
-    await displayDelivery(contentContainer, deliveryid, isLoggedIn);
+export async function Delivery(
+  isLoggedIn: boolean,
+  er: unknown,
+  deliveryid: string,
+  contentContainer: HTMLElement
+): Promise<void> {
+  await displayDelivery(contentContainer, deliveryid, isLoggedIn);
 }
-
-export { Delivery };
-export default Delivery;

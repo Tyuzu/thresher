@@ -1,8 +1,9 @@
-import { displayDiscord} from "../../services/discord/discord.js";
+import { displayDiscord } from "../../services/discord/discord.js";
 
-async function Discord(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayDiscord(contentContainer, isLoggedIn);
+export async function Discord(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayDiscord(contentContainer, isLoggedIn);
 }
-
-export { Discord };

@@ -1,8 +1,9 @@
 import { createRecipe } from "../../services/recipes/createOrEditRecipe.js";
 
-async function CreateRecipe(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    createRecipe(contentContainer, isLoggedIn);
+export async function CreateRecipe(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  createRecipe(contentContainer);
 }
-
-export { CreateRecipe };

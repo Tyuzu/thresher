@@ -1,9 +1,11 @@
-import "../../../css/inistyles/onechat1.css";
-import { displayOneChat } from "../../services/merechats/onechat";
 
-async function OneChatPage(isLoggedIn,  chatid, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayOneChat(contentContainer, chatid, isLoggedIn);
+import { displayOneChat } from "../../services/merechats/onechat.js";
+
+export async function OneChatPage(
+  isLoggedIn: boolean,
+  chatid: string,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayOneChat(contentContainer, chatid);
 }
-
-export { OneChatPage };

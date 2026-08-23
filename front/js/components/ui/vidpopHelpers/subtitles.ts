@@ -1,12 +1,34 @@
 import { parseVTT } from "./vutils.js";
 
-async function setupSubtitles(video, subtitles, subtitleContainer) {
-  const subtitleTracks = await Promise.all(
+export interface SubtitleSource {
+  label: string;
+  srclang: string;
+  src: string;
+}
+
+export interface VTTItem {
+  start: number;
+  end: number;
+  text: string;
+}
+
+export interface SubtitleTrack extends SubtitleSource {
+  data: VTTItem[];
+}
+
+export async function setupSubtitles(
+  video: HTMLVideoElement,
+  subtitles: SubtitleSource[],
+  subtitleContainer: HTMLElement
+): Promise<SubtitleTrack[]> {
+  const subtitleTracks: SubtitleTrack[] = await Promise.all(
     subtitles.map(async (subtitle) => ({
       label: subtitle.label,
       srclang: subtitle.srclang,
       src: subtitle.src,
-      data: await fetch(subtitle.src).then(res => res.text()).then(parseVTT),
+      data: await fetch(subtitle.src)
+        .then((res) => res.text())
+        .then(parseVTT),
     }))
   );
 
@@ -21,7 +43,9 @@ async function setupSubtitles(video, subtitles, subtitleContainer) {
 
     const currentTime = video.currentTime;
     const track = subtitleTracks[currentSubtitleTrackIndex];
-    const activeSubtitle = track.data.find(s => currentTime >= s.start && currentTime <= s.end);
+    const activeSubtitle = track.data.find(
+      (s) => currentTime >= s.start && currentTime <= s.end
+    );
 
     subtitleContainer.textContent = activeSubtitle ? activeSubtitle.text : "";
     subtitleContainer.style.display = activeSubtitle ? "block" : "none";
@@ -29,5 +53,3 @@ async function setupSubtitles(video, subtitles, subtitleContainer) {
 
   return subtitleTracks;
 }
-
-export { setupSubtitles };

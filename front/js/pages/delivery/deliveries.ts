@@ -1,10 +1,13 @@
+
 import "../../../css/inistyles/deliveries.css";
 import { displayDeliveries } from "../../services/deliveries/deliveries.js";
 
-async function Deliveries(isLoggedIn, contentContainer) {
+export async function Deliveries(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
   contentContainer.innerHTML = "";
   displayDeliveries(contentContainer, isLoggedIn);
 }
 
-export { Deliveries };
 export default Deliveries;

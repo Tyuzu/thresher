@@ -1,8 +1,9 @@
 import { createEvent } from "../../services/event/creadit.js";
 
-async function CreateEvent(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    createEvent(isLoggedIn, contentContainer);
+export async function CreateEvent(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  createEvent(isLoggedIn, contentContainer);
 }
-
-export { CreateEvent };

@@ -1,9 +1,13 @@
+
 import "../../../css/farmstyles/productpage.css";
 import { displayProduct } from "../../services/product/productPage.js";
 
-async function Product(isLoggedIn, productType, productId, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayProduct(isLoggedIn, productType, productId, contentContainer);
+export async function Product(
+  isLoggedIn: boolean,
+  productType: string,
+  productId: string,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayProduct(isLoggedIn, productType, productId, contentContainer);
 }
-
-export { Product };

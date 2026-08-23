@@ -1,8 +1,9 @@
 import { CreateDelivery } from "../../services/deliveries/createDelivery.js";
 
-async function Createdelivery(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    CreateDelivery(contentContainer, isLoggedIn);
+export async function Createdelivery(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  CreateDelivery(contentContainer, isLoggedIn);
 }
-
-export { Createdelivery };

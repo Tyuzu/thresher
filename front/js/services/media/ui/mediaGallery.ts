@@ -16,7 +16,7 @@ import Imagex from "../../../components/base/Imagex.js";
 import { handleTranslationToggle } from "../../fanmade/translate.js";
 import Sightbox from "../../../components/ui/Sightbox_zoom.js";
 import LightBox from "../../../components/ui/Lightbox.js";
-import { generateVideoPlayer } from "../../../components/ui/vidpopHelpers.js";
+import { generateVideoPlayer } from "../../../components/ui/vidpopHelpers/index.js";
 
 /* ------------------------------------------------------
    Helper: Determine media type

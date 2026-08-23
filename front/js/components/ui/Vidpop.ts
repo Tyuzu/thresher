@@ -3,19 +3,14 @@ import "../../../css/ui/Sightbox.css";
 import { createElement } from "../createElement.js";
 import { createIconButton } from "../../utils/svgIconButton.js";
 import { xSVG } from "../svgs.js";
-import { generateVideoPlayer } from "./vidpopHelpers.js";
+import {
+  generateVideoPlayer,
+  QualityOption,
+} from "./vidpopHelpers/index.js";
+import { SubtitleSource as SubtitleOption } from "./vidpopHelpers/subtitles.js";
 
-export interface QualityOption {
-  label: string;
-  src: string;
-}
 
-export interface SubtitleOption {
-  label: string;
-  src: string;
-  srclang: string;
-  default?: boolean;
-}
+export type { QualityOption, SubtitleOption };
 
 export interface VidpopOptions {
   poster?: string | null;
@@ -70,7 +65,13 @@ const Vidpop = (
   let loadedVideoPlayer: CleanableElement | null = null;
 
   // 3. Append the generated video player asynchronously
-  generateVideoPlayer(mediaSrc, poster, qualities, subtitles, videoid)
+  generateVideoPlayer(
+    mediaSrc,
+    poster || "",
+    qualities,
+    subtitles,
+    videoid || "default"
+  )
     .then((videoPlayer: CleanableElement) => {
       // Edge case safety verification
       if (!sightbox.parentNode) {

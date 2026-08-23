@@ -1,9 +1,11 @@
+
 import "../../../css/inistyles/posts5.css";
 import { displayPosts } from "../../services/posts/PostsService.js";
 
-async function Posts(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayPosts(contentContainer, isLoggedIn);
+export async function Posts(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayPosts(contentContainer, isLoggedIn);
 }
-
-export { Posts };

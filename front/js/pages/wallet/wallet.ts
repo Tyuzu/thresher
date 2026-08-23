@@ -1,9 +1,11 @@
+
 import "../../../css/inistyles/wallet1.css";
 import { displayWallet } from "../../services/pay/walletService.js";
 
-async function Wallet(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayWallet(isLoggedIn, contentContainer);
+export async function Wallet(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayWallet(isLoggedIn, contentContainer);
 }
-
-export { Wallet };

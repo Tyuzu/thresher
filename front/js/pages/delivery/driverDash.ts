@@ -1,10 +1,11 @@
+
 import "../../../css/inistyles/driverDash.css";
 import { DriverDashboard } from "../../services/deliveries/DriverDashboard.js";
 
-async function DriverDash(isLoggedIn, contentContainer) {
+export async function DriverDash(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
   contentContainer.innerHTML = "";
   DriverDashboard(contentContainer, isLoggedIn);
 }
-
-export { DriverDash };
-export default DriverDash;

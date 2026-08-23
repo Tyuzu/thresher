@@ -1,8 +1,9 @@
 import { createPost } from "../../services/posts/createOrEditPost.js";
 
-async function CreatePost(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    createPost(isLoggedIn, contentContainer);
+export async function CreatePost(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  createPost(isLoggedIn, contentContainer);
 }
-
-export { CreatePost };

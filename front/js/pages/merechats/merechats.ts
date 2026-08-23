@@ -1,10 +1,12 @@
+
 import "../../../css/inistyles/mecaht.css";
 import "../../../css/inistyles/onechat1.css";
-import { displayChats } from "../../services/merechats/merechat";
+import { displayChats } from "../../services/merechats/merechat.js";
 
-async function MeChats(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayChats(contentContainer, isLoggedIn);
+export async function MeChats(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayChats(contentContainer, isLoggedIn);
 }
-
-export { MeChats };

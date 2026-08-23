@@ -1,9 +1,12 @@
+
 import "../../../css/farmstyles/recipepage5.css";
 import { displayRecipe } from "../../services/recipes/recipePage.js";
 
-async function Recipe(isLoggedIn, recipe, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayRecipe(contentContainer, isLoggedIn, recipe);
+export async function Recipe(
+  isLoggedIn: boolean,
+  recipe: string | Record<string, unknown>,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayRecipe(contentContainer, isLoggedIn, recipe);
 }
-
-export { Recipe };
