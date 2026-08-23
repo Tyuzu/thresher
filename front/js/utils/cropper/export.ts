@@ -1,5 +1,19 @@
-// export.js
-export function toBlobAsync(canvas, mimeType = "image/jpeg", quality = 0.92) {
+import Cropper from "cropperjs";
+import { IFilterManager } from "./types.js";
+
+export interface ExportBlobOptions {
+  cropper: Cropper;
+  cropWidth: number;
+  cropHeight: number;
+  filterManager?: IFilterManager | null;
+  quality?: number;
+}
+
+export function toBlobAsync(
+  canvas: HTMLCanvasElement,
+  mimeType = "image/jpeg",
+  quality = 0.92
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -12,7 +26,10 @@ export function toBlobAsync(canvas, mimeType = "image/jpeg", quality = 0.92) {
   });
 }
 
-export function exportWithFilters(croppedCanvas, filterManager) {
+export function exportWithFilters(
+  croppedCanvas: HTMLCanvasElement,
+  filterManager?: IFilterManager | null
+): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = croppedCanvas.width;
   canvas.height = croppedCanvas.height;
@@ -21,22 +38,27 @@ export function exportWithFilters(croppedCanvas, filterManager) {
   if (!ctx) return croppedCanvas;
 
   ctx.save();
-  
-  // Safely apply canvas filters if supported
   if (filterManager && "filter" in ctx) {
     filterManager.applyCanvasFilters(ctx);
   }
-  
+
   ctx.drawImage(croppedCanvas, 0, 0, canvas.width, canvas.height);
   ctx.restore();
 
   return canvas;
 }
 
-export async function exportBlob({ cropper, cropWidth, cropHeight, filterManager, quality = 0.92 }) {
-  if (!cropper) throw new Error("Cropper instance is missing.");
+export async function exportBlob({
+  cropper,
+  cropWidth,
+  cropHeight,
+  filterManager,
+  quality = 0.92
+}: ExportBlobOptions): Promise<Blob> {
+  if (!cropper) {
+    throw new Error("Cropper instance is missing.");
+  }
 
-  // Get cropped canvas from Cropper.js
   const canvas = cropper.getCroppedCanvas({
     width: cropWidth,
     height: cropHeight,
@@ -51,7 +73,7 @@ export async function exportBlob({ cropper, cropWidth, cropHeight, filterManager
   const filteredCanvas = exportWithFilters(canvas, filterManager);
   const blob = await toBlobAsync(filteredCanvas, "image/jpeg", quality);
 
-  // Prevent memory leaks by zeroing canvas dimensions
+  // Prevent memory leaks on large canvas buffers
   canvas.width = 0;
   canvas.height = 0;
   filteredCanvas.width = 0;

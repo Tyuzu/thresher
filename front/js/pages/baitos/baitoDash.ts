@@ -1,8 +1,9 @@
 import "../../../css/inistyles/baitodash.css";
-import { displayBaitoDash } from '../../services/baitos/dash/BaitoDash.js';
+import { displayBaitoDash } from "../../services/baitos/dash/BaitoDash.js";
 
-async function BaitoDash(isLoggedIn, contentContainer) {
-    displayBaitoDash(isLoggedIn, contentContainer)
+export async function BaitoDash(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  displayBaitoDash(isLoggedIn, contentContainer);
 }
-
-export { BaitoDash };

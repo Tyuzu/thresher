@@ -1,4 +1,6 @@
-export const eventsRoutes = [
+import { AppRoute } from "./routeTypes.js";
+
+export const eventsRoutes: AppRoute[] = [
   /* =======================================================
      EVENTS
   ======================================================= */

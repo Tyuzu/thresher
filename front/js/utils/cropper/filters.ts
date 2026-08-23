@@ -1,115 +1,66 @@
+import { Adjustments, AdjustmentKey, ControlRegistration, IFilterManager } from "./types.js";
 import { DEFAULT_ADJUSTMENTS, CONTROL_CONFIG, PRESETS } from "./constants.js";
 
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
+export class FilterManager implements IFilterManager {
+  public adjustments: Adjustments = { ...DEFAULT_ADJUSTMENTS };
+  private stage: HTMLElement | null = null;
+  private controls = new Map<AdjustmentKey, ControlRegistration>();
 
-export class FilterManager {
-  constructor() {
-    this.adjustments = { ...DEFAULT_ADJUSTMENTS };
-    this.controlRefs = {};
-    this.stage = null;
-  }
-
-  setStage(stage) {
+  public setStage(stage: HTMLElement): void {
     this.stage = stage;
   }
 
-  registerControl(key, refs) {
-    this.controlRefs[key] = refs;
+  public registerControl(key: AdjustmentKey, controls: ControlRegistration): void {
+    this.controls.set(key, controls);
   }
 
-  formatControlValue(key, value) {
-    switch (key) {
-      case "brightness":
-      case "contrast":
-      case "saturation":
-      case "grayscale":
-      case "sepia":
-      case "invert":
-        return `${Math.round(value * 100)}%`;
-      case "blur":
-        return `${Number(value).toFixed(1)}px`;
-      case "hueRotate":
-        return `${Math.round(value)}°`;
-      default:
-        return String(value);
-    }
-  }
-
-  buildFilterString() {
-    const adj = this.adjustments;
-    return [
-      `brightness(${adj.brightness})`,
-      `contrast(${adj.contrast})`,
-      `saturate(${adj.saturation})`,
-      `blur(${adj.blur}px)`,
-      `hue-rotate(${adj.hueRotate}deg)`,
-      `grayscale(${adj.grayscale})`,
-      `sepia(${adj.sepia})`,
-      `invert(${adj.invert})`
-    ].join(" ");
-  }
-
-  applyPreviewFilters() {
-    if (!this.stage) return;
-    const filter = this.buildFilterString();
-    
-    // Target main cropper image target explicitly rather than all dynamic images
-    const cropperImage = this.stage.querySelector(".cropper-container .cropper-canvas img");
-    if (cropperImage) {
-      cropperImage.style.filter = filter;
-    }
-  }
-
-  applyCanvasFilters(ctx) {
-    if (ctx && "filter" in ctx) {
-      ctx.filter = this.buildFilterString();
-    }
-  }
-
-  setAdjustment(key, value) {
-    if (!(key in this.adjustments)) return;
-
+  public formatControlValue(key: AdjustmentKey, value: number): string {
     const config = CONTROL_CONFIG[key];
-    const nextValue = clamp(Number(value), config.min, config.max);
-    this.adjustments[key] = nextValue;
+    if (config.unit === "%") return `${Math.round(value * 100)}%`;
+    if (config.unit === "deg") return `${Math.round(value)}°`;
+    return `${value.toFixed(2)}${config.unit}`;
+  }
 
-    const ref = this.controlRefs[key];
-    if (ref) {
-      ref.input.value = String(nextValue);
-      ref.valueLabel.textContent = this.formatControlValue(key, nextValue);
+  public setAdjustment(key: AdjustmentKey, value: number | string): void {
+    const numericValue = typeof value === "string" ? parseFloat(value) : value;
+    this.adjustments[key] = numericValue;
+    
+    const reg = this.controls.get(key);
+    if (reg) {
+      reg.input.value = String(numericValue);
+      reg.valueLabel.textContent = this.formatControlValue(key, numericValue);
     }
-
     this.applyPreviewFilters();
   }
 
-  setAdjustments(values) {
-    Object.entries(values).forEach(([key, value]) => {
-      if (key in this.adjustments) {
-        this.adjustments[key] = value;
-      }
+  public applyPreset(presetName: string): void {
+    const preset = PRESETS[presetName];
+    if (!preset) return;
+    (Object.keys(preset) as AdjustmentKey[]).forEach((key) => {
+      this.setAdjustment(key, preset[key]);
     });
-
-    this.syncControls();
-    this.applyPreviewFilters();
   }
 
-  resetAdjustments() {
-    this.setAdjustments(DEFAULT_ADJUSTMENTS);
+  public resetAdjustments(): void {
+    (Object.keys(DEFAULT_ADJUSTMENTS) as AdjustmentKey[]).forEach((key) => {
+      this.setAdjustment(key, DEFAULT_ADJUSTMENTS[key]);
+    });
   }
 
-  applyPreset(name) {
-    const preset = PRESETS[name];
-    if (preset) {
-      this.setAdjustments(preset);
+  public getFilterString(): string {
+    const a = this.adjustments;
+    return `brightness(${a.brightness}) contrast(${a.contrast}) saturate(${a.saturation}) blur(${a.blur}px) hue-rotate(${a.hueRotate}deg) grayscale(${a.grayscale}) sepia(${a.sepia}) invert(${a.invert})`;
+  }
+
+  public applyPreviewFilters(): void {
+    if (!this.stage) return;
+    const imgWrapper = this.stage.querySelector<HTMLElement>(".cropper-container");
+    if (imgWrapper) {
+      imgWrapper.style.filter = this.getFilterString();
     }
   }
 
-  syncControls() {
-    Object.entries(this.controlRefs).forEach(([key, ref]) => {
-      ref.input.value = String(this.adjustments[key]);
-      ref.valueLabel.textContent = this.formatControlValue(key, this.adjustments[key]);
-    });
+  public applyCanvasFilters(ctx: CanvasRenderingContext2D): void {
+    ctx.filter = this.getFilterString();
   }
 }

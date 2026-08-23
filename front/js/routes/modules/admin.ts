@@ -1,4 +1,13 @@
-export const adminRoutes = [
+import { RouteMeta } from "./routeTypes.js";
+
+export interface AdminRoute {
+  path: string;
+  component: () => Promise<unknown>;
+  functionName: string;
+  meta: RouteMeta;
+}
+
+export const adminRoutes: AdminRoute[] = [
   /* =======================================================
      ADMIN
   ======================================================= */

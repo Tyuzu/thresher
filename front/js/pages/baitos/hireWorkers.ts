@@ -1,8 +1,10 @@
+
 import "../../../css/inistyles/workers1.css";
-import { displayHireWorkers } from '../../services/baitos/workers/displayHires.js';
+import { displayHireWorkers } from "../../services/baitos/workers/displayHires.js";
 
-async function HireWorkers(isLoggedIn, contentContainer) {
-    displayHireWorkers(isLoggedIn, contentContainer);
+export async function HireWorkers(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  displayHireWorkers(isLoggedIn, contentContainer);
 }
-
-export { HireWorkers };

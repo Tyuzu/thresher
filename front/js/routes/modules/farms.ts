@@ -1,4 +1,6 @@
-export const farmsRoutes = [
+import { AppRoute } from "./routeTypes.js";
+
+export const farmsRoutes: AppRoute[] = [
   /* =======================================================
      DASHBOARD
   ======================================================= */

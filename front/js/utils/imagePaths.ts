@@ -23,6 +23,7 @@ export const EntityType = {
   USER: "user",
   VENDOR: "vendor",
   WORKER: "worker",
+  ADVT: "advt",
 } as const;
 
 export type EntityType = (typeof EntityType)[keyof typeof EntityType];
@@ -105,9 +106,9 @@ function isLocalOrPrivateHost(host: string): boolean {
  * Resolves safe asset paths or converts remote URLs into proxied asset paths.
  */
 export function resolveImagePath(
-  entityType: EntityType,
-  pictureType: PictureType,
-  filename: string,
+  entityType: EntityType | unknown,
+  pictureType: PictureType | unknown,
+  filename: unknown,
   fallback: string = "/assets/fallbacks.png"
 ): string {
   if (
@@ -115,6 +116,8 @@ export function resolveImagePath(
     !pictureType ||
     !filename ||
     typeof filename !== "string" ||
+    typeof entityType !== "string" ||
+    typeof pictureType !== "string" ||
     !VALID_ENTITY_TYPES.has(entityType) ||
     !VALID_PICTURE_TYPES.has(pictureType)
   ) {
@@ -159,24 +162,27 @@ export function resolveImagePath(
     return fallback;
   }
 
-  const folder = PictureSubfolders[pictureType] || "misc";
+  const validPictureType = pictureType as PictureType;
+  const validEntityType = entityType as EntityType;
+
+  const folder = PictureSubfolders[validPictureType] || "misc";
   let finalName = cleanFilename;
 
   // Append missing file extension based on type
   const hasExt = /\.[a-zA-Z0-9]+$/.test(finalName);
   if (!hasExt) {
-    switch (pictureType) {
+    switch (validPictureType) {
       case PictureType.THUMB:
       case PictureType.POSTER:
         finalName += ".jpg";
         break;
       default:
-        if (isImageType(pictureType)) {
+        if (isImageType(validPictureType)) {
           finalName += ".png";
         }
         break;
     }
   }
 
-  return `${baseUrl}/uploads/${entityType}/${folder}/${finalName}`;
+  return `${baseUrl}/uploads/${validEntityType}/${folder}/${finalName}`;
 }

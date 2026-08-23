@@ -1,4 +1,6 @@
-export const chatsRoutes = [
+import { AppRoute } from "./routeTypes.js";
+
+export const chatsRoutes: AppRoute[] = [
   /* =======================================================
      CHATS
   ======================================================= */

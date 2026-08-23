@@ -1,8 +1,16 @@
-import "../../../css/farmstyles/farmpage3.css";
-import { displayFarm } from '../../services/crops/farm/farmDisplay.js';
 
-async function Farm(isLoggedIn, farm, contentContainer) {
-    displayFarm(isLoggedIn, farm.id, contentContainer);
+import "../../../css/farmstyles/farmpage3.css";
+import { displayFarm } from "../../services/crops/farm/farmDisplay.js";
+
+export interface FarmTarget {
+  id: string;
+  [key: string]: unknown;
 }
 
-export { Farm };
+export async function Farm(
+  isLoggedIn: boolean,
+  farm: FarmTarget,
+  contentContainer: HTMLElement
+): Promise<void> {
+  displayFarm(isLoggedIn, farm.id, contentContainer);
+}

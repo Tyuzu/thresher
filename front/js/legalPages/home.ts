@@ -1,13 +1,15 @@
 import { createElement } from "../components/createElement.js";
 
-function section(title, text) {
+type RouteContainer = HTMLElement;
+
+function section(title: string, text: string): HTMLElement {
   return createElement("section", {}, [
     createElement("h2", {}, title),
     createElement("p", {}, text),
   ]);
 }
 
-async function About(concon) {
+export async function About(concon: RouteContainer): Promise<void> {
   concon.append(
     createElement("div", {}, [
       createElement("h1", {}, "About Us"),
@@ -23,7 +25,7 @@ async function About(concon) {
   );
 }
 
-async function Contact(concon) {
+export async function Contact(concon: RouteContainer): Promise<void> {
   concon.append(
     createElement("div", {}, [
       createElement("h1", {}, "Contact"),
@@ -34,7 +36,7 @@ async function Contact(concon) {
   );
 }
 
-async function Faq(concon) {
+export async function Faq(concon: RouteContainer): Promise<void> {
   concon.append(
     createElement("div", {}, [
       createElement("h1", {}, "FAQ"),
@@ -45,7 +47,7 @@ async function Faq(concon) {
   );
 }
 
-async function Terms(concon) {
+export async function Terms(concon: RouteContainer): Promise<void> {
   concon.append(
     createElement("div", {}, [
       createElement("h1", {}, "Terms of Service"),
@@ -61,7 +63,7 @@ async function Terms(concon) {
   );
 }
 
-async function Privacy(concon) {
+export async function Privacy(concon: RouteContainer): Promise<void> {
   concon.append(
     createElement("div", {}, [
       createElement("h1", {}, "Privacy Policy"),
@@ -77,7 +79,7 @@ async function Privacy(concon) {
   );
 }
 
-async function Refund(concon) {
+export async function Refund(concon: RouteContainer): Promise<void> {
   concon.append(
     createElement("div", {}, [
       createElement("h1", {}, "Refund Policy"),
@@ -93,7 +95,7 @@ async function Refund(concon) {
   );
 }
 
-async function Shipping(concon) {
+export async function Shipping(concon: RouteContainer): Promise<void> {
   concon.append(
     createElement("div", {}, [
       createElement("h1", {}, "Shipping Policy"),
@@ -109,7 +111,7 @@ async function Shipping(concon) {
   );
 }
 
-async function Returns(concon) {
+export async function Returns(concon: RouteContainer): Promise<void> {
   concon.append(
     createElement("div", {}, [
       createElement("h1", {}, "Returns"),
@@ -125,7 +127,7 @@ async function Returns(concon) {
   );
 }
 
-async function Disclaimer(concon) {
+export async function Disclaimer(concon: RouteContainer): Promise<void> {
   concon.append(
     createElement("div", {}, [
       createElement("h1", {}, "Disclaimer"),
@@ -141,7 +143,7 @@ async function Disclaimer(concon) {
   );
 }
 
-async function Blog(concon) {
+export async function Blog(concon: RouteContainer): Promise<void> {
   concon.append(
     createElement("div", {}, [
       createElement("h1", {}, "Blog"),
@@ -152,16 +154,3 @@ async function Blog(concon) {
     ])
   );
 }
-
-export {
-  About,
-  Contact,
-  Faq,
-  Terms,
-  Privacy,
-  Refund,
-  Shipping,
-  Returns,
-  Disclaimer,
-  Blog,
-};

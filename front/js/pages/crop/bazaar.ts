@@ -1,8 +1,10 @@
+
 import { displayBazarBhav } from "../../services/crops/bazarbhav/bazaarBhav.js";
 
-async function BazaarBhav(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayBazarBhav(contentContainer, isLoggedIn);
+export async function BazaarBhav(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayBazarBhav(contentContainer);
 }
-
-export { BazaarBhav };

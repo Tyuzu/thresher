@@ -1,4 +1,8 @@
-export const baitoRoutes = [
+import { AppRoute } from "./routeTypes.js";
+
+
+
+export const baitoRoutes: AppRoute[] = [
   /* =======================================================
      BAITO
   ======================================================= */

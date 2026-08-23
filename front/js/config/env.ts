@@ -3,17 +3,20 @@
  * Vite + Netlify same-origin API configuration.
  */
 
-export const webSiteName = "Agrinet";
+export const webSiteName: string = "Agrinet";
+
+// Access Vite environment variables safely without TypeScript compiler errors
+const env = (import.meta as unknown as { env: Record<string, string | undefined> }).env || {};
 
 // Normalize base URLs by removing trailing slashes
-const MAIN_URL = (import.meta.env.VITE_MAIN_URL || "").replace(/\/+$/, "");
-const BANNERDROP_URL = (import.meta.env.VITE_BANNERDROP_URL || "").replace(/\/+$/, "");
-const MODE = import.meta.env.MODE || "development";
+const MAIN_URL: string = (env.VITE_MAIN_URL || "").replace(/\/+$/, "");
+const BANNERDROP_URL: string = (env.VITE_BANNERDROP_URL || "").replace(/\/+$/, "");
+const MODE: string = env.MODE || "development";
 
 /**
  * Safely construct relative or absolute URLs.
  */
-const buildURL = (baseURL, path) => {
+const buildURL = (baseURL: string, path: string): string => {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return baseURL ? `${baseURL}${normalizedPath}` : normalizedPath;
 };
@@ -21,7 +24,7 @@ const buildURL = (baseURL, path) => {
 /**
  * Safely compute WebSocket URL with SSR & Relative Path fallbacks.
  */
-const getWebSocketURL = () => {
+const getWebSocketURL = (): string => {
   // 1. Explicit full API URL configured (e.g., http://localhost:4000)
   if (MAIN_URL) {
     try {
@@ -44,12 +47,35 @@ const getWebSocketURL = () => {
   return "";
 };
 
-const WS_URL = getWebSocketURL();
+const WS_URL: string = getWebSocketURL();
+
+export interface ApiConfig {
+  MAIN_URL: string;
+  BANNERDROP_URL: string;
+  API_URL: string;
+  STRIPE_URL: string;
+  AD_URL: string;
+  SEARCH_URL: string;
+  MERE_URL: string;
+  MUSIC_URL: string;
+  LIVE_URL: string;
+  EMBED_URL: string;
+  MERE_WS: string;
+  CHAT_URL: string;
+  CHAT_WS: string;
+  SRC_URL: string;
+  FILEDROP_URL: string;
+  CHATDROP_URL: string;
+  isDev: boolean;
+  isStaging: boolean;
+  isProduction: boolean;
+  environment: string;
+}
 
 /**
  * Centralized API configuration.
  */
-export const apiConfig = {
+export const apiConfig: ApiConfig = {
   /* Base URLs */
   MAIN_URL,
   BANNERDROP_URL,

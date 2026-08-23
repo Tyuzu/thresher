@@ -1,15 +1,17 @@
 import { JS_SRC, CSS_HREF } from "./constants.js";
 import { createElement } from "../../components/createElement.js";
 
-let scriptPromise = null;
-let cssPromise = null;
+let scriptPromise: Promise<HTMLScriptElement> | null = null;
+let cssPromise: Promise<HTMLLinkElement> | null = null;
 
-export function loadScript(src = JS_SRC) {
-  if (window.Cropper) return Promise.resolve();
+export function loadScript(src: string = JS_SRC): Promise<HTMLScriptElement> {
+  if (window.Cropper) {
+    return Promise.resolve(document.createElement("script"));
+  }
   if (scriptPromise) return scriptPromise;
 
-  scriptPromise = new Promise((resolve, reject) => {
-    const script = createElement("script", { src });
+  scriptPromise = new Promise<HTMLScriptElement>((resolve, reject) => {
+    const script = createElement("script", { src }) as HTMLScriptElement;
     script.async = true;
 
     script.addEventListener("load", () => resolve(script), { once: true });
@@ -24,11 +26,11 @@ export function loadScript(src = JS_SRC) {
   return scriptPromise;
 }
 
-export function loadCss(href = CSS_HREF) {
+export function loadCss(href: string = CSS_HREF): Promise<HTMLLinkElement> {
   if (cssPromise) return cssPromise;
 
-  cssPromise = new Promise((resolve, reject) => {
-    const link = createElement("link", { rel: "stylesheet", href });
+  cssPromise = new Promise<HTMLLinkElement>((resolve, reject) => {
+    const link = createElement("link", { rel: "stylesheet", href }) as HTMLLinkElement;
 
     link.addEventListener("load", () => resolve(link), { once: true });
     link.addEventListener("error", () => {
@@ -42,6 +44,6 @@ export function loadCss(href = CSS_HREF) {
   return cssPromise;
 }
 
-export async function ensureCropper() {
+export async function ensureCropper(): Promise<void> {
   await Promise.all([loadCss(), loadScript()]);
 }

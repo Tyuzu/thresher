@@ -1,72 +1,81 @@
-import Datex from "../components/base/Datex";
+import Datex from "../components/base/Datex.js";
+
+/* =========================
+   TYPES & INTERFACES
+========================= */
+export interface InputValidationRule<T = unknown> {
+  value: T;
+  validator: (val: T) => boolean;
+  message: string;
+}
 
 /**
  * Safely escapes HTML characters to prevent DOM-based XSS.
  * Optimized to avoid DOM generation/memory thrashing.
  */
-function escapeHTML(str) {
-    if (typeof str !== 'string') return '';
-    return str.replace(/[&<>"']/g, (match) => {
-        switch (match) {
-            case '&': return '&amp;';
-            case '<': return '&lt;';
-            case '>': return '&gt;';
-            case '"': return '&quot;';
-            case "'": return '&#x27;';
-            default: return match;
-        }
-    });
+function escapeHTML(str: unknown): string {
+  if (typeof str !== "string") return "";
+  return str.replace(/[&<>"']/g, (match: string) => {
+    switch (match) {
+      case "&": return "&amp;";
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case '"': return "&quot;";
+      case "'": return "&#x27;";
+      default: return match;
+    }
+  });
 }
 
 /**
  * Validates a list of inputs against custom rules.
  * Returns a newline-separated string of errors, or null if all pass.
  */
-function validateInputs(inputs) {
-    if (!Array.isArray(inputs)) return null;
-    
-    const errors = [];
+function validateInputs(inputs: InputValidationRule[]): string | null {
+  if (!Array.isArray(inputs)) return null;
 
-    inputs.forEach(({ value, validator, message }) => {
-        if (typeof validator === 'function' && !validator(value)) {
-            errors.push(message);
-        }
-    });
+  const errors: string[] = [];
 
-    return errors.length ? errors.join('\n') : null;
+  inputs.forEach(({ value, validator, message }) => {
+    if (typeof validator === "function" && !validator(value)) {
+      errors.push(message);
+    }
+  });
+
+  return errors.length ? errors.join("\n") : null;
 }
 
 /* =========================
    VALIDATORS
 ========================= */
-const isValidUsername = username => 
-    typeof username === 'string' && username.length >= 3 && username.length <= 20;
+const isValidUsername = (username: unknown): username is string =>
+  typeof username === "string" && username.length >= 3 && username.length <= 20;
 
-const isValidEmail = email => 
-    typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+const isValidEmail = (email: unknown): email is string =>
+  typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 
-const isValidPassword = password => 
-    typeof password === 'string' && password.length >= 6;
+const isValidPassword = (password: unknown): password is string =>
+  typeof password === "string" && password.length >= 6;
 
 /* =========================
    FORMATTERS & HANDLERS
 ========================= */
-function formatDate(dateString) {
-    return dateString ? Datex(dateString) : null;
+function formatDate(dateString: string | null | undefined): string | null {
+  return dateString ? Datex(dateString, true) : null;
 }
 
-function handleError(errorMessage) {
-    // Extract message if an Error object is accidentally passed
-    const msg = errorMessage instanceof Error ? errorMessage.message : errorMessage;
-    console.error(`[App Error]: ${msg}`);
+function handleError(errorMessage: unknown): void {
+  // Extract message if an Error object is accidentally passed
+  const msg = errorMessage instanceof Error ? errorMessage.message : String(errorMessage);
+  console.error(`[App Error]: ${msg}`);
 }
 
-export { 
-    escapeHTML, 
-    validateInputs, 
-    isValidUsername, 
-    isValidEmail, 
-    isValidPassword, 
-    handleError, 
-    formatDate 
+export {
+  escapeHTML,
+  validateInputs,
+  isValidUsername,
+  isValidEmail,
+  isValidPassword,
+  handleError,
+  formatDate
 };

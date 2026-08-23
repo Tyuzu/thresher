@@ -1,8 +1,10 @@
+
 import { displayCreateBaitoProfile } from "../../services/baitos/create/createBaitoProfile.js";
 
-async function CreateBaitoProfile(isLoggedIn, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayCreateBaitoProfile(isLoggedIn, contentContainer);
+export async function CreateBaitoProfile(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayCreateBaitoProfile(isLoggedIn, contentContainer);
 }
-
-export { CreateBaitoProfile };

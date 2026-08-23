@@ -1,4 +1,6 @@
-export const placesRoutes = [
+import { AppRoute } from "./routeTypes.js";
+
+export const placesRoutes: AppRoute[] = [
   /* =======================================================
      MAP & PLACES
   ======================================================= */

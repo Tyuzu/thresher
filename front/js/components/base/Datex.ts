@@ -20,7 +20,7 @@ function Datex(
     return formatted;
   }
 
-  return createElement("span", {}, [formatted]);
+  return createElement("span", {}, [formatted]) as HTMLElement;
 }
 
 export default Datex;

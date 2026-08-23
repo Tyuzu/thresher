@@ -1,6 +1,26 @@
 // src/config/domainFeatures.ts
 
-export const DOMAIN_FEATURE_MAP = {
+export type FeatureKey =
+  | "core"
+  | "farms"
+  | "places"
+  | "events"
+  | "baito"
+  | "chats"
+  | "admin"
+  | "social"
+  | "ALL"
+  | string;
+
+export interface DomainMetadata {
+  title: string;
+  description: string;
+  theme: string;
+  logo: string;
+  favicon: string;
+}
+
+export const DOMAIN_FEATURE_MAP: Record<string, FeatureKey[]> = {
   "farms.myapp.com": ["core", "farms", "chats"],
   "places.myapp.com": ["core", "places", "chats", "events", "baito"],
   "events.myapp.com": ["core", "events"],
@@ -16,7 +36,7 @@ export const DOMAIN_FEATURE_MAP = {
 };
 
 /** Reverse lookup map linking feature keys back to their domain hostnames */
-const FEATURE_TO_DOMAIN_MAP = {
+const FEATURE_TO_DOMAIN_MAP: Record<string, string> = {
   farms: "farms.myapp.com",
   places: "places.myapp.com",
   events: "events.myapp.com",
@@ -26,7 +46,7 @@ const FEATURE_TO_DOMAIN_MAP = {
   social: "social.myapp.com"
 };
 
-export const DOMAIN_METADATA = {
+export const DOMAIN_METADATA: Record<string, DomainMetadata> = {
   "farms.myapp.com": {
     title: "FarmHub",
     description: "Discover local farms, fresh produce, and community crops.",
@@ -104,7 +124,7 @@ export const DOMAIN_METADATA = {
 /**
  * Gets the feature override parameter from URL if present (`?feature=events`).
  */
-function getUrlFeatureOverride() {
+function getUrlFeatureOverride(): string | null {
   if (typeof window === "undefined") return null;
   const urlParams = new URLSearchParams(window.location.search);
   const override = urlParams.get("feature");
@@ -114,7 +134,7 @@ function getUrlFeatureOverride() {
 /**
  * Returns allowed features for the current hostname or URL override.
  */
-export function getCurrentAllowedFeatures() {
+export function getCurrentAllowedFeatures(): FeatureKey[] {
   const featureOverride = getUrlFeatureOverride();
   if (featureOverride) {
     return ["core", featureOverride];
@@ -127,7 +147,7 @@ export function getCurrentAllowedFeatures() {
 /**
  * Checks if a specific feature key is allowed on the active domain.
  */
-export function isFeatureAllowed(featureKey) {
+export function isFeatureAllowed(featureKey: FeatureKey): boolean {
   const allowed = getCurrentAllowedFeatures();
   if (allowed.includes("ALL")) return true;
   return allowed.includes(featureKey);
@@ -136,7 +156,7 @@ export function isFeatureAllowed(featureKey) {
 /**
  * Returns metadata object for current hostname or target URL override.
  */
-export function getActiveDomainMetadata() {
+export function getActiveDomainMetadata(): DomainMetadata {
   // 1. If testing via ?feature=events on localhost, dynamically switch branding metadata
   const featureOverride = getUrlFeatureOverride();
   if (featureOverride && FEATURE_TO_DOMAIN_MAP[featureOverride]) {

@@ -1,3 +1,29 @@
+/* =========================================================
+   TYPES & INTERFACES
+========================================================= */
+
+export type SystemLogType = "success" | "error" | "info" | "warning";
+
+export interface SystemLogEntry {
+  id: string | number;
+  title: string;
+  message: string;
+  type: SystemLogType;
+  isRead: boolean;
+  createdAt: string;
+  [key: string]: unknown;
+}
+
+export interface AddSystemLogOptions {
+  title: string;
+  message: string;
+  type?: SystemLogType;
+}
+
+/* =========================================================
+   CONSTANTS & DATABASE INIT
+========================================================= */
+
 const DB_NAME = "AppNotificationsDB";
 const DB_VERSION = 1;
 const STORE_NAME = "system_logs";
@@ -5,12 +31,13 @@ const STORE_NAME = "system_logs";
 /**
  * Initializes and opens the IndexedDB database instance.
  */
-function openDB() {
+function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
+    request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+      const target = event.target as IDBOpenDBRequest;
+      const db = target.result;
 
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: "id" });
@@ -33,10 +60,16 @@ function openDB() {
   });
 }
 
+/* =========================================================
+   DATA ACCESS LAYER (CRUD)
+========================================================= */
+
 /**
  * Retrieve a single log by ID.
  */
-export async function get(id) {
+export async function get<T extends SystemLogEntry = SystemLogEntry>(
+  id: IDBValidKey
+): Promise<T | undefined> {
   const db = await openDB();
 
   return new Promise((resolve, reject) => {
@@ -44,7 +77,7 @@ export async function get(id) {
     const store = tx.objectStore(STORE_NAME);
     const request = store.get(id);
 
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => resolve(request.result as T | undefined);
     request.onerror = () => reject(request.error);
 
     tx.onabort = () => reject(tx.error);
@@ -57,7 +90,9 @@ export async function get(id) {
  * Uses IndexedDB's put(), which inserts when the ID doesn't exist
  * and updates when the ID already exists.
  */
-export async function set(value) {
+export async function set<T extends SystemLogEntry = SystemLogEntry>(
+  value: T
+): Promise<IDBValidKey> {
   if (!value || value.id == null) {
     throw new Error("IndexedDB log must contain an id.");
   }
@@ -79,35 +114,33 @@ export async function set(value) {
 
 /**
  * Explicit update alias.
- *
- * Kept separate from set() so callers can use the more descriptive
- * update() name when modifying an existing log.
  */
-export async function update(value) {
+export async function update<T extends SystemLogEntry = SystemLogEntry>(
+  value: T
+): Promise<IDBValidKey> {
   return set(value);
 }
 
 /**
  * Explicit put alias.
- *
- * Useful for compatibility with code that expects IndexedDB-style
- * put() semantics.
  */
-export async function put(value) {
+export async function put<T extends SystemLogEntry = SystemLogEntry>(
+  value: T
+): Promise<IDBValidKey> {
   return set(value);
 }
 
 /**
  * Retrieve all system log entries.
  */
-export async function getAll() {
+export async function getAll<T extends SystemLogEntry = SystemLogEntry>(): Promise<T[]> {
   const db = await openDB();
 
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readonly");
     const request = tx.objectStore(STORE_NAME).getAll();
 
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => resolve(request.result as T[]);
     request.onerror = () => reject(request.error);
 
     tx.onabort = () => reject(tx.error);
@@ -117,42 +150,39 @@ export async function getAll() {
 /**
  * Clear all entries from the store.
  */
-export async function clear() {
+export async function clear(): Promise<void> {
   const db = await openDB();
 
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
     const request = tx.objectStore(STORE_NAME).clear();
 
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
 
     tx.onabort = () => reject(tx.error);
   });
 }
 
+/* =========================================================
+   DOMAIN HELPERS
+========================================================= */
+
 /**
  * Helper to add a new system log.
- *
- * @param {Object} options
- * @param {string} options.title
- * @param {string} options.message
- * @param {"success"|"error"|"info"} options.type
  */
 export async function addSystemLog({
   title,
   message,
-  type = "info",
-}) {
-  const logItem = {
-    id: `log-${Date.now()}-${Math.random()
-      .toString(36)
-      .slice(2, 6)}`,
+  type = "info"
+}: AddSystemLogOptions): Promise<SystemLogEntry> {
+  const logItem: SystemLogEntry = {
+    id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     title,
     message,
     type,
     isRead: false,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toISOString()
   };
 
   await set(logItem);

@@ -1,10 +1,13 @@
+
 import "../../../css/farmstyles/croppage6.css";
 import "../../../css/farmstyles/croppageform.css";
 import { displayCrop } from "../../services/crops/crop/cropPage.js";
 
-async function Crop(isLoggedIn,  cropID, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayCrop(contentContainer, cropID, isLoggedIn);
+export async function Crop(
+  isLoggedIn: boolean,
+  cropID: string,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayCrop(contentContainer, cropID, isLoggedIn);
 }
-
-export { Crop };

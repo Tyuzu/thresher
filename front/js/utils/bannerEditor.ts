@@ -150,77 +150,105 @@ export async function updateImageWithCrop({
 
 /* ────────── UI Modal Dialogs ────────── */
 
+// export type UpdateMethodChoice = "upload" | "url" | "url-crop" | false;
+
 function askUpdateMethod(imageType: string): Promise<UpdateMethodChoice> {
-    return new Promise(resolve => {
-        let modalInstance: any = null;
+  return new Promise(resolve => {
+    let modalInstance: any = null;
 
-        const handleChoice = (action: UpdateMethodChoice) => {
-            modalInstance?.close?.();
-            resolve(action);
-        };
+    const handleChoice = (action: UpdateMethodChoice) => {
+      modalInstance?.close?.();
+      resolve(action);
+    };
 
-        const content = createElement("div", { class: "vflex gap10" }, [
-            createElement("p", {}, [`Update ${imageType} picture:`]),
-            Button("Upload Image", "up-banner-btn", { click: () => handleChoice("upload") }, "btn"),
-            Button("Use URL", "url-banner-btn", { click: () => handleChoice("url") }, "btn"),
-            Button("Use URL + Crop", "url-crop-banner-btn", { click: () => handleChoice("url-crop") }, "btn"),
-            Button("Cancel", "cancel-banner-btn", { click: () => handleChoice(false) }, "btn")
-        ]);
+    const content = createElement("div", { class: "vflex gap10" }, [
+      createElement("p", {}, [`Update ${imageType} picture:`]),
+      Button({
+        title: "Upload Image",
+        id: "up-banner-btn",
+        classes: "btn",
+        events: { click: () => handleChoice("upload") }
+      }),
+      Button({
+        title: "Use URL",
+        id: "url-banner-btn",
+        classes: "btn",
+        events: { click: () => handleChoice("url") }
+      }),
+      Button({
+        title: "Use URL + Crop",
+        id: "url-crop-banner-btn",
+        classes: "btn",
+        events: { click: () => handleChoice("url-crop") }
+      }),
+      Button({
+        title: "Cancel",
+        id: "cancel-banner-btn",
+        classes: "btn",
+        events: { click: () => handleChoice(false) }
+      })
+    ]);
 
-        modalInstance = Modal({
-            title: "Update Picture",
-            content,
-            onClose: () => resolve(false)
-        });
+    modalInstance = Modal({
+      title: "Update Picture",
+      content,
+      onClose: () => resolve(false)
     });
+  });
 }
 
 function promptUrlInput(): Promise<string | null> {
-    return new Promise(resolve => {
-        let modalInstance: any = null;
+  return new Promise(resolve => {
+    let modalInstance: any = null;
 
-        const handleDone = (val: string | null) => {
-            modalInstance?.close?.();
-            resolve(val);
-        };
+    const handleDone = (val: string | null) => {
+      modalInstance?.close?.();
+      resolve(val);
+    };
 
-        const input = createElement("input", {
-            type: "url",
-            placeholder: "https://example.com/image.jpg",
-            class: "input-field",
-            style: "width: 100%; margin: 10px 0;"
-        }) as HTMLInputElement;
+    const input = createElement("input", {
+      type: "url",
+      placeholder: "https://example.com/image.jpg",
+      class: "input-field",
+      style: "width: 100%; margin: 10px 0;"
+    }) as HTMLInputElement;
 
-        // Submit on Enter key press
-        input.addEventListener("keydown", (e: KeyboardEvent) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                handleDone(input.value.trim());
-            }
-        });
-
-        const submitBtn = Button("Confirm", "confirm-url-btn", {
-            click: () => handleDone(input.value.trim())
-        }, "btn btn-primary");
-
-        const cancelBtn = Button("Cancel", "cancel-url-btn", {
-            click: () => handleDone(null)
-        }, "btn");
-
-        const content = createElement("div", { class: "vflex gap10" }, [
-            createElement("label", {}, ["Enter image URL:"]),
-            input,
-            createElement("div", { class: "hflex gap10 justify-end" }, [cancelBtn, submitBtn])
-        ]);
-
-        modalInstance = Modal({
-            title: "Image URL",
-            content,
-            onClose: () => resolve(null)
-        });
-
-        requestAnimationFrame(() => input.focus());
+    // Submit on Enter key press
+    input.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleDone(input.value.trim());
+      }
     });
+
+    const submitBtn = Button({
+      title: "Confirm",
+      id: "confirm-url-btn",
+      classes: "btn btn-primary",
+      events: { click: () => handleDone(input.value.trim()) }
+    });
+
+    const cancelBtn = Button({
+      title: "Cancel",
+      id: "cancel-url-btn",
+      classes: "btn",
+      events: { click: () => handleDone(null) }
+    });
+
+    const content = createElement("div", { class: "vflex gap10" }, [
+      createElement("label", {}, ["Enter image URL:"]),
+      input,
+      createElement("div", { class: "hflex gap10 justify-end" }, [cancelBtn, submitBtn])
+    ]);
+
+    modalInstance = Modal({
+      title: "Image URL",
+      content,
+      onClose: () => resolve(null)
+    });
+
+    requestAnimationFrame(() => input.focus());
+  });
 }
 
 /* ────────── Image Sourcing Helpers ────────── */
@@ -337,7 +365,7 @@ export async function uploadImage({
         throw new Error("Invalid payload provided for image upload.");
     }
 
-    return bannerFetch(endpoint, "POST", formData);
+    return bannerFetch(endpoint, "POST", formData, {});
 }
 
 /* ────────── Preview Update ────────── */

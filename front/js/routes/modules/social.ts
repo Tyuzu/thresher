@@ -1,4 +1,6 @@
-export const socialRoutes = [
+import { AppRoute } from "./routeTypes.js";
+
+export const socialRoutes: AppRoute[] = [
   /* =======================================================
      POSTS
   ======================================================= */

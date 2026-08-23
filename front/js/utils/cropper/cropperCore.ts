@@ -1,4 +1,5 @@
-// cropperCore.js
+import Cropper from "cropperjs";
+import { CreateCropperOptions } from "./types.js";
 
 export function createCropper({
   image,
@@ -6,105 +7,84 @@ export function createCropper({
   cropTargetW,
   cropTargetH,
   onReady
-}) {
-  if (!window.Cropper) {
+}: CreateCropperOptions): Cropper {
+  const CropperClass = window.Cropper || Cropper;
+
+  if (!CropperClass) {
     throw new Error("CropperJS is not loaded.");
   }
 
-  const cropper = new window.Cropper(image, {
+  const cropperInstance = new CropperClass(image, {
     viewMode: 1,
     dragMode: "move",
-
     autoCrop: true,
     autoCropArea: 1,
-
     responsive: true,
     restore: true,
-
     modal: true,
     guides: false,
     center: true,
     background: false,
-
     movable: true,
     zoomable: true,
     rotatable: true,
     scalable: false,
-
     cropBoxResizable: false,
     cropBoxMovable: false,
-
     aspectRatio,
 
-ready() {
+    ready(this: Cropper) {
       try {
         centerCropBox(this, cropTargetW, cropTargetH);
         this.crop();
       } catch {
-        try { this.crop(); } catch {}
+        try {
+          this.crop();
+        } catch { /* noop */ }
       }
 
-      if (typeof onReady === "function") {
-        onReady(this);
-      }
+      onReady?.(this);
     }
   });
 
-  return cropper;
+  return cropperInstance;
 }
 
-export function destroyCropper(cropper) {
-  if (!cropper) {
-return;
+export function destroyCropper(cropper: Cropper | null): void {
+  cropper?.destroy();
 }
 
+export function rotateLeft(cropper: Cropper | null): void {
+  cropper?.rotate(-90);
+}
+
+export function rotateRight(cropper: Cropper | null): void {
+  cropper?.rotate(90);
+}
+
+export function zoomIn(cropper: Cropper | null, amount = 0.1): void {
+  cropper?.zoom(amount);
+}
+
+export function zoomOut(cropper: Cropper | null, amount = 0.1): void {
+  cropper?.zoom(-amount);
+}
+
+export function resizeCropper(cropper: Cropper | null): void {
+  if (!cropper) return;
+  
   try {
-    cropper.destroy();
-  } catch (_) {}
-}
-
-export function rotateLeft(cropper) {
-  if (cropper) {
-    cropper.rotate(-90);
-  }
-}
-
-export function rotateRight(cropper) {
-  if (cropper) {
-    cropper.rotate(90);
-  }
-}
-
-export function zoomIn(cropper, amount = 0.1) {
-  if (cropper) {
-    cropper.zoom(amount);
-  }
-}
-
-export function zoomOut(cropper, amount = 0.1) {
-  if (cropper) {
-    cropper.zoom(-amount);
-  }
-}
-
-export function resizeCropper(cropper) {
-  if (!cropper) {
-return;
-}
-
-  try {
-    cropper.resize();
+    // In v1.5.13, reset() recalculates container dimensions and resets crop box
+    cropper.reset();
   } catch (_) {}
 }
 
 export function getCroppedCanvas(
-  cropper,
-  width,
-  height
-) {
-  if (!cropper) {
-return null;
-}
+  cropper: Cropper | null,
+  width: number,
+  height: number
+): HTMLCanvasElement | null {
+  if (!cropper) return null;
 
   return cropper.getCroppedCanvas({
     width,
@@ -114,11 +94,13 @@ return null;
   });
 }
 
-// cropperCore.js
-
-export function centerCropBox(cropper, cropTargetW, cropTargetH) {
+export function centerCropBox(
+  cropper: Cropper | null,
+  cropTargetW: number,
+  cropTargetH: number
+): void {
   if (!cropper) return;
-  
+
   const container = cropper.getContainerData();
 
   const fitScale = Math.min(

@@ -6,7 +6,7 @@ import "../../css/farmstyles/crops8.css";
 import { displayCrops } from "../services/crops/crop/crops.js";
 
 function Home(isLoggedIn, container) {
-    displayCrops(container, isLoggedIn);
+    displayCrops(container);
     // YoHome(isLoggedIn, container);
 }
 

@@ -11,58 +11,52 @@ import {
 } from "../../state/state.js";
 import Notify from "../../components/ui/Notify.js";
 
+type ToggleViewFn = () => void;
+type GetSubmittingFn = () => boolean;
+type SetSubmittingFn = (value: boolean) => void;
 
-export function Auth(isLoggedIn, contentContainer) {
+export function Auth(isLoggedIn: boolean, contentContainer: HTMLElement | null): void {
   if (!contentContainer) {
     return;
   }
   const stateToken = getState("token");
   const isAuthenticated = Boolean(isLoggedIn || stateToken || localStorage.getItem("token") || sessionStorage.getItem("token"));
-  /*
-   * Authentication redirect is handled by
-   * the route middleware. Do not perform
-   * navigation during rendering.
-   *
-   * In normal operation /login won't reach
-   * this renderer when already authenticated.
-   */
+
   if (isAuthenticated) {
     contentContainer.replaceChildren();
     return;
   }
+
   contentContainer.replaceChildren();
   let isLoginView = true;
-  const wrapper = createElement("div", {
-    class: "auth-wrapper"
-  },
-    []);
-  const authBox = createElement("div", {
-    class: "auth-box"
-  },
-    []);
+  const wrapper = createElement("div", { class: "auth-wrapper" });
+  const authBox = createElement("div", { class: "auth-box" });
   let submitting = false;
 
-  function renderView() {
+  function renderView(): void {
     authBox.replaceChildren();
-    const form = isLoginView ? createLoginForm(toggleView,
-      () => submitting,
-      (value) => {
-        submitting = value;
-      }) : createSignupForm(toggleView,
-        () => submitting,
-        (value) => {
-          submitting = value;
-        });
+    const form = isLoginView
+      ? createLoginForm(
+          toggleView,
+          () => submitting,
+          (value) => { submitting = value; }
+        )
+      : createSignupForm(
+          toggleView,
+          () => submitting,
+          (value) => { submitting = value; }
+        );
     authBox.appendChild(form);
   }
 
-  function toggleView() {
+  function toggleView(): void {
     if (submitting) {
       return;
     }
     isLoginView = !isLoginView;
     renderView();
   }
+
   wrapper.appendChild(authBox);
   contentContainer.appendChild(wrapper);
   renderView();
@@ -71,49 +65,48 @@ export function Auth(isLoggedIn, contentContainer) {
 /* =========================================================
    LOGIN FORM
 ========================================================= */
-function createLoginForm(onToggleView, getSubmitting, setSubmitting) {
-  const section = createElement("section", {
-    class: "auth-section"
-  },
-    []);
-  const title = createElement("h2", {
-    class: "auth-title"
-  },
-    ["Log In"]);
+function createLoginForm(
+  onToggleView: ToggleViewFn,
+  getSubmitting: GetSubmittingFn,
+  setSubmitting: SetSubmittingFn
+): HTMLElement {
+  const section = createElement("section", { class: "auth-section" });
+  const title = createElement("h2", { class: "auth-title" }, "Log In");
+  
+  // Strongly typed as HTMLInputElement via createElement generic map
   const usernameInput = inputField("text", "Username", "login-username", "username");
   const passwordInput = inputField("password", "Password", "login-password", "current-password");
+
+  // Strongly typed as HTMLButtonElement
   const submitBtn = createElement("button", {
     type: "submit",
     class: "btn-primary"
-  },
-    ["Login"]);
-  const toggleText = createElement("p", {
-    class: "auth-toggle"
-  },
-    ["Don't have an account? ",
-      createElement("a", {
-        href: "#",
-        events: {
-          click: (event) => {
-            event.preventDefault();
-            if (!getSubmitting()) {
-              onToggleView();
-            }
+  }, "Login");
+
+  const toggleText = createElement("p", { class: "auth-toggle" }, [
+    "Don't have an account? ",
+    createElement("a", {
+      href: "#",
+      events: {
+        click: (event: Event) => {
+          event.preventDefault();
+          if (!getSubmitting()) {
+            onToggleView();
           }
         }
-      },
-        ["Sign Up"])
-    ]);
-  const form = createElement("form", {
-    class: "auth-form"
-  },
-    [
-      usernameInput,
-      passwordInput,
-      submitBtn,
-      toggleText
-    ]);
-  form.addEventListener("submit", async (event) => {
+      }
+    }, "Sign Up")
+  ]);
+
+  // Strongly typed as HTMLFormElement
+  const form = createElement("form", { class: "auth-form" }, [
+    usernameInput,
+    passwordInput,
+    submitBtn,
+    toggleText
+  ]);
+
+  form.addEventListener("submit", async (event: SubmitEvent) => {
     event.preventDefault();
     if (getSubmitting()) {
       return;
@@ -130,10 +123,7 @@ function createLoginForm(onToggleView, getSubmitting, setSubmitting) {
     setSubmitting(true);
     submitBtn.disabled = true;
     try {
-      const success = await login({
-        username,
-        password
-      });
+      const success = await login({ username, password });
       if (!success) {
         submitBtn.disabled = false;
       }
@@ -144,6 +134,7 @@ function createLoginForm(onToggleView, getSubmitting, setSubmitting) {
       setSubmitting(false);
     }
   });
+
   section.append(title, form);
   return section;
 }
@@ -151,65 +142,65 @@ function createLoginForm(onToggleView, getSubmitting, setSubmitting) {
 /* =========================================================
    SIGNUP FORM
 ========================================================= */
-function createSignupForm(onToggleView, getSubmitting, setSubmitting) {
-  const section = createElement("section", {
-    class: "auth-section"
-  },
-    []);
-  const title = createElement("h2", {
-    class: "auth-title"
-  },
-    ["Sign Up"]);
+function createSignupForm(
+  onToggleView: ToggleViewFn,
+  getSubmitting: GetSubmittingFn,
+  setSubmitting: SetSubmittingFn
+): HTMLElement {
+  const section = createElement("section", { class: "auth-section" });
+  const title = createElement("h2", { class: "auth-title" }, "Sign Up");
+
+  // Strongly typed HTMLInputElements
   const usernameInput = inputField("text", "Username", "signup-username", "username");
   const emailInput = inputField("email", "Email", "signup-email", "email");
   const passwordInput = inputField("password", "Password", "signup-password", "new-password");
+
   const checkbox = createElement("input", {
     type: "checkbox",
     id: "signup-terms",
     required: true
-  },
-    []);
+  });
+
   const termsLabel = createElement("label", {
     class: "auth-terms",
     htmlFor: "signup-terms"
-  },
-    [
-      checkbox, " I agree to the Terms & Conditions"
-    ]);
+  }, [
+    checkbox, 
+    " I agree to the Terms & Conditions"
+  ]);
+
+  // Strongly typed HTMLButtonElement
   const submitBtn = createElement("button", {
     type: "submit",
     class: "btn-primary"
-  },
-    ["Sign Up"]);
-  const toggleText = createElement("p", {
-    class: "auth-toggle"
-  },
-    ["Already have an account? ",
-      createElement("a", {
-        href: "#",
-        events: {
-          click: (event) => {
-            event.preventDefault();
-            if (!getSubmitting()) {
-              onToggleView();
-            }
+  }, "Sign Up");
+
+  const toggleText = createElement("p", { class: "auth-toggle" }, [
+    "Already have an account? ",
+    createElement("a", {
+      href: "#",
+      events: {
+        click: (event: Event) => {
+          event.preventDefault();
+          if (!getSubmitting()) {
+            onToggleView();
           }
         }
-      },
-        ["Log In"])
-    ]);
-  const form = createElement("form", {
-    class: "auth-form"
-  },
-    [
-      usernameInput,
-      emailInput,
-      passwordInput,
-      termsLabel,
-      submitBtn,
-      toggleText
-    ]);
-  form.addEventListener("submit", async (event) => {
+      }
+    }, "Log In")
+  ]);
+
+  // Strongly typed HTMLFormElement
+  const form = createElement("form", { class: "auth-form" }, [
+    usernameInput,
+    emailInput,
+    passwordInput,
+    termsLabel,
+    submitBtn,
+    toggleText
+  ]);
+
+  form.addEventListener("submit", async (event: SubmitEvent) => {
     event.preventDefault();
     if (getSubmitting()) {
       return;
@@ -227,11 +218,7 @@ function createSignupForm(onToggleView, getSubmitting, setSubmitting) {
     setSubmitting(true);
     submitBtn.disabled = true;
     try {
-      const success = await signup({
-        username,
-        email,
-        password
-      });
+      const success = await signup({ username, email, password });
       if (success) {
         onToggleView();
       } else {
@@ -244,14 +231,21 @@ function createSignupForm(onToggleView, getSubmitting, setSubmitting) {
       setSubmitting(false);
     }
   });
+
   section.append(title, form);
   return section;
 }
+
 /* =========================================================
-   INPUT
+   INPUT HELPER
 ========================================================= */
-function inputField(type, placeholder, id, autocomplete = "") {
-  const attrs = {
+function inputField(
+  type: string,
+  placeholder: string,
+  id: string,
+  autocomplete: string = ""
+): HTMLInputElement {
+  const attrs: Record<string, unknown> = {
     type,
     id,
     placeholder,
@@ -260,6 +254,7 @@ function inputField(type, placeholder, id, autocomplete = "") {
   if (autocomplete) {
     attrs.autocomplete = autocomplete;
   }
-  return createElement("input", attrs,
-    []);
+
+  // Passing "input" directly infers HTMLInputElement return type automatically
+  return createElement("input", attrs);
 }

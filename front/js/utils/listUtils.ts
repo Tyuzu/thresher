@@ -1,6 +1,61 @@
-import { createElement } from "../components/createElement.js";
+import { createElement, ElementAttributes } from "../components/createElement.js";
 
-const sortOptionsByType = {
+/* =========================================================
+   TYPES & INTERFACES
+========================================================= */
+
+export interface FilterableItem {
+  id?: string | number;
+  name?: string;
+  title?: string;
+  category?: string;
+  createdAt?: string | number | Date;
+  views?: number;
+  capacity?: number;
+  popular?: number;
+  placename?: string;
+  prices?: number[];
+  ingredients?: Array<string | { name?: string }>;
+  [key: string]: unknown;
+}
+
+export type ControlType = "events" | "places" | "recipes" | "default" | string;
+
+export interface SortOption {
+  value: string;
+  label: string;
+}
+
+export interface FilterControlsOptions<T extends FilterableItem> {
+  type: ControlType;
+  items?: T[];
+  onRender?: (filteredItems: T[]) => void;
+}
+
+export interface FilterCriteria<T extends FilterableItem> {
+  keyword?: string;
+  category?: string | null;
+  extraFilters?: Array<(item: T) => boolean>;
+}
+
+export interface ApplyFilterAndSortOptions {
+  keyword?: string;
+  category?: string | null;
+  sortBy?: string | null;
+  type?: ControlType;
+}
+
+export interface FilterControlsResult<T extends FilterableItem> {
+  controls: HTMLDivElement;
+  renderFiltered: () => void;
+  chipContainer: HTMLDivElement;
+}
+
+/* =========================================================
+   CONSTANTS & UTILITIES
+========================================================= */
+
+const sortOptionsByType: Record<string, SortOption[]> = {
   events: [
     { value: "date", label: "Sort by Date" },
     { value: "price", label: "Sort by Price" },
@@ -22,18 +77,26 @@ const sortOptionsByType = {
 /**
  * Creates a debounced utility function wrapper
  */
-function debounce(fn, delay = 250) {
-  let timeoutId;
-  return (...args) => {
+function debounce<T extends (...args: any[]) => void>(fn: T, delay = 250): (...args: Parameters<T>) => void {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  return (...args: Parameters<T>) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => fn(...args), delay);
   };
 }
 
+/* =========================================================
+   COMPONENT & FILTER CONTROLS
+========================================================= */
+
 /**
  * Reusable filter controls factory
  */
-export function createFilterControls({ type, items = [], onRender }) {
+export function createFilterControls<T extends FilterableItem>({
+  type,
+  items = [],
+  onRender
+}: FilterControlsOptions<T>): FilterControlsResult<T> {
   const wrapper = createElement("div", { class: `filter-controls ${type}-controls` });
 
   const searchInput = createElement("input", {
@@ -44,25 +107,27 @@ export function createFilterControls({ type, items = [], onRender }) {
   });
 
   const options = sortOptionsByType[type] || sortOptionsByType.default;
-  const sortSelect = createElement("select", { 
-    class: `${type}-sort`,
-    "aria-label": "Select layout sorting type parameters"
-  }, 
-    options.map(opt => createElement("option", { value: opt.value }, [opt.label]))
+  const sortSelect = createElement(
+    "select",
+    {
+      class: `${type}-sort`,
+      "aria-label": "Select layout sorting type parameters"
+    },
+    options.map(opt => createElement("option", { value: opt.value }, opt.label))
   );
 
-  const chipContainer = createElement("div", { 
+  const chipContainer = createElement("div", {
     class: "category-chips",
     role: "group",
     "aria-label": "Filter items by category tag parameters"
   });
-  
-  const categories = [...new Set(items.map(i => i.category).filter(Boolean))];
-  const selectedCategory = { value: null };
-  const chipButtonsMap = new Map();
+
+  const categories = [...new Set(items.map(i => i.category).filter((cat): cat is string => Boolean(cat)))];
+  const selectedCategory: { value: string | null } = { value: null };
+  const chipButtonsMap = new Map<string, HTMLButtonElement>();
 
   categories.forEach(cat => {
-    const chip = createElement("button", {
+    const chipAttributes: ElementAttributes = {
       type: "button",
       class: "category-chip buttonx secondary",
       "aria-pressed": "false",
@@ -70,7 +135,7 @@ export function createFilterControls({ type, items = [], onRender }) {
         click: () => {
           const isSelected = selectedCategory.value === cat;
           selectedCategory.value = isSelected ? null : cat;
-          
+
           // Sync visual ARIA pressed states perfectly across chips
           chipButtonsMap.forEach((btn, id) => {
             const state = id === selectedCategory.value;
@@ -81,19 +146,20 @@ export function createFilterControls({ type, items = [], onRender }) {
           renderFilteredImmediate();
         }
       }
-    }, [cat]);
+    };
+
+    const chip = createElement("button", chipAttributes, cat);
 
     chipButtonsMap.set(cat, chip);
     chipContainer.appendChild(chip);
   });
 
-  // FIXED: Elements are correctly mounted into the control wrapper hierarchy tree
   if (categories.length > 0) {
     wrapper.appendChild(chipContainer);
   }
   wrapper.append(searchInput, sortSelect);
 
-  function renderFilteredImmediate() {
+  function renderFilteredImmediate(): void {
     const filtered = applyFiltersAndSort(items, {
       keyword: searchInput.value,
       category: selectedCategory.value,
@@ -105,7 +171,7 @@ export function createFilterControls({ type, items = [], onRender }) {
     }
   }
 
-  // Use debouncing for heavy keyup events, processing selection modifications instantly
+  // Use debouncing for heavy input events
   const renderFilteredDebounced = debounce(renderFilteredImmediate, 200);
 
   searchInput.addEventListener("input", renderFilteredDebounced);
@@ -114,22 +180,29 @@ export function createFilterControls({ type, items = [], onRender }) {
   // Initial data injection execute pass
   renderFilteredImmediate();
 
-  return { 
-    controls: wrapper, 
-    renderFiltered: renderFilteredImmediate, 
-    chipContainer 
+  return {
+    controls: wrapper,
+    renderFiltered: renderFilteredImmediate,
+    chipContainer
   };
 }
+
+/* =========================================================
+   CORE FILTERING & SORTING LOGIC
+========================================================= */
 
 /**
  * Core generic filter matching function logic
  */
-export function filterItems(items, { keyword = "", category = null, extraFilters = [] }) {
+export function filterItems<T extends FilterableItem>(
+  items: T[],
+  { keyword = "", category = null, extraFilters = [] }: FilterCriteria<T>
+): T[] {
   const cleanKeyword = keyword.trim().toLowerCase();
 
   return items.filter(item => {
     if (category && item.category !== category) return false;
-    
+
     if (cleanKeyword) {
       const matchText = (item.name || item.title || "").toLowerCase();
       if (!matchText.includes(cleanKeyword)) return false;
@@ -142,7 +215,7 @@ export function filterItems(items, { keyword = "", category = null, extraFilters
 /**
  * Standard Array Sorting Strategy Mapping Context
  */
-export function sortItems(items, sortBy) {
+export function sortItems<T extends FilterableItem>(items: T[], sortBy?: string | null): T[] {
   return [...items].sort((a, b) => {
     switch (sortBy) {
       case "date":
@@ -169,18 +242,21 @@ export function sortItems(items, sortBy) {
   });
 }
 
-/**
- * Domain-specific custom data pipelines
- */
-function filterEvents(events, { keyword, category }) {
+/* =========================================================
+   DOMAIN SPECIFIC PIPELINES
+========================================================= */
+
+function filterEvents<T extends FilterableItem>(
+  events: T[],
+  { keyword = "", category = null }: { keyword: string; category: string | null }
+): T[] {
   const cleanKeyword = keyword.trim().toLowerCase();
-  
+
   return filterItems(events, {
     category,
     extraFilters: [
-      ev => {
+      (ev: T) => {
         if (!cleanKeyword) return true;
-        // FIXED: Shifted evaluation to use standard logical OR comparisons correctly
         const titleMatch = (ev.title || ev.name || "").toLowerCase().includes(cleanKeyword);
         const placeMatch = (ev.placename || "").toLowerCase().includes(cleanKeyword);
         return titleMatch || placeMatch;
@@ -189,7 +265,7 @@ function filterEvents(events, { keyword, category }) {
   });
 }
 
-function sortEvents(events, sortBy) {
+function sortEvents<T extends FilterableItem>(events: T[], sortBy?: string | null): T[] {
   if (sortBy === "price") {
     return [...events].sort((a, b) => {
       const validPricesA = Array.isArray(a.prices) && a.prices.length ? a.prices : [0];
@@ -200,18 +276,22 @@ function sortEvents(events, sortBy) {
   return sortItems(events, sortBy);
 }
 
-function filterRecipes(recipes, { keyword, category }) {
+function filterRecipes<T extends FilterableItem>(
+  recipes: T[],
+  { keyword = "", category = null }: { keyword: string; category: string | null }
+): T[] {
   const cleanKeyword = keyword.trim().toLowerCase();
 
   return filterItems(recipes, {
     category,
     extraFilters: [
-      r => {
+      (r: T) => {
         if (!cleanKeyword) return true;
         const baseMatch = (r.title || r.name || "").toLowerCase().includes(cleanKeyword);
-        const ingredientMatch = Array.isArray(r.ingredients) && r.ingredients.some(i => 
-          String(i && i.name ? i.name : i).toLowerCase().includes(cleanKeyword)
-        );
+        const ingredientMatch = Array.isArray(r.ingredients) && r.ingredients.some(i => {
+          const ingName = typeof i === "object" && i !== null && "name" in i ? i.name : i;
+          return String(ingName || "").toLowerCase().includes(cleanKeyword);
+        });
         return baseMatch || ingredientMatch;
       }
     ]
@@ -221,10 +301,13 @@ function filterRecipes(recipes, { keyword, category }) {
 /**
  * Unified Filtering Engine Processor Route Handler
  */
-export function applyFiltersAndSort(items, { keyword = "", category = null, sortBy = null, type = "generic" }) {
+export function applyFiltersAndSort<T extends FilterableItem>(
+  items: T[],
+  { keyword = "", category = null, sortBy = null, type = "generic" }: ApplyFilterAndSortOptions = {}
+): T[] {
   if (!Array.isArray(items)) return [];
-  
-  let filtered;
+
+  let filtered: T[];
   switch (type) {
     case "events":
       filtered = filterEvents(items, { keyword, category });
@@ -239,12 +322,20 @@ export function applyFiltersAndSort(items, { keyword = "", category = null, sort
   return type === "events" ? sortEvents(filtered, sortBy) : sortItems(filtered, sortBy);
 }
 
-export function paginate(items, page, pageSize) {
+/* =========================================================
+   PAGINATION & SCROLL OBSERVERS
+========================================================= */
+
+export function paginate<T>(items: T[], page: number, pageSize: number): T[] {
   const start = (page - 1) * pageSize;
   return items.slice(start, start + pageSize);
 }
 
-export function attachInfiniteScroll(target, callback, options = { threshold: 1.0 }) {
+export function attachInfiniteScroll(
+  target: Element | null,
+  callback: () => void,
+  options: IntersectionObserverInit = { threshold: 1.0 }
+): IntersectionObserver | null {
   if (!target) return null;
   const observer = new IntersectionObserver(([entry]) => {
     if (entry.isIntersecting) {

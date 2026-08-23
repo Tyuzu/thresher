@@ -1,10 +1,24 @@
 import { createControls } from "./controls.js";
+import { QualityOption } from "../Vidpop.js";
 import { setupSubtitles } from "./subtitles.js";
+
+export interface SubtitleTrack {
+  src: string;
+  label?: string;
+  srclang?: string;
+  [key: string]: unknown;
+}
 
 /**
  * Generates a video player with quality selection, subtitles, and advanced controls.
  */
-async function generateVideoPlayer(mediaSrc, poster, qualities, subtitles, videoid) {
+async function generateVideoPlayer(
+  mediaSrc: string,
+  poster: string,
+  qualities: QualityOption[],
+  subtitles: SubtitleTrack[],
+  videoid: string | number
+): Promise<HTMLDivElement> {
   const videoPlayer = document.createElement("div");
   videoPlayer.id = "video-player";
 
@@ -14,19 +28,19 @@ async function generateVideoPlayer(mediaSrc, poster, qualities, subtitles, video
   video.loop = true;
   video.muted = true;
   video.poster = poster;
-  // video.controls = true;
   video.preload = "metadata";
   video.crossOrigin = "anonymous";
 
   /** === HANDLE VIDEO QUALITY SELECTION === **/
   if (qualities.length !== 0) {
     const storedQuality = localStorage.getItem("videoQuality") || "144p";
-    const defaultQuality = qualities.find(q => q.label === storedQuality) || qualities[0];
+    const defaultQuality =
+      qualities.find((q) => q.label === storedQuality) || qualities[0];
     video.src = defaultQuality.src;
     video.setAttribute("data-quality", defaultQuality.label);
 
     // Append alternative quality sources
-    qualities.forEach(quality => {
+    qualities.forEach((quality) => {
       const source = document.createElement("source");
       source.src = quality.src;
       source.type = "video/mp4";
@@ -37,7 +51,9 @@ async function generateVideoPlayer(mediaSrc, poster, qualities, subtitles, video
     video.src = mediaSrc;
   }
 
-  video.appendChild(document.createTextNode("Your browser does not support the video tag."));
+  video.appendChild(
+    document.createTextNode("Your browser does not support the video tag.")
+  );
 
   /** === HANDLE SUBTITLES === **/
   if (subtitles.length !== 0) {
@@ -49,37 +65,47 @@ async function generateVideoPlayer(mediaSrc, poster, qualities, subtitles, video
   }
 
   /** === VIDEO CONTROLS === **/
-  const controls = createControls(video, mediaSrc, qualities, videoid, videoPlayer);
+  const controls = createControls(
+    video,
+    mediaSrc,
+    qualities,
+    videoid,
+    videoPlayer
+  );
   videoPlayer.appendChild(video);
   videoPlayer.appendChild(controls);
 
   /** === PROGRESS BAR LOGIC === **/
-  const progressBar = controls.querySelector(".progress-bar");
-  const progress = controls.querySelector(".progress");
+  const progressBar = controls.querySelector(".progress-bar") as HTMLElement | null;
+  const progress = controls.querySelector(".progress") as HTMLElement | null;
 
   let isDragging = false;
 
-  function updateProgressBar() {
-    if (!isDragging && !isNaN(video.duration)) {
+  function updateProgressBar(): void {
+    if (!isDragging && !isNaN(video.duration) && progress) {
       progress.style.width = `${(video.currentTime / video.duration) * 100}%`;
     }
   }
 
   video.addEventListener("timeupdate", updateProgressBar);
 
-  function seekVideo(event) {
+  function seekVideo(event: MouseEvent): void {
+    if (!progressBar || !progress) return;
     const rect = progressBar.getBoundingClientRect();
-    const fraction = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1);
+    const fraction = Math.min(
+      Math.max((event.clientX - rect.left) / rect.width, 0),
+      1
+    );
     video.currentTime = video.duration * fraction;
     progress.style.width = `${fraction * 100}%`;
   }
 
-  progressBar.addEventListener("mousedown", (event) => {
+  progressBar?.addEventListener("mousedown", (event: MouseEvent) => {
     isDragging = true;
     seekVideo(event);
   });
 
-  document.addEventListener("mousemove", (event) => {
+  document.addEventListener("mousemove", (event: MouseEvent) => {
     if (isDragging) {
       seekVideo(event);
     }
@@ -92,17 +118,27 @@ async function generateVideoPlayer(mediaSrc, poster, qualities, subtitles, video
   });
 
   /** === TOGGLE PLAY/PAUSE ON CLICK === **/
-  video.addEventListener("click", () => (video.paused ? video.play() : video.pause()));
+  video.addEventListener("click", () =>
+    video.paused ? video.play() : video.pause()
+  );
 
   /** === HANDLE QUALITY SWITCHING WITHOUT RELOADING === **/
   if (qualities.length !== 0) {
-    controls.querySelector(".quality-selector").addEventListener("change", (event) => {
-      const selectedQualityLabel = event.target.value;
-      const selectedQuality = qualities.find(q => q.label === selectedQualityLabel);
+    const qualitySelector = controls.querySelector(
+      ".quality-selector"
+    ) as HTMLSelectElement | null;
+
+    qualitySelector?.addEventListener("change", (event: Event) => {
+      const target = event.target as HTMLSelectElement;
+      const selectedQualityLabel = target.value;
+      const selectedQuality = qualities.find(
+        (q) => q.label === selectedQualityLabel
+      );
 
       if (!selectedQuality || selectedQuality.src === video.src) {
-return;
-}
+        return;
+      }
+
       // Save preference
       localStorage.setItem("videoQuality", selectedQuality.label);
 
@@ -114,12 +150,16 @@ return;
       video.src = selectedQuality.src;
       video.setAttribute("data-quality", selectedQuality.label);
 
-      video.addEventListener("loadedmetadata", () => {
-        video.currentTime = currentTime;
-        if (!isPaused) {
-video.play();
-}
-      }, { once: true });
+      video.addEventListener(
+        "loadedmetadata",
+        () => {
+          video.currentTime = currentTime;
+          if (!isPaused) {
+            video.play();
+          }
+        },
+        { once: true }
+      );
     });
   }
 
@@ -131,8 +171,8 @@ video.play();
       }
     } else {
       if (isMobile()) {
-unlockOrientation();
-}
+        unlockOrientation();
+      }
     }
   });
 
@@ -143,26 +183,26 @@ unlockOrientation();
 
 /**
  * Detects if the user is on a mobile device.
- * @returns {boolean}
  */
-function isMobile() {
+function isMobile(): boolean {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
 /**
  * Locks the screen orientation (only works inside fullscreen).
- * @param {string} orientation - "landscape" or "portrait"
  */
-function lockOrientation(orientation) {
+function lockOrientation(orientation: OrientationLockType): void {
   if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock(orientation).catch(err => console.warn("Orientation lock failed:", err));
+    screen.orientation
+      .lock(orientation)
+      .catch((err) => console.warn("Orientation lock failed:", err));
   }
 }
 
 /**
  * Unlocks screen orientation.
  */
-function unlockOrientation() {
+function unlockOrientation(): void {
   if (screen.orientation && screen.orientation.unlock) {
     screen.orientation.unlock();
   }

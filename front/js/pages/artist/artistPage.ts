@@ -5,9 +5,13 @@ import "../../../css/subpages/livpage.css";
 import "../../../css/subpages/livcon.css";
 import { displayArtist } from "../../services/artist/artistPage.js";
 
-async function Artist(isLoggedIn,  artistID, contentContainer) {
-    contentContainer.innerHTML = '';
-    displayArtist(contentContainer, artistID, isLoggedIn);
+async function Artist(
+  isLoggedIn: boolean,
+  artistID: string,
+  contentContainer: HTMLElement
+): Promise<void> {
+  contentContainer.innerHTML = "";
+  displayArtist(contentContainer, artistID, isLoggedIn);
 }
 
 export { Artist };
