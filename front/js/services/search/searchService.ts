@@ -4,7 +4,7 @@ import { createTabs } from "../../utils/persistTabs.js";
 import { createElement } from "../../components/createElement.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import { createIconButton } from "../../utils/svgIconButton.js";
-import { searchSVG } from "../../components/svgs.js";
+import { searchSVG } from "../../components/svgs/featherSVGs";
 
 let currentTab = "all";
 let searchQuery = "";

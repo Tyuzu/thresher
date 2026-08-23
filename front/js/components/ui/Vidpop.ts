@@ -2,7 +2,7 @@ import "../../../css/ui/vidpop.css";
 import "../../../css/ui/Sightbox.css";
 import { createElement } from "../createElement.js";
 import { createIconButton } from "../../utils/svgIconButton.js";
-import { xSVG } from "../svgs.js";
+import { xSVG } from "../svgs/featherSVGs";
 import {
   generateVideoPlayer,
   QualityOption,

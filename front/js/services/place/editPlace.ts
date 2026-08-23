@@ -2,7 +2,7 @@ import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { navigate } from "../../routes/navigate.js";
 import Notify from "../../components/ui/Notify.js";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 
 const categoryMap = {
   "Food & Beverage": ["Restaurant", "Cafe", "Bakery"],

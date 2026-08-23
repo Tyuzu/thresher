@@ -1,5 +1,4 @@
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
-// import ZoomBox from "../../../components/ui/ZoomBox.js";
 import Imagex from "../../../components/base/Imagex.js";
 import Sightbox from "../../../components/ui/Sightbox_zoom.js";
 

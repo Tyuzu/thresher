@@ -3,7 +3,7 @@
 import { createElement } from "../../../components/createElement.js";
 import { navigate } from "../../../routes/navigate.js";
 import { apiFetch } from "../../../api/api.js";
-import { createFormGroup } from "../../../components/createFormGroupEnhanced.js";
+import { createFormGroup } from "../../../components/form/createFormGroupEnhanced.js";
 import Notify from "../../../components/ui/Notify.js";
 
 // --- Category Data ---

@@ -2,7 +2,7 @@ import "../../../css/ui/Sightbox.css";
 import { createElement } from "../../components/createElement.js"; // Adjust path as needed
 import { createIconButton } from "../../utils/svgIconButton.js";
 import Imagex from "../base/Imagex.js";
-import { xSVG } from "../svgs.js";
+import { xSVG } from "../svgs/featherSVGs";
 
 // ---- Types & Interfaces ----
 

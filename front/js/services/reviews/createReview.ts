@@ -1,7 +1,7 @@
 import "../../../css/subpages/reviews.css";
 import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import Button from "../../components/base/Button.js";
 
 function handleAddReview(container, entityType, entityId, onDone) {

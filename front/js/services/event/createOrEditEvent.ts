@@ -2,7 +2,7 @@ import { API_URL, getState } from "../../state/state.js";
 import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
 import { createElement } from "../../components/createElement.js";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import Button from "../../components/base/Button.js";
 import Notify from "../../components/ui/Notify.js";
 import { debounce } from "../../utils/deutils.js";

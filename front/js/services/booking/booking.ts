@@ -1,5 +1,5 @@
 import { createElement } from "../../components/createElement.js";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import Notify from "../../components/ui/Notify.js";
 import { fetchUserMeta } from "../../utils/usersMeta.js";
 import { genId, bookingStorage, bookingApi } from "./bookingApi.js";

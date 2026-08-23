@@ -1,7 +1,7 @@
 import { createElement } from "../../components/createElement.js";
 import { Imagex } from "../../components/base/Imagex.js";
 import { apiFetch, SRC_URL } from "../../api/api.js";
-import { smoothZoom, handleTouchStart, handleTouchMove, handleTouchEnd, updateTransform, resetTransformState } from "../../components/ui/zoomboxHelpers.js";
+import { smoothZoom, handleTouchStart, handleTouchMove, handleTouchEnd, updateTransform, resetTransformState } from "../../components/ui/zoomBox/zoomboxHelpers.js";
 import { handlePointerDown, handlePointerMove, handlePointerUp } from "./pointerEvents.js";
 
 export async function displayGtaMap(container, isLoggedIn, entity = "ls") {

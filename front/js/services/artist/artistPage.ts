@@ -19,7 +19,7 @@ import Imagex from "../../components/base/Imagex.js";
 import { renderPostsTab } from "./moretabs.js";
 import { displayNotices } from "../notices/notices.js";
 import { renderBandMembers, renderManageMembersButton } from "./memberManage.js";
-import { blueskySVG, facebookSVG, instagramSVG, soundcloudSVG, spotifySVG, tiktokSVG, twitterSVG, xitterSVG, youtubeSVG } from "../../components/socialSVGs.js";
+import { blueskySVG, facebookSVG, instagramSVG, soundcloudSVG, spotifySVG, tiktokSVG, twitterSVG, xitterSVG, youtubeSVG } from "../../components/svgs/socialSVGs.js";
 import { createIconButton } from "../../utils/svgIconButton.js";
 import { payViaStripe } from "../pay/pay.js";
 

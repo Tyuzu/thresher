@@ -1,5 +1,6 @@
 // src/utils/activityLogger.ts
-import { API_URL, generateUUID } from "../../api/api.js";
+import { generateUUID } from "../../utils/genUUID.js";
+import { API_URL } from "../../api/api.js";
 
 // --- Types & Interfaces ---
 export type EventType =

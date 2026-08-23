@@ -21,7 +21,7 @@ import {
 } from "../reporting/reporting.js";
 import {
   createFormGroup
-} from "../../components/createFormGroupEnhanced.js";
+} from "../../components/form/createFormGroupEnhanced.js";
 import {
   addToCart,
   isValidCartQuantity

@@ -5,7 +5,7 @@ import { createElement } from "../../components/createElement.js";
 import Modal from "../../components/ui/Modal.js";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
 import Notify from "../../components/ui/Notify.js";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import { uploadFile } from "../media/api/mediaApi.js";
 import { uid } from "../media/ui/mediaUploadForm.js";
 import { showPaymentModal } from "../pay/pay.js";

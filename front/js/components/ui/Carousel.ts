@@ -1,6 +1,6 @@
 import "../../../css/ui/Carousel.css";
 import Imagex from "../base/Imagex.js";
-import { playSVG } from "../svgs.js";
+import { playSVG } from "../svgs/featherSVGs";
 
 export interface CarouselItem {
   src: string;

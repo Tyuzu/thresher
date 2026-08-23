@@ -1,6 +1,6 @@
 import "../../../css/layout/sticky5.css";
 import { createElement } from "../createElement.js";
-import { notifSVG, cartSVG, chatSVG, menuSVG } from "../svgs.js";
+import { notifSVG, cartSVG, chatSVG, menuSVG } from "../svgs/featherSVGs";
 import { navigate } from "../../routes/navigate.js";
 import { getState, subscribe } from "../../state/state.js";
 import { openNotificationsModal } from "../../services/notifications/notifModal.js";

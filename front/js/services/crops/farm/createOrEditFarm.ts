@@ -1,5 +1,5 @@
 import { createElement } from "../../../components/createElement.js";
-import { createFormGroup } from "../../../components/createFormGroupEnhanced.js";
+import { createFormGroup } from "../../../components/form/createFormGroupEnhanced.js";
 
 export function createInputField(type, placeholder, value = "", required = false) {
   return createElement("input", {

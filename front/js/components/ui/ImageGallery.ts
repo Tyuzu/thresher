@@ -1,6 +1,6 @@
 import { createElement } from "../../components/createElement.js";
 import Imagex, { ImagexAttributes } from "../base/Imagex.js";
-import ZoomBox from "./ZoomBox.js";
+import ZoomBox from "./zoomBox/ZoomBox.js";
 
 export type MediaType = "image" | "video" | "pdf";
 

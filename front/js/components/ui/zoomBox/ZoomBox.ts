@@ -1,5 +1,5 @@
 import "../../../css/ui/ZoomBox.css";
-import { createElement } from "../createElement.js";
+import { createElement } from "../../createElement.js";
 import {
   createOverlay,
   createImageElement,
@@ -14,7 +14,7 @@ import {
   handleKeyboard,
   ZoomBoxState
 } from "./zoomboxHelpers.js";
-import { dispatchZoomBoxEvent } from "../../utils/eventDispatcher.js";
+import { dispatchZoomBoxEvent } from "../../../utils/eventDispatcher.js";
 
 type MediaType = "video" | "image";
 

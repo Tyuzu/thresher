@@ -2,7 +2,7 @@ import "../../../css/ui/SightboxZoom.css";
 import { createZoomableMedia, ZoomableMediaType } from "./createZoomableMedia.js";
 import { createElement } from "../../components/createElement.js";
 import { createIconButton } from "../../utils/svgIconButton.js";
-import { xSVG } from "../svgs.js";
+import { xSVG } from "../svgs/featherSVGs.js";
 
 /**
  * Creates and displays an accessible, zoomable media lightbox modal with a focus trap.

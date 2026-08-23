@@ -12,7 +12,7 @@ import {
   settingsSVG,
   skipBackSVG,
   skipForwardSVG,
-} from "../../../components/svgs.js";
+} from "../../../components/svgs/featherSVGs";
 
 
 export function appendElements(

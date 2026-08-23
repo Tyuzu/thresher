@@ -1,7 +1,7 @@
 // player.js
 import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
-import { playSVG, pauseSVG } from "../../components/svgs.js";
+import { playSVG, pauseSVG } from "../../components/svgs/featherSVGs";
 
 // ------------------------ Player State ------------------------
 const state = {

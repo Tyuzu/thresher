@@ -12,7 +12,7 @@ import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePath
 import Notify from "../../components/ui/Notify.js";
 import Imagex from "../../components/base/Imagex.js";
 import { fetchUserMeta } from "../../utils/usersMeta.js";
-import ZoomBox from "../../components/ui/ZoomBox.js";
+import ZoomBox from "../../components/ui/zoomBox/ZoomBox.js";
 import { renderRelatedPosts } from "./relatedPosts.js";
 
 // --- Shared constants ---

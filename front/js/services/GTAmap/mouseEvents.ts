@@ -4,7 +4,7 @@ import { apiFetch, SRC_URL } from "../../api/api.js";
 import {
     updateTransform,
     resetTransformState
-} from "../../components/ui/zoomboxHelpers.js";
+} from "../../components/ui/zoomBox/zoomboxHelpers.js";
 import {dispatchZoomBoxEvent} from "../../utils/eventDispatcher.js";
 
 /**

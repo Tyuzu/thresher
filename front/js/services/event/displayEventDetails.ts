@@ -4,7 +4,7 @@ import { editEvent } from "./creadit.js";
 import { viewEventAnalytics } from "./eventAnalytics.js";
 import { reportEntity } from "../reporting/reporting.js";
 import { EntityType } from "../../utils/imagePaths.js";
-import { starEmptySVG, starFilledSVG } from "../../components/svgs.js";
+import { starEmptySVG, starFilledSVG } from "../../components/svgs/featherSVGs";
 import { createIconButton } from "../../utils/svgIconButton.js";
 import { hireVendors } from "../jobs/vendors/vendors.js";
 import Bannerx from "../../components/base/Bannerx.js";

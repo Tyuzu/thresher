@@ -1,6 +1,6 @@
 import "../../../css/inistyles/deliverypage.css";
 import { createElement } from "../../components/createElement.js";
-import { createFormGroup } from "../../components/createFormGroupEnhanced.js";
+import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import Button from "../../components/base/Button.js";
 import Notify from "../../components/ui/Notify.js";
 import { createDeliveryRequest } from "../../services/deliveries/deliveriesApi.js";

@@ -1,7 +1,7 @@
 import "../../../css/ui/Sightbox.css";
 import { createElement } from "../../components/createElement.js";
 import { createIconButton } from "../../utils/svgIconButton.js";
-import { xSVG } from "../svgs.js";
+import { xSVG } from "../svgs/featherSVGs";
 
 export type LightBoxContent = HTMLElement | DocumentFragment | Node;
 
