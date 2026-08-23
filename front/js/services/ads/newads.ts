@@ -1,17 +1,71 @@
-// src/utils/newads.js
 import "../../../css/subpages/sda.css";
 import { createElement } from "../../components/createElement.js";
 import { t } from "../../i18n/i18n.js";
 
+// --- Types & Interfaces ---
+
+export type AdLayout = "horizontal" | "vertical" | "banner" | "compact";
+
+export type AdFetcher = (slotEl: HTMLElement) => Promise<void> | void;
+
+export interface RawAdPayload {
+  id?: string;
+  ID?: string;
+  link?: string;
+  Link?: string;
+  image?: string;
+  Image?: string;
+  title?: string;
+  Title?: string;
+  description?: string;
+  Description?: string;
+  badge?: string;
+  Badge?: string;
+  cta?: string;
+  CTA?: string;
+}
+
+export interface AdData {
+  id: string;
+  link: string;
+  image: string;
+  title: string;
+  description: string;
+  badge: string;
+  cta: string;
+}
+
+export interface AdConfig {
+  adNetworkInit?: AdFetcher | null;
+  fallbackNetworks?: AdFetcher[];
+  refreshInterval?: number;
+  debug?: boolean;
+}
+
+export interface AdEmbedOptions {
+  category?: string;
+  layout?: AdLayout;
+  classes?: string;
+  fallbackText?: string;
+  adNetworkInit?: AdFetcher | null;
+  fallbackNetworks?: AdFetcher[];
+  refreshInterval?: number;
+  width?: string | number;
+  height?: string | number;
+  debug?: boolean;
+}
+
+// --- Global State ---
+
 let adCounter = 0;
 
-const adConfigs = new WeakMap();
-const adRefreshTimers = new WeakMap();
+const adConfigs = new WeakMap<HTMLElement, AdConfig>();
+const adRefreshTimers = new WeakMap<HTMLElement, ReturnType<typeof setInterval>>();
 
 /**
  * Resolves current page context from options or window.location.
  */
-function resolvePageContext(page) {
+function resolvePageContext(page?: string): string {
   if (page && page !== "home" && page !== "auto") {
     return page;
   }
@@ -25,33 +79,38 @@ function resolvePageContext(page) {
 }
 
 /**
- * Secondary Observer for IAB-Compliant Impression Tracking
+ * Secondary Observer for IAB-Compliant Impression Tracking.
  * Triggers beacon ONLY when ad is >= 50% visible in the viewport.
  */
-const impressionObserver = (typeof window !== "undefined" && "IntersectionObserver" in window)
-  ? new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-          const slotEl = entry.target;
-          const adId = slotEl.getAttribute("data-ad-id");
-          const tracked = slotEl.getAttribute("data-impression-tracked");
+const impressionObserver: IntersectionObserver | null =
+  typeof window !== "undefined" && "IntersectionObserver" in window
+    ? new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+              const slotEl = entry.target as HTMLElement;
+              const adId = slotEl.getAttribute("data-ad-id");
+              const tracked = slotEl.getAttribute("data-impression-tracked");
 
-          if (adId && tracked !== "true") {
-            slotEl.setAttribute("data-impression-tracked", "true");
-            if (typeof navigator !== "undefined" && navigator.sendBeacon) {
-              navigator.sendBeacon(`/api/v1/sda/track-impression?id=${encodeURIComponent(adId)}`);
+              if (adId && tracked !== "true") {
+                slotEl.setAttribute("data-impression-tracked", "true");
+                if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+                  navigator.sendBeacon(`/api/v1/sda/track-impression?id=${encodeURIComponent(adId)}`);
+                }
+                impressionObserver?.unobserve(slotEl);
+              }
             }
-            impressionObserver.unobserve(slotEl);
-          }
-        }
-      });
-    }, { threshold: 0.5 })
-  : null;
+          });
+        },
+        { threshold: 0.5 }
+      )
+    : null;
 
 /**
  * Default internal fetcher connecting directly to Go backend.
  */
-async function defaultAdNetworkFetcher(slotEl) {
+
+async function defaultAdNetworkFetcher(slotEl: HTMLElement): Promise<void> {
   const page = slotEl.getAttribute("data-page") || "home";
   const position = slotEl.getAttribute("data-position") || "";
   const category = slotEl.getAttribute("data-category") || "";
@@ -59,16 +118,16 @@ async function defaultAdNetworkFetcher(slotEl) {
   const queryParams = new URLSearchParams({ page, position, category });
   const response = await fetch(`/api/v1/sda/sda?${queryParams.toString()}`, {
     method: "GET",
-    headers: { "Accept": "application/json" }
+    headers: { Accept: "application/json" }
   });
 
   if (!response.ok) {
     throw new Error(`Ad API error HTTP ${response.status}`);
   }
 
-  const rawData = await response.json();
+  const rawData = (await response.json()) as RawAdPayload;
 
-  const adData = {
+  const adData: AdData = {
     id: rawData.id || rawData.ID || "",
     link: rawData.link || rawData.Link || "",
     image: rawData.image || rawData.Image || "",
@@ -86,12 +145,7 @@ async function defaultAdNetworkFetcher(slotEl) {
   slotEl.setAttribute("data-ad-id", adData.id);
   slotEl.setAttribute("data-impression-tracked", "false");
 
-  const anchor = createElement("a", {
-    href: adData.link,
-    target: "_blank",
-    rel: "noopener noreferrer",
-    class: "ad-card-link"
-  }, [
+  const children: HTMLElement[] = [
     createElement("div", { class: "ad-card-media" }, [
       createElement("img", {
         src: adData.image,
@@ -108,7 +162,18 @@ async function defaultAdNetworkFetcher(slotEl) {
         createElement("span", { class: "ad-card-cta" }, [adData.cta])
       ])
     ])
-  ]);
+  ];
+
+  const anchor = createElement(
+    "a",
+    {
+      href: adData.link,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      class: "ad-card-link"
+    },
+    children
+  ) as HTMLAnchorElement;
 
   // Click Tracking Listener
   anchor.addEventListener("click", () => {
@@ -125,34 +190,38 @@ async function defaultAdNetworkFetcher(slotEl) {
 }
 
 // Primary IntersectionObserver for Lazy-Loading
-const sharedAdObserver = (typeof window !== "undefined" && "IntersectionObserver" in window)
-  ? new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        const slotEl = entry.target;
-        const config = adConfigs.get(slotEl);
+const sharedAdObserver: IntersectionObserver | null =
+  typeof window !== "undefined" && "IntersectionObserver" in window
+    ? new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const slotEl = entry.target as HTMLElement;
+            const config = adConfigs.get(slotEl);
 
-        if (!config) return;
+            if (!config) return;
 
-        if (entry.isIntersecting) {
-          if (slotEl.getAttribute("data-ad-state") === "waiting") {
-            triggerAdInitialization(slotEl, config);
-          }
-          if (config.refreshInterval && slotEl.getAttribute("data-ad-state") === "loaded") {
-            startRefreshTimer(slotEl, config);
-          }
-        } else {
-          stopRefreshTimer(slotEl);
-        }
-      });
-    }, { rootMargin: "200px" })
-  : null;
+            if (entry.isIntersecting) {
+              if (slotEl.getAttribute("data-ad-state") === "waiting") {
+                triggerAdInitialization(slotEl, config);
+              }
+              if (config.refreshInterval && slotEl.getAttribute("data-ad-state") === "loaded") {
+                startRefreshTimer(slotEl, config);
+              }
+            } else {
+              stopRefreshTimer(slotEl);
+            }
+          });
+        },
+        { rootMargin: "200px" }
+      )
+    : null;
 
-async function triggerAdInitialization(slotEl, config) {
+async function triggerAdInitialization(slotEl: HTMLElement, config: AdConfig): Promise<void> {
   const { adNetworkInit, fallbackNetworks = [], debug } = config;
 
   slotEl.setAttribute("data-ad-state", "loading");
 
-  const networksToTry = [];
+  const networksToTry: AdFetcher[] = [];
   if (typeof adNetworkInit === "function") {
     networksToTry.push(adNetworkInit);
   } else {
@@ -160,7 +229,7 @@ async function triggerAdInitialization(slotEl, config) {
   }
 
   if (Array.isArray(fallbackNetworks)) {
-    networksToTry.push(...fallbackNetworks.filter(fn => typeof fn === "function"));
+    networksToTry.push(...fallbackNetworks.filter((fn): fn is AdFetcher => typeof fn === "function"));
   }
 
   let initialized = false;
@@ -190,8 +259,10 @@ async function triggerAdInitialization(slotEl, config) {
   }
 }
 
-function startRefreshTimer(slotEl, config) {
+function startRefreshTimer(slotEl: HTMLElement, config: AdConfig): void {
   stopRefreshTimer(slotEl);
+  if (!config.refreshInterval) return;
+
   const interval = Math.max(config.refreshInterval, 10000);
 
   const timerId = setInterval(() => {
@@ -208,35 +279,40 @@ function startRefreshTimer(slotEl, config) {
   adRefreshTimers.set(slotEl, timerId);
 }
 
-function stopRefreshTimer(slotEl) {
+function stopRefreshTimer(slotEl: HTMLElement): void {
   if (adRefreshTimers.has(slotEl)) {
-    clearInterval(adRefreshTimers.get(slotEl));
+    clearInterval(adRefreshTimers.get(slotEl)!);
     adRefreshTimers.delete(slotEl);
   }
 }
 
-export function destroyAdSlot(slotEl) {
+/**
+ * Clean up memory references, refresh timers, and observers for an ad element.
+ */
+export function destroyAdSlot(slotEl: HTMLElement | null): void {
   if (!slotEl) return;
   stopRefreshTimer(slotEl);
-  if (sharedAdObserver) sharedAdObserver.unobserve(slotEl);
-  if (impressionObserver) impressionObserver.unobserve(slotEl);
+  sharedAdObserver?.unobserve(slotEl);
+  impressionObserver?.unobserve(slotEl);
   adConfigs.delete(slotEl);
 }
 
-export function advertEmbed(page, position = "", options = {}) {
+/**
+ * Creates an ad slot element and registers lazy-loading observer.
+ */
+export function advertEmbed(page?: string, position = "", options: AdEmbedOptions = {}): HTMLElement {
   adCounter++;
 
   const resolvedPage = resolvePageContext(page);
 
   const {
     category = "",
-    layout = "horizontal", // "horizontal" | "vertical" | "banner" | "compact"
+    layout = "horizontal",
     classes = "",
     fallbackText = t("common.advertisement", {}, "Advertisement"),
     adNetworkInit = null,
     fallbackNetworks = [],
     refreshInterval = 0,
-    width = "auto",
     height = "auto",
     debug = false
   } = options;
@@ -244,27 +320,31 @@ export function advertEmbed(page, position = "", options = {}) {
   const slotId = `ad-slot-${resolvedPage}-${position || "default"}-${adCounter}`;
   const styleMinH = typeof height === "number" ? `${height}px` : height;
 
-  const slotEl = createElement("div", {
-    id: slotId,
-    class: `ad-slot ad-layout-${layout} ${classes}`.trim(),
-    "data-page": resolvedPage,
-    "data-position": position,
-    "data-category": category,
-    "data-ad-layout": layout,
-    "data-ad-state": "waiting",
-    style: `min-height: ${styleMinH};`
-  }, [
-    createElement("div", { class: "ad-skeleton" }, [
-      createElement("div", { class: "ad-skeleton-img" }),
-      createElement("div", { class: "ad-skeleton-lines" }, [
-        createElement("div", { class: "ad-skeleton-line short" }),
-        createElement("div", { class: "ad-skeleton-line medium" })
-      ])
-    ]),
-    createElement("span", { class: "ad-fallback-text" }, [fallbackText])
-  ]);
+  const slotEl = createElement(
+    "div",
+    {
+      id: slotId,
+      class: `ad-slot ad-layout-${layout} ${classes}`.trim(),
+      "data-page": resolvedPage,
+      "data-position": position,
+      "data-category": category,
+      "data-ad-layout": layout,
+      "data-ad-state": "waiting",
+      style: { minHeight: styleMinH }
+    },
+    [
+      createElement("div", { class: "ad-skeleton" }, [
+        createElement("div", { class: "ad-skeleton-img" }),
+        createElement("div", { class: "ad-skeleton-lines" }, [
+          createElement("div", { class: "ad-skeleton-line short" }),
+          createElement("div", { class: "ad-skeleton-line medium" })
+        ])
+      ]),
+      createElement("span", { class: "ad-fallback-text" }, [fallbackText])
+    ]
+  );
 
-  const config = { adNetworkInit, fallbackNetworks, refreshInterval, debug };
+  const config: AdConfig = { adNetworkInit, fallbackNetworks, refreshInterval, debug };
 
   if (debug) {
     console.warn(`[Ad System] Created slot ${slotId} [Layout: ${layout}]`);
@@ -280,14 +360,19 @@ export function advertEmbed(page, position = "", options = {}) {
   return slotEl;
 }
 
-export function adspace(position = "", page, options = {}) {
+/**
+ * Wraps an ad slot in a semantically appropriate `<section>` container.
+ */
+export function adspace(position = "", page?: string, options: AdEmbedOptions = {}): HTMLElement {
   const sanitizePos = position || "default";
   const resolvedPage = resolvePageContext(page);
 
-  return createElement("section", {
-    class: `advert advert-${sanitizePos}`.trim(),
-    "aria-label": t("common.advertisement", {}, "Advertisement")
-  }, [
-    advertEmbed(resolvedPage, position, options)
-  ]);
+  return createElement(
+    "section",
+    {
+      class: `advert advert-${sanitizePos}`.trim(),
+      "aria-label": t("common.advertisement", {}, "Advertisement")
+    },
+    [advertEmbed(resolvedPage, position, options)]
+  );
 }

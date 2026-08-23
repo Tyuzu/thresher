@@ -5,19 +5,48 @@ import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePath
 import { createTabs } from "../../utils/persistTabs.js";
 import Imagex from "../../components/base/Imagex.js";
 
-// --- Helpers ---
+/* =========================
+   TYPES & INTERFACES
+========================= */
+
+export interface PostItem {
+    postid: string | number;
+    title?: string;
+    type?: "image" | "video" | string;
+    media_url?: string | string[];
+    [key: string]: unknown;
+}
+
+export interface UserItem {
+    username: string;
+    display_name?: string;
+    [key: string]: unknown;
+}
+
+/* =========================
+   CONFIG
+========================= */
+
 const DEFAULT_LIMIT = 20;
 
-// Render "Top" tab
-async function renderTopTab(container, hashtag, page = 0, limit = DEFAULT_LIMIT) {
+/* =========================
+   TAB RENDERERS
+========================= */
+
+async function renderTopTab(
+    container: HTMLElement,
+    hashtag: string,
+    page: number = 0,
+    limit: number = DEFAULT_LIMIT
+): Promise<void> {
     const loading = createElement("p", { class: "loading" }, ["Loading top posts..."]);
     container.appendChild(loading);
 
     try {
-        const posts = await apiFetch(`/hashtags/hashtag/${hashtag}/top?page=${page}&limit=${limit}`);
+        const posts = await apiFetch<PostItem[]>(`/hashtags/hashtag/${hashtag}/top?page=${page}&limit=${limit}`);
         container.textContent = "";
 
-        if (!posts.length) {
+        if (!Array.isArray(posts) || !posts.length) {
             container.appendChild(
                 createElement("div", { class: "empty-state" }, [
                     createElement("p", {}, ["No top posts found for this hashtag."])
@@ -42,16 +71,20 @@ async function renderTopTab(container, hashtag, page = 0, limit = DEFAULT_LIMIT)
     }
 }
 
-// Render "Latest" tab
-async function renderLatestTab(container, hashtag, page = 0, limit = DEFAULT_LIMIT) {
+async function renderLatestTab(
+    container: HTMLElement,
+    hashtag: string,
+    page: number = 0,
+    limit: number = DEFAULT_LIMIT
+): Promise<void> {
     const loading = createElement("p", { class: "loading" }, ["Loading latest posts..."]);
     container.appendChild(loading);
 
     try {
-        const posts = await apiFetch(`/hashtags/hashtag/${hashtag}/latest?page=${page}&limit=${limit}`);
+        const posts = await apiFetch<PostItem[]>(`/hashtags/hashtag/${hashtag}/latest?page=${page}&limit=${limit}`);
         container.textContent = "";
 
-        if (!posts.length) {
+        if (!Array.isArray(posts) || !posts.length) {
             container.appendChild(
                 createElement("div", { class: "empty-state" }, [
                     createElement("p", {}, ["No recent posts found for this hashtag."])
@@ -76,16 +109,20 @@ async function renderLatestTab(container, hashtag, page = 0, limit = DEFAULT_LIM
     }
 }
 
-// Render "People" tab
-async function renderPeopleTab(container, hashtag, page = 0, limit = DEFAULT_LIMIT) {
+async function renderPeopleTab(
+    container: HTMLElement,
+    hashtag: string,
+    page: number = 0,
+    limit: number = DEFAULT_LIMIT
+): Promise<void> {
     const loading = createElement("p", { class: "loading" }, ["Loading people..."]);
     container.appendChild(loading);
 
     try {
-        const people = await apiFetch(`/hashtags/hashtag/${hashtag}/people?page=${page}&limit=${limit}`);
+        const people = await apiFetch<UserItem[]>(`/hashtags/hashtag/${hashtag}/people?page=${page}&limit=${limit}`);
         container.textContent = "";
 
-        if (!people.length) {
+        if (!Array.isArray(people) || !people.length) {
             container.appendChild(
                 createElement("div", { class: "empty-state" }, [
                     createElement("p", {}, ["No people found using this hashtag."])
@@ -110,16 +147,20 @@ async function renderPeopleTab(container, hashtag, page = 0, limit = DEFAULT_LIM
     }
 }
 
-// Render "Media" tab
-async function renderMediaTab(container, hashtag, page = 0, limit = DEFAULT_LIMIT) {
+async function renderMediaTab(
+    container: HTMLElement,
+    hashtag: string,
+    page: number = 0,
+    limit: number = DEFAULT_LIMIT
+): Promise<void> {
     const loading = createElement("p", { class: "loading" }, ["Loading media..."]);
     container.appendChild(loading);
 
     try {
-        const posts = await apiFetch(`/hashtags/hashtag/${hashtag}?page=${page}&limit=${limit}`);
+        const posts = await apiFetch<PostItem[]>(`/hashtags/hashtag/${hashtag}?page=${page}&limit=${limit}`);
         container.textContent = "";
 
-        if (!posts.length) {
+        if (!Array.isArray(posts) || !posts.length) {
             container.appendChild(
                 createElement("div", { class: "empty-state" }, [
                     createElement("p", {}, ["No media found for this hashtag."])
@@ -135,23 +176,23 @@ async function renderMediaTab(container, hashtag, page = 0, limit = DEFAULT_LIMI
                 : post.media_url ? [post.media_url] : [];
 
             if (!mediaUrls.length) {
-return;
-}
+                return;
+            }
 
             const thumbSrc =
                 post.type === "video"
                     ? resolveImagePath(EntityType.FEED, PictureType.VIDEO, mediaUrls[0])
-                    : resolveImagePath(EntityType.FEED, PictureType.IMAGE, mediaUrls[0]);
+                    : resolveImagePath(EntityType.FEED, PictureType.PHOTO, mediaUrls[0]);
 
             const card = createElement(
                 "a",
                 { class: "grid-item", href: `/feedpost/${post.postid}` },
                 [
-                    Imagex( {
+                    Imagex({
                         src: thumbSrc,
                         alt: post.title || "Post",
                         loading: "lazy"
-                    })
+                    }) as HTMLElement
                 ]
             );
 
@@ -168,8 +209,15 @@ return;
     }
 }
 
-// --- Main Function ---
-export async function displayHashtag(contentContainer, hashtag, isLoggedIn) {
+/* =========================
+   MAIN ENTRY POINT
+========================= */
+
+export async function displayHashtag(
+    contentContainer: HTMLElement,
+    hashtag: string,
+    isLoggedIn: boolean
+): Promise<void> {
     // Clear old content
     while (contentContainer.firstChild) {
         contentContainer.removeChild(contentContainer.firstChild);
@@ -178,7 +226,7 @@ export async function displayHashtag(contentContainer, hashtag, isLoggedIn) {
     // Page wrapper
     const hashcon = createElement("div", { id: "hashcon", class: "hashtag-page" }, []);
 
-    // --- Header row ---
+    // Header row
     const header = createElement("div", { class: "hashtag-header hvflex-sb" }, [
         createElement("h2", { class: "hashtag-title" }, [`#${hashtag}`])
     ]);
@@ -186,40 +234,40 @@ export async function displayHashtag(contentContainer, hashtag, isLoggedIn) {
     if (isLoggedIn) {
         const reportBtn = createElement("button", { class: "report-btn" }, ["Report"]);
         reportBtn.addEventListener("click", () => {
-            reportEntity(hashtag);
+            reportEntity(String(hashtag), "hashtag");
         });
         header.appendChild(reportBtn);
     }
 
     hashcon.appendChild(header);
 
-    // --- Tabs ---
+    // Tabs configuration
     const tabs = createTabs(
         [
             {
                 id: "top",
                 title: "Top",
-                render: async container => renderTopTab(container, hashtag)
+                render: async (container: HTMLElement) => renderTopTab(container, hashtag)
             },
             {
                 id: "latest",
                 title: "Latest",
-                render: async container => renderLatestTab(container, hashtag)
+                render: async (container: HTMLElement) => renderLatestTab(container, hashtag)
             },
             {
                 id: "people",
                 title: "People",
-                render: async container => renderPeopleTab(container, hashtag)
+                render: async (container: HTMLElement) => renderPeopleTab(container, hashtag)
             },
             {
                 id: "media",
                 title: "Media",
-                render: async container => renderMediaTab(container, hashtag)
+                render: async (container: HTMLElement) => renderMediaTab(container, hashtag)
             }
         ],
         `hashtag-${hashtag}`,
         "top"
-    );
+    ) as HTMLElement;
 
     hashcon.appendChild(tabs);
     contentContainer.appendChild(hashcon);

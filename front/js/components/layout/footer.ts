@@ -2,9 +2,7 @@ import "../../../css/layout/footer.css";
 import { setLanguage } from "../../i18n/i18n.js";
 import { navigate } from "../../routes/navigate.js";
 import { webSiteName } from "../../config/env.js";
-import { userFeedbackGlobal } from "../../services/reporting/feedback/feedback.js";
 import { createElement } from "../createElement.js";
-import { Button } from "../base/Button.js";
 
 interface NavPage {
   href: string;
@@ -79,21 +77,11 @@ const Footer = (): HTMLElement => {
   const savedLang = localStorage.getItem("lang") || "en";
   langSelect.value = savedLang;
 
-  const feedbackButton = Button(
-    "Feedback",
-    "feedback-btn",
-    {
-      click: () => userFeedbackGlobal()
-    },
-    "buttonx"
-  );
-
   const footerBottom = createElement("div", { class: "footer-bottom" }, [
     langSelect,
     createElement("p", {}, [
       `© ${new Date().getFullYear()} ${webSiteName}. All rights reserved.`
-    ]),
-    feedbackButton
+    ])
   ]);
 
   return createElement("div", { class: "footer-container" }, [

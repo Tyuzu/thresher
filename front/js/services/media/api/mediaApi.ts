@@ -2,32 +2,78 @@ import { apiFetch } from "../../../api/api.js";
 import { FILEDROP_URL, getState } from "../../../state/state.js";
 import { UploadStore } from "../store/uploadStore.js";
 
-/* -------------------------
+/* =========================
+   TYPES & INTERFACES
+========================= */
+
+export interface MediaUploadResult {
+    filename?: string;
+    key?: string;
+    url?: string;
+    id?: string | number;
+    [key: string]: unknown;
+}
+
+export interface UploadItem {
+    id: string;
+    file: File;
+    entityType: string;
+    entityId?: string | number;
+    key?: string;
+}
+
+export interface UploadOptions {
+    entityType?: string;
+    entityId?: string | number;
+    concurrency?: number;
+    retry?: number;
+    key?: string | ((file: File) => string);
+}
+
+export interface QueueResult {
+    error?: string;
+    [key: string]: unknown;
+}
+
+export interface MediaApi {
+    fetchMedia: <T = unknown>(entityType: string, entityId: string | number) => Promise<T>;
+    deleteMedia: <T = unknown>(mediaId: string | number, entityType: string, entityId: string | number) => Promise<T>;
+    postMedia: <T = unknown>(entityType: string, entityId: string | number, payload: unknown) => Promise<T>;
+}
+
+/* =========================
    API - Service endpoint factory
-------------------------- */
+========================= */
 
-export function createMediaApi(service = "media") {
-  return {
-    async fetchMedia(entityType, entityId) {
-      return await apiFetch(`/${service}/${entityType}/${entityId}`);
-    },
+export function createMediaApi(service = "media"): MediaApi {
+    return {
+        async fetchMedia<T = unknown>(entityType: string, entityId: string | number): Promise<T> {
+            return await apiFetch<T>(`/${service}/${entityType}/${entityId}`);
+        },
 
-    async deleteMedia(mediaId, entityType, entityId) {
-      return await apiFetch(
-        `/${service}/${entityType}/${entityId}/${mediaId}`,
-        "DELETE"
-      );
-    },
+        async deleteMedia<T = unknown>(
+            mediaId: string | number,
+            entityType: string,
+            entityId: string | number
+        ): Promise<T> {
+            return await apiFetch<T>(
+                `/${service}/${entityType}/${entityId}/${mediaId}`,
+                "DELETE"
+            );
+        },
 
-    async postMedia(entityType, entityId, payload) {
-      return await apiFetch(
-        `/${service}/${entityType}/${entityId}`,
-        "POST",
-        payload,
-        { json: true }
-      );
-    }
-  };
+        async postMedia<T = unknown>(
+            entityType: string,
+            entityId: string | number,
+            payload: unknown
+        ): Promise<T> {
+            return await apiFetch<T>(
+                `/${service}/${entityType}/${entityId}`,
+                "POST",
+                payload
+            );
+        }
+    };
 }
 
 const defaultApi = createMediaApi("media");
@@ -36,256 +82,211 @@ export const fetchMedia = defaultApi.fetchMedia.bind(defaultApi);
 export const deleteMedia = defaultApi.deleteMedia.bind(defaultApi);
 export const postMedia = defaultApi.postMedia.bind(defaultApi);
 
-/* -------------------------
+/* =========================
    FileDrop Upload (single)
-------------------------- */
+========================= */
 
-export function uploadFile(u) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
+export function uploadFile(u: UploadItem): Promise<MediaUploadResult> {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
 
-    UploadStore.controllers[u.id] = xhr;
+        UploadStore.controllers[u.id] = xhr;
 
-    const formData = new FormData();
+        const formData = new FormData();
+        const key = (u.key || "file").toLowerCase();
 
-    const key = (u.key || "file").toLowerCase();
+        formData.append(key, u.file);
+        formData.append("entityType", u.entityType);
+        formData.append("entityId", String(u.entityId || ""));
 
-    formData.append(key, u.file);
-    formData.append("entityType", u.entityType);
-    formData.append("entityId", u.entityId || "");
-
-    UploadStore.update(u.id, {
-      status: "uploading",
-      progress: 0
-    });
-
-    xhr.upload.onprogress = e => {
-      if (e.lengthComputable) {
         UploadStore.update(u.id, {
-          progress: Math.round(
-            (e.loaded / e.total) * 100
-          )
+            status: "uploading",
+            progress: 0
         });
-      }
-    };
 
-    xhr.onload = () => {
-      delete UploadStore.controllers[u.id];
+        xhr.upload.onprogress = (e: ProgressEvent) => {
+            if (e.lengthComputable) {
+                UploadStore.update(u.id, {
+                    progress: Math.round((e.loaded / e.total) * 100)
+                });
+            }
+        };
 
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const data = JSON.parse(xhr.responseText);
+        xhr.onload = () => {
+            delete UploadStore.controllers[u.id];
 
-          UploadStore.update(u.id, {
-            status: "done",
-            progress: 100
-          });
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
 
-          resolve(
-            Array.isArray(data)
-              ? data[0]
-              : data
-          );
-        } catch {
-          UploadStore.update(u.id, {
-            status: "error"
-          });
+                    UploadStore.update(u.id, {
+                        status: "done",
+                        progress: 100
+                    });
 
-          reject(
-            new Error(
-              "Invalid FILEDROP response"
-            )
-          );
+                    resolve(Array.isArray(data) ? data[0] : data);
+                } catch {
+                    UploadStore.update(u.id, { status: "error" });
+                    reject(new Error("Invalid FILEDROP response"));
+                }
+                return;
+            }
+
+            UploadStore.update(u.id, { status: "error" });
+
+            const error = new Error(
+                xhr.responseText || xhr.statusText || "Upload failed"
+            ) as Error & { status?: number };
+
+            error.status = xhr.status;
+            reject(error);
+        };
+
+        xhr.onerror = () => {
+            UploadStore.update(u.id, { status: "error" });
+            reject(new Error("Network error"));
+        };
+
+        xhr.onabort = () => {
+            UploadStore.update(u.id, { status: "canceled" });
+            reject(new Error("Upload canceled"));
+        };
+
+        xhr.open("POST", FILEDROP_URL);
+
+        const token = getState("token");
+        if (token) {
+            xhr.setRequestHeader("Authorization", `Bearer ${token}`);
         }
 
-        return;
-      }
-
-      UploadStore.update(u.id, {
-        status: "error"
-      });
-
-      const error = new Error(
-        xhr.responseText ||
-        xhr.statusText ||
-        "Upload failed"
-      );
-
-      error.status = xhr.status;
-
-      reject(error);
-    };
-
-    xhr.onerror = () => {
-      UploadStore.update(u.id, {
-        status: "error"
-      });
-
-      reject(new Error("Network error"));
-    };
-
-    xhr.onabort = () => {
-      UploadStore.update(u.id, {
-        status: "canceled"
-      });
-
-      reject(new Error("Upload canceled"));
-    };
-
-    xhr.open("POST", FILEDROP_URL);
-
-    const token = getState("token");
-
-    if (token) {
-      xhr.setRequestHeader(
-        "Authorization",
-        `Bearer ${token}`
-      );
-    }
-
-    xhr.send(formData);
-  });
+        xhr.send(formData);
+    });
 }
 
-/* -------------------------
+/* =========================
    Concurrency Queue
-------------------------- */
+========================= */
 
-async function runUploadQueue(
-  items,
-  worker,
-  concurrency = 3
-) {
-  const results = new Array(items.length);
+async function runUploadQueue<T>(
+    items: UploadItem[],
+    worker: (item: UploadItem) => Promise<T>,
+    concurrency = 3
+): Promise<(T | QueueResult)[]> {
+    const results: (T | QueueResult)[] = new Array(items.length);
+    let index = 0;
 
-  let index = 0;
+    async function next(): Promise<void> {
+        if (index >= items.length) return;
 
-  async function next() {
-    if (index >= items.length) {
-      return;
+        const currentIndex = index++;
+        const item = items[currentIndex];
+
+        try {
+            results[currentIndex] = await worker(item);
+        } catch (err) {
+            const error = err as Error;
+            results[currentIndex] = {
+                error: error.message || String(err)
+            };
+        }
+
+        return next();
     }
 
-    const currentIndex = index++;
-    const item = items[currentIndex];
+    const workers = Array.from({ length: concurrency }, () => next());
+    await Promise.all(workers);
 
-    try {
-      results[currentIndex] =
-        await worker(item);
-    } catch (err) {
-      results[currentIndex] = {
-        error: err.message || String(err)
-      };
-    }
-
-    return next();
-  }
-
-  const workers = Array.from(
-    { length: concurrency },
-    () => next()
-  );
-
-  await Promise.all(workers);
-
-  return results;
+    return results;
 }
 
-/* -------------------------
+/* =========================
    Retry Wrapper
-------------------------- */
+========================= */
 
 async function uploadWithRetry(
-  item,
-  retries = 2
-) {
-  try {
-    return await uploadFile(item);
-  } catch (err) {
+    item: UploadItem,
+    retries = 2
+): Promise<MediaUploadResult> {
+    try {
+        return await uploadFile(item);
+    } catch (err) {
+        const error = err as Error & { status?: number };
 
-    if (
-      err.status === 401 ||
-      err.status === 403
-    ) {
-      throw err;
+        if (error.status === 401 || error.status === 403) {
+            throw error;
+        }
+
+        if (retries > 0) {
+            return uploadWithRetry(item, retries - 1);
+        }
+
+        throw error;
     }
-
-    if (retries > 0) {
-      return uploadWithRetry(
-        item,
-        retries - 1
-      );
-    }
-
-    throw err;
-  }
 }
 
-/* -------------------------
+/* =========================
    Upload Multiple Files
-------------------------- */
+========================= */
 
 export async function uploadFiles(
-  files,
-  options = {}
-) {
-  const {
-    entityType = "media",
-    entityId = "",
-    concurrency = 3,
-    retry = 0,
-    key
-  } = options;
+    files: FileList | File[],
+    options: UploadOptions = {}
+): Promise<(MediaUploadResult | QueueResult)[]> {
+    const {
+        entityType = "media",
+        entityId = "",
+        concurrency = 3,
+        retry = 0,
+        key
+    } = options;
 
-  const items = Array.from(files).map(
-    file => {
-      const id = crypto.randomUUID();
+    const items: UploadItem[] = Array.from(files).map((file) => {
+        const id = crypto.randomUUID();
 
-      UploadStore.update(id, {
-        fileName: file.name,
-        progress: 0,
-        status: "queued"
-      });
+        UploadStore.update(id, {
+            fileName: file.name,
+            progress: 0,
+            status: "queued"
+        });
 
-      return {
-        id,
-        file,
-        entityType,
-        entityId,
-        key:
-          typeof key === "function"
-            ? key(file)
-            : key || "file"
-      };
-    }
-  );
+        return {
+            id,
+            file,
+            entityType,
+            entityId,
+            key: typeof key === "function" ? key(file) : key || "file"
+        };
+    });
 
-  const worker =
-    retry > 0
-      ? item =>
-          uploadWithRetry(item, retry)
-      : item => uploadFile(item);
+    const worker =
+        retry > 0
+            ? (item: UploadItem) => uploadWithRetry(item, retry)
+            : (item: UploadItem) => uploadFile(item);
 
-  return runUploadQueue(
-    items,
-    worker,
-    concurrency
-  );
+    return runUploadQueue(items, worker, concurrency);
 }
 
-/* -------------------------
+/* =========================
    Cancel Helpers
-------------------------- */
+========================= */
 
-export function cancelUpload(id) {
-  const xhr = UploadStore.controllers[id];
+// Define the shape of your controllers map if not typed elsewhere:
+type ControllersMap = Record<string, XMLHttpRequest | undefined>;
 
-  if (xhr) {
-    xhr.abort();
-  }
+export function cancelUpload(id: string): void {
+    const xhr = (UploadStore.controllers as ControllersMap)[id];
+
+    if (xhr) {
+        xhr.abort();
+    }
 }
 
-export function cancelAllUploads() {
-  Object.values(
-    UploadStore.controllers
-  ).forEach(xhr => xhr.abort());
+export function cancelAllUploads(): void {
+    const controllers = UploadStore.controllers as ControllersMap;
+
+    Object.values(controllers).forEach((xhr) => {
+        if (xhr) {
+            xhr.abort();
+        }
+    });
 }

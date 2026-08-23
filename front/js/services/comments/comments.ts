@@ -11,6 +11,38 @@ import Datex from "../../components/base/Datex.js";
 import { reportEntity } from "../reporting/reporting.js";
 
 /* =========================
+   TYPES & INTERFACES
+========================= */
+
+export type SortOption = "newest" | "oldest";
+
+export interface UserMeta {
+    username?: string;
+    [key: string]: unknown;
+}
+
+export interface CommentItem {
+    commentid: string | number;
+    createdBy: string | number;
+    createdAt?: string | number | Date;
+    content?: string;
+    user?: UserMeta;
+    [key: string]: unknown;
+}
+
+interface CommentState {
+    entityType: string;
+    entityId: string | number;
+    currentUser: unknown;
+    list: HTMLDivElement;
+    input: HTMLTextAreaElement;
+    sort: SortOption;
+    page: number;
+    hasMore: boolean;
+    loading: boolean;
+}
+
+/* =========================
    CONFIG
 ========================= */
 
@@ -20,26 +52,27 @@ const PAGE_SIZE = 10;
    STATE
 ========================= */
 
-const commentState = new Map();
-const userCache = new Map();
+const commentState = new Map<string, CommentState>();
+const userCache = new Map<string | number, UserMeta>();
 
 /* =========================
    HELPERS
 ========================= */
 
-function makeKey(entityType, entityId) {
+function makeKey(entityType: string, entityId: string | number): string {
     return JSON.stringify([entityType, entityId]);
 }
 
-function mapSort(val) {
+function mapSort(val: SortOption): "old" | "new" {
     return val === "oldest" ? "old" : "new";
 }
 
-async function getUsersMeta(ids) {
+async function getUsersMeta(ids: (string | number)[]): Promise<Record<string | number, UserMeta>> {
     const missing = ids.filter(id => !userCache.has(id));
     if (missing.length) {
         try {
-            const data = await fetchUserMeta(missing);
+            // Convert array of string | number to string[]
+            const data: Record<string | number, UserMeta> = await fetchUserMeta(missing.map(String));
             Object.entries(data).forEach(([id, u]) => userCache.set(id, u));
         } catch (e) {
             console.error("User meta fetch failed", e);
@@ -49,8 +82,13 @@ async function getUsersMeta(ids) {
     return Object.fromEntries(ids.map(id => [id, userCache.get(id) || {}]));
 }
 
-async function fetchComments(entityType, entityId, page, sort) {
-    console.warn("entityType: ",entityType);
+async function fetchComments(
+    entityType: string,
+    entityId: string | number,
+    page: number,
+    sort: SortOption
+): Promise<CommentItem[]> {
+    console.warn("entityType: ", entityType);
     console.warn("entityId: ", entityId);
     console.warn("page: ", page);
     console.warn("sort: ", sort);
@@ -58,14 +96,14 @@ async function fetchComments(entityType, entityId, page, sort) {
         const res = await apiFetch(
             `/comments/${entityType}/${entityId}?sort=${mapSort(sort)}&page=${page}`
         );
-        return Array.isArray(res) ? res : [];
+        return Array.isArray(res) ? (res as CommentItem[]) : [];
     } catch (err) {
         console.error("Failed to fetch comments", err);
         return [];
     }
 }
 
-function showError(container, msg) {
+function showError(container: HTMLElement, msg: string): void {
     container.appendChild(
         createElement("p", { class: "comment-error" }, [msg])
     );
@@ -75,15 +113,14 @@ function showError(container, msg) {
    RENDER
 ========================= */
 
-function renderComment(comment, entityType, entityId) {
+function renderComment(comment: CommentItem, entityType: string, entityId: string | number): HTMLDivElement {
     const user = comment.user || {};
 
     const avatarLeft = Imagex({
-        src: resolveImagePath(EntityType.USER, PictureType.THUMB, comment.createdBy),
+        src: resolveImagePath(EntityType.USER, PictureType.THUMB, String(comment.createdBy)),
         alt: `${user.username || "Unknown"} avatar`,
-        classes: "comment-avatar",
-        style: "cursor:pointer;"
-    });
+        classes: "comment-avatar"
+    }) as HTMLElement;
 
     avatarLeft.addEventListener("click", () => {
         if (user.username) {
@@ -93,7 +130,7 @@ function renderComment(comment, entityType, entityId) {
 
     const usernameEl = createElement("span", {
         class: "comment-username",
-        style: "cursor:pointer;"
+        style: { cursor: "pointer" }
     }, [user.username || "Unknown"]);
 
     usernameEl.addEventListener("click", () => {
@@ -114,12 +151,21 @@ function renderComment(comment, entityType, entityId) {
     ]);
 
     const actions = createElement("div", { class: "comment-actions" }, [
-        Button("Reply", "", {
-            click: () => console.warn("Reply:", comment.commentid)
-        }, "comment-reply buttonx"),
-        Button("Report", "", {
-            click: () => reportEntity(comment.commentid, "comment", entityType, entityId)
-        }, "comment-report buttonx")
+        Button({
+            title: "Reply",
+            classes: "comment-reply buttonx",
+            events: {
+                click: () => console.warn("Reply:", comment.commentid)
+            }
+        }),
+        Button({
+            title: "Report",
+            classes: "comment-report buttonx",
+            events: {
+                // Ensure both commentid and entityId are converted to strings
+                click: () => reportEntity(String(comment.commentid), "comment", entityType, String(entityId))
+            }
+        })
     ]);
 
     return createElement("div", { class: "comment" }, [
@@ -128,7 +174,7 @@ function renderComment(comment, entityType, entityId) {
     ]);
 }
 
-async function appendComments(state, comments, toTop = false) {
+async function appendComments(state: CommentState, comments: CommentItem[], toTop = false): Promise<void> {
     const ids = [...new Set(comments.map(c => c.createdBy))];
     const usersMeta = await getUsersMeta(ids);
 
@@ -151,7 +197,7 @@ async function appendComments(state, comments, toTop = false) {
    LOAD
 ========================= */
 
-async function loadComments(key, reset = false) {
+async function loadComments(key: string, reset = false): Promise<void> {
     const state = commentState.get(key);
     if (!state || state.loading) {
         return;
@@ -193,7 +239,7 @@ async function loadComments(key, reset = false) {
    PAGINATION
 ========================= */
 
-async function fetchMoreComments(key) {
+async function fetchMoreComments(key: string): Promise<void> {
     const state = commentState.get(key);
     if (!state || !state.hasMore || state.loading) {
         return;
@@ -231,7 +277,7 @@ async function fetchMoreComments(key) {
    SUBMIT
 ========================= */
 
-async function handleSubmit(e, key) {
+async function handleSubmit(e: SubmitEvent | Event, key: string): Promise<void> {
     e.preventDefault();
 
     const state = commentState.get(key);
@@ -245,7 +291,7 @@ async function handleSubmit(e, key) {
     }
 
     try {
-        const newComment = await apiFetch(
+        const newComment = await apiFetch<CommentItem>(
             `/comments/${state.entityType}/${state.entityId}`,
             "POST",
             { content }
@@ -267,7 +313,11 @@ async function handleSubmit(e, key) {
    PUBLIC API
 ========================= */
 
-export function createCommentsSection(entityType, entityId, currentUser) {
+export function createCommentsSection(
+    entityType: string,
+    entityId: string | number,
+    currentUser: unknown
+): HTMLDivElement {
     const key = makeKey(entityType, entityId);
 
     const container = createElement("div", {
@@ -281,19 +331,22 @@ export function createCommentsSection(entityType, entityId, currentUser) {
         createElement("option", { value: "oldest" }, ["Oldest"])
     ]);
 
-    const loadMoreBtn = Button(
-        "Load More",
-        "",
-        { click: () => fetchMoreComments(key) },
-        "load-more-comments buttonx"
-    );
+    const loadMoreBtn = Button({
+        title: "Load More",
+        classes: "load-more-comments buttonx",
+        events: {
+            click: () => fetchMoreComments(key)
+        }
+    });
+
+    const input = createElement("textarea", {
+        class: "comment-input",
+        placeholder: currentUser ? "Write a comment..." : "Login to comment",
+        disabled: !currentUser
+    });
 
     const form = createElement("form", { class: "comment-form" }, [
-        createElement("textarea", {
-            class: "comment-input",
-            placeholder: currentUser ? "Write a comment..." : "Login to comment",
-            disabled: !currentUser
-        }),
+        input,
         createElement("button", {
             type: "submit",
             disabled: !currentUser
@@ -302,12 +355,12 @@ export function createCommentsSection(entityType, entityId, currentUser) {
 
     container.append(sort, form, list, loadMoreBtn);
 
-    const state = {
+    const state: CommentState = {
         entityType,
         entityId,
         currentUser,
         list,
-        input: form.querySelector("textarea"),
+        input,
         sort: "newest",
         page: 1,
         hasMore: true,
@@ -322,12 +375,13 @@ export function createCommentsSection(entityType, entityId, currentUser) {
 
     sort.addEventListener(
         "change",
-        debounce(e => {
+        debounce((e: Event) => {
+            const target = e.target as HTMLSelectElement;
             const s = commentState.get(key);
             if (!s) {
                 return;
             }
-            s.sort = e.target.value;
+            s.sort = target.value as SortOption;
             loadComments(key, true);
         }, 250)
     );
@@ -336,10 +390,10 @@ export function createCommentsSection(entityType, entityId, currentUser) {
 }
 
 /* =========================
-   CLEANUP (optional)
+   CLEANUP
 ========================= */
 
-export function destroyCommentsSection(entityType, entityId) {
+export function destroyCommentsSection(entityType: string, entityId: string | number): void {
     const key = makeKey(entityType, entityId);
     commentState.delete(key);
 }

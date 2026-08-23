@@ -19,10 +19,39 @@ import LightBox from "../../../components/ui/Lightbox.js";
 import { generateVideoPlayer } from "../../../components/ui/vidpopHelpers/index.js";
 
 /* ------------------------------------------------------
+   Types & Interfaces
+------------------------------------------------------ */
+export interface MediaItem {
+  mediaid: string | number;
+  url: string;
+  creatorid?: string | number;
+  type?: string;
+  caption?: string;
+  extn?: string;
+  [key: string]: unknown;
+}
+
+export type MediaType = "image" | "video" | "unknown";
+
+/* ------------------------------------------------------
+   Type Guards
+------------------------------------------------------ */
+function isMediaItem(item: unknown): item is MediaItem {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    "mediaid" in item &&
+    "url" in item &&
+    "creatorid" in item &&
+    typeof (item as MediaItem).url === "string"
+  );
+}
+
+/* ------------------------------------------------------
    Helper: Determine media type
 ------------------------------------------------------ */
-function getFileType(media) {
-  if (!media || !media.type) {
+function getFileType(media: MediaItem): MediaType {
+  if (!media?.type) {
     if (media.url && /\.(mp4|webm|ogg)$/i.test(media.url)) {
       return "video";
     }
@@ -31,49 +60,58 @@ function getFileType(media) {
     }
     return "unknown";
   }
-  if (media.type.startsWith("image")) {
-    return "image";
-  }
-  if (media.type.startsWith("video")) {
-    return "video";
-  }
+  if (media.type.startsWith("image")) return "image";
+  if (media.type.startsWith("video")) return "video";
   return "unknown";
 }
 
 /* ------------------------------------------------------
    BUILD MEDIA FRAGMENT
 ------------------------------------------------------ */
-function buildMediaFragment(mediaData, entityType, entityId, isLoggedIn, prefix = "media") {
+function buildMediaFragment(
+  mediaData: MediaItem[],
+  entityType: EntityType | string,
+  entityId: string | number,
+  isLoggedIn: boolean,
+  prefix: string = "media"
+): DocumentFragment {
   const frag = document.createDocumentFragment();
-  const grouped = groupMedia(mediaData);
+  const grouped: MediaItem[][] = groupMedia(mediaData);
 
-  grouped.forEach(group => {
+  grouped.forEach((group) => {
     const wrapper = createElement("div", { class: `${prefix}-group` });
 
     group.forEach((media, i) => {
-      if (!media.url) {
-        return;
-      }
+      if (!media.url) return;
 
       const mediaType = getFileType(media);
       const figure = createElement("figure", {
         class: `${prefix}-item`,
-        "data-id": media.mediaid
+        "data-id": String(media.mediaid)
       });
 
       const thumbSrc = resolveImagePath(EntityType.MEDIA, PictureType.THUMB, `${media.url}.jpg`);
-      const captionText = media.caption || "";
+      const captionText = media.caption ?? "";
       const mediaEl = buildMediaElement(media, thumbSrc, i, prefix, mediaType);
       const caption = createElement("figcaption", { class: `${prefix}-caption` }, [captionText]);
 
       const translation = buildTranslationSection(captionText);
-      const actions = createMediaActions(media, entityType, entityId, isLoggedIn, confirmDelete, prefix);
+      const actions = createMediaActions(
+        media,
+        String(entityType),
+        entityId,
+        isLoggedIn,
+        confirmDelete,
+        prefix
+      );
 
       figure.append(mediaEl, caption);
       if (translation) {
         figure.append(...translation);
       }
-      figure.append(actions);
+      if (actions) {
+        figure.append(actions);
+      }
 
       wrapper.append(figure);
     });
@@ -87,13 +125,20 @@ function buildMediaFragment(mediaData, entityType, entityId, isLoggedIn, prefix 
 /* ------------------------------------------------------
    MEDIA ELEMENT BUILDER
 ------------------------------------------------------ */
-function buildMediaElement(media, thumbSrc, index, prefix, type) {
+function buildMediaElement(
+  media: MediaItem,
+  thumbSrc: string,
+  index: number,
+  prefix: string,
+  type: MediaType
+): HTMLElement {
   if (type === "image") {
     const img = Imagex({
       "data-src": thumbSrc,
       classes: `${prefix}-img`,
-      "data-index": index
+      "data-index": String(index)
     });
+
     img.addEventListener("click", () => Sightbox(thumbSrc, "image"));
     lazyMediaObserver.observe(img);
     return img;
@@ -107,30 +152,25 @@ function buildMediaElement(media, thumbSrc, index, prefix, type) {
     );
 
     const img = Imagex({
-      src: thumbSrc,
+      "data-src": thumbSrc,
       classes: `${prefix}-img`,
-      "data-index": index
+      "data-index": String(index)
     });
 
-    const vidEl = createElement("div", { class: `${prefix}-video-wrapper` }, []);
+    // Observe video thumbnail for lazy loading
+    lazyMediaObserver.observe(img);
 
-    // Load video player lazily
-    generateVideoPlayer(videoSrc, thumbSrc, [], [], media.url)
-      .then(videoPlayer => {
+    // Lazy load video player directly into Lightbox on click
+    img.addEventListener("click", async () => {
+      try {
+        const videoPlayer = await generateVideoPlayer(videoSrc, thumbSrc, [], [], media.url);
         if (videoPlayer) {
-          vidEl.append(videoPlayer);
+          const container = createElement("div", { class: "lightbox-video-container" }, [videoPlayer]);
+          LightBox(container);
         }
-      })
-      .catch(err => {
-        console.error("Video load error:", err);
-        vidEl.append(
-          createElement("p", { class: "video-error" }, ["Failed to load video."])
-        );
-      });
-
-    img.addEventListener("click", () => {
-      const container = createElement("div", { class: "lightbox-video-container" }, [vidEl]);
-      LightBox(container);
+      } catch (err: unknown) {
+        console.error("Video player error for LightBox:", err);
+      }
     });
 
     return img;
@@ -144,10 +184,8 @@ function buildMediaElement(media, thumbSrc, index, prefix, type) {
 /* ------------------------------------------------------
    TRANSLATION TOGGLE BUILDER
 ------------------------------------------------------ */
-function buildTranslationSection(captionText) {
-  if (!captionText) {
-    return null;
-  }
+function buildTranslationSection(captionText: string): [HTMLElement, HTMLElement] | null {
+  if (!captionText) return null;
 
   const translationBox = createElement("div", {
     class: "translation-container",
@@ -163,7 +201,7 @@ function buildTranslationSection(captionText) {
     ["See Translation"]
   );
 
-  toggle.addEventListener("click", async (e) => {
+  toggle.addEventListener("click", async (e: MouseEvent) => {
     e.stopPropagation();
     await handleTranslationToggle(toggle, captionText, translationBox);
   });
@@ -174,41 +212,50 @@ function buildTranslationSection(captionText) {
 /* ------------------------------------------------------
    DISPLAY MEDIA GALLERY
 ------------------------------------------------------ */
-export async function displayMedia(content, entityType, entityId, isLoggedIn) {
+export async function displayMedia(
+  content: HTMLElement,
+  entityType: EntityType | string,
+  entityId: string | number,
+  isLoggedIn: boolean
+): Promise<void> {
   clear(content);
 
   const title = createElement("h2", {}, ["Media Gallery"]);
   const loader = createElement("p", { class: "loading" }, ["Loading media..."]);
   const list = createElement("div", { class: "media-list" });
 
-  const addBtn = createAddMediaButton(isLoggedIn, entityType, entityId, list, showMediaUploadForm);
+  const addBtn = createAddMediaButton(
+    isLoggedIn,
+    String(entityType),
+    entityId,
+    list,
+    showMediaUploadForm
+  );
   if (addBtn) {
     content.append(addBtn);
   }
 
-  // Append upfront to minimize layout shifts
   content.append(title, loader, list);
 
   try {
-    const mediaData = await fetchMedia(entityType, entityId);
+    const response: unknown = await fetchMedia(entityType, entityId);
     loader.remove();
 
-    if (!Array.isArray(mediaData) || mediaData.length === 0) {
+    if (!Array.isArray(response)) {
+      content.append(createElement("p", {}, ["No media available."]));
+      return;
+    }
+
+    const mediaData = response.filter(isMediaItem);
+
+    if (mediaData.length === 0) {
       content.append(createElement("p", {}, ["No media available."]));
       return;
     }
 
     const frag = buildMediaFragment(mediaData, entityType, entityId, isLoggedIn, "media");
     list.append(frag);
-
-    // Reserved for delegated interactions
-    list.addEventListener("click", e => {
-      const img = e.target.closest(".media-img");
-      if (img) {
-        return;
-      }
-    });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("Media fetch error:", err);
     loader.replaceWith(
       createElement("p", { class: "error" }, ["Failed to load media."])

@@ -1,246 +1,298 @@
 import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
+import { createElement } from "../../components/createElement.js";
 import ToggleSwitch from "../../components/ui/ToggleSwitch.js";
+
+// --- Type Definitions ---
+
+export type ControlType = "toggle" | "select" | "time" | "number" | "text" | string;
+
+export interface SettingSchemaItem {
+  type: string;
+  label: string;
+  description: string;
+  control: ControlType;
+  category?: string;
+  options?: string[];
+}
+
+export type SettingsValues = Record<string, unknown>;
+
+export interface ApiResponse<T = unknown> {
+  status?: string;
+  data?: T;
+  message?: string;
+}
 
 // --- UI Helpers ---
 
-function createContainer() {
-    const container = document.createElement("div");
-    container.id = "settings-container";
-    return container;
+function createContainer(): HTMLElement {
+  return createElement("div", { id: "settings-container" });
 }
 
-function createLoadingIndicator() {
-    const loading = document.createElement("div");
-    loading.className = "settings-loading";
-    loading.textContent = "Loading settings...";
-    return loading;
+function createLoadingIndicator(): HTMLElement {
+  return createElement(
+    "div",
+    { class: "settings-loading" },
+    ["Loading settings..."]
+  );
 }
 
-function createErrorContainer(message = "") {
-    const error = document.createElement("div");
-    error.className = "settings-error";
-    error.textContent = message;
-    return error;
+function createErrorContainer(message = ""): HTMLElement {
+  return createElement(
+    "div",
+    { class: "settings-error" },
+    [message]
+  );
 }
 
-function showToast(message, isError = false) {
-    const toast = document.createElement("div");
-    toast.className = `settings-toast ${isError ? "error" : "success"}`;
-    toast.textContent = message;
-    toast.setAttribute("role", "status");
+function showToast(message: string, isError = false): void {
+  const toast = createElement(
+    "div",
+    {
+      class: `settings-toast ${isError ? "error" : "success"}`,
+      role: "status"
+    },
+    [message]
+  );
 
-    document.body.appendChild(toast);
+  document.body.appendChild(toast);
 
-    setTimeout(() => {
-        toast.remove();
-    }, 2500);
+  setTimeout(() => {
+    toast.remove();
+  }, 2500);
 }
 
 // --- API Layer ---
 
-async function updateSetting(type, value) {
-    try {
-        const response = await apiFetch("/settings", "PATCH", { [type]: value });
+async function updateSetting(type: string, value: unknown): Promise<boolean> {
+  try {
+    const response = (await apiFetch("/settings", "PATCH", {
+      [type]: value
+    })) as ApiResponse | undefined;
 
-        if (!response || response.status !== "success") {
-            throw new Error(response?.message || "Update failed");
-        }
-
-        showToast("Saved");
-        return true;
-    } catch (error) {
-        console.error(`Failed to update setting [${type}]:`, error);
-        showToast("Failed to save", true);
-        return false;
+    if (!response || response.status !== "success") {
+      throw new Error(response?.message || "Update failed");
     }
+
+    showToast("Saved");
+    return true;
+  } catch (error) {
+    console.error(`Failed to update setting [${type}]:`, error);
+    showToast("Failed to save", true);
+    return false;
+  }
 }
 
-async function loadSettings() {
-    const [schemaRes, valuesRes] = await Promise.all([
-        apiFetch("/settings/schema"),
-        apiFetch("/settings"),
-    ]);
+async function loadSettings(): Promise<{ schema: SettingSchemaItem[]; values: SettingsValues }> {
+  const [schemaRes, valuesRes] = await Promise.all([
+    apiFetch("/settings/schema") as Promise<ApiResponse<SettingSchemaItem[]> | SettingSchemaItem[]>,
+    apiFetch("/settings") as Promise<ApiResponse<SettingsValues> | SettingsValues>
+  ]);
 
-    // Ensure responses are valid before attempting to render
-    if (!schemaRes || !Array.isArray(schemaRes.data || schemaRes)) {
-        throw new Error("Invalid schema received from server");
-    }
+  const rawSchema = (schemaRes as ApiResponse<SettingSchemaItem[]>)?.data || schemaRes;
 
-    const schema = schemaRes.data || schemaRes;
-    const values = (valuesRes && valuesRes.data) ? valuesRes.data : (valuesRes || {});
+  if (!Array.isArray(rawSchema)) {
+    throw new Error("Invalid schema received from server");
+  }
 
-    return { schema, values };
+  const values =
+    (valuesRes as ApiResponse<SettingsValues>)?.data ||
+    ((valuesRes && typeof valuesRes === "object" ? valuesRes : {}) as SettingsValues);
+
+  return { schema: rawSchema as SettingSchemaItem[], values };
 }
 
 // --- Dynamic Control Factories ---
 
-function createToggle(setting, value, inputId) {
-    const toggle = ToggleSwitch((checked) => {
-        updateSetting(setting.type, checked);
-    });
-
-    const input = toggle.querySelector("input");
-    if (input) {
-        input.id = inputId;
-        input.checked = Boolean(value);
+function createToggle(setting: SettingSchemaItem, value: unknown, inputId: string): HTMLElement {
+  const toggle = ToggleSwitch(async (checked: boolean) => {
+    const success = await updateSetting(setting.type, checked);
+    if (!success && input) {
+      input.checked = !checked; // Rollback toggle state on failure
     }
+  });
 
-    return toggle;
-}
-
-function createSelect(setting, value, inputId) {
-    const select = document.createElement("select");
-    select.id = inputId;
-
-    (setting.options || []).forEach((option) => {
-        const el = document.createElement("option");
-        el.value = option;
-        el.textContent = option.charAt(0).toUpperCase() + option.slice(1);
-        el.selected = option === value;
-        select.appendChild(el);
-    });
-
-    select.addEventListener("change", () => {
-        updateSetting(setting.type, select.value);
-    });
-
-    return select;
-}
-
-function createInputControl(setting, value, inputId, type = "text") {
-    const input = document.createElement("input");
-    input.type = type;
+  const input = toggle.querySelector<HTMLInputElement>("input");
+  if (input) {
     input.id = inputId;
+    input.checked = Boolean(value);
+  }
 
-    if (type === "number") {
-        input.value = value ?? 0;
-    } else {
-        input.value = value || "";
-    }
-
-    // Rollback value if save fails on blur
-    let originalValue = input.value;
-
-    input.addEventListener("focus", () => {
-        originalValue = input.value;
-    });
-
-    input.addEventListener("blur", async () => {
-        const newValue = type === "number" ? Number(input.value) : input.value;
-        if (newValue === originalValue) return;
-
-        const success = await updateSetting(setting.type, newValue);
-        if (success) {
-            originalValue = input.value;
-        } else {
-            input.value = originalValue; // Revert visually on API failure
-        }
-    });
-
-    return input;
+  return toggle;
 }
 
-function createControl(setting, value, inputId) {
-    switch (setting.control) {
-        case "toggle":
-            return createToggle(setting, value, inputId);
-        case "select":
-            return createSelect(setting, value, inputId);
-        case "time":
-            return createInputControl(setting, value, inputId, "time");
-        case "number":
-            return createInputControl(setting, value, inputId, "number");
-        default:
-            return createInputControl(setting, value, inputId, "text");
+function createSelect(setting: SettingSchemaItem, value: unknown, inputId: string): HTMLSelectElement {
+  const options = (setting.options || []).map((option) =>
+    createElement(
+      "option",
+      {
+        value: option,
+        selected: option === value
+      },
+      [option.charAt(0).toUpperCase() + option.slice(1)]
+    )
+  );
+
+  const select = createElement(
+    "select",
+    {
+      id: inputId,
+      class: "setting-select",
+      events: {
+        change: async (e: Event) => {
+          const target = e.target as HTMLSelectElement;
+          await updateSetting(setting.type, target.value);
+        }
+      }
+    },
+    options
+  ) as HTMLSelectElement;
+
+  return select;
+}
+
+function createInputControl(
+  setting: SettingSchemaItem,
+  value: unknown,
+  inputId: string,
+  type = "text"
+): HTMLInputElement {
+  const initialValue = type === "number" ? String(value ?? 0) : String(value || "");
+
+  let originalValue = initialValue;
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const saveValue = async (inputEl: HTMLInputElement): Promise<void> => {
+    const newValue = type === "number" ? Number(inputEl.value) : inputEl.value;
+    if (String(newValue) === originalValue) return;
+
+    const success = await updateSetting(setting.type, newValue);
+    if (success) {
+      originalValue = String(newValue);
+    } else {
+      inputEl.value = originalValue; // Revert visually on API failure
     }
+  };
+
+  const input = createElement("input", {
+    type,
+    id: inputId,
+    value: initialValue,
+    class: "setting-input",
+    events: {
+      focus: (e: Event) => {
+        const target = e.target as HTMLInputElement;
+        originalValue = target.value;
+      },
+      input: (e: Event) => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        const target = e.target as HTMLInputElement;
+        debounceTimer = setTimeout(() => saveValue(target), 800);
+      },
+      blur: (e: Event) => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        const target = e.target as HTMLInputElement;
+        saveValue(target);
+      }
+    }
+  }) as HTMLInputElement;
+
+  return input;
+}
+
+function createControl(setting: SettingSchemaItem, value: unknown, inputId: string): HTMLElement {
+  switch (setting.control) {
+    case "toggle":
+      return createToggle(setting, value, inputId);
+    case "select":
+      return createSelect(setting, value, inputId);
+    case "time":
+      return createInputControl(setting, value, inputId, "time");
+    case "number":
+      return createInputControl(setting, value, inputId, "number");
+    default:
+      return createInputControl(setting, value, inputId, "text");
+  }
 }
 
 // --- Card & Layout Rendering ---
 
-function createSettingCard(setting, value) {
-    const card = document.createElement("div");
-    card.className = "setting-card";
+function createSettingCard(setting: SettingSchemaItem, value: unknown): HTMLElement {
+  const inputId = `setting-${setting.type}`;
 
-    // Unique ID for connecting <label> to input controls
-    const inputId = `setting-${setting.type}`;
+  const title = createElement(
+    "label",
+    { htmlFor: inputId, class: "setting-title" },
+    [setting.label]
+  );
 
-    const info = document.createElement("div");
-    info.className = "setting-info";
+  const description = createElement("p", { class: "setting-description" }, [setting.description]);
 
-    const title = document.createElement("label");
-    title.htmlFor = inputId;
-    title.className = "setting-title";
-    title.textContent = setting.label;
+  const info = createElement("div", { class: "setting-info" }, [title, description]);
 
-    const description = document.createElement("p");
-    description.textContent = setting.description;
+  const controlContainer = createElement(
+    "div",
+    { class: "setting-control" },
+    [createControl(setting, value, inputId)]
+  );
 
-    info.append(title, description);
-
-    const control = document.createElement("div");
-    control.className = "setting-control";
-    control.appendChild(createControl(setting, value, inputId));
-
-    card.append(info, control);
-    return card;
+  return createElement("div", { class: "setting-card" }, [info, controlContainer]);
 }
 
-function renderSettings(container, schema, values) {
-    const categories = new Map();
-    const fragment = document.createDocumentFragment();
+function renderSettings(
+  container: HTMLElement,
+  schema: SettingSchemaItem[],
+  values: SettingsValues
+): void {
+  const categories = new Map<string, HTMLElement>();
+  const fragment = document.createDocumentFragment();
 
-    schema.forEach((setting) => {
-        const categoryName = setting.category || "General";
+  schema.forEach((setting) => {
+    const categoryName = setting.category || "General";
 
-        if (!categories.has(categoryName)) {
-            const section = document.createElement("section");
-            section.className = "settings-category";
+    if (!categories.has(categoryName)) {
+      const heading = createElement("h2", { class: "settings-category-title" }, [categoryName]);
+      const body = createElement("div", { class: "settings-category-body" });
 
-            const heading = document.createElement("h2");
-            heading.textContent = categoryName;
+      const section = createElement("section", { class: "settings-category" }, [
+        heading,
+        body
+      ]);
 
-            const body = document.createElement("div");
-            body.className = "settings-category-body";
+      fragment.appendChild(section);
+      categories.set(categoryName, body);
+    }
 
-            section.append(heading, body);
-            fragment.appendChild(section);
+    const categoryBody = categories.get(categoryName)!;
+    categoryBody.appendChild(createSettingCard(setting, values[setting.type]));
+  });
 
-            categories.set(categoryName, body);
-        }
-
-        const categoryBody = categories.get(categoryName);
-        const settingValue = values[setting.type];
-        categoryBody.appendChild(createSettingCard(setting, values[setting.type]));
-    });
-
-    container.appendChild(fragment);
+  container.appendChild(fragment);
 }
 
 // --- Main Entry Point ---
 
-async function displaySettings(isLoggedIn, settingsSec) {
-    if (!isLoggedIn) {
-        navigate("/login");
-        return;
-    }
+export async function displaySettings(isLoggedIn: boolean, settingsSec: HTMLElement): Promise<void> {
+  if (!isLoggedIn) {
+    navigate("/login");
+    return;
+  }
 
-    const container = createContainer();
-    container.appendChild(createLoadingIndicator());
-    settingsSec.replaceChildren(container);
+  const container = createContainer();
+  container.appendChild(createLoadingIndicator());
+  settingsSec.replaceChildren(container);
 
-    try {
-        const { schema, values } = await loadSettings();
+  try {
+    const { schema, values } = await loadSettings();
 
-        // Clear loading state before rendering
-        container.replaceChildren();
-        renderSettings(container, schema, values);
-    } catch (err) {
-        console.error("Display settings error:", err);
-        container.replaceChildren(
-            createErrorContainer(err.message || "Failed to load settings. Please try again.")
-        );
-    }
+    container.replaceChildren();
+    renderSettings(container, schema, values);
+  } catch (err) {
+    const error = err as Error;
+    console.error("Display settings error:", error);
+    container.replaceChildren(
+      createErrorContainer(error.message || "Failed to load settings. Please try again.")
+    );
+  }
 }
-
-export { displaySettings };

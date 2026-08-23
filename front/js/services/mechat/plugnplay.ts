@@ -1,26 +1,52 @@
-import { mereFetch } from "../../api/api";
+import { mereFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
-import { getState } from "../../state/state";
+import { getState } from "../../state/state.js";
 import { userNewChatInit } from "../newchat/newchats.js";
 
+/* =========================
+   TYPES & INTERFACES
+========================= */
 
-export async function meChat(otherUserId, entityType, entityId) {
-    const userId = getState("user").userid;
+export interface ChatResponse {
+    chatid: string | number;
+    [key: string]: unknown;
+}
+
+export interface UserState {
+    userid: string | number;
+    [key: string]: unknown;
+}
+
+/* =========================
+   MAIN FUNCTION
+========================= */
+
+export async function meChat(
+    otherUserId: string | number,
+    entityType: string,
+    entityId: string | number
+): Promise<void> {
+    const user = getState("user") as UserState | undefined;
+    const userId = user?.userid;
+
     if (!userId || !otherUserId) {
         return;
     }
-    let chat;
+
     if (entityType === "user") {
-        userNewChatInit(otherUserId);
+        userNewChatInit(String(otherUserId));
         // navigate(`/merechats/${chat.chatid}`);
     } else {
         const participants = [userId, otherUserId];
 
-        chat = await mereFetch("/merechats/start", "POST", {
+        const chat = await mereFetch<ChatResponse>("/merechats/start", "POST", {
             participants,
             entityType,
             entityId
         });
-        navigate(`/merechats/${chat.chatid}`);
+
+        if (chat?.chatid) {
+            navigate(`/merechats/${chat.chatid}`);
+        }
     }
 }

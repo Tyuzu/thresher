@@ -1,12 +1,35 @@
 import { createElement } from "../../components/createElement.js";
 
-function Datex(DATE_TO_PRINT?: string, asString?: true): string;
-function Datex(DATE_TO_PRINT: string | undefined, asString: false): HTMLElement;
+export type DateInput = string | number | Date | null | undefined;
+
+// Overload signatures
+function Datex(dateToPrint?: DateInput, asString?: true): string;
+function Datex(dateToPrint: DateInput, asString: false): HTMLElement;
 function Datex(
-  DATE_TO_PRINT: string = "2026-01-03T12:39:00Z",
+  dateToPrint: DateInput = new Date(),
   asString: boolean = true
 ): string | HTMLElement {
-  const formatted = new Date(DATE_TO_PRINT).toLocaleString("en-GB", {
+  let parsedDate: Date;
+
+  if (dateToPrint instanceof Date) {
+    parsedDate = dateToPrint;
+  } else if (typeof dateToPrint === "number") {
+    parsedDate = new Date(dateToPrint);
+  } else if (typeof dateToPrint === "string") {
+    parsedDate = new Date(dateToPrint);
+  } else {
+    parsedDate = new Date();
+  }
+
+  // Fallback if the date is invalid (NaN)
+  if (isNaN(parsedDate.getTime())) {
+    const fallbackText = "Invalid Date";
+    return asString
+      ? fallbackText
+      : (createElement("span", { class: "datex-invalid" }, [fallbackText]) as HTMLElement);
+  }
+
+  const formatted = parsedDate.toLocaleString("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -20,7 +43,7 @@ function Datex(
     return formatted;
   }
 
-  return createElement("span", {}, [formatted]) as HTMLElement;
+  return createElement("time", { dateTime: parsedDate.toISOString() }, [formatted]) as HTMLElement;
 }
 
 export default Datex;
