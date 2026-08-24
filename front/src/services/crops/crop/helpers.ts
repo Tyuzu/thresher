@@ -1,29 +1,27 @@
-import { createElement } from "../../../components/createElement.js";
-export function clearElement(el) {
-  while (el.firstChild) {
-    el.removeChild(el.firstChild);
-  }
+import { createElement } from "../../../components/createElement";
+import Notify, { NotifyOptions } from "../../../components/ui/Notify";
+
+/**
+ * Clears all child nodes from a given DOM element.
+ */
+export function clearElement(el: HTMLElement): void {
+    el.replaceChildren();
 }
 
-export function createOption(value, text) {
-  return createElement("option", { value }, [text]);
+/**
+ * Creates an HTML option element with specified value and text content.
+ */
+export function createOption(value: string | number, text: string): HTMLOptionElement {
+    return createElement("option", { value: String(value) }, [text]) as HTMLOptionElement;
 }
 
-export function showToast(msg) {
-  const toast = createElement("div", {
-    style: `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: #4caf50;
-        color: #fff;
-        padding: 10px 16px;
-        border-radius: 4px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-        z-index: 1000;
-      `
-  }, [msg]);
-
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 2500);
+/**
+ * Displays a global notification toast using the central Notify system.
+ */
+export function showToast(msg: string, options?: NotifyOptions): void {
+    Notify(msg, {
+        type: "success",
+        dismissible: true,
+        ...options
+    });
 }

@@ -4,16 +4,18 @@ import {
   bulkAcceptOrders,
   bulkRejectOrders,
   bulkMarkOrdersDelivered,
+  OrderFilters,
 } from "./orderUtils.js";
 import { renderFiltersSection } from "./renderFiltersSection.js";
 import { renderBulkActionsSection } from "./renderBulkActionsSection.js";
 import { renderOrderCard } from "./renderOrderCard.js";
 import { renderOrdersTable } from "./renderOrdersTable.js";
+import { OrderData } from "./orderHelpers.js";
 
-let currentFilters = {};
-let allOrders = [];
+let currentFilters: OrderFilters = {};
+let allOrders: OrderData[] = [];
 
-export async function displayOrders(container) {
+export async function displayOrders(container: HTMLElement): Promise<void> {
   container.replaceChildren();
 
   const section = createElement("section", { class: "orders-page" }, [
@@ -56,7 +58,7 @@ export async function displayOrders(container) {
   }
 }
 
-function buildResponsiveOrdersLayout(orderList, refresh) {
+function buildResponsiveOrdersLayout(orderList: OrderData[], refresh: () => void): HTMLElement {
   const isMobile = window.innerWidth <= 768;
 
   if (isMobile) {
@@ -72,24 +74,24 @@ function buildResponsiveOrdersLayout(orderList, refresh) {
   return renderOrdersTable(orderList, refresh);
 }
 
-function bindSelectAllCheckbox(section) {
-  const selectAll = section.querySelector("#select-all-orders");
+function bindSelectAllCheckbox(section: HTMLElement): void {
+  const selectAll = section.querySelector<HTMLInputElement>("#select-all-orders");
   if (!selectAll) {
     return;
   }
 
   selectAll.addEventListener("change", () => {
-    const checkboxes = section.querySelectorAll(".select-order");
+    const checkboxes = section.querySelectorAll<HTMLInputElement>(".select-order");
     checkboxes.forEach((checkbox) => {
       checkbox.checked = selectAll.checked;
     });
   });
 }
 
-async function handleBulkAccept(section, refresh) {
-  const selectedOrders = Array.from(section.querySelectorAll(".select-order:checked")).map(
-    (cb) => cb.value
-  );
+async function handleBulkAccept(section: HTMLElement, refresh: () => void): Promise<void> {
+  const selectedOrders = Array.from(
+    section.querySelectorAll<HTMLInputElement>(".select-order:checked")
+  ).map((cb) => cb.value);
 
   if (selectedOrders.length === 0) {
     alert("Please select at least one order");
@@ -114,10 +116,10 @@ async function handleBulkAccept(section, refresh) {
   }
 }
 
-async function handleBulkReject(section, refresh) {
-  const selectedOrders = Array.from(section.querySelectorAll(".select-order:checked")).map(
-    (cb) => cb.value
-  );
+async function handleBulkReject(section: HTMLElement, refresh: () => void): Promise<void> {
+  const selectedOrders = Array.from(
+    section.querySelectorAll<HTMLInputElement>(".select-order:checked")
+  ).map((cb) => cb.value);
 
   if (selectedOrders.length === 0) {
     alert("Please select at least one order");
@@ -142,10 +144,10 @@ async function handleBulkReject(section, refresh) {
   }
 }
 
-async function handleBulkMarkDelivered(section, refresh) {
-  const selectedOrders = Array.from(section.querySelectorAll(".select-order:checked")).map(
-    (cb) => cb.value
-  );
+async function handleBulkMarkDelivered(section: HTMLElement, refresh: () => void): Promise<void> {
+  const selectedOrders = Array.from(
+    section.querySelectorAll<HTMLInputElement>(".select-order:checked")
+  ).map((cb) => cb.value);
 
   if (selectedOrders.length === 0) {
     alert("Please select at least one order");

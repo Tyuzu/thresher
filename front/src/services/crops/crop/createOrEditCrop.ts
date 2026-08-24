@@ -1,9 +1,42 @@
-import { createElement } from "../../../components/createElement.js";
-import { createFormGroup } from "../../../components/form/createFormGroupEnhanced.js";
-import { cropCategoryMap } from "./cropCategories.js";
+import { createElement } from "../../../components/createElement";
+import { createFormGroup } from "../../../components/form/createFormGroupEnhanced";
+import { cropCategoryMap } from "./cropCategories";
 
-export function createCommonCropForm({ crop = {}, currentFarmName = "", isEdit = false, onSubmit }) {
-    const form = createElement("form", { class: isEdit ? "crop-edit-form create-section" : "crop-create-form create-section" });
+export interface CropData {
+    name?: string;
+    price?: number | string;
+    discount?: number | string;
+    quantity?: number | string;
+    unit?: string;
+    notes?: string;
+    harvestDate?: string;
+    expiryDate?: string;
+    featured?: boolean;
+    outOfStock?: boolean;
+}
+
+export interface CreateCommonCropFormOptions {
+    crop?: CropData;
+    currentFarmName?: string;
+    isEdit?: boolean;
+    onSubmit: (formData: FormData, submitBtn: HTMLButtonElement) => void;
+}
+
+// Backwards-compatibility alias
+export type CommonCropFormOptions = CreateCommonCropFormOptions;
+
+// Helper type for category indexing
+type CropCategoryKey = keyof typeof cropCategoryMap;
+
+export function createCommonCropForm({
+    crop = {},
+    currentFarmName = "",
+    isEdit = false,
+    onSubmit
+}: CreateCommonCropFormOptions): HTMLFormElement {
+    const form = createElement("form", {
+        class: isEdit ? "crop-edit-form create-section" : "crop-create-form create-section"
+    }) as HTMLFormElement;
 
     const h20 = createElement("h2", {}, [isEdit ? "Edit Crop" : "Create Crop"]);
     form.appendChild(h20);
@@ -11,7 +44,8 @@ export function createCommonCropForm({ crop = {}, currentFarmName = "", isEdit =
     let preCategory = "";
     if (crop.name) {
         for (const [cat, crops] of Object.entries(cropCategoryMap)) {
-            if (crops.includes(crop.name)) {
+            const cropList = crops as readonly string[];
+            if (cropList.includes(crop.name)) {
                 preCategory = cat;
                 break;
             }
@@ -46,7 +80,7 @@ export function createCommonCropForm({ crop = {}, currentFarmName = "", isEdit =
         id: "crop-price",
         name: "price",
         placeholder: "price",
-        value: crop.price || "",
+        value: crop.price ?? "",
         required: true,
         additionalProps: { step: "0.01" }
     });
@@ -57,7 +91,7 @@ export function createCommonCropForm({ crop = {}, currentFarmName = "", isEdit =
         id: "crop-discount",
         name: "discount",
         placeholder: "e.g. 10",
-        value: crop.discount || "",
+        value: crop.discount ?? "",
         additionalProps: { step: "0.01", min: "0", max: "100" }
     });
 
@@ -67,7 +101,7 @@ export function createCommonCropForm({ crop = {}, currentFarmName = "", isEdit =
         id: "crop-quantity",
         name: "quantity",
         placeholder: "quantity",
-        value: crop.quantity || "",
+        value: crop.quantity ?? "",
         required: true
     });
 
@@ -122,58 +156,63 @@ export function createCommonCropForm({ crop = {}, currentFarmName = "", isEdit =
         value: crop.outOfStock || false
     });
 
-    // const imageGroup = createFormGroup({
-    //     label: "Image",
-    //     type: "file",
-    //     id: "crop-image",
-    //     name: "image",
-    //     accept: "image/*"
-    // });
-
-    const fields = [
+    const fields: HTMLElement[] = [
         categoryGroup, cropGroup, priceGroup, discountGroup, quantityGroup, unitGroup,
-        notesGroup, harvestGroup, expiryGroup, featuredGroup, outOfStockGroup,
-        //imageGroup
+        notesGroup, harvestGroup, expiryGroup, featuredGroup, outOfStockGroup
     ];
 
     if (!isEdit && currentFarmName) {
-        const farmInput = createElement("input", { type: "hidden", name: "farmName", value: currentFarmName });
+        const farmInput = createElement("input", { type: "hidden", name: "farmName", value: currentFarmName }) as HTMLElement;
         fields.push(farmInput);
     }
 
     fields.forEach(f => form.appendChild(f));
 
     // Submit button
-    const submitBtn = createElement("button", { type: "submit" }, [isEdit ? "Save Changes" : "Add Crop"]);
+    const submitBtn = createElement("button", { type: "submit" }, [isEdit ? "Save Changes" : "Add Crop"]) as HTMLButtonElement;
     form.appendChild(submitBtn);
 
     // Dynamic crop population
-    const categorySelect = categoryGroup.querySelector("select");
-    const cropSelect = cropGroup.querySelector("select");
+    const categorySelect = categoryGroup.querySelector<HTMLSelectElement>("select");
+    const cropSelect = cropGroup.querySelector<HTMLSelectElement>("select");
 
-    function populateCrops(category) {
+    function populateCrops(category: string): void {
+        if (!cropSelect) return;
+        
         cropSelect.innerHTML = '<option value="">Select Crop</option>';
-        const crops = cropCategoryMap[category];
+        const crops = cropCategoryMap[category as CropCategoryKey] as readonly string[] | undefined;
         if (!crops) {
-            return cropSelect.disabled = true;
+            cropSelect.disabled = true;
+            return;
         }
-        crops.forEach(c => {
+        crops.forEach((c: string) => {
             const option = createElement("option", { value: c, selected: c === crop.name }, [c]);
             cropSelect.appendChild(option);
         });
         cropSelect.disabled = false;
     }
 
-    populateCrops(preCategory);
-    categorySelect.addEventListener("change", e => populateCrops(e.target.value));
+    if (categorySelect) {
+        populateCrops(preCategory);
+        categorySelect.addEventListener("change", (e: Event) => {
+            const target = e.target as HTMLSelectElement;
+            populateCrops(target.value);
+        });
+    }
 
-    form.addEventListener("submit", e => {
+    form.addEventListener("submit", (e: SubmitEvent) => {
         e.preventDefault();
-        if (harvestGroup.querySelector("input").value && expiryGroup.querySelector("input").value) {
-            const h = new Date(harvestGroup.querySelector("input").value);
-            const x = new Date(expiryGroup.querySelector("input").value);
+
+        const harvestInput = harvestGroup.querySelector<HTMLInputElement>("input");
+        const expiryInput = expiryGroup.querySelector<HTMLInputElement>("input");
+
+        if (harvestInput?.value && expiryInput?.value) {
+            const h = new Date(harvestInput.value);
+            const x = new Date(expiryInput.value);
             if (h > x) {
-                form.parentElement.textContent = "❌ Expiry date must be after harvest date.";
+                if (form.parentElement) {
+                    form.parentElement.textContent = "❌ Expiry date must be after harvest date.";
+                }
                 return;
             }
         }

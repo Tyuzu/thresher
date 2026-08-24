@@ -8,6 +8,7 @@ import {
   getPaymentStatusClass,
   getOrderValue,
   normalizeOrderId,
+  OrderData,
 } from "./orderHelpers.js";
 import {
   markOrderDelivered,
@@ -16,24 +17,24 @@ import {
   acceptOrder,
 } from "./orderUtils.js";
 
-function canAccept(status) {
+function canAccept(status: unknown): boolean {
   return String(status || "").toLowerCase() === "pending";
 }
 
-function canMarkPaid(status) {
+function canMarkPaid(status: unknown): boolean {
   return String(status || "").toLowerCase() === "accepted";
 }
 
-function canDeliver(status) {
+function canDeliver(status: unknown): boolean {
   return String(status || "").toLowerCase() === "paid";
 }
 
-function canReject(status) {
+function canReject(status: unknown): boolean {
   const normalized = String(status || "").toLowerCase();
   return normalized === "pending" || normalized === "accepted";
 }
 
-export function renderOrderCard(order, onRefresh) {
+export function renderOrderCard(order: OrderData, onRefresh?: () => void): HTMLElement {
   const orderId = normalizeOrderId(order);
   const statusClass = getOrderStatusClass(order.status);
   const paymentClass = getPaymentStatusClass(order.payment);
@@ -128,22 +129,22 @@ export function renderOrderCard(order, onRefresh) {
     ]),
 
     createElement("div", { class: "order-actions" }, [
-      Button("Contact", `contact-${orderId}`, { click: handleContact }, "secondary-button"),
+      Button({ title: "Contact", id: `contact-${orderId}`, events: { click: handleContact }, classes: "secondary-button" }),
 
       canAccept(order.status)
-        ? Button("Accept", `accept-${orderId}`, { click: handleAccepted }, "secondary-button")
+        ? Button({ title: "Accept", id: `accept-${orderId}`, events: { click: handleAccepted }, classes: "secondary-button" })
         : null,
 
       canMarkPaid(order.status)
-        ? Button("Mark Paid", `markpaid-${orderId}`, { click: handleMarkedPaid }, "secondary-button")
+        ? Button({ title: "Mark Paid", id: `markpaid-${orderId}`, events: { click: handleMarkedPaid }, classes: "secondary-button" })
         : null,
 
       canDeliver(order.status)
-        ? Button("Delivered", `deliver-${orderId}`, { click: handleDelivered }, "secondary-button")
+        ? Button({ title: "Delivered", id: `deliver-${orderId}`, events: { click: handleDelivered }, classes: "secondary-button" })
         : null,
 
       canReject(order.status)
-        ? Button("Reject", `reject-${orderId}`, { click: handleReject }, "secondary-button")
+        ? Button({ title: "Reject", id: `reject-${orderId}`, events: { click: handleReject }, classes: "secondary-button" })
         : null,
     ].filter(Boolean)),
   ]);

@@ -6,15 +6,32 @@ import { renderItemCard } from "./renderItemCard.js";
 import { renderCategoryChips } from "./renderCategoryChips.js";
 import { capitalize } from "../../profile/profileHelpers.js";
 import { renderSearchAndSortUI } from "./renderSearchAndSortUI.js";
-import { sortItems } from "./sortItems.js";
 import { renderPagination } from "./renderPagination.js";
+import { DisplayItemsOptions, FarmItem, ItemType } from "./types.js";
+
+export function sortItems(items: FarmItem[], sort: string): void {
+  switch (sort) {
+    case "price_asc":
+      items.sort((a, b) => a.price - b.price);
+      break;
+    case "price_desc":
+      items.sort((a, b) => b.price - a.price);
+      break;
+    case "name_asc":
+      items.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case "name_desc":
+      items.sort((a, b) => b.name.localeCompare(a.name));
+      break;
+  }
+}
 
 export async function displayItems(
-  type,
-  content,
-  isLoggedIn,
-  { limit = 10, offset = 0, search = "", category = "", sort = "" } = {}
-) {
+  type: ItemType,
+  content: HTMLElement,
+  isLoggedIn: boolean,
+  { limit = 10, offset = 0, search = "", category = "", sort = "" }: DisplayItemsOptions = {}
+): Promise<void> {
   const container = createElement("div", { class: "protoolspage" }, []);
   content.replaceChildren();
   content.appendChild(container);
@@ -24,7 +41,7 @@ export async function displayItems(
 
   container.appendChild(createElement("h2", { class: "page-title" }, [`${capitalize(type)}s`]));
 
-  // Setup dedicated sub-container for category chips so they don't replace global container children
+  // Setup dedicated sub-container for category chips
   const chipsWrapper = createElement("div", { class: "chips-wrapper" });
   container.appendChild(chipsWrapper);
 
@@ -38,36 +55,42 @@ export async function displayItems(
     })
   );
 
-  await renderCategoryChips(chipsWrapper, category, (newCategory) =>
-    displayItems(type, content, isLoggedIn, {
-      limit,
-      offset: 0,
-      search,
-      category: newCategory,
-      sort,
-    }), type
+  await renderCategoryChips(
+    chipsWrapper,
+    category,
+    (newCategory) =>
+      displayItems(type, content, isLoggedIn, {
+        limit,
+        offset: 0,
+        search,
+        category: newCategory,
+        sort,
+      }),
+    type
   );
 
   const topBar = createElement("div", { class: "items-topbar" }, [
     searchInput,
     sortSelect,
     isLoggedIn
-      ? Button(
-        `Create ${type}`,
-        `create-${type}-btn`,
-        { click: () => renderItemForm(container, "create", null, type, refresh) },
-        "primary-button critical-action"
-      )
+      ? Button({
+          title: `Create ${type}`,
+          id: `create-${type}-btn`,
+          classes: "primary-button critical-action",
+          events: {
+            click: () => renderItemForm(container, "create", null, type, refresh),
+          },
+        })
       : null,
-  ].filter(Boolean));
+  ].filter(Boolean) as HTMLElement[]);
 
   container.appendChild(topBar);
 
-  let items = [];
+  let items: FarmItem[] = [];
   let total = 0;
 
   try {
-    const qs = new URLSearchParams({ type, limit, offset, search, category });
+    const qs = new URLSearchParams({ type, limit: String(limit), offset: String(offset), search, category });
     const result = await apiFetch(`/farm/items?${qs.toString()}`);
     items = result.items || [];
     total = result.total ?? items.length;
@@ -90,7 +113,7 @@ export async function displayItems(
 
   container.appendChild(grid);
 
-  renderPagination(container, total, limit, offset, currentPage =>
+  renderPagination(container, total, limit, offset, (currentPage) =>
     displayItems(type, content, isLoggedIn, {
       limit,
       offset: (currentPage - 1) * limit,

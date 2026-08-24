@@ -1,61 +1,75 @@
 import { apiFetch } from "../../../api/api.js";
 import { createElement } from "../../../components/createElement.js";
+import Button from "../../../components/base/Button.js";
 
-async function fetchWeather() {
-    const res = await apiFetch("/weather");
-
-    return res;
+interface WeatherData {
+  icon?: string;
+  airTemp: number;
+  location: string;
+  humidity: number;
+  windSpeed: number;
+  soilTemp: number;
+  rain24h: number;
 }
 
-function renderContent(data) {
-    return [
-        createElement("div", { class: "weather-main" }, [
-            createElement("span", { class: "weather-icon" }, [
-                data.icon || "🌤️",
-            ]),
-            createElement("span", { class: "temperature" }, [
-                `${data.airTemp}°C Air`,
-            ]),
-        ]),
-
-        createElement("div", { class: "location" }, [
-            data.location,
-        ]),
-
-        createElement("div", { class: "weather-extra" }, [
-            createElement("span", { class: "humidity" }, [
-                `💧 Humidity: ${data.humidity}%`,
-            ]),
-
-            createElement("span", { class: "wind" }, [
-                `🌬️ Wind: ${data.windSpeed} km/h`,
-            ]),
-
-            createElement("span", { class: "soil-temp" }, [
-                `🌱 Soil: ${data.soilTemp}°C`,
-            ]),
-
-            createElement("span", { class: "rain" }, [
-                `🌧️ Rain: ${data.rain24h} mm`,
-            ]),
-        ]),
-    ];
+async function fetchWeather(): Promise<WeatherData> {
+  const res = await apiFetch("/weather");
+  return res as WeatherData;
 }
 
-export function renderWeatherDetails() {
-    const section = createElement("section", {
-        class: "info-widget",
-    });
+function renderContent(data: WeatherData, onRefresh: () => void): HTMLElement[] {
+  const refreshBtn = Button({
+    title: "🔄",
+    id: "weather-refresh-btn",
+    classes: "weather-refresh-btn",
+    events: {
+      click: onRefresh,
+    },
+  });
 
+  return [
+    createElement("div", { class: "weather-main" }, [
+      createElement("span", { class: "weather-icon" }, [data.icon || "🌤️"]),
+      createElement("span", { class: "temperature" }, [`${data.airTemp}°C Air`]),
+      refreshBtn,
+    ]),
+
+    createElement("div", { class: "location" }, [data.location]),
+
+    createElement("div", { class: "weather-extra" }, [
+      createElement("span", { class: "humidity" }, [`💧 Humidity: ${data.humidity}%`]),
+      createElement("span", { class: "wind" }, [`🌬️ Wind: ${data.windSpeed} km/h`]),
+      createElement("span", { class: "soil-temp" }, [`🌱 Soil: ${data.soilTemp}°C`]),
+      createElement("span", { class: "rain" }, [`🌧️ Rain: ${data.rain24h} mm`]),
+    ]),
+  ];
+}
+
+export function renderWeatherDetails(): HTMLElement {
+  const section = createElement("section", { class: "info-widget" });
+
+  const load = () => {
     section.textContent = "Loading weather...";
 
     fetchWeather()
-        .then((data) => {
-            section.replaceChildren(...renderContent(data));
-        })
-        .catch(() => {
-            section.textContent = "Unable to load weather";
+      .then((data) => {
+        section.replaceChildren(...renderContent(data, load));
+      })
+      .catch(() => {
+        const retryBtn = Button({
+          title: "Retry",
+          classes: "secondary-button",
+          events: { click: load },
         });
 
-    return section;
+        section.replaceChildren(
+          createElement("p", {}, ["Unable to load weather"]),
+          retryBtn
+        );
+      });
+  };
+
+  load();
+
+  return section;
 }

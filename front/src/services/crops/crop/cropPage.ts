@@ -1,18 +1,77 @@
-import { createUserControls } from "../farm/displayFarmHelpers.js";
-import { createElement } from "../../../components/createElement.js";
-import { apiFetch } from "../../../api/api.js";
-import { navigate } from "../../../routes/navigate.js";
-import Imagex from "../../../components/base/Imagex.js";
-import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.js";
-import Notify from "../../../components/ui/Notify.js";
-import Button from "../../../components/base/Button.js";
+import { createUserControls } from "../farm/displayFarmHelpers";
+import { createElement } from "../../../components/createElement";
+import { apiFetch } from "../../../api/api";
+import { navigate } from "../../../routes/navigate";
+import Imagex from "../../../components/base/Imagex";
+import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths";
+import Notify from "../../../components/ui/Notify";
+import Button from "../../../components/base/Button";
+
+// --- Types & Interfaces ---
+
+export interface AvailabilityDay {
+  enabled?: boolean;
+  from?: string;
+  to?: string;
+}
+
+export type AvailabilityMap = Record<string, AvailabilityDay>;
+
+export interface CropListing {
+  cropid: string;
+  farmid: string;
+  farmName?: string;
+  breed?: string;
+  banner?: string;
+  location?: string;
+  pricePerKg?: number;
+  unit?: string;
+  availableQtyKg?: number;
+  inventoryValue?: number;
+  outOfStock?: boolean;
+  featured?: boolean;
+  avgRating?: number;
+  reviewCount?: number;
+  favoritesCount?: number;
+  harvestDate?: string;
+  plantedDate?: string;
+  lastSoldAt?: string;
+  availability?: AvailabilityMap;
+  phone?: string;
+  tags?: string[];
+}
+
+export interface CropApiResponse {
+  success: boolean;
+  name?: string;
+  category?: string;
+  total?: number;
+  listings?: CropListing[];
+}
+
+export interface FilterValues {
+  location: string;
+  breed: string;
+  minPrice: number | null;
+  maxPrice: number | null;
+  minQty: number | null;
+  maxQty: number | null;
+  harvestDate: string | null;
+}
+
+export interface SetupFilterInteractionsParams {
+  filterForm: HTMLFormElement;
+  toggleFiltersBtn: HTMLElement;
+  listings: CropListing[];
+  onFiltered: (data: CropListing[]) => void;
+}
 
 /**
  * Creates a lightweight debounced function wrapper.
  */
-function debounce(fn, delay = 300) {
-  let timer;
-  return (...args) => {
+function debounce<T extends (...args: unknown[]) => void>(fn: T, delay = 300): (...args: Parameters<T>) => void {
+  let timer: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };
@@ -20,17 +79,17 @@ function debounce(fn, delay = 300) {
 
 /**
  * Main entry function to fetch and display crop listings.
- *
- * @param {HTMLElement} content - Container node to populate.
- * @param {string|number} cropID - Unique identifier for the crop.
- * @param {boolean} isLoggedIn - Current session authentication state.
  */
-export async function displayCrop(content, cropID, isLoggedIn) {
-  const container = createElement("div", { class: "croppage" });
+export async function displayCrop(
+  content: HTMLElement,
+  cropID: string | number,
+  isLoggedIn: boolean
+): Promise<void> {
+  const container = createElement("div", { class: "croppage" }) as HTMLElement;
   content.replaceChildren(container);
 
   try {
-    const resp = await apiFetch(`/crops/crop/${cropID}?page=1&limit=100`);
+    const resp = await apiFetch<CropApiResponse>(`/crops/crop/${cropID}?page=1&limit=100`);
     if (!resp?.success || !Array.isArray(resp?.listings) || resp.listings.length === 0) {
       Notify("No listings found for this crop.", { type: "error", dismissible: true });
       return;
@@ -50,26 +109,26 @@ export async function displayCrop(content, cropID, isLoggedIn) {
         [`${resp.name || "Crop"} (${resp.category || "Uncategorized"})`]
       ),
       createElement("p", { class: "crop-meta" }, [`Total Listings: ${resp.total ?? listings.length}`])
-    ]);
+    ]) as HTMLElement;
 
     // 2. Setup Filters & Listings Wrapper
-    const toggleFiltersBtn = Button("Filters", "button", {}, "toggle-filters-btn buttonx");
+    const toggleFiltersBtn = Button({ title: "Filters", id: "button", events: {}, classes: "toggle-filters-btn buttonx" }) as HTMLElement;
     const filterForm = createFilterForm();
-    const listingsWrapper = createElement("section", { class: "crop-listings" });
+    const listingsWrapper = createElement("section", { class: "crop-listings" }) as HTMLElement;
 
     // 3. Render Handler
-    const renderListings = (data) => {
+    const renderListings = (data: CropListing[]): void => {
       listingsWrapper.replaceChildren();
       if (!data || data.length === 0) {
         listingsWrapper.appendChild(
-          createElement("p", { class: "no-results" }, ["No listings match the selected filters."])
+          createElement("p", { class: "no-results" }, ["No listings match the selected filters."]) as HTMLElement
         );
         return;
       }
 
       const fragment = document.createDocumentFragment();
       data.forEach((listing) => {
-        fragment.appendChild(createListingCard(listing, resp.name, isLoggedIn));
+        fragment.appendChild(createListingCard(listing, resp.name || "Crop", isLoggedIn));
       });
       listingsWrapper.appendChild(fragment);
     };
@@ -86,15 +145,16 @@ export async function displayCrop(content, cropID, isLoggedIn) {
     });
 
     container.append(header, toggleFiltersBtn, filterForm, listingsWrapper);
-  } catch (err) {
-    Notify(err?.message || "Failed to load crop details.", { type: "error", dismissible: true });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Failed to load crop details.";
+    Notify(errorMessage, { type: "error", dismissible: true });
   }
 }
 
 /**
  * Factory function to build the filtering form layout.
  */
-function createFilterForm() {
+function createFilterForm(): HTMLFormElement {
   const fields = [
     { id: "filter-location", label: "Location", type: "text", placeholder: "e.g. Nagoya" },
     { id: "filter-breed", label: "Breed", type: "text", placeholder: "e.g. Koshihikari" },
@@ -112,7 +172,7 @@ function createFilterForm() {
         type: f.type,
         id: f.id,
         placeholder: f.placeholder || "",
-        ...(f.min !== undefined && { min: f.min })
+        ...(f.min !== undefined && { min: String(f.min) })
       })
     ])
   );
@@ -130,40 +190,49 @@ function createFilterForm() {
         createElement("button", { type: "button", id: "reset-filters" }, ["Reset"])
       ])
     ]
-  );
+  ) as HTMLFormElement;
 }
 
 /**
  * Handles input change handlers, filtering calculations, and toggle mechanics.
  */
-function setupFilterInteractions({ filterForm, toggleFiltersBtn, listings, onFiltered }) {
+function setupFilterInteractions({
+  filterForm,
+  toggleFiltersBtn,
+  listings,
+  onFiltered
+}: SetupFilterInteractionsParams): void {
   const inputs = {
-    location: filterForm.querySelector("#filter-location"),
-    breed: filterForm.querySelector("#filter-breed"),
-    minPrice: filterForm.querySelector("#filter-min-price"),
-    maxPrice: filterForm.querySelector("#filter-max-price"),
-    minQty: filterForm.querySelector("#filter-min-qty"),
-    maxQty: filterForm.querySelector("#filter-max-qty"),
-    harvestDate: filterForm.querySelector("#filter-harvest")
+    location: filterForm.querySelector<HTMLInputElement>("#filter-location"),
+    breed: filterForm.querySelector<HTMLInputElement>("#filter-breed"),
+    minPrice: filterForm.querySelector<HTMLInputElement>("#filter-min-price"),
+    maxPrice: filterForm.querySelector<HTMLInputElement>("#filter-max-price"),
+    minQty: filterForm.querySelector<HTMLInputElement>("#filter-min-qty"),
+    maxQty: filterForm.querySelector<HTMLInputElement>("#filter-max-qty"),
+    harvestDate: filterForm.querySelector<HTMLInputElement>("#filter-harvest")
   };
 
-  const applyButton = filterForm.querySelector("#apply-filters");
-  const resetButton = filterForm.querySelector("#reset-filters");
+  const applyButton = filterForm.querySelector<HTMLButtonElement>("#apply-filters");
+  const resetButton = filterForm.querySelector<HTMLButtonElement>("#reset-filters");
 
-  if (Object.values(inputs).some((el) => !el) || !applyButton || !resetButton) {
+  if (!inputs.location || !inputs.breed || !inputs.minPrice || !inputs.maxPrice ||
+    !inputs.minQty || !inputs.maxQty || !inputs.harvestDate || !applyButton || !resetButton) {
     Notify("Unable to initialize crop filters.", { type: "error", dismissible: true });
     return;
   }
 
-  const applyFilters = () => {
-    const filters = {
-      location: inputs.location.value.trim().toLowerCase(),
-      breed: inputs.breed.value.trim().toLowerCase(),
-      minPrice: parseFloat(inputs.minPrice.value) || null,
-      maxPrice: parseFloat(inputs.maxPrice.value) || null,
-      minQty: parseFloat(inputs.minQty.value) || null,
-      maxQty: parseFloat(inputs.maxQty.value) || null,
-      harvestDate: inputs.harvestDate.value || null
+  // Type assertion since we validated null checks above
+  const validInputs = inputs as Record<keyof typeof inputs, HTMLInputElement>;
+
+  const applyFilters = (): void => {
+    const filters: FilterValues = {
+      location: validInputs.location.value.trim().toLowerCase(),
+      breed: validInputs.breed.value.trim().toLowerCase(),
+      minPrice: parseFloat(validInputs.minPrice.value) || null,
+      maxPrice: parseFloat(validInputs.maxPrice.value) || null,
+      minQty: parseFloat(validInputs.minQty.value) || null,
+      maxQty: parseFloat(validInputs.maxQty.value) || null,
+      harvestDate: validInputs.harvestDate.value || null
     };
 
     if (filters.minPrice && filters.maxPrice && filters.minPrice > filters.maxPrice) {
@@ -206,11 +275,11 @@ function setupFilterInteractions({ filterForm, toggleFiltersBtn, listings, onFil
   const debouncedApply = debounce(applyFilters, 250);
 
   // Live input filtering
-  Object.values(inputs).forEach((input) => {
+  Object.values(validInputs).forEach((input) => {
     input.addEventListener("input", debouncedApply);
   });
 
-  const resetFilters = () => {
+  const resetFilters = (): void => {
     filterForm.reset();
     onFiltered(listings);
     filterForm.classList.remove("open");
@@ -223,7 +292,7 @@ function setupFilterInteractions({ filterForm, toggleFiltersBtn, listings, onFil
   });
   resetButton.addEventListener("click", resetFilters);
 
-  filterForm.addEventListener("keydown", (e) => {
+  filterForm.addEventListener("keydown", (e: KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
       applyFilters();
@@ -235,7 +304,7 @@ function setupFilterInteractions({ filterForm, toggleFiltersBtn, listings, onFil
 /**
  * Component factory to build individual listing card elements.
  */
-function createListingCard(listing, cropName, isLoggedIn) {
+function createListingCard(listing: CropListing, cropName: string, isLoggedIn: boolean): HTMLElement {
   const imageSrc = resolveImagePath(EntityType.CROP, PictureType.THUMB, listing?.banner);
   const farmName = listing?.farmName || "Unnamed Farm";
 
@@ -266,7 +335,7 @@ function createListingCard(listing, cropName, isLoggedIn) {
     createElement("p", {}, [`Availability: ${formatAvailability(listing?.availability)}`]),
     createElement("p", {}, [`Phone: ${listing?.phone || "N/A"}`]),
     listing?.tags?.length ? createElement("p", {}, [`Tags: ${listing.tags.join(", ")}`]) : null
-  ].filter(Boolean);
+  ].filter((node): node is HTMLHeadingElement => Boolean(node));
 
   const detailsSection = createElement("div", { class: "listing-details" }, detailRows);
 
@@ -293,13 +362,13 @@ function createListingCard(listing, cropName, isLoggedIn) {
   return createElement("div", { class: "listing-card" }, [
     imageSection,
     createElement("div", { class: "listing-content" }, [detailsSection, controlsSection])
-  ]);
+  ]) as HTMLElement;
 }
 
 /**
  * Decodes availability hours object mapping into a human-readable string.
  */
-function formatAvailability(availability) {
+function formatAvailability(availability?: AvailabilityMap): string {
   if (!availability || typeof availability !== "object") {
     return "N/A";
   }
@@ -317,7 +386,7 @@ function formatAvailability(availability) {
 /**
  * Calculates human-readable elapsed relative time.
  */
-function formatRelativeDate(dateString) {
+function formatRelativeDate(dateString?: string): string {
   if (!dateString) return "N/A";
 
   const date = new Date(dateString);
@@ -333,7 +402,7 @@ function formatRelativeDate(dateString) {
 /**
  * Maps numerical stock amounts to descriptive state strings.
  */
-function getStockStatus(qty) {
+function getStockStatus(qty: number): string {
   if (qty <= 0) return "Out of Stock";
   if (qty <= 5) return "Low Stock";
   if (qty <= 20) return "Limited Stock";

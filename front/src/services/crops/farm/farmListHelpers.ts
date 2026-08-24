@@ -1,6 +1,6 @@
 import { createElement } from "../../../components/createElement.js";
 import { navigate } from "../../../routes/navigate.js";
-import Button from "../../../components/base/Button.js";
+import Button, { ButtonOptions } from "../../../components/base/Button.js";
 import {
   resolveImagePath,
   PictureType,
@@ -8,9 +8,44 @@ import {
 } from "../../../utils/imagePaths.js";
 import Imagex from "../../../components/base/Imagex.js";
 
+// ---------- Interfaces ----------
+
+export interface Crop {
+  name?: string;
+  banner?: string;
+  outOfStock?: boolean;
+  featured?: boolean;
+  [key: string]: any;
+}
+
+export interface Farm {
+  id?: string | number;
+  farmid?: string | number;
+  name?: string;
+  photo?: string;
+  location?: string;
+  owner?: string;
+  description?: string;
+  avgRating?: number;
+  reviewCount?: number;
+  isFavorite?: boolean;
+  organic?: boolean;
+  delivers?: boolean;
+  hydroponic?: boolean;
+  crops?: Crop[];
+  [key: string]: any;
+}
+
+export type ToggleFavoriteCallback = (farmId: string) => void;
+
 // ---------- Farm Cards ----------
 
-function renderFarmCards(farms, container, isLoggedIn, toggleFavorite) {
+export function renderFarmCards(
+  farms: Farm[],
+  container: HTMLElement,
+  isLoggedIn: boolean,
+  toggleFavorite: ToggleFavoriteCallback | null
+): void {
   const fragment = document.createDocumentFragment();
 
   for (const farm of farms) {
@@ -20,7 +55,11 @@ function renderFarmCards(farms, container, isLoggedIn, toggleFavorite) {
   container.appendChild(fragment);
 }
 
-function FarmCard(farm, isLoggedIn = false, toggleFavorite = null) {
+export function FarmCard(
+  farm: Farm,
+  isLoggedIn = false,
+  toggleFavorite: ToggleFavoriteCallback | null = null
+): HTMLElement {
   const farmId = String(farm?.id || farm?.farmid || "");
 
   const img = Imagex({
@@ -33,21 +72,21 @@ function FarmCard(farm, isLoggedIn = false, toggleFavorite = null) {
     classes: "farm__image"
   });
 
-  const headerChildren = [
-    createElement("h3", {}, [farm?.name || "Unnamed Farm"]),
+  const headerChildren: HTMLElement[] = [
+    createElement("h3", {}, [farm?.name || "Unnamed Farm"]) as HTMLElement,
     createElement("p", { class: "farm__location" }, [
       farm?.location || "Unknown location"
-    ])
+    ]) as HTMLElement
   ];
 
   if (isLoggedIn && typeof toggleFavorite === "function") {
     const isFav = farm?.isFavorite || false;
-    const favButton = Button(
-      isFav ? "❤️" : "🤍",
-      `fav-${farmId}`,
-      { click: () => toggleFavorite(farmId) },
-      `farm__fav-btn ${isFav ? "is-favorite" : ""}`.trim()
-    );
+    const favButton = Button({
+      title: isFav ? "❤️" : "🤍",
+      id: `fav-${farmId}`,
+      events: { click: () => toggleFavorite(farmId) },
+      classes: `farm__fav-btn ${isFav ? "is-favorite" : ""}`.trim()
+    });
     headerChildren.unshift(favButton);
   }
 
@@ -69,12 +108,12 @@ function FarmCard(farm, isLoggedIn = false, toggleFavorite = null) {
   );
 
   const actions = createElement("div", { class: "farm__actions" }, [
-    Button(
-      "View",
-      `farm-${farmId}`,
-      { click: () => navigate(`/farm/${farmId}`) },
-      "farm__button"
-    )
+    Button({
+      title: "View",
+      id: `farm-${farmId}`,
+      events: { click: () => navigate(`/farm/${farmId}`) },
+      classes: "farm__button"
+    })
   ]);
 
   return createElement("div", { class: "farm__card" }, [
@@ -84,15 +123,15 @@ function FarmCard(farm, isLoggedIn = false, toggleFavorite = null) {
     meta,
     cropsSection,
     actions
-  ]);
+  ]) as HTMLElement;
 }
 
 // ---------- Crops ----------
 
-function createCropList(crops) {
+export function createCropList(crops?: Crop[]): HTMLElement {
   const items = Array.isArray(crops) ? crops.slice(0, 4) : [];
 
-  const cropCards = items.map(crop => {
+  const cropCards = items.map((crop) => {
     const img = Imagex({
       src: resolveImagePath(
         EntityType.CROP,
@@ -103,17 +142,17 @@ function createCropList(crops) {
       classes: "crop__image"
     });
 
-    const infoChildren = [
-      createElement("strong", {}, [crop?.name || "Unnamed"])
+    const infoChildren: HTMLElement[] = [
+      createElement("strong", {}, [crop?.name || "Unnamed"]) as HTMLElement
     ];
 
     if (crop?.outOfStock) {
       infoChildren.push(
-        createElement("span", { class: "crop__badge out" }, ["Out of Stock"])
+        createElement("span", { class: "crop__badge out" }, ["Out of Stock"]) as HTMLElement
       );
     } else if (crop?.featured) {
       infoChildren.push(
-        createElement("span", { class: "crop__badge featured" }, ["Featured"])
+        createElement("span", { class: "crop__badge featured" }, ["Featured"]) as HTMLElement
       );
     }
 
@@ -126,30 +165,30 @@ function createCropList(crops) {
     return createElement("div", { class: "crop__card" }, [img, cropInfo]);
   });
 
-  return createElement("div", { class: "crop__list" }, cropCards);
+  return createElement("div", { class: "crop__list" }, cropCards) as HTMLElement;
 }
 
 // ---------- Badges ----------
 
-function createFarmBadges(farm) {
-  const badges = [];
+export function createFarmBadges(farm?: Farm): HTMLElement {
+  const badges: HTMLElement[] = [];
 
   if (farm?.organic) {
-    badges.push(createElement("span", { class: "farm__badge" }, ["Organic"]));
+    badges.push(createElement("span", { class: "farm__badge" }, ["Organic"]) as HTMLElement);
   }
   if (farm?.delivers) {
-    badges.push(createElement("span", { class: "farm__badge" }, ["Delivers"]));
+    badges.push(createElement("span", { class: "farm__badge" }, ["Delivers"]) as HTMLElement);
   }
   if (farm?.hydroponic) {
-    badges.push(createElement("span", { class: "farm__badge" }, ["Hydroponic"]));
+    badges.push(createElement("span", { class: "farm__badge" }, ["Hydroponic"]) as HTMLElement);
   }
 
-  return createElement("div", { class: "farm__badges" }, badges);
+  return createElement("div", { class: "farm__badges" }, badges) as HTMLElement;
 }
 
 // ---------- Sidebar Sections ----------
 
-function renderFeaturedFarm(container, farm) {
+export function renderFeaturedFarm(container: HTMLElement, farm?: Farm): void {
   if (!farm) return;
 
   const farmId = String(farm?.id || farm?.farmid || "");
@@ -171,34 +210,43 @@ function renderFeaturedFarm(container, farm) {
     createElement("p", { class: "farm__featured-rating" }, [
       `⭐ ${typeof farm?.avgRating === "number" ? farm.avgRating.toFixed(1) : "N/A"} (${farm?.reviewCount || 0} reviews)`
     ]),
-    Button(
-      "View",
-      `featured-${farmId}`,
-      { click: () => navigate(`/farm/${farmId}`) },
-      "farm__button"
-    )
+    Button({
+      title: "View",
+      id: `featured-${farmId}`,
+      events: { click: () => navigate(`/farm/${farmId}`) },
+      classes: "farm__button"
+    })
   ]);
 
   container.append(section);
 }
 
-function renderCTAFarm(container) {
+export function renderCTAFarm(container: HTMLElement): void {
   const section = createElement("section", { class: "farm__cta" }, [
-    Button("Buy Tools", "buytools-crp-btn", {
-      click: () => navigate("/tools")
-    }, "buttonx"),
-    Button("Chats", "chatss-frm-btn", {
-      click: () => navigate("/merechats")
-    }, "buttonx"),
-    Button("Create Farm", "crt-frm-btn", {
-      click: () => navigate("/create-farm")
-    }, "buttonx")
+    Button({
+      title: "Buy Tools",
+      id: "buytools-crp-btn",
+      events: { click: () => navigate("/tools") },
+      classes: "buttonx"
+    }),
+    Button({
+      title: "Chats",
+      id: "chatss-frm-btn",
+      events: { click: () => navigate("/merechats") },
+      classes: "buttonx"
+    }),
+    Button({
+      title: "Create Farm",
+      id: "crt-frm-btn",
+      events: { click: () => navigate("/create-farm") },
+      classes: "buttonx"
+    })
   ]);
 
   container.append(section);
 }
 
-function renderWeatherWidget(container) {
+export function renderWeatherWidget(container: HTMLElement): void {
   const section = createElement("section", { class: "farm__weather" }, [
     createElement("h3", {}, ["🌤 Weather"]),
     createElement("p", {}, ["Today: Sunny, 28°C"]),
@@ -208,13 +256,13 @@ function renderWeatherWidget(container) {
   container.append(section);
 }
 
-function renderFarmStats(container, farms = []) {
-  const locations = new Set();
-  const crops = new Set();
+export function renderFarmStats(container: HTMLElement, farms: Farm[] = []): void {
+  const locations = new Set<string>();
+  const crops = new Set<string>();
 
   for (const farm of farms) {
     if (farm?.location) locations.add(farm.location);
-    (farm?.crops || []).forEach(c => c?.name && crops.add(c.name));
+    (farm?.crops || []).forEach((c) => c?.name && crops.add(c.name));
   }
 
   const section = createElement("section", { class: "farm__stats" }, [
@@ -226,16 +274,3 @@ function renderFarmStats(container, farms = []) {
 
   container.append(section);
 }
-
-// ---------- Exports ----------
-
-export {
-  renderFarmCards,
-  FarmCard,
-  createCropList,
-  createFarmBadges,
-  renderFeaturedFarm,
-  renderCTAFarm,
-  renderWeatherWidget,
-  renderFarmStats
-};

@@ -2,25 +2,45 @@ import { apiFetch } from "../../../api/api.js";
 import { navigate } from "../../../routes/navigate.js";
 import { createFarmForm } from "./createOrEditFarm.js";
 
-export function createFarm(isLoggedIn, container) {
-    container.textContent = "";
+export interface FarmFormData {
+  [key: string]: unknown;
+}
 
-    if (!isLoggedIn) {
-        container.textContent = "Please log in to create a farm.";
-        return;
+export interface CreateFarmResponse {
+  success: boolean;
+  id?: string | number;
+  message?: string;
+}
+
+/**
+ * Renders the create farm interface into the provided container.
+ *
+ * @param isLoggedIn - Authentication state flag.
+ * @param container - DOM element target where the form mounts.
+ */
+export function createFarm(isLoggedIn: boolean, container: HTMLElement | null): void {
+  if (!container) return;
+
+  container.textContent = "";
+
+  if (!isLoggedIn) {
+    container.textContent = "Please log in to create a farm.";
+    return;
+  }
+
+  const form = createFarmForm({
+    isEdit: false,
+    onSubmit: async (formData: FarmFormData): Promise<void> => {
+      // Adjusted apiFetch signature to match ApiFetchOptions object parameter
+      const res = await apiFetch<CreateFarmResponse>("/farms", "POST", formData);
+
+      if (res?.success && res.id) {
+        navigate(`/farm/${res.id}`);
+      } else {
+        container.textContent = "❌ Failed to create farm. Please try again.";
+      }
     }
+  });
 
-    const form = createFarmForm({
-        isEdit: false,
-        onSubmit: async (formData) => {
-            const res = await apiFetch("/farms", "POST", formData, true);
-            if (res.success) {
-                navigate(`/farm/${res.id}`);
-            } else {
-                container.textContent = "❌ Failed to create farm. Please try again.";
-            }
-        }
-    });
-
-    container.appendChild(form);
+  container.appendChild(form);
 }

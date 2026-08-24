@@ -1,15 +1,42 @@
 import { apiFetch } from "../../../api/api.js";
 import { displayCropCard } from "../crop/displayCropCard.js";
 
+export interface CategoryFilters {
+  minPrice?: string | number;
+  maxPrice?: string | number;
+  inStock?: boolean;
+  region?: string;
+  lat?: string | number;
+  lng?: string | number;
+  [key: string]: any;
+}
+
+export interface CropItem {
+  id?: string | number;
+  name?: string;
+  category?: string;
+  price?: number;
+  [key: string]: any;
+}
+
+export interface CategoryItemsResponse {
+  success: boolean;
+  crops?: CropItem[];
+  [key: string]: any;
+}
+
 /**
  * Renders items for a specific category into a container element with filtering support.
  *
- * @param {HTMLElement} container - DOM node where items should be rendered.
- * @param {string} category - Category identifier or name.
- * @param {Object} [filters={}] - Optional filters for querying items.
- * @returns {Promise<void>}
+ * @param container - DOM node where items should be rendered.
+ * @param category - Category identifier or name.
+ * @param filters - Optional filters for querying items.
  */
-export async function renderCategoryItems(container, category, filters = {}) {
+export async function renderCategoryItems(
+  container: HTMLElement | null,
+  category: string,
+  filters: CategoryFilters = {}
+): Promise<void> {
   if (!container) return;
 
   // Clear previous content cleanly
@@ -24,17 +51,25 @@ export async function renderCategoryItems(container, category, filters = {}) {
     const params = new URLSearchParams();
 
     if (category) params.append("category", category);
-    if (filters.minPrice) params.append("minPrice", filters.minPrice);
-    if (filters.maxPrice) params.append("maxPrice", filters.maxPrice);
+    if (filters.minPrice !== undefined && filters.minPrice !== "") {
+      params.append("minPrice", String(filters.minPrice));
+    }
+    if (filters.maxPrice !== undefined && filters.maxPrice !== "") {
+      params.append("maxPrice", String(filters.maxPrice));
+    }
     if (filters.inStock) params.append("inStock", "true");
-    if (filters.region) params.append("region", filters.region);
-    if (filters.lat) params.append("lat", filters.lat);
-    if (filters.lng) params.append("lng", filters.lng);
+    if (filters.region) params.append("region", String(filters.region));
+    if (filters.lat !== undefined && filters.lat !== "") {
+      params.append("lat", String(filters.lat));
+    }
+    if (filters.lng !== undefined && filters.lng !== "") {
+      params.append("lng", String(filters.lng));
+    }
 
     const queryString = params.toString();
     const endpoint = `/crops${queryString ? `?${queryString}` : ""}`;
 
-    const res = await apiFetch(endpoint);
+    const res = (await apiFetch(endpoint)) as CategoryItemsResponse;
 
     if (!res?.success || !Array.isArray(res?.crops) || res.crops.length === 0) {
       container.replaceChildren();
@@ -47,7 +82,7 @@ export async function renderCategoryItems(container, category, filters = {}) {
 
     const fragment = document.createDocumentFragment();
 
-    res.crops.forEach(crop => {
+    res.crops.forEach((crop: CropItem) => {
       const card = displayCropCard(crop);
       if (card) fragment.appendChild(card);
     });

@@ -1,17 +1,66 @@
 import { createElement } from "../../../components/createElement.js";
 import { createFormGroup } from "../../../components/form/createFormGroupEnhanced.js";
 
-export function createInputField(type, placeholder, value = "", required = false) {
+export interface FarmData {
+  name?: string;
+  location?: string;
+  description?: string;
+  owner?: string;
+  contact?: string;
+  practice?: string;
+  availabilityTiming?: Record<string, unknown> | string;
+  social?: string;
+  [key: string]: unknown;
+}
+
+export interface FieldOption {
+  value: string;
+  label: string;
+}
+
+export interface FieldConfig {
+  type: "text" | "textarea" | "select" | "availability" | "url" | "file";
+  id: string;
+  label: string;
+  value?: unknown;
+  placeholder?: string;
+  required?: boolean;
+  rows?: number;
+  options?: FieldOption[];
+  accept?: string;
+  multiple?: boolean;
+}
+
+export type SubmitResult = boolean | { success: boolean; [key: string]: unknown } | void;
+
+export type OnSubmitHandler = (formOrData?: HTMLElement | FormData) => Promise<SubmitResult> | SubmitResult;
+
+export interface CreateFarmFormProps {
+  isEdit?: boolean;
+  farm?: FarmData;
+  onSubmit: (formData: FormData) => Promise<SubmitResult>;
+}
+
+export function createInputField(
+  type: string,
+  placeholder: string,
+  value: string = "",
+  required: boolean = false
+): HTMLInputElement {
   return createElement("input", {
     type,
     placeholder,
     value,
     required,
-  });
+  }) as HTMLInputElement;
 }
 
-export function createForm(fields, onSubmit, submitText = "Submit") {
-  const form = createElement("form", { class: "create-section" });
+export function createForm(
+  fields: HTMLElement[],
+  onSubmit: (form: HTMLFormElement) => Promise<SubmitResult>,
+  submitText: string = "Submit"
+): HTMLFormElement {
+  const form = createElement("form", { class: "create-section" }) as HTMLFormElement;
 
   form.appendChild(createElement("h2", {}, ["Create Farm"]));
 
@@ -23,12 +72,12 @@ export function createForm(fields, onSubmit, submitText = "Submit") {
 
   form.appendChild(submitBtn);
 
-  form.addEventListener("submit", async (e) => {
+  form.addEventListener("submit", async (e: Event) => {
     e.preventDefault();
 
     const result = await onSubmit(form);
 
-    if (result === true || result?.success) {
+    if (result === true || (typeof result === "object" && result !== null && result.success)) {
       form.reset();
     }
   });
@@ -36,8 +85,12 @@ export function createForm(fields, onSubmit, submitText = "Submit") {
   return form;
 }
 
-export function createFarmForm({ isEdit = false, farm = {}, onSubmit }) {
-  const fieldsConfig = [
+export function createFarmForm({
+  isEdit = false,
+  farm = {},
+  onSubmit
+}: CreateFarmFormProps): HTMLFormElement {
+  const fieldsConfig: FieldConfig[] = [
     {
       type: "text",
       id: "farm-name",
@@ -91,15 +144,12 @@ export function createFarmForm({ isEdit = false, farm = {}, onSubmit }) {
         { value: "regenerative", label: "Regenerative" }
       ]
     },
-
-    // New availability picker
     {
       type: "availability",
       id: "farm-availability",
       label: "Availability",
       value: farm.availabilityTiming || {}
     },
-
     {
       type: "url",
       id: "farm-social",
@@ -107,14 +157,6 @@ export function createFarmForm({ isEdit = false, farm = {}, onSubmit }) {
       value: farm.social || "",
       placeholder: "Website / Social Link"
     }
-
-    // {
-    //   type: "file",
-    //   id: "farm-gallery",
-    //   label: "Gallery",
-    //   accept: "image/*",
-    //   multiple: true
-    // }
   ];
 
   const fields = fieldsConfig.map(field => createFormGroup(field));
@@ -125,7 +167,7 @@ export function createFarmForm({ isEdit = false, farm = {}, onSubmit }) {
       const formData = new FormData();
 
       fieldsConfig.forEach(field => {
-        const input = document.getElementById(field.id);
+        const input = document.getElementById(field.id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
 
         if (!input) {
           return;
@@ -135,17 +177,18 @@ export function createFarmForm({ isEdit = false, farm = {}, onSubmit }) {
 
         switch (field.type) {
           case "availability":
-            // hidden input already contains JSON
             formData.append(key, input.value || "{}");
             break;
 
-          case "file":
-            if (input.files?.length) {
-              Array.from(input.files).forEach(file => {
+          case "file": {
+            const fileInput = input as HTMLInputElement;
+            if (fileInput.files?.length) {
+              Array.from(fileInput.files).forEach(file => {
                 formData.append(key, file);
               });
             }
             break;
+          }
 
           default:
             formData.append(key, input.value.trim());

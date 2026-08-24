@@ -1,27 +1,33 @@
 import { createElement } from "../../../components/createElement.js";
 import Button from "../../../components/base/Button.js";
 
-export function renderBulkActionsSection(onAccept, onReject, onMarkDelivered) {
-  const acceptBtn = Button(
-    "Accept Selected",
-    "bulk-accept-btn",
-    { click: onAccept },
-    "success-button buttonx"
-  );
+type EventHandler = (event: Event) => void;
 
-  const rejectBtn = Button(
-    "Reject Selected",
-    "bulk-reject-btn",
-    { click: onReject },
-    "danger-button buttonx"
-  );
+export function renderBulkActionsSection(
+  onAccept: EventHandler,
+  onReject: EventHandler,
+  onMarkDelivered: EventHandler
+): HTMLElement {
+  const acceptBtn = Button({
+    title: "Accept Selected",
+    id: "bulk-accept-btn",
+    events: { click: onAccept },
+    classes: "success-button buttonx",
+  });
 
-  const deliveredBtn = Button(
-    "Mark as Delivered",
-    "bulk-delivered-btn",
-    { click: onMarkDelivered },
-    "secondary-button buttonx"
-  );
+  const rejectBtn = Button({
+    title: "Reject Selected",
+    id: "bulk-reject-btn",
+    events: { click: onReject },
+    classes: "danger-button buttonx",
+  });
+
+  const deliveredBtn = Button({
+    title: "Mark as Delivered",
+    id: "bulk-delivered-btn",
+    events: { click: onMarkDelivered },
+    classes: "secondary-button buttonx",
+  });
 
   return createElement("div", { class: "bulk-actions-section" }, [
     acceptBtn,

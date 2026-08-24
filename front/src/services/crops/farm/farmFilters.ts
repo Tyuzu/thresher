@@ -1,12 +1,30 @@
 import { createElement } from "../../../components/createElement.js";
 import { createOption } from "../../../components/ui/createOption.js";
 
+export interface FilterState {
+  searchKeyword?: string;
+  sortBy?: "name" | "rating" | string;
+  sortDir?: "asc" | "desc" | string;
+  locationFilter?: string;
+  onlyAvailable?: boolean;
+}
+
+export interface FarmRecord {
+  name?: string;
+  location?: string;
+  available?: boolean;
+  rating?: number;
+  [key: string]: any;
+}
+
+type EventCallback<T extends Event = Event> = (event: T) => void;
+
 /**
  * Creates a lightweight debounced wrapper for input handlers.
  */
-function debounce(fn, delay = 300) {
-  let timer;
-  return (...args) => {
+function debounce<T extends any[]>(fn: (...args: T) => void, delay = 300): (...args: T) => void {
+  let timer: ReturnType<typeof setTimeout>;
+  return (...args: T) => {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };
@@ -15,22 +33,25 @@ function debounce(fn, delay = 300) {
 /**
  * Generates filter and sort control elements bound to a shared state object.
  *
- * @param {Object} state - Current filter and sort criteria.
- * @param {Function} onFilterChange - Callback executed when any filter setting mutates.
- * @returns {HTMLElement} Filter panel container.
+ * @param state - Current filter and sort criteria.
+ * @param onFilterChange - Callback executed when any filter setting mutates.
+ * @returns Filter panel container.
  */
-export function createFilterControls(state = {}, onFilterChange = () => {}) {
-  const container = createElement("div", { class: "farm__filters" });
+export function createFilterControls(
+  state: FilterState = {},
+  onFilterChange: () => void = () => {}
+): HTMLElement {
+  const container = createElement("div", { class: "farm__filters" }) as HTMLElement;
 
   const searchInput = createElement("input", {
     type: "text",
     placeholder: "🔍 Search farms…",
     class: "farm__search",
     value: state.searchKeyword || ""
-  });
+  }) as HTMLInputElement;
 
-  const sortSelect = createElement("select", { class: "farm__sort" });
-  const sortOptions = [
+  const sortSelect = createElement("select", { class: "farm__sort" }) as HTMLSelectElement;
+  const sortOptions: [string, string][] = [
     ["", "Sort by…"],
     ["name-asc", "Name A→Z"],
     ["name-desc", "Name Z→A"],
@@ -40,7 +61,7 @@ export function createFilterControls(state = {}, onFilterChange = () => {}) {
 
   const currentSortVal = state.sortBy && state.sortDir ? `${state.sortBy}-${state.sortDir}` : "";
   sortOptions.forEach(([val, label]) => {
-    const opt = createOption(val, label);
+    const opt = createOption(val, label) as HTMLOptionElement;
     if (val === currentSortVal) opt.selected = true;
     sortSelect.append(opt);
   });
@@ -50,34 +71,37 @@ export function createFilterControls(state = {}, onFilterChange = () => {}) {
     placeholder: "📍 Filter by location",
     class: "farm__location",
     value: state.locationFilter || ""
-  });
+  }) as HTMLInputElement;
 
   const availToggle = createElement("input", {
     type: "checkbox"
-  });
+  }) as HTMLInputElement;
   availToggle.checked = Boolean(state.onlyAvailable);
 
   const availLabel = createElement("label", { class: "farm__availability-label" }, [
     "🟢 Available Only ",
     availToggle
-  ]);
+  ]) as HTMLLabelElement;
 
   // Debounced input listeners
-  const handleSearchInput = debounce((e) => {
-    state.searchKeyword = e.target.value.toLowerCase().trim();
+  const handleSearchInput: EventCallback<InputEvent> = debounce((e) => {
+    const target = e.target as HTMLInputElement;
+    state.searchKeyword = target.value.toLowerCase().trim();
     onFilterChange();
   }, 250);
 
-  const handleLocationInput = debounce((e) => {
-    state.locationFilter = e.target.value.toLowerCase().trim();
+  const handleLocationInput: EventCallback<InputEvent> = debounce((e) => {
+    const target = e.target as HTMLInputElement;
+    state.locationFilter = target.value.toLowerCase().trim();
     onFilterChange();
   }, 250);
 
-  searchInput.addEventListener("input", handleSearchInput);
-  locationInput.addEventListener("input", handleLocationInput);
+  searchInput.addEventListener("input", handleSearchInput as EventListener);
+  locationInput.addEventListener("input", handleLocationInput as EventListener);
 
-  sortSelect.addEventListener("change", (e) => {
-    const val = e.target.value;
+  sortSelect.addEventListener("change", (e: Event) => {
+    const target = e.target as HTMLSelectElement;
+    const val = target.value;
     if (!val) {
       state.sortBy = "";
       state.sortDir = "";
@@ -89,8 +113,9 @@ export function createFilterControls(state = {}, onFilterChange = () => {}) {
     onFilterChange();
   });
 
-  availToggle.addEventListener("change", (e) => {
-    state.onlyAvailable = e.target.checked;
+  availToggle.addEventListener("change", (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    state.onlyAvailable = target.checked;
     onFilterChange();
   });
 
@@ -107,11 +132,14 @@ export function createFilterControls(state = {}, onFilterChange = () => {}) {
 /**
  * Applies search, location, availability, and sorting constraints to a list of farms.
  *
- * @param {Array<Object>} farms - Collection of farm records.
- * @param {Object} state - Filter and sort state.
- * @returns {Array<Object>} Processed farm list.
+ * @param farms - Collection of farm records.
+ * @param state - Filter and sort state.
+ * @returns Processed farm list.
  */
-export function applyFiltersAndSort(farms = [], state = {}) {
+export function applyFiltersAndSort<T extends FarmRecord>(
+  farms: T[] = [],
+  state: FilterState = {}
+): T[] {
   let result = Array.isArray(farms) ? farms.slice() : [];
 
   if (state.searchKeyword) {

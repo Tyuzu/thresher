@@ -2,18 +2,25 @@ import { apiFetch } from "../../../api/api.js";
 import { createElement } from "../../../components/createElement.js";
 import { createFormGroup } from "../../../components/form/createFormGroupEnhanced.js";
 import Button from "../../../components/base/Button.js";
+import { CategoryOption, FarmItem, ItemPayload, ItemType } from "./types.js";
 
-export function renderItemForm(container, mode, itemData, type, onDone) {
+export function renderItemForm(
+  container: HTMLElement,
+  mode: "create" | "edit",
+  itemData: FarmItem | null,
+  type: ItemType,
+  onDone: () => void
+): void {
   container.replaceChildren();
 
-  const form = createElement("form", { class: "create-section" });
+  const form = createElement("form", { class: "create-section" }) as HTMLFormElement;
 
   // ---------------------------------
   // CATEGORY OPTIONS
   // ---------------------------------
 
-  const getCategoryOptions = (type) => {
-    if (type === "product") {
+  const getCategoryOptions = (itemType: ItemType): CategoryOption[] => {
+    if (itemType === "product") {
       return [
         { value: "", label: "Select category" },
         { value: "Spices", label: "Spices" },
@@ -27,7 +34,7 @@ export function renderItemForm(container, mode, itemData, type, onDone) {
       ];
     }
 
-    if (type === "tool") {
+    if (itemType === "tool") {
       return [
         { value: "", label: "Select category" },
         { value: "Cutting", label: "Cutting" },
@@ -41,6 +48,8 @@ export function renderItemForm(container, mode, itemData, type, onDone) {
 
     return [];
   };
+
+  const categories = getCategoryOptions(type);
 
   // ---------------------------------
   // FORM GROUPS
@@ -56,26 +65,26 @@ export function renderItemForm(container, mode, itemData, type, onDone) {
   });
 
   const categoryGroup = createFormGroup({
-    type: getCategoryOptions(type).length ? "select" : "text",
-                                        id: "category",
-                                        label: "Category",
-                                        value: itemData?.category || "",
-                                        placeholder: getCategoryOptions(type).length ? "" : "e.g., Fruit, Tool",
-                                        required: true,
-                                        options: getCategoryOptions(type)
+    type: categories.length ? "select" : "text",
+    id: "category",
+    label: "Category",
+    value: itemData?.category || "",
+    placeholder: categories.length ? "" : "e.g., Fruit, Tool",
+    required: true,
+    options: categories
   });
 
   const priceGroup = createFormGroup({
     type: "number",
     id: "price",
     label: "Price (₹)",
-                                     value: itemData?.price ?? "",
-                                     placeholder: "e.g., 49.99",
-                                     required: true,
-                                     additionalProps: {
-                                       step: "0.01",
-                                       min: "0"
-                                     }
+    value: itemData?.price ?? "",
+    placeholder: "e.g., 49.99",
+    required: true,
+    additionalProps: {
+      step: "0.01",
+      min: "0"
+    }
   });
 
   const discountGroup = createFormGroup({
@@ -175,21 +184,21 @@ export function renderItemForm(container, mode, itemData, type, onDone) {
   // BUTTONS
   // ---------------------------------
 
-  const submitBtn = Button(
-    mode === "create" ? `Create ${type}` : `Update ${type}`,
-    `submit-${type}-btn`,
-    {},
-    "primary-button"
-  );
+  const submitBtn = Button({
+    title: mode === "create" ? `Create ${type}` : `Update ${type}`,
+    id: `submit-${type}-btn`,
+    type: "submit",
+    classes: "primary-button"
+  }) as HTMLButtonElement;
 
-  const cancelBtn = Button(
-    "Cancel",
-    `cancel-${type}-btn`,
-    {
+  const cancelBtn = Button({
+    title: "Cancel",
+    id: `cancel-${type}-btn`,
+    classes: "secondary-button",
+    events: {
       click: () => onDone()
-    },
-    "secondary-button"
-  );
+    }
+  });
 
   const actions = createElement(
     "div",
@@ -206,10 +215,11 @@ export function renderItemForm(container, mode, itemData, type, onDone) {
   // ---------------------------------
 
   if (mode === "edit" && itemData?.productid) {
-    const deleteBtn = Button(
-      `Delete ${type}`,
-      `delete-${type}-btn`,
-      {
+    const deleteBtn = Button({
+      title: `Delete ${type}`,
+      id: `delete-${type}-btn`,
+      classes: "danger-button",
+      events: {
         click: async () => {
           if (!confirm(`Delete this ${type}?`)) {
             return;
@@ -218,8 +228,8 @@ export function renderItemForm(container, mode, itemData, type, onDone) {
           try {
             await apiFetch(`/farm/${type}/${itemData.productid}`, "DELETE");
             onDone();
-          } catch (err) {
-            if (err.status === 403) {
+          } catch (err: any) {
+            if (err?.status === 403) {
               alert("You can only delete items you created");
             } else {
               alert("Delete failed");
@@ -227,51 +237,57 @@ export function renderItemForm(container, mode, itemData, type, onDone) {
             console.error(err);
           }
         }
-      },
-      "danger-button"
-    );
+      }
+    });
 
     form.appendChild(deleteBtn);
   }
 
   // ---------------------------------
-  // SUBMIT
+  // SUBMIT HANDLER
   // ---------------------------------
 
-  form.onsubmit = async (e) => {
+  form.onsubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     submitBtn.disabled = true;
 
+    const parseNumber = (val: string, fallback = 0): number => {
+      const parsed = parseFloat(val);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
+    const elements = form.elements as unknown as Record<string, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
+
     try {
-      const payload = {
-        name: form.name.value.trim(),
-        category: form.category.value.trim(),
-        price: parseFloat(form.price.value),
-        discount: parseFloat(form.discount.value || 0),
-        quantity: parseInt(form.quantity.value, 10),
-        unit: form.unit.value,
-        sku: form.sku.value.trim(),
-        availableFrom: form.availableFrom.value,
-        availableTo: form.availableTo.value,
-        description: form.description.value.trim(),
-        featured: form.featured.checked
+      const payload: ItemPayload = {
+        name: elements.name.value.trim(),
+        category: elements.category.value.trim(),
+        price: parseNumber(elements.price.value, 0),
+        discount: parseNumber(elements.discount.value, 0),
+        quantity: parseInt(elements.quantity.value, 10) || 0,
+        unit: elements.unit.value,
+        sku: elements.sku.value.trim() || null,
+        availableFrom: elements.availableFrom.value || null,
+        availableTo: elements.availableTo.value || null,
+        description: elements.description.value.trim(),
+        featured: (elements.featured as HTMLInputElement).checked
       };
 
       const url =
-      mode === "create"
-      ? `/farm/${type}`
-      : `/farm/${type}/${itemData.productid}`;
+        mode === "create"
+          ? `/farm/${type}`
+          : `/farm/${type}/${itemData?.productid}`;
 
       const method = mode === "create" ? "POST" : "PUT";
 
       const res = await apiFetch(url, method, payload);
-      
+
       if (!res || !res.productid) {
         throw new Error("Request failed");
       }
       onDone();
-    } catch (err) {
-      if (err.status === 403) {
+    } catch (err: any) {
+      if (err?.status === 403) {
         alert("You can only edit items you created");
       } else {
         alert(`${mode === "create" ? "Create" : "Update"} failed`);

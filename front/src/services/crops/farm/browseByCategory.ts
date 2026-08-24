@@ -1,20 +1,41 @@
 import { createElement } from "../../../components/createElement.js";
-import { createTabs } from "../../utils/persistTabs.js";
+import { createTabs } from "../../../utils/persistTabs.js";
 import { renderCategoryItems } from "./renderCategoryItems.js";
 import { createFilterPanel } from "./createFilterPanel.js";
 import { debounce } from "../../../utils/deutils.js";
 
+export interface FilterState {
+  minPrice: string;
+  maxPrice: string;
+  inStock: boolean;
+  region: string;
+  lat: number | null;
+  lng: number | null;
+}
+
+export interface CategoryDef {
+  id: string;
+  title: string;
+  category: string;
+}
+
+export interface TabDef {
+  id: string;
+  title: string;
+  render: (el: HTMLElement) => void | Promise<void>;
+}
+
 /**
  * Renders the category browser tab layout with interactive filtering.
  *
- * @param {HTMLElement} container - DOM node where the category browser will mount.
+ * @param container - DOM node where the category browser will mount.
  */
-export function showCategoryBrowser(container) {
+export function showCategoryBrowser(container: HTMLElement | null): void {
   if (!container) return;
 
   container.replaceChildren();
 
-  const filters = {
+  const filters: FilterState = {
     minPrice: "",
     maxPrice: "",
     inStock: false,
@@ -26,12 +47,14 @@ export function showCategoryBrowser(container) {
   /**
    * Refreshes the active tab content using the updated state of `filters`.
    */
-  const refreshActiveTab = () => {
-    const activeTab = container.querySelector(".tab-content.active, [role='tabpanel']:not([hidden])");
-    if (activeTab) {
-      const category = activeTab.dataset.category || activeTab.id.replace("-tab", "");
-      renderCategoryItems(activeTab, category, filters);
-    }
+  const refreshActiveTab = (): void => {
+    const activeTab = container.querySelector<HTMLElement>(
+      ".tab-content.active, [role='tabpanel']:not([hidden])"
+    );
+    if (!activeTab) return;
+
+    const category = activeTab.dataset.category || activeTab.id.replace("-tab", "");
+    renderCategoryItems(activeTab, category, filters);
   };
 
   // Debounced wrapper to prevent rapid re-renders on filter changes
@@ -39,7 +62,7 @@ export function showCategoryBrowser(container) {
 
   const filterPanel = createFilterPanel(filters, onFilterChange);
 
-  const categories = [
+  const categories: CategoryDef[] = [
     { id: "fruits-tab", title: "🍎 Fruits", category: "Fruits" },
     { id: "vegetables-tab", title: "🥕 Vegetables", category: "Vegetables" },
     { id: "grains-tab", title: "🌾 Grains", category: "Grains" },
@@ -50,10 +73,10 @@ export function showCategoryBrowser(container) {
     { id: "others-tab", title: "🌱 Others", category: "Others" }
   ];
 
-  const tabs = categories.map(({ id, title, category }) => ({
+  const tabs: TabDef[] = categories.map(({ id, title, category }) => ({
     id,
     title,
-    render: (el) => {
+    render: (el: HTMLElement) => {
       el.dataset.category = category;
       return renderCategoryItems(el, category, filters);
     }

@@ -8,6 +8,7 @@ import {
   getPaymentStatusClass,
   getOrderValue,
   normalizeOrderId,
+  OrderData,
 } from "./orderHelpers.js";
 import {
   markOrderDelivered,
@@ -16,48 +17,52 @@ import {
   acceptOrder,
 } from "./orderUtils.js";
 
-function canAccept(status) {
+function canAccept(status: unknown): boolean {
   return String(status || "").toLowerCase() === "pending";
 }
 
-function canMarkPaid(status) {
+function canMarkPaid(status: unknown): boolean {
   return String(status || "").toLowerCase() === "accepted";
 }
 
-function canDeliver(status) {
+function canDeliver(status: unknown): boolean {
   return String(status || "").toLowerCase() === "paid";
 }
 
-function canReject(status) {
+function canReject(status: unknown): boolean {
   const normalized = String(status || "").toLowerCase();
   return normalized === "pending" || normalized === "accepted";
 }
 
-export function renderOrdersTable(orderList, onRefresh) {
-  const handleContact = (contact) => contactBuyer(contact);
+type RefreshCallback = () => void;
+type ContactHandler = (contact: string) => void;
+type ActionHandler = (orderId: string | number) => Promise<void>;
 
-  const handleAccepted = async (orderId) => {
+export function renderOrdersTable(orderList: OrderData[], onRefresh?: RefreshCallback): HTMLElement {
+  const handleContact: ContactHandler = (contact) => contactBuyer(contact);
+
+  const handleAccepted: ActionHandler = async (orderId) => {
     const success = await acceptOrder(orderId);
     if (success) {
       onRefresh?.();
     }
   };
 
-  const handleMarkedPaid = async (orderId) => {
+  const handleMarkedPaid: ActionHandler = async (orderId) => {
     const success = await markOrderPaid(orderId);
     if (success) {
       onRefresh?.();
     }
   };
 
-  const handleDelivered = async (orderId) => {
+  const handleDelivered: ActionHandler = async (orderId) => {
     const success = await markOrderDelivered(orderId);
     if (success) {
       onRefresh?.();
     }
   };
 
-  const handleReject = async (orderId) => {
+  const handleReject: ActionHandler = async (orderId) => {
     const success = await rejectOrder(orderId);
     if (success) {
       onRefresh?.();
@@ -101,7 +106,14 @@ export function renderOrdersTable(orderList, onRefresh) {
   ]);
 }
 
-function buildOrderTableRow(order, onContact, onAccepted, onMarkedPaid, onDelivered, onReject) {
+function buildOrderTableRow(
+  order: OrderData,
+  onContact: ContactHandler,
+  onAccepted: ActionHandler,
+  onMarkedPaid: ActionHandler,
+  onDelivered: ActionHandler,
+  onReject: ActionHandler
+): HTMLElement {
   const orderId = normalizeOrderId(order);
   const statusClass = getOrderStatusClass(order.status);
   const paymentClass = getPaymentStatusClass(order.payment);
@@ -131,47 +143,72 @@ function buildOrderTableRow(order, onContact, onAccepted, onMarkedPaid, onDelive
     createElement("td", { class: `payment-status ${paymentClass}` }, [payment]),
     createElement("td", { class: `order-status ${statusClass}` }, [status]),
     createElement("td", { class: "action-buttons" }, [
-      Button("Contact", `contact-${orderId}`, {
-        click: (e) => {
-          e.stopPropagation();
-          onContact(contact);
+      Button({
+        title: "Contact",
+        id: `contact-${orderId}`,
+        events: {
+          click: (e: Event) => {
+            e.stopPropagation();
+            onContact(contact);
+          },
         },
-      }, "small-button buttonx"),
+        classes: "small-button buttonx",
+      }),
 
       canAccept(order.status)
-        ? Button("Accept", `accept-${orderId}`, {
-            click: (e) => {
-              e.stopPropagation();
-              onAccepted(orderId);
+        ? Button({
+            title: "Accept",
+            id: `accept-${orderId}`,
+            events: {
+              click: (e: Event) => {
+                e.stopPropagation();
+                onAccepted(orderId);
+              },
             },
-          }, "small-button buttonx")
+            classes: "small-button buttonx",
+          })
         : null,
 
       canMarkPaid(order.status)
-        ? Button("Mark Paid", `markpaid-${orderId}`, {
-            click: (e) => {
-              e.stopPropagation();
-              onMarkedPaid(orderId);
+        ? Button({
+            title: "Mark Paid",
+            id: `markpaid-${orderId}`,
+            events: {
+              click: (e: Event) => {
+                e.stopPropagation();
+                onMarkedPaid(orderId);
+              },
             },
-          }, "small-button buttonx")
+            classes: "small-button buttonx",
+          })
         : null,
 
       canDeliver(order.status)
-        ? Button("Delivered", `deliver-${orderId}`, {
-            click: (e) => {
-              e.stopPropagation();
-              onDelivered(orderId);
+        ? Button({
+            title: "Delivered",
+            id: `deliver-${orderId}`,
+            events: {
+              click: (e: Event) => {
+                e.stopPropagation();
+                onDelivered(orderId);
+              },
             },
-          }, "small-button buttonx")
+            classes: "small-button buttonx",
+          })
         : null,
 
       canReject(order.status)
-        ? Button("Reject", `reject-${orderId}`, {
-            click: (e) => {
-              e.stopPropagation();
-              onReject(orderId);
+        ? Button({
+            title: "Reject",
+            id: `reject-${orderId}`,
+            events: {
+              click: (e: Event) => {
+                e.stopPropagation();
+                onReject(orderId);
+              },
             },
-          }, "small-button buttonx")
+            classes: "small-button buttonx",
+          })
         : null,
     ].filter(Boolean)),
   ]);

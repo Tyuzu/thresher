@@ -1,20 +1,18 @@
-import { createElement } from "../../../../components/createElement.js";
-import { deleteCropAbout, getAllCropAbouts } from "./cropAbout.api.js";
-import { displayCropForm } from "./cropAbout.form.js";
+import { createElement } from "../../../../components/createElement";
+import { deleteCropAbout, getAllCropAbouts } from "./cropAbout.api";
+import { displayCropForm } from "./cropAbout.form";
+import type { CropAbout } from "./cropAbout.types";
 
-export async function displayCropList(container) {
+export async function displayCropList(container: HTMLElement): Promise<void> {
     container.textContent = "";
 
     const crops = await getAllCropAbouts();
     const safeCrops = Array.isArray(crops) ? crops : [];
 
-    const list = createElement(
-        "div",
-        { class: "crop-list" },
-        safeCrops.map(crop => {
-            if (!crop) return null;
-
-            return createElement(
+    const cards = safeCrops
+        .filter((crop): crop is CropAbout => Boolean(crop))
+        .map(crop =>
+            createElement(
                 "div",
                 { class: "crop-card" },
                 [
@@ -40,10 +38,7 @@ export async function displayCropList(container) {
                             class: "btn btn-small btn-danger",
                             events: {
                                 click: async () => {
-                                    if (!confirm("Delete crop?")) {
-                                        return;
-                                    }
-
+                                    if (!confirm("Delete crop?")) return;
                                     await deleteCropAbout(crop.id);
                                     displayCropList(container);
                                 }
@@ -52,14 +47,14 @@ export async function displayCropList(container) {
                         ["Delete"]
                     )
                 ]
-            );
-        }).filter(Boolean)
-    );
+            ) as HTMLElement
+        );
 
-    container.appendChild(list);
+    const list = createElement("div", { class: "crop-list" }, cards);
+    container.appendChild(list as HTMLElement);
 }
 
-export function createAdminActions(crop, container) {
+export function createAdminActions(crop: CropAbout | null, container: HTMLElement): HTMLElement | null {
     if (!crop) return null;
 
     return createElement(
@@ -85,10 +80,7 @@ export function createAdminActions(crop, container) {
                     class: "btn btn-danger",
                     events: {
                         click: async () => {
-                            if (!confirm("Delete crop?")) {
-                                return;
-                            }
-
+                            if (!confirm("Delete crop?")) return;
                             await deleteCropAbout(crop.id);
                             location.reload();
                         }
@@ -97,5 +89,5 @@ export function createAdminActions(crop, container) {
                 ["Delete Crop"]
             )
         ]
-    );
+    ) as HTMLElement;
 }

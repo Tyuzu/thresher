@@ -1,15 +1,20 @@
-import { createCommonCropForm } from "./createOrEditCrop.js";
-import { apiFetch } from "../../../api/api.js";
-import Notify from "../../../components/ui/Notify.js";
-import { navigate } from "../../../routes/navigate.js";
+import { createCommonCropForm } from "./createOrEditCrop";
+import { apiFetch } from "../../../api/api";
+import Notify from "../../../components/ui/Notify";
+import { navigate } from "../../../routes/navigate";
 
-export async function createCrop(farmId, closeModal) {
+export type CloseModalCallback = () => void;
+
+export async function createCrop(
+    farmId: string, 
+    closeModal?: CloseModalCallback
+): Promise<HTMLDivElement> {
     const wrapper = document.createElement("div");
 
     const form = createCommonCropForm({
         currentFarmName: farmId,
         isEdit: false,
-        onSubmit: async (formData, submitBtn) => {
+        onSubmit: async (formData: Record<string, unknown> | FormData, submitBtn: HTMLButtonElement): Promise<void> => {
             submitBtn.disabled = true;
 
             try {
@@ -26,8 +31,9 @@ export async function createCrop(farmId, closeModal) {
                 // refresh current view
                 navigate(window.location.pathname);
 
-            } catch (err) {
-                wrapper.textContent = `❌ ${err.message}`;
+            } catch (err: unknown) {
+                const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+                wrapper.textContent = `❌ ${errorMessage}`;
             } finally {
                 submitBtn.disabled = false;
             }

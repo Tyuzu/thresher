@@ -1,7 +1,28 @@
 import { apiFetch } from "../../../api/api.js";
 import { createFarmForm } from "./createOrEditFarm.js";
 
-export function editFarm(isLoggedIn, farm, container, onSuccess = null) {
+// Define interface for the Farm object adjust properties as needed
+export interface Farm {
+    farmid: string | number;
+    name?: string;
+    [key: string]: any;
+}
+
+// Interface for API response
+interface ApiResponse {
+    success: boolean;
+    data?: any;
+    error?: string;
+}
+
+type OnSuccessCallback = (() => void) | null;
+
+export function editFarm(
+    isLoggedIn: boolean,
+    farm: Farm,
+    container: HTMLElement,
+    onSuccess: OnSuccessCallback = null
+): void {
     container.textContent = "";
 
     if (!isLoggedIn) {
@@ -9,11 +30,17 @@ export function editFarm(isLoggedIn, farm, container, onSuccess = null) {
         return;
     }
 
-    const form = createFarmForm({
+    const form: HTMLFormElement = createFarmForm({
         isEdit: true,
         farm,
-        onSubmit: async (formData) => {
-            const res = await apiFetch(`/farms/farm/${farm.farmid}`, "PUT", formData, true);
+        onSubmit: async (formData: Record<string, any> | FormData): Promise<void> => {
+            const res: ApiResponse = await apiFetch(
+                `/farms/farm/${farm.farmid}`,
+                "PUT",
+                formData,
+                {}
+            );
+
             if (res.success) {
                 if (typeof onSuccess === "function") {
                     onSuccess();

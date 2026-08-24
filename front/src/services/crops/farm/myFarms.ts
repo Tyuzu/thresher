@@ -1,32 +1,62 @@
 import { createElement } from "../../../components/createElement.js";
 import { apiFetch } from "../../../api/api.js";
 
-export async function displayMyFarm(container) {
+export interface Crop {
+  name?: string;
+  quantity?: number | string;
+  unit?: string;
+  price?: number | string;
+  [key: string]: any;
+}
+
+export interface MyFarm {
+  farmid?: string | number;
+  name?: string;
+  location?: string;
+  practice?: string;
+  crops?: Crop[];
+  [key: string]: any;
+}
+
+export interface MyFarmApiResponse {
+  success: boolean;
+  message?: string;
+  farm?: MyFarm;
+}
+
+/**
+ * Renders the dashboard view for the currently logged-in user's farm.
+ *
+ * @param container - Root DOM element to mount the view onto.
+ */
+export async function displayMyFarm(container: HTMLElement | null): Promise<void> {
+  if (!container) return;
+
   container.replaceChildren();
 
   const page = createElement("div", { class: "my-farms-page" }, [
-    createElement("h2", {}, ["My Farm"]),
-  ]);
+    createElement("h2", {}, ["My Farm"])
+  ]) as HTMLElement;
 
-  const content = createElement("div", { class: "my-farm-content" });
+  const content = createElement("div", { class: "my-farm-content" }) as HTMLElement;
 
   page.appendChild(content);
   container.appendChild(page);
 
   try {
-    const res = await apiFetch("/dash/farms");
+    const res = (await apiFetch("/dash/farms")) as MyFarmApiResponse;
 
     if (!res?.success || !res?.farm) {
       content.appendChild(
         createElement("p", {}, [
-          res?.message || "You do not own any farms yet.",
+          res?.message || "You do not own any farms yet."
         ])
       );
       return;
     }
 
     const farm = res.farm;
-    const crops = Array.isArray(farm.crops) ? farm.crops : [];
+    const crops: Crop[] = Array.isArray(farm.crops) ? farm.crops : [];
 
     content.appendChild(
       createElement("div", { class: "farm-header" }, [
@@ -35,8 +65,8 @@ export async function displayMyFarm(container) {
         createElement("p", {}, [
           farm.practice
             ? `Practice: ${farm.practice}`
-            : "Practice: N/A",
-        ]),
+            : "Practice: N/A"
+        ])
       ])
     );
 
@@ -49,11 +79,11 @@ export async function displayMyFarm(container) {
               {},
               crops.map((crop) =>
                 createElement("li", {}, [
-                  `${crop.name} • ${crop.quantity} ${crop.unit} • ₹${Number(crop.price || 0).toFixed(2)}/${crop.unit}`,
+                  `${crop.name || "Unnamed"} • ${crop.quantity ?? 0} ${crop.unit || ""} • ₹${Number(crop.price || 0).toFixed(2)}/${crop.unit || "unit"}`
                 ])
               )
             )
-          : createElement("p", {}, ["No crops listed yet."]),
+          : createElement("p", {}, ["No crops listed yet."])
       ])
     );
   } catch (err) {

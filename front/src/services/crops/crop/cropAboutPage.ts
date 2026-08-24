@@ -1,140 +1,134 @@
-
 import Imagex from "../../../components/base/Imagex.js";
 import { createElement } from "../../../components/createElement.js";
+import { getCropAbout } from "./about/cropAbout.api.js";
+import { createAdminActions } from "./about/cropAbout.list.js";
+import type { GrowingConditions, NutritionalValue } from "./about/cropAbout.types.js";
 
-export async function displayAboutCrop(contentContainer, _cropID, _isLoggedIn) {
+export async function displayAboutCrop(
+    contentContainer: HTMLElement,
+    cropID: string,
+    isLoggedIn: boolean
+): Promise<void> {
     contentContainer.textContent = "";
 
-    const wrapper = createElement("div", { class: "crop-about-wrapper" }, [
-        createHeaderSection("Tomato", "Solanum lycopersicum"),
-        createImageSection("/static/images/tomato.jpg", "A ripe tomato on vine"),
-        createDescriptionSection(),
-        createNutritionalSection(),
-        createGrowingConditionsSection(),
-        createPlantingHarvestingSection(),
-        createCareSection(),
-        createVarietiesSection(),
-        createUsageSection(),
-        createFunFactsSection()
-    ]);
+    try {
+        const crop = await getCropAbout(cropID);
 
-    contentContainer.appendChild(wrapper);
+        const sections: (HTMLElement | null)[] = [
+            createHeaderSection(crop.commonName, crop.scientificName),
+            createImageSection(crop.image, crop.imageAlt),
+            createDescriptionSection(crop.description),
+            createNutritionalSection(crop.nutritionalValues),
+            createGrowingConditionsSection(crop.growingConditions),
+            createPlantingHarvestingSection(crop.plantingHarvesting),
+            createCareSection(crop.careTips),
+            createVarietiesSection(crop.varieties),
+            createUsageSection(crop.usage),
+            createFunFactsSection(crop.funFacts),
+            isLoggedIn ? createAdminActions(crop, contentContainer) : null
+        ];
+
+        // Filter out any potential null elements (e.g. non-logged-in admin actions)
+        const validSections = sections.filter((node): node is HTMLElement => Boolean(node));
+
+        const wrapper = createElement("div", { class: "crop-about-wrapper" }, validSections);
+        contentContainer.appendChild(wrapper as HTMLElement);
+
+    } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to load crop details.";
+        const errorNode = createElement("div", { class: "error-message" }, [errorMessage]) as HTMLElement;
+        contentContainer.appendChild(errorNode);
+    }
 }
 
-function createHeaderSection(common, scientific) {
+function createHeaderSection(common?: string, scientific?: string): HTMLElement {
     return createElement("section", { class: "crop-header" }, [
-        createElement("h1", {}, [common]),
-        createElement("h3", { class: "crop-scientific" }, [scientific])
-    ]);
+        createElement("h1", {}, [common || ""]),
+        createElement("h3", { class: "crop-scientific" }, [scientific || ""])
+    ]) as HTMLElement;
 }
 
-function createImageSection(src, alt) {
-    const img = Imagex( {
-        src,
-        alt,
+function createImageSection(src?: string, alt?: string): HTMLElement {
+    const img = Imagex({
+        src: src || "/static/images/placeholder.png",
+        alt: alt || "",
         clasess: "crop-main-image",
         loading: "lazy"
     });
-    return createElement("section", { class: "crop-image-section" }, [img]);
+
+    return createElement("section", { class: "crop-image-section" }, [img]) as HTMLElement;
 }
 
-function createDescriptionSection() {
+function createDescriptionSection(description?: string): HTMLElement {
     return createElement("section", { class: "crop-section" }, [
         createElement("h2", {}, ["Description"]),
-        createElement("p", {}, [
-            "Tomatoes are warm-season annuals native to western South America. They are grown for their edible fruits, which are rich in vitamin C and antioxidants. Tomatoes grow on vines and come in a variety of colors including red, yellow, and purple."
-        ])
-    ]);
+        createElement("p", {}, [description || ""])
+    ]) as HTMLElement;
 }
 
-function createNutritionalSection() {
-    const list = createElement("ul", {}, [
-        createElement("li", {}, ["Calories: 18 kcal"]),
-        createElement("li", {}, ["Water: 95%"]),
-        createElement("li", {}, ["Vitamin C: 13.7 mg"]),
-        createElement("li", {}, ["Potassium: 237 mg"]),
-        createElement("li", {}, ["Lycopene: High"])
-    ]);
+function createNutritionalSection(values: NutritionalValue[] = []): HTMLElement {
+    const listItems = values.map(item => 
+        createElement("li", {}, [`${item.label}: ${item.value}`])
+    );
+
     return createElement("section", { class: "crop-section" }, [
-        createElement("h2", {}, ["Nutritional Value (per 100g)"]),
-        list
-    ]);
+        createElement("h2", {}, ["Nutritional Value"]),
+        createElement("ul", {}, listItems)
+    ]) as HTMLElement;
 }
 
-function createGrowingConditionsSection() {
+function createGrowingConditionsSection(conditions: Partial<GrowingConditions> = {}): HTMLElement {
     const table = createElement("table", { class: "crop-table" }, [
-        createElement("tr", {}, [
-            createElement("th", {}, ["Soil"]),
-            createElement("td", {}, ["Well-drained, loamy"])
-        ]),
-        createElement("tr", {}, [
-            createElement("th", {}, ["Sunlight"]),
-            createElement("td", {}, ["Full sun (6–8 hrs)"])
-        ]),
-        createElement("tr", {}, [
-            createElement("th", {}, ["Water"]),
-            createElement("td", {}, ["Moderate, consistent"])
-        ]),
-        createElement("tr", {}, [
-            createElement("th", {}, ["Temperature"]),
-            createElement("td", {}, ["20°C – 30°C"])
-        ])
+        createTableRow("Soil", conditions.soil),
+        createTableRow("Sunlight", conditions.sunlight),
+        createTableRow("Water", conditions.water),
+        createTableRow("Temperature", conditions.temperature)
     ]);
+
     return createElement("section", { class: "crop-section" }, [
         createElement("h2", {}, ["Ideal Growing Conditions"]),
         table
-    ]);
+    ]) as HTMLElement;
 }
 
-function createPlantingHarvestingSection() {
+function createPlantingHarvestingSection(plantingHarvesting?: string): HTMLElement {
     return createElement("section", { class: "crop-section" }, [
         createElement("h2", {}, ["Planting & Harvesting"]),
-        createElement("p", {}, [
-            "Plant tomato seeds indoors 6–8 weeks before the last frost. Transplant outdoors when seedlings are 15cm tall. Harvest typically begins 60–85 days after planting, when fruits are fully colored and slightly soft to touch."
-        ])
-    ]);
+        createElement("p", {}, [plantingHarvesting || ""])
+    ]) as HTMLElement;
 }
 
-function createCareSection() {
+function createSimpleListSection(title: string, items: string[] = []): HTMLElement {
+    const listItems = items.map(item => createElement("li", {}, [item]));
+
     return createElement("section", { class: "crop-section" }, [
-        createElement("h2", {}, ["Care & Maintenance"]),
-        createElement("ul", {}, [
-            createElement("li", {}, ["Use compost-rich soil for optimal growth."]),
-            createElement("li", {}, ["Stake or cage the plants to support vines."]),
-            createElement("li", {}, ["Watch for blight and aphids."]),
-            createElement("li", {}, ["Rotate crops yearly to prevent disease."])
-        ])
-    ]);
+        createElement("h2", {}, [title]),
+        createElement("ul", {}, listItems)
+    ]) as HTMLElement;
 }
 
-function createVarietiesSection() {
-    return createElement("section", { class: "crop-section" }, [
-        createElement("h2", {}, ["Varieties"]),
-        createElement("ul", {}, [
-            createElement("li", {}, ["Roma"]),
-            createElement("li", {}, ["Cherry"]),
-            createElement("li", {}, ["Beefsteak"]),
-            createElement("li", {}, ["Heirloom"])
-        ])
-    ]);
+function createCareSection(careTips: string[] = []): HTMLElement {
+    return createSimpleListSection("Care & Maintenance", careTips);
 }
 
-function createUsageSection() {
+function createVarietiesSection(varieties: string[] = []): HTMLElement {
+    return createSimpleListSection("Varieties", varieties);
+}
+
+function createFunFactsSection(funFacts: string[] = []): HTMLElement {
+    return createSimpleListSection("Fun Facts", funFacts);
+}
+
+function createUsageSection(usage?: string): HTMLElement {
     return createElement("section", { class: "crop-section" }, [
         createElement("h2", {}, ["Usage"]),
-        createElement("p", {}, [
-            "Tomatoes are used in sauces, salads, soups, juices, and condiments. They are also processed into ketchup, puree, and sun-dried forms. Medicinally, they are known for antioxidant properties."
-        ])
-    ]);
+        createElement("p", {}, [usage || ""])
+    ]) as HTMLElement;
 }
 
-function createFunFactsSection() {
-    return createElement("section", { class: "crop-section" }, [
-        createElement("h2", {}, ["Fun Facts"]),
-        createElement("ul", {}, [
-            createElement("li", {}, ["Tomatoes were once thought to be poisonous."]),
-            createElement("li", {}, ["China is the world's largest tomato producer."]),
-            createElement("li", {}, ["Tomatoes are technically berries."])
-        ])
-    ]);
+function createTableRow(label: string, value?: string): HTMLElement {
+    return createElement("tr", {}, [
+        createElement("th", {}, [label]),
+        createElement("td", {}, [value || "-"])
+    ]) as HTMLElement;
 }

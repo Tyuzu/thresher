@@ -1,14 +1,15 @@
-import Imagex from "../../../../components/base/Imagex.js";
-import { createElement } from "../../../../components/createElement.js";
+import Imagex from "../../../../components/base/Imagex";
+import { createElement } from "../../../../components/createElement";
+import type { GrowingConditions, NutritionalValue } from "./cropAbout.types";
 
-export function splitLines(text) {
+export function splitLines(text: unknown): string[] {
     return String(text || "")
         .split("\n")
         .map(v => v.trim())
         .filter(Boolean);
 }
 
-export function createHeaderSection(common, scientific) {
+export function createHeaderSection(common?: string, scientific?: string): HTMLElement {
     return createElement(
         "section",
         { class: "crop-header" },
@@ -20,10 +21,10 @@ export function createHeaderSection(common, scientific) {
                 [scientific || ""]
             )
         ]
-    );
+    ) as HTMLElement;
 }
 
-export function createImageSection(src, alt) {
+export function createImageSection(src?: string, alt?: string): HTMLElement {
     const img = Imagex({
         src: src || "/static/images/placeholder.png",
         alt: alt || "",
@@ -35,10 +36,10 @@ export function createImageSection(src, alt) {
         "section",
         { class: "crop-image-section" },
         [img]
-    );
+    ) as HTMLElement;
 }
 
-export function createDescriptionSection(description) {
+export function createDescriptionSection(description?: string): HTMLElement {
     return createElement(
         "section",
         { class: "crop-section" },
@@ -46,10 +47,10 @@ export function createDescriptionSection(description) {
             createElement("h2", {}, ["Description"]),
             createElement("p", {}, [description || ""])
         ]
-    );
+    ) as HTMLElement;
 }
 
-export function createNutritionalSection(values = []) {
+export function createNutritionalSection(values: NutritionalValue[] = []): HTMLElement {
     return createElement(
         "section",
         { class: "crop-section" },
@@ -67,10 +68,10 @@ export function createNutritionalSection(values = []) {
                 )
             )
         ]
-    );
+    ) as HTMLElement;
 }
 
-export function createGrowingConditionsSection(conditions = {}) {
+export function createGrowingConditionsSection(conditions: Partial<GrowingConditions> = {}): HTMLElement {
     return createElement(
         "section",
         { class: "crop-section" },
@@ -87,10 +88,10 @@ export function createGrowingConditionsSection(conditions = {}) {
                 ]
             )
         ]
-    );
+    ) as HTMLElement;
 }
 
-export function createPlantingHarvestingSection(text) {
+export function createPlantingHarvestingSection(text?: string): HTMLElement {
     return createElement(
         "section",
         { class: "crop-section" },
@@ -98,33 +99,10 @@ export function createPlantingHarvestingSection(text) {
             createElement("h2", {}, ["Planting & Harvesting"]),
             createElement("p", {}, [text || ""])
         ]
-    );
+    ) as HTMLElement;
 }
 
-export function createCareSection(careTips = []) {
-    return createSimpleListSection("Care & Maintenance", careTips);
-}
-
-export function createVarietiesSection(varieties = []) {
-    return createSimpleListSection("Varieties", varieties);
-}
-
-export function createFunFactsSection(funFacts = []) {
-    return createSimpleListSection("Fun Facts", funFacts);
-}
-
-export function createUsageSection(usage) {
-    return createElement(
-        "section",
-        { class: "crop-section" },
-        [
-            createElement("h2", {}, ["Usage"]),
-            createElement("p", {}, [usage || ""])
-        ]
-    );
-}
-
-export function createSimpleListSection(title, values) {
+export function createSimpleListSection(title: string, values: string[]): HTMLElement {
     return createElement(
         "section",
         { class: "crop-section" },
@@ -142,10 +120,33 @@ export function createSimpleListSection(title, values) {
                 )
             )
         ]
-    );
+    ) as HTMLElement;
 }
 
-export function row(label, value) {
+export function createCareSection(careTips: string[] = []): HTMLElement {
+    return createSimpleListSection("Care & Maintenance", careTips);
+}
+
+export function createVarietiesSection(varieties: string[] = []): HTMLElement {
+    return createSimpleListSection("Varieties", varieties);
+}
+
+export function createFunFactsSection(funFacts: string[] = []): HTMLElement {
+    return createSimpleListSection("Fun Facts", funFacts);
+}
+
+export function createUsageSection(usage?: string): HTMLElement {
+    return createElement(
+        "section",
+        { class: "crop-section" },
+        [
+            createElement("h2", {}, ["Usage"]),
+            createElement("p", {}, [usage || ""])
+        ]
+    ) as HTMLElement;
+}
+
+export function row(label: string, value?: string): HTMLElement {
     return createElement(
         "tr",
         {},
@@ -153,5 +154,5 @@ export function row(label, value) {
             createElement("th", {}, [label]),
             createElement("td", {}, [value || "-"])
         ]
-    );
+    ) as HTMLElement;
 }

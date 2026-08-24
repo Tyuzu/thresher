@@ -1,17 +1,18 @@
-import { createElement } from "../../../../components/createElement.js";
-import {
-    createCropAbout,
-    updateCropAbout
-} from "./cropAbout.api.js";
-import { splitLines } from "./cropAbout.helpers.js";
+import { createElement } from "../../../../components/createElement";
+import { createCropAbout, updateCropAbout } from "./cropAbout.api";
+import { splitLines } from "./cropAbout.helpers";
+import type { CropAbout } from "./cropAbout.types";
 
-export function displayCropForm(container, crop = null) {
+export function displayCropForm(
+    container: HTMLElement,
+    crop: CropAbout | null = null
+): void {
     container.textContent = "";
 
     const form = createElement(
         "form",
         { class: "crop-form" }
-    );
+    ) as HTMLFormElement;
 
     form.innerHTML = `
         <input
@@ -80,30 +81,27 @@ export function displayCropForm(container, crop = null) {
         </button>
     `;
 
-    form.addEventListener("submit", async e => {
+    form.addEventListener("submit", async (e: SubmitEvent): Promise<void> => {
         e.preventDefault();
 
         const formData = new FormData(form);
 
-        const payload = {
-            id: formData.get("id"),
-            commonName: formData.get("commonName"),
-            scientificName: formData.get("scientificName"),
-            image: formData.get("image"),
-            imageAlt: formData.get("imageAlt"),
-            description: formData.get("description"),
-            plantingHarvesting: formData.get("plantingHarvesting"),
-            usage: formData.get("usage"),
-
-            nutritionalValues: [],
-
-            growingConditions: {
+        const payload: CropAbout = {
+            id: String(formData.get("id") ?? ""),
+            commonName: String(formData.get("commonName") ?? ""),
+            scientificName: String(formData.get("scientificName") ?? ""),
+            image: String(formData.get("image") ?? ""),
+            imageAlt: String(formData.get("imageAlt") ?? ""),
+            description: String(formData.get("description") ?? ""),
+            plantingHarvesting: String(formData.get("plantingHarvesting") ?? ""),
+            usage: String(formData.get("usage") ?? ""),
+            nutritionalValues: crop?.nutritionalValues || [],
+            growingConditions: crop?.growingConditions || {
                 soil: "",
                 sunlight: "",
                 water: "",
                 temperature: ""
             },
-
             careTips: splitLines(formData.get("careTips")),
             varieties: splitLines(formData.get("varieties")),
             funFacts: splitLines(formData.get("funFacts"))

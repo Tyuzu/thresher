@@ -1,13 +1,32 @@
-export function normalizeOrderId(order) {
+export interface OrderData {
+  id?: string | number;
+  orderid?: string | number;
+  orderId?: string | number;
+  OrderID?: string | number;
+  status?: string;
+  payment?: string;
+  [key: string]: unknown;
+}
+
+export function normalizeOrderId(order: OrderData | null | undefined): string | number {
   return order?.id ?? order?.orderid ?? order?.orderId ?? order?.OrderID ?? "";
 }
 
-const PLACEHOLDER_SET = new Set(["", "-", "none", "null", "n/a", "na", "unknown", "unknown entity"]);
+const PLACEHOLDER_SET: Set<string> = new Set([
+  "",
+  "-",
+  "none",
+  "null",
+  "n/a",
+  "na",
+  "unknown",
+  "unknown entity",
+]);
 
-function isPlaceholder(value) {
+function isPlaceholder(value: unknown): boolean {
   if (value === undefined || value === null) {
-return true;
-}
+    return true;
+  }
   if (typeof value === "string") {
     const v = value.trim().toLowerCase();
     return PLACEHOLDER_SET.has(v);
@@ -15,12 +34,12 @@ return true;
   return false;
 }
 
-export function getOrderValue(order, ...keys) {
+export function getOrderValue(order: OrderData | null | undefined, ...keys: string[]): any {
   for (const key of keys) {
     const value = order?.[key];
     if (isPlaceholder(value)) {
-continue;
-}
+      continue;
+    }
     if (value !== undefined && value !== null && value !== "") {
       return value;
     }
@@ -28,19 +47,19 @@ continue;
   return "";
 }
 
-export function capitalize(str) {
+export function capitalize(str: unknown): string {
   if (typeof str !== "string" || str.length === 0) {
     return "";
   }
 
   if (isPlaceholder(str)) {
-return "";
-}
+    return "";
+  }
 
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-export function contactBuyer(contact) {
+export function contactBuyer(contact: string | null | undefined): void {
   if (!contact || isPlaceholder(contact)) {
     return;
   }
@@ -48,7 +67,7 @@ export function contactBuyer(contact) {
   window.location.href = `mailto:${contact}`;
 }
 
-export function formatOrderDate(value) {
+export function formatOrderDate(value: string | number | Date | null | undefined): string {
   if (!value || isPlaceholder(value)) {
     return "";
   }
@@ -61,10 +80,10 @@ export function formatOrderDate(value) {
   return date.toLocaleDateString();
 }
 
-export function getOrderStatusClass(status) {
+export function getOrderStatusClass(status: unknown): string {
   const normalized = String(status || "").toLowerCase();
 
-  const statusMap = {
+  const statusMap: Record<string, string> = {
     pending: "status-pending",
     accepted: "status-accepted",
     paid: "status-paid",
@@ -75,10 +94,10 @@ export function getOrderStatusClass(status) {
   return statusMap[normalized] || "status-unknown";
 }
 
-export function getPaymentStatusClass(payment) {
+export function getPaymentStatusClass(payment: unknown): string {
   const normalized = String(payment || "").toLowerCase();
 
-  const paymentMap = {
+  const paymentMap: Record<string, string> = {
     paid: "payment-paid",
     pending: "payment-pending",
     unpaid: "payment-unpaid",

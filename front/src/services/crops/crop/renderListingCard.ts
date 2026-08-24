@@ -1,157 +1,133 @@
-// renderListingCard.js
-import { createElement } from "../../../components/createElement.js";
+import { createElement } from "../../../components/createElement";
 import Button from "../../../components/base/Button";
-import { navigate } from "../../../routes";
-import { addToCart, isValidCartQuantity } from "../../cart/addToCart.js";
-import { getState } from "../../../state/state.js";
+import { navigate } from "../../../routes/navigate";
+import { addToCart, isValidCartQuantity } from "../../cart/addToCart";
+import { getState } from "../../../state/state";
+
+// --- Types & Interfaces ---
+
+export interface CropListingItem {
+  cropid: string;
+  farmid: string;
+  farmName?: string;
+  location?: string;
+  breed?: string;
+  pricePerKg?: number;
+  [key: string]: unknown;
+}
+
 const MAX_QUANTITY = 99;
-export function renderListingCard(listing) {
+
+/**
+ * Renders a listing card with reactive quantity control and cart action.
+ */
+export function renderListingCard(listing: CropListingItem): HTMLElement {
   let quantity = 1;
   let isAddingToCart = false;
-  const quantityDisplay = createElement("span", {
-    class: "quantity-value",
-    "aria-live": "polite",
-    "aria-label": "Selected quantity"
-  },
-    [String(quantity)]);
-  const updateQuantity = () => {
+
+  // 1. Quantity Displays & Controls
+  const quantityDisplay = createElement(
+    "span",
+    {
+      class: "quantity-value",
+      "aria-live": "polite",
+      "aria-label": "Selected quantity"
+    },
+    [String(quantity)]
+  ) as HTMLElement;
+
+  const updateQuantity = (): void => {
     quantityDisplay.textContent = String(quantity);
   };
-  const decrementBtn = createElement("button", {
-    type: "button",
-    "aria-label": "Decrease quantity",
-    events: {
-      click: () => {
-        if (isAddingToCart) {
-          return;
-        }
-        if (quantity > 1) {
-          quantity -= 1;
-          updateQuantity();
-        }
-      }
-    }
-  },
-    ["−"]);
-  const incrementBtn = createElement("button", {
-    type: "button",
-    "aria-label": "Increase quantity",
-    events: {
-      click: () => {
-        if (isAddingToCart) {
-          return;
-        }
-        if (quantity < MAX_QUANTITY) {
-          quantity += 1;
-          updateQuantity();
+
+  const decrementBtn = createElement(
+    "button",
+    {
+      type: "button",
+      "aria-label": "Decrease quantity",
+      events: {
+        click: (): void => {
+          if (isAddingToCart) return;
+          if (quantity > 1) {
+            quantity -= 1;
+            updateQuantity();
+          }
         }
       }
-    }
-  },
-    ["+"]);
-  const quantityWrapper = createElement("div", {
-    class: "quantity-control",
-    role: "group",
-    "aria-label": "Quantity"
-  },
-    [
-      decrementBtn,
-      quantityDisplay,
-      incrementBtn
-    ]);
+    },
+    ["−"]
+  ) as HTMLButtonElement;
+
+  const incrementBtn = createElement(
+    "button",
+    {
+      type: "button",
+      "aria-label": "Increase quantity",
+      events: {
+        click: (): void => {
+          if (isAddingToCart) return;
+          if (quantity < MAX_QUANTITY) {
+            quantity += 1;
+            updateQuantity();
+          }
+        }
+      }
+    },
+    ["+"]
+  ) as HTMLButtonElement;
+
+  const quantityWrapper = createElement(
+    "div",
+    {
+      class: "quantity-control",
+      role: "group",
+      "aria-label": "Quantity"
+    },
+    [decrementBtn, quantityDisplay, incrementBtn]
+  );
+  // 2. Navigation Elements
   const farmUrl = `/farm/${listing.farmid}`;
-  const farmLink = createElement("a", {
-    href: farmUrl,
-    events: {
-      click: (event) => {
-        event.preventDefault();
-        navigate(farmUrl);
+  const farmLink = createElement(
+    "a",
+    {
+      href: farmUrl,
+      events: {
+        click: (event: Event): void => {
+          event.preventDefault();
+          navigate(farmUrl);
+        }
       }
-    }
-  },
-    [listing.farmName ?? "Unknown farm"]);
-  /**
-   * Handle the cart mutation.
-   *
-   * The cart API now only needs:
-   *   - itemId
-   *   - quantity
-   *
-   * Do NOT send:
-   *   - itemType
-   *   - entityType
-   *   - entityId
-   *   - category
-   *   - itemName
-   *   - entityName
-   *
-   * The backend should resolve those from the canonical item ID.
-   */
-  const handleAddToCart = async () => {
-    /**
-     * Prevent accidental double-clicks while the request is active.
-     */
-    if (isAddingToCart) {
-      return;
-    }
-    /**
-     * Validate the quantity before making the request.
-     *
-     * This is a UX check only. The backend must validate it again.
-     */
+    },
+    [listing.farmName ?? "Unknown farm"]
+  );
+
+  // 3. Cart Handler
+  const handleAddToCart = async (): Promise<void> => {
+    if (isAddingToCart) return;
+
     if (!isValidCartQuantity(quantity)) {
       console.error("Invalid cart quantity:", quantity);
       return;
     }
-    /**
-     * The token is only a client-side UX hint.
-     *
-     * It is NOT a security mechanism.
-     * The backend must authenticate the actual request.
-     */
+
     const isLoggedIn = Boolean(getState("token"));
     isAddingToCart = true;
-    /**
-     * Disable the quantity controls while the mutation is in flight.
-     *
-     * Native disabled properties prevent further user interaction.
-     */
+
     decrementBtn.disabled = true;
     incrementBtn.disabled = true;
+
     try {
       const success = await addToCart({
         itemId: listing.cropid,
         quantity,
         isLoggedIn,
-        /**
-         * This callback runs only after the backend confirms success.
-         *
-         * Keep it lightweight. Global cart synchronization is already
-         * handled by addToCart().
-         */
-        onCartUpdated: (response) => {
+        onCartUpdated: (response: unknown): void => {
           console.debug("Cart updated:", response);
         }
       });
-      /**
-       * addToCart() returns false for handled failures.
-       * It normally does not throw, but keeping this check makes
-       * the component resilient if its implementation changes.
-       */
-      if (!success) {
-        return;
-      }
-      /**
-       * At this point the server has accepted the mutation.
-       *
-       * We intentionally do NOT reset quantity automatically.
-       * Users often want to add the same item again, and preserving
-       * their selected quantity is less surprising.
-       */
-    } catch (error) {
-      /**
-       * Defensive catch in case addToCart() itself unexpectedly throws.
-       */
+
+      if (!success) return;
+    } catch (error: unknown) {
       console.error("Failed to add item to cart:", error);
     } finally {
       isAddingToCart = false;
@@ -159,23 +135,31 @@ export function renderListingCard(listing) {
       incrementBtn.disabled = false;
     }
   };
-  const addToCartButton = Button("Add-To-Cart", "a2c-crop", {
-    click: handleAddToCart
-  }, "buttonx");
-  return createElement("div", {
-    class: "listing-card"
-  },
+
+  // 4. Integrated Button Component
+  const addToCartButton = Button({
+    title: "Add To Cart",
+    id: "a2c-crop",
+    events: { click: handleAddToCart },
+    classes: "buttonx"
+  });
+
+  // 5. Structure Assembly
+  return createElement(
+    "div",
+    { class: "listing-card" },
     [
       farmLink,
-      createElement("p", {},
-        [`Location: ${listing.location ?? "N/A"}`]),
-      createElement("p", {},
-        [`Breed: ${listing.breed ?? "N/A"}`]),
-      createElement("p", {},
-        [`Price: ₹${listing.pricePerKg ?? "N/A"} per kg`]),
-      createElement("label", {},
-        ["Quantity (kg):"]),
+      createElement("p", {}, [`Location: ${listing.location ?? "N/A"}`]),
+      createElement("p", {}, [`Breed: ${listing.breed ?? "N/A"}`]),
+      createElement("p", {}, [
+        `Price: ₹${listing.pricePerKg !== undefined ? listing.pricePerKg.toLocaleString("en-IN") : "N/A"} per kg`
+      ]),
+      createElement("label", {}, ["Quantity (kg):"]),
       quantityWrapper,
       addToCartButton
-    ]);
+    ]
+  ) as HTMLElement;
 }
+
+export default renderListingCard;

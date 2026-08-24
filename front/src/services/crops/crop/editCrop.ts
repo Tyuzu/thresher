@@ -1,24 +1,68 @@
-import { createCommonCropForm } from "./createOrEditCrop.js";
-import { apiFetch } from "../../../api/api.js";
+import { createCommonCropForm, CreateCommonCropFormOptions } from "./createOrEditCrop";
+import { apiFetch } from "../../../api/api";
+import Notify from "../../../components/ui/Notify";
 
-export async function editCrop(farmId, crop, container) {
-    const form = createCommonCropForm({
+export interface Crop {
+    cropid: string | number;
+    name?: string;
+    category?: string;
+    breed?: string;
+    pricePerKg?: number;
+    availableQtyKg?: number;
+    banner?: string;
+    [key: string]: unknown;
+}
+
+export interface ApiResponse {
+    success?: boolean;
+    message?: string;
+    [key: string]: unknown;
+}
+
+/**
+ * Renders and attaches the edit crop form to a container element.
+ */
+export async function editCrop(
+    farmId: string | number,
+    crop: Crop,
+    container: HTMLElement
+): Promise<HTMLElement> {
+    if (!crop?.cropid) {
+        Notify("Invalid crop data provided for editing.", { type: "error", dismissible: true });
+        return container;
+    }
+
+    const formOptions: CreateCommonCropFormOptions = {
         crop,
-        currentFarmName: farmId,
+        currentFarmName: String(farmId),
         isEdit: true,
-        onSubmit: async (formData, submitBtn) => {
+        onSubmit: async (formData: FormData, submitBtn: HTMLButtonElement): Promise<void> => {
             submitBtn.disabled = true;
+
             try {
-                await apiFetch(`/farms/farm/${farmId}/crops/${crop.cropid}`, "PUT", formData);
-                container.textContent = "✅ Crop updated successfully.";
-            } catch (err) {
-                container.textContent = `❌ ${err.message}`;
+                const response = await apiFetch<ApiResponse>(
+                    `/farms/farm/${farmId}/crops/${crop.cropid}`,
+                    "PUT",
+                    formData
+                );
+
+                if (response?.success !== false) {
+                    Notify("Crop updated successfully.", { type: "success", dismissible: true });
+                } else {
+                    throw new Error(response?.message || "Failed to update crop.");
+                }
+            } catch (err: unknown) {
+                // apiFetch handles toast notification error logging
             } finally {
                 submitBtn.disabled = false;
             }
         }
-    });
+    };
 
-    container.appendChild(form);
+    const form = createCommonCropForm(formOptions);
+    container.replaceChildren(form);
+
     return container;
 }
+
+export default editCrop;
