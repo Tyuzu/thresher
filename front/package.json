@@ -2,7 +2,6 @@
   "name": "naevis",
   "version": "1.0.0",
   "description": "Gallium",
-  "main": "js/inapp.js",
   "type": "module",
   "scripts": {
     "dev": "vite",

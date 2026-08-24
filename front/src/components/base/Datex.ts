@@ -1,4 +1,4 @@
-import { createElement } from "../../components/createElement.js";
+import { createElement } from "../createElement.js";
 
 export type DateInput = string | number | Date | null | undefined;
 

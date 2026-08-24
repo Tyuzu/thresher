@@ -1,33 +1,34 @@
 {
   "compilerOptions": {
-    "types": ["vite/client"],
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    
+    "types": ["vite/client"],
+
     /* Strict Type-Checking Options */
     "strict": true,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    "strictFunctionTypes": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "allowJs" : true,
-    "checkJs" : false,
+    "allowJs": true,
+    "checkJs": true,
 
-    /* Linter-friendly Rules */
+    /* Vite & Bundler Compatibility */
+    "jsx": "preserve",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linter & Safety Rules */
     "noUnusedLocals": false, /* Handled by ESLint */
     "noUnusedParameters": false, /* Handled by ESLint */
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
 
-    /* Module & Build Options */
+    /* Performance & Compatibility */
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["js/**/*"],
+  "include": ["src/**/*", "js/**/*"],
   "exclude": ["node_modules", "dist", "build"]
 }

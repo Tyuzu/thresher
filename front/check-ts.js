@@ -7,7 +7,7 @@ import traverseModule from "@babel/traverse";
 const traverse = traverseModule.default || traverseModule;
 
 // Target directory (adjust if your source files are in `src/` or elsewhere)
-const TARGET_DIR = "./js";
+const TARGET_DIR = "./src";
 
 async function analyzeFiles() {
   // Find all .js, .jsx, .ts, and .tsx files
