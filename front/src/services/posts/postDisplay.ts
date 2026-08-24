@@ -15,59 +15,114 @@ import { fetchUserMeta } from "../../utils/usersMeta.js";
 import ZoomBox from "../../components/ui/zoomBox/ZoomBox.js";
 import { renderRelatedPosts } from "./relatedPosts.js";
 
+/* ---------------------- TYPES ---------------------- */
+export interface TextBlock {
+  type: "text";
+  content?: string;
+}
+
+export interface ImageBlock {
+  type: "image";
+  url?: string;
+  alt?: string;
+}
+
+export interface CodeBlock {
+  type: "code";
+  language?: string;
+  content?: string;
+}
+
+export interface VideoBlock {
+  type: "video";
+  url?: string;
+  caption?: string;
+}
+
+export type PostBlock = TextBlock | ImageBlock | CodeBlock | VideoBlock;
+
+export interface Post {
+  postid: string | number;
+  title?: string;
+  type?: string;
+  category?: string;
+  subcategory?: string;
+  createdBy: string | number;
+  username?: string;
+  createdAt?: string | number | Date;
+  updatedAt?: string | number | Date;
+  referenceId?: string | number;
+  hashtags?: string[];
+  tags?: string[];
+  blocks?: PostBlock[];
+}
+
+export interface UserState {
+  userid: string | number;
+  username?: string;
+  [key: string]: unknown;
+}
+
+export interface UserMetaMap {
+  [key: string | number]: {
+    username?: string;
+    [key: string]: unknown;
+  };
+}
+
 // --- Shared constants ---
 const PLACEHOLDER =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 
-const lazyObserver =
+const lazyObserver: IntersectionObserver | null =
   "loading" in HTMLImageElement.prototype || typeof IntersectionObserver === "undefined"
     ? null
     : new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) {
-            return;
-          }
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) {
+              return;
+            }
 
-          const img = entry.target;
-          const real = img.dataset.src;
+            const img = entry.target as HTMLImageElement;
+            const real = img.dataset.src;
 
-          if (real) {
-            img.src = real;
-            img.removeAttribute("data-src");
-            img.addEventListener(
-              "load",
-              () => {
-                img.style.opacity = "1";
-              },
-              { once: true }
-            );
-          }
+            if (real) {
+              img.src = real;
+              img.removeAttribute("data-src");
+              img.addEventListener(
+                "load",
+                () => {
+                  img.style.opacity = "1";
+                },
+                { once: true }
+              );
+            }
 
-          lazyObserver.unobserve(img);
-        });
-      },
-      { rootMargin: "200px 0px" }
-    );
+            lazyObserver?.unobserve(img);
+          });
+        },
+        { rootMargin: "200px 0px" }
+      );
 
-const avatarCache = new Map();
+const avatarCache = new Map<string | number, string>();
 
-function getAvatar(userId) {
+function getAvatar(userId: string | number): string {
   if (!avatarCache.has(userId)) {
     avatarCache.set(userId, resolveImagePath(EntityType.USER, PictureType.THUMB, userId));
   }
 
-  return avatarCache.get(userId);
+  return avatarCache.get(userId)!;
 }
 
-function capitalize(value) {
+function capitalize(value?: string | number | null): string {
   if (!value) {
     return "";
   }
   return String(value).charAt(0).toUpperCase() + String(value).slice(1);
 }
 
-function getPostHashtags(post) {
+function getPostHashtags(post?: Post | null): string[] {
   if (Array.isArray(post?.hashtags) && post.hashtags.length) {
     return post.hashtags;
   }
@@ -79,7 +134,7 @@ function getPostHashtags(post) {
   return [];
 }
 
-function renderCodeBlock(block) {
+function renderCodeBlock(block: CodeBlock): HTMLElement {
   return createElement("pre", { class: "post-code" }, [
     createElement(
       "code",
@@ -91,11 +146,11 @@ function renderCodeBlock(block) {
   ]);
 }
 
-function renderVideoBlock(block) {
+function renderVideoBlock(block: VideoBlock): HTMLElement {
   const wrapper = createElement("div", { class: "post-video" });
 
   const video = createElement("video", {
-    controls: true,
+    controls: "true",
     preload: "metadata",
     src: block.url || ""
   });
@@ -111,7 +166,7 @@ function renderVideoBlock(block) {
   return wrapper;
 }
 
-function renderReference(post) {
+function renderReference(post?: Post | null): HTMLElement | null {
   if (!post?.referenceId) {
     return null;
   }
@@ -123,15 +178,19 @@ function renderReference(post) {
 }
 
 // --- Main Export ---
-export async function displayPost(isLoggedIn, postId, container) {
+export async function displayPost(
+  isLoggedIn: boolean,
+  postId: string | number,
+  container: HTMLElement
+): Promise<void> {
   container.replaceChildren();
 
   const page = createElement("div", { class: "postpage" });
 
-  let post;
+  let post: Post | undefined;
   try {
     const resp = await apiFetch(`/posts/post/${encodeURIComponent(postId)}`);
-    post = resp?.post;
+    post = resp?.post as Post | undefined;
   } catch (err) {
     page.appendChild(renderError("Failed to load post."));
     container.appendChild(page);
@@ -144,7 +203,7 @@ export async function displayPost(isLoggedIn, postId, container) {
     return;
   }
 
-  const userx = await fetchUserMeta([post.createdBy]);
+  const userx = (await fetchUserMeta([String(post.createdBy)])) as UserMetaMap | undefined;
   post.username = userx?.[post.createdBy]?.username || "Anonymous";
 
   const frag = document.createDocumentFragment();
@@ -164,7 +223,8 @@ export async function displayPost(isLoggedIn, postId, container) {
 
   frag.append(await renderProfile(post));
 
-  if (isLoggedIn && post.createdBy === getState("user").userid) {
+  const currentUser = getState("user") as UserState | undefined;
+  if (isLoggedIn && currentUser && post.createdBy === currentUser.userid) {
     frag.append(renderPostActions(post.postid, isLoggedIn, page));
   }
 
@@ -173,17 +233,19 @@ export async function displayPost(isLoggedIn, postId, container) {
   page.appendChild(frag);
 
   const relatedEl = await renderRelatedPosts(post);
-  page.appendChild(relatedEl);
+  if (relatedEl) {
+    page.appendChild(relatedEl);
+  }
 
   container.appendChild(page);
 }
 
 // --- Renderers ---
-function renderError(msg) {
+function renderError(msg: string): HTMLElement {
   return createElement("p", {}, [msg]);
 }
 
-function renderHeader(post) {
+function renderHeader(post: Post): HTMLElement {
   const createdAt = post.createdAt ? formatRelativeTime(post.createdAt) : "";
   const updatedAt =
     post.updatedAt && post.createdAt && post.updatedAt !== post.createdAt
@@ -208,14 +270,14 @@ function renderHeader(post) {
   ]);
 }
 
-function renderBody(post) {
+function renderBody(post: Post): HTMLElement {
   const content = createElement("div", { class: "post-body" });
   const blocks = Array.isArray(post.blocks) ? post.blocks : [];
   const fragment = document.createDocumentFragment();
 
-  let imageBuffer = [];
+  let imageBuffer: ImageBlock[] = [];
 
-  const flushImages = () => {
+  const flushImages = (): void => {
     if (!imageBuffer.length) {
       return;
     }
@@ -268,12 +330,13 @@ function renderBody(post) {
   return content;
 }
 
-function renderImageGroup(images) {
+function renderImageGroup(images: ImageBlock[]): HTMLElement {
   const group = createElement("div", { class: "image-group" });
 
   const mediaItems = images.map((img) =>
     resolveImagePath(EntityType.BLOGPOST, PictureType.PHOTO, img.url)
   );
+
   images.forEach((img, index) => {
     const thumbSrc = resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, img.url);
 
@@ -281,15 +344,16 @@ function renderImageGroup(images) {
       src: thumbSrc,
       alt: img.alt || `Post Image ${index + 1}`,
       classes: "post-image",
-      dataset: { index }
+      dataset: { index: String(index) }
     });
 
     group.appendChild(imgEl);
   });
 
-  group.addEventListener("click", (e) => {
-    const img = e.target.closest(".post-image");
-    if (!img) {
+  group.addEventListener("click", (e: MouseEvent) => {
+    const target = e.target as HTMLElement | null;
+    const img = target?.closest<HTMLElement>(".post-image");
+    if (!img || !img.dataset.index) {
       return;
     }
 
@@ -304,7 +368,7 @@ function renderImageGroup(images) {
   return group;
 }
 
-function renderTags(tags) {
+function renderTags(tags: string[]): HTMLElement {
   return createElement(
     "div",
     { class: "post-tags" },
@@ -314,7 +378,7 @@ function renderTags(tags) {
   );
 }
 
-async function renderProfile(post) {
+async function renderProfile(post: Post): Promise<HTMLElement> {
   const avatarUrl = getAvatar(post.createdBy);
 
   return await userProfileCard({
@@ -329,20 +393,24 @@ async function renderProfile(post) {
   });
 }
 
-function renderPostActions(postId, isLoggedIn, page) {
-  const editBtn = Button(
-    "✏️ Edit",
-    "",
-    {
+function renderPostActions(
+  postId: string | number,
+  isLoggedIn: boolean,
+  page: HTMLElement
+): HTMLElement {
+  const editBtn = Button({
+    title: "✏️ Edit",
+    classes: "buttonx btn-warning",
+    events: {
       click: () => editPost(isLoggedIn, postId, page)
-    },
-    "buttonx btn-warning"
-  );
+    }
+  });
 
-  const deleteBtn = Button(
-    "🗑️ Delete",
-    "delete-post",
-    {
+  const deleteBtn = Button({
+    title: "🗑️ Delete",
+    id: "delete-post",
+    classes: "buttonx btn-danger",
+    events: {
       click: async () => {
         if (!confirm("Are you sure you want to delete this post?")) {
           return;
@@ -365,36 +433,38 @@ function renderPostActions(postId, isLoggedIn, page) {
           console.error(err);
         }
       }
-    },
-    "buttonx btn-danger"
-  );
+    }
+  });
 
   return createElement("div", { class: "post-actions" }, [editBtn, deleteBtn]);
 }
 
-function renderComments(post) {
+function renderComments(post: Post): HTMLElement {
   const wrapper = createElement("div", { class: "post-comments" });
 
   const toggle = createElement(
     "button",
     { class: "toggle-comments btn btn-link" },
     ["💬 Show Comments"]
-  );
+  ) as HTMLButtonElement;
 
-  let commentsEl = null;
+  let commentsEl: HTMLElement | null = null;
   let visible = false;
   let loaded = false;
 
   toggle.addEventListener("click", async () => {
     if (!loaded) {
       try {
+        const currentUser = getState("user") as UserState | undefined;
         commentsEl = await createCommentsSection(
           EntityType.BLOGPOST,
           post.postid,
-          getState("user").userid
+          currentUser?.userid
         );
 
-        wrapper.appendChild(commentsEl);
+        if (commentsEl) {
+          wrapper.appendChild(commentsEl);
+        }
         loaded = true;
       } catch (err) {
         Notify("Failed to load comments.", {
@@ -407,7 +477,9 @@ function renderComments(post) {
       }
     }
 
-    commentsEl.style.display = visible ? "none" : "";
+    if (commentsEl) {
+      commentsEl.style.display = visible ? "none" : "";
+    }
     toggle.textContent = visible ? "💬 Show Comments" : "💬 Hide Comments";
     visible = !visible;
   });

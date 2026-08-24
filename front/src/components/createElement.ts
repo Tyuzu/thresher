@@ -1,4 +1,4 @@
-type ChildInput =
+export type ChildInput =
   | Node
   | string
   | number

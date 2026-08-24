@@ -1,4 +1,4 @@
-import { apiFetch } from "../../api/api";
+import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import Button from "../../components/base/Button.js";
@@ -9,14 +9,107 @@ import { uploadFile } from "../media/api/mediaApi.js";
 import Notify from "../../components/ui/Notify.js";
 import { getUploadKey } from "../newchat/fileUpload.js";
 
+/* ---------------------- TYPES ---------------------- */
+export type BlockType = "text" | "image" | "code" | "video";
+
+export interface TextBlock {
+  type: "text";
+  content: string;
+}
+
+export interface ImageBlock {
+  type: "image";
+  url: string;
+}
+
+export interface CodeBlock {
+  type: "code";
+  language: string;
+  content: string;
+}
+
+export interface VideoBlock {
+  type: "video";
+  url: string;
+  caption: string;
+}
+
+export type Block = TextBlock | ImageBlock | CodeBlock | VideoBlock;
+
+export interface UploadContext {
+  entityType?: EntityType;
+  entityId?: string | number;
+}
+
+export interface BlockPlugin<T extends Block = Block> {
+  create: () => T;
+  render: (
+    block: T,
+    update: (newBlock: T) => void,
+    uploadCtx?: UploadContext
+  ) => HTMLElement;
+  sanitize: (b: T) => T | null;
+}
+
+export interface PostField {
+  id: string;
+  label: string;
+  type: string;
+  options?: string[];
+  placeholder?: string;
+}
+
+export interface PostTypeConfig {
+  label: string;
+  availableBlocks: BlockType[];
+  fields: PostField[];
+}
+
+export interface Post {
+  postid?: string | number;
+  type?: string;
+  title?: string;
+  hashtags?: string[];
+  category?: string;
+  subcategory?: string;
+  blocks?: Block[];
+  [key: string]: unknown;
+}
+
+export interface RenderPostEditorOptions {
+  isLoggedIn: boolean;
+  postId?: string | number;
+  contentContainer: HTMLElement;
+  mode: "create" | "edit";
+}
+
+export interface SelectGroupOptions {
+  id: string;
+  label: string;
+  value: string;
+  options: string[];
+  required?: boolean;
+}
+
+export interface TextGroupOptions {
+  id: string;
+  label: string;
+  value: string;
+  placeholder?: string;
+  required?: boolean;
+}
+
 /* ---------------------- BLOCK PLUGINS ---------------------- */
-const BlockPlugins = {
+const BlockPlugins: { [K in BlockType]: BlockPlugin<Extract<Block, { type: K }>> } = {
   text: {
     create: () => ({ type: "text", content: "" }),
     render: (block, update) => {
-      const input = createElement("textarea", { rows: 3 }, [block.content || ""]);
+      const input = createElement("textarea", { rows: "3" }, [
+        block.content || ""
+      ]) as HTMLTextAreaElement;
       input.setAttribute("name", "textin");
       input.addEventListener("input", () => update({ ...block, content: input.value }));
+
       return createElement("div", { class: "block block-text" }, [
         createElement("span", { class: "block-label" }, ["Text Block"]),
         input
@@ -27,21 +120,20 @@ const BlockPlugins = {
 
   image: {
     create: () => ({ type: "image", url: "" }),
-
     render: (block, update, uploadCtx) => {
       const fileInput = createElement("input", {
         type: "file",
         accept: "image/*"
-      });
+      }) as HTMLInputElement;
 
       const preview = createElement("img", {
         class: "image-preview"
-      });
+      }) as HTMLImageElement;
 
       if (block.url) {
         preview.setAttribute(
           "src",
-          resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, block.url)
+          resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, String(block.url))
         );
       }
 
@@ -73,7 +165,6 @@ const BlockPlugins = {
             entityId: String(uploadCtx?.entityId || EntityType.BLOGPOST)
           });
 
-          // FileDrop may return different shapes: { savedname, filename, key, url, path }
           const imageKey =
             uploadedImage?.savedname ||
             uploadedImage?.filename ||
@@ -82,21 +173,20 @@ const BlockPlugins = {
             uploadedImage?.fileName ||
             "";
 
-          const returnedUrl = uploadedImage?.url || uploadedImage?.src || uploadedImage?.path || "";
+          const returnedUrl =
+            uploadedImage?.url || uploadedImage?.src || uploadedImage?.path || "";
 
           if (!imageKey && !returnedUrl) {
             throw new Error("Image upload failed.");
           }
 
-          // Prefer an absolute URL from the service if available, otherwise store the key/filename
-          const finalUrlOrKey = returnedUrl || imageKey;
+          const finalUrlOrKey = String(returnedUrl || imageKey);
 
           update({
             ...block,
             url: finalUrlOrKey
           });
 
-          // If we got a full URL, use it directly; otherwise resolve the path on our CDN/storage
           if (/^https?:\/\//i.test(finalUrlOrKey)) {
             preview.setAttribute("src", finalUrlOrKey);
           } else {
@@ -105,10 +195,11 @@ const BlockPlugins = {
               resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, finalUrlOrKey)
             );
           }
-        } catch (err) {
+        } catch (err: unknown) {
           console.error("Upload failed", err);
+          const message = err instanceof Error ? err.message : "Unknown error";
 
-          Notify(`Upload failed: ${err.message}`, {
+          Notify(`Upload failed: ${message}`, {
             type: "error"
           });
         }
@@ -120,8 +211,7 @@ const BlockPlugins = {
         preview
       ]);
     },
-
-    sanitize: (b) => (b.url?.trim() ? b : null)
+    sanitize: (b) => (String(b.url || "").trim() ? b : null)
   },
 
   code: {
@@ -131,12 +221,18 @@ const BlockPlugins = {
         type: "text",
         placeholder: "Language",
         value: block.language || ""
-      });
+      }) as HTMLInputElement;
 
-      const codeArea = createElement("textarea", { rows: 5 }, [block.content || ""]);
+      const codeArea = createElement("textarea", { rows: "5" }, [
+        block.content || ""
+      ]) as HTMLTextAreaElement;
 
-      langInput.addEventListener("input", () => update({ ...block, language: langInput.value }));
-      codeArea.addEventListener("input", () => update({ ...block, content: codeArea.value }));
+      langInput.addEventListener("input", () =>
+        update({ ...block, language: langInput.value })
+      );
+      codeArea.addEventListener("input", () =>
+        update({ ...block, content: codeArea.value })
+      );
 
       return createElement("div", { class: "block block-code" }, [
         createElement("span", { class: "block-label" }, ["Code Block"]),
@@ -154,18 +250,18 @@ const BlockPlugins = {
         type: "text",
         placeholder: "Video URL",
         value: block.url || ""
-      });
+      }) as HTMLInputElement;
 
       const captionInput = createElement("input", {
         type: "text",
         placeholder: "Caption",
         value: block.caption || ""
-      });
+      }) as HTMLInputElement;
 
       const preview = createElement("video", {
         controls: true,
         class: "video-preview"
-      });
+      }) as HTMLVideoElement;
 
       if (block.url) {
         preview.setAttribute("src", block.url);
@@ -176,7 +272,9 @@ const BlockPlugins = {
         preview.setAttribute("src", urlInput.value);
       });
 
-      captionInput.addEventListener("input", () => update({ ...block, caption: captionInput.value }));
+      captionInput.addEventListener("input", () =>
+        update({ ...block, caption: captionInput.value })
+      );
 
       return createElement("div", { class: "block block-video" }, [
         createElement("span", { class: "block-label" }, ["Video Block"]),
@@ -190,7 +288,7 @@ const BlockPlugins = {
 };
 
 /* ---------------------- POST TYPE PLUGINS ---------------------- */
-const PostTypes = {
+const PostTypes: Record<string, PostTypeConfig> = {
   standard: {
     label: "Standard",
     availableBlocks: ["text", "image"],
@@ -221,7 +319,7 @@ const PostTypes = {
 };
 
 /* ---------------------- HELPERS ---------------------- */
-function createSelectGroup({ id, label, value, options, required = false }) {
+function createSelectGroup({ id, label, value, options, required = false }: SelectGroupOptions): HTMLElement {
   return createFormGroup({
     type: "select",
     id,
@@ -233,7 +331,7 @@ function createSelectGroup({ id, label, value, options, required = false }) {
   });
 }
 
-function createTextGroup({ id, label, value, placeholder, required = false }) {
+function createTextGroup({ id, label, value, placeholder, required = false }: TextGroupOptions): HTMLElement {
   return createFormGroup({
     type: "text",
     id,
@@ -246,49 +344,28 @@ function createTextGroup({ id, label, value, placeholder, required = false }) {
 }
 
 /* ---------------------- BLOCK MANAGER ---------------------- */
-function createBlockManager(blocksContainer, blocksTextarea, uploadCtx) {
-  let blocks = [];
+function createBlockManager(
+  blocksContainer: HTMLElement,
+  blocksTextarea: HTMLElement,
+  uploadCtx?: UploadContext
+) {
+  let blocks: Block[] = [];
 
-  function sync() {
-    blocksTextarea.querySelector("textarea").value = JSON.stringify(blocks, null, 2);
+  function sync(): void {
+    const textarea = blocksTextarea.querySelector("textarea") as HTMLTextAreaElement | null;
+    if (textarea) {
+      textarea.value = JSON.stringify(blocks, null, 2);
+    }
   }
 
-  function render() {
-    blocksContainer.replaceChildren();
-
-    blocks.forEach((block, i) => {
-      const plugin = BlockPlugins[block.type];
-      if (!plugin) {
-        return;
-      }
-
-      const node = plugin.render(block, (newBlock) => {
-        blocks[i] = newBlock;
-        sync();
-      }, uploadCtx);
-
-      const removeBtn = Button("Remove", `remove-${i}`, {
-        click: () => {
-          blocks.splice(i, 1);
-          render();
-          sync();
-        }
-      }, "buttonx");
-
-      node.appendChild(removeBtn);
-      setupDrag(node, i);
-      blocksContainer.appendChild(node);
-    });
-  }
-
-  function setupDrag(node, i) {
+  function setupDrag(node: HTMLElement, i: number): void {
     node.setAttribute("draggable", "true");
 
-    node.addEventListener("dragstart", (e) => {
-      e.dataTransfer.setData("text/plain", String(i));
+    node.addEventListener("dragstart", (e: DragEvent) => {
+      e.dataTransfer?.setData("text/plain", String(i));
     });
 
-    node.addEventListener("dragover", (e) => {
+    node.addEventListener("dragover", (e: DragEvent) => {
       e.preventDefault();
       node.classList.add("drag-over");
     });
@@ -297,11 +374,14 @@ function createBlockManager(blocksContainer, blocksTextarea, uploadCtx) {
       node.classList.remove("drag-over");
     });
 
-    node.addEventListener("drop", (e) => {
+    node.addEventListener("drop", (e: DragEvent) => {
       e.preventDefault();
       node.classList.remove("drag-over");
 
-      const fromIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+      const dataStr = e.dataTransfer?.getData("text/plain");
+      if (!dataStr) return;
+
+      const fromIndex = parseInt(dataStr, 10);
       if (Number.isNaN(fromIndex) || fromIndex === i) {
         return;
       }
@@ -313,7 +393,44 @@ function createBlockManager(blocksContainer, blocksTextarea, uploadCtx) {
     });
   }
 
-  function addBlock(type) {
+  function render(): void {
+    blocksContainer.replaceChildren();
+
+    blocks.forEach((block, i) => {
+      const plugin = BlockPlugins[block.type] as BlockPlugin<Block> | undefined;
+      if (!plugin) {
+        return;
+      }
+
+      const node = plugin.render(
+        block,
+        (newBlock: Block) => {
+          blocks[i] = newBlock;
+          sync();
+        },
+        uploadCtx
+      );
+
+      const removeBtn = Button({
+        title: "Remove",
+        id: `remove-${i}`,
+        classes: "buttonx",
+        events: {
+          click: () => {
+            blocks.splice(i, 1);
+            render();
+            sync();
+          }
+        }
+      });
+
+      node.appendChild(removeBtn);
+      setupDrag(node, i);
+      blocksContainer.appendChild(node);
+    });
+  }
+
+  function addBlock(type: BlockType): void {
     const plugin = BlockPlugins[type];
     if (!plugin) {
       return console.warn("Unknown block type:", type);
@@ -324,14 +441,17 @@ function createBlockManager(blocksContainer, blocksTextarea, uploadCtx) {
     sync();
   }
 
-  function getSanitizedBlocks() {
+  function getSanitizedBlocks(): Block[] {
     return blocks
-      .map((b) => BlockPlugins[b.type]?.sanitize(b))
-      .filter(Boolean);
+      .map((b) => {
+        const plugin = BlockPlugins[b.type] as BlockPlugin<Block> | undefined;
+        return plugin?.sanitize(b) ?? null;
+      })
+      .filter((b): b is Block => b !== null);
   }
 
   return {
-    setBlocks: (b) => {
+    setBlocks: (b: Block[]) => {
       blocks = Array.isArray(b) ? b : [];
       render();
       sync();
@@ -345,23 +465,30 @@ function createBlockManager(blocksContainer, blocksTextarea, uploadCtx) {
 }
 
 /* ---------------------- MAIN EDITOR ---------------------- */
-async function renderPostEditor({ isLoggedIn, postId, contentContainer, mode }) {
+async function renderPostEditor({
+  isLoggedIn,
+  postId,
+  contentContainer,
+  mode
+}: RenderPostEditorOptions): Promise<void> {
   if (!isLoggedIn) {
-    return contentContainer.replaceChildren(
-      createElement("div", {}, ["You must be logged in to " + mode + " a post."])
+    contentContainer.replaceChildren(
+      createElement("div", {}, [`You must be logged in to ${mode} a post.`])
     );
+    return;
   }
 
-  let existingPost = null;
+  let existingPost: Post | null = null;
 
   if (mode === "edit" && postId) {
     try {
-      const data = await apiFetch(`/posts/post/${postId}`);
-      existingPost = data.post;
+      const data = (await apiFetch(`/posts/post/${postId}`)) as { post?: Post };
+      existingPost = data?.post || null;
     } catch {
-      return contentContainer.replaceChildren(
+      contentContainer.replaceChildren(
         createElement("div", {}, ["Failed to load post."])
       );
+      return;
     }
   }
 
@@ -392,7 +519,7 @@ async function renderPostEditor({ isLoggedIn, postId, contentContainer, mode }) 
     placeholder: "e.g. javascript, webdev, tips"
   });
 
-  const categoryMap = {
+  const categoryMap: Record<string, string[]> = {
     Blog: ["Tips", "Opinion", "News", "Updates"],
     Coding: ["JavaScript", "Go", "Python", "Rust"],
     Design: ["UI", "UX", "Branding"],
@@ -421,17 +548,22 @@ async function renderPostEditor({ isLoggedIn, postId, contentContainer, mode }) 
     required: true
   });
 
-  categoryGroup.querySelector("select").addEventListener("change", (e) => {
-    const selectedCat = e.target.value;
-    const newSubs = categoryMap[selectedCat] || [];
-    const subSelect = subcategoryGroup.querySelector("select");
+  const categorySelect = categoryGroup.querySelector("select") as HTMLSelectElement | null;
+  if (categorySelect) {
+    categorySelect.addEventListener("change", (e: Event) => {
+      const target = e.target as HTMLSelectElement;
+      const selectedCat = target.value;
+      const newSubs = categoryMap[selectedCat] || [];
+      const subSelect = subcategoryGroup.querySelector("select") as HTMLSelectElement | null;
 
-    subSelect.replaceChildren(
-      ...newSubs.map((s) => createElement("option", { value: s }, [s]))
-    );
-
-    subSelect.value = newSubs[0] || "";
-  });
+      if (subSelect) {
+        subSelect.replaceChildren(
+          ...newSubs.map((s) => createElement("option", { value: s }, [s]))
+        );
+        subSelect.value = newSubs[0] || "";
+      }
+    });
+  }
 
   const messageBox = createElement("div", { id: "message-box" });
   const blocksContainer = createElement("div", { class: "blocks-container" });
@@ -443,7 +575,7 @@ async function renderPostEditor({ isLoggedIn, postId, contentContainer, mode }) 
     postId ||
     (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
 
-  const uploadCtx = {
+  const uploadCtx: UploadContext = {
     entityType: EntityType.BLOGPOST,
     entityId: assetEntityId
   };
@@ -453,15 +585,20 @@ async function renderPostEditor({ isLoggedIn, postId, contentContainer, mode }) 
 
   const addBlockButtons = createElement("div", { class: "block-buttons" });
 
-  function renderAddBlockButtons(typeKey) {
+  function renderAddBlockButtons(typeKey: string): void {
     addBlockButtons.replaceChildren();
 
     const typeCfg = PostTypes[typeKey] || PostTypes.standard;
 
     typeCfg.availableBlocks.forEach((bt) => {
-      const btn = Button("Add " + capitalize(bt) + " Block", `add-${bt}`, {
-        click: () => blockManager.addBlock(bt)
-      }, "buttonx");
+      const btn = Button({
+        title: `Add ${capitalize(bt)} Block`,
+        id: `add-${bt}`,
+        classes: "buttonx",
+        events: {
+          click: () => blockManager.addBlock(bt)
+        }
+      });
 
       addBlockButtons.appendChild(btn);
     });
@@ -469,38 +606,44 @@ async function renderPostEditor({ isLoggedIn, postId, contentContainer, mode }) 
 
   renderAddBlockButtons(normalizedType);
 
-  postTypeGroup.querySelector("select").addEventListener("change", (e) => {
-    const selected = e.target.value.toLowerCase();
-    renderAddBlockButtons(selected);
-    renderExtraFields(selected);
-  });
+  const postTypeSelect = postTypeGroup.querySelector("select") as HTMLSelectElement | null;
+  if (postTypeSelect) {
+    postTypeSelect.addEventListener("change", (e: Event) => {
+      const target = e.target as HTMLSelectElement;
+      const selected = target.value.toLowerCase();
+      renderAddBlockButtons(selected);
+      renderExtraFields(selected);
+    });
+  }
 
   const extraFieldsContainer = createElement("div", { class: "extra-fields" });
 
-  function collectCurrentExtraFieldValues() {
-    const values = {};
-    extraFieldsContainer.querySelectorAll("[name]").forEach((el) => {
+  function collectCurrentExtraFieldValues(): Record<string, string> {
+    const values: Record<string, string> = {};
+    extraFieldsContainer.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("[name]").forEach((el) => {
       values[el.name] = el.value;
     });
     return values;
   }
 
-  function renderExtraFields(typeKey) {
+  function renderExtraFields(typeKey: string): void {
     const currentValues = collectCurrentExtraFieldValues();
     extraFieldsContainer.replaceChildren();
 
     const cfg = PostTypes[typeKey] || PostTypes.standard;
 
     cfg.fields.forEach((f) => {
+      const fieldValue =
+        typeof existingPost?.[f.id] === "string"
+          ? (existingPost[f.id] as string)
+          : currentValues[f.id] || "";
+
       const grp = createFormGroup({
         type: f.type,
         id: f.id,
         name: f.id,
         label: f.label,
-        value:
-          existingPost?.[f.id] ||
-          currentValues[f.id] ||
-          "",
+        value: fieldValue,
         options: f.options || [],
         placeholder: f.placeholder || ""
       });
@@ -511,53 +654,71 @@ async function renderPostEditor({ isLoggedIn, postId, contentContainer, mode }) 
 
   renderExtraFields(normalizedType);
 
-  const submitBtn = Button(mode === "create" ? "Create" : "Update", "submit-post", {
-    click: async () => {
-      const typeKey = postTypeGroup.querySelector("select").value.toLowerCase();
-      const cfg = PostTypes[typeKey] || PostTypes.standard;
+  const submitBtn = Button({
+    title: mode === "create" ? "Create" : "Update",
+    id: "submit-post",
+    classes: "buttonx",
+    events: {
+      click: async () => {
+        const selectedType = (postTypeGroup.querySelector("select") as HTMLSelectElement)?.value || "";
+        const typeKey = selectedType.toLowerCase();
+        const cfg = PostTypes[typeKey] || PostTypes.standard;
 
-      const title = titleGroup.querySelector("input").value.trim();
-      const category = categoryGroup.querySelector("select").value.trim();
-      const subcategory = subcategoryGroup.querySelector("select").value.trim();
+        const title = (titleGroup.querySelector("input") as HTMLInputElement)?.value.trim() || "";
+        const category = (categoryGroup.querySelector("select") as HTMLSelectElement)?.value.trim() || "";
+        const subcategory = (subcategoryGroup.querySelector("select") as HTMLSelectElement)?.value.trim() || "";
 
-      const formData = new FormData();
-      formData.append("type", typeKey);
-      formData.append("title", title);
-      formData.append("category", category);
-      formData.append("subcategory", subcategory);
+        const formData = new FormData();
+        formData.append("type", typeKey);
+        formData.append("title", title);
+        formData.append("category", category);
+        formData.append("subcategory", subcategory);
 
-      const rawTags = hashtagsGroup.querySelector("input").value.trim();
-      if (rawTags) {
-        rawTags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean)
-          .forEach((tag) => formData.append("hashtags", tag));
-      }
-
-      cfg.fields.forEach((f) => {
-        const el = extraFieldsContainer.querySelector(`[name="${f.id}"]`);
-        if (el && el.value.trim()) {
-          formData.append(f.id, el.value.trim());
+        const rawTags = (hashtagsGroup.querySelector("input") as HTMLInputElement)?.value.trim() || "";
+        if (rawTags) {
+          rawTags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .forEach((tag) => formData.append("hashtags", tag));
         }
-      });
 
-      formData.append("blocks", JSON.stringify(blockManager.getSanitizedBlocks(), null, 2));
+        cfg.fields.forEach((f) => {
+          const el = extraFieldsContainer.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${f.id}"]`);
+          if (el && el.value.trim()) {
+            formData.append(f.id, el.value.trim());
+          }
+        });
 
-      const endpoint = mode === "create" ? "/posts/post" : `/posts/post/${postId}`;
-      const method = mode === "create" ? "POST" : "PATCH";
-
-      try {
-        const res = await apiFetch(endpoint, method, formData, { isForm: true });
-        messageBox.replaceChildren(createElement("span", {}, ["Saved successfully"]));
-        navigate(`/post/${res.postid}`);
-      } catch (err) {
-        messageBox.replaceChildren(
-          createElement("span", {}, ["Error: " + (err.message || "Unknown error")])
+        formData.append(
+          "blocks",
+          JSON.stringify(blockManager.getSanitizedBlocks(), null, 2)
         );
+
+        const endpoint = mode === "create" ? "/posts/post" : `/posts/post/${postId}`;
+
+        try {
+          // Send FormData correctly through apiFetch body arguments
+          // Send FormData correctly through apiFetch arguments
+          const res = (await apiFetch(
+            endpoint,
+            mode === "create" ? "POST" : "PATCH",
+            formData
+          )) as { postid?: string | number };
+
+          messageBox.replaceChildren(createElement("span", {}, ["Saved successfully"]));
+          if (res?.postid) {
+            navigate(`/post/${res.postid}`);
+          }
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Unknown error";
+          messageBox.replaceChildren(
+            createElement("span", {}, ["Error: " + message])
+          );
+        }
       }
     }
-  }, "buttonx");
+  });
 
   const form = createElement("div", { class: "post-editor" }, [
     postTypeGroup,
@@ -582,11 +743,18 @@ async function renderPostEditor({ isLoggedIn, postId, contentContainer, mode }) 
 }
 
 /* ---------------------- PUBLIC API ---------------------- */
-export async function createPost(isLoggedIn, contentContainer) {
+export async function createPost(
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): Promise<void> {
   return renderPostEditor({ isLoggedIn, contentContainer, mode: "create" });
 }
 
-export async function editPost(isLoggedIn, postId, contentContainer) {
+export async function editPost(
+  isLoggedIn: boolean,
+  postId: string | number,
+  contentContainer: HTMLElement
+): Promise<void> {
   return renderPostEditor({ isLoggedIn, postId, contentContainer, mode: "edit" });
 }
 

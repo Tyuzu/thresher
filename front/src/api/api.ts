@@ -24,6 +24,7 @@ export interface ApiFetchOptions {
   signal?: AbortSignal;
   credentials?: RequestCredentials;
   headers?: Record<string, string>;
+  responseType?: string;
 }
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";

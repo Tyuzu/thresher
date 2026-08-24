@@ -1,4 +1,4 @@
-import { createElement } from "../../components/createElement.js";
+import { createElement, ElementAttributes } from "../../components/createElement.js";
 import { Button } from "../../components/base/Button.js";
 import { navigate } from "../../routes/navigate.js";
 import { apiFetch } from "../../api/api.js";
@@ -9,22 +9,58 @@ import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePath
 import { createMainLayout } from "../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../components/layout/asideLayout.js";
 
-export async function displayPosts(container, isLoggedIn) {
+/* ---------------------- TYPES ---------------------- */
+export interface Post {
+  postid: string | number;
+  title?: string;
+  thumb?: string;
+  category?: string;
+  subcategory?: string;
+  createdAt?: string | number | Date;
+  username?: string;
+}
+
+export interface PostsApiResponse {
+  data?: Post[];
+  posts?: Post[];
+}
+
+export type PostsFetchResult = Post[] | PostsApiResponse;
+
+export interface AsideSection {
+  title?: string;
+  content: HTMLElement;
+  className?: string;
+}
+
+// --- Main Export ---
+export async function displayPosts(
+  container: HTMLElement,
+  isLoggedIn: boolean
+): Promise<void> {
   container.replaceChildren();
 
   const PAGE_NAME = "posts";
 
   // ---------- SIDEBAR SECTIONS ----------
-  const actionButtons = [];
+  const actionButtons: HTMLElement[] = [];
   if (isLoggedIn) {
     actionButtons.push(
-      Button("Create Post", "posts-create-btn", { click: () => navigate("/create-post") }, "buttonx")
+      Button({
+        title: "Create Post",
+        id: "posts-create-btn",
+        classes: "buttonx",
+        events: {
+          click: (() => navigate("/create-post")) as EventListener
+        }
+      })
     );
   }
 
-  const actionsWrapper = actionButtons.length > 0
-    ? createElement("div", { class: "aside-actions-group" }, actionButtons)
-    : null;
+  const actionsWrapper: HTMLElement | null =
+    actionButtons.length > 0
+      ? createElement("div", { class: "aside-actions-group" }, actionButtons)
+      : null;
 
   // Sidebar Ad component
   const sidebarAd = adspace("aside", PAGE_NAME, {
@@ -34,30 +70,30 @@ export async function displayPosts(container, isLoggedIn) {
     refreshInterval: 30000
   });
 
-  const sections = [];
+  const sections: AsideSection[] = [];
 
   if (actionsWrapper) {
     sections.push({
       title: "Actions",
       content: actionsWrapper,
-      className: "aside-actions-section",
+      className: "aside-actions-section"
     });
   }
 
   sections.push({
     content: sidebarAd,
-    className: "aside-ad-section",
+    className: "aside-ad-section"
   });
 
   const asideContent = createAsideContent({
     title: "Posts Overview",
     sections,
     showAd: false, // Handled directly via custom section to prevent duplication
-    page: PAGE_NAME,
+    page: PAGE_NAME
   });
 
   // ---------- MAIN HEADER & INBODY AD ----------
-  const mainHeader = [
+  const mainHeader: HTMLElement[] = [
     createElement("h1", {}, ["All Posts"]),
     adspace("inbody", PAGE_NAME, {
       layout: "horizontal",
@@ -77,12 +113,18 @@ export async function displayPosts(container, isLoggedIn) {
   container.append(layout);
 
   // ---------- DATA FETCHING & LIST INJECTION ----------
-  const mainElement = layout.querySelector(".layout-main");
+  const mainElement = layout.querySelector<HTMLElement>(".layout-main");
   const list = createElement("div", { class: "posts-list" });
 
   try {
-    const resp = await apiFetch("/posts?page=1&limit=100");
-    const posts = Array.isArray(resp) ? resp : resp?.data || resp?.posts || [];
+    const resp = (await apiFetch("/posts?page=1&limit=100")) as PostsFetchResult | undefined;
+    
+    let posts: Post[] = [];
+    if (Array.isArray(resp)) {
+      posts = resp;
+    } else if (resp && typeof resp === "object") {
+      posts = resp.data || resp.posts || [];
+    }
 
     if (!posts.length) {
       list.append(createElement("p", {}, ["No posts found."]));
@@ -107,11 +149,13 @@ export async function displayPosts(container, isLoggedIn) {
     list.append(createElement("p", {}, ["Error loading posts."]));
   }
 
-  mainElement.append(list);
+  if (mainElement) {
+    mainElement.append(list);
+  }
 }
 
 // ---------- CARD BUILDER ----------
-function createPostCard(post) {
+function createPostCard(post: Post): HTMLElement {
   const thumb = post.thumb
     ? resolveImagePath(EntityType.BLOGPOST, PictureType.THUMB, post.thumb)
     : "/default-thumb.png";
@@ -121,7 +165,6 @@ function createPostCard(post) {
     alt: post.title || "Post image",
     loading: "lazy",
     classes: "",
-    style: "width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:4px;"
   });
 
   const postInfo = createElement("div", { class: "post-info" }, [
@@ -149,17 +192,15 @@ function createPostCard(post) {
     postInfo
   ]);
 
-  return createElement(
-    "a",
-    {
-      href: "#",
-      events: {
-        click: e => {
-          e.preventDefault();
-          navigate(`/post/${encodeURIComponent(post.postid)}`);
-        }
-      }
-    },
-    [card]
-  );
+  const linkAttributes: ElementAttributes = {
+    href: "#",
+    events: {
+      click: ((e: Event) => {
+        e.preventDefault();
+        navigate(`/post/${encodeURIComponent(post.postid)}`);
+      }) as EventListener
+    }
+  };
+
+  return createElement("a", linkAttributes, [card]);
 }

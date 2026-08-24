@@ -3,119 +3,148 @@ import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import Button from "../../components/base/Button.js";
+import type { Review, OnDoneCallback } from "./reviewTypes.js";
 
-function handleAddReview(container, entityType, entityId, onDone) {
-    container.replaceChildren();
+function handleAddReview(
+  container: HTMLElement,
+  entityType: string,
+  entityId: string | number,
+  onDone: OnDoneCallback
+): void {
+  container.replaceChildren();
 
-    const form = createElement("form", { class: "review-form" });
+  const form = createElement("form", { class: "review-form" }) as HTMLFormElement;
 
-    const ratingGroup = createFormGroup({
-        type: "number",
-        id: "rating",
-        label: "Rating (1–5)",
-        required: true,
-        additionalProps: { min: 1, max: 5 }
-    });
+  const ratingGroup = createFormGroup({
+    type: "number",
+    id: "rating",
+    label: "Rating (1–5)",
+    required: true,
+    additionalProps: { min: 1, max: 5 }
+  });
 
-    const commentGroup = createFormGroup({
-        type: "textarea",
-        id: "comment",
-        label: "Your review",
-        required: true,
-        additionalProps: { rows: 3 }
-    });
+  const commentGroup = createFormGroup({
+    type: "textarea",
+    id: "comment",
+    label: "Your review",
+    required: true,
+    additionalProps: { rows: 3 }
+  });
 
-    const submitBtn = Button("Submit", "", { type: "submit" });
-    const cancelBtn = Button("Cancel", "", {
-        click: () => container.replaceChildren()
-    });
+  const submitBtn = Button({ title: "Submit", type: "submit" });
+  const cancelBtn = Button({
+    title: "Cancel",
+    type: "button",
+    events: { click: () => container.replaceChildren() }
+  });
 
-    form.append(ratingGroup, commentGroup, submitBtn, cancelBtn);
-    container.append(form);
+  form.append(ratingGroup, commentGroup, submitBtn, cancelBtn);
+  container.append(form);
 
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+  form.addEventListener("submit", async (e: SubmitEvent) => {
+    e.preventDefault();
 
-        const rating = Number(form.querySelector("#rating").value);
-        const comment = form.querySelector("#comment").value.trim();
+    const ratingInput = form.querySelector("#rating") as HTMLInputElement | null;
+    const commentInput = form.querySelector("#comment") as HTMLTextAreaElement | null;
 
-        if (rating < 1 || rating > 5 || !comment) {
-            alert("Invalid rating or empty comment.");
-            return;
-        }
+    const rating = Number(ratingInput?.value);
+    const comment = commentInput?.value.trim() || "";
 
-        try {
-            await apiFetch(`/reviews/${entityType}/${entityId}`, "POST", {
-                rating,
-                comment
-            });
-            container.replaceChildren();
-            onDone();
-        } catch (err) {
-            alert(err?.error || "You already reviewed this item.");
-        }
-    });
+    if (rating < 1 || rating > 5 || !comment) {
+      alert("Invalid rating or empty comment.");
+      return;
+    }
+
+    try {
+      await apiFetch(`/reviews/${entityType}/${entityId}`, "POST", {
+        rating,
+        comment
+      });
+      container.replaceChildren();
+      onDone();
+    } catch (err: any) {
+      alert(err?.error || "You already reviewed this item.");
+    }
+  });
 }
 
-function handleEditReview(review, entityType, entityId, onDone) {
-    const container = review.__container;
-    container.replaceChildren();
+function handleEditReview(
+  review: Review,
+  entityType: string,
+  entityId: string | number,
+  onDone: OnDoneCallback
+): void {
+  const container = review.__container;
+  if (!container) return;
 
-    const form = createElement("form", { class: "review-form" });
+  container.replaceChildren();
 
-    const ratingGroup = createFormGroup({
-        type: "number",
-        id: "rating",
-        label: "Rating (1–5)",
-        required: true,
-        value: review.rating,
-        additionalProps: { min: 1, max: 5 }
-    });
+  const form = createElement("form", { class: "review-form" }) as HTMLFormElement;
 
-    const commentGroup = createFormGroup({
-        type: "textarea",
-        id: "comment",
-        label: "Your review",
-        required: true,
-        value: review.comment,
-        additionalProps: { rows: 3 }
-    });
+  const ratingGroup = createFormGroup({
+    type: "number",
+    id: "rating",
+    label: "Rating (1–5)",
+    required: true,
+    value: review.rating,
+    additionalProps: { min: 1, max: 5 }
+  });
 
-    const submitBtn = Button("Save", "", { type: "submit" });
-    const cancelBtn = Button("Cancel", "", { click: onDone });
+  const commentGroup = createFormGroup({
+    type: "textarea",
+    id: "comment",
+    label: "Your review",
+    required: true,
+    value: review.comment,
+    additionalProps: { rows: 3 }
+  });
 
-    form.append(ratingGroup, commentGroup, submitBtn, cancelBtn);
-    container.append(form);
+  const submitBtn = Button({ title: "Save", type: "submit" });
+  const cancelBtn = Button({
+    title: "Cancel",
+    type: "button",
+    events: { click: onDone }
+  });
 
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+  form.append(ratingGroup, commentGroup, submitBtn, cancelBtn);
+  container.append(form);
 
-        const rating = Number(form.querySelector("#rating").value);
-        const comment = form.querySelector("#comment").value.trim();
+  form.addEventListener("submit", async (e: SubmitEvent) => {
+    e.preventDefault();
 
-        if (rating < 1 || rating > 5 || !comment) {
-            alert("Invalid input.");
-            return;
-        }
+    const ratingInput = form.querySelector("#rating") as HTMLInputElement | null;
+    const commentInput = form.querySelector("#comment") as HTMLTextAreaElement | null;
 
-        await apiFetch(
-            `/reviews/${entityType}/${entityId}/${review.reviewid}`,
-            "PUT",
-            { rating, comment }
-        );
+    const rating = Number(ratingInput?.value);
+    const comment = commentInput?.value.trim() || "";
 
-        onDone();
-    });
-}
+    if (rating < 1 || rating > 5 || !comment) {
+      alert("Invalid input.");
+      return;
+    }
 
-async function handleDeleteReview(reviewId, entityType, entityId, onDone) {
-    if (!confirm("Delete this review?")) {
-return;
-}
+    await apiFetch(
+      `/reviews/${entityType}/${entityId}/${review.reviewid}`,
+      "PUT",
+      { rating, comment }
+    );
 
-    await apiFetch(`/reviews/${entityType}/${entityId}/${reviewId}`, "DELETE");
     onDone();
+  });
+}
+
+async function handleDeleteReview(
+  reviewId: string | number,
+  entityType: string,
+  entityId: string | number,
+  onDone: OnDoneCallback
+): Promise<void> {
+  if (!confirm("Delete this review?")) {
+    return;
+  }
+
+  await apiFetch(`/reviews/${entityType}/${entityId}/${reviewId}`, "DELETE");
+  onDone();
 }
 
 export { handleAddReview, handleEditReview, handleDeleteReview };
-

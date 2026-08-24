@@ -1,8 +1,9 @@
 import Datex from "../../components/base/Datex.js";
 import { createElement } from "../../components/createElement.js";
+import type { EntityType, EntityItem } from "./types.js";
 
 // Label mapping dictionary
-const ENTITY_LABELS = {
+const ENTITY_LABELS: Record<string, string> = {
   media: "Media ID",
   ticket: "Ticket ID",
   merch: "Merch ID",
@@ -16,7 +17,7 @@ const ENTITY_LABELS = {
 };
 
 // Route mapping dictionary
-const ENTITY_ROUTES = {
+const ENTITY_ROUTES: Record<string, (id: string | number) => string> = {
   place: (id) => `/place/${id}`,
   event: (id) => `/event/${id}`,
   feedpost: (id) => `/feedpost/${id}`,
@@ -26,10 +27,10 @@ const ENTITY_ROUTES = {
 /**
  * Handles copying text to clipboard safely
  */
-async function copyToClipboard(text, targetElement) {
+async function copyToClipboard(text: string, targetElement: HTMLElement): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
-    const originalText = targetElement.textContent;
+    const originalText = targetElement.textContent || "";
     targetElement.textContent = "Copied ID!";
     setTimeout(() => {
       targetElement.textContent = originalText;
@@ -42,7 +43,7 @@ async function copyToClipboard(text, targetElement) {
 /**
  * Creates an entity card item
  */
-function createEntityCard(item, entityType) {
+function createEntityCard(item: EntityItem, entityType: EntityType): HTMLDivElement {
   const label = ENTITY_LABELS[entityType] || "Post ID";
   const getRoute = ENTITY_ROUTES[entityType];
   const href = getRoute ? getRoute(item.entity_id) : "#";
@@ -52,7 +53,9 @@ function createEntityCard(item, entityType) {
     `${label}: ${item.entity_id} - Created At: ${Datex(item.created_at, true)}`
   ]);
 
-  cardContent.addEventListener("click", () => copyToClipboard(item.entity_id, cardContent));
+  cardContent.addEventListener("click", () =>
+    copyToClipboard(String(item.entity_id), cardContent)
+  );
 
   // Entity navigation link
   const entityLink = createElement("a", { class: "entity-card-link", href }, ["View Details"]);
@@ -64,7 +67,11 @@ function createEntityCard(item, entityType) {
 /**
  * Render fetched data inside the tab container.
  */
-export function renderEntityData(container, data, entityType) {
+export function renderEntityData(
+  container: HTMLElement,
+  data: EntityItem[] | null | undefined,
+  entityType: EntityType
+): void {
   container.replaceChildren();
 
   if (!data || data.length === 0) {
@@ -73,7 +80,9 @@ export function renderEntityData(container, data, entityType) {
     return;
   }
 
-  const listItems = data.map((item) => createElement("li", { class: "entity-list-item" }, [createEntityCard(item, entityType)]));
+  const listItems = data.map((item) =>
+    createElement("li", { class: "entity-list-item" }, [createEntityCard(item, entityType)])
+  );
   const list = createElement("ul", { class: "entity-list" }, listItems);
 
   container.append(list);

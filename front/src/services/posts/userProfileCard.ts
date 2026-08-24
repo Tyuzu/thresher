@@ -5,43 +5,71 @@ import { payViaStripe } from "../pay/pay.js";
 import { getState } from "../../state/state.js";
 import Imagex from "../../components/base/Imagex.js";
 import { EntityType } from "../../utils/imagePaths.js";
-// import { fetchUserMeta } from "../../utils/usersMeta.js";
 
+/* ---------------------- TYPES ---------------------- */
+export interface UserProfileOptions {
+  username?: string;
+  bio?: string;
+  avatarUrl?: string;
+  postCount?: number;
+  isFollowing?: boolean;
+  entityType?: string;
+  entityId?: string | number | null;
+  entityName?: string;
+}
+
+export interface UserState {
+  userid?: string | number;
+  username?: string;
+  [key: string]: unknown;
+}
+
+export interface PaymentResult {
+  success?: boolean;
+  [key: string]: unknown;
+}
+
+const DEFAULT_PROFILE: Required<UserProfileOptions> = {
+  username: "Anonymous",
+  bio: "This user hasn't added a bio yet.",
+  avatarUrl: "default-avatar.png",
+  postCount: 0,
+  isFollowing: false,
+  entityType: EntityType.USER,
+  entityId: null,
+  entityName: "Anonymous"
+};
+
+// --- Main Export ---
 export async function userProfileCard(
-  profile = {
-    username: "Anonymous",
-    bio: "This user hasn't added a bio yet.",
-    avatarUrl: "default-avatar.png",
-    postCount: 0,
-    isFollowing: false,
-    entityType: EntityType.USER, // "user" | "post"
-    entityId: null, // userId or postId
-    entityName: "Anonymous", // username or post title
-  }
-) {
+  options: UserProfileOptions = {}
+): Promise<HTMLElement> {
+  const profile = { ...DEFAULT_PROFILE, ...options };
+
   const card = createElement("div", { class: "user-profile-card" });
-  // const userx =  await fetchUserMeta([profile.username]);
-  // profile.username = userx[profile.username]?.username || "Anonymous"
+
   const avatar = Imagex({
     src: profile.avatarUrl,
     alt: `${profile.username}'s avatar`,
     classes: "avatar",
-    loading: "lazy",
+    loading: "lazy"
   });
 
   const name = createElement("h3", {}, [profile.username]);
   const bio = createElement("p", { class: "bio" }, [profile.bio]);
 
-  const elements = [avatar, name, bio];
+  const elements: HTMLElement[] = [avatar, name, bio];
 
-  const currentUser = getState("user").userid;
+  const currentUserState = getState("user") as UserState | undefined;
+  const currentUserId = currentUserState?.userid;
 
   // Funding button (only if not the logged-in user)
-  if (profile.username !== currentUser) {
-    const fundButton = Button(
-      "Fund",
-      "fund-btn",
-      {
+  if (profile.username !== currentUserId && profile.username !== currentUserState?.username) {
+    const fundButton = Button({
+      title: "Fund",
+      id: "fund-btn",
+      classes: "buttonx",
+      events: {
         click: async () => {
           if (!profile.entityId) {
             alert("Funding not available.");
@@ -50,33 +78,31 @@ export async function userProfileCard(
 
           try {
             // Map entity types to valid fundable types
-            let fundableType = profile.entityType;
+            let fundableType: string = profile.entityType;
             if (fundableType === EntityType.BLOGPOST) {
               fundableType = "creator";
             } else if (!fundableType || fundableType === EntityType.USER) {
               fundableType = EntityType.ARTIST;
             }
 
-            const result = await payViaStripe({
+            const result = (await payViaStripe({
               paymentType: "funding",
               entityType: fundableType,
-              entityId: profile.entityId,
-            });
+              entityId: profile.entityId
+            })) as PaymentResult | undefined;
 
             if (result && result.success === true) {
               alert("Funding successful.");
-            } else {
             }
           } catch (err) {
             console.error("Funding failed:", err);
           }
-        },
-      },
-      "buttonx"
-    );
+        }
+      }
+    });
 
     const count = createElement("p", { class: "post-count" }, [
-      `Posts: ${profile.postCount}`,
+      `Posts: ${profile.postCount}`
     ]);
 
     elements.push(count, fundButton);
@@ -90,8 +116,8 @@ export async function userProfileCard(
             click: () => {
               profile.isFollowing = !profile.isFollowing;
               followBtn.textContent = profile.isFollowing ? "Unfollow" : "Follow";
-            },
-          },
+            }
+          }
         },
         [profile.isFollowing ? "Unfollow" : "Follow"]
       );

@@ -9,19 +9,20 @@ import { adspace } from "../../services/ads/newads.js";
 import { t } from "../../i18n/i18n.js";
 import { createMainLayout } from "../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../components/layout/asideLayout.js";
+import { Recipe } from "./types/recipe.js";
 
-export async function displayRecipes(container, isLoggedIn) {
+export async function displayRecipes(container: HTMLElement, isLoggedIn: boolean): Promise<void> {
   container.replaceChildren();
 
   const PAGE_NAME = "recipes";
 
   // ---------- SIDEBAR SECTIONS ----------
-  const actionButton = Button(
-    t("recipes.createNewRecipe", {}, "Create Recipe"),
-    "create-recipe-shortcut",
-    { click: () => createRecipe(container) },
-    "buttonx secondary"
-  );
+  const actionButton = Button({
+    title: t("recipes.createNewRecipe", {}, "Create Recipe"),
+    id: "create-recipe-shortcut",
+    classes: "buttonx secondary",
+    events: { click: () => createRecipe(container) },
+  });
 
   const actionsWrapper = createElement("div", { class: "aside-actions-group" }, [actionButton]);
 
@@ -54,12 +55,12 @@ export async function displayRecipes(container, isLoggedIn) {
   const mainActions = createElement("div", { class: "recipe-actions" });
   if (isLoggedIn) {
     mainActions.append(
-      Button(
-        t("recipes.createNewRecipe", {}, "Create New Recipe"),
-        "create-recipe-btn",
-        { click: () => createRecipe(container) },
-        "buttonx primary"
-      )
+      Button({
+        title: t("recipes.createNewRecipe", {}, "Create New Recipe"),
+        id: "create-recipe-btn",
+        classes: "buttonx primary",
+        events: { click: () => createRecipe(container) },
+      })
     );
   }
 
@@ -83,11 +84,11 @@ export async function displayRecipes(container, isLoggedIn) {
 
   container.append(layout);
 
-  const mainElement = layout.querySelector(".layout-main");
+  const mainElement = layout.querySelector(".layout-main") as HTMLElement;
   const list = createElement("div", { class: "recipe-list" });
 
   // ---------- FETCH RECIPES ----------
-  let recipes = [];
+  let recipes: Recipe[] = [];
   try {
     const resp = await apiFetch("/recipes?offset=0&limit=5000");
     recipes = Array.isArray(resp) ? resp : resp?.recipes || [];
@@ -119,7 +120,7 @@ export async function displayRecipes(container, isLoggedIn) {
 }
 
 // ---------- CARD BUILDER ----------
-function createRecipeCard(recipe, _isLoggedIn) {
+function createRecipeCard(recipe: Recipe, _isLoggedIn: boolean): HTMLElement {
   const imageUrl = resolveImagePath(
     EntityType.RECIPE,
     PictureType.THUMB,
@@ -127,32 +128,26 @@ function createRecipeCard(recipe, _isLoggedIn) {
   );
 
   return createElement("div", { class: "recipe-card" }, [
-    Imagex({ src: imageUrl, alt: recipe.title, classes: "thumbnail" }),
-    createElement("h3", {}, [recipe.title]),
-    createElement("p", {}, [recipe.description]),
-    createElement(
-      "p",
-      {},
-      [
-        t(
-          "recipes.prepTime",
-          { cookTime: recipe.cookTime || "N/A" },
-          `Prep Time: ${recipe.cookTime || "N/A"}`
-        ),
-      ]
-    ),
+    Imagex({ src: imageUrl, alt: recipe.title || recipe.name || "", classes: "thumbnail" }),
+    createElement("h3", {}, [recipe.title || recipe.name || "Untitled"]),
+    createElement("p", {}, [recipe.description || ""]),
+    createElement("p", {}, [
+      t(
+        "recipes.prepTime",
+        { cookTime: recipe.cookTime || "N/A" },
+        `Prep Time: ${recipe.cookTime || "N/A"}`
+      ),
+    ]),
     createElement(
       "div",
       { class: "tags" },
-      (recipe.tags || []).map((tag) =>
-        createElement("span", { class: "tag" }, [tag])
-      )
+      (recipe.tags || []).map((tag) => createElement("span", { class: "tag" }, [tag]))
     ),
-    Button(
-      t("recipes.viewRecipe", {}, "View Recipe"),
-      `view-${recipe.recipeid}`,
-      { click: () => navigate(`/recipe/${recipe.recipeid}`) },
-      "buttonx primary"
-    ),
+    Button({
+      title: t("recipes.viewRecipe", {}, "View Recipe"),
+      id: `view-${recipe.recipeid}`,
+      classes: "buttonx primary",
+      events: { click: () => navigate(`/recipe/${recipe.recipeid}`) },
+    }),
   ]);
 }

@@ -1,5 +1,5 @@
 import TicketCard from "../../components/ui/TicketCard.js";
-import Button from "../../components/base/Button.js";
+import { Button } from "../../components/base/Button.js";
 import Modal from "../../components/ui/Modal.js";
 import Notify from "../../components/ui/Notify.js";
 import { createElement } from "../../components/createElement.js";
@@ -8,13 +8,37 @@ import { apiFetch } from "../../api/api.js";
 
 import { deleteTicket, editTicket, clearTicketForm } from "./editTicket.js";
 import { printTicket } from "./printTicket.js";
-import { listMyTickets } from "./listmyTickets.js";
+import { listMyTickets } from "./listMyTickets.js";
 import { showPaymentModal } from "../pay/pay.js";
 import {
   verifyTicketAndShowModal,
   cancelTicket,
   transferTicket
 } from "./ticketTransfer.js";
+
+export interface Ticket {
+  ticketid: string | number;
+  name: string;
+  price: number;
+  quantity: number;
+  currency?: string;
+  color?: string;
+  seatstart?: number;
+  seatend?: number;
+  [key: string]: unknown;
+}
+
+export interface PaymentResult {
+  success: boolean;
+  [key: string]: unknown;
+}
+
+export interface ApiFetchTicketResponse {
+  success?: boolean;
+  message?: string;
+  data?: Ticket[];
+  [key: string]: unknown;
+}
 
 /* ────────── Helpers ────────── */
 function formatCurrency(minorValue: number, currencyCode = "INR"): string {
@@ -37,12 +61,12 @@ function formatCurrency(minorValue: number, currencyCode = "INR"): string {
 
 /* ────────── Ticket Card ────────── */
 function createTicketCard(
-  ticket: any,
-  eventId: string,
+  ticket: Ticket,
+  eventId: string | number,
   isCreator: boolean,
   isLoggedIn: boolean,
   onRefresh?: () => void
-) {
+): HTMLElement {
   const card = TicketCard({
     isl: isLoggedIn,
     seatstart: ticket.seatstart,
@@ -52,7 +76,7 @@ function createTicketCard(
     price: formatCurrency(ticket.price, ticket.currency),
     quantity: ticket.quantity,
     color: ticket.color || "#a3a3a349",
-    attributes: { "data-ticket-id": ticket.ticketid },
+    attributes: { "data-ticket-id": String(ticket.ticketid) },
     onClick: async () => {
       if (!isLoggedIn || isCreator) return;
 
@@ -65,16 +89,15 @@ function createTicketCard(
       const wrapper = createElement("div", { class: "modal-form-group" }, [
         createElement("label", {}, ["Quantity: ", quantityInput])
       ]);
-
       const modal = Modal({
         title: `Purchase ${ticket.name}`,
         content: wrapper,
         actions: () =>
           createElement("div", { class: "modal-actions" }, [
-            Button(
-              "Next",
-              "",
-              {
+            Button({
+              title: "Next",
+              classes: "buttonx primary",
+              events: {
                 click: async () => {
                   const quantity = parseInt(
                     (quantityInput as HTMLInputElement).value,
@@ -86,30 +109,32 @@ function createTicketCard(
                     quantity < 1 ||
                     quantity > ticket.quantity
                   ) {
-                    return Notify(
+                    Notify(
                       `Enter a valid quantity (1-${ticket.quantity}).`,
                       { type: "warning", dismissible: true }
                     );
+                    return;
                   }
 
                   modal.close();
 
                   try {
-                    const paymentResult = await showPaymentModal({
+                    const paymentResult = (await showPaymentModal({
                       paymentType: "purchase",
                       entityType: "ticket",
                       entityId: ticket.ticketid,
                       entityName: ticket.name
-                    });
+                    })) as PaymentResult | null;
 
                     if (!paymentResult?.success) {
-                      return Notify("Payment cancelled or failed.", {
+                      Notify("Payment cancelled or failed.", {
                         type: "error",
                         dismissible: true
                       });
+                      return;
                     }
 
-                    const resp = await apiFetch(
+                    const resp = await apiFetch<ApiFetchTicketResponse>(
                       `/ticket/event/${eventId}/${ticket.ticketid}/confirm-purchase`,
                       "POST",
                       { quantity }
@@ -126,23 +151,22 @@ function createTicketCard(
                         dismissible: true
                       });
                     }
-                  } catch (err: any) {
+                  } catch (err: unknown) {
                     console.error("Ticket purchase failed:", err);
-                    Notify(`Purchase failed: ${err.message}`, {
+                    const errorMessage = err instanceof Error ? err.message : String(err);
+                    Notify(`Purchase failed: ${errorMessage}`, {
                       type: "error",
                       dismissible: true
                     });
                   }
                 }
-              },
-              "buttonx primary"
-            ),
-            Button(
-              "Cancel",
-              "",
-              { click: () => modal.close() },
-              "buttonx"
-            )
+              }
+            }),
+            Button({
+              title: "Cancel",
+              classes: "buttonx",
+              events: { click: () => modal.close() }
+            })
           ])
       });
     }
@@ -151,22 +175,20 @@ function createTicketCard(
   if (isCreator) {
     const actions = createElement("div", {
       class: "hflex-sb",
-      style: "padding: 0 0.5rem;"
+      style: { padding: "0 0.5rem" }
     });
 
     actions.append(
-      Button(
-        "Edit",
-        "",
-        { click: () => editTicket(ticket.ticketid, eventId, onRefresh) },
-        "buttonx primary"
-      ),
-      Button(
-        "Delete",
-        "",
-        { click: () => deleteTicket(ticket.ticketid, eventId, onRefresh) },
-        "buttonx delete-btn"
-      )
+      Button({
+        title: "Edit",
+        classes: "buttonx primary",
+        events: { click: () => editTicket(ticket.ticketid, eventId, onRefresh) }
+      }),
+      Button({
+        title: "Delete",
+        classes: "buttonx delete-btn",
+        events: { click: () => deleteTicket(ticket.ticketid, eventId, onRefresh) }
+      })
     );
     card.append(actions);
   }
@@ -175,28 +197,28 @@ function createTicketCard(
 }
 
 export function displayNewTicket(
-  ticketData: any,
+  ticketData: Ticket,
   ticketList: HTMLElement,
   isCreator = false,
   isLoggedIn = false,
-  eventId: string,
+  eventId: string | number,
   onRefresh?: () => void
-) {
+): void {
   ticketList.append(createTicketCard(ticketData, eventId, isCreator, isLoggedIn, onRefresh));
 }
 
 export async function displayTickets(
   ticketContainer: HTMLElement,
-  eventId: string,
+  eventId: string | number,
   isCreator: boolean,
   isLoggedIn: boolean
-) {
-  let tickets: any[] = [];
+): Promise<void> {
+  let tickets: Ticket[] = [];
 
   const handleRefresh = () => displayTickets(ticketContainer, eventId, isCreator, isLoggedIn);
 
   try {
-    const resp = await apiFetch(`/ticket/event/${eventId}`);
+    const resp = await apiFetch<ApiFetchTicketResponse>(`/ticket/event/${eventId}`);
     tickets = resp?.data ?? [];
   } catch (err) {
     console.error("Failed to load tickets:", err);
@@ -211,11 +233,31 @@ export async function displayTickets(
 
   if (!isCreator && tickets.length > 0) {
     actionsCon.append(
-      Button("Verify Ticket", "", { click: () => verifyTicketAndShowModal(eventId) }, "buttonx action-btn"),
-      Button("Print Ticket", "", { click: () => printTicket(eventId) }, "buttonx action-btn"),
-      Button("Cancel Ticket", "", { click: () => cancelTicket(eventId) }, "buttonx action-btn"),
-      Button("Transfer Ticket", "", { click: () => transferTicket(eventId) }, "buttonx action-btn"),
-      Button("My Tickets", "", { click: () => listMyTickets(eventId) }, "buttonx action-btn")
+      Button({
+        title: "Verify Ticket",
+        classes: "buttonx action-btn",
+        events: { click: () => verifyTicketAndShowModal(eventId) }
+      }),
+      Button({
+        title: "Print Ticket",
+        classes: "buttonx action-btn",
+        events: { click: () => printTicket(eventId) }
+      }),
+      Button({
+        title: "Cancel Ticket",
+        classes: "buttonx action-btn",
+        events: { click: () => cancelTicket(eventId) }
+      }),
+      Button({
+        title: "Transfer Ticket",
+        classes: "buttonx action-btn",
+        events: { click: () => transferTicket(eventId) }
+      }),
+      Button({
+        title: "My Tickets",
+        classes: "buttonx action-btn",
+        events: { click: () => listMyTickets(eventId) }
+      })
     );
   }
 
@@ -223,12 +265,12 @@ export async function displayTickets(
 
   if (isCreator) {
     ticketContainer.append(
-      Button(
-        "Add Tickets",
-        "add-ticket-btn",
-        { click: () => addTicketForm(eventId, ticketListDiv) },
-        "buttonx"
-      )
+      Button({
+        title: "Add Tickets",
+        id: "add-ticket-btn",
+        classes: "buttonx",
+        events: { click: () => addTicketForm(eventId, ticketListDiv) }
+      })
     );
   }
 
@@ -248,10 +290,10 @@ export async function displayTickets(
 /* ────────── Add Ticket API & Form ────────── */
 async function handleAddTicketSubmit(
   form: HTMLFormElement,
-  eventId: string,
+  eventId: string | number,
   ticketList: HTMLElement,
-  modalInstance: any
-) {
+  modalInstance: { close: () => void } | null
+): Promise<void> {
   const formData = new FormData(form);
 
   const payload = {
@@ -270,7 +312,7 @@ async function handleAddTicketSubmit(
     payload.quantity <= 0 ||
     payload.seatstart > payload.seatend
   ) {
-    return Notify("Please enter valid ticket details.", {
+    Notify("Please enter valid ticket details.", {
       type: "warning",
       dismissible: true,
       duration: 3000
@@ -278,7 +320,7 @@ async function handleAddTicketSubmit(
   }
 
   try {
-    const ticket = await apiFetch(`/ticket/event/${eventId}`, "POST", payload);
+    const ticket = await apiFetch<Ticket>(`/ticket/event/${eventId}`, "POST", payload);
 
     if (ticket?.ticketid) {
       Notify("Ticket added successfully.", {
@@ -299,8 +341,8 @@ async function handleAddTicketSubmit(
   }
 }
 
-export function addTicketForm(eventId: string, ticketList: HTMLElement) {
-  const form = createElement("form", { id: "add-ticket-form" }) as HTMLFormElement;
+export function addTicketForm(eventId: string | number, ticketList: HTMLElement): void {
+  const form = createElement("form", { id: "add-ticket-form" }, []) as HTMLFormElement;
 
   const fields = [
     { label: "Ticket Name", type: "text", id: "ticket-name", name: "name", required: true },
@@ -348,18 +390,16 @@ export function addTicketForm(eventId: string, ticketList: HTMLElement) {
     content: form,
     actions: () =>
       createElement("div", { class: "modal-actions" }, [
-        Button(
-          "Add Ticket",
-          "",
-          { click: () => form.requestSubmit() },
-          "buttonx primary"
-        ),
-        Button(
-          "Cancel",
-          "",
-          { click: () => modal.close() },
-          "buttonx"
-        )
+        Button({
+          title: "Add Ticket",
+          classes: "buttonx primary",
+          events: { click: () => form.requestSubmit() }
+        }),
+        Button({
+          title: "Cancel",
+          classes: "buttonx",
+          events: { click: () => modal.close() }
+        })
       ])
   });
 

@@ -7,9 +7,36 @@ import Datex from "../../components/base/Datex.js";
 import { createMainLayout } from "../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../components/layout/asideLayout.js";
 
+export interface Ticket {
+  id?: string | number;
+  [key: string]: unknown;
+}
+
+export interface EventData {
+  success?: boolean;
+  error?: string;
+  creatorid?: string | number;
+  title: string;
+  description?: string;
+  date: string | number | Date;
+  placename?: string;
+  location?: string;
+  category?: string;
+  currency?: string;
+  organizer_name?: string;
+  organizer_contact?: string;
+  tickets: Ticket[];
+  [key: string]: unknown;
+}
+
+interface UserState {
+  userid?: string | number;
+  [key: string]: unknown;
+}
+
 /* ────────── Fetch Event ────────── */
-async function fetchEventData(eventId) {
-  const eventData = await apiFetch(
+async function fetchEventData(eventId: string | number): Promise<EventData> {
+  const eventData = await apiFetch<EventData>(
     `/events/event/${eventId}`,
     "GET"
   );
@@ -18,12 +45,12 @@ async function fetchEventData(eventId) {
   if (eventData?.success === false) {
     throw new Error(`Failed to load event: ${eventData.error}`);
   }
-  
+
   // Check if response is invalid
   if (!eventData) {
     throw new Error("No event data received from server.");
   }
-  
+
   // Check if tickets array exists and is an array
   if (!Array.isArray(eventData.tickets)) {
     console.warn("Event data structure:", eventData);
@@ -34,16 +61,21 @@ async function fetchEventData(eventId) {
 }
 
 /* ────────── Render Tickets Page ────────── */
-async function renderTicksPage(isLoggedIn, eventId, containerx) {
+async function renderTicksPage(
+  isLoggedIn: boolean,
+  eventId: string | number,
+  containerx: HTMLElement
+): Promise<void> {
   containerx.replaceChildren();
 
   try {
     const eventData = await fetchEventData(eventId);
 
-    const currentUserId = getState("user").userid;
+    const user = getState("user");
+    const currentUserId = user?.userid;
     const isCreator =
       isLoggedIn &&
-      currentUserId &&
+      currentUserId !== undefined &&
       currentUserId === eventData.creatorid;
 
     /* Header & Main Content Elements */
@@ -83,7 +115,7 @@ async function renderTicksPage(isLoggedIn, eventId, containerx) {
     const mainContent = [header, editTabs, ticketSection];
 
     /* Organizer / Sidebar Content */
-    const sections = [];
+    const sections: { title: string; content: HTMLElement; className: string }[] = [];
 
     if (eventData.organizer_name || eventData.organizer_contact) {
       const organizerInfo = createElement("div", { class: "event-organizer-info" }, [
@@ -116,8 +148,7 @@ async function renderTicksPage(isLoggedIn, eventId, containerx) {
     /* Load Tickets Into Section */
     await displayTickets(
       ticketSection,
-      eventData.tickets,
-      eventId,
+      String(eventId),
       isCreator,
       isLoggedIn
     );

@@ -1,17 +1,19 @@
 import { initializeMainTabs, activateMainTab } from "./mainTabs.js";
 import { createTabStructure, activateChildTab } from "./subTabs.js";
+import type { EntityType } from "./types.js";
 
 /**
  * Displays user profile data and initializes the tab system.
- * @param {boolean} isLoggedIn - The user’s login status.
- * @param {HTMLElement} content - The container element for profile data.
- * @param {string} username - The username for fetching data.
  */
-async function displayUserProfileData(isLoggedIn, content, username) {
+async function displayUserProfileData(
+  isLoggedIn: boolean,
+  content: HTMLElement,
+  username: string
+): Promise<void> {
   content.replaceChildren(); // Clear any existing content
 
-  const contentTabs = ["userhome", "place", "event", "feedpost"];
-  const subcontentTabs = ["media", "ticket", "merch", "review"];
+  const contentTabs: EntityType[] = ["userhome", "place", "event", "feedpost"];
+  const subcontentTabs: EntityType[] = ["media", "ticket", "merch", "review"];
 
   // Initialize the main tab structure.
   const { mainTabButtons, mainTabContents } = initializeMainTabs(content);

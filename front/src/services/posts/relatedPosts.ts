@@ -1,36 +1,63 @@
-import { apiFetch } from "../../api/api";
-import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
+import { createElement, ElementAttributes } from "../../components/createElement.js";
 import { navigate } from "../../routes/navigate.js";
 
-export async function renderRelatedPosts(post) {
+/* ---------------------- TYPES ---------------------- */
+export interface PostSummary {
+  postid: string | number;
+  category?: string;
+  subcategory?: string;
+}
+
+export interface RelatedPostItem {
+  postid: string | number;
+  title?: string;
+  category?: string;
+  subcategory?: string;
+}
+
+export interface RelatedPostsResponse {
+  related?: RelatedPostItem[];
+}
+
+// --- Main Export ---
+export async function renderRelatedPosts(post: PostSummary): Promise<HTMLElement> {
   const container = createElement("div", { class: "related-posts" }, [
     createElement("h4", {}, ["Related Posts"])
   ]);
 
   try {
-    // Fetch related posts from backend
-    const data = await apiFetch(
-      `/posts/post/${post.postid}/related?postid=${encodeURIComponent(post.postid)}&category=${encodeURIComponent(post.category)}&subcategory=${encodeURIComponent(post.subcategory)}`
-    );
+    const category = encodeURIComponent(post.category || "");
+    const subcategory = encodeURIComponent(post.subcategory || "");
+    const postId = encodeURIComponent(post.postid);
 
-    if (!data.related?.length) {
+    // Fetch related posts from backend
+    const data = (await apiFetch(
+      `/posts/post/${postId}/related?postid=${postId}&category=${category}&subcategory=${subcategory}`
+    )) as RelatedPostsResponse | undefined;
+
+    if (!data?.related?.length) {
       container.appendChild(createElement("p", {}, ["No related posts found."]));
       return container;
     }
 
     const list = createElement("div", { class: "related-list" });
 
-    data.related.forEach(rp => {
-      const item = createElement("div", { class: "related-item" }, [
-        createElement("a", {
-          href: `/post/${rp.postid}`,
-          click: e => {
+    data.related.forEach((rp) => {
+      const linkAttributes: ElementAttributes = {
+        href: `/post/${rp.postid}`,
+        events: {
+          click: ((e: Event) => {
             e.preventDefault();
             navigate(`/post/${rp.postid}`);
-          }
-        }, [rp.title || "Untitled"]),
+          }) as EventListener
+        }
+      };
+
+      const item = createElement("div", { class: "related-item" }, [
+        createElement("a", linkAttributes, [rp.title || "Untitled"]),
         createElement("p", { class: "related-meta" }, [
-          `${rp.category} › ${rp.subcategory}`
+          `${rp.category || "Uncategorized"} › ${rp.subcategory || "General"}`
         ])
       ]);
       list.appendChild(item);

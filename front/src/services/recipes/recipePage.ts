@@ -19,20 +19,25 @@ import {
   renderActions
 } from "./recipeSections.js";
 
+import { Recipe, TabItem, User } from "./types/recipe.js";
 
 /* =========================
    MAIN DISPLAY
 ========================= */
 
-export async function displayRecipe(content, isLoggedIn, recipeid) {
+export async function displayRecipe(
+  content: HTMLElement,
+  isLoggedIn: boolean,
+  recipeid: string | number
+): Promise<void> {
   content.replaceChildren();
 
   const container = createElement("div", { class: "recipepage" });
   content.appendChild(container);
 
-  const currentUser = getState("user").userid;
+  const currentUser = (getState("user") as User | undefined)?.userid;
 
-  let recipe;
+  let recipe: Recipe;
 
   try {
     recipe = await apiFetch(`/recipes/recipe/${recipeid}`);
@@ -43,15 +48,14 @@ export async function displayRecipe(content, isLoggedIn, recipeid) {
     return;
   }
 
-  const isFavorite = getFavorites().includes(recipeid);
-  // const isCreator = currentUser && recipe.userid === currentUser;
+  const isFavorite = getFavorites().map(String).includes(String(recipeid));
 
   /* HEADER */
   const titleEl = createElement("h2", {}, [
-    recipe.title || "Untitled"
+    recipe.title || recipe.name || "Untitled"
   ]);
 
-  const metaInfo = [];
+  const metaInfo: HTMLElement[] = [];
 
   if (recipe.version) {
     metaInfo.push(
@@ -76,40 +80,41 @@ export async function displayRecipe(content, isLoggedIn, recipeid) {
   const infoBox = renderInfoBox(recipe);
   const tagsEl = renderTags(recipe.tags);
 
-
   /* SETUP TABS */
-  const tabs = [
+  const tabs: TabItem[] = [
     {
       title: "Ingredients",
       id: "ingredients-tab",
-      render: (c) => {
+      render: (c: HTMLElement) => {
         c.replaceChildren(renderIngredients(recipe.ingredients, isLoggedIn, recipe));
       }
     },
     {
       title: "Steps",
       id: "steps-tab",
-      render: (c) => {
+      render: (c: HTMLElement) => {
         c.replaceChildren(renderSteps(recipeid, recipe.steps || [], recipe));
       }
     },
     {
       title: "Comments",
       id: "comments-tab",
-      render: (c) => {
+      render: (c: HTMLElement) => {
         c.replaceChildren(renderComments(recipe));
       }
     },
     {
       title: "Media",
       id: "media-tab",
-      render: (c) => displayMedia(c, "recipe", recipeid, isLoggedIn)
+      render: (c: HTMLElement) => displayMedia(c, "recipe", recipeid, isLoggedIn)
     },
     {
       title: "Actions",
       id: "actions-tab",
-      render: (c) => {
-        c.replaceChildren(renderActions(recipe, currentUser, content, isFavorite, recipeid));
+      render: (c: HTMLElement) => {
+        c.replaceChildren(
+          renderActions(recipe, getState("user") as User, content, isFavorite, recipeid)
+        );
       }
     }
   ];

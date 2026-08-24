@@ -1,5 +1,5 @@
 
-import { renderMerchPage } from "../../services/tickets/merchOnlyPage.js";
+import { renderMerchPage } from "../../services/merch/merchOnlyPage.js";
 
 export async function EventMerch(
   isLoggedIn: boolean,

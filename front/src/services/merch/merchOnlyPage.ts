@@ -1,4 +1,4 @@
-import { displayMerchandise } from "../merch/merchService.js";
+import { displayMerchandise } from "./merchService.js";
 import { createElement } from "../../components/createElement.js";
 import { apiFetch } from "../../api/api.js";
 import { getState } from "../../state/state.js";

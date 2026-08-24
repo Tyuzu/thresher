@@ -1,25 +1,31 @@
-// js/services/recipes/createOrEditRecipe.js
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
+import { Recipe, IngredientAlternative } from "./types/recipe.js";
 
-export function createRecipe(container) {
+type FormMode = "create" | "edit";
+
+export function createRecipe(container: HTMLElement): void {
   renderRecipeForm(container, "create", null);
 }
 
-export function editRecipe(container, recipe) {
+export function editRecipe(container: HTMLElement, recipe: Recipe): void {
   renderRecipeForm(container, "edit", recipe);
 }
 
-function renderRecipeForm(container, mode = "create", recipe = null) {
+function renderRecipeForm(
+  container: HTMLElement,
+  mode: FormMode = "create",
+  recipe: Recipe | null = null
+): void {
   container.replaceChildren();
 
   const form = createElement("form", {
     class: "create-section",
     enctype: "multipart/form-data",
-  });
+  }) as HTMLFormElement;
 
   const titleGroup = createFormGroup({
     label: "Recipe Title",
@@ -68,7 +74,7 @@ function renderRecipeForm(container, mode = "create", recipe = null) {
     label: "Servings",
     type: "number",
     id: "servings",
-    value: recipe?.servings || "",
+    value: recipe?.servings !== undefined ? String(recipe.servings) : "",
     placeholder: "e.g. 4",
     additionalProps: { min: 1 },
   });
@@ -111,79 +117,104 @@ function renderRecipeForm(container, mode = "create", recipe = null) {
   });
 
   // --- Ingredients ---
-const ingredientsGroup = createElement("div", { class: "form-group" });
-ingredientsGroup.appendChild(createElement("label", {}, ["Ingredients"]));
-const ingredientsList = createElement("div", { id: "ingredients-list" });
-ingredientsGroup.appendChild(ingredientsList);
+  const ingredientsGroup = createElement("div", { class: "form-group" });
+  ingredientsGroup.appendChild(createElement("label", {}, ["Ingredients"]));
+  const ingredientsList = createElement("div", { id: "ingredients-list" });
+  ingredientsGroup.appendChild(ingredientsList);
 
-function addIngredientRow(name = "", quantity = "", unit = "", alternatives = []) {
-  const altStr = alternatives
-    .map(a => [a.name, a.itemId, a.type].join("|"))
-    .join(",");
+  function addIngredientRow(
+    name: string = "",
+    quantity: number | string = "",
+    unit: string = "",
+    alternatives: IngredientAlternative[] = []
+  ): void {
+    const altStr = alternatives
+      .map((a) => [a.name, a.itemId, a.type].join("|"))
+      .join(",");
 
-  const row = createElement("div", { class: "ingredient-row hvflex" }, [
-    createElement("input", {
-      type: "text",
-      name: "ingredientName[]",
-      placeholder: "Name",
-      value: name,
-      required: true,
-    }),
-    createElement("input", {
-      type: "number",
-      name: "ingredientQuantity[]",
-      placeholder: "Qty",
-      step: "any",
-      value: quantity !== "" ? String(quantity) : "",
-      required: true,
-    }),
-    createElement("input", {
-      type: "text",
-      name: "ingredientUnit[]",
-      placeholder: "Unit",
-      value: unit,
-      required: true,
-    }),
-    createElement("input", {
-      type: "text",
-      name: "ingredientAlternatives[]",
-      placeholder: "Alternatives (name|itemId|type, ...)",
-      value: altStr,
-    }),
-    Button("−", "", { click: () => row.remove() }, "remove-btn"),
-  ]);
+    const removeBtn = Button({
+      title: "−",
+      classes: "remove-btn",
+      type: "button",
+      events: {
+        click: (e: Event) => {
+          e.preventDefault();
+          row.remove();
+        },
+      },
+    });
 
-  ingredientsList.appendChild(row);
-}
+    const row = createElement("div", { class: "ingredient-row hvflex" }, [
+      createElement("input", {
+        type: "text",
+        name: "ingredientName[]",
+        placeholder: "Name",
+        value: name,
+        required: true,
+      }),
+      createElement("input", {
+        type: "number",
+        name: "ingredientQuantity[]",
+        placeholder: "Qty",
+        step: "any",
+        value: quantity !== "" ? String(quantity) : "",
+        required: true,
+      }),
+      createElement("input", {
+        type: "text",
+        name: "ingredientUnit[]",
+        placeholder: "Unit",
+        value: unit,
+        required: true,
+      }),
+      createElement("input", {
+        type: "text",
+        name: "ingredientAlternatives[]",
+        placeholder: "Alternatives (name|itemId|type, ...)",
+        value: altStr,
+      }),
+      removeBtn,
+    ]);
 
-if (recipe?.ingredients?.length) {
-  recipe.ingredients.forEach(ing =>
-    addIngredientRow(
-      ing.name,
-      ing.quantity,
-      ing.unit,
-      ing.alternatives || []
-    )
-  );
-} else {
-  addIngredientRow();
-}
+    ingredientsList.appendChild(row);
+  }
 
-const addIngredientBtn = Button(
-  "Add Ingredient",
-  "",
-  { click: () => addIngredientRow() }
-);
+  if (recipe?.ingredients?.length) {
+    recipe.ingredients.forEach((ing) =>
+      addIngredientRow(
+        ing.name,
+        ing.quantity,
+        ing.unit,
+        ing.alternatives || []
+      )
+    );
+  } else {
+    addIngredientRow();
+  }
 
-ingredientsGroup.appendChild(addIngredientBtn);
+  const addIngredientBtn = Button({
+    title: "Add Ingredient",
+    type: "button",
+    events: {
+      click: (e: Event) => {
+        e.preventDefault();
+        addIngredientRow();
+      },
+    },
+  });
 
+  ingredientsGroup.appendChild(addIngredientBtn);
 
   // --- Steps ---
+  const initialStepsText = (recipe?.steps || [])
+    .map((step) => (typeof step === "object" ? step.text : step))
+    .join("\n");
+
   const stepsGroup = createFormGroup({
     label: "Steps",
     type: "textarea",
     id: "steps",
-    value: (recipe?.steps || []).join("\n"),
+    value: initialStepsText,
     placeholder: "Each step on a new line",
     required: true,
     additionalProps: { rows: 6 },
@@ -209,14 +240,16 @@ ingredientsGroup.appendChild(addIngredientBtn);
   });
 
   // --- Submit Button ---
-  const submitBtn = Button(mode === "edit" ? "Update Recipe" : "Create Recipe", "", { type: "submit" });
+  const submitBtn = Button({
+    title: mode === "edit" ? "Update Recipe" : "Create Recipe",
+    type: "submit",
+  });
 
-  form.addEventListener("submit", async e => {
+  form.addEventListener("submit", async (e: SubmitEvent) => {
     e.preventDefault();
     const formData = new FormData(form);
-    const endpoint = mode === "edit"
-      ? `/recipes/recipe/${recipe?.recipeid}`
-      : "/recipes";
+    const endpoint =
+      mode === "edit" ? `/recipes/recipe/${recipe?.recipeid}` : "/recipes";
     const method = mode === "edit" ? "PUT" : "POST";
 
     try {
@@ -225,7 +258,6 @@ ingredientsGroup.appendChild(addIngredientBtn);
         form.reset();
       }
       alert("Recipe saved successfully!");
-      // displayRecipe(container, true, result?.recipeid);
       navigate(`/recipe/${result?.recipeid}`);
     } catch (err) {
       console.error("Upload failed:", err);
@@ -248,7 +280,6 @@ ingredientsGroup.appendChild(addIngredientBtn);
     stepsGroup,
     videoGroup,
     notesGroup,
-    // imageGroup,
     submitBtn
   );
 
