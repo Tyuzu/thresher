@@ -1,92 +1,130 @@
 import { createElement } from "../../components/createElement.js";
 import { Button } from "../../components/base/Button.js";
 import { apiFetch } from "../../api/api.js";
-import { formatCurrency } from "../../types/api.types.js";
-import { v4 as uuidv4 } from "https://jspm.dev/uuid";
+import { formatCurrency, Paise, toPaise } from "../../types/api.types.js";
+import { v4 as uuidv4 } from "uuid";
 import Notify from "../../components/ui/Notify.js";
 
-function parseAmountToPaise(value) {
-    const amount = Number(value);
-    if (Number.isNaN(amount) || amount <= 0) return 0;
-    return Math.round((amount + Number.EPSILON) * 100);
+/* ───────────────────────────────────────── */
+/* Types & Interfaces */
+/* ───────────────────────────────────────── */
+
+export interface WalletBalanceResponse {
+  balance?: number;
+  exists?: boolean;
+  [key: string]: unknown;
 }
 
-export function WalletManager() {
-    let currentIdempotencyKey = uuidv4();
+export interface WalletTopupResponse {
+  success?: boolean;
+  message?: string;
+  [key: string]: unknown;
+}
 
-    const balanceEl = createElement("div", { id: "wallet-balance", class: "balance-display" }, ["Loading balance..."]);
-    const amountInput = createElement("input", {
-        type: "number",
-        id: "topup-amount",
-        placeholder: "Enter amount in INR",
-        min: "1",
-        step: "0.01"
-    });
+export interface WalletManagerInstance {
+  element: HTMLElement;
+  loadBalance: () => Promise<void>;
+}
 
-    const methodSelect = createElement("select", { id: "topup-method" }, [
-        createElement("option", { value: "card" }, ["Credit/Debit Card"]),
-        createElement("option", { value: "upi" }, ["UPI Ecosystem"])
-    ]);
+/* ───────────────────────────────────────── */
+/* Utility Functions */
+/* ───────────────────────────────────────── */
 
-    const topupBtn = Button("Top Up Account", "topup-btn", {
-        click: async () => {
-            const amountPaise = parseAmountToPaise(amountInput.value);
-            const method = methodSelect.value;
+function parseAmountToPaise(value: string): Paise {
+  const amount = Number(value);
+  if (Number.isNaN(amount) || amount <= 0) return 0 as Paise;
+  return toPaise(amount);
+}
 
-            if (amountPaise <= 0) {
-                return Notify("Please enter a valid amount", { type: "warning" });
-            }
+/* ───────────────────────────────────────── */
+/* Wallet Manager Component */
+/* ───────────────────────────────────────── */
 
-            topupBtn.disabled = true;
-            try {
-                const res = await apiFetch("/wallet/topup", "POST", 
-                    { amount: amountPaise, method }, 
-                    { headers: { "Idempotency-Key": currentIdempotencyKey } }
-                );
+export function WalletManager(): WalletManagerInstance {
+  let currentIdempotencyKey: string = uuidv4();
 
-                if (res?.success) {
-                    Notify(res.message || "Top-up successful", { type: "success" });
-                    currentIdempotencyKey = uuidv4();
-                    amountInput.value = "";
-                    
-                    // Dispatch event for any component listening to balance updates
-                    window.dispatchEvent(new CustomEvent("wallet:balance-changed"));
-                } else {
-                    Notify(res?.message || "Transaction declined by gateway", { type: "error" });
-                }
-            } catch (err) {
-                console.error("Network error:", err);
-                Notify("Top-up request failed", { type: "error" });
-            } finally {
-                topupBtn.disabled = false;
-            }
+  const balanceEl = createElement("div", { id: "wallet-balance", class: "balance-display" }, [
+    "Loading balance..."
+  ]);
+
+  const amountInput = createElement("input", {
+    type: "number",
+    id: "topup-amount",
+    placeholder: "Enter amount in INR",
+    min: "1",
+    step: "0.01"
+  }) as HTMLInputElement;
+
+  const methodSelect = createElement("select", { id: "topup-method" }, [
+    createElement("option", { value: "card" }, ["Credit/Debit Card"]),
+    createElement("option", { value: "upi" }, ["UPI Ecosystem"])
+  ]) as HTMLSelectElement;
+
+  const topupBtn = Button({
+    title: "Top Up Account",
+    classes: "topup-btn btn-primary",
+    events: {
+      click: async () => {
+        const amountPaise = parseAmountToPaise(amountInput.value);
+        const method = methodSelect.value;
+
+        if (amountPaise <= 0) {
+          return Notify("Please enter a valid amount", { type: "warning" });
         }
-    });
 
-    async function loadBalance() {
+        topupBtn.disabled = true;
         try {
-            const res = await apiFetch("/wallet/balance");
-            if (res && res.balance !== undefined) {
-                balanceEl.textContent = `Wallet Balance: ${formatCurrency(res.balance)}`;
-            } else {
-                balanceEl.textContent = "Balance unavailable";
-            }
-        } catch (err) {
-            console.error("Balance fetch error:", err);
-            balanceEl.textContent = "Sync failed";
+          const res = await apiFetch<WalletTopupResponse>(
+            "/wallet/topup",
+            "POST",
+            { amount: amountPaise, method },
+            { headers: { "Idempotency-Key": currentIdempotencyKey } }
+          );
+
+          if (res?.success) {
+            Notify(res.message || "Top-up successful", { type: "success" });
+            currentIdempotencyKey = uuidv4();
+            amountInput.value = "";
+
+            // Dispatch event for any component listening to balance updates
+            window.dispatchEvent(new CustomEvent("wallet:balance-changed"));
+          } else {
+            Notify(res?.message || "Transaction declined by gateway", { type: "error" });
+          }
+        } catch (err: unknown) {
+          console.error("Network error:", err);
+          Notify("Top-up request failed", { type: "error" });
+        } finally {
+          topupBtn.disabled = false;
         }
+      }
     }
+  }) as HTMLButtonElement;
 
-    // Auto-listen to global balance updates
-    window.addEventListener("wallet:balance-changed", loadBalance);
-    loadBalance();
+  async function loadBalance(): Promise<void> {
+    try {
+      const res = await apiFetch<WalletBalanceResponse>("/wallet/balance");
+      if (res && res.balance !== undefined) {
+        balanceEl.textContent = `Wallet Balance: ${formatCurrency(res.balance)}`;
+      } else {
+        balanceEl.textContent = "Balance unavailable";
+      }
+    } catch (err: unknown) {
+      console.error("Balance fetch error:", err);
+      balanceEl.textContent = "Sync failed";
+    }
+  }
 
-    return {
-        element: createElement("div", { id: "wallet-manager", class: "wallet-card" }, [
-            createElement("h3", { class: "wallet-section-title" }, ["Account Balance"]),
-            balanceEl,
-            createElement("div", { class: "wallet-form" }, [amountInput, methodSelect, topupBtn])
-        ]),
-        loadBalance
-    };
+  // Auto-listen to global balance updates
+  window.addEventListener("wallet:balance-changed", loadBalance);
+  loadBalance();
+
+  return {
+    element: createElement("div", { id: "wallet-manager", class: "wallet-card" }, [
+      createElement("h3", { class: "wallet-section-title" }, ["Account Balance"]),
+      balanceEl,
+      createElement("div", { class: "wallet-form" }, [amountInput, methodSelect, topupBtn])
+    ]),
+    loadBalance
+  };
 }

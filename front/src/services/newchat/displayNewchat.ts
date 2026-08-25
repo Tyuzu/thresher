@@ -4,34 +4,51 @@ import { renderMessage } from "./renderMessage.js";
 import { setupFileUpload } from "./fileUpload.js";
 import { playSoundAlert, setChatSoundPreference, resolveSoundPreference } from "../notifications/soundAlerts.js";
 
-let activeSocket = null;
+let activeSocket: WebSocket | null = null;
+
+export interface SoundPreference {
+  tone?: string;
+}
+
+export interface InputRowElements {
+  inputRow: HTMLElement;
+  inputField: HTMLInputElement;
+  sendButton: HTMLButtonElement;
+}
+
+export interface UploadElements {
+  fileInput: HTMLInputElement;
+  uploadButton: HTMLButtonElement;
+  dropZone: HTMLElement;
+  progressBar: HTMLProgressElement;
+}
 
 export function displayNewChat(
-  contentContainer,
-  chatid,
-  isLoggedIn,
-  currentUserId
-) {
+  contentContainer: HTMLElement,
+  chatid: string | number,
+  isLoggedIn: boolean,
+  currentUserId: string | number
+): void {
   clearContainer(contentContainer);
   cleanupChat();
 
   const chatBox = createElement("div", {
     class: "chat-box"
-  });
+  }) as HTMLElement;
 
   const messagesContainer = createElement("div", {
     id: "messages",
     class: "messages-container"
-  });
+  }) as HTMLElement;
 
-  let socket = null;
+  let socket: WebSocket | null = null;
   if (isLoggedIn) {
     socket = createWebSocket(chatid);
     activeSocket = socket;
   }
 
-  const messageSoundPreference = resolveSoundPreference({ type: "message", chatId: chatid });
-  const notificationSoundPreference = resolveSoundPreference({ type: "notification", chatId: chatid });
+  const messageSoundPreference = resolveSoundPreference({ type: "message", chatId: String(chatid) }) as SoundPreference;
+  const notificationSoundPreference = resolveSoundPreference({ type: "notification", chatId: String(chatid) }) as SoundPreference;
 
   const {
     inputRow,
@@ -59,7 +76,7 @@ export function displayNewChat(
       progressBar,
       dropZone
     ]
-  );
+  ) as HTMLElement;
 
   if (!isLoggedIn) {
     disableInputs([
@@ -102,7 +119,7 @@ export function displayNewChat(
   );
 }
 
-export function cleanupChat() {
+export function cleanupChat(): void {
   if (activeSocket) {
     activeSocket.close();
     activeSocket = null;
@@ -111,21 +128,21 @@ export function cleanupChat() {
 
 /* ------------------ Helpers ------------------ */
 
-function clearContainer(container) {
+function clearContainer(container: HTMLElement): void {
   while (container.firstChild) {
     container.removeChild(container.firstChild);
   }
 }
 
-function createInputRow(socket) {
+function createInputRow(socket: WebSocket | null): InputRowElements {
   const inputField = createElement("input", {
     type: "text",
     placeholder: "Type a message…",
     id: "messageInput",
     class: "message-input"
-  });
+  }) as HTMLInputElement;
 
-  function sendMessage() {
+  function sendMessage(): void {
     const content = inputField.value.trim();
 
     if (!content) {
@@ -149,8 +166,7 @@ function createInputRow(socket) {
     inputField.value = "";
   }
 
-  // Bind input element events cleanly
-  inputField.addEventListener("keydown", e => {
+  inputField.addEventListener("keydown", (e: KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
       sendMessage();
@@ -164,17 +180,17 @@ function createInputRow(socket) {
       class: "send-button",
       disabled: true,
       events: {
-        click: sendMessage
+        click: sendMessage as EventListener
       }
     },
     ["Send"]
-  );
+  ) as HTMLButtonElement;
 
   const inputRow = createElement(
     "div",
     { class: "input-row" },
     [inputField, sendButton]
-  );
+  ) as HTMLElement;
 
   return {
     inputRow,
@@ -183,7 +199,11 @@ function createInputRow(socket) {
   };
 }
 
-function createChatSoundControls(chatid, messagePreference, notificationPreference) {
+function createChatSoundControls(
+  chatid: string | number,
+  messagePreference?: SoundPreference,
+  notificationPreference?: SoundPreference
+): HTMLElement {
   const container = createElement("div", {
     class: "chat-sound-controls",
     style: {
@@ -193,16 +213,14 @@ function createChatSoundControls(chatid, messagePreference, notificationPreferen
       alignItems: "center",
       marginBottom: "0.5rem"
     }
-  });
+  }) as HTMLElement;
 
-  // Helper to construct sound selector options with initial 'selected' state
-  const buildOptions = (currentVal) => [
-    createElement("option", { value: "default", ...(currentVal === "default" && { selected: true }) }, ["Default"]),
-    createElement("option", { value: "chime", ...(currentVal === "chime" && { selected: true }) }, ["Chime"]),
-    createElement("option", { value: "sharp", ...(currentVal === "sharp" && { selected: true }) }, ["Sharp"])
+  const buildOptions = (currentVal?: string): HTMLElement[] => [
+    createElement("option", { value: "default", ...(currentVal === "default" && { selected: true }) }, ["Default"]) as HTMLElement,
+    createElement("option", { value: "chime", ...(currentVal === "chime" && { selected: true }) }, ["Chime"]) as HTMLElement,
+    createElement("option", { value: "sharp", ...(currentVal === "sharp" && { selected: true }) }, ["Sharp"]) as HTMLElement
   ];
 
-  // FIXED: Changed event binding from onchange attribute property to standard events schema block
   const messageTone = createElement("label", {
     style: {
       display: "flex",
@@ -214,14 +232,15 @@ function createChatSoundControls(chatid, messagePreference, notificationPreferen
     "Message tone",
     createElement("select", {
       events: {
-        change: e => {
-          setChatSoundPreference(chatid, {
-            messageTone: e.target.value
+        change: ((e: Event) => {
+          const target = e.target as HTMLSelectElement;
+          setChatSoundPreference(String(chatid), {
+            messageTone: target.value
           });
-        }
+        }) as EventListener
       }
     }, buildOptions(messagePreference?.tone))
-  ]);
+  ]) as HTMLElement;
 
   const notificationTone = createElement("label", {
     style: {
@@ -234,26 +253,27 @@ function createChatSoundControls(chatid, messagePreference, notificationPreferen
     "Notification tone",
     createElement("select", {
       events: {
-        change: e => {
-          setChatSoundPreference(chatid, {
-            notificationTone: e.target.value
+        change: ((e: Event) => {
+          const target = e.target as HTMLSelectElement;
+          setChatSoundPreference(String(chatid), {
+            notificationTone: target.value
           });
-        }
+        }) as EventListener
       }
     }, buildOptions(notificationPreference?.tone))
-  ]);
+  ]) as HTMLElement;
 
   container.append(messageTone, notificationTone);
   return container;
 }
 
-function createUploadElements() {
+function createUploadElements(): UploadElements {
   const fileInput = createElement("input", {
     type: "file",
     accept: "image/*",
     class: "file-input",
     multiple: true
-  });
+  }) as HTMLInputElement;
 
   const uploadButton = createElement(
     "button",
@@ -262,23 +282,23 @@ function createUploadElements() {
       class: "upload-button"
     },
     ["Upload"]
-  );
+  ) as HTMLButtonElement;
 
   const dropZone = createElement(
     "div",
     {
       class: "drop-zone",
       events: {
-        dragover(e) {
+        dragover: ((e: DragEvent) => {
           e.preventDefault();
-        },
-        drop(e) {
+        }) as EventListener,
+        drop: ((e: DragEvent) => {
           e.preventDefault();
-        }
+        }) as EventListener
       }
     },
     ["Drag & drop files here"]
-  );
+  ) as HTMLElement;
 
   const progressBar = createElement("progress", {
     value: 0,
@@ -287,7 +307,7 @@ function createUploadElements() {
     style: {
       display: "none"
     }
-  });
+  }) as HTMLProgressElement;
 
   return {
     fileInput,
@@ -297,7 +317,7 @@ function createUploadElements() {
   };
 }
 
-function disableInputs(elements) {
+function disableInputs(elements: (HTMLInputElement | HTMLButtonElement | null)[]): void {
   elements.forEach(el => {
     if (el) {
       el.disabled = true;
@@ -305,9 +325,9 @@ function disableInputs(elements) {
   });
 }
 
-function createWebSocket(chatid) {
-  const token = getState("token") ?? "";
-  let base = CHAT_WS.replace(/\/+$/, "");
+function createWebSocket(chatid: string | number): WebSocket {
+  const token: string = getState("token") ?? "";
+  let base: string = CHAT_WS.replace(/\/+$/, "");
 
   if (
     !base.startsWith("ws://") &&
@@ -323,12 +343,12 @@ function createWebSocket(chatid) {
 }
 
 function setupSocketListeners(
-  socket,
-  messagesContainer,
-  currentUserId,
-  sendButton,
-  chatid
-) {
+  socket: WebSocket,
+  messagesContainer: HTMLElement,
+  currentUserId: string | number,
+  sendButton: HTMLButtonElement,
+  chatid: string | number
+): void {
   if (!socket) {
     return;
   }
@@ -347,7 +367,7 @@ function setupSocketListeners(
     sendButton.disabled = true;
   });
 
-  socket.addEventListener("error", err => {
+  socket.addEventListener("error", (err: Event) => {
     if (socket !== activeSocket) {
       return;
     }
@@ -355,7 +375,7 @@ function setupSocketListeners(
     sendButton.disabled = true;
   });
 
-  socket.addEventListener("message", async event => {
+  socket.addEventListener("message", async (event: MessageEvent) => {
     if (socket !== activeSocket) {
       return;
     }
@@ -366,14 +386,13 @@ function setupSocketListeners(
         msg?.senderid === currentUserId ||
         msg?.userid === currentUserId;
 
-      // FIXED: Only increment unread badge count and alert if the message was received in a background chat
       const isWindowHidden = typeof document !== "undefined" && document.visibilityState === "hidden";
       
       if (!isOwn) {
-        playSoundAlert({ type: "message", chatId: chatid });
+        playSoundAlert({ type: "message", chatId: String(chatid) });
         
         if (isWindowHidden) {
-          const unread = getState("unreadMessages") || 0;
+          const unread: number = getState("unreadMessages") || 0;
           setState("unreadMessages", unread + 1);
         }
       }

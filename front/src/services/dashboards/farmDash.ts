@@ -4,7 +4,93 @@ import { createTabs } from "../../utils/persistTabs.js";
 import { displayOrders } from "../crops/orders/orders.js";
 import { displayMyFarm } from "../crops/farm/myFarms.js";
 
-export function displayDash(content, isLoggedIn) {
+interface CropItem {
+  name?: string;
+  quantity?: number;
+  unit?: string;
+  price?: number;
+  discount?: number;
+  value?: number;
+}
+
+interface DayAvailability {
+  enabled?: boolean;
+  from?: string;
+  to?: string;
+}
+
+interface FarmAvailability {
+  monday?: DayAvailability;
+  tuesday?: DayAvailability;
+  wednesday?: DayAvailability;
+  thursday?: DayAvailability;
+  friday?: DayAvailability;
+  saturday?: DayAvailability;
+  sunday?: DayAvailability;
+  [key: string]: DayAvailability | undefined;
+}
+
+interface FarmData {
+  name?: string;
+  crops?: CropItem[];
+  location?: string;
+  practice?: string;
+  contact?: string;
+  owner?: string;
+  description?: string;
+  availability?: FarmAvailability;
+}
+
+interface AlertItem {
+  severity?: string;
+  message?: string;
+}
+
+interface OrderItem {
+  orderId?: string | number;
+  id?: string | number;
+  status?: string;
+  total?: number;
+}
+
+interface DashboardData {
+  inventory?: {
+    totalCrops?: number;
+    totalQuantity?: number;
+    inventoryValue?: number;
+    featuredCrops?: number;
+    lowStockCount?: number;
+    outOfStockCount?: number;
+  };
+  stats?: {
+    healthScore?: number;
+  };
+  revenue?: {
+    monthly?: number;
+    lifetime?: number;
+  };
+  orders?: {
+    pending?: number;
+    delivered?: number;
+    today?: number;
+    customers?: number;
+    total?: number;
+    cancelled?: number;
+  };
+  alerts?: AlertItem[];
+  recommendations?: string[];
+  topCrops?: CropItem[];
+  recentOrders?: OrderItem[];
+}
+
+interface FarmDashResponse {
+  success?: boolean;
+  message?: string;
+  farm?: FarmData;
+  dashboard?: DashboardData;
+}
+
+export function displayDash(content: HTMLElement, isLoggedIn: boolean): void {
   content.replaceChildren();
 
   if (!isLoggedIn) {
@@ -31,7 +117,7 @@ export function displayDash(content, isLoggedIn) {
     tabs,
     "farmdash-tabs",
     activeTabId,
-    (newTabId) => {
+    (newTabId: string) => {
       localStorage.setItem("dash-active-tab", newTabId);
     }
   );
@@ -41,7 +127,7 @@ export function displayDash(content, isLoggedIn) {
   );
 }
 
-function renderOverviewTab(container) {
+function renderOverviewTab(container: HTMLElement): void {
   container.replaceChildren();
 
   const loading = createElement("div", { class: "dashboard-loading" }, [
@@ -50,7 +136,7 @@ function renderOverviewTab(container) {
 
   container.appendChild(loading);
 
-  apiFetch("/dash/farms")
+  apiFetch<FarmDashResponse>("/dash/farms", "GET")
     .then((response) => {
       container.replaceChildren();
 
@@ -93,15 +179,15 @@ function renderOverviewTab(container) {
     });
 }
 
-function renderOrdersTab(container) {
+function renderOrdersTab(container: HTMLElement): void {
   displayOrders(container);
 }
 
-function renderMyFarmTab(container) {
+function renderMyFarmTab(container: HTMLElement): void {
   displayMyFarm(container);
 }
 
-function buildStatsSummary(farm, dashboard) {
+function buildStatsSummary(farm: FarmData, dashboard: DashboardData): HTMLElement {
   const inventory = dashboard.inventory || {};
   const stats = dashboard.stats || {};
 
@@ -133,116 +219,116 @@ function buildStatsSummary(farm, dashboard) {
   ]);
 }
 
-function buildRevenueSection(revenue) {
+function buildRevenueSection(revenue: DashboardData["revenue"] & {}): HTMLElement {
   return createElement("div", { class: "dashboard-section" }, [
     createElement("h3", {}, ["Revenue"]),
     createElement("div", { class: "stats-summary" }, [
       createElement("div", { class: "stat-card" }, [
-        `Monthly Revenue: ₹${formatMoney(revenue.monthly)}`,
+        `Monthly Revenue: ₹${formatMoney(revenue?.monthly)}`,
       ]),
       createElement("div", { class: "stat-card" }, [
-        `Lifetime Revenue: ₹${formatMoney(revenue.lifetime)}`,
+        `Lifetime Revenue: ₹${formatMoney(revenue?.lifetime)}`,
       ]),
     ]),
   ]);
 }
 
-function buildOrdersSection(orders) {
+function buildOrdersSection(orders: DashboardData["orders"] & {}): HTMLElement {
   return createElement("div", { class: "dashboard-section" }, [
     createElement("h3", {}, ["Orders"]),
     createElement("div", { class: "stats-summary" }, [
       createElement("div", { class: "stat-card" }, [
-        `Pending: ${orders.pending ?? 0}`,
+        `Pending: ${orders?.pending ?? 0}`,
       ]),
       createElement("div", { class: "stat-card" }, [
-        `Delivered: ${orders.delivered ?? 0}`,
+        `Delivered: ${orders?.delivered ?? 0}`,
       ]),
       createElement("div", { class: "stat-card" }, [
-        `Today's Orders: ${orders.today ?? 0}`,
+        `Today's Orders: ${orders?.today ?? 0}`,
       ]),
       createElement("div", { class: "stat-card" }, [
-        `Customers: ${orders.customers ?? 0}`,
+        `Customers: ${orders?.customers ?? 0}`,
       ]),
       createElement("div", { class: "stat-card" }, [
-        `Total Orders: ${orders.total ?? 0}`,
+        `Total Orders: ${orders?.total ?? 0}`,
       ]),
       createElement("div", { class: "stat-card" }, [
-        `Cancelled: ${orders.cancelled ?? 0}`,
+        `Cancelled: ${orders?.cancelled ?? 0}`,
       ]),
     ]),
   ]);
 }
 
-function buildAlertsSection(alerts) {
+function buildAlertsSection(alerts: AlertItem[]): HTMLElement {
   return createElement("div", { class: "dashboard-section" }, [
     createElement("h3", {}, ["Alerts"]),
     alerts.length === 0
       ? createElement("p", {}, ["No active alerts"])
       : createElement(
-          "ul",
-          { class: "dashboard-alerts" },
-          alerts.map((alert) =>
-            createElement("li", { class: `alert-${alert.severity || "info"}` }, [
-              createElement("strong", {}, [
-                `${(alert.severity || "info").toUpperCase()}: `,
-              ]),
-              alert.message || "Unknown alert",
-            ])
-          )
-        ),
+        "ul",
+        { class: "dashboard-alerts" },
+        alerts.map((alert) =>
+          createElement("li", { class: `alert-${alert.severity || "info"}` }, [
+            createElement("strong", {}, [
+              `${(alert.severity || "info").toUpperCase()}: `,
+            ]),
+            alert.message || "Unknown alert",
+          ])
+        )
+      ),
   ]);
 }
 
-function buildRecommendationsSection(recommendations) {
+function buildRecommendationsSection(recommendations: string[]): HTMLElement {
   return createElement("div", { class: "dashboard-section" }, [
     createElement("h3", {}, ["Recommendations"]),
     recommendations.length === 0
       ? createElement("p", {}, ["No recommendations"])
       : createElement(
-          "ul",
-          {},
-          recommendations.map((item) =>
-            createElement("li", {}, [item])
-          )
-        ),
+        "ul",
+        {},
+        recommendations.map((item) =>
+          createElement("li", {}, [item])
+        )
+      ),
   ]);
 }
 
-function buildTopCropsSection(crops) {
+function buildTopCropsSection(crops: CropItem[]): HTMLElement {
   return createElement("div", { class: "dashboard-section" }, [
     createElement("h3", {}, ["Top Inventory Value Crops"]),
     crops.length === 0
       ? createElement("p", {}, ["No crop data"])
       : createElement(
-          "ul",
-          {},
-          crops.map((crop) =>
-            createElement("li", {}, [
-              `${crop.name || "Unnamed Crop"} • ${crop.quantity ?? 0} ${crop.unit || ""} • ₹${formatMoney(crop.value)}`,
-            ])
-          )
-        ),
+        "ul",
+        {},
+        crops.map((crop) =>
+          createElement("li", {}, [
+            `${crop.name || "Unnamed Crop"} • ${crop.quantity ?? 0} ${crop.unit || ""} • ₹${formatMoney(crop.value)}`,
+          ])
+        )
+      ),
   ]);
 }
 
-function buildRecentOrdersSection(orders) {
+function buildRecentOrdersSection(orders: OrderItem[]): HTMLElement {
   return createElement("div", { class: "dashboard-section" }, [
     createElement("h3", {}, ["Recent Orders"]),
     orders.length === 0
       ? createElement("p", {}, ["No recent orders"])
       : createElement(
-          "ul",
-          {},
-          orders.map((order) =>
-            createElement("li", {}, [
-              `${order.orderId || order.id || "Unknown"} • ${order.status || "Unknown"} • ₹${formatMoney(order.total)}`,
-            ])
-          )
-        ),
+        "ul",
+        {},
+        orders.map((order) =>
+          createElement("li", {}, [
+            `${order.orderId || order.id || "Unknown"} • ${order.status || "Unknown"} • ₹${formatMoney(order.total)}`,
+          ])
+        )
+      ),
   ]);
 }
 
-function buildCropSection(crops) {
+function buildCropSection(crops: CropItem[]): HTMLElement {
   const section = createElement(
     "div",
     { class: "crop-distribution dashboard-section" },
@@ -271,7 +357,7 @@ function buildCropSection(crops) {
   return section;
 }
 
-function buildFarmExtra(farm) {
+function buildFarmExtra(farm: FarmData): HTMLElement {
   return createElement("div", { class: "farm-extra dashboard-section" }, [
     createElement("h3", {}, ["Farm Information"]),
     createElement("p", {}, [
@@ -293,8 +379,8 @@ function buildFarmExtra(farm) {
   ]);
 }
 
-function buildAvailability(availability) {
-  const days = [
+function buildAvailability(availability?: FarmAvailability): HTMLElement {
+  const days: [string, string][] = [
     ["monday", "Monday"],
     ["tuesday", "Tuesday"],
     ["wednesday", "Wednesday"],
@@ -305,7 +391,6 @@ function buildAvailability(availability) {
   ];
 
   const list = createElement("ul", { class: "farm-availability" });
-
   for (const [key, label] of days) {
     const day = availability?.[key];
 
@@ -319,14 +404,13 @@ function buildAvailability(availability) {
 
     list.appendChild(createElement("li", {}, [text]));
   }
-
   return createElement("div", {}, [
     createElement("h4", {}, ["Availability"]),
     list,
   ]);
 }
 
-function renderOverviewFallback(container, message) {
+function renderOverviewFallback(container: HTMLElement, message: string): void {
   container.appendChild(
     createElement("div", { class: "empty-state" }, [
       createElement("h3", {}, ["No Farm Found"]),
@@ -343,7 +427,7 @@ function renderOverviewFallback(container, message) {
   );
 }
 
-function formatMoney(value) {
+function formatMoney(value: unknown): string {
   const number = Number(value);
 
   if (!Number.isFinite(number)) {

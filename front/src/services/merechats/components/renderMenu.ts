@@ -2,25 +2,47 @@ import Button from "../../../components/base/Button.js";
 import { createElement } from "../../../components/createElement.js";
 import { mereFetch } from "../../../api/api.js";
 
-export function renderMenu(msg) {
-  // hard guards
-  if (!msg || msg.deleted) {
-return null;
+// Message interface representing the expected input structure
+export interface MenuMessagePayload {
+  messageid?: string | number | null;
+  deleted?: boolean;
+  content?: string | null;
+  [key: string]: unknown;
 }
 
-  const messageId =
+/**
+ * Renders the context menu element for a chat message.
+ * 
+ * @param msg - The message data object
+ * @returns The container DOM element or null if invalid/deleted
+ */
+export function renderMenu(msg: MenuMessagePayload): HTMLElement | null {
+  // hard guards
+  if (!msg || msg.deleted) {
+    return null;
+  }
+
+  const messageId: string | null =
     typeof msg.messageid === "string" && msg.messageid.trim()
       ? msg.messageid
+      : typeof msg.messageid === "number"
+      ? String(msg.messageid)
       : null;
 
   return createElement("div", { class: "msg-menu" }, [
-    Button("⋮", "menu-btn", {
-      click: e => {
-        e.stopPropagation();
-        const dropdown = e.currentTarget.nextSibling;
-        if (dropdown) {
-dropdown.classList.toggle("open");
-}
+    Button({
+      title: "⋮",
+      id: "menu-btn",
+      events: {
+        click: (e: Event) => {
+          const mouseEvent = e as MouseEvent;
+          mouseEvent.stopPropagation();
+          const currentTarget = mouseEvent.currentTarget as HTMLElement | null;
+          const dropdown = currentTarget?.nextSibling as HTMLElement | null;
+          if (dropdown) {
+            dropdown.classList.toggle("open");
+          }
+        }
       }
     }),
 
@@ -29,33 +51,49 @@ dropdown.classList.toggle("open");
       { class: "dropdown" },
       [
         messageId &&
-          Button("Edit", "", {
-            click: () => handleEdit(messageId)
+          Button({
+            title: "Edit",
+            events: {
+              click: () => handleEdit(messageId)
+            }
           }),
 
         messageId &&
-          Button("Delete", "", {
-            click: () => handleDelete(messageId)
+          Button({
+            title: "Delete",
+            events: {
+              click: () => handleDelete(messageId)
+            }
           }),
 
         msg.content &&
-          Button("Copy", "", {
-            click: () => navigator.clipboard.writeText(msg.content)
+          Button({
+            title: "Copy",
+            events: {
+              click: () => {
+                if (msg.content) {
+                  navigator.clipboard.writeText(msg.content);
+                }
+              }
+            }
           })
-      ].filter(Boolean) // remove null buttons cleanly
+      ].filter((btn): btn is HTMLElement => Boolean(btn)) // clean type guard filter
     )
-  ]);
+  ]) as HTMLElement;
 }
 
-async function handleEdit(id) {
+/**
+ * Handles editing an existing message by ID.
+ */
+async function handleEdit(id: string): Promise<void> {
   if (!id) {
-return;
-}
+    return;
+  }
 
   const text = prompt("Edit message:");
   if (!text || !text.trim()) {
-return;
-}
+    return;
+  }
 
   await mereFetch(
     `/merechats/messages/${id}`,
@@ -64,14 +102,17 @@ return;
   );
 }
 
-async function handleDelete(id) {
+/**
+ * Handles deleting an existing message by ID.
+ */
+async function handleDelete(id: string): Promise<void> {
   if (!id) {
-return;
-}
+    return;
+  }
 
   if (!confirm("Delete this message?")) {
-return;
-}
+    return;
+  }
 
   await mereFetch(
     `/merechats/messages/${id}`,

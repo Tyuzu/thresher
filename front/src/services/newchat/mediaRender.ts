@@ -3,12 +3,40 @@ import { RenderVideoPost } from "./renders/renderVideoPost.js";
 import { RenderAudioPost } from "./renders/renderAudioPost.js";
 import { createElement } from "../../components/createElement.js";
 
+/* ───────────────────────────────────────── */
+/* Types & Interfaces                       */
+/* ───────────────────────────────────────── */
+
+export type PostType = "image" | "video" | "audio" | "file" | string;
+
+export interface Post {
+  type?: PostType;
+  content?: string;
+  [key: string]: unknown;
+}
+
+export interface VideoPostOptions {
+  controls?: boolean;
+  "aria-label"?: string;
+  [key: string]: unknown;
+}
+
+export interface AudioPostOptions {
+  controls?: boolean;
+  "aria-label"?: string;
+  [key: string]: unknown;
+}
+
+/* ───────────────────────────────────────── */
+/* Function Implementation                   */
+/* ───────────────────────────────────────── */
+
 function createChatContent(
-  post,
-  media = [],
-  isOwn = false
-) {
-  const type = post?.type ?? "file";
+  post?: Post | null,
+  media: string[] = [],
+  isOwn: boolean = false
+): HTMLElement {
+  const type: PostType = post?.type ?? "file";
 
   // 1. Create the base bubble container synchronously to prevent layout blocks
   const bubble = createElement(
@@ -26,7 +54,6 @@ function createChatContent(
       createElement(
         "p",
         {
-          // FIXED: Added "message-content" class so your edit actions can find it!
           class: "chat-message-text message-content"
         },
         [post.content]
@@ -48,7 +75,7 @@ function createChatContent(
 
   // 3. Handle media rendering asynchronously without blocking the thread
   // This allows the bubble to paint to the screen instantly while the media loads
-  (async () => {
+  (async (): Promise<void> => {
     try {
       switch (type) {
         case "image":
@@ -76,13 +103,12 @@ function createChatContent(
           break;
 
         default: {
-          // FIXED: Structured multiple generic file links inside a semantic list
           const fileList = createElement("ul", { class: "chat-file-list" });
-          
+
           media.forEach((url, index) => {
             const fileName = `Download file ${index + 1}`;
             const fileItem = createElement("li", { class: "chat-file-item" });
-            
+
             const link = createElement(
               "a",
               {
@@ -103,9 +129,9 @@ function createChatContent(
           break;
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to render attachment media:", error);
-      
+
       // Graceful fallback display if renderer fails
       mediaContainer.textContent = "Failed to load media attachment.";
     }

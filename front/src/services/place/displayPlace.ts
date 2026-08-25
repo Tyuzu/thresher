@@ -4,7 +4,7 @@ import { createElement } from "../../components/createElement.js";
 import { renderPlaceDetails } from "./renderPlaceDetails.js";
 import { displayMedia } from "../media/ui/mediaGallery.js";
 import { displayReviews } from "../reviews/displayReviews.js";
-import { persistTabs } from "../../utils/persistTabs.js";
+import { persistTabs, TabItem } from "../../utils/persistTabs.js";
 import { displayPlaceInfo } from "./placeTabs.js";
 import {
   displayPlaceNearby,
@@ -23,24 +23,55 @@ import {
 import { displayPlaceJobs } from "../jobs/jobs.js";
 import Notify from "../../components/ui/Notify.js";
 import { displayBooking } from "../booking/booking.js";
-// import { displayPlacesMap } from "./placeRemap.js";
+
+export interface PlaceCoordinates {
+  lat?: number;
+  lng?: number;
+}
+
+export interface Place {
+  placeid?: string;
+  createdBy?: string;
+  name?: string;
+  category?: string;
+  address?: string;
+  description?: string;
+  short_desc?: string;
+  capacity?: number;
+  tags?: string[];
+  banner?: string;
+  coordinates?: PlaceCoordinates;
+  [key: string]: unknown;
+}
+
+type CategoryTabHandler = (
+  container: HTMLElement,
+  placeId: string,
+  isCreator: boolean,
+  isLoggedIn: boolean
+) => void;
 
 /**
  * Main entry point to fetch and render a place page
  */
-export default async function displayPlace(isLoggedIn, placeId, contentContainer) {
+export default async function displayPlace(
+  isLoggedIn: boolean,
+  placeId: string,
+  contentContainer: HTMLElement
+): Promise<void> {
   if (!placeId || !contentContainer || !(contentContainer instanceof HTMLElement)) {
     console.error("Invalid arguments passed to displayPlace.");
     return;
   }
 
   try {
-    const placeData = await apiFetch(`/places/place/${placeId}`);
+    const placeData = await apiFetch<Place>(`/places/place/${placeId}`);
     if (!placeData || typeof placeData !== "object") {
       throw new Error("Invalid place data received.");
     }
 
-    const isCreator = isLoggedIn && getState("user").userid === placeData.createdBy;
+    const user = getState("user") as { userid?: string } | undefined;
+    const isCreator = isLoggedIn && Boolean(user?.userid) && user?.userid === placeData.createdBy;
     contentContainer.replaceChildren();
 
     // 1. Render Header
@@ -59,9 +90,10 @@ export default async function displayPlace(isLoggedIn, placeId, contentContainer
     persistTabs(contentContainer, tabs, `place-tabs:${placeId}`);
 
   } catch (err) {
-    console.error("displayPlace error:", err);
+    const error = err as Error;
+    console.error("displayPlace error:", error);
     contentContainer.replaceChildren();
-    contentContainer.appendChild(createElement("h1", {}, [`Error loading place: ${err.message}`]));
+    contentContainer.appendChild(createElement("h1", {}, [`Error loading place: ${error.message}`]));
     Notify("Failed to load place details. Please try again later.", { type: "error", duration: 3000, dismissible: true });
   }
 }
@@ -69,7 +101,7 @@ export default async function displayPlace(isLoggedIn, placeId, contentContainer
 /**
  * Creates the place title, owner tags, maps links, bookmarks and sharing options
  */
-function createPlaceHeader(placeId, placeData, isCreator) {
+function createPlaceHeader(placeId: string, placeData: Place, isCreator: boolean): HTMLElement {
   const headerSection = createElement("div", { class: "place-header" });
   const titleRow = createElement("div", { class: "place-header-row" });
   const heading = createElement("h1", {}, [placeData.name || "Unnamed"]);
@@ -127,26 +159,16 @@ function createPlaceHeader(placeId, placeData, isCreator) {
 /**
  * Handles the inline editable metadata display and the maps toggler
  */
-function renderPlaceDetailsSection(editSection, placeData, isCreator, isLoggedIn, contentContainer) {
+function renderPlaceDetailsSection(
+  editSection: HTMLElement,
+  placeData: Place,
+  isCreator: boolean,
+  isLoggedIn: boolean,
+  contentContainer: HTMLElement
+): void {
   try {
     renderPlaceDetails(isLoggedIn, editSection, placeData, isCreator);
     contentContainer.appendChild(editSection);
-    /*
-        const maparea = createElement("div", { class: "place-map-container" });
-        const mapButton = createElement("button", {
-          id: "showMapBtn",
-          class: "buttonx secondary",
-          events: {
-            click: () => {
-              const mapElement = displayPlacesMap();
-              maparea.appendChild(mapElement);
-              mapButton.remove();
-            }
-          }
-        }, ["Show Map"]);
-    
-        contentContainer.appendChild(mapButton);
-        contentContainer.appendChild(maparea);*/
   } catch (err) {
     console.warn("Failed to render edit section:", err);
   }
@@ -155,9 +177,16 @@ function renderPlaceDetailsSection(editSection, placeData, isCreator, isLoggedIn
 /**
  * Builds and initializes the reservation booking manager area
  */
-function renderBookingSection(editSection, placeId, placeData, isCreator) {
+function renderBookingSection(
+  editSection: HTMLElement,
+  placeId: string,
+  placeData: Place,
+  isCreator: boolean
+): void {
   const bookingContainer = createElement("div", { id: "place-booking" });
   editSection.appendChild(bookingContainer);
+
+  const user = getState("user") as { userid?: string } | undefined;
 
   const bookButton = createElement("button", {
     id: "booking-btn",
@@ -174,7 +203,7 @@ function renderBookingSection(editSection, placeId, placeData, isCreator) {
             entityType: "place",
             entityId: placeId,
             entityCategory: placeData.category,
-            userId: getState("user").userid || "guest",
+            userId: user?.userid || "guest",
             isAdmin: isCreator
           },
           bookingContainer
@@ -189,14 +218,19 @@ function renderBookingSection(editSection, placeId, placeData, isCreator) {
 /**
  * Builds and returns the structured tabs array with safety boundaries
  */
-function buildPlaceTabs(placeId, placeData, isCreator, isLoggedIn) {
-  const tabs = [];
+function buildPlaceTabs(
+  placeId: string,
+  placeData: Place,
+  isCreator: boolean,
+  isLoggedIn: boolean
+): TabItem[] {
+  const tabs: TabItem[] = [];
 
   // Info Tab
   tabs.push({
     title: "Info",
     id: "info-tab",
-    render: (container) => {
+    render: (container: HTMLElement) => {
       try {
         displayPlaceInfo(container, placeData, isCreator);
       } catch (err) {
@@ -208,7 +242,7 @@ function buildPlaceTabs(placeId, placeData, isCreator, isLoggedIn) {
 
   // Dynamic Category-specific Tabs
   const category = (placeData.category || "").trim().toLowerCase();
-  const categoryTabs = {
+  const categoryTabs: Record<string, () => CategoryTabHandler> = {
     restaurant: () => displayPlaceMenu,
     café: () => displayPlaceMenu,
     cafe: () => displayPlaceMenu,
@@ -228,7 +262,7 @@ function buildPlaceTabs(placeId, placeData, isCreator, isLoggedIn) {
     tabs.push({
       title: (category === "cafe" || category === "café") ? "Menu" : tabName,
       id: `${category}-tab`,
-      render: (container) => {
+      render: (container: HTMLElement) => {
         try {
           categoryTabs[category]()(container, placeId, isCreator, isLoggedIn);
         } catch (err) {
@@ -241,7 +275,7 @@ function buildPlaceTabs(placeId, placeData, isCreator, isLoggedIn) {
     tabs.push({
       title: "Details",
       id: "details-tab",
-      render: (container) => displayPlaceDetailsFallback(container, placeData.category || "", placeId)
+      render: (container: HTMLElement) => displayPlaceDetailsFallback(container, placeData.category || "", placeId)
     });
   }
 
@@ -250,7 +284,7 @@ function buildPlaceTabs(placeId, placeData, isCreator, isLoggedIn) {
     {
       title: "Nearby",
       id: "nearby-tab",
-      render: (container) => {
+      render: (container: HTMLElement) => {
         try {
           displayPlaceNearby(container, placeId);
         } catch {
@@ -261,7 +295,7 @@ function buildPlaceTabs(placeId, placeData, isCreator, isLoggedIn) {
     {
       title: "Gallery",
       id: "gallery-tab",
-      render: (container) => {
+      render: (container: HTMLElement) => {
         try {
           displayMedia(container, "place", placeId, isLoggedIn);
         } catch {
@@ -272,7 +306,7 @@ function buildPlaceTabs(placeId, placeData, isCreator, isLoggedIn) {
     {
       title: "Reviews",
       id: "reviews-tab",
-      render: (container) => {
+      render: (container: HTMLElement) => {
         try {
           displayReviews(container, isCreator, isLoggedIn, "place", placeId);
         } catch {
@@ -283,7 +317,7 @@ function buildPlaceTabs(placeId, placeData, isCreator, isLoggedIn) {
     {
       title: "Jobs",
       id: "jobs-tab",
-      render: (container) => {
+      render: (container: HTMLElement) => {
         try {
           displayPlaceJobs(container, isCreator, isLoggedIn, "place", placeId);
         } catch {
@@ -297,7 +331,7 @@ function buildPlaceTabs(placeId, placeData, isCreator, isLoggedIn) {
 }
 
 // ─── Bookmark Utility Functions ─────────────────────────────────────────
-function getBookmarks() {
+function getBookmarks(): string[] {
   try {
     return JSON.parse(localStorage.getItem("bookmarked_places") || "[]");
   } catch {
@@ -305,7 +339,7 @@ function getBookmarks() {
   }
 }
 
-function toggleBookmark(placeId) {
+function toggleBookmark(placeId: string): void {
   let bookmarks = getBookmarks();
   if (bookmarks.includes(placeId)) {
     bookmarks = bookmarks.filter(id => id !== placeId);

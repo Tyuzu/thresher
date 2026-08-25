@@ -6,98 +6,131 @@ import { Button } from "../../components/base/Button.js";
 import { apiFetch } from "../../api/api.js";
 import Notify from "../../components/ui/Notify.js";
 
-export function WalletDashboard() {
-    const container = createElement("div", { id: "wallet-dashboard", class: "wallet-dashboard" });
+/* ───────────────────────────────────────── */
+/* Types & Interfaces */
+/* ───────────────────────────────────────── */
 
-    // Loading indicator while checking account status
-    const loadingEl = createElement("div", { class: "wallet-loading" }, ["Checking wallet account..."]);
-    container.appendChild(loadingEl);
+export interface WalletBalanceResponse {
+  exists?: boolean;
+  accountExists?: boolean;
+  balance?: number;
+  currency?: string;
+  [key: string]: unknown;
+}
 
-    async function checkAndRender() {
-        try {
-            const res = await apiFetch("/wallet/balance");
+export interface WalletCreateResponse {
+  success: boolean;
+  message?: string;
+  [key: string]: unknown;
+}
 
-            container.replaceChildren(); // Clear loading state
+export interface ApiError extends Error {
+  status?: number;
+}
 
-            // Check if account does NOT exist (e.g. res.exists === false or 404 response payload)
-            if (!res || res.exists === false || res.accountExists === false) {
-                renderCreateAccountView();
-                return;
-            }
+export interface WalletManagerInstance {
+  element: HTMLElement;
+  loadBalance: () => Promise<void> | void;
+}
 
-            // Account exists: Render full wallet UI
-            renderFullDashboard();
-        } catch (err) {
-            container.replaceChildren();
+export function WalletDashboard(): HTMLElement {
+  const container = createElement("div", { id: "wallet-dashboard", class: "wallet-dashboard" });
 
-            // If backend returns a 404 error indicating no account exists
-            if (err?.status === 404 || err?.message?.includes("not found")) {
-                renderCreateAccountView();
+  // Loading indicator while checking account status
+  const loadingEl = createElement("div", { class: "wallet-loading" }, ["Checking wallet account..."]);
+  container.appendChild(loadingEl);
+
+  async function checkAndRender(): Promise<void> {
+    try {
+      const res = await apiFetch<WalletBalanceResponse>("/wallet/balance");
+
+      container.replaceChildren(); // Clear loading state
+
+      // Check if account does NOT exist (e.g. res.exists === false or 404 response payload)
+      if (!res || res.exists === false || res.accountExists === false) {
+        renderCreateAccountView();
+        return;
+      }
+
+      // Account exists: Render full wallet UI
+      renderFullDashboard();
+    } catch (err: unknown) {
+      container.replaceChildren();
+
+      const error = err as ApiError;
+      // If backend returns a 404 error indicating no account exists
+      if (error?.status === 404 || error?.message?.includes("not found")) {
+        renderCreateAccountView();
+      } else {
+        container.appendChild(
+          createElement("div", { class: "wallet-error" }, ["Unable to load wallet information."])
+        );
+      }
+    }
+  }
+
+  function renderCreateAccountView(): void {
+    const createBtn = Button({
+      title: "Create Wallet Account",
+      id: "btn-create-account",
+      classes: "btn-primary",
+      events: {
+        click: async () => {
+          createBtn.disabled = true;
+          createBtn.textContent = "Creating Account...";
+
+          try {
+            const res = await apiFetch<WalletCreateResponse>("/wallet/create", "POST");
+            if (res?.success) {
+              Notify("Wallet account created successfully!", { type: "success" });
+              await checkAndRender(); // Re-check and render the full dashboard
             } else {
-                container.appendChild(
-                    createElement("div", { class: "wallet-error" }, ["Unable to load wallet information."])
-                );
+              Notify(res?.message || "Failed to create wallet account", { type: "error" });
             }
+          } catch (err: unknown) {
+            console.error("Account creation error:", err);
+            Notify("Error creating wallet account", { type: "error" });
+          } finally {
+            createBtn.disabled = false;
+            createBtn.textContent = "Create Wallet Account";
+          }
         }
-    }
+      }
+    }) as HTMLButtonElement;
 
-    function renderCreateAccountView() {
-        const createBtn = Button("Create Wallet Account", "btn-create-account", {
-            click: async () => {
-                createBtn.disabled = true;
-                createBtn.textContent = "Creating Account...";
+    const createAccountCard = createElement("div", { class: "wallet-card empty-wallet-state" }, [
+      createElement("h3", { class: "wallet-section-title" }, ["No Wallet Account Found"]),
+      createElement("p", { class: "wallet-description" }, ["Set up your wallet account to start sending, receiving, and managing funds."]),
+      createBtn
+    ]);
 
-                try {
-                    const res = await apiFetch("/wallet/create", "POST");
-                    if (res?.success) {
-                        Notify("Wallet account created successfully!", { type: "success" });
-                        await checkAndRender(); // Re-check and render the full dashboard
-                    } else {
-                        Notify(res?.message || "Failed to create wallet account", { type: "error" });
-                    }
-                } catch (err) {
-                    console.error("Account creation error:", err);
-                    Notify("Error creating wallet account", { type: "error" });
-                } finally {
-                    createBtn.disabled = false;
-                    createBtn.textContent = "Create Wallet Account";
-                }
-            }
-        });
+    container.appendChild(createAccountCard);
+  }
 
-        const createAccountCard = createElement("div", { class: "wallet-card empty-wallet-state" }, [
-            createElement("h3", { class: "wallet-section-title" }, ["No Wallet Account Found"]),
-            createElement("p", { class: "wallet-description" }, ["Set up your wallet account to start sending, receiving, and managing funds."]),
-            createBtn
-        ]);
+  function renderFullDashboard(): void {
+    const leftCol = createElement("div", { class: "wallet-left-col" });
 
-        container.appendChild(createAccountCard);
-    }
+    const walletManagerInstance = WalletManager() as WalletManagerInstance;
+    const walletManagerWrapper = createElement("section", { class: "wallet-section wallet-balance" }, [
+      walletManagerInstance.element
+    ]);
 
-    function renderFullDashboard() {
-        const leftCol = createElement("div", { class: "wallet-left-col" });
+    const transferWrapper = createElement("section", { class: "wallet-section wallet-transfer" }, [
+      WalletTransfer({ onBalanceChange: walletManagerInstance.loadBalance })
+    ]);
 
-        const walletManagerInstance = WalletManager();
-        const walletManagerWrapper = createElement("section", { class: "wallet-section wallet-balance" }, [
-            walletManagerInstance.element
-        ]);
+    leftCol.append(walletManagerWrapper, transferWrapper);
 
-        const transferWrapper = createElement("section", { class: "wallet-section wallet-transfer" }, [
-            WalletTransfer({ onBalanceChange: walletManagerInstance.loadBalance })
-        ]);
+    const rightCol = createElement("div", { class: "wallet-right-col" });
+    const txnWrapper = createElement("section", { class: "wallet-section wallet-transactions" }, [
+      WalletTransactions({ onBalanceChange: walletManagerInstance.loadBalance })
+    ]);
+    rightCol.append(txnWrapper);
 
-        leftCol.append(walletManagerWrapper, transferWrapper);
+    container.append(leftCol, rightCol);
+  }
 
-        const rightCol = createElement("div", { class: "wallet-right-col" });
-        const txnWrapper = createElement("section", { class: "wallet-section wallet-transactions" }, [
-            WalletTransactions({ onBalanceChange: walletManagerInstance.loadBalance })
-        ]);
-        rightCol.append(txnWrapper);
+  checkAndRender();
 
-        container.append(leftCol, rightCol);
-    }
-
-    checkAndRender();
-
-    return container;
+  return container;
 }

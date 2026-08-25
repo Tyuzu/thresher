@@ -1,7 +1,27 @@
 const SOUND_KEY = 'app-sound-settings';
 const CHAT_SOUND_KEY = 'app-chat-sound-settings';
 
-const DEFAULT_SETTINGS = {
+export interface SoundSettings {
+  enabled: boolean;
+  messageEnabled: boolean;
+  notificationEnabled: boolean;
+  messageTone: string;
+  notificationTone: string;
+}
+
+export interface ChatPreferences {
+  messageEnabled?: boolean;
+  notificationEnabled?: boolean;
+  messageTone?: string;
+  notificationTone?: string;
+}
+
+export interface SoundPreferenceOptions {
+  type?: 'message' | 'notification';
+  chatId?: string;
+}
+
+const DEFAULT_SETTINGS: SoundSettings = {
   enabled: true,
   messageEnabled: true,
   notificationEnabled: true,
@@ -10,12 +30,12 @@ const DEFAULT_SETTINGS = {
 };
 
 // Singleton AudioContext unlocked on first user gesture
-let audioContext = null;
+let audioContext: AudioContext | null = null;
 
 if (typeof window !== 'undefined') {
   const unlockAudio = () => {
     if (!audioContext) {
-      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      const AudioCtor = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtor) audioContext = new AudioCtor();
     }
     if (audioContext && audioContext.state === 'suspended') {
@@ -32,7 +52,7 @@ if (typeof window !== 'undefined') {
 }
 
 // Storage Helpers
-function getItem(key, fallback) {
+function getItem<T>(key: string, fallback: T): T {
   try {
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : fallback;
@@ -41,7 +61,7 @@ function getItem(key, fallback) {
   }
 }
 
-function setItem(key, value) {
+function setItem<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (e) {
@@ -50,48 +70,48 @@ function setItem(key, value) {
 }
 
 // Public API
-export function getSoundSettings() {
-  return { ...DEFAULT_SETTINGS, ...getItem(SOUND_KEY, {}) };
+export function getSoundSettings(): SoundSettings {
+  return { ...DEFAULT_SETTINGS, ...getItem<Partial<SoundSettings>>(SOUND_KEY, {}) };
 }
 
-export function setSoundSettings(partial = {}) {
+export function setSoundSettings(partial: Partial<SoundSettings> = {}): SoundSettings {
   const updated = { ...getSoundSettings(), ...partial };
   setItem(SOUND_KEY, updated);
   return updated;
 }
 
-export function setChatSoundPreference(chatId, preferences = {}) {
+export function setChatSoundPreference(chatId: string, preferences: ChatPreferences = {}): Record<string, ChatPreferences> | void {
   if (!chatId) return;
-  const allChatSettings = getItem(CHAT_SOUND_KEY, {});
+  const allChatSettings = getItem<Record<string, ChatPreferences>>(CHAT_SOUND_KEY, {});
   allChatSettings[chatId] = { ...allChatSettings[chatId], ...preferences };
   setItem(CHAT_SOUND_KEY, allChatSettings);
   return allChatSettings;
 }
 
-export function resolveSoundPreference({ type = 'message', chatId } = {}) {
+export function resolveSoundPreference({ type = 'message', chatId }: SoundPreferenceOptions = {}): { enabled: boolean; tone: string } {
   const globalSettings = getSoundSettings();
-  const chatSettings = chatId ? getItem(CHAT_SOUND_KEY, {})[chatId] || {} : {};
+  const chatSettings = chatId ? getItem<Record<string, ChatPreferences>>(CHAT_SOUND_KEY, {})[chatId] || {} : {};
 
   const toneKey = type === 'notification' ? 'notificationTone' : 'messageTone';
   const enabledKey = type === 'notification' ? 'notificationEnabled' : 'messageEnabled';
 
   const enabled =
     (globalSettings.enabled ?? true) &&
-    (chatSettings[enabledKey] ?? globalSettings[enabledKey] ?? true);
+    ((chatSettings as any)[enabledKey] ?? globalSettings[enabledKey as keyof SoundSettings] ?? true);
 
-  const tone = chatSettings[toneKey] || globalSettings[toneKey] || 'default';
+  const tone = (chatSettings as any)[toneKey] || globalSettings[toneKey as keyof SoundSettings] || 'default';
 
   return { enabled, tone };
 }
 
-export function resetSoundSettings() {
+export function resetSoundSettings(): void {
   try {
     localStorage.removeItem(SOUND_KEY);
     localStorage.removeItem(CHAT_SOUND_KEY);
   } catch {}
 }
 
-export function playSoundAlert({ type = 'message', chatId } = {}) {
+export function playSoundAlert({ type = 'message', chatId }: SoundPreferenceOptions = {}): boolean {
   const { enabled, tone } = resolveSoundPreference({ type, chatId });
 
   if (!enabled || !audioContext || audioContext.state !== 'running') {
@@ -102,7 +122,7 @@ export function playSoundAlert({ type = 'message', chatId } = {}) {
     const osc = audioContext.createOscillator();
     const gain = audioContext.createGain();
 
-    const frequencies = { chime: 880, sharp: 1320, default: 660 };
+    const frequencies: Record<string, number> = { chime: 880, sharp: 1320, default: 660 };
     osc.frequency.value = frequencies[tone] || frequencies.default;
 
     gain.gain.setValueAtTime(0.04, audioContext.currentTime);

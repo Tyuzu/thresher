@@ -1,11 +1,11 @@
-export { displayAboutCrop } from "./cropAbout.view";
-export { displayCropForm } from "./cropAbout.form";
-export { displayCropList } from "./cropAbout.list";
+export { displayAboutCrop } from "./cropAbout.view.js";
+export { displayCropForm } from "./cropAbout.form.js";
+export { displayCropList } from "./cropAbout.list.js";
 export {
     getCropAbout,
     getAllCropAbouts,
     createCropAbout,
     updateCropAbout,
     deleteCropAbout
-} from "./cropAbout.api";
-export * from "./cropAbout.types";
+} from "./cropAbout.api.js";
+export * from "./cropAbout.types.js";

@@ -1,8 +1,60 @@
 import { createElement } from "../../components/createElement.js";
-import { displayGenericMap } from "../remap/displayGenericMap.js";
+import { displayGenericMap } from "../../remap/displayGenericMap.js";
 
-export function displayPlacesMap(options = {}) {
-  const defaultOptions = {
+export interface LocationCoordinates {
+  lat: number;
+  lon: number;
+}
+
+export interface MapBounds {
+  minLat: number;
+  maxLat: number;
+  minLon: number;
+  maxLon: number;
+}
+
+export interface LockedArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label: string;
+}
+
+export type MarkerType = "event" | "shop" | "enemy" | "place";
+
+export interface MapMarker {
+  lat: number;
+  lon: number;
+  type: MarkerType;
+  title: string;
+}
+
+export interface PlacesMapOptions {
+  defaultLocation?: LocationCoordinates;
+  mapImage?: string;
+  mapWidth?: number;
+  mapHeight?: number;
+  mapBounds?: MapBounds;
+  markerCount?: number;
+  showLegend?: boolean;
+  lockedAreas?: LockedArea[];
+  minZoom?: number;
+  maxZoom?: number;
+  zoomStep?: number;
+  enableInertia?: boolean;
+  enableTouch?: boolean;
+}
+
+export interface GenericMapConfig extends Required<PlacesMapOptions> {
+  currentLocation: LocationCoordinates;
+  markers: MapMarker[];
+  lonToX: (lonVal: number) => number;
+  latToY: (latVal: number) => number;
+}
+
+export function displayPlacesMap(options: PlacesMapOptions = {}): HTMLElement {
+  const defaultOptions: Required<PlacesMapOptions> = {
     defaultLocation: { lat: 37.7749, lon: -122.4194 },
     mapImage: "",
     mapWidth: 1200,
@@ -25,12 +77,12 @@ export function displayPlacesMap(options = {}) {
     enableTouch: true,
   };
 
-  const mapOptions = { ...defaultOptions, ...options };
-  const container = createElement("div", { class: "mapcon" });
+  const mapOptions: Required<PlacesMapOptions> = { ...defaultOptions, ...options };
+  const container = createElement("div", { class: "mapcon" }) as HTMLElement;
 
   // Helper to generate random markers within bounds
-  const generateMarkers = (bounds, count) => {
-    const types = ["event", "shop", "enemy", "place"];
+  const generateMarkers = (bounds: MapBounds, count: number): MapMarker[] => {
+    const types: MarkerType[] = ["event", "shop", "enemy", "place"];
     return Array.from({ length: count }, (_, i) => {
       const lat =
         bounds.minLat + Math.random() * (bounds.maxLat - bounds.minLat);
@@ -46,19 +98,19 @@ export function displayPlacesMap(options = {}) {
     });
   };
 
-  const initMap = (lat, lon) => {
+  const initMap = (lat: number, lon: number): unknown => {
     const { mapBounds, mapWidth, mapHeight } = mapOptions;
 
     // Pixel conversion functions
-    const lonToX = (lonVal) =>
+    const lonToX = (lonVal: number): number =>
       ((lonVal - mapBounds.minLon) / (mapBounds.maxLon - mapBounds.minLon)) *
       mapWidth;
 
-    const latToY = (latVal) =>
+    const latToY = (latVal: number): number =>
       ((mapBounds.maxLat - latVal) / (mapBounds.maxLat - mapBounds.minLat)) *
       mapHeight;
 
-    const finalOptions = {
+    const finalOptions: GenericMapConfig = {
       ...mapOptions,
       currentLocation: { lat, lon },
       markers: generateMarkers(mapBounds, mapOptions.markerCount),
@@ -72,25 +124,5 @@ export function displayPlacesMap(options = {}) {
   // Initialize map with default location
   initMap(mapOptions.defaultLocation.lat, mapOptions.defaultLocation.lon);
 
-  // Optional: Uncomment to use actual geolocation
-  /*
-  if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        mapAPI.renderMarkers(
-          generateMarkers(mapOptions.mapBounds, mapOptions.markerCount),
-          { lat: pos.coords.latitude, lon: pos.coords.longitude }
-        ),
-      () =>
-        mapAPI.renderMarkers(
-          generateMarkers(mapOptions.mapBounds, mapOptions.markerCount),
-          mapOptions.defaultLocation
-        ),
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  }
-  */
-
-  // return { container, mapAPI };
   return container;
 }

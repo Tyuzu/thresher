@@ -1,4 +1,4 @@
-import { displayFanMedia } from "../fanmade/ui/mediaGallery.js";
+import { displayFanMedia } from "../fanmade/mediaGallery.js";
 import { displayMedia } from "../media/ui/mediaGallery.js";
 import { persistTabs } from "../../utils/persistTabs.js";
 

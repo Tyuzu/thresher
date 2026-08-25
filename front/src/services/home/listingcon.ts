@@ -1,4 +1,4 @@
-import { createElement } from "../../components/createElement.js";
+import { createElement, ChildInput } from "../../components/createElement.js";
 import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
 import Button from "../../components/base/Button.js";
@@ -7,10 +7,10 @@ import Imagex from "../../components/base/Imagex.js";
 import { createTabs } from "../../utils/persistTabs.js";
 import { subscribe } from "../../state/state.js";
 
-export const clearElement = (el) => {
- while (el.firstChild) {
-el.removeChild(el.firstChild);
-} 
+export const clearElement = (el: HTMLElement | Element): void => {
+  while (el.firstChild) {
+    el.removeChild(el.firstChild);
+  }
 };
 
 const categoryMap = {
@@ -18,11 +18,20 @@ const categoryMap = {
   Events: EntityType.EVENT,
   Baitos: EntityType.BAITO,
   Products: EntityType.PRODUCT,
-  Posts: EntityType.POST
-};
-const getEntityByCategory = (category) => categoryMap[category];
+  Posts: EntityType.BLOGPOST,
+} as const;
 
-function createImageCard({ banner, title, description, href }, entitytype) {
+type CategoryKey = keyof typeof categoryMap;
+
+const getEntityByCategory = (category: CategoryKey): EntityType => categoryMap[category];
+
+interface ImageCardData {
+  banner?: string;
+  title?: string;
+  description?: string;
+  href: string;
+}
+function createImageCard({ banner, title, description, href }: ImageCardData, entitytype: EntityType): HTMLElement {
   const safeTitle = title || "Untitled";
   const imgSrc = resolveImagePath(entitytype, PictureType.THUMB, banner);
 
@@ -34,18 +43,25 @@ function createImageCard({ banner, title, description, href }, entitytype) {
       createElement("div", { class: "card-info" }, [
         createElement("h4", {}, [safeTitle]),
         createElement("p", {}, [description || ""]),
-        Button("Explore", "button", { click: (e) => {
- e.stopPropagation(); navigate(href); 
-} }, "card-link")
-      ])
+        Button({
+          title: "Explore",
+          classes: "card-link",
+          events: {
+            click: (e: Event) => {
+              e.stopPropagation();
+              navigate(href);
+            },
+          },
+        }),
+      ]),
     ]
   );
 
   card.addEventListener("click", () => navigate(href));
-  card.addEventListener("keypress", (e) => {
+  card.addEventListener("keypress", (e: KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
-navigate(href);
-}
+      navigate(href);
+    }
   });
 
   return card;
@@ -55,26 +71,31 @@ navigate(href);
 function createCardSection() {
   const cardGrid = createElement("div", { class: "card-grid" }, []);
   const loadMoreWrapper = createElement("div", { class: "load-more-wrap" }, []);
-  const pagingState = {};
+  const pagingState: Record<string, { skip: number; limit: number; done: boolean; loading: boolean }> = {};
   const DEFAULT_LIMIT = 20;
 
-  const fetchPage = async (category, skip, limit) =>
-    apiFetch(`/homecards?category=${encodeURIComponent(category)}&skip=${skip}&limit=${limit}`);
+  const fetchPage = async (category: string, skip: number, limit: number) =>
+    apiFetch<any[]>(`/homecards?category=${encodeURIComponent(category)}&skip=${skip}&limit=${limit}`, "GET");
 
-  const showMessage = (msg) => createElement("p", { class: "status-message" }, [msg]);
-
-  const makeLoadMoreButton = (category) =>
-    Button("Load more", "home-load-more", { click: () => renderCardsPage(category, false) }, "load-more-btn");
-
-  const renderCardsPage = async (category, initial = false) => {
+  const showMessage = (msg: string) => createElement("p", { class: "status-message" }, [msg]);
+  const makeLoadMoreButton = (category: CategoryKey) =>
+    Button({
+      title: "Load more",
+      id: "home-load-more",
+      classes: "load-more-btn",
+      events: {
+        click: () => renderCardsPage(category, false),
+      },
+    });
+  const renderCardsPage = async (category: CategoryKey, initial: boolean = false): Promise<void> => {
     if (!pagingState[category]) {
       pagingState[category] = { skip: 0, limit: DEFAULT_LIMIT, done: false, loading: false };
     }
 
     const state = pagingState[category];
     if (state.loading || state.done) {
-return;
-}
+      return;
+    }
 
     state.loading = true;
 
@@ -89,14 +110,14 @@ return;
       const data = await fetchPage(category, state.skip, state.limit);
 
       if (initial) {
-clearElement(cardGrid);
-}
+        clearElement(cardGrid);
+      }
       loadMoreWrapper.removeAttribute("data-loading");
 
       if (!data?.length) {
         if (initial) {
-cardGrid.append(showMessage("No results found."));
-}
+          cardGrid.append(showMessage("No results found."));
+        }
         state.done = true;
         clearElement(loadMoreWrapper);
         return;
@@ -112,10 +133,10 @@ cardGrid.append(showMessage("No results found."));
 
       clearElement(loadMoreWrapper);
       if (data.length === state.limit) {
-loadMoreWrapper.append(makeLoadMoreButton(category));
-} else {
-state.done = true;
-}
+        loadMoreWrapper.append(makeLoadMoreButton(category));
+      } else {
+        state.done = true;
+      }
     } catch {
       if (initial) {
         clearElement(cardGrid);
@@ -130,22 +151,22 @@ state.done = true;
 }
 
 // -------------------- MAIN: Tabs + Reactive Update --------------------
-export function createListingTabs() {
+export function createListingTabs(): HTMLElement {
   const wrapper = createElement("div", { class: "listing-tabs-wrapper" }, []);
 
-  function render() {
+  function render(): void {
     wrapper.replaceChildren();
 
-    const categories = Object.keys(categoryMap);
+    const categories = Object.keys(categoryMap) as CategoryKey[];
 
     const tabs = categories.map((id) => ({
       id,
       title: id,
-      render: (container) => {
+      render: (container: HTMLElement) => {
         const section = createCardSection();
         container.append(section.cardGrid, section.loadMoreWrapper);
         section.renderCardsPage(id, true);
-      }
+      },
     }));
 
     wrapper.append(createTabs(tabs, "homeTabs", "Places"));

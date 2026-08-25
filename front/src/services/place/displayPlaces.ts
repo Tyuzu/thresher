@@ -7,24 +7,49 @@ import { apiFetch } from "../../api/api.js";
 import { adspace } from "../../services/ads/newads.js";
 import { createMainLayout } from "../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../components/layout/asideLayout.js";
+import { Place } from "./placeDetails.js";
 
-export async function displayPlaces(isLoggedIn, container) {
+interface PlacesResponse {
+  data?: Place[];
+  places?: Place[];
+}
+
+export async function displayPlaces(
+  isLoggedIn: boolean, 
+  container: HTMLElement
+): Promise<void> {
   container.replaceChildren();
 
   const PAGE_NAME = "places";
 
   // ---------- SIDEBAR SECTIONS ----------
-  const actionButtons = [];
+  const actionButtons: HTMLElement[] = [];
   if (isLoggedIn) {
     actionButtons.push(
-      Button("Create Place", "", { click: () => navigate("/create-place") }, "buttonx primary")
+      Button({
+        title: "Create Place",
+        classes: "buttonx primary",
+        events: { click: () => navigate("/create-place") },
+      })
     );
   }
 
   actionButtons.push(
-    Button("Create Itinerary", "", { click: () => navigate("/itinerary") }, "buttonx primary"),
-    Button("Manage Places", "", { click: () => navigate("/places/manage") }, "buttonx secondary"),
-    Button("Help / FAQ", "", { click: () => navigate("/help") }, "buttonx secondary")
+    Button({
+      title: "Create Itinerary",
+      classes: "buttonx primary",
+      events: { click: () => navigate("/itinerary") },
+    }),
+    Button({
+      title: "Manage Places",
+      classes: "buttonx secondary",
+      events: { click: () => navigate("/places/manage") },
+    }),
+    Button({
+      title: "Help / FAQ",
+      classes: "buttonx secondary",
+      events: { click: () => navigate("/help") },
+    })
   );
 
   const actionsWrapper = createElement("div", { class: "aside-actions-group" }, actionButtons);
@@ -74,14 +99,18 @@ export async function displayPlaces(isLoggedIn, container) {
 
   container.append(layout);
 
-  const mainElement = layout.querySelector(".layout-main");
+  const mainElement = layout.querySelector(".layout-main") as HTMLElement;
   const list = createElement("div", { class: "places-list" });
 
   // ---------- FETCH PLACES ----------
-  let places = [];
+  let places: Place[] = [];
   try {
-    const resp = await apiFetch("/places/places?page=1&limit=100");
-    places = Array.isArray(resp) ? resp : resp?.data || resp?.places || [];
+    const resp = await apiFetch<PlacesResponse | Place[]>("/places/places?page=1&limit=100");
+    if (Array.isArray(resp)) {
+      places = resp;
+    } else {
+      places = resp?.data || resp?.places || [];
+    }
   } catch (err) {
     console.error("Failed to load places", err);
   }
@@ -106,11 +135,13 @@ export async function displayPlaces(isLoggedIn, container) {
     });
   }
 
-  mainElement.append(list);
+  if (mainElement) {
+    mainElement.append(list);
+  }
 }
 
 // ---------- CARD BUILDER ----------
-function createPlaceCard(place) {
+function createPlaceCard(place: Place): HTMLElement {
   const bannerUrl = place.banner
     ? resolveImagePath(EntityType.PLACE, PictureType.THUMB, place.banner)
     : resolveImagePath(EntityType.DEFAULT, PictureType.STATIC, "placeholder.png");
@@ -119,7 +150,7 @@ function createPlaceCard(place) {
     src: bannerUrl,
     alt: `${place.name || "Unnamed"} Banner`,
     loading: "lazy",
-  });
+  }) as HTMLImageElement;
 
   image.onerror = () => {
     image.src = resolveImagePath(EntityType.DEFAULT, PictureType.STATIC, "placeholder.png");

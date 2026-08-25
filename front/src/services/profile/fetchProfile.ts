@@ -1,14 +1,23 @@
-// fetchProfile.js
-
 import { getState, setState } from "../../state/state.js";
 import { apiFetch } from "../../api/api.js";
 import Notify from "../../components/ui/Notify.js";
+
+interface UserProfile {
+  userid?: string | number;
+  id?: string | number;
+  username?: string;
+  [key: string]: unknown;
+}
+
+interface AuthState {
+  accessToken?: string;
+}
 
 /* ============================================================
     HELPERS
 ============================================================ */
 
-function notifyError(message) {
+function notifyError(message: string): void {
   Notify(message, {
     type: "error",
     duration: 3000,
@@ -16,10 +25,10 @@ function notifyError(message) {
   });
 }
 
-function getAccessToken() {
+function getAccessToken(): string | null {
   return (
-    getState("token") ||
-    getState("auth")?.accessToken ||
+    (getState("token") as string) ||
+    (getState("auth") as AuthState)?.accessToken ||
     localStorage.getItem("token") ||
     null
   );
@@ -31,9 +40,8 @@ function getAccessToken() {
 
 /**
  * Fetches the currently authenticated user's profile and updates app state
- * @returns {Promise<Object|null>}
  */
-async function fetchProfile() {
+async function fetchProfile(): Promise<UserProfile | null> {
   const token = getAccessToken();
 
   if (!token) {
@@ -42,7 +50,7 @@ async function fetchProfile() {
   }
 
   try {
-    const profile = await apiFetch("/profile/profile", "GET");
+    const profile = (await apiFetch("/profile/profile", "GET")) as UserProfile | null;
 
     if (!profile) {
       setState({ userProfile: null }, true);
@@ -53,7 +61,8 @@ async function fetchProfile() {
     setState({ userProfile: profile }, true);
     return profile;
   } catch (error) {
-    if (error?.name === "AbortError") {
+    const err = error as Error;
+    if (err?.name === "AbortError") {
       return null;
     }
 
@@ -70,10 +79,8 @@ async function fetchProfile() {
 
 /**
  * Fetches another user's public profile details by username
- * @param {string} username 
- * @returns {Promise<Object|null>}
  */
-async function fetchUserProfile(username) {
+async function fetchUserProfile(username: string): Promise<UserProfile | null> {
   if (typeof username !== "string" || !username.trim()) {
     return null;
   }
@@ -81,7 +88,7 @@ async function fetchUserProfile(username) {
   const encodedUsername = encodeURIComponent(username.trim());
 
   try {
-    const data = await apiFetch(`/user/${encodedUsername}`, "GET");
+    const data = (await apiFetch(`/user/${encodedUsername}`, "GET")) as UserProfile | null;
 
     if (!data || typeof data !== "object") {
       return null;
@@ -90,7 +97,8 @@ async function fetchUserProfile(username) {
     // Check for essential entity properties instead of requiring is_following
     return data.userid || data.id || data.username ? data : null;
   } catch (error) {
-    if (error?.name === "AbortError") {
+    const err = error as Error;
+    if (err?.name === "AbortError") {
       return null;
     }
 
@@ -105,11 +113,11 @@ async function fetchUserProfile(username) {
 
 /**
  * Fetches entity-specific data (posts, media, likes, etc.) for a user
- * @param {string} username 
- * @param {string} entityType 
- * @returns {Promise<Object|Array|null>}
  */
-async function fetchUserProfileData(username, entityType) {
+async function fetchUserProfileData(
+  username: string,
+  entityType: string
+): Promise<unknown> {
   if (typeof username !== "string" || !username.trim()) {
     throw new Error("Username is required.");
   }
@@ -127,7 +135,8 @@ async function fetchUserProfileData(username, entityType) {
       "GET"
     );
   } catch (error) {
-    if (error?.name === "AbortError") {
+    const err = error as Error;
+    if (err?.name === "AbortError") {
       return null;
     }
 

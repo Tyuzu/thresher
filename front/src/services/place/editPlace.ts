@@ -3,8 +3,11 @@ import { createElement } from "../../components/createElement.js";
 import { navigate } from "../../routes/navigate.js";
 import Notify from "../../components/ui/Notify.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
+import { Place } from "./placeDetails.js";
 
-const categoryMap = {
+type CategoryMap = Record<string, string[]>;
+
+const categoryMap: CategoryMap = {
   "Food & Beverage": ["Restaurant", "Cafe", "Bakery"],
   "Health & Wellness": ["Hospital", "Clinic", "Gym", "Yoga Center"],
   "Entertainment": ["Theater", "Stadium", "Museum", "Arena"],
@@ -13,32 +16,51 @@ const categoryMap = {
   Business: ["Business", "Hotel", "Other"],
 };
 
-async function editPlaceForm(isLoggedIn, placeId, content) {
+interface FormFieldConfig {
+  label: string;
+  type: string;
+  id: string;
+  value?: string | number;
+  placeholder?: string;
+  required?: boolean;
+}
+
+interface UpdatePlaceResponse {
+  placeid: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+async function editPlaceForm(
+  isLoggedIn: boolean, 
+  placeId: string, 
+  content: HTMLElement
+): Promise<void> {
   if (!isLoggedIn) {
     navigate("/login");
     return;
   }
 
   try {
-    const place = await apiFetch(`/places/place/${placeId}`);
+    const place = await apiFetch<Place>(`/places/place/${placeId}`);
     content.innerHTML = "";
 
     const detectedMainCategory =
       Object.entries(categoryMap).find(([_, subs]) =>
-        subs.includes(place.category)
+        subs.includes(place.category || "")
       )?.[0] || "";
 
-    const tags = Array.isArray(place.tags) ? [...place.tags] : [];
+    const tags: string[] = Array.isArray(place.tags) ? [...place.tags] : [];
 
     const form = createElement("form", {
       id: "edit-place-form",
       events: {
-        submit: async (event) => {
+        submit: async (event: Event) => {
           event.preventDefault();
           await updatePlace(isLoggedIn, placeId, tags);
         },
       },
-    });
+    }) as HTMLFormElement;
 
     const mainCategoryGroup = createFormGroup({
       label: "Place Type",
@@ -51,9 +73,10 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
         label: cat,
       })),
       events: {
-        change: (e) => {
-          const selected = e.target.value;
-          const subSelect = form.querySelector("#category");
+        change: (e: Event) => {
+          const target = e.target as HTMLSelectElement;
+          const selected = target.value;
+          const subSelect = form.querySelector("#category") as HTMLSelectElement | null;
           if (!subSelect) return;
           subSelect.innerHTML = "";
           (categoryMap[selected] || []).forEach((sub) => {
@@ -79,7 +102,7 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
       })
     );
 
-    const fields = [
+    const fields: FormFieldConfig[] = [
       {
         label: "Place Name",
         type: "text",
@@ -119,14 +142,14 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
       type: "text",
       id: "tag-input",
       placeholder: "Add a tag",
-    });
+    }) as HTMLInputElement;
 
     const tagList = createElement("div", {
       id: "tag-list",
       style: "margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;",
     });
 
-    function renderTags() {
+    function renderTags(): void {
       tagList.replaceChildren();
       tags.forEach((tag, index) => {
         const chip = createElement(
@@ -198,7 +221,8 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
     content.appendChild(createElement("h2", {}, ["Edit Place"]));
     content.appendChild(form);
   } catch (error) {
-    Notify(`Error loading place: ${error.message}`, {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    Notify(`Error loading place: ${message}`, {
       type: "warning",
       duration: 3000,
       dismissible: true,
@@ -206,7 +230,11 @@ async function editPlaceForm(isLoggedIn, placeId, content) {
   }
 }
 
-async function updatePlace(isLoggedIn, placeId, tags = []) {
+async function updatePlace(
+  isLoggedIn: boolean, 
+  placeId: string, 
+  tags: string[] = []
+): Promise<void> {
   if (!isLoggedIn) {
     Notify("Please log in to update place.", {
       type: "warning",
@@ -216,11 +244,17 @@ async function updatePlace(isLoggedIn, placeId, tags = []) {
     return;
   }
 
-  const name = document.getElementById("place-name").value.trim();
-  const capacity = document.getElementById("capacity").value;
-  const category = document.getElementById("category").value;
-  const address = document.getElementById("place-address").value.trim();
-  const description = document.getElementById("place-description").value.trim();
+  const nameEl = document.getElementById("place-name") as HTMLInputElement | null;
+  const capacityEl = document.getElementById("capacity") as HTMLInputElement | null;
+  const categoryEl = document.getElementById("category") as HTMLSelectElement | null;
+  const addressEl = document.getElementById("place-address") as HTMLInputElement | null;
+  const descriptionEl = document.getElementById("place-description") as HTMLTextAreaElement | null;
+
+  const name = nameEl?.value.trim() || "";
+  const capacity = capacityEl?.value || "";
+  const category = categoryEl?.value || "";
+  const address = addressEl?.value.trim() || "";
+  const description = descriptionEl?.value.trim() || "";
 
   if (!name || !capacity || !category || !address || !description) {
     Notify("Please fill in all required fields.", {
@@ -240,7 +274,7 @@ async function updatePlace(isLoggedIn, placeId, tags = []) {
   formData.append("tags", JSON.stringify(tags));
 
   try {
-    const result = await apiFetch(`/places/place/${placeId}`, "PUT", formData);
+    const result = await apiFetch<UpdatePlaceResponse>(`/places/place/${placeId}`, "PUT", formData);
     Notify(`Place updated successfully: ${result.name}`, {
       type: "success",
       duration: 3000,
@@ -250,7 +284,8 @@ async function updatePlace(isLoggedIn, placeId, tags = []) {
     // Triggers router update safely without requiring displayPlace import
     navigate(`/place/${placeId}`);
   } catch (error) {
-    Notify(`Error updating place: ${error.message}`, {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    Notify(`Error updating place: ${message}`, {
       type: "error",
       duration: 3000,
       dismissible: true,
@@ -258,7 +293,7 @@ async function updatePlace(isLoggedIn, placeId, tags = []) {
   }
 }
 
-async function deletePlace(isLoggedIn, placeId) {
+async function deletePlace(isLoggedIn: boolean, placeId: string): Promise<void> {
   if (!isLoggedIn) {
     Notify("Please log in to delete your place.", {
       type: "warning",
@@ -277,7 +312,8 @@ async function deletePlace(isLoggedIn, placeId) {
       });
       navigate("/places");
     } catch (error) {
-      Notify(`Error deleting place: ${error.message || "Unknown error"}`, {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      Notify(`Error deleting place: ${message}`, {
         type: "error",
         duration: 3000,
         dismissible: true,

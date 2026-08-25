@@ -1,3 +1,4 @@
+// MerchCard.ts
 import "../../../css/ui/MerchCard.css";
 import { createElement } from "../createElement.js";
 import Button from "../base/Button.js";
@@ -15,6 +16,7 @@ export interface MerchCardProps {
   onReport?: (e: Event) => void;
   isCreator?: boolean;
   isLoggedIn?: boolean;
+  [key: string]: unknown;
 }
 
 const MerchCard = ({
@@ -100,19 +102,21 @@ const MerchCard = ({
 
   return createElement("div", { class: "merch-card" }, [
     imageElement,
-    createElement("h3", { textContent: name }),
-    createElement("p", { textContent: priceText }),
+    createElement("h3", {}, [name]),
+    createElement("p", {}, [priceText]),
     hasDiscount
-      ? createElement("p", {
-          textContent: `${discount}% OFF`,
-          style: { color: "#e53935", fontWeight: "bold" },
-        })
+      ? createElement(
+          "p",
+          {
+            style: { color: "#e53935", fontWeight: "bold" },
+          },
+          [`${discount}% OFF`]
+        )
       : null,
-    createElement("p", {
-      textContent: `Available: ${stock}`,
-    }),
+    createElement("p", {}, [`Available: ${stock}`]),
     actions,
   ]) as HTMLElement;
 };
 
 export default MerchCard;
+export { MerchCard };

@@ -4,22 +4,32 @@ import { getVendorId, getVendorName, normalizeVendorList } from "./vendorUtils.j
 import { renderVendorCard } from "./vendorCardComponent.js";
 import { createElement } from "../../../components/createElement.js";
 
-function getVendorHiringRecord(vendorId, eventVendors) {
+interface VendorHiringRecord {
+    status?: string;
+    [key: string]: any;
+}
+
+interface LoadVendorsOptions {
+    onHireSuccess?: () => void;
+    isCreator?: boolean;
+}
+
+function getVendorHiringRecord(vendorId: string, eventVendors: any[]): VendorHiringRecord | undefined {
     return eventVendors.find((eventVendor) => String(getVendorId(eventVendor)) === String(vendorId));
 }
 
 /**
  * Loads, verifies, handles structural layouts, and handles initialization of vendor directory data structures.
  */
-export async function loadVendors(eventId, isLoggedIn = true, options = {}) {
+export async function loadVendors(eventId?: string, isLoggedIn: boolean = true, options: LoadVendorsOptions = {}): Promise<HTMLElement> {
     const { onHireSuccess, isCreator = false } = options;
 
     const container = createElement("div", { id: "vendors-list" }, [
         createElement("h4", {}, "Available Vendors")
-    ]);
+    ]) as HTMLElement;
 
-    let vendors = [];
-    let eventVendors = [];
+    let vendors: any[] = [];
+    let eventVendors: any[] = [];
 
     // 1. Fetch data arrays asynchronously
     try {

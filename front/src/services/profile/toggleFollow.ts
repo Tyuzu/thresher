@@ -3,6 +3,20 @@ import { apiFetch } from "../../api/api.js";
 import { fetchProfile } from './fetchProfile.js';
 import Notify from "../../components/ui/Notify.js";
 
+interface ToggleLabels {
+  on: string;
+  off: string;
+}
+
+interface ToggleActionOptions {
+  entityId: string | number;
+  entityType?: string;
+  button: HTMLButtonElement | null;
+  apiPath: string;
+  labels?: ToggleLabels;
+  actionName?: string;
+}
+
 /* ============================================================
     GENERIC TOGGLE ACTION
 ============================================================ */
@@ -17,7 +31,7 @@ async function toggleAction({
   apiPath,
   labels = { on: "Active", off: "Inactive" },
   actionName = "action"
-}) {
+}: ToggleActionOptions): Promise<void> {
   if (!getState("token")) {
     Notify("Please log in first.", { type: "warning", duration: 3000, dismissible: true });
     return;
@@ -41,7 +55,7 @@ async function toggleAction({
   button.dataset.active = String(!isActive);
 
   try {
-    const response = await apiFetch(apiEndpoint, httpMethod);
+    const response = (await apiFetch(apiEndpoint, httpMethod)) as Response | undefined;
 
     // Support both raw Response objects and parsed JSON payloads
     if (response && typeof response.ok === "boolean" && !response.ok) {
@@ -70,8 +84,9 @@ async function toggleAction({
     button.dataset.active = String(wasActive);
     button.disabled = false;
 
+    const err = error as Error;
     console.error(`Error toggling ${actionName}:`, error);
-    Notify(`Failed to update ${actionName}: ${error.message || "Unknown error"}`, {
+    Notify(`Failed to update ${actionName}: ${err.message || "Unknown error"}`, {
       type: "error",
       duration: 3000,
       dismissible: true
@@ -86,7 +101,7 @@ async function toggleAction({
 /**
  * Legacy wrapper for follow/unfollow toggle action
  */
-function toggleFollow(userId, followButton) {
+function toggleFollow(userId: string | number, followButton: HTMLButtonElement | null): Promise<void> {
   return toggleAction({
     entityId: userId,
     entityType: "user",

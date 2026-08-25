@@ -1,3 +1,4 @@
+// createOrEditItinerary.ts
 import { apiFetch } from "../../api/api.js";
 import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
@@ -6,34 +7,72 @@ import { navigate } from "../../routes/navigate.js";
 
 let dayCount = 0;
 
+/* ---------- types ---------- */
+
+interface Visit {
+  transport?: string;
+  start_time?: string;
+  end_time?: string;
+  location?: string;
+  [key: string]: unknown;
+}
+
+interface Day {
+  date?: string;
+  visits?: Visit[];
+  [key: string]: unknown;
+}
+
+interface Itinerary {
+  itineraryid?: string | number;
+  name?: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  status?: string;
+  days?: Day[];
+  [key: string]: unknown;
+}
+
+interface InputFieldConfig {
+  name: string;
+  type: string;
+  placeholder?: string;
+  required?: boolean;
+  id: string;
+  label?: string;
+  value?: string | number;
+  classes?: string;
+}
+
 /* ---------- helpers ---------- */
 
-function clearNode(node) {
+function clearNode(node: HTMLElement): void {
   while (node.firstChild) {
     node.removeChild(node.firstChild);
   }
 }
 
-function showFormError(form, message) {
-  let box = form.querySelector(".form-error");
+function showFormError(form: HTMLElement, message: string): void {
+  let box = form.querySelector(".form-error") as HTMLElement | null;
 
   if (!box) {
-    box = createElement("div", { class: "form-error" }, []);
+    box = createElement("div", { class: "form-error" }, []) as HTMLElement;
     form.prepend(box);
   }
 
   box.textContent = message;
 }
 
-function clearFormError(form) {
-  const box = form.querySelector(".form-error");
+function clearFormError(form: HTMLElement): void {
+  const box = form.querySelector(".form-error") as HTMLElement | null;
   if (box) {
     box.textContent = "";
   }
 }
 
-function createInputField({ name, type, placeholder, required, id, label, value, classes }) {
-  const group = createElement("div", { class: "form-group" }, []);
+function createInputField({ name, type, placeholder, required, id, label, value, classes }: InputFieldConfig): HTMLElement {
+  const group = createElement("div", { class: "form-group" }, []) as HTMLElement;
 
   if (label) {
     group.append(
@@ -43,8 +82,8 @@ function createInputField({ name, type, placeholder, required, id, label, value,
 
   const input =
     type === "textarea"
-      ? createElement("textarea", { name, id }, [])
-      : createElement("input", { type, name, id }, []);
+      ? (createElement("textarea", { name, id }, []) as HTMLTextAreaElement)
+      : (createElement("input", { type, name, id }, []) as HTMLInputElement);
 
   if (placeholder) {
     input.setAttribute("placeholder", placeholder);
@@ -53,7 +92,7 @@ function createInputField({ name, type, placeholder, required, id, label, value,
     input.required = true;
   }
   if (value !== undefined) {
-    input.value = value;
+    input.value = String(value);
   }
   if (classes) {
     input.setAttribute("class", classes);
@@ -63,15 +102,15 @@ function createInputField({ name, type, placeholder, required, id, label, value,
   return group;
 }
 
-function createTransportDropdown(selected) {
+function createTransportDropdown(selected?: string): HTMLElement {
   const group = createElement("div", { class: "form-group transport-group" }, [
     createElement("label", {}, ["Transport from previous stop"])
-  ]);
+  ]) as HTMLElement;
 
-  const select = createElement("select", { class: "transport-mode" }, []);
+  const select = createElement("select", { class: "transport-mode" }, []) as HTMLSelectElement;
 
   ["airplane", "car", "train", "walking", "other"].forEach(v => {
-    const opt = createElement("option", { value: v }, [v]);
+    const opt = createElement("option", { value: v }, [v]) as HTMLOptionElement;
     if (selected === v) {
       opt.selected = true;
     }
@@ -84,14 +123,15 @@ function createTransportDropdown(selected) {
 
 /* ---------- visits ---------- */
 
-function createVisitEntry(daySection, visit = {}) {
-  const visitsContainer = daySection.querySelector(".visits-container");
+function createVisitEntry(daySection: HTMLElement, visit: Visit = {}): void {
+  const visitsContainer = daySection.querySelector(".visits-container") as HTMLElement;
   const idx = visitsContainer.children.length;
+  const dayIndexAttr = daySection.dataset.dayIndex || "0";
 
   const entry = createElement("div", {
     class: "visit-entry",
-    "data-visit-index": idx
-  }, []);
+    "data-visit-index": String(idx)
+  }, []) as HTMLElement;
 
   if (idx > 0) {
     entry.append(createTransportDropdown(visit.transport));
@@ -101,7 +141,7 @@ function createVisitEntry(daySection, visit = {}) {
     createInputField({
       name: "start_time",
       type: "time",
-      id: `d${daySection.dataset.dayIndex}-v${idx}-st`,
+      id: `d${dayIndexAttr}-v${idx}-st`,
       label: "Start Time",
       required: true,
       value: visit.start_time,
@@ -110,7 +150,7 @@ function createVisitEntry(daySection, visit = {}) {
     createInputField({
       name: "end_time",
       type: "time",
-      id: `d${daySection.dataset.dayIndex}-v${idx}-en`,
+      id: `d${dayIndexAttr}-v${idx}-en`,
       label: "End Time",
       required: true,
       value: visit.end_time,
@@ -119,7 +159,7 @@ function createVisitEntry(daySection, visit = {}) {
     createInputField({
       name: "location",
       type: "text",
-      id: `d${daySection.dataset.dayIndex}-v${idx}-loc`,
+      id: `d${dayIndexAttr}-v${idx}-loc`,
       label: "Location",
       required: true,
       value: visit.location,
@@ -127,23 +167,24 @@ function createVisitEntry(daySection, visit = {}) {
     })
   );
 
-  entry.append(
-    Button("Remove visit", "rm-visit", {
+  const rmButton = Button({
+    title: "Remove visit", id: "rm-visit", events: {
       click: () => visitsContainer.removeChild(entry)
-    }, "buttonx secondary")
-  );
+    }, classes: "buttonx secondary"
+  }) as HTMLButtonElement;
 
+  entry.append(rmButton);
   visitsContainer.append(entry);
 }
 
 /* ---------- days ---------- */
 
-function createDaySection(day = {}) {
+function createDaySection(day: Day = {}): HTMLElement {
   const idx = dayCount++;
   const dayDiv = createElement("div", {
     class: "day-section",
-    "data-day-index": idx
-  }, []);
+    "data-day-index": String(idx)
+  }, []) as HTMLElement;
 
   dayDiv.append(
     createElement("h3", {}, [`Day ${idx + 1}`]),
@@ -158,17 +199,18 @@ function createDaySection(day = {}) {
     })
   );
 
-  const visitsContainer = createElement("div", { class: "visits-container" }, []);
+  const visitsContainer = createElement("div", { class: "visits-container" }, []) as HTMLElement;
   dayDiv.append(visitsContainer);
 
-  dayDiv.append(
-    Button("Add visit", "add-visit", {
-      click: () => createVisitEntry(dayDiv)
-    }, "buttonx"),
-    Button("Remove Day", "rm-day", {
-      click: () => dayDiv.remove()
-    }, "buttonx secondary")
-  );
+  const addVisitBtn = Button({title:"Add visit", id:"add-visit", events:{
+    click: () => createVisitEntry(dayDiv)
+  }, classes:"buttonx"}) as HTMLButtonElement;
+
+  const rmDayBtn = Button({title:"Remove Day", id:"rm-day", events:{
+    click: () => dayDiv.remove()
+  }, classes:"buttonx secondary"}) as HTMLButtonElement;
+
+  dayDiv.append(addVisitBtn, rmDayBtn);
 
   if (Array.isArray(day.visits) && day.visits.length) {
     day.visits.forEach(v => createVisitEntry(dayDiv, v));
@@ -181,15 +223,15 @@ function createDaySection(day = {}) {
 
 /* ---------- status ---------- */
 
-function createStatusDropdown(selected) {
+function createStatusDropdown(selected?: string): HTMLElement {
   const group = createElement("div", { class: "form-group" }, [
     createElement("label", { for: "status" }, ["Status"])
-  ]);
+  ]) as HTMLElement;
 
-  const select = createElement("select", { id: "status", name: "status" }, []);
+  const select = createElement("select", { id: "status", name: "status" }, []) as HTMLSelectElement;
 
   ["draft", "confirmed"].forEach(v => {
-    const opt = createElement("option", { value: v }, [v]);
+    const opt = createElement("option", { value: v }, [v]) as HTMLOptionElement;
     if (selected === v) {
       opt.selected = true;
     }
@@ -202,20 +244,25 @@ function createStatusDropdown(selected) {
 
 /* ---------- payload ---------- */
 
-function buildPayload(form, daysContainer, itineraryId) {
-  const days = [];
+function buildPayload(form: HTMLFormElement, daysContainer: HTMLElement, itineraryId?: string | number) {
+  const days: Day[] = [];
 
   daysContainer.querySelectorAll(".day-section").forEach(dayDiv => {
-    const date = dayDiv.querySelector(".day-date").value;
+    const dateInput = dayDiv.querySelector(".day-date") as HTMLInputElement;
+    const date = dateInput?.value;
     if (!date) {
       return;
     }
 
-    const visits = [];
+    const visits: Visit[] = [];
     dayDiv.querySelectorAll(".visit-entry").forEach(v => {
-      const location = v.querySelector(".visit-location").value.trim();
-      const start = v.querySelector(".start-time").value;
-      const end = v.querySelector(".end-time").value;
+      const locInput = v.querySelector(".visit-location") as HTMLInputElement;
+      const startInput = v.querySelector(".start-time") as HTMLInputElement;
+      const endInput = v.querySelector(".end-time") as HTMLInputElement;
+
+      const location = locInput?.value.trim() || "";
+      const start = startInput?.value || "";
+      const end = endInput?.value || "";
 
       if (!location || !start || !end) {
         return;
@@ -224,8 +271,8 @@ function buildPayload(form, daysContainer, itineraryId) {
         return;
       }
 
-      const t = v.querySelector(".transport-mode");
-      const visit = { location, start_time: start, end_time: end };
+      const t = v.querySelector(".transport-mode") as HTMLSelectElement;
+      const visit: Visit = { location, start_time: start, end_time: end };
       if (t) {
         visit.transport = t.value;
       }
@@ -238,20 +285,22 @@ function buildPayload(form, daysContainer, itineraryId) {
     }
   });
 
+  const elements = form.elements as unknown as Record<string, HTMLInputElement | HTMLSelectElement>;
+
   return {
     ...(itineraryId ? { itineraryid: itineraryId } : {}),
-    name: form.elements.name.value.trim(),
-    description: form.elements.description.value.trim(),
-    start_date: form.elements.start_date.value,
-    end_date: form.elements.end_date.value,
-    status: form.elements.status.value,
+    name: elements.name?.value.trim() || "",
+    description: elements.description?.value.trim() || "",
+    start_date: elements.start_date?.value || "",
+    end_date: elements.end_date?.value || "",
+    status: elements.status?.value || "draft",
     days
   };
 }
 
 /* ---------- render ---------- */
 
-export async function renderItineraryForm(container, isLoggedIn, mode = "create", itinerary) {
+export async function renderItineraryForm(container: HTMLElement, isLoggedIn: boolean, mode: string = "create", itinerary?: Itinerary): Promise<void> {
   clearNode(container);
 
   if (!isLoggedIn) {
@@ -261,7 +310,7 @@ export async function renderItineraryForm(container, isLoggedIn, mode = "create"
 
   dayCount = 0;
 
-  const form = createElement("form", { class: "create-section" }, []);
+  const form = createElement("form", { class: "create-section" }, []) as HTMLFormElement;
 
   form.append(
     createElement("h2", {}, [mode === "edit" ? "Edit Itinerary" : "Create Itinerary"]),
@@ -271,24 +320,26 @@ export async function renderItineraryForm(container, isLoggedIn, mode = "create"
     createInputField({ name: "end_date", id: "end_date", type: "date", label: "End Date", required: true, value: itinerary?.end_date })
   );
 
-  const daysContainer = createElement("div", { id: "daysContainer" }, []);
+  const daysContainer = createElement("div", { id: "daysContainer" }, []) as HTMLElement;
   form.append(daysContainer);
 
-  form.append(
-    Button("Add Day", "add-day", {
-      click: () => daysContainer.append(createDaySection())
-    }, "buttonx primary")
-  );
+  const addDayBtn = Button({titls:"Add Day", id:"add-day", events:{
+    click: () => daysContainer.append(createDaySection())
+  }, classes:"buttonx primary"}) as HTMLButtonElement;
 
-  if (itinerary?.days?.length) {
+  form.append(addDayBtn);
+
+  if (Array.isArray(itinerary?.days) && itinerary.days.length) {
     itinerary.days.forEach(d => daysContainer.append(createDaySection(d)));
   } else {
     daysContainer.append(createDaySection());
   }
 
+  const submitBtn = Button({title:(mode === "edit" ? "Update" : "Create"), id:"submit-it", events:{}, classes:"buttonx primary"}) as HTMLButtonElement;
+
   form.append(
     createStatusDropdown(itinerary?.status || "draft"),
-    Button(mode === "edit" ? "Update" : "Create", "submit-it", {}, "buttonx primary")
+    submitBtn
   );
 
   form.addEventListener("submit", async e => {
@@ -309,7 +360,7 @@ export async function renderItineraryForm(container, isLoggedIn, mode = "create"
       }
 
       const url = mode === "edit"
-        ? `/itineraries/${itinerary.itineraryid}`
+        ? `/itineraries/${itinerary?.itineraryid}`
         : "/itineraries";
 
       const method = mode === "edit" ? "PUT" : "POST";
@@ -323,13 +374,11 @@ export async function renderItineraryForm(container, isLoggedIn, mode = "create"
       Notify("Successfully updated ", { type: "success" });
 
       navigate("/itinerary");
-      // window.dispatchEvent(
-      //   new CustomEvent("navigate", { detail: "/itinerary" })
-      // );
 
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      showFormError(form, err.message || "An unexpected error occurred.");
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred.";
+      showFormError(form, errorMessage);
     }
   });
 
@@ -338,15 +387,16 @@ export async function renderItineraryForm(container, isLoggedIn, mode = "create"
 
 /* ---------- wrappers ---------- */
 
-export function createItinerary(container, isLoggedIn) {
+export function createItinerary(container: HTMLElement, isLoggedIn: boolean): void {
   renderItineraryForm(container, isLoggedIn, "create");
 }
 
-export async function editItinerary(container, isLoggedIn, id) {
+export async function editItinerary(container: HTMLElement, isLoggedIn: boolean, id: string | number): Promise<void> {
   clearNode(container);
 
   try {
-    const it = await apiFetch(`/itineraries/all/${id}`);
+    const response = (await apiFetch(`/itineraries/all/${id}`)) as { data?: Itinerary;[key: string]: unknown };
+    const it = response?.data || (response as Itinerary);
 
     if (!it) {
       throw new Error("Itinerary not found.");
@@ -354,7 +404,7 @@ export async function editItinerary(container, isLoggedIn, id) {
 
     renderItineraryForm(container, isLoggedIn, "edit", it);
 
-  } catch (err) {
+  } catch (err: unknown) {
     console.error(err);
 
     container.append(

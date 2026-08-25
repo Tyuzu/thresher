@@ -1,12 +1,16 @@
 import { createElement } from "../../components/createElement.js";
+import { ChatMessagePayload } from "./renderMessage.js";
 
-export function setupMessageActions(msg, socket) {
+export function setupMessageActions(
+  msg: ChatMessagePayload,
+  socket: WebSocket | null
+): HTMLElement {
   const messageId = msg.id || msg.messageid;
 
   const container = createElement("nav", {
     class: "msg-actions-container",
     "aria-label": "Message actions"
-  });
+  }) as HTMLElement;
 
   const triggerBtn = createElement(
     "button",
@@ -18,22 +22,20 @@ export function setupMessageActions(msg, socket) {
       type: "button"
     },
     ["⋮"]
-  );
+  ) as HTMLButtonElement;
 
   const dropdown = createElement("ul", {
     class: "msg-actions-dropdown hidden",
     role: "menu"
-  });
+  }) as HTMLElement;
 
-  // FIXED: Handle global click-away safely without multiplying listeners
-  function onDocumentClick(e) {
-    if (!container.contains(e.target)) {
+  function onDocumentClick(e: MouseEvent): void {
+    if (!container.contains(e.target as Node)) {
       closeMenu();
     }
   }
 
-  function openMenu() {
-    // Hide all other open menus first
+  function openMenu(): void {
     document.querySelectorAll(".msg-actions-dropdown").forEach(menu => {
       menu.classList.add("hidden");
     });
@@ -44,19 +46,17 @@ export function setupMessageActions(msg, socket) {
     dropdown.classList.remove("hidden");
     triggerBtn.setAttribute("aria-expanded", "true");
     
-    // Bind click-away only when open
     document.addEventListener("click", onDocumentClick);
   }
 
-  function closeMenu() {
+  function closeMenu(): void {
     dropdown.classList.add("hidden");
     triggerBtn.setAttribute("aria-expanded", "false");
     
-    // Clean up global listener immediately on close
     document.removeEventListener("click", onDocumentClick);
   }
 
-  function sendSocket(data) {
+  function sendSocket(data: object): boolean {
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       return false;
     }
@@ -75,7 +75,7 @@ export function setupMessageActions(msg, socket) {
         "aria-label": "Edit message"
       },
       ["Edit"]
-    );
+    ) as HTMLButtonElement;
 
     editButton.addEventListener("click", () => {
       const wrapper = document.getElementById(`msg-${messageId}`);
@@ -84,15 +84,14 @@ export function setupMessageActions(msg, socket) {
       const textNode = wrapper.querySelector(".message-content");
       if (!textNode) return;
 
-      // FIXED: Pull text directly from the DOM to avoid old cached msg.content values
-      const currentText = textNode.textContent.trim();
+      const currentText = textNode.textContent?.trim() || "";
 
       const input = createElement("input", {
         type: "text",
         value: currentText,
         class: "msg-edit-input",
         "aria-label": "Edit message text"
-      });
+      }) as HTMLInputElement;
 
       const saveBtn = createElement(
         "button",
@@ -102,7 +101,7 @@ export function setupMessageActions(msg, socket) {
           "aria-label": "Save edited message"
         },
         ["Save"]
-      );
+      ) as HTMLButtonElement;
 
       const cancelBtn = createElement(
         "button",
@@ -112,17 +111,17 @@ export function setupMessageActions(msg, socket) {
           "aria-label": "Cancel editing"
         },
         ["Cancel"]
-      );
+      ) as HTMLButtonElement;
 
       textNode.replaceWith(input);
 
-      const cleanupEditUI = (replacementElement) => {
+      const cleanupEditUI = (replacementElement: HTMLElement): void => {
         input.replaceWith(replacementElement);
         saveBtn.remove();
         cancelBtn.remove();
       };
 
-      const handleSave = () => {
+      const handleSave = (): void => {
         const newText = input.value.trim();
 
         if (!newText || newText === currentText) {
@@ -131,29 +130,27 @@ export function setupMessageActions(msg, socket) {
         }
 
         if (sendSocket({ action: "edit", id: messageId, content: newText })) {
-          // FIXED: Sync local model state so subsequent UI passes match the server
           msg.content = newText; 
 
           const replacement = createElement(
             "span",
             { class: "message-content" },
             [newText]
-          );
+          ) as HTMLElement;
           cleanupEditUI(replacement);
         }
       };
 
-      const handleCancel = () => {
+      const handleCancel = (): void => {
         const replacement = createElement(
           "span",
           { class: "message-content" },
           [currentText]
-        );
+        ) as HTMLElement;
         cleanupEditUI(replacement);
       };
 
-      // FIXED: Added Enter / Escape keyboard listeners
-      input.addEventListener("keydown", e => {
+      input.addEventListener("keydown", (e: KeyboardEvent) => {
         if (e.key === "Enter") {
           e.preventDefault();
           handleSave();
@@ -175,7 +172,7 @@ export function setupMessageActions(msg, socket) {
       });
     });
 
-    const editItem = createElement("li", { role: "menuitem" });
+    const editItem = createElement("li", { role: "menuitem" }) as HTMLElement;
     editItem.appendChild(editButton);
     dropdown.appendChild(editItem);
   }
@@ -190,7 +187,7 @@ export function setupMessageActions(msg, socket) {
       "aria-label": "Delete message"
     },
     ["Delete"]
-  );
+  ) as HTMLButtonElement;
 
   deleteButton.addEventListener("click", () => {
     if (!confirm("Delete this message?")) {
@@ -205,13 +202,13 @@ export function setupMessageActions(msg, socket) {
     closeMenu();
   });
 
-  const deleteItem = createElement("li", { role: "menuitem" });
+  const deleteItem = createElement("li", { role: "menuitem" }) as HTMLElement;
   deleteItem.appendChild(deleteButton);
   dropdown.appendChild(deleteItem);
 
   /* ---------- Menu Toggle ---------- */
 
-  triggerBtn.addEventListener("click", e => {
+  triggerBtn.addEventListener("click", (e: MouseEvent) => {
     e.stopPropagation();
     const isHidden = dropdown.classList.contains("hidden");
 

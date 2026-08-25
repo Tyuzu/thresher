@@ -1,25 +1,22 @@
 import { createElement } from "../../../components/createElement.js";
+import { Order, OrderFilters, OrderItem, OrderPageState } from "./types.js";
 
-/* ───────────────── Filtering / Sorting ───────────────── */
-
-function normalizeMoney(value) {
+function normalizeMoney(value: any): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
 /**
  * Normalizes user order payload parameters into strict local layout configurations.
- * @param {Array} orders - Incoming order matrices from backend microservices.
- * @returns {Array} Clean sorted array data arrays.
  */
-export function normalizeOrders(orders) {
+export function normalizeOrders(orders: Record<string, any>[]): Order[] {
   if (!Array.isArray(orders)) return [];
 
   return [...orders]
-    .map((order) => {
-      // Unify the timestamp property profile ahead of sorting checks
-      const explicitTime = order.createdAt || order.created_at || order.createdTime || order.timestamp || 0;
-      
+    .map((order): Order => {
+      const explicitTime =
+        order.createdAt || order.created_at || order.createdTime || order.timestamp || 0;
+
       return {
         ...order,
         orderId: String(order.orderId || order.orderid || order.id || order.OrderID || ""),
@@ -41,13 +38,13 @@ export function normalizeOrders(orders) {
     .sort((a, b) => {
       const aTime = new Date(a.createdAt).getTime() || 0;
       const bTime = new Date(b.createdAt).getTime() || 0;
-      return bTime - aTime; // Always descending (newest first)
+      return bTime - aTime;
     });
 }
 
-export function getFilteredOrders(orders, filters) {
+export function getFilteredOrders(orders: Order[], filters?: OrderFilters): Order[] {
   if (!Array.isArray(orders)) return [];
-  
+
   const status = (filters?.status || "").trim().toLowerCase();
   const date = (filters?.date || "").trim();
 
@@ -66,9 +63,9 @@ export function getFilteredOrders(orders, filters) {
   });
 }
 
-export function toLocalDateKey(dateStr) {
+export function toLocalDateKey(dateStr: string | number): string {
   if (!dateStr) return "";
-  
+
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "";
 
@@ -78,9 +75,9 @@ export function toLocalDateKey(dateStr) {
   return `${y}-${m}-${day}`;
 }
 
-export function toggleExpanded(state, orderId) {
+export function toggleExpanded(state: OrderPageState, orderId: string): void {
   if (!state || !state.expandedOrders) return;
-  
+
   if (state.expandedOrders.has(orderId)) {
     state.expandedOrders.delete(orderId);
   } else {
@@ -88,7 +85,7 @@ export function toggleExpanded(state, orderId) {
   }
 }
 
-export function getOrderProducts(order) {
+export function getOrderProducts(order: Order | null): OrderItem[] {
   if (!order || !order.items) return [];
 
   if (Array.isArray(order.items.products)) {
@@ -96,25 +93,24 @@ export function getOrderProducts(order) {
   }
 
   if (typeof order.items === "object" && !Array.isArray(order.items)) {
-    const allItems = [];
-    
-    // FIXED: Protect against property iteration pollution from object prototype changes
+    const allItems: OrderItem[] = [];
+
     Object.keys(order.items).forEach((category) => {
       const categoryItems = order.items[category];
       if (Array.isArray(categoryItems)) {
         allItems.push(...categoryItems);
       }
     });
-    
+
     return allItems;
   }
 
   return [];
 }
 
-export function getOrderSummaryMeta(order) {
+export function getOrderSummaryMeta(order: Order | null) {
   if (!order) return {};
-  
+
   return {
     orderId: order.orderId || "N/A",
     orderType: order.orderType || "regular",
@@ -126,12 +122,12 @@ export function getOrderSummaryMeta(order) {
   };
 }
 
-export function capitalize(text = "") {
+export function capitalize(text: string = ""): string {
   if (typeof text !== "string") return "";
   return text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
 }
 
-export function formatDate(dateStr) {
+export function formatDate(dateStr: string | number): string {
   if (!dateStr) return "N/A";
 
   const d = new Date(dateStr);
@@ -144,7 +140,7 @@ export function formatDate(dateStr) {
       });
 }
 
-export function formatINR(val = 0, isPaise = false) {
+export function formatINR(val: number = 0, isPaise: boolean = false): string {
   const rupees = isPaise ? val / 100 : val;
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -152,9 +148,7 @@ export function formatINR(val = 0, isPaise = false) {
   }).format(rupees);
 }
 
-/* ───────────────── Actions ───────────────── */
-
-export function downloadReceipt(order) {
+export function downloadReceipt(order: Order | null): void {
   if (!order) return;
 
   const blob = new Blob([JSON.stringify(order, null, 2)], {
@@ -162,17 +156,16 @@ export function downloadReceipt(order) {
   });
 
   const blobUrl = URL.createObjectURL(blob);
-  
+
   const link = createElement("a", {
     href: blobUrl,
     download: `receipt_${order.orderId || "order"}.json`,
-    style: "display: none;" // Prevent layout jumping during insertion
-  });
+    style: "display: none;",
+  }) as HTMLAnchorElement;
 
   document.body.append(link);
   link.click();
 
-  // FIXED: Proactive garbage cleanup avoids async detached node memory creep 
   link.remove();
   URL.revokeObjectURL(blobUrl);
 }

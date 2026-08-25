@@ -2,23 +2,59 @@ import { getState } from "../../state/state.js";
 import { formatDate } from "./profileHelpers.js";
 import { logout } from "../auth/authService.js";
 import { reportEntity } from "../reporting/reporting.js";
-import Button from "../../components/base/Button.js";
+import Button, { ButtonOptions } from "../../components/base/Button.js";
 
 import { toggleAction } from "../beats/toggleFollows.js";
 import { meChat } from "../mechat/plugnplay.js";
 
-// Reuse appendChildren from profileImages.js or redefine here if needed
-function appendChildren(parent, ...children) {
+/* ============================================================
+    TYPE DEFINITIONS
+============================================================ */
+
+export interface UserProfile {
+    userid: string | number;
+    username: string;
+    name?: string;
+    bio?: string;
+    is_following?: boolean;
+    last_login?: string | Date;
+    is_verified?: boolean;
+    wallet_balance?: number;
+    followerscount?: number;
+    followscount?: number;
+}
+
+export interface InfoItem {
+    label: string;
+    value: string | Node;
+}
+
+export interface StatItem {
+    label: string;
+    value: number | string;
+}
+
+/* ============================================================
+    DOM HELPERS & COMPONENTS
+============================================================ */
+
+/**
+ * Appends child nodes to a parent element safely.
+ */
+function appendChildren(parent: HTMLElement, ...children: (Node | null | undefined)[]): void {
     children.forEach(child => {
         if (child instanceof Node) {
             parent.appendChild(child);
-        } else {
+        } else if (child !== null && child !== undefined) {
             console.error("Invalid child passed to appendChildren:", child);
         }
     });
 }
 
-function createProfileDetails(profile, isLoggedIn) {
+/**
+ * Creates the container element containing user profile details.
+ */
+function createProfileDetails(profile: UserProfile, isLoggedIn: boolean): HTMLDivElement {
     const profileDetails = document.createElement("div");
     profileDetails.className = "profile-details";
 
@@ -42,9 +78,9 @@ function createProfileDetails(profile, isLoggedIn) {
 }
 
 /**
- * Follow a user
+ * Handles toggling the follow state for a user entity.
  */
-function FollowUser(followBtn, userId) {
+function FollowUser(followBtn: HTMLElement, userId: string | number): void {
     toggleAction({
         entityId: userId,
         entityType: "user",
@@ -55,83 +91,86 @@ function FollowUser(followBtn, userId) {
     });
 }
 
-function createProfileActions(profile, isLoggedIn) {
+/**
+ * Generates action buttons depending on whether the current user owns the profile or is viewing another profile.
+ */
+function createProfileActions(profile: UserProfile, isLoggedIn: boolean): HTMLDivElement {
     const profileActions = document.createElement("div");
     profileActions.className = "profile-actions";
 
-    const currentUser = getState("user").userid;
+    const currentUser = getState("user")?.userid;
 
     // Owner Actions (Logout, Edit Profile)
     if (profile.userid === currentUser) {
-        const logoutButton = Button(
-            "Logout",
-            "logout-btn",
-            {
-                click: async () => await logout()
-            },
-            "dropdown-item logout-btn"
-        );
+        const logoutOptions: ButtonOptions = {
+            title: "Logout",
+            id: "logout-btn",
+            events: { click: async () => await logout() },
+            classes: "dropdown-item logout-btn"
+        };
+        const logoutButton = Button(logoutOptions);
         profileActions.appendChild(logoutButton);
 
-        const editButton = Button(
-            "Edit Profile",
-            "edit-profile-btn",
-            {},
-            "btn edit-btn",
-            {},
-            { "data-action": "edit-profile" }
-        );
+        const editOptions: ButtonOptions = {
+            title: "Edit Profile",
+            id: "edit-profile-btn",
+            classes: "btn edit-btn",
+            "data-action": "edit-profile"
+        };
+        const editButton = Button(editOptions);
         profileActions.appendChild(editButton);
     }
 
     // Profile Actions for other users (Follow, Message, Report)
     if (isLoggedIn && profile.userid !== currentUser) {
-        const followButton = Button(
-            profile.is_following ? "Unfollow" : "Follow",
-            "follow-btn",
-            {
+        const followOptions: ButtonOptions = {
+            title: profile.is_following ? "Unfollow" : "Follow",
+            id: "follow-btn",
+            events: {
                 click: () => FollowUser(followButton, profile.userid)
             },
-            "btn follow-button",
-            { backgroundColor: "green" },
-            {
-                "data-action": "toggle-follow",
-                "data-userid": profile.userid
-            }
-        );
+            classes: "btn follow-button",
+            styles: { backgroundColor: "green" },
+            "data-action": "toggle-follow",
+            "data-userid": String(profile.userid)
+        };
+        const followButton = Button(followOptions);
         profileActions.appendChild(followButton);
 
-        const sendMessagebtn = Button(
-            "Send Message",
-            "send-msg",
-            {
+        const sendMessageOptions: ButtonOptions = {
+            title: "Send Message",
+            id: "send-msg",
+            events: {
                 click: () => meChat(profile.userid, "user", currentUser)
             },
-            "buttonx"
-        );
+            classes: "buttonx"
+        };
+        const sendMessagebtn = Button(sendMessageOptions);
         profileActions.appendChild(sendMessagebtn);
 
-        const reportButton = Button(
-            "Report",
-            "report-btn",
-            {
-                click: () => {
-                    reportEntity(profile.userid, "user");
-                }
+        const reportOptions: ButtonOptions = {
+            title: "Report",
+            id: "report-btn",
+            events: {
+                click: () => reportEntity(String(profile.userid), "user")
             },
-            "report-btn"
-        );
+            classes: "report-btn"
+        };
+        const reportButton = Button(reportOptions);
         profileActions.appendChild(reportButton);
     }
 
     return profileActions;
 }
 
-function createProfileInfo(profile) {
+/**
+ * Renders key account status items (Last Login, Verification).
+ */
+function createProfileInfo(profile: UserProfile): HTMLDivElement {
     const profileInfo = document.createElement("div");
     profileInfo.className = "profile-info";
 
-    const infoItems = [
+    const infoItems: InfoItem[] = [
         { label: "Last Login", value: formatDate(profile.last_login) || "Never logged in" },
         { label: "Verification Status", value: profile.is_verified ? "Verified" : "Not Verified" },
     ];
@@ -141,14 +180,14 @@ function createProfileInfo(profile) {
         infoItem.className = "info-item";
 
         const strongLabel = document.createElement("strong");
-        strongLabel.textContent = label + ":";
+        strongLabel.textContent = `${label}:`;
         infoItem.appendChild(strongLabel);
 
         if (value instanceof Node) {
             infoItem.appendChild(document.createTextNode(" "));
             infoItem.appendChild(value);
         } else {
-            infoItem.appendChild(document.createTextNode(" " + value));
+            infoItem.appendChild(document.createTextNode(` ${value}`));
         }
 
         profileInfo.appendChild(infoItem);
@@ -157,11 +196,14 @@ function createProfileInfo(profile) {
     return profileInfo;
 }
 
-function createStatistics(profile) {
+/**
+ * Renders numerical user statistics (Balance, Followers, Following).
+ */
+function createStatistics(profile: UserProfile): HTMLDivElement {
     const statistics = document.createElement("div");
     statistics.className = "statistics";
 
-    const stats = [
+    const stats: StatItem[] = [
         { label: "Rupees", value: profile.wallet_balance || 0 },
         { label: "Followers", value: profile.followerscount || 0 },
         { label: "Following", value: profile.followscount || 0 },
@@ -172,9 +214,9 @@ function createStatistics(profile) {
         statItem.className = "hflex";
 
         const strong = document.createElement("strong");
-        strong.textContent = value;
+        strong.textContent = String(value);
 
-        const labelSpan = document.createTextNode(" " + label);
+        const labelSpan = document.createTextNode(` ${label}`);
 
         statItem.appendChild(strong);
         statItem.appendChild(labelSpan);
@@ -182,6 +224,92 @@ function createStatistics(profile) {
     });
 
     return statistics;
+}
+
+/* ============================================================
+    FORMATTERS & HELPERS
+============================================================ */
+
+/**
+ * Formats a date string into a Datex component instance or formatted string
+ */
+export function formatDateUtil(dateString?: string | Date | null): HTMLElement | string | null {
+    if (!dateString) return null;
+    try {
+        return formatDate(dateString);
+    } catch (error) {
+        console.error("Error formatting date with Datex:", error);
+        return new Date(dateString).toLocaleString();
+    }
+}
+
+/**
+ * Capitalizes the first letter of a string
+ */
+export function capitalize(string: string = ""): string {
+    if (!string) return "";
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+/* ============================================================
+    LOADING INDICATORS
+============================================================ */
+
+/**
+ * Renders a loading message to a target container or default #content element
+ */
+export function showLoadingMessage(message: string, containerId: string = "content"): void {
+    removeLoadingMessage();
+
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.warn(`Container #${containerId} not found to show loading message.`);
+        return;
+    }
+
+    const loadingMsg = document.createElement("p");
+    loadingMsg.id = "loading-msg";
+    loadingMsg.className = "loading-message";
+    loadingMsg.textContent = message;
+
+    container.appendChild(loadingMsg);
+}
+
+/**
+ * Removes active loading message from the DOM
+ */
+export function removeLoadingMessage(): void {
+    const loadingMsg = document.getElementById("loading-msg");
+    if (loadingMsg) {
+        loadingMsg.remove();
+    }
+}
+
+/* ============================================================
+    MEDIA PREVIEWS
+============================================================ */
+
+/**
+ * Previews an image file selection on a target image element
+ */
+export function previewAvatar(event: Event, previewId: string = "profile-picture-preview"): void {
+    const target = event.target as HTMLInputElement | null;
+    const file = target?.files?.[0];
+    const preview = document.getElementById(previewId) as HTMLImageElement | null;
+
+    if (!preview) return;
+
+    if (file) {
+        // Revoke previous Object URL to prevent memory leaks if re-uploading
+        if (preview.dataset.objectUrl) {
+            URL.revokeObjectURL(preview.dataset.objectUrl);
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        preview.src = objectUrl;
+        preview.style.display = "block";
+        preview.dataset.objectUrl = objectUrl;
+    }
 }
 
 export {

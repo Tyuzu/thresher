@@ -1,14 +1,8 @@
-// merchPage.js
-import {
-  apiFetch
-} from "../../api/api.js";
+// merchPage.ts
+import { apiFetch } from "../../api/api.js";
 import MerchCard from "../../components/ui/MerchCard.js";
-import {
-  Button
-} from "../../components/base/Button.js";
-import {
-  createElement
-} from "../../components/createElement.js";
+import { Button } from "../../components/base/Button.js";
+import { createElement } from "../../components/createElement.js";
 import Modal from "../../components/ui/Modal.js";
 import Notify from "../../components/ui/Notify.js";
 import {
@@ -16,145 +10,125 @@ import {
   PictureType,
   resolveImagePath
 } from "../../utils/imagePaths.js";
-import {
-  reportEntity
-} from "../reporting/reporting.js";
-import {
-  createFormGroup
-} from "../../components/form/createFormGroupEnhanced.js";
-import {
-  addToCart,
-  isValidCartQuantity
-} from "../cart/addToCart.js";
-import {
-  getState
-} from "../../state/state.js";
-import {
-  showPaymentModal
-} from "../pay/pay.js";
-import {
-  addMerchandise
-} from "./merchAPI.js";
+import { reportEntity } from "../reporting/reporting.js";
+import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
+import { addToCart, isValidCartQuantity } from "../cart/addToCart.js";
+import { getState } from "../../state/state.js";
+import { showPaymentModal } from "../pay/pay.js";
+import { addMerchandise } from "./merchAPI.js";
+
+// External declarations for unprovided helpers
+declare function editMerchForm(entityType: string, merchId: string | number, eventId: string | number): void;
+declare function deleteMerch(entityType: string, merchId: string | number, eventId: string | number): void;
+
+export interface MerchItem {
+  merchid: string | number;
+  name: string;
+  price: number;
+  discount?: number;
+  stock: number | string;
+  merch_pic?: string;
+  [key: string]: unknown;
+}
+
+export interface FormGroupField {
+  label: string;
+  type: string;
+  id: string;
+  placeholder?: string;
+  required?: boolean;
+  additionalProps?: Record<string, unknown>;
+}
+
+interface ModalInstance {
+  close: () => void;
+}
+
+interface ApiResponse<T = unknown> {
+  success?: boolean;
+  message?: string;
+  data?: T;
+}
+
 const MAX_CART_QUANTITY = 99;
 const MAX_PURCHASE_NOTE_LENGTH = 1000;
-/**
- * Normalize a stock value received from the backend.
- *
- * This is only for UI validation.
- * The backend must remain authoritative for inventory.
- */
-function normalizeStock(value) {
+
+function normalizeStock(value: unknown): number {
   const stock = Number(value);
   if (!Number.isFinite(stock) || stock <= 0) {
     return 0;
   }
   return Math.floor(stock);
 }
-/**
- * Parse and validate a user-entered quantity.
- */
-function parseQuantity(value, maxStock) {
+
+function parseQuantity(value: unknown, maxStock: number): number | null {
   const quantity = Number(value);
-  if (!Number.isInteger(quantity)) {
-    return null;
-  }
-  if (quantity < 1) {
-    return null;
-  }
-  if (quantity > maxStock) {
-    return null;
-  }
-  if (!isValidCartQuantity(quantity)) {
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > maxStock || !isValidCartQuantity(quantity)) {
     return null;
   }
   return quantity;
 }
-/**
- * Disable/enable a button while an async mutation is running.
- */
-function setButtonBusy(button, busy) {
-  if (!button) {
-    return;
+
+function setButtonBusy(button: HTMLButtonElement | null, busy: boolean): void {
+  if (button) {
+    button.disabled = busy;
   }
-  button.disabled = busy;
 }
-/**
- * Safely build a path segment.
- */
-function encodePathSegment(value) {
+
+function encodePathSegment(value: unknown): string {
   return encodeURIComponent(String(value ?? ""));
 }
+
 // ------------------------------------------------------------
 // Add Merchandise Form
 // ------------------------------------------------------------
-function addMerchForm(entityType, eventId, merchList) {
+function addMerchForm(
+  entityType: string,
+  eventId: string | number,
+  merchList: HTMLElement
+): void {
   const form = createElement("form", {
     id: "add-merch-form",
     class: "create-section"
-  });
-  const fields = [{
-    label: "Merchandise Name",
-    type: "text",
-    id: "merch-name",
-    placeholder: "Merchandise Name",
-    required: true
-  }, {
-    label: "Price",
-    type: "number",
-    id: "merch-price",
-    placeholder: "Price",
-    required: true
-  }, {
-    label: "Discount (%)",
-    type: "number",
-    id: "merch-discount",
-    placeholder: "e.g. 10",
-    additionalProps: {
-      min: 0,
-      max: 100,
-      step: "0.01"
-    }
-  }, {
-    label: "Stock Available",
-    type: "number",
-    id: "merch-stock",
-    placeholder: "Stock Available",
-    required: true
-  }, {
-    label: "Merch Image",
-    type: "file",
-    id: "merch-image",
-    additionalProps: {
-      accept: "image/*"
-    }
-  }];
+  }) as HTMLFormElement;
+
+  const fields: FormGroupField[] = [
+    { label: "Merchandise Name", type: "text", id: "merch-name", placeholder: "Merchandise Name", required: true },
+    { label: "Price", type: "number", id: "merch-price", placeholder: "Price", required: true },
+    { label: "Discount (%)", type: "number", id: "merch-discount", placeholder: "e.g. 10", additionalProps: { min: 0, max: 100, step: "0.01" } },
+    { label: "Stock Available", type: "number", id: "merch-stock", placeholder: "Stock Available", required: true },
+    { label: "Merch Image", type: "file", id: "merch-image", additionalProps: { accept: "image/*" } }
+  ];
+
   fields.forEach((field) => {
     form.appendChild(createFormGroup(field));
   });
+
   const addBtn = createElement("button", {
     type: "submit",
     class: "buttonx"
-  },
-    ["Add Merchandise"]);
+  }, ["Add Merchandise"]) as HTMLButtonElement;
+
   form.appendChild(addBtn);
-  const {
-    close: closeModal
-  } = Modal({
+
+  const modal = Modal({
     title: "Add Merchandise",
     content: form
-  });
+  }) as ModalInstance;
+
   let submitting = false;
-  form.addEventListener("submit", async (event) => {
+
+  form.addEventListener("submit", async (event: SubmitEvent) => {
     event.preventDefault();
-    if (submitting) {
-      return;
-    }
+    if (submitting) return;
+
     submitting = true;
     addBtn.disabled = true;
+
     try {
-      await addMerchandise(entityType, eventId, merchList);
-      closeModal();
-    } catch (error) {
+      await addMerchandise(entityType, String(eventId), merchList);
+      modal.close();
+    } catch (error: any) {
       console.error("Failed to add merchandise:", error);
       Notify(error?.message || "Failed to add merchandise.", {
         type: "error",
@@ -166,37 +140,51 @@ function addMerchForm(entityType, eventId, merchList) {
     }
   });
 }
+
 // ------------------------------------------------------------
 // Display Merchandise List
 // ------------------------------------------------------------
-async function displayMerchandise(container, entityType, eventId, isCreator, isLoggedIn, merchData = []) {
+async function displayMerchandise(
+  container: HTMLElement,
+  entityType: string,
+  eventId: string | number,
+  isCreator: boolean,
+  isLoggedIn: boolean,
+  merchData: MerchItem[] = []
+): Promise<void> {
   container.replaceChildren();
-  const heading = createElement("h2", {},
-    ["Merchandise"]);
+
+  const heading = createElement("h2", {}, ["Merchandise"]);
   const merchList = createElement("div", {
     class: "merchcon hvflex"
   });
+
   container.appendChild(heading);
   container.appendChild(merchList);
-  // ----------------------------------------------------------
+
   // Creator controls
-  // ----------------------------------------------------------
   if (isCreator) {
-    container.prepend(Button("Add Merchandise", "add-merch-btn", {
-      click: () => addMerchForm(entityType, eventId, merchList)
-    }, "buttonx"));
+    container.prepend(
+      Button({
+        title: "Add Merchandise",
+        id: "add-merch-btn",
+        classes: "buttonx",
+        events: {
+          click: () => addMerchForm(entityType, eventId, merchList)
+        }
+      })
+    );
   }
-  // ----------------------------------------------------------
+
   // Empty state
-  // ----------------------------------------------------------
   if (!Array.isArray(merchData) || merchData.length === 0) {
-    merchList.appendChild(createElement("p", {},
-      ["No merchandise available."]));
+    merchList.appendChild(
+      createElement("p", {}, ["No merchandise available."])
+    );
     return;
   }
-  // ----------------------------------------------------------
+
   // Render merchandise
-  // ----------------------------------------------------------
   merchData.forEach((merch) => {
     const stock = normalizeStock(merch.stock);
     const card = MerchCard({
@@ -207,24 +195,18 @@ async function displayMerchandise(container, entityType, eventId, isCreator, isL
       stock,
       isCreator,
       isLoggedIn,
-      // ------------------------------------------------------
-      // Add to Cart
-      // ------------------------------------------------------
+
       onAddToCart: async () => {
         if (!isLoggedIn || !getState("token")) {
-          Notify("Please log in to add items to cart.", {
-            type: "warning",
-            duration: 3000
-          });
+          Notify("Please log in to add items to cart.", { type: "warning", duration: 3000 });
           return;
         }
+
         if (stock <= 0) {
-          Notify("This merchandise is out of stock.", {
-            type: "warning",
-            duration: 3000
-          });
+          Notify("This merchandise is out of stock.", { type: "warning", duration: 3000 });
           return;
         }
+
         const maxQuantity = Math.min(stock, MAX_CART_QUANTITY);
         const quantityInput = createElement("input", {
           type: "number",
@@ -234,112 +216,95 @@ async function displayMerchandise(container, entityType, eventId, isCreator, isL
           value: "1",
           inputmode: "numeric",
           "aria-label": "Merchandise quantity"
-        });
-        const wrapper = createElement("div", {
-          class: "modal-form-group"
-        },
+        }) as HTMLInputElement;
+
+        const wrapper = createElement(
+          "div",
+          { class: "modal-form-group" },
           [
-            createElement("label", {},
-              ["Quantity: ",
-                quantityInput
-              ]),
-            createElement("small", {},
-              [`Maximum: ${maxQuantity}`])
-          ]);
+            createElement("label", {}, ["Quantity: ", quantityInput]),
+            createElement("small", {}, [`Maximum: ${maxQuantity}`])
+          ]
+        );
+
         let adding = false;
         const modal = Modal({
-          title: `Add ${merch.name ||
-            "Merchandise"
-            } to Cart`,
+          title: `Add ${merch.name || "Merchandise"} to Cart`,
           content: wrapper,
-          actions: () => createElement("div", {
-            class: "modal-actions"
-          },
-            [
-              Button("Add to Cart", "", {
-                click: async () => {
-                  if (adding) {
-                    return;
-                  }
-                  const quantity = parseQuantity(quantityInput.value, maxQuantity);
-                  if (quantity === null) {
-                    Notify(`Enter a valid quantity from 1-${maxQuantity}.`, {
-                      type: "warning",
-                      duration: 3000
-                    });
-                    return;
-                  }
-                  adding = true;
-                  /**
-                   * Find the actual action
-                   * button from the modal.
-                   *
-                   * The cart operation itself
-                   * remains the single source of
-                   * truth for cart mutation.
-                   */
-                  const buttons = wrapper.parentElement?.querySelectorAll?.("button");
-                  if (buttons?.length) {
-                    buttons[0].disabled = true;
-                  }
-                  try {
-                    /**
-                     * NEW CART CONTRACT
-                     *
-                     * Only send:
-                     *
-                     *   itemId
-                     *   quantity
-                     *
-                     * The server should resolve
-                     * item type, name, price,
-                     * category and ownership.
-                     */
-                    const success = await addToCart({
-                      itemId: merch.merchid,
-                      quantity,
-                      isLoggedIn: Boolean(getState("token")),
-                      onCartUpdated: (response) => {
-                        console.debug("Merch cart updated:", response);
+          actions: () =>
+            createElement(
+              "div",
+              { class: "modal-actions" },
+              [
+                Button({
+                  title: "Add to Cart",
+                  classes: "buttonx primary",
+                  events: {
+                    click: async () => {
+                      if (adding) return;
+
+                      const quantity = parseQuantity(quantityInput.value, maxQuantity);
+                      if (quantity === null) {
+                        Notify(`Enter a valid quantity from 1-${maxQuantity}.`, {
+                          type: "warning",
+                          duration: 3000
+                        });
+                        return;
                       }
-                    });
-                    if (success) {
-                      modal.close();
-                    }
-                  } catch (error) {
-                    console.error("Failed to add merchandise to cart:", error);
-                  } finally {
-                    adding = false;
-                    if (buttons?.length) {
-                      buttons[0].disabled = false;
+
+                      adding = true;
+                      const buttons = wrapper.parentElement?.querySelectorAll<HTMLButtonElement>("button");
+                      if (buttons?.length) {
+                        setButtonBusy(buttons[0], true);
+                      }
+
+                      try {
+                        const success = await addToCart({
+                          itemId: merch.merchid,
+                          quantity,
+                          isLoggedIn: Boolean(getState("token")),
+                          onCartUpdated: (response: unknown) => {
+                            console.debug("Merch cart updated:", response);
+                          }
+                        });
+
+                        if (success) {
+                          modal.close();
+                        }
+                      } catch (error) {
+                        console.error("Failed to add merchandise to cart:", error);
+                      } finally {
+                        adding = false;
+                        if (buttons?.length) {
+                          setButtonBusy(buttons[0], false);
+                        }
+                      }
                     }
                   }
-                }
-              }, "buttonx primary"),
-              Button("Cancel", "", {
-                click: () => modal.close()
-              }, "buttonx")
-            ])
-        });
+                }),
+                Button({
+                  title: "Cancel",
+                  classes: "buttonx",
+                  events: {
+                    click: () => modal.close()
+                  }
+                })
+              ]
+            )
+        }) as ModalInstance;
       },
-      // ------------------------------------------------------
-      // Buy Now
-      // ------------------------------------------------------
+
       onBuy: async () => {
         if (!isLoggedIn || !getState("token")) {
-          Notify("Please log in to purchase merchandise.", {
-            type: "warning",
-            duration: 3000
-          });
+          Notify("Please log in to purchase merchandise.", { type: "warning", duration: 3000 });
           return;
         }
+
         if (stock <= 0) {
-          Notify("This merchandise is out of stock.", {
-            type: "warning",
-            duration: 3000
-          });
+          Notify("This merchandise is out of stock.", { type: "warning", duration: 3000 });
           return;
         }
+
         const maxQuantity = Math.min(stock, MAX_CART_QUANTITY);
         const quantityInput = createElement("input", {
           type: "number",
@@ -348,131 +313,126 @@ async function displayMerchandise(container, entityType, eventId, isCreator, isL
           step: "1",
           value: "1",
           inputmode: "numeric"
-        });
+        }) as HTMLInputElement;
+
         const noteInput = createElement("textarea", {
           placeholder: "Special request (optional)",
           rows: 3,
           maxlength: String(MAX_PURCHASE_NOTE_LENGTH)
-        });
-        const wrapper = createElement("div", {
-          class: "modal-form-group"
-        },
+        }) as HTMLTextAreaElement;
+
+        const wrapper = createElement(
+          "div",
+          { class: "modal-form-group" },
           [
-            createElement("label", {},
-              ["Quantity: ",
-                quantityInput
-              ]),
-            createElement("label", {},
-              ["Note: ",
-                noteInput
-              ])
-          ]);
+            createElement("label", {}, ["Quantity: ", quantityInput]),
+            createElement("label", {}, ["Note: ", noteInput])
+          ]
+        );
+
         let purchasing = false;
         const modal = Modal({
-          title: `Purchase ${merch.name ||
-            "Merchandise"
-            }`,
+          title: `Purchase ${merch.name || "Merchandise"}`,
           content: wrapper,
-          actions: () => createElement("div", {
-            class: "modal-actions"
-          },
-            [
-              Button("Proceed to Payment", "", {
-                click: async () => {
-                  if (purchasing) {
-                    return;
-                  }
-                  const quantity = parseQuantity(quantityInput.value, maxQuantity);
-                  if (quantity === null) {
-                    Notify(`Enter a valid quantity from 1-${maxQuantity}.`, {
-                      type: "warning",
-                      duration: 3000
-                    });
-                    return;
-                  }
-                  const note = String(noteInput.value || "").trim().slice(0, MAX_PURCHASE_NOTE_LENGTH);
-                  purchasing = true;
-                  modal.close();
-                  try {
-                    /**
-                     * Payment is deliberately kept
-                     * separate from cart mutation.
-                     */
-                    const paymentResult = await showPaymentModal({
-                      paymentType: "purchase",
-                      entityType: "merch",
-                      entityId: merch.merchid,
-                      entityName: merch.name
-                    });
-                    if (!paymentResult || paymentResult.success !== true) {
-                      Notify("Payment cancelled or failed.", {
-                        type: "warning",
-                        duration: 3000
-                      });
-                      return;
+          actions: () =>
+            createElement(
+              "div",
+              { class: "modal-actions" },
+              [
+                Button({
+                  title: "Proceed to Payment",
+                  classes: "buttonx primary",
+                  events: {
+                    click: async () => {
+                      if (purchasing) return;
+
+                      const quantity = parseQuantity(quantityInput.value, maxQuantity);
+                      if (quantity === null) {
+                        Notify(`Enter a valid quantity from 1-${maxQuantity}.`, {
+                          type: "warning",
+                          duration: 3000
+                        });
+                        return;
+                      }
+
+                      const note = String(noteInput.value || "")
+                        .trim()
+                        .slice(0, MAX_PURCHASE_NOTE_LENGTH);
+
+                      purchasing = true;
+                      modal.close();
+
+                      try {
+                        const paymentResult = await showPaymentModal({
+                          paymentType: "purchase",
+                          entityType: "merch",
+                          entityId: merch.merchid,
+                          entityName: merch.name
+                        });
+
+                        if (!paymentResult || paymentResult.success !== true) {
+                          Notify("Payment cancelled or failed.", {
+                            type: "warning",
+                            duration: 3000
+                          });
+                          return;
+                        }
+
+                        const purchaseUrl = `/merch/${encodePathSegment(
+                          entityType
+                        )}/${encodePathSegment(
+                          eventId
+                        )}/${encodePathSegment(
+                          merch.merchid
+                        )}/confirm-purchase`;
+
+                        const resp = await apiFetch<ApiResponse>(purchaseUrl, "POST", {
+                          quantity,
+                          note
+                        });
+
+                        if (resp?.success) {
+                          Notify("Merchandise purchased successfully!", {
+                            type: "success",
+                            duration: 3000
+                          });
+                        } else {
+                          Notify(resp?.message || "Purchase failed.", {
+                            type: "error",
+                            duration: 3000
+                          });
+                        }
+                      } catch (error) {
+                        console.error("Purchase error:", error);
+                        Notify("Purchase failed. Please try again.", {
+                          type: "error",
+                          duration: 3000
+                        });
+                      } finally {
+                        purchasing = false;
+                      }
                     }
-                    /**
-                     * Keep entityType/eventId in
-                     * this endpoint because this is
-                     * the existing merchandise purchase
-                     * API, not the cart API.
-                     *
-                     * Values are URL encoded to avoid
-                     * malformed path segments.
-                     */
-                    const purchaseUrl = `/merch/${encodePathSegment(
-                      entityType
-                    )}/${encodePathSegment(
-                      eventId
-                    )}/${encodePathSegment(
-                      merch.merchid
-                    )}/confirm-purchase`;
-                    const resp = await apiFetch(purchaseUrl, "POST", {
-                      quantity,
-                      note
-                    });
-                    if (resp?.success) {
-                      Notify("Merchandise purchased successfully!", {
-                        type: "success",
-                        duration: 3000
-                      });
-                    } else {
-                      Notify(resp?.message || "Purchase failed.", {
-                        type: "error",
-                        duration: 3000
-                      });
-                    }
-                  } catch (error) {
-                    console.error("Purchase error:", error);
-                    Notify("Purchase failed. Please try again.", {
-                      type: "error",
-                      duration: 3000
-                    });
-                  } finally {
-                    purchasing = false;
                   }
-                }
-              }, "buttonx primary"),
-              Button("Cancel", "", {
-                click: () => modal.close()
-              }, "buttonx")
-            ])
-        });
+                }),
+                Button({
+                  title: "Cancel",
+                  classes: "buttonx",
+                  events: {
+                    click: () => modal.close()
+                  }
+                })
+              ]
+            )
+        }) as ModalInstance;
       },
-      // ------------------------------------------------------
-      // Creator actions
-      // ------------------------------------------------------
+
       onEdit: () => editMerchForm(entityType, merch.merchid, eventId),
       onDelete: () => deleteMerch(entityType, merch.merchid, eventId),
-      // ------------------------------------------------------
-      // Reporting
-      // ------------------------------------------------------
-      onReport: () => reportEntity(merch.merchid, "merch", entityType, eventId)
+      onReport: () => reportEntity(String(merch.merchid), "merch", entityType, String(eventId))
     });
+
     merchList.appendChild(card);
   });
 }
-export {
-  addMerchForm,
-  displayMerchandise
-};
+
+export { setButtonBusy, addMerchForm, displayMerchandise };

@@ -22,7 +22,7 @@ const Button = ({
   classes = "",
   styles = {},
   ...rest
-}: ButtonOptions = {}): HTMLElement => {
+}: ButtonOptions = {}): HTMLButtonElement => {
   // Input validation
   if (typeof title !== "string" || title.trim() === "") {
     throw new Error("A valid 'title' is required for the Button component.");

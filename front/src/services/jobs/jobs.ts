@@ -6,8 +6,26 @@ import Notify from "../../components/ui/Notify.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import { buildCard } from "../baitos/baitoslisting/JobCard.js";
 
+interface JobPayload {
+  category: string;
+  subcategory: string;
+  title: string;
+  description: string;
+  location: string;
+  wage: string;
+}
+
+interface JobItem {
+  baitoid?: string | number;
+  [key: string]: unknown;
+}
+
+interface JobsApiResponse {
+  jobs?: JobItem[];
+}
+
 // --- Category → Roles Map (light version) ---
-const jobCategoryMap = {
+const jobCategoryMap: Record<string, string[]> = {
   Food: ["Waiter", "Cook", "Delivery", "Cleaning", "Dishwasher", "Barista"],
   Retail: ["Cashier", "Stock", "Floor Staff"],
   Logistics: ["Warehouse", "Driver", "Mover"],
@@ -19,7 +37,7 @@ const jobCategoryMap = {
 };
 
 // --- Utility: populate select options ---
-function populateSelect(select, options, selected = "") {
+function populateSelect(select: HTMLSelectElement, options: string[], selected: string = ""): void {
   select.replaceChildren();
 
   const placeholder = createElement(
@@ -38,7 +56,7 @@ function populateSelect(select, options, selected = "") {
 }
 
 // --- Minimal Validator ---
-function validateHirePayload(data) {
+function validateHirePayload(data: JobPayload): boolean {
   if (!data.title || !data.description || !data.category || !data.subcategory) {
     Notify("Please fill in required fields.", { type: "error", duration: 3000 });
     return false;
@@ -47,8 +65,8 @@ function validateHirePayload(data) {
 }
 
 // --- Build form with category + subcategory ---
-function buildHireForm() {
-  const form = createElement("form", { id: "hire-job-form", class: "create-section" });
+function buildHireForm(): HTMLFormElement {
+  const form = createElement("form", { id: "hire-job-form", class: "create-section" }) as HTMLFormElement;
 
   // Category select
   const categoryGroup = createFormGroup({
@@ -85,24 +103,35 @@ function buildHireForm() {
     ...groups
   );
 
-  const submitBtn = Button("Create Job", "", { type: "submit" }, "buttonx btn-primary");
+  const submitBtn = Button({
+    title: "Create Job",
+    type: "submit",
+    classes: "buttonx btn-primary"
+  });
+  
   form.appendChild(submitBtn);
 
   return form;
 }
 
 // --- Hire Job Modal ---
-export function jobsHire(container, entityType, entityId) {
+export function jobsHire(container: HTMLElement, entityType: string, entityId: string | number): void {
   const form = buildHireForm();
 
-  const subSelect = form.querySelector("#job-category-sub");
+  const subSelect = form.querySelector("#job-category-sub") as HTMLSelectElement;
 
   // Category change → update subcategory list
-  form.querySelector("#job-category-main").addEventListener("change", e => {
-    const selectedCat = e.target.value;
-    const roles = jobCategoryMap[selectedCat] || [];
-    populateSelect(subSelect, roles);
-  });
+  const mainCategorySelect = form.querySelector("#job-category-main") as HTMLSelectElement;
+  if (mainCategorySelect) {
+    mainCategorySelect.addEventListener("change", (e: Event) => {
+      const target = e.target as HTMLSelectElement;
+      const selectedCat = target.value;
+      const roles = jobCategoryMap[selectedCat] || [];
+      if (subSelect) {
+        populateSelect(subSelect, roles);
+      }
+    });
+  }
 
   const { close: closeModal } = Modal({
     title: "Hire a Job",
@@ -111,70 +140,80 @@ export function jobsHire(container, entityType, entityId) {
     closeOnOverlayClick: true
   });
 
-  form.addEventListener("submit", async e => {
+  form.addEventListener("submit", async (e: Event) => {
     e.preventDefault();
 
-    const jobData = {
-      category: form.querySelector("#job-category-main")?.value.trim() || "",
-      subcategory: form.querySelector("#job-category-sub")?.value.trim() || "",
-      title: form.querySelector("#job-title")?.value.trim() || "",
-      description: form.querySelector("#job-description")?.value.trim() || "",
-      location: form.querySelector("#job-location")?.value.trim() || "",
-      wage: form.querySelector("#job-wage")?.value.trim() || ""
+    const jobData: JobPayload = {
+      category: (form.querySelector("#job-category-main") as HTMLSelectElement)?.value.trim() || "",
+      subcategory: (form.querySelector("#job-category-sub") as HTMLSelectElement)?.value.trim() || "",
+      title: (form.querySelector("#job-title") as HTMLInputElement)?.value.trim() || "",
+      description: (form.querySelector("#job-description") as HTMLTextAreaElement)?.value.trim() || "",
+      location: (form.querySelector("#job-location") as HTMLInputElement)?.value.trim() || "",
+      wage: (form.querySelector("#job-wage") as HTMLInputElement)?.value.trim() || ""
     };
 
     if (!validateHirePayload(jobData)) {
-return;
-}
+      return;
+    }
 
     try {
-      const newJob = await apiFetch(
+      const newJob = await apiFetch<JobItem>(
         `/jobs/${entityType}/${entityId}`,
         "POST",
-        JSON.stringify(jobData),
-        { "Content-Type": "application/json" }
+        JSON.stringify(jobData)
       );
 
       if (!newJob || !newJob.baitoid) {
-throw new Error("Failed to create job");
-}
+        throw new Error("Failed to create job");
+      }
 
       const wrapper = container.querySelector(".places-wrapper");
       if (wrapper) {
-wrapper.appendChild(buildCard(newJob));
-}
+        const card = buildCard(newJob);
+        if (card) {
+          wrapper.appendChild(card);
+        }
+      }
 
       Notify("Job created successfully!", { type: "success", duration: 3000 });
       closeModal();
-    } catch (err) {
-      Notify(`Error creating job: ${err.message}`, { type: "error", duration: 5000 });
+    } catch (err: any) {
+      Notify(`Error creating job: ${err?.message || "Unknown error"}`, { type: "error", duration: 5000 });
     }
   });
 }
 
 // --- Display Jobs ---
-export async function displayPlaceJobs(container, isCreator, isLoggedIn, entityType, entityId) {
+export async function displayPlaceJobs(
+  container: HTMLElement,
+  isCreator: boolean,
+  _isLoggedIn: boolean,
+  entityType: string,
+  entityId: string | number
+): Promise<void> {
   container.replaceChildren();
 
   const title = createElement("h2", {}, ["Jobs"]);
   const jobsContainer = createElement("div", { class: "places-wrapper grid" });
 
-  const elements = [title];
+  const elements: HTMLElement[] = [title];
 
   if (isCreator) {
-    const hireBtn = Button(
-      "Hire",
-      "hire-btn",
-      { click: () => jobsHire(container, entityType, entityId) },
-      "buttonx btn-primary"
-    );
+    const hireBtn = Button({
+      title: "Hire",
+      id: "hire-btn",
+      classes: "buttonx btn-primary",
+      events: {
+        click: () => jobsHire(container, entityType, entityId)
+      }
+    });
     elements.push(hireBtn);
   }
 
   container.append(...elements, jobsContainer);
 
   try {
-    const response = await apiFetch(`/jobs/${entityType}/${entityId}`);
+    const response = await apiFetch<JobsApiResponse>(`/jobs/${entityType}/${entityId}`);
     const jobs = Array.isArray(response?.jobs) ? response.jobs : [];
 
     if (jobs.length === 0) {
@@ -188,8 +227,8 @@ export async function displayPlaceJobs(container, isCreator, isLoggedIn, entityT
     jobs.forEach(job => {
       const card = buildCard(job);
       if (card) {
-fragment.appendChild(card);
-}
+        fragment.appendChild(card);
+      }
     });
     jobsContainer.appendChild(fragment);
   } catch {

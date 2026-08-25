@@ -1,4 +1,4 @@
-export function normalizeVendorList(response) {
+export function normalizeVendorList(response: any): any[] {
     if (Array.isArray(response)) {
         return response;
     }
@@ -22,11 +22,11 @@ export function normalizeVendorList(response) {
     return [];
 }
 
-export function getVendorId(vendor) {
+export function getVendorId(vendor: any): string | null {
     return vendor?.vendorid ?? vendor?.vendor_id ?? vendor?.vendorId ?? vendor?.id ?? null;
 }
 
-export function getVendorName(vendor) {
+export function getVendorName(vendor: any): string {
     return (
         vendor?.name ??
         vendor?.full_name ??
@@ -37,7 +37,7 @@ export function getVendorName(vendor) {
     );
 }
 
-export function normalizeErrorMessage(error) {
+export function normalizeErrorMessage(error: unknown): string {
     if (!error) {
         return "";
     }
@@ -50,10 +50,11 @@ export function normalizeErrorMessage(error) {
         return error.message || "";
     }
 
-    return error.message || error.error || error.details || error.msg || "";
+    const errObj = error as any;
+    return errObj.message || errObj.error || errObj.details || errObj.msg || "";
 }
 
-export function isValidEmail(email) {
+export function isValidEmail(email?: string): boolean {
     if (!email) {
         return true;
     }
@@ -62,7 +63,7 @@ export function isValidEmail(email) {
     return emailRegex.test(email);
 }
 
-export function formatRequestStatus(status) {
+export function formatRequestStatus(status?: string): string {
     if (!status) return "Pending";
     switch (String(status).toLowerCase()) {
         case "pending": return "Request Pending";

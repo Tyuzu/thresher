@@ -3,22 +3,27 @@ import { loadVendors } from "./loadVendors.js";
 import { vendorForm } from "./vendorForm.js";
 import { createElement } from "../../../components/createElement.js";
 
+interface HireVendorsOptions {
+    onChange?: () => Promise<void> | void;
+    [key: string]: any;
+}
+
 /**
  * Builds the marketplace top header section.
  */
-function buildHeader(eventId) {
+function buildHeader(eventId?: string): HTMLElement {
     return createElement("div", { class: "vendors-header" }, [
         createElement("h2", { class: "vendors-title" }, "Vendors Marketplace"),
         createElement("p", { class: "vendors-subtitle" }, eventId
             ? "Hire vendors for your event"
             : "Browse vendors and register your own profile")
-    ]);
+    ]) as HTMLElement;
 }
 
 /**
  * Handles form toggle visibility state, focusing first input safely.
  */
-function setupToggleInterface(section, button, formElement) {
+function setupToggleInterface(section: HTMLElement, button: HTMLElement, formElement: HTMLElement): void {
     formElement.classList.add("hidden");
     section.appendChild(formElement);
 
@@ -29,7 +34,7 @@ function setupToggleInterface(section, button, formElement) {
             : "Hide Registration";
 
         if (!isCurrentlyHidden) {
-            const firstField = formElement.querySelector("input, select, textarea");
+            const firstField = formElement.querySelector("input, select, textarea") as HTMLElement | null;
             if (firstField && typeof firstField.focus === "function") {
                 firstField.focus();
             }
@@ -40,7 +45,13 @@ function setupToggleInterface(section, button, formElement) {
 /**
  * Orchestrates and renders the core vendors UI view panel.
  */
-export async function hireVendors(anacon, isCreator, isLoggedIn, eventId, options = {}) {
+export async function hireVendors(
+    anacon: HTMLElement,
+    isCreator: boolean,
+    isLoggedIn: boolean,
+    eventId?: string,
+    options: HireVendorsOptions = {}
+): Promise<HTMLElement | null> {
     if (!anacon) {
         console.error("Vendor container element is required.");
         return null;
@@ -62,7 +73,7 @@ export async function hireVendors(anacon, isCreator, isLoggedIn, eventId, option
         await renderUI();
     };
 
-    const renderUI = async () => {
+    const renderUI = async (): Promise<HTMLElement> => {
         anacon.innerHTML = "";
 
         const wrapper = createElement("div", {
@@ -70,7 +81,7 @@ export async function hireVendors(anacon, isCreator, isLoggedIn, eventId, option
             class: "vendors-container"
         }, [
             buildHeader(eventId)
-        ]);
+        ]) as HTMLElement;
 
         // Load Vendor List (isCreator determines if action buttons are visible)
         const vendorListEl = await loadVendors(eventId, isLoggedIn, {
@@ -84,14 +95,14 @@ export async function hireVendors(anacon, isCreator, isLoggedIn, eventId, option
             const toggleBtn = createElement("button", {
                 type: "button",
                 class: "btn-secondary vendor-list-btn"
-            }, "List Yourself as Vendor");
+            }, "List Yourself as Vendor") as HTMLElement;
 
             const registrationSection = createElement("div", {
                 class: "vendor-registration-section"
             }, [
                 createElement("h3", { class: "registration-title" }, "Want to Become a Vendor?"),
                 toggleBtn
-            ]);
+            ]) as HTMLElement;
 
             const formElement = vendorForm(
                 anacon,

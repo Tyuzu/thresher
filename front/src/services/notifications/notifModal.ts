@@ -5,17 +5,28 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   clearAllNotifications,
+  NotificationItem,
 } from "./notifService.js";
 import * as idxDB from "../../utils/idxDB.js";
+
+interface SystemLog {
+  id?: string | number;
+  notificationid?: string | number;
+  type?: "info" | "error" | "success" | string;
+  title?: string;
+  message?: string;
+  createdAt?: string | number | Date;
+  isRead?: boolean;
+}
 
 /**
  * Formats a given date string/timestamp into relative human-readable time.
  */
-function timeAgo(dateInput) {
+function timeAgo(dateInput: string | number | Date): string {
   const date = new Date(dateInput);
   if (isNaN(date.getTime())) return "";
 
-  const seconds = Math.floor((new Date() - date) / 1000);
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
   if (seconds < 60) return "Just now";
@@ -29,7 +40,7 @@ function timeAgo(dateInput) {
 /**
  * Safely retrieves user ID from localStorage.
  */
-function getUserId() {
+function getUserId(): string | null {
   try {
     const userStr = localStorage.getItem("user");
     if (!userStr) return null;
@@ -43,26 +54,26 @@ function getUserId() {
 /**
  * Main Modal Entry Point
  */
-export async function openNotificationsModal() {
+export async function openNotificationsModal(): Promise<void> {
   const userId = getUserId();
-  let activeTab = "activity"; // Active state tracking: 'activity' | 'system'
+  let activeTab: "activity" | "system" = "activity";
 
   // Root wrapper layout
   const content = createElement("div", {
-    style: "display: flex; flex-direction: column; gap: 0.75rem; max-height: 450px; padding: 0.25rem;",
+    style: { display: "flex", flexDirection: "column", gap: "0.75rem", maxHeight: "450px", padding: "0.25rem" },
   });
 
   // Tab Header Navigation
   const tabHeader = createElement("div", {
-    style: "display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 0.25rem;",
+    style: { display: "flex", borderBottom: "2px solid #e2e8f0", marginBottom: "0.25rem" },
   });
 
   const activityTabBtn = createElement("button", {
-    style: "flex: 1; padding: 0.6rem; border: none; background: transparent; font-weight: 600; cursor: pointer; border-bottom: 2px solid #007bff; color: #007bff; transition: all 0.2s ease;",
+    style: { flex: "1", padding: "0.6rem", border: "none", background: "transparent", fontWeight: "600", cursor: "pointer", borderBottom: "2px solid #007bff", color: "#007bff", transition: "all 0.2s ease" },
   }, ["Activity"]);
 
   const systemTabBtn = createElement("button", {
-    style: "flex: 1; padding: 0.6rem; border: none; background: transparent; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: #64748b; transition: all 0.2s ease;",
+    style: { flex: "1", padding: "0.6rem", border: "none", background: "transparent", fontWeight: "600", cursor: "pointer", borderBottom: "2px solid transparent", color: "#64748b", transition: "all 0.2s ease" },
   }, ["System Logs"]);
 
   tabHeader.appendChild(activityTabBtn);
@@ -71,7 +82,7 @@ export async function openNotificationsModal() {
 
   // Scrollable Tab Viewport
   const tabContentView = createElement("div", {
-    style: "display: flex; flex-direction: column; gap: 0.75rem; overflow-y: auto; max-height: 350px; padding: 0.25rem; scrollbar-width: thin;",
+    style: { display: "flex", flexDirection: "column", gap: "0.75rem", overflowY: "auto", maxHeight: "350px", padding: "0.25rem", scrollbarWidth: "thin" },
   });
   content.appendChild(tabContentView);
 
@@ -98,7 +109,7 @@ export async function openNotificationsModal() {
     renderSystemTab();
   });
 
-  function updateTabStyles() {
+  function updateTabStyles(): void {
     const isActivity = activeTab === "activity";
     activityTabBtn.style.borderBottomColor = isActivity ? "#007bff" : "transparent";
     activityTabBtn.style.color = isActivity ? "#007bff" : "#64748b";
@@ -108,7 +119,7 @@ export async function openNotificationsModal() {
 
   // --- Renderers ---
 
-  async function renderActivityTab() {
+  async function renderActivityTab(): Promise<void> {
     tabContentView.innerHTML = `<div style="text-align: center; color: #64748b; padding: 2.5rem 0;">Loading activity...</div>`;
     
     try {
@@ -120,7 +131,7 @@ export async function openNotificationsModal() {
         return;
       }
 
-      const listContainer = createElement("div", { style: "display: flex; flex-direction: column; gap: 0.75rem;" });
+      const listContainer = createElement("div", { style: { display: "flex", flexDirection: "column", gap: "0.75rem" } });
       notifications.forEach((notification) => {
         listContainer.appendChild(createNotificationCard(notification, userId, renderActivityTab));
       });
@@ -134,14 +145,13 @@ export async function openNotificationsModal() {
     }
   }
 
-  async function renderSystemTab() {
+  async function renderSystemTab(): Promise<void> {
     tabContentView.innerHTML = `<div style="text-align: center; color: #64748b; padding: 2.5rem 0;">Loading system logs...</div>`;
     
-    let logs = [];
+    let logs: SystemLog[] = [];
     try {
       logs = (await idxDB.getAll()) || [];
-      // Sort newest entries to top
-      logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      logs.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     } catch (err) {
       console.error("Failed to fetch system logs from IndexedDB:", err);
     }
@@ -153,7 +163,7 @@ export async function openNotificationsModal() {
       return;
     }
 
-    const listContainer = createElement("div", { style: "display: flex; flex-direction: column; gap: 0.75rem;" });
+    const listContainer = createElement("div", { style: { display: "flex", flexDirection: "column", gap: "0.75rem" } });
     logs.forEach((log) => {
       listContainer.appendChild(createSystemLogCard(log, renderSystemTab));
     });
@@ -163,18 +173,17 @@ export async function openNotificationsModal() {
     if (actionBar) tabContentView.appendChild(actionBar);
   }
 
-  // Initial load default view
   renderActivityTab();
 }
 
 /**
  * Reusable Empty State Visual Element
  */
-function renderEmptyState(container, message) {
+function renderEmptyState(container: HTMLElement, message: string): void {
   container.appendChild(
-    createElement("div", { style: "text-align: center; color: #64748b; padding: 2.5rem 1rem;" }, [
-      createElement("p", { style: "font-weight: 600; font-size: 1rem; margin-bottom: 0.25rem; color: #334155;" }, ["🔔 All caught up"]),
-      createElement("p", { style: "font-size: 0.85rem; color: #94a3b8; margin: 0;" }, [message]),
+    createElement("div", { style: { textAlign: "center", color: "#64748b", padding: "2.5rem 1rem" } }, [
+      createElement("p", { style: { fontWeight: "600", fontSize: "1rem", marginBottom: "0.25rem", color: "#334155" } }, ["🔔 All caught up"]),
+      createElement("p", { style: { fontSize: "0.85rem", color: "#94a3b8", margin: "0" } }, [message]),
     ])
   );
 }
@@ -182,29 +191,29 @@ function renderEmptyState(container, message) {
 /**
  * Card Component: User Activity Notification
  */
-function createNotificationCard(n, userId, onChange) {
+function createNotificationCard(n: NotificationItem, userId: string | null, onChange?: () => void): HTMLElement {
   let isRead = Boolean(n.isRead);
 
-  const leftContent = createElement("div", { style: "flex: 1; min-width: 0;" }, [
+  const leftContent = createElement("div", { style: { flex: "1", minWidth: "0" } }, [
     createElement("strong", {
-      style: `display: block; margin-bottom: 0.25rem; font-size: 0.925rem; color: ${isRead ? "#475569" : "#0f172a"};`,
+      style: { display: "block", marginBottom: "0.25rem", fontSize: "0.925rem", color: isRead ? "#475569" : "#0f172a" },
     }, [n.title || n.type || "Notification"]),
     createElement("p", {
-      style: "margin: 0; font-size: 0.85rem; color: #64748b; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;",
+      style: { margin: "0", fontSize: "0.85rem", color: "#64748b", display: "-webkit-box", WebkitLineClamp: "2", WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: "1.4" },
     }, [n.message || "No details provided."]),
     createElement("small", {
-      style: "color: #94a3b8; font-size: 0.775rem; display: block; margin-top: 0.35rem;",
-    }, [timeAgo(n.createdAt)]),
+      style: { color: "#94a3b8", fontSize: "0.775rem", display: "block", marginTop: "0.35rem" },
+    }, [timeAgo(n.createdAt || Date.now())]),
   ]);
 
   const markReadBtn = createElement("button", {
-    style: "background: #007bff; color: #ffffff; border: none; padding: 0.35rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: opacity 0.2s;",
+    style: { background: "#007bff", color: "#ffffff", border: "none", padding: "0.35rem 0.75rem", borderRadius: "4px", fontSize: "0.8rem", fontWeight: "500", cursor: "pointer", whiteSpace: "nowrap", transition: "opacity 0.2s" },
     events: {
-      click: async (e) => {
-        e.stopPropagation();
+      click: async (e: Event) => {
+        const mouseEvent = e as MouseEvent;
+        mouseEvent.stopPropagation();
         const notifId = n.notificationid || n.id;
         
-        // Optimistic UI updates
         isRead = true;
         card.style.background = "#f8fafc";
         card.style.borderColor = "#e2e8f0";
@@ -215,7 +224,6 @@ function createNotificationCard(n, userId, onChange) {
           if (onChange) onChange();
         } catch (err) {
           console.error("Failed to mark notification read:", err);
-          // Rollback UI changes on failure
           isRead = false;
           card.style.background = "#f0f9ff";
           card.style.borderColor = "#bae6fd";
@@ -225,12 +233,12 @@ function createNotificationCard(n, userId, onChange) {
     },
   }, ["Mark Read"]);
 
-  const children = [leftContent];
+  const children: HTMLElement[] = [leftContent];
   if (!isRead && userId) children.push(markReadBtn);
 
   const card = createElement("div", {
-    "data-notif-card": "true",
-    style: `padding: 0.75rem 1rem; border-radius: 6px; background: ${isRead ? "#f8fafc" : "#f0f9ff"}; border: 1px solid ${isRead ? "#e2e8f0" : "#bae6fd"}; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; transition: all 0.2s ease;`,
+    dataset: { notifCard: "true" },
+    style: { padding: "0.75rem 1rem", borderRadius: "6px", background: isRead ? "#f8fafc" : "#f0f9ff", border: `1px solid ${isRead ? "#e2e8f0" : "#bae6fd"}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", transition: "all 0.2s ease" },
   }, children);
 
   return card;
@@ -239,12 +247,12 @@ function createNotificationCard(n, userId, onChange) {
 /**
  * Card Component: IndexedDB System Log
  */
-function createSystemLogCard(log, onChange) {
+function createSystemLogCard(log: SystemLog, onChange?: () => void): HTMLElement {
   let isRead = Boolean(log.isRead);
   const isError = log.type === "error";
   const isSuccess = log.type === "success";
 
-  const getThemeStyles = (readState) => {
+  const getThemeStyles = (readState: boolean) => {
     let bgColor = readState ? "#f8fafc" : "#f0f9ff";
     let borderColor = readState ? "#e2e8f0" : "#bae6fd";
     let badgeBg = "#64748b";
@@ -265,30 +273,31 @@ function createSystemLogCard(log, onChange) {
   let currentStyles = getThemeStyles(isRead);
 
   const badge = createElement("span", {
-    style: `background: ${currentStyles.badgeBg}; color: #ffffff; padding: 0.15rem 0.45rem; border-radius: 3px; font-size: 0.675rem; font-weight: 700; text-transform: uppercase; display: inline-block; margin-bottom: 0.35rem; letter-spacing: 0.025em;`,
+    style: { background: currentStyles.badgeBg, color: "#ffffff", padding: "0.15rem 0.45rem", borderRadius: "3px", fontSize: "0.675rem", fontWeight: "700", textTransform: "uppercase", display: "inline-block", marginBottom: "0.35rem", letterSpacing: "0.025em" },
   }, [log.type || "info"]);
 
-  const content = createElement("div", { style: "flex: 1; min-width: 0;" }, [
+  const content = createElement("div", { style: { flex: "1", minWidth: "0" } }, [
     badge,
     createElement("strong", {
-      style: `display: block; margin-bottom: 0.25rem; font-size: 0.9rem; color: ${isRead ? "#475569" : "#0f172a"};`,
+      style: { display: "block", marginBottom: "0.25rem", fontSize: "0.9rem", color: isRead ? "#475569" : "#0f172a" },
     }, [log.title || "System Message"]),
     createElement("p", {
-      style: "margin: 0; font-size: 0.85rem; color: #334155; word-break: break-word; line-height: 1.4;",
+      style: { margin: "0", fontSize: "0.85rem", color: "#334155", wordBreak: "break-word", lineHeight: "1.4" },
     }, [log.message || ""]),
     createElement("small", {
-      style: "color: #94a3b8; font-size: 0.75rem; display: block; margin-top: 0.35rem;",
-    }, [timeAgo(log.createdAt)]),
+      style: { color: "#94a3b8", fontSize: "0.75rem", display: "block", marginTop: "0.35rem" },
+    }, [timeAgo(log.createdAt || Date.now())]),
   ]);
 
   const markReadBtn = createElement("button", {
-    style: "background: #007bff; color: #ffffff; border: none; padding: 0.35rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 500; cursor: pointer; white-space: nowrap; align-self: center; transition: opacity 0.2s;",
+    style: { background: "#007bff", color: "#ffffff", border: "none", padding: "0.35rem 0.75rem", borderRadius: "4px", fontSize: "0.8rem", fontWeight: "500", cursor: "pointer", whiteSpace: "nowrap", alignSelf: "center", transition: "opacity 0.2s" },
     events: {
-      click: async (e) => {
-        e.stopPropagation();
+      click: async (e: Event) => {
+        const mouseEvent = e as MouseEvent;
+        mouseEvent.stopPropagation();
         try {
           const updatedLog = { ...log, isRead: true };
-          const saveMethod = idxDB.update || idxDB.put;
+          const saveMethod = (idxDB as any).update || (idxDB as any).put;
           
           if (saveMethod) {
             await saveMethod(updatedLog);
@@ -308,11 +317,11 @@ function createSystemLogCard(log, onChange) {
     },
   }, ["Mark Read"]);
 
-  const children = [content];
+  const children: HTMLElement[] = [content];
   if (!isRead) children.push(markReadBtn);
 
   const card = createElement("div", {
-    style: `padding: 0.75rem 1rem; border-radius: 6px; background: ${currentStyles.bgColor}; border: 1px solid ${currentStyles.borderColor}; display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; transition: all 0.2s ease;`,
+    style: { padding: "0.75rem 1rem", borderRadius: "6px", background: currentStyles.bgColor, border: `1px solid ${currentStyles.borderColor}`, display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem", transition: "all 0.2s ease" },
   }, children);
 
   return card;
@@ -321,19 +330,19 @@ function createSystemLogCard(log, onChange) {
 /**
  * System Logs Action Footer
  */
-function createSystemActionBar(logs, onRefresh) {
+function createSystemActionBar(logs: SystemLog[], onRefresh: () => void): HTMLElement | null {
   if (!logs.length) return null;
 
-  const actionBarChildren = [];
+  const actionBarChildren: HTMLElement[] = [];
   const unreadExist = logs.some((log) => !log.isRead);
 
   if (unreadExist) {
     const markAllBtn = createElement("button", {
-      style: "background: #16a34a; color: #ffffff; border: none; padding: 0.4rem 0.85rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: opacity 0.2s;",
+      style: { background: "#16a34a", color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "4px", fontSize: "0.85rem", fontWeight: "500", cursor: "pointer", transition: "opacity 0.2s" },
       events: {
         click: async () => {
           try {
-            const saveMethod = idxDB.update || idxDB.put;
+            const saveMethod = (idxDB as any).update || (idxDB as any).put;
             const updatePromises = logs
               .filter((log) => !log.isRead)
               .map((log) => saveMethod({ ...log, isRead: true }));
@@ -351,7 +360,7 @@ function createSystemActionBar(logs, onRefresh) {
   }
 
   const clearLogsBtn = createElement("button", {
-    style: "background: #dc2626; color: #ffffff; border: none; padding: 0.4rem 0.85rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: opacity 0.2s;",
+    style: { background: "#dc2626", color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "4px", fontSize: "0.85rem", fontWeight: "500", cursor: "pointer", transition: "opacity 0.2s" },
     events: {
       click: async () => {
         if (!confirm("Clear all stored system logs?")) return;
@@ -368,22 +377,22 @@ function createSystemActionBar(logs, onRefresh) {
   actionBarChildren.push(clearLogsBtn);
 
   return createElement("div", {
-    style: "display: flex; gap: 0.5rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; margin-top: 0.5rem; justify-content: flex-end;",
+    style: { display: "flex", gap: "0.5rem", paddingTop: "0.75rem", borderTop: "1px solid #e2e8f0", marginTop: "0.5rem", justifyContent: "flex-end" },
   }, actionBarChildren);
 }
 
 /**
  * Activity Tab Action Footer
  */
-function createActionBar(userId, notifications, onRefresh) {
+function createActionBar(userId: string | null, notifications: NotificationItem[], onRefresh: () => void): HTMLElement | null {
   if (!userId || !notifications.length) return null;
 
-  const actionBarChildren = [];
+  const actionBarChildren: HTMLElement[] = [];
   const unreadExist = notifications.some((n) => !n.isRead);
 
   if (unreadExist) {
     const markAllBtn = createElement("button", {
-      style: "background: #16a34a; color: #ffffff; border: none; padding: 0.4rem 0.85rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: opacity 0.2s;",
+      style: { background: "#16a34a", color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "4px", fontSize: "0.85rem", fontWeight: "500", cursor: "pointer", transition: "opacity 0.2s" },
       events: {
         click: async () => {
           try {
@@ -400,7 +409,7 @@ function createActionBar(userId, notifications, onRefresh) {
   }
 
   const clearBtn = createElement("button", {
-    style: "background: #dc2626; color: #ffffff; border: none; padding: 0.4rem 0.85rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: opacity 0.2s;",
+    style: { background: "#dc2626", color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "4px", fontSize: "0.85rem", fontWeight: "500", cursor: "pointer", transition: "opacity 0.2s" },
     events: {
       click: async () => {
         if (!confirm("Clear all activity notifications?")) return;
@@ -417,6 +426,6 @@ function createActionBar(userId, notifications, onRefresh) {
   actionBarChildren.push(clearBtn);
 
   return createElement("div", {
-    style: "display: flex; gap: 0.5rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; margin-top: 0.5rem; justify-content: flex-end;",
+    style: { display: "flex", gap: "0.5rem", paddingTop: "0.75rem", borderTop: "1px solid #e2e8f0", marginTop: "0.5rem", justifyContent: "flex-end" },
   }, actionBarChildren);
 }

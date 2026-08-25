@@ -1,3 +1,4 @@
+// merchAPI.ts
 import { apiFetch } from "../../api/api.js";
 import Modal from "../../components/ui/Modal.js";
 import Notify from "../../components/ui/Notify.js";
@@ -11,85 +12,50 @@ import { uid } from "../media/ui/mediaUploadForm.js";
 
 // --- Add Merchandise ---
 async function addMerchandise(
-    entityType,
-    eventId,
-    merchList
-) {
+    entityType: string,
+    eventId: string,
+    merchList: HTMLElement
+): Promise<void> {
+    const nameInput = document.getElementById("merch-name") as HTMLInputElement | null;
+    const priceInput = document.getElementById("merch-price") as HTMLInputElement | null;
+    const stockInput = document.getElementById("merch-stock") as HTMLInputElement | null;
+    const discountInput = document.getElementById("merch-discount") as HTMLInputElement | null;
+    const imageInput = document.getElementById("merch-image") as HTMLInputElement | null;
 
-    const name = document
-        .getElementById("merch-name")
-        .value
-        .trim();
-
-    const price = parseFloat(
-        document.getElementById("merch-price").value
-    );
-
-    const stock = parseInt(
-        document.getElementById("merch-stock").value,
-        10
-    );
-
-    const discount = parseFloat(
-        document.getElementById("merch-discount").value || 0
-    );
-
-    const imageFile = document
-        .getElementById("merch-image")
-        .files?.[0];
+    const name = nameInput?.value.trim() || "";
+    const price = parseFloat(priceInput?.value || "");
+    const stock = parseInt(stockInput?.value || "", 10);
+    const discount = parseFloat(discountInput?.value || "0");
+    const imageFile = imageInput?.files?.[0];
 
     // ---------------------------------
     // VALIDATION
     // ---------------------------------
-
-    if (
-        !name ||
-        Number.isNaN(price) ||
-        Number.isNaN(stock)
-    ) {
-
-        Notify(
-            "Please fill in all fields correctly.",
-            {
-                type: "error"
-            }
-        );
-
+    if (!name || Number.isNaN(price) || Number.isNaN(stock)) {
+        Notify("Please fill in all fields correctly.", {
+            type: "error"
+        });
         return;
     }
 
-    if (
-        imageFile &&
-        !imageFile.type.startsWith("image/")
-    ) {
-
-        Notify(
-            "Please upload a valid image file.",
-            {
-                type: "error"
-            }
-        );
-
+    if (imageFile && !imageFile.type.startsWith("image/")) {
+        Notify("Please upload a valid image file.", {
+            type: "error"
+        });
         return;
     }
 
     try {
-
-        let uploadedImage = null;
+        let uploadedImage: { filename?: string; key?: string } | null = null;
 
         // ---------------------------------
         // IMAGE UPLOAD
         // ---------------------------------
-
         if (imageFile) {
-
-            Notify(
-                "Uploading image...",
-                {
-                    type: "info",
-                    duration: 2000
-                }
-            );
+            Notify("Uploading image...", {
+                type: "info",
+                duration: 2000
+            });
 
             uploadedImage = await uploadFile({
                 id: uid(),
@@ -98,108 +64,75 @@ async function addMerchandise(
                 entityId: String(eventId)
             });
 
-            if (
-                !uploadedImage?.filename &&
-                !uploadedImage?.key
-            ) {
-
-                throw new Error(
-                    "Image upload failed."
-                );
+            if (!uploadedImage?.filename && !uploadedImage?.key) {
+                throw new Error("Image upload failed.");
             }
         }
 
         // ---------------------------------
         // PAYLOAD
         // ---------------------------------
-
         const payload = {
-
             name,
-
             price,
-
             discount,
-
             stock,
-
-            merch_pic:
-                uploadedImage?.filename
-                || uploadedImage?.key
-                || ""
+            merch_pic: uploadedImage?.filename || uploadedImage?.key || ""
         };
 
         // ---------------------------------
         // API
         // ---------------------------------
-
-        const resp = await apiFetch(
-            `/merch/${entityType}/${eventId}`,
-            "POST",
-            payload
-        );
+        const resp = await apiFetch(`/merch/${entityType}/${eventId}`, "POST", payload) as {
+            data?: { merchid?: string | number; [key: string]: unknown };
+            message?: string;
+            [key: string]: unknown;
+        };
 
         if (!resp?.data?.merchid) {
-
-            throw new Error(
-                resp?.message
-                || "Invalid server response."
-            );
+            throw new Error(resp?.message || "Invalid server response.");
         }
 
         // ---------------------------------
         // SUCCESS
         // ---------------------------------
+        Notify(resp.message || "Merchandise added successfully.", {
+            type: "success",
+            duration: 3000
+        });
 
-        Notify(
-            resp.message
-            || "Merchandise added successfully.",
-            {
-                type: "success",
-                duration: 3000
-            }
-        );
-
-        displayNewMerchandise(
-            resp.data,
-            merchList
-        );
-
+        displayNewMerchandise(resp.data, merchList);
         clearMerchForm();
 
-    } catch (err) {
-
-        console.error(
-            "Error adding merchandise:",
-            err
-        );
-
-        Notify(
-            `Error adding merchandise: ${err.message}`,
-            {
-                type: "error"
-            }
-        );
+    } catch (err: unknown) {
+        console.error("Error adding merchandise:", err);
+        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        Notify(`Error adding merchandise: ${errorMessage}`, {
+            type: "error"
+        });
     }
 }
 
 // --- Clear Form ---
-function clearMerchForm() {
-    const formContainer = document.getElementById('edittabs');
+function clearMerchForm(): void {
+    const formContainer = document.getElementById("edittabs");
     if (formContainer) {
         formContainer.replaceChildren();
     }
 }
 
 // --- Delete Merchandise ---
-async function deleteMerch(entityType, merchId, eventId) {
-    if (!confirm('Are you sure you want to delete this merchandise?')) {
+async function deleteMerch(entityType: string, merchId: string, eventId: string): Promise<void> {
+    if (!confirm("Are you sure you want to delete this merchandise?")) {
         return;
     }
     try {
-        const resp = await apiFetch(`/merch/${entityType}/${eventId}/${merchId}`, 'DELETE');
+        const resp = await apiFetch(`/merch/${entityType}/${eventId}/${merchId}`, "DELETE") as {
+            success?: boolean;
+            message?: string;
+        };
         if (resp.success) {
-            Notify('Merchandise deleted successfully!', { type: "success" });
+            Notify("Merchandise deleted successfully!", { type: "success" });
             const merchItem = document.getElementById(`merch-${merchId}`);
             if (merchItem) {
                 merchItem.remove();
@@ -207,80 +140,100 @@ async function deleteMerch(entityType, merchId, eventId) {
         } else {
             Notify(`Failed to delete merchandise: ${resp.message}`, { type: "error" });
         }
-    } catch (err) {
-        console.error('Error deleting merchandise:', err);
-        Notify('An error occurred while deleting the merchandise.', { type: "error" });
+    } catch (err: unknown) {
+        console.error("Error deleting merchandise:", err);
+        Notify("An error occurred while deleting the merchandise.", { type: "error" });
     }
 }
 
 // --- Edit Merchandise ---
-async function editMerchForm(entityType, merchId, eventId) {
+async function editMerchForm(entityType: string, merchId: string, eventId: string): Promise<void> {
     try {
-        const resp = await apiFetch(`/merch/${entityType}/${eventId}/${merchId}`, 'GET');
+        const resp = await apiFetch(`/merch/${entityType}/${eventId}/${merchId}`, "GET") as {
+            data?: {
+                name?: string;
+                price?: number;
+                discount?: number;
+                stock?: number;
+                [key: string]: unknown;
+            };
+        };
         const data = resp?.data;
         if (!data) {
             throw new Error("Merchandise not found.");
         }
 
-        const form = createElement("form", { id: "edit-merch-form" });
+        const form = createElement("form", { id: "edit-merch-form" }) as HTMLFormElement;
         const fields = [
-            { label: "Name:", type: "text", id: "merchName", value: data.name, required: true },
-            { label: "Price:", type: "number", id: "merchPrice", value: data.price, required: true, step: "0.01" },
+            { label: "Name:", type: "text", id: "merchName", value: data.name ?? "", required: true },
+            { label: "Price:", type: "number", id: "merchPrice", value: data.price ?? 0, required: true, step: "0.01" },
             { label: "Discount (%)", type: "number", id: "merch-discount", value: data.discount || 0, step: "0.01", min: "0", max: "100" },
-            { label: "Stock:", type: "number", id: "merchStock", value: data.stock, required: true }
+            { label: "Stock:", type: "number", id: "merchStock", value: data.stock ?? 0, required: true }
         ];
         fields.forEach(f => form.appendChild(createFormGroup(f)));
 
-        const submitBtn = Button("Update Merchandise", "", { type: "submit" }, "buttonx");
+        const submitBtn = Button({
+            title: "Update Merchandise",
+            classes: "buttonx",
+            events: {
+                click: () => {}
+            },
+            ...({ type: "submit" } as any)
+        });
         form.appendChild(submitBtn);
 
-        const { close: closeModal } = Modal({ title: "Edit Merchandise", content: form });
+        const modalInstance = Modal({ title: "Edit Merchandise", content: form });
+        const closeModal = modalInstance.close;
 
         form.addEventListener("submit", async e => {
             e.preventDefault();
+            const nameEl = form.querySelector("#merchName") as HTMLInputElement;
+            const priceEl = form.querySelector("#merchPrice") as HTMLInputElement;
+            const discountEl = form.querySelector("#merch-discount") as HTMLInputElement;
+            const stockEl = form.querySelector("#merchStock") as HTMLInputElement;
+
             const merchData = {
-                name: form.querySelector("#merchName").value,
-                price: parseFloat(form.querySelector("#merchPrice").value),
-                discount: parseFloat(form.querySelector("#merch-discount").value || 0),
-                stock: parseInt(form.querySelector("#merchStock").value, 10)
+                name: nameEl?.value || "",
+                price: parseFloat(priceEl?.value || "0"),
+                discount: parseFloat(discountEl?.value || "0"),
+                stock: parseInt(stockEl?.value || "0", 10)
             };
             try {
                 const updateResp = await apiFetch(
                     `/merch/${entityType}/${eventId}/${merchId}`,
-                    'PUT',
+                    "PUT",
                     merchData
-                );
+                ) as { success?: boolean; message?: string };
                 if (updateResp.success) {
-                    Notify('Merchandise updated successfully!', { type: "success" });
+                    Notify("Merchandise updated successfully!", { type: "success" });
                     closeModal();
                 } else {
                     Notify(`Failed to update merchandise: ${updateResp.message}`, { type: "error" });
                 }
-            } catch (err) {
+            } catch (err: unknown) {
                 console.error("Error updating merchandise:", err);
                 Notify("An error occurred while updating the merchandise.", { type: "error" });
             }
         });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error("Error fetching merchandise details:", err);
-        Notify('An error occurred while fetching the merchandise details.', { type: "error" });
+        Notify("An error occurred while fetching the merchandise details.", { type: "error" });
     }
 }
 
 // --- Display New Merchandise Item ---
-function displayNewMerchandise(merchData, merchList) {
-    const item = createElement("div", { class: "merch-item", id: `merch-${merchData.merchid}` });
+function displayNewMerchandise(merchData: { merchid: string | number; name: string; price: number; stock: number; merch_pic?: string }, merchList: HTMLElement): void {
+    const item = createElement("div", { class: "merch-item", id: `merch-${merchData.merchid}` }) as HTMLElement;
     item.append(
         createElement("h3", {}, [merchData.name]),
-        createElement("p", {}, [`Price: $${merchData.price.toFixed(2)}`]),
+        createElement("p", {}, [`Price: $${Number(merchData.price).toFixed(2)}`]),
         createElement("p", {}, [`Available: ${merchData.stock}`])
     );
     if (merchData.merch_pic) {
         const img = Imagex({
             src: resolveImagePath(EntityType.MERCH, PictureType.THUMB, merchData.merch_pic),
             alt: merchData.name,
-            loading: "lazy",
-            style: "max-width:160px"
+            loading: "lazy"
         });
         item.appendChild(img);
     }

@@ -1,7 +1,8 @@
 import { fetchUserProfile } from "./fetchProfile.js";
-import profilGen from "./renderUserProfile.js";
+import profilGen from "./profilegen.js";
 import { attachProfileEventListeners } from "./displayMyProfile.js";
 import { displayUserProfileData } from "../userdata/displayProfileData.js";
+import { createElement } from "../../components/createElement.js";
 import Notify from "../../components/ui/Notify.js";
 
 /* ============================================================
@@ -10,14 +11,15 @@ import Notify from "../../components/ui/Notify.js";
 
 /**
  * Fetches and displays a specific user's profile view
- * @param {boolean} isLoggedIn 
- * @param {HTMLElement} content Container element to render into
- * @param {string} username Target username
  */
-async function displayUserProfile(isLoggedIn, content, username) {
+async function displayUserProfile(
+  isLoggedIn: boolean,
+  content: HTMLElement | null,
+  username: string
+): Promise<void> {
   if (!content) return;
 
-  content.textContent = ""; // Clear existing container content
+  content.replaceChildren(); // Clear existing container content
 
   try {
     const userProfile = await fetchUserProfile(username);
@@ -28,17 +30,21 @@ async function displayUserProfile(isLoggedIn, content, username) {
       content.appendChild(profileElement);
       attachProfileEventListeners(content);
     } else {
-      const notFoundMessage = document.createElement("p");
-      notFoundMessage.className = "error-message";
-      notFoundMessage.textContent = "User not found.";
+      const notFoundMessage = createElement(
+        "p",
+        { class: "error-message" },
+        "User not found."
+      );
       content.appendChild(notFoundMessage);
     }
   } catch (error) {
     console.error("Failed to display user profile:", error);
 
-    const errorMessage = document.createElement("p");
-    errorMessage.className = "error-message";
-    errorMessage.textContent = "Failed to load user profile. Please try again later.";
+    const errorMessage = createElement(
+      "p",
+      { class: "error-message" },
+      "Failed to load user profile. Please try again later."
+    );
     content.appendChild(errorMessage);
 
     Notify("Error fetching user profile.", {
@@ -49,4 +55,4 @@ async function displayUserProfile(isLoggedIn, content, username) {
   }
 }
 
-export { displayUserProfile, displayUserProfileData };
+export { displayUserProfile };

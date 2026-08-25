@@ -1,7 +1,9 @@
 import { apiFetch } from "../../api/api.js";
 import { uploadFiles } from "../media/api/mediaApi.js";
 
-export function getUploadKey(file) {
+export type UploadKeyType = "photo" | "video" | "audio" | "file";
+
+export function getUploadKey(file: File): UploadKeyType {
   if (file.type.startsWith("image/")) {
     return "photo";
   }
@@ -15,18 +17,18 @@ export function getUploadKey(file) {
 }
 
 export function setupFileUpload(
-  fileInput,
-  uploadButton,
-  dropZone,
-  chatid,
-  progressBar
-) {
+  fileInput: HTMLInputElement,
+  uploadButton: HTMLButtonElement,
+  dropZone: HTMLElement,
+  chatid: string | number,
+  progressBar: HTMLProgressElement
+): void {
   const MAX_FILES = 20;
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
   let uploading = false;
 
-  function validateFile(file) {
+  function validateFile(file: File): boolean {
     const isImage =
       file.type.startsWith("image/") ||
       /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name);
@@ -34,7 +36,7 @@ export function setupFileUpload(
     return isImage && file.size <= MAX_FILE_SIZE;
   }
 
-  function setUploading(state) {
+  function setUploading(state: boolean): void {
     uploading = state;
 
     uploadButton.disabled = state;
@@ -47,7 +49,7 @@ export function setupFileUpload(
     }
   }
 
-  async function processFiles(files) {
+  async function processFiles(files: File[]): Promise<void> {
     if (uploading) {
       return;
     }
@@ -74,13 +76,12 @@ export function setupFileUpload(
           entityId: String(chatid),
           concurrency: 3,
           retry: 1,
-          // FIXED: Wrapped callback in an evaluator to ensure proper resolution per-file
-          key: (file) => getUploadKey(file)
+          key: (file: File) => getUploadKey(file)
         }
       );
 
       const successfulUploads = uploadedFiles.filter(
-        file => file && !file.error
+        (file: any) => file && !file.error
       );
 
       if (successfulUploads.length === 0) {
@@ -93,12 +94,11 @@ export function setupFileUpload(
         {
           chat: chatid,
           files: successfulUploads
-        },
-        { json: true }
+        }
       );
 
       fileInput.value = "";
-    } catch (err) {
+    } catch (err: any) {
       console.error("Chat upload failed", err);
       alert(err?.message || "Upload failed.");
     } finally {
@@ -106,7 +106,7 @@ export function setupFileUpload(
     }
   }
 
-  function getSelectedFiles() {
+  function getSelectedFiles(): File[] | null {
     const files = Array.from(fileInput.files || []);
 
     if (files.length > MAX_FILES) {
@@ -125,12 +125,12 @@ export function setupFileUpload(
     processFiles(files);
   });
 
-  dropZone.addEventListener("dragenter", e => {
+  dropZone.addEventListener("dragenter", (e: DragEvent) => {
     e.preventDefault();
     dropZone.classList.add("drag-over");
   });
 
-  dropZone.addEventListener("dragover", e => {
+  dropZone.addEventListener("dragover", (e: DragEvent) => {
     e.preventDefault();
   });
 
@@ -138,7 +138,7 @@ export function setupFileUpload(
     dropZone.classList.remove("drag-over");
   });
 
-  dropZone.addEventListener("drop", e => {
+  dropZone.addEventListener("drop", (e: DragEvent) => {
     e.preventDefault();
     dropZone.classList.remove("drag-over");
 
@@ -149,7 +149,6 @@ export function setupFileUpload(
       return;
     }
 
-    // FIXED: Clear standard input to prevent duplicate uploads if users switch gestures
     fileInput.value = "";
     processFiles(files);
   });

@@ -19,7 +19,7 @@ import { farmChat } from "./farmchat.js";
 import Imagex from "../../../components/base/Imagex.js";
 import { persistTabs, TabItem } from "../../../utils/persistTabs.js";
 import { displayNotices } from "../../notices/notices.js";
-import { displayFanMedia } from "../../fanmade/ui/mediaGallery.js";
+import { displayFanMedia } from "../../fanmade/mediaGallery.js";
 import { renderWeatherDetails } from "../weather/weather.js";
 import { createCrop } from "../crop/createCrop.js";
 import Modal from "../../../components/ui/Modal.js";

@@ -4,7 +4,19 @@ import { dispatchVendorEvent, VENDOR_EVENTS } from "./vendorEvents.js";
 import { isValidEmail, normalizeErrorMessage } from "./vendorUtils.js";
 import { createElement } from "../../../components/createElement.js";
 
-export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, options = {}) {
+interface VendorFormOptions {
+    mode?: "create" | "edit";
+    initialData?: Record<string, any>;
+    vendorId?: string | null;
+}
+
+export function vendorForm(
+    anacon: HTMLElement,
+    isLoggedIn: boolean,
+    eventId?: string,
+    onSuccess: ((detail: any) => void | Promise<void>) | null = null,
+    options: VendorFormOptions = {}
+): HTMLFormElement {
     const mode = options.mode === "edit" ? "edit" : "create";
     const initialData = options.initialData || {};
     const vendorId = options.vendorId ?? initialData.vendorid ?? initialData.vendor_id ?? initialData.vendorId ?? initialData.id ?? null;
@@ -13,7 +25,7 @@ export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, option
         class: mode === "edit" ? "vendor-registration-form vendor-edit-form" : "vendor-registration-form",
         noValidate: "true",
         events: {
-            submit: async (event) => {
+            submit: async (event: Event) => {
                 event.preventDefault();
                 await handleVendorSubmit(form, {
                     isLoggedIn,
@@ -24,7 +36,7 @@ export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, option
                 });
             }
         }
-    });
+    }) as HTMLFormElement;
 
     const title = createElement("h4", {}, mode === "edit" ? "Edit Vendor Profile" : "List Yourself as a Vendor");
     form.appendChild(title);
@@ -42,12 +54,12 @@ export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, option
         name: "category",
         required: "true",
         class: "form-input"
-    });
+    }) as HTMLSelectElement;
 
     const placeholderOption = createElement("option", {
         value: "",
         disabled: "true"
-    }, "Select a Category");
+    }, "Select a Category") as HTMLOptionElement;
     
     if (!initialData.category) {
         placeholderOption.selected = true;
@@ -110,7 +122,7 @@ export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, option
         type: "submit",
         id: `vendor-submit-${Math.random().toString(36).slice(2, 10)}`,
         class: "btn-primary"
-    }, mode === "edit" ? "Save Changes" : "Register as Vendor");
+    }, mode === "edit" ? "Save Changes" : "Register as Vendor") as HTMLButtonElement;
 
     form.appendChild(nameInput);
     form.appendChild(categorySelect);
@@ -123,7 +135,18 @@ export function vendorForm(anacon, isLoggedIn, eventId, onSuccess = null, option
     return form;
 }
 
-async function handleVendorSubmit(formEl, { isLoggedIn, eventId, onSuccess, mode, vendorId }) {
+interface SubmitOptions {
+    isLoggedIn: boolean;
+    eventId?: string;
+    onSuccess?: ((detail: any) => void | Promise<void>) | null;
+    mode: "create" | "edit";
+    vendorId?: string | null;
+}
+
+async function handleVendorSubmit(
+    formEl: HTMLFormElement,
+    { isLoggedIn, eventId, onSuccess, mode, vendorId }: SubmitOptions
+): Promise<void> {
     if (!isLoggedIn) {
         Notify("Please log in first.", {
             type: "warning",
@@ -133,13 +156,13 @@ async function handleVendorSubmit(formEl, { isLoggedIn, eventId, onSuccess, mode
         return;
     }
 
-    const nameInput = formEl.querySelector("input[name='name']");
-    const categoryInput = formEl.querySelector("select[name='category']");
-    const descriptionInput = formEl.querySelector("textarea[name='description']");
-    const emailInput = formEl.querySelector("input[name='email']");
-    const phoneInput = formEl.querySelector("input[name='phone']");
-    const locationInput = formEl.querySelector("input[name='location']");
-    const submitBtn = formEl.querySelector("button[type='submit']");
+    const nameInput = formEl.querySelector("input[name='name']") as HTMLInputElement | null;
+    const categoryInput = formEl.querySelector("select[name='category']") as HTMLSelectElement | null;
+    const descriptionInput = formEl.querySelector("textarea[name='description']") as HTMLTextAreaElement | null;
+    const emailInput = formEl.querySelector("input[name='email']") as HTMLInputElement | null;
+    const phoneInput = formEl.querySelector("input[name='phone']") as HTMLInputElement | null;
+    const locationInput = formEl.querySelector("input[name='location']") as HTMLInputElement | null;
+    const submitBtn = formEl.querySelector("button[type='submit']") as HTMLButtonElement | null;
 
     const name = nameInput ? nameInput.value.trim() : "";
     const category = categoryInput ? categoryInput.value.trim() : "";
@@ -179,7 +202,7 @@ async function handleVendorSubmit(formEl, { isLoggedIn, eventId, onSuccess, mode
     }
 
     try {
-        const payload = {
+        const payload: Record<string, any> = {
             name,
             category,
             ...(description && { description }),
@@ -188,7 +211,7 @@ async function handleVendorSubmit(formEl, { isLoggedIn, eventId, onSuccess, mode
             ...(location && { location })
         };
 
-        const response = mode === "edit"
+        const response: any = mode === "edit" && vendorId
             ? await updateVendor(vendorId, payload)
             : await createVendor(payload);
 
@@ -229,7 +252,7 @@ async function handleVendorSubmit(formEl, { isLoggedIn, eventId, onSuccess, mode
                 categoryInput.value = "";
             }
         }
-    } catch (error) {
+    } catch (error: unknown) {
         console.error(mode === "edit" ? "Vendor update error:" : "Vendor registration error:", error);
 
         Notify(
@@ -247,7 +270,7 @@ async function handleVendorSubmit(formEl, { isLoggedIn, eventId, onSuccess, mode
     }
 }
 
-function createInput(attributes) {
+function createInput(attributes: Record<string, any>): HTMLElement {
     const safeAttributes = { ...attributes };
     if (safeAttributes.className) {
         safeAttributes.class = safeAttributes.className;
@@ -256,7 +279,7 @@ function createInput(attributes) {
     return createElement("input", safeAttributes);
 }
 
-function createTextarea(attributes) {
+function createTextarea(attributes: Record<string, any>): HTMLElement {
     const safeAttributes = { ...attributes };
     if (safeAttributes.className) {
         safeAttributes.class = safeAttributes.className;

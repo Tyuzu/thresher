@@ -6,7 +6,7 @@ export const VENDOR_EVENTS = Object.freeze({
     DELETED: "vendor-deleted"
 });
 
-export function dispatchVendorEvent(eventName, detail = {}) {
+export function dispatchVendorEvent(eventName: string, detail: Record<string, any> = {}): void {
     if (typeof document !== "undefined" && typeof CustomEvent === "function") {
         document.dispatchEvent(new CustomEvent(eventName, { detail }));
     }

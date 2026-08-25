@@ -2,7 +2,16 @@ import { resolveImagePath, EntityType, PictureType } from "../../../utils/imageP
 import ZoomBox from "../../../components/ui/zoomBox/ZoomBox.js";
 import Imagex from "../../../components/base/Imagex.js";
 
-async function RenderImagePost(mediaContainer, media) {
+/**
+ * Renders an image list/grid container for post media elements.
+ * 
+ * @param mediaContainer - The target HTMLElement container to append images to
+ * @param media - Array of media identifiers/IDs
+ */
+export async function RenderImagePost(
+  mediaContainer: HTMLElement, 
+  media: (string | number)[]
+): Promise<void> {
   const imageList = document.createElement("ul");
   imageList.className = "preview_image_wrap";
 
@@ -19,6 +28,7 @@ async function RenderImagePost(mediaContainer, media) {
       `${id}.jpg`
     );
     
+    // Assuming Imagex utilizes the options-object pattern similar to your Button component
     const img = Imagex({
       src: thumb,
       loading: "lazy",

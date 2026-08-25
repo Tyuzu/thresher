@@ -8,21 +8,31 @@ import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
 import Notify from "../../components/ui/Notify.js";
 
+interface UserProfile {
+  username?: string;
+  name?: string;
+  email?: string;
+  bio?: string;
+  phone_number?: string;
+  [key: string]: unknown;
+}
+
 /* ============================================================
     EDIT PROFILE VIEW
 ============================================================ */
 
 /**
  * Renders the edit profile form into the target container
- * @param {HTMLElement} content 
- * @param {Function} [onDelete] Optional delete handler callback
  */
-async function editProfile(content, onDelete) {
+async function editProfile(
+  content: HTMLElement | null,
+  onDelete?: () => void
+): Promise<void> {
   if (!content) return;
 
   content.replaceChildren(); // Clear existing content
 
-  const profile = getState("userProfile");
+  const profile = getState("userProfile") as UserProfile | undefined;
   if (!profile) {
     Notify("Please log in to edit your profile.", {
       type: "warning",
@@ -39,13 +49,13 @@ async function editProfile(content, onDelete) {
   const form = createElement("form", {
     id: "edit-profile-form",
     class: "create-section"
-  });
+  }) as HTMLFormElement;
 
   // Generate form fields mapped directly to profile schema keys
   const fields = [
-    generateFormField("Username", "username", "text", username),
-    generateFormField("Name", "name", "text", name),
-    generateFormField("Email", "email", "email", email),
+    generateFormField("Username", "username", "text", username || ""),
+    generateFormField("Name", "name", "text", name || ""),
+    generateFormField("Email", "email", "email", email || ""),
     generateFormField("Bio", "bio", "textarea", bio || ""),
     generateFormField("Phone Number", "phone_number", "text", phone_number || "")
   ];
@@ -55,20 +65,21 @@ async function editProfile(content, onDelete) {
   });
 
   // Submit button
-  const updateBtn = Button(
-    "Update Profile",
-    "update-profile-btn",
-    null,
-    "buttonx primary"
-  );
-  updateBtn.type = "submit";
+  const updateBtn = Button({
+    title: "Update Profile",
+    id: "update-profile-btn",
+    classes: "buttonx primary",
+    type: "submit"
+  }) as HTMLButtonElement;
 
   // Cancel button
-  const cancelBtn = Button(
-    "Cancel",
-    "cancel-profile-btn",
-    {
-      click: (e) => {
+  const cancelBtn = Button({
+    title: "Cancel",
+    id: "cancel-profile-btn",
+    classes: "buttonx secondary",
+    type: "button",
+    events: {
+      click: (e: Event) => {
         e.preventDefault();
         Notify("Profile editing canceled.", {
           type: "info",
@@ -77,26 +88,27 @@ async function editProfile(content, onDelete) {
         });
         navigate("/profile");
       }
-    },
-    "buttonx secondary"
-  );
-  cancelBtn.type = "button";
+    }
+  }) as HTMLButtonElement;
 
   form.appendChild(updateBtn);
   form.appendChild(cancelBtn);
 
   // Form submit event handler
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", (e: SubmitEvent) => {
     e.preventDefault();
     updateProfile(new FormData(form));
   });
 
   // Delete button
-  const deleteBtn = Button(
-    "Delete Profile",
-    "btndelprof",
-    {
-      click: (e) => {
+  const deleteBtn = Button({
+    title: "Delete Profile",
+    id: "btndelprof",
+    classes: "btn delete-btn",
+    type: "button",
+    "data-action": "delete-profile",
+    events: {
+      click: (e: Event) => {
         e.preventDefault();
         if (typeof onDelete === "function") {
           onDelete();
@@ -104,11 +116,8 @@ async function editProfile(content, onDelete) {
           content.dispatchEvent(new CustomEvent("edit-profile:delete", { bubbles: true }));
         }
       }
-    },
-    "btn delete-btn"
-  );
-  deleteBtn.type = "button";
-  deleteBtn.setAttribute("data-action", "delete-profile");
+    }
+  }) as HTMLButtonElement;
 
   content.append(title, form, deleteBtn);
 }
@@ -119,9 +128,8 @@ async function editProfile(content, onDelete) {
 
 /**
  * Handles profile update submission
- * @param {FormData} formData 
  */
-async function updateProfile(formData) {
+async function updateProfile(formData: FormData): Promise<void> {
   if (!getState("token")) {
     Notify("Please log in to update your profile.", {
       type: "warning",
@@ -131,8 +139,8 @@ async function updateProfile(formData) {
     return;
   }
 
-  const currentProfile = getState("userProfile") || {};
-  const updatedFields = {};
+  const currentProfile = (getState("userProfile") as Record<string, unknown>) || {};
+  const updatedFields: Record<string, string> = {};
 
   // Compare input values against current state to send only changed fields
   for (const [key, value] of formData.entries()) {
@@ -161,11 +169,11 @@ async function updateProfile(formData) {
       updateFormData.append(key, val)
     );
 
-    const updatedProfile = await apiFetch(
+    const updatedProfile = (await apiFetch(
       "/profile/edit",
       "PUT",
       updateFormData
-    );
+    )) as Record<string, unknown> | null;
 
     if (!updatedProfile) {
       throw new Error("No response received for the profile update.");

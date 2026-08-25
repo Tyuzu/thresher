@@ -3,15 +3,36 @@ import { RenderImagePost } from "./renderImagePost.js";
 import { RenderAudioPost } from "./renderAudioPost.js";
 import { RenderVideoPost } from "./renderVideoPost.js";
 
-export function renderMedia(msg) {
+// Media item structure based on your implementation
+export interface MediaItem {
+  url?: string;
+  mimeType?: string;
+  type?: string;
+  extn?: string;
+  [key: string]: unknown;
+}
+
+// Message payload structure expected by renderMedia
+export interface MediaMessagePayload {
+  media?: MediaItem | MediaItem[] | null;
+  [key: string]: unknown;
+}
+
+/**
+ * Renders media content (images, videos, audio) for a message.
+ * 
+ * @param msg - The message data object
+ * @returns The container DOM element or null if no media exists
+ */
+export function renderMedia(msg: MediaMessagePayload): HTMLElement | null {
   const media = msg?.media;
   if (!media) {
     return null;
   }
 
-  const container = createElement("div", { class: "mediacon" }, []);
+  const container = createElement("div", { class: "mediacon" }, []) as HTMLElement;
   const items = Array.isArray(media) ? media : [media];
-  const imageIds = [];
+  const imageIds: string[] = [];
 
   try {
     for (const m of items) {
@@ -37,20 +58,14 @@ export function renderMedia(msg) {
         continue;
       }
 
-      //      const href = raw.startsWith("http")
-      //        ? raw
-      //        : resolveImagePath(EntityType.CHAT, PictureType.PHOTO, raw);
-
-      //      container.appendChild(
-      //        createElement("a", { href, download: "", class: "msg-file" }, [raw])
-      //      );
-
-      const chatImage = createElement("div", {}, []);
+      // Fallback/Default handling for other types or standalone images
+      const chatImage = createElement("div", {}, []) as HTMLElement;
       RenderImagePost(chatImage, [raw]);
       container.appendChild(chatImage);
     }
 
-    if (imageIds.length) {
+    // Batch render grouped images if any were collected
+    if (imageIds.length > 0) {
       RenderImagePost(container, imageIds);
     }
   } catch (e) {
@@ -60,5 +75,5 @@ export function renderMedia(msg) {
     );
   }
 
-  return container.children.length ? container : null;
+  return container.children.length > 0 ? container : null;
 }

@@ -1,44 +1,119 @@
 import { formatCurrency } from "../../types/api.types.js";
 import { apiFetch } from "../../api/api.js";
 
-export function formatTransactionAmount(amount) {
+/* ───────────────────────────────────────── */
+/* Types & Interfaces */
+/* ───────────────────────────────────────── */
+
+export interface CartItem {
+  price?: number | string;
+  currency?: string;
+  quantity?: number | string;
+  [key: string]: unknown;
+}
+
+export interface CouponValidationResult {
+  valid: boolean;
+  discount: number;
+  reason?: string;
+}
+
+export interface CouponApiResponse {
+  data?: CouponValidationResult;
+  [key: string]: unknown;
+}
+
+export interface Transaction {
+  id: string | number;
+  amount: number;
+  [key: string]: unknown;
+}
+
+export interface TransactionResponse {
+  data?: {
+    transactions?: Transaction[];
+  };
+  transactions?: Transaction[];
+}
+
+export interface FormattedTotals {
+  subtotal: string;
+  tax: string;
+  discount: string;
+  total: string;
+}
+
+export interface OrderTotals {
+  subtotal: number;
+  tax: number;
+  discount: number;
+  total: number;
+  display: FormattedTotals;
+}
+
+export interface TopupResponse {
+  transactionId?: string | number;
+  status?: string;
+  balance?: number;
+  [key: string]: unknown;
+}
+
+/* ───────────────────────────────────────── */
+/* Utility Functions */
+/* ───────────────────────────────────────── */
+
+export function formatTransactionAmount(amount: number): string {
   return formatCurrency(amount);
 }
 
-export function formatCartItemPrice(item) {
+export function formatCartItemPrice(item?: CartItem | null): string {
   if (typeof item?.price === 'number') {
     return formatCurrency(item.price);
   }
   return `${item?.currency || 'INR'} ${item?.price || 0}`;
 }
 
-export async function validateCouponCode(couponCode, cartTotal) {
+export async function validateCouponCode(
+  couponCode: string,
+  cartTotal: number
+): Promise<CouponValidationResult> {
   if (!couponCode?.trim()) return { valid: false, discount: 0 };
   
   try {
-    const response = await apiFetch('/cart/validate-coupon', 'POST', {
+    const response = await apiFetch<CouponApiResponse>('/cart/validate-coupon', 'POST', {
       coupon_code: couponCode,
       cart_total: cartTotal
     });
     return response?.data || { valid: false, discount: 0 };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Coupon alignment verification error:', error);
-    return { valid: false, discount: 0, reason: error.message };
+    return { valid: false, discount: 0, reason: error?.message || 'Validation failed' };
   }
 }
 
-export function formatWalletBalance(balanceInPaise) {
+export function formatWalletBalance(balanceInPaise: number): string {
   return formatCurrency(balanceInPaise);
 }
 
-export function normalizeTransactionResponse(response) {
-  if (response?.data?.transactions) return response.data.transactions;
-  if (Array.isArray(response)) return response;
-  if (Array.isArray(response?.transactions)) return response.transactions;
+export function normalizeTransactionResponse(
+  response: TransactionResponse | Transaction[] | null | undefined
+): Transaction[] {
+  if (response && 'data' in response && response.data?.transactions) {
+    return response.data.transactions;
+  }
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (response && 'transactions' in response && Array.isArray(response.transactions)) {
+    return response.transactions;
+  }
   return [];
 }
 
-export function calculateOrderTotals(items, couponDiscount = 0) {
+export function calculateOrderTotals(
+  items: CartItem[],
+  couponDiscount: number = 0
+): OrderTotals {
   let subtotal = 0;
   items.forEach(item => {
     subtotal += (Number(item.price) || 0) * (Number(item.quantity) || 0);
@@ -48,7 +123,10 @@ export function calculateOrderTotals(items, couponDiscount = 0) {
   const total = Math.max(0, subtotal + tax - couponDiscount);
 
   return {
-    subtotal, tax, discount: couponDiscount, total,
+    subtotal,
+    tax,
+    discount: couponDiscount,
+    total,
     display: {
       subtotal: formatCurrency(subtotal),
       tax: formatCurrency(tax),
@@ -58,9 +136,12 @@ export function calculateOrderTotals(items, couponDiscount = 0) {
   };
 }
 
-export async function requestWalletTopup(amount, paymentMethod) {
+export async function requestWalletTopup(
+  amount: number,
+  paymentMethod: string
+): Promise<TopupResponse | undefined> {
   try {
-    const res = await apiFetch('/wallet/topup', 'POST', {
+    const res = await apiFetch<{ data?: TopupResponse }>('/wallet/topup', 'POST', {
       amount,
       payment_method: paymentMethod
     });

@@ -14,7 +14,7 @@ export interface ChatMessage {
 export interface GenericChat {
   chatid?: string | number;
   id?: string | number;
-  participants?: string[];
+  participants?: (string | number)[];
   lastMessage?: ChatMessage;
   [key: string]: unknown;
 }
@@ -27,18 +27,18 @@ export interface UserStateObject {
   [key: string]: unknown;
 }
 
-export interface RenderChatContext {
-  currentUser: string;
+export interface RenderChatContext<UserType = string | number> {
+  currentUser: UserType;
   isLoggedIn: boolean;
 }
 
-export interface SharedChatListExtractors<T = GenericChat> {
-  getOtherUser: (chat: T, currentUser: string) => string;
+export interface SharedChatListExtractors<T = GenericChat, UserType = string | number> {
+  getOtherUser: (chat: T, currentUser: UserType) => string;
   getLastMessage: (chat: T) => string;
   getTimestamp: (chat: T) => string | number | Date | undefined;
 }
 
-export interface RenderSharedChatListOptions<T = GenericChat> {
+export interface RenderSharedChatListOptions<T = GenericChat, UserType = string | number> {
   container: HTMLElement | null;
   isLoggedIn: boolean;
   loginText?: string;
@@ -47,10 +47,10 @@ export interface RenderSharedChatListOptions<T = GenericChat> {
   renderChat: (
     targetView: HTMLElement,
     chat: T,
-    context: RenderChatContext
+    context: RenderChatContext<UserType>
   ) => void;
   getChatId?: (chat: T) => string | number | undefined;
-  getOtherUser?: (chat: T, currentUser: string) => string;
+  getOtherUser?: (chat: T, currentUser: UserType) => string;
   getLastMessage?: (chat: T) => string;
   getTimestamp?: (chat: T) => string | number | Date | undefined;
 }
@@ -82,11 +82,31 @@ function formatTimestamp(
   });
 }
 
-function createChatListItem<T = GenericChat>(
+function extractCurrentUserId(): string | number {
+  const userState = getState("user") as UserStateObject | string | number | null;
+
+  if (userState && typeof userState === "object") {
+    const rawUser = userState.userid ?? userState.id;
+    if (typeof rawUser === "object" && rawUser !== null) {
+      return (
+        (rawUser as UserStateObject).id ??
+        (rawUser as UserStateObject).userid ??
+        (rawUser as UserStateObject).username ??
+        (rawUser as UserStateObject).email ??
+        ""
+      );
+    }
+    return rawUser ?? "";
+  }
+
+  return userState ?? "";
+}
+
+function createChatListItem<T = GenericChat, UserType = string | number>(
   chat: T,
-  currentUser: string,
+  currentUser: UserType,
   onClick: (event: Event) => void,
-  { getOtherUser, getLastMessage, getTimestamp }: SharedChatListExtractors<T>
+  { getOtherUser, getLastMessage, getTimestamp }: SharedChatListExtractors<T, UserType>
 ): HTMLLIElement {
   const otherUser = getOtherUser(chat, currentUser);
   const lastMessage = getLastMessage(chat);
@@ -94,13 +114,22 @@ function createChatListItem<T = GenericChat>(
 
   const li = createElement("li", {
     class: "chat-item",
+    role: "option",
+    tabindex: "0",
+    "aria-selected": "false",
     events: {
-      click: onClick
+      click: onClick as EventListener,
+      keydown: ((e: KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(e);
+        }
+      }) as EventListener
     }
   }) as HTMLLIElement;
 
   const avatar = createElement("div", { class: "chat-avatar" }, [
-    String(otherUser).charAt(0).toUpperCase()
+    String(otherUser).charAt(0).toUpperCase() || "?"
   ]);
 
   const info = createElement("div", { class: "chat-info" });
@@ -117,40 +146,46 @@ function createChatListItem<T = GenericChat>(
    MAIN ENTRY
 ========================================================= */
 
-export async function renderSharedChatList<T = GenericChat>({
+export async function renderSharedChatList<T = GenericChat, UserType = string | number>({
   container,
   isLoggedIn,
   loginText = "Please log in to view chats.",
   emptyText = "No chats found.",
   fetchChats,
   renderChat,
-  getChatId = (chat) => (chat as GenericChat)?.chatid,
+  getChatId = (chat) => (chat as GenericChat)?.chatid ?? (chat as GenericChat)?.id,
   getOtherUser = (chat, currentUser) => {
     const participants = Array.isArray((chat as GenericChat)?.participants)
-      ? ((chat as GenericChat).participants as string[])
+      ? ((chat as GenericChat).participants as (string | number)[])
       : [];
 
-    return (
-      participants.filter((user) => user !== currentUser).join(", ") || "Unknown"
+    const otherParticipants = participants.filter(
+      (user) => String(user) !== String(currentUser)
     );
+
+    return otherParticipants.join(", ") || "Unknown";
   },
   getLastMessage = (chat) =>
     (chat as GenericChat)?.lastMessage?.text?.trim() || "No messages yet",
   getTimestamp = (chat) => (chat as GenericChat)?.lastMessage?.timestamp
-}: RenderSharedChatListOptions<T>): Promise<void> {
+}: RenderSharedChatListOptions<T, UserType>): Promise<void> {
   if (!container) return;
   container.replaceChildren();
 
   if (!isLoggedIn) {
     container.appendChild(
-      createElement("p", { "aria-live": "polite" }, [loginText])
+      createElement("p", { "aria-live": "polite", class: "chat-login-prompt" }, [loginText])
     );
     return;
   }
 
   const wrapper = createElement("div", { class: "chat-wrapper" });
   const sidebar = createElement("div", { class: "chat-sidebar" });
-  const list = createElement("ul", { class: "chat-list" });
+  const list = createElement("ul", {
+    class: "chat-list",
+    role: "listbox",
+    "aria-label": "Chat list"
+  });
   const chatView = createElement("div", { class: "chat-view" }) as HTMLElement;
 
   sidebar.appendChild(list);
@@ -159,30 +194,11 @@ export async function renderSharedChatList<T = GenericChat>({
 
   try {
     const chats = (await fetchChats()) || [];
-
-    // Safely extract active user identifier without risk of NPEs
-    const userState = getState("user") as UserStateObject | string | null;
-    let currentUser = "";
-
-    if (userState && typeof userState === "object") {
-      const rawUser = userState.userid ?? userState.id;
-      if (typeof rawUser === "object" && rawUser !== null) {
-        currentUser = String(
-          (rawUser as UserStateObject).id ??
-            (rawUser as UserStateObject).username ??
-            (rawUser as UserStateObject).email ??
-            ""
-        );
-      } else {
-        currentUser = String(rawUser ?? "");
-      }
-    } else {
-      currentUser = String(userState ?? "");
-    }
+    const currentUser = extractCurrentUserId() as UserType;
 
     if (!Array.isArray(chats) || chats.length === 0) {
       list.appendChild(
-        createElement("li", { class: "no-chats" }, [emptyText])
+        createElement("li", { class: "no-chats", role: "option" }, [emptyText])
       );
       return;
     }
@@ -196,14 +212,16 @@ export async function renderSharedChatList<T = GenericChat>({
       const selectThisItem = (itemElement: HTMLLIElement): void => {
         if (activeChatItem) {
           activeChatItem.classList.remove("chat-item-active");
+          activeChatItem.setAttribute("aria-selected", "false");
         }
         itemElement.classList.add("chat-item-active");
+        itemElement.setAttribute("aria-selected", "true");
         activeChatItem = itemElement;
 
         renderChat(chatView, chat, { currentUser, isLoggedIn });
       };
 
-      const chatItem = createChatListItem(
+      const chatItem = createChatListItem<T, UserType>(
         chat,
         currentUser,
         () => selectThisItem(chatItem),
@@ -228,7 +246,7 @@ export async function renderSharedChatList<T = GenericChat>({
   } catch (err) {
     console.error("Error loading chats:", err);
     list.appendChild(
-      createElement("li", { class: "chat-error" }, ["Failed to load chats."])
+      createElement("li", { class: "chat-error", role: "option" }, ["Failed to load chats."])
     );
   }
 }

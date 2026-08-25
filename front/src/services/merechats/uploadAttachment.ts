@@ -1,255 +1,154 @@
-import { MERE_URL, getState } from "../../state/state.js";
-import { uploadFile } from "../media/api/mediaApi.js";
-import { uid } from "../media/ui/mediaUploadForm.js";
-import {
-  pendingMap,
-  mountMessage,
-  reconcilePending
-} from "./chatSocket.js";
+import { getState } from "../../state/state.js";
 
-const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+/* ───────────────────────────────────────── */
+/* Types & Interfaces                       */
+/* ───────────────────────────────────────── */
 
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "video/mp4",
-  "video/webm"
-];
+export type UploadStatus = "idle" | "uploading" | "done" | "error" | "canceled";
 
-const MAX_RETRIES = 3;
-
-function isValidFile(file) {
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error(`Unsupported file type: ${file.type}`);
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    throw new Error(
-      `File exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`
-    );
-  }
+export interface UploadItem {
+  id: string;
+  file: File;
+  key?: string;
+  entityType: string;
+  entityId?: string | number;
+  onProgress?: (percent: number) => void;
 }
 
-function getUploadKey(file) {
-  if (file.type.startsWith("image/")) {
-    return "photo";
-  }
-  if (file.type.startsWith("video/")) {
-    return "video";
-  }
-  if (file.type.startsWith("audio/")) {
-    return "audio";
-  }
-  return "file";
+export interface MediaUploadResult {
+  mediaid?: string;
+  filename: string;
+  extension: string;
+  url?: string;
+  mimeType?: string;
+  size?: number;
+  [key: string]: unknown;
 }
 
-function createOptimisticMessage(file, mediaId, clientId) {
-  const previewUrl = URL.createObjectURL(file);
-
-  return {
-    previewUrl,
-    message: {
-      messageid: clientId,
-      sender: getState("user").userid,
-      createdAt: new Date().toISOString(),
-      media: {
-        mediaId,
-        url: previewUrl,
-        mimeType: file.type,
-        type: file.type.startsWith("video") ? "video" : "image"
-      }
-    }
-  };
+export interface UploadStoreState {
+  status: UploadStatus;
+  progress?: number;
 }
 
-async function retry(fn, retries = MAX_RETRIES) {
-  let lastError;
+export interface CustomError extends Error {
+  status?: number;
+}
 
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastError = err;
+/* ───────────────────────────────────────── */
+/* Store & Constants                        */
+/* ───────────────────────────────────────── */
 
-      if (i < retries - 1) {
-        await new Promise(resolve =>
-          setTimeout(resolve, 1000 * (i + 1))
-        );
-      }
+export const FILEDROP_URL = "/api/v1/media/upload";
+
+export const UploadStore = {
+  controllers: {} as Record<string, XMLHttpRequest>,
+  state: {} as Record<string, UploadStoreState>,
+
+  update(id: string, updates: Partial<UploadStoreState>): void {
+    this.state[id] = {
+      ...this.state[id],
+      ...updates
+    };
+  },
+
+  abort(id: string): void {
+    if (this.controllers[id]) {
+      this.controllers[id].abort();
+      delete this.controllers[id];
     }
   }
+};
 
-  throw lastError;
-}
+/* ───────────────────────────────────────── */
+/* Upload Implementation                    */
+/* ───────────────────────────────────────── */
 
-async function sendMediaMessage(chatid, mediaId, upload, file) {
-  const form = new FormData();
+export function uploadFile(u: UploadItem): Promise<MediaUploadResult> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
 
-  form.append("mediaid", mediaId);
-  form.append("savedname", upload.filename);
-  form.append("extn", upload.extension);
-  form.append("mimeType", extToMime(upload.extension));
-  form.append("fileSize", String(file.size));
+    UploadStore.controllers[u.id] = xhr;
 
-  const response = await fetch(
-    `${MERE_URL}/merechats/chat/${encodeURIComponent(chatid)}/upload`,
-    {
-      method: "POST",
-      body: form,
-      headers: {
-        Authorization: `Bearer ${getState("token") || ""}`
-        // NOTE: DO NOT add a Content-Type header here.
-        // Letting the browser assign it dynamically ensures valid multi-part boundaries.
-      }
-    }
-  );
+    const formData = new FormData();
+    const key = (u.key || "file").toLowerCase();
 
-  if (!response.ok) {
-    throw new Error(await response.text());
-  }
+    formData.append(key, u.file);
+    formData.append("entityType", u.entityType);
+    formData.append("entityId", String(u.entityId || ""));
 
-  return response.json();
-}
+    UploadStore.update(u.id, {
+      status: "uploading",
+      progress: 0
+    });
 
-function reconcilePreview(serverMessage, previewUrl) {
-  if (!serverMessage?.media) {
-    return serverMessage;
-  }
+    xhr.upload.onprogress = (e: ProgressEvent) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
 
-  serverMessage.media.serverUrl = serverMessage.media.url;
-  serverMessage.media.previewUrl = previewUrl;
-  serverMessage.media.__local_preview = true;
+        UploadStore.update(u.id, {
+          progress: percent
+        });
 
-  return serverMessage;
-}
-
-async function uploadSingleFile(chatid, file) {
-  isValidFile(file);
-
-  const mediaId = uid();
-  const clientId = `f_${mediaId}`;
-
-  const { previewUrl, message } = createOptimisticMessage(
-    file,
-    mediaId,
-    clientId
-  );
-
-  const el = mountMessage(message);
-
-  pendingMap.set(clientId, {
-    chatid,
-    el,
-    previewUrl,
-    progress: 0
-  });
-
-  try {
-    const upload = await retry(() =>
-      uploadFile({
-        id: mediaId,
-        file,
-        key: getUploadKey(file),
-        entityType: "chat",
-        entityId: String(chatid),
-        onProgress(percent) {
-          const pending = pendingMap.get(clientId);
-          if (!pending) return;
-
-          pending.progress = percent;
-
-          if (pending.el?.dataset) {
-            pending.el.dataset.progress = String(percent);
-          }
+        // Trigger individual callback if supplied by call-site
+        if (typeof u.onProgress === "function") {
+          u.onProgress(percent);
         }
-      })
-    );
+      }
+    };
 
-    if (!upload?.filename || !upload?.extension) {
-      throw new Error("Upload response invalid");
+    xhr.onload = () => {
+      delete UploadStore.controllers[u.id];
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+
+          UploadStore.update(u.id, {
+            status: "done",
+            progress: 100
+          });
+
+          resolve(Array.isArray(data) ? data[0] : data);
+        } catch {
+          UploadStore.update(u.id, { status: "error" });
+          reject(new Error("Invalid FILEDROP response"));
+        }
+        return;
+      }
+
+      UploadStore.update(u.id, { status: "error" });
+
+      const error: CustomError = new Error(
+        xhr.responseText || xhr.statusText || "Upload failed"
+      );
+
+      error.status = xhr.status;
+      reject(error);
+    };
+
+    xhr.onerror = () => {
+      delete UploadStore.controllers[u.id];
+      UploadStore.update(u.id, { status: "error" });
+      reject(new Error("Network error"));
+    };
+
+    xhr.onabort = () => {
+      delete UploadStore.controllers[u.id];
+      UploadStore.update(u.id, { status: "canceled" });
+      reject(new Error("Upload canceled"));
+    };
+
+    xhr.open("POST", FILEDROP_URL);
+
+    const token = getState("token") as string | undefined;
+    if (token) {
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
     }
 
-    const msg = await retry(() =>
-      sendMediaMessage(chatid, mediaId, upload, file)
-    );
-
-    reconcilePending(
-      chatid,
-      clientId,
-      reconcilePreview(msg, previewUrl)
-    );
-
-    pendingMap.delete(clientId);
-
-    // FIXED: Deferred Blob URL cleanup to allow the browser thread to fully paint the new image
-    setTimeout(() => {
-      try {
-        URL.revokeObjectURL(previewUrl);
-      } catch {}
-    }, 30000); // 30s delay prevents flickering
-
-  } catch (error) {
-    console.error("File upload failed", error);
-
-    const pending = pendingMap.get(clientId);
-    if (pending?.el) {
-      pending.el.remove();
-    }
-
-    pendingMap.delete(clientId);
-
-    // If failed, clean up the object URL immediately to reclaim browser memory
-    try {
-      URL.revokeObjectURL(previewUrl);
-    } catch {}
-
-    throw error;
-  }
+    xhr.send(formData);
+  });
 }
 
-export async function uploadAttachment(chatid, fileInput) {
-  const files = Array.from(fileInput.files || []);
-
-  if (!files.length) {
-    return;
-  }
-
-  try {
-    const results = await Promise.allSettled(
-      files.map(file => uploadSingleFile(chatid, file))
-    );
-
-    const failed = results.filter(
-      result => result.status === "rejected"
-    );
-
-    if (failed.length) {
-      console.error("Some uploads failed:", failed);
-    }
-  } finally {
-    fileInput.value = "";
-  }
-}
-
-function extToMime(ext) {
-  if (!ext) {
-    return "application/octet-stream";
-  }
-
-  const normalized = ext.startsWith(".")
-    ? ext.toLowerCase().trim()
-    : `.${ext.toLowerCase().trim()}`;
-
-  return {
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".png": "image/png",
-    ".gif": "image/gif",
-    ".webp": "image/webp",
-    ".mp4": "video/mp4",
-    ".webm": "video/webm",
-    ".mov": "video/quicktime"
-  }[normalized] || "application/octet-stream";
+export function uploadAttachment(chatid: string, fileInput: HTMLElement) {
+  
 }

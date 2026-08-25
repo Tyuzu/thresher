@@ -8,12 +8,27 @@ import Imagex from "../../components/base/Imagex.js";
 import { setupMessageActions } from "./setupMessageActions.js";
 import { renderMedia } from "../merechats/components/renderMedia.js";
 
+export interface MessageFile {
+  filename?: string;
+  path?: string;
+}
+
+export interface ChatMessagePayload {
+  id?: string | number;
+  messageid?: string | number;
+  senderid?: string | number;
+  userid?: string | number;
+  content?: string;
+  timestamp?: string | number;
+  files?: MessageFile[];
+}
+
 export async function renderMessage(
-  msg,
-  container,
-  currentUserId,
-  socket
-) {
+  msg: ChatMessagePayload,
+  container: HTMLElement,
+  currentUserId: string | number,
+  socket: WebSocket | null
+): Promise<void> {
   if (
     !msg ||
     (
@@ -33,7 +48,7 @@ export async function renderMessage(
 
   let wrapper = document.getElementById(
     `msg-${messageId}`
-  );
+  ) as HTMLElement | null;
 
   const isUpdate = Boolean(wrapper);
 
@@ -43,7 +58,7 @@ export async function renderMessage(
       class: "chat-message-wrapper",
       role: "group",
       "aria-label": "Chat message"
-    });
+    }) as HTMLElement;
 
     container.appendChild(wrapper);
   } else {
@@ -68,7 +83,7 @@ export async function renderMessage(
   const timestamp =
     typeof msg.timestamp === "number"
       ? msg.timestamp * 1000
-      : Date.parse(msg.timestamp);
+      : Date.parse(msg.timestamp || "");
 
   const date = new Date(
     Number.isFinite(timestamp)
@@ -86,7 +101,7 @@ export async function renderMessage(
 
   /* ---------- Message Content ---------- */
 
-  let contentNode;
+  let contentNode: HTMLElement;
 
   if (
     Array.isArray(msg.files) &&
@@ -99,10 +114,7 @@ export async function renderMessage(
         ).trim();
 
         const ext = filename.includes(".")
-          ? filename
-              .split(".")
-              .pop()
-              .toLowerCase()
+          ? (filename.split(".").pop() || "").toLowerCase()
           : "";
 
         let type = "file";
@@ -157,15 +169,15 @@ export async function renderMessage(
     );
 
     contentNode =
-      renderMedia({ media }) ??
-      createElement(
+      (renderMedia({ media }) as HTMLElement) ??
+      (createElement(
         "p",
         {
           class:
             "chat-message-text system-msg"
         },
         ["[media unavailable]"]
-      );
+      ) as HTMLElement);
   } else {
     contentNode = createElement(
       "span",
@@ -174,7 +186,7 @@ export async function renderMessage(
           "message-content chat-message-text"
       },
       [msg.content || ""]
-    );
+    ) as HTMLElement;
   }
 
   /* ---------- Time ---------- */
@@ -195,7 +207,7 @@ export async function renderMessage(
           : "Message time"
     },
     [timeText]
-  );
+  ) as HTMLElement;
 
   /* ---------- Avatar ---------- */
 
@@ -226,7 +238,7 @@ export async function renderMessage(
       "aria-label":
         "Message content"
     }
-  );
+  ) as HTMLElement;
 
   bubble.append(
     contentNode,

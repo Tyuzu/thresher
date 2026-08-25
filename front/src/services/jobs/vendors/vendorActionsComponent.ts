@@ -5,11 +5,31 @@ import { getState } from "../../../state/state.js";
 import { formatRequestStatus } from "./vendorUtils.js";
 import { createElement } from "../../../components/createElement.js";
 
+export interface VendorActionsProps {
+    eventId?: string;
+    vendorId: string;
+    vendorName: string;
+    vendor: Record<string, any>;
+    hired: boolean;
+    hiringStatus?: string;
+    isLoggedIn: boolean;
+    onHireSuccess?: (details: { eventId?: string; vendorId: string; vendor: Record<string, any> }) => void | Promise<void>;
+}
+
 /**
  * Creates the action button group (Hire & Book) strictly for organizers.
  */
-export function renderVendorActions({ eventId, vendorId, vendorName, vendor, hired, hiringStatus, isLoggedIn, onHireSuccess }) {
-    const actionsEl = createElement("div", { class: "vendor-actions" });
+export function renderVendorActions({
+    eventId,
+    vendorId,
+    vendorName,
+    vendor,
+    hired,
+    hiringStatus,
+    isLoggedIn,
+    onHireSuccess
+}: VendorActionsProps): HTMLElement {
+    const actionsEl = createElement("div", { class: "vendor-actions" }) as HTMLElement;
 
     // 1. Render Hire Button if an explicit event context is present
     if (eventId) {
@@ -25,7 +45,7 @@ export function renderVendorActions({ eventId, vendorId, vendorName, vendor, hir
                     }
 
                     const originalLabel = hireButton.textContent;
-                    hireButton.disabled = true;
+                    (hireButton as HTMLButtonElement).disabled = true;
                     hireButton.textContent = "Hiring...";
 
                     const hiredSuccessfully = await hireVendor(eventId, vendorId, vendorName);
@@ -38,12 +58,12 @@ export function renderVendorActions({ eventId, vendorId, vendorName, vendor, hir
                     }
 
                     if (!hired) {
-                        hireButton.disabled = false;
+                        (hireButton as HTMLButtonElement).disabled = false;
                         hireButton.textContent = originalLabel;
                     }
                 }
             }
-        }, hired ? formatRequestStatus(hiringStatus) : "Hire Vendor");
+        }, hired ? formatRequestStatus(hiringStatus) : "Hire Vendor") as HTMLElement;
 
         actionsEl.appendChild(hireButton);
     }
@@ -61,7 +81,7 @@ export function renderVendorActions({ eventId, vendorId, vendorName, vendor, hir
 
                 const bookingContainer = createElement("div", {
                     style: { display: "none" }
-                });
+                }) as HTMLElement;
                 document.body.appendChild(bookingContainer);
 
                 try {
@@ -69,10 +89,10 @@ export function renderVendorActions({ eventId, vendorId, vendorName, vendor, hir
                         entityType: "vendor", 
                         entityId: vendorId, 
                         entityCategory: vendorName, 
-                        userId: getState("user").userid || "guest" 
+                        userId: getState("user")?.userid || "guest" 
                     }, bookingContainer);
 
-                    const action = bookingContainer.querySelector(".btn-primary");
+                    const action = bookingContainer.querySelector(".btn-primary") as HTMLElement | null;
                     if (action) action.click();
                 } catch (err) {
                     console.error("Failed to open booking modal:", err);
@@ -82,7 +102,7 @@ export function renderVendorActions({ eventId, vendorId, vendorName, vendor, hir
                 }
             }
         }
-    }, "Book");
+    }, "Book") as HTMLElement;
 
     actionsEl.appendChild(bookBtn);
     return actionsEl;

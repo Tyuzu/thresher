@@ -2,16 +2,27 @@ import { renderVendorActions } from "./vendorActionsComponent.js";
 import { formatRequestStatus } from "./vendorUtils.js";
 import { createElement } from "../../../components/createElement.js";
 
+export interface VendorCardContext {
+    vendorId?: string | null;
+    vendorName: string;
+    hired: boolean;
+    hiringStatus?: string;
+    isCreator: boolean;
+    eventId?: string;
+    isLoggedIn: boolean;
+    onHireSuccess?: (details: any) => void | Promise<void>;
+}
+
 /**
  * Renders an isolated standalone structural card template container block for a vendor profile record.
  */
-export function renderVendorCard(vendor, context) {
+export function renderVendorCard(vendor: Record<string, any>, context: VendorCardContext): HTMLElement {
     const { vendorId, vendorName, hired, hiringStatus, isCreator, eventId, isLoggedIn, onHireSuccess } = context;
 
     const vendorCard = createElement("div", { class: "vendor-card" }, [
         createElement("h5", {}, vendorName),
         createElement("span", { class: "vendor-category" }, vendor?.category || "General")
-    ]);
+    ]) as HTMLElement;
 
     if (isCreator && hiringStatus) {
         const statusClass = `vendor-hiring-status status-${String(hiringStatus).toLowerCase()}`;
@@ -19,7 +30,7 @@ export function renderVendorCard(vendor, context) {
     }
 
     // Secondary Info Fields Container
-    const infoEl = createElement("div", { class: "vendor-info" });
+    const infoEl = createElement("div", { class: "vendor-info" }) as HTMLElement;
 
     if (vendor?.location) {
         infoEl.appendChild(
@@ -47,7 +58,7 @@ export function renderVendorCard(vendor, context) {
 
     // Shared Details
     if (vendor?.phone || vendor?.email) {
-        const parts = [];
+        const parts: string[] = [];
         if (vendor.phone) parts.push(`📞 ${vendor.phone}`);
         if (vendor.email) parts.push(`📧 ${vendor.email}`);
         vendorCard.appendChild(createElement("div", { class: "vendor-contact" }, parts.join(" | ")));

@@ -8,13 +8,19 @@ import {
     getVendorName,
     normalizeVendorList
 } from "./vendorUtils.js";
-import { VENDOR_EVENTS } from "./vendorEvents.js";
+import { dispatchVendorEvent, VENDOR_EVENTS } from "./vendorEvents.js";
 import { apiFetch } from "../../../api/api.js";
 import { deleteVendor } from "./vendorService.js";
 import Notify from "../../../components/ui/Notify.js";
 import { createElement } from "../../../components/createElement.js";
 
-async function renderEventVendorSummary(eventId, container, options = {}) {
+interface RenderSummaryOptions {
+    allowRemove?: boolean;
+    showManageButton?: boolean;
+    onManageClick?: (() => void) | null;
+}
+
+async function renderEventVendorSummary(eventId: string, container: HTMLElement, options: RenderSummaryOptions = {}): Promise<void> {
     const {
         allowRemove = false,
         showManageButton = true,
@@ -22,7 +28,7 @@ async function renderEventVendorSummary(eventId, container, options = {}) {
     } = options;
 
     try {
-        const response = await fetchEventVendors(eventId);
+        const response: any = await fetchEventVendors(eventId);
 
         if (response?.success === false) {
             container.innerHTML = "";
@@ -32,7 +38,7 @@ async function renderEventVendorSummary(eventId, container, options = {}) {
 
         const vendors = normalizeVendorList(response);
 
-        const summary = createElement("div", { class: "vendors-summary" });
+        const summary = createElement("div", { class: "vendors-summary" }) as HTMLElement;
 
         const titleText = vendors.length > 0
             ? `Hired Vendors (${vendors.length})`
@@ -42,10 +48,10 @@ async function renderEventVendorSummary(eventId, container, options = {}) {
         if (!vendors.length) {
             summary.appendChild(createElement("p", {}, "No vendors hired yet for this event."));
         } else {
-            const list = createElement("div", { class: "hired-vendors-list" });
+            const list = createElement("div", { class: "hired-vendors-list" }) as HTMLElement;
 
-            vendors.forEach((vendor) => {
-                const item = createElement("div", { class: "vendor-summary-item" });
+            vendors.forEach((vendor: any) => {
+                const item = createElement("div", { class: "vendor-summary-item" }) as HTMLElement;
 
                 const vendorId = getVendorId(vendor);
                 const vendorName = getVendorName(vendor);
@@ -70,12 +76,12 @@ async function renderEventVendorSummary(eventId, container, options = {}) {
                                 }
 
                                 const original = removeBtn.textContent;
-                                removeBtn.disabled = true;
+                                (removeBtn as HTMLButtonElement).disabled = true;
                                 removeBtn.textContent = "Removing...";
 
                                 const removed = await removeVendor(eventId, vendorId, vendorName);
 
-                                removeBtn.disabled = false;
+                                (removeBtn as HTMLButtonElement).disabled = false;
                                 removeBtn.textContent = original;
 
                                 if (removed) {
@@ -83,7 +89,7 @@ async function renderEventVendorSummary(eventId, container, options = {}) {
                                 }
                             }
                         }
-                    }, "Remove");
+                    }, "Remove") as HTMLButtonElement;
 
                     const actions = createElement("div", { class: "vendor-summary-actions" }, [removeBtn]);
                     item.appendChild(actions);
@@ -121,7 +127,7 @@ async function renderEventVendorSummary(eventId, container, options = {}) {
     }
 }
 
-export async function initEventVendorManagement(eventId, containerElement) {
+export async function initEventVendorManagement(eventId: string, containerElement: HTMLElement): Promise<void> {
     if (!containerElement) {
         console.error("Container element required");
         return;
@@ -130,7 +136,7 @@ export async function initEventVendorManagement(eventId, containerElement) {
     const vendorTab = createElement("div", {
         id: "event-vendors-tab",
         class: "event-section"
-    });
+    }) as HTMLElement;
 
     await renderEventVendorSummary(eventId, vendorTab, {
         allowRemove: false,
@@ -140,8 +146,8 @@ export async function initEventVendorManagement(eventId, containerElement) {
     containerElement.appendChild(vendorTab);
 }
 
-export async function openVendorManagementModal(eventId) {
-    const listeners = [];
+export async function openVendorManagementModal(eventId: string): Promise<void> {
+    const listeners: Array<{ eventName: string; handler: (event: Event) => void }> = [];
     let refreshSummary = async () => {};
     let refreshMarketplace = async () => {};
 
@@ -158,10 +164,10 @@ export async function openVendorManagementModal(eventId) {
 
     document.body.appendChild(modal);
 
-    const summaryContainer = createElement("div", { class: "vendor-management-summary" });
+    const summaryContainer = createElement("div", { class: "vendor-management-summary" }) as HTMLElement;
     body.appendChild(summaryContainer);
 
-    const marketplaceContainer = createElement("div", { class: "vendor-management-marketplace" });
+    const marketplaceContainer = createElement("div", { class: "vendor-management-marketplace" }) as HTMLElement;
     body.appendChild(marketplaceContainer);
 
     refreshSummary = async () => {
@@ -172,13 +178,14 @@ export async function openVendorManagementModal(eventId) {
     };
 
     refreshMarketplace = async () => {
-        await hireVendors(marketplaceContainer, true, eventId, {
+        await hireVendors(marketplaceContainer, true, true, eventId, {
             onChange: refreshSummary
         });
     };
 
-    const handleVendorChanged = async (event) => {
-        if (String(event?.detail?.eventId) !== String(eventId)) {
+    const handleVendorChanged = async (event: Event) => {
+        const customEvent = event as CustomEvent;
+        if (String(customEvent?.detail?.eventId) !== String(eventId)) {
             return;
         }
         await refreshSummary();
@@ -199,8 +206,8 @@ export async function openVendorManagementModal(eventId) {
     await refreshMarketplace();
 }
 
-export async function addVendorSelectionToEventCreation(eventId, formElement) {
-    const vendorContainer = createElement("div", { class: "event-creation-vendors" });
+export async function addVendorSelectionToEventCreation(eventId: string, formElement: HTMLElement): Promise<void> {
+    const vendorContainer = createElement("div", { class: "event-creation-vendors" }) as HTMLElement;
     const vendorSection = createElement("div", { class: "event-creation-section" }, [
         createElement("h3", {}, "Vendors (Optional)"),
         createElement("p", {}, "Hire vendors to provide services for your event"),
@@ -209,12 +216,12 @@ export async function addVendorSelectionToEventCreation(eventId, formElement) {
 
     formElement.appendChild(vendorSection);
 
-    await hireVendors(vendorContainer, true, eventId);
+    await hireVendors(vendorContainer, true, true, eventId);
 }
 
-export async function showVendorProfile(userId, container) {
+export async function showVendorProfile(userId: string, container: HTMLElement): Promise<void> {
     try {
-        const user = await apiFetch(`/users/${userId}`, "GET");
+        const user: any = await apiFetch(`/users/${userId}`, "GET");
 
         if (user?.success === false) {
             console.error("API error loading user:", user.error);
@@ -257,7 +264,7 @@ export async function showVendorProfile(userId, container) {
             createProfileField("Category:", vendorData.category || "—"),
             createProfileField("Rating:", `⭐ ${vendorData.rating || "Not rated yet"}`),
             createProfileField("Status:", vendorData.verified ? "✓ Verified" : "Pending verification")
-        ]);
+        ]) as HTMLElement;
 
         const editBtn = createElement("button", {
             type: "button",
@@ -272,7 +279,7 @@ export async function showVendorProfile(userId, container) {
             }
         }, "Edit Profile");
 
-        const actions = createElement("div", { class: "vendor-profile-actions" }, [editBtn]);
+        const actions = createElement("div", { class: "vendor-profile-actions" }, [editBtn]) as HTMLElement;
 
         if (vendorId) {
             const deleteBtn = createElement("button", {
@@ -285,11 +292,11 @@ export async function showVendorProfile(userId, container) {
                             return;
                         }
 
-                        deleteBtn.disabled = true;
+                        (deleteBtn as HTMLButtonElement).disabled = true;
                         deleteBtn.textContent = "Deleting...";
 
                         try {
-                            const response = await deleteVendor(vendorId);
+                            const response: any = await deleteVendor(vendorId);
 
                             if (response?.success === false) {
                                 throw new Error(response?.error || "Failed to delete vendor profile.");
@@ -307,19 +314,19 @@ export async function showVendorProfile(userId, container) {
                             });
 
                             await showVendorProfile(userId, container);
-                        } catch (error) {
+                        } catch (error: any) {
                             console.error("Error deleting vendor profile:", error);
                             Notify("Failed to delete vendor profile.", {
                                 type: "error",
                                 duration: 3000
                             });
                         } finally {
-                            deleteBtn.disabled = false;
+                            (deleteBtn as HTMLButtonElement).disabled = false;
                             deleteBtn.textContent = "Delete Vendor Profile";
                         }
                     }
                 }
-            }, "Delete Vendor Profile");
+            }, "Delete Vendor Profile") as HTMLButtonElement;
 
             actions.appendChild(deleteBtn);
         }
@@ -328,7 +335,7 @@ export async function showVendorProfile(userId, container) {
         container.appendChild(profile);
 
         if (vendorId) {
-            const requestsContainer = createElement("div", { class: "vendor-requests-list" });
+            const requestsContainer = createElement("div", { class: "vendor-requests-list" }) as HTMLElement;
             const requestsSection = createElement("div", { class: "vendor-requests-section" }, [
                 createElement("h3", {}, "Incoming Vendor Requests"),
                 requestsContainer
@@ -344,11 +351,11 @@ export async function showVendorProfile(userId, container) {
     }
 }
 
-async function refreshVendorRequests(container) {
+async function refreshVendorRequests(container: HTMLElement): Promise<void> {
     container.innerHTML = "";
 
     try {
-        const response = await getMyVendorRequests();
+        const response: any = await getMyVendorRequests();
         if (!response) {
             throw new Error("No response from server.");
         }
@@ -375,7 +382,7 @@ async function refreshVendorRequests(container) {
                 createElement("div", { class: "vendor-request-title" }, `Event: ${request.eventid || request.eventId || "Unknown"}`),
                 statusBadge,
                 createElement("div", { class: "vendor-request-details" }, `Requested by: ${request.hiredby || request.hiredBy || "Unknown organizer"}`)
-            ]);
+            ]) as HTMLElement;
 
             if (String(request.status || "").toLowerCase() === "pending") {
                 const acceptBtn = createElement("button", {
@@ -383,20 +390,20 @@ async function refreshVendorRequests(container) {
                     class: "btn-primary vendor-request-accept",
                     events: {
                         click: async () => {
-                            await handleVendorRequestAction(request, "accepted", acceptBtn, rejectBtn, container);
+                            await handleVendorRequestAction(request, "accepted", acceptBtn as HTMLButtonElement, rejectBtn as HTMLButtonElement, container);
                         }
                     }
-                }, "Accept");
+                }, "Accept") as HTMLButtonElement;
 
                 const rejectBtn = createElement("button", {
                     type: "button",
                     class: "btn-danger vendor-request-reject",
                     events: {
                         click: async () => {
-                            await handleVendorRequestAction(request, "rejected", acceptBtn, rejectBtn, container);
+                            await handleVendorRequestAction(request, "rejected", acceptBtn as HTMLButtonElement, rejectBtn as HTMLButtonElement, container);
                         }
                     }
-                }, "Reject");
+                }, "Reject") as HTMLButtonElement;
 
                 const actions = createElement("div", { class: "vendor-request-actions" }, [acceptBtn, rejectBtn]);
                 requestCard.appendChild(actions);
@@ -412,8 +419,14 @@ async function refreshVendorRequests(container) {
     }
 }
 
-async function handleVendorRequestAction(request, status, acceptButton, rejectButton, container) {
-    if (!request || !request.hiringid && !request.hiringID) {
+async function handleVendorRequestAction(
+    request: any,
+    status: string,
+    acceptButton: HTMLButtonElement,
+    rejectButton: HTMLButtonElement,
+    container: HTMLElement
+): Promise<void> {
+    if (!request || (!request.hiringid && !request.hiringID)) {
         Notify("Missing request data.", { type: "error", duration: 3000 });
         return;
     }
@@ -425,7 +438,7 @@ async function handleVendorRequestAction(request, status, acceptButton, rejectBu
         acceptButton.disabled = true;
         rejectButton.disabled = true;
 
-        const result = await updateVendorHiringStatus(hiringId, status);
+        const result: any = await updateVendorHiringStatus(hiringId, status);
         if (result?.success === false) {
             throw new Error(result.error || "Failed to update request status.");
         }
@@ -440,7 +453,7 @@ async function handleVendorRequestAction(request, status, acceptButton, rejectBu
     }
 }
 
-function formatVendorRequestStatus(status) {
+function formatVendorRequestStatus(status?: string): string {
     switch (String(status || "").toLowerCase()) {
         case "pending":
             return "Pending";
@@ -459,14 +472,14 @@ function formatVendorRequestStatus(status) {
     }
 }
 
-function createProfileField(labelText, valueText) {
+function createProfileField(labelText: string, valueText: string): HTMLElement {
     return createElement("div", { class: "profile-field" }, [
         createElement("label", {}, labelText),
         createElement("span", {}, valueText)
-    ]);
+    ]) as HTMLElement;
 }
 
-export async function openVendorRegistration(onSuccess = null) {
+export async function openVendorRegistration(onSuccess: ((detail: any) => void | Promise<void>) | null = null): Promise<void> {
     const { modal, body } = createModal({
         title: "Register as a Vendor",
         className: "vendor-registration-modal"
@@ -477,7 +490,7 @@ export async function openVendorRegistration(onSuccess = null) {
     const form = vendorForm(
         body,
         true,
-        null,
+        undefined,
         async (detail) => {
             if (typeof onSuccess === "function") {
                 await onSuccess(detail);
@@ -492,12 +505,16 @@ export async function openVendorRegistration(onSuccess = null) {
     body.appendChild(form);
 }
 
-export async function openEditVendorProfile(userId, existingVendorProfile = null, onSuccess = null) {
+export async function openEditVendorProfile(
+    userId: string,
+    existingVendorProfile: Record<string, any> | null = null,
+    onSuccess: ((detail: any) => void | Promise<void>) | null = null
+): Promise<void> {
     let vendorData = existingVendorProfile;
 
     try {
         if (!vendorData) {
-            const user = await apiFetch(`/users/${userId}`, "GET");
+            const user: any = await apiFetch(`/users/${userId}`, "GET");
 
             if (user?.success === false) {
                 throw new Error(user?.error || "Failed to load vendor profile.");
@@ -526,7 +543,7 @@ export async function openEditVendorProfile(userId, existingVendorProfile = null
         const form = vendorForm(
             body,
             true,
-            null,
+            undefined,
             async (detail) => {
                 modal.remove();
                 if (typeof onSuccess === "function") {
@@ -536,39 +553,43 @@ export async function openEditVendorProfile(userId, existingVendorProfile = null
             {
                 mode: "edit",
                 vendorId,
-                initialData: vendorData,
-                submitLabel: "Save Changes"
+                initialData: vendorData
             }
         );
 
         body.appendChild(form);
 
         if (vendorId) {
-            const actions = createElement("div", { class: "vendor-edit-actions" });
-
-            const availabilityList = createElement("div", { class: "vendor-availability-list" });
+            const actions = createElement("div", { class: "vendor-edit-actions" }) as HTMLElement;
+            const availabilityList = createElement("div", { class: "vendor-availability-list" }) as HTMLElement;
 
             const availabilityForm = createElement("form", {
                 class: "vendor-availability-form",
                 events: {
-                    submit: async (event) => {
+                    submit: async (event: Event) => {
                         event.preventDefault();
 
-                        const startDate = availabilityForm.querySelector("input[name='start_date']").value;
-                        const endDate = availabilityForm.querySelector("input[name='end_date']").value;
-                        const notes = availabilityForm.querySelector("input[name='notes']").value;
+                        const startDateInput = availabilityForm.querySelector("input[name='start_date']") as HTMLInputElement | null;
+                        const endDateInput = availabilityForm.querySelector("input[name='end_date']") as HTMLInputElement | null;
+                        const notesInput = availabilityForm.querySelector("input[name='notes']") as HTMLInputElement | null;
+
+                        const startDate = startDateInput ? startDateInput.value : "";
+                        const endDate = endDateInput ? endDateInput.value : "";
+                        const notes = notesInput ? notesInput.value : "";
 
                         if (!startDate || !endDate) {
                             Notify("Please provide both start and end dates.", { type: "warning", duration: 3000 });
                             return;
                         }
 
-                        const submitBtn = availabilityForm.querySelector("button[type='submit']");
-                        submitBtn.disabled = true;
-                        submitBtn.textContent = "Adding...";
+                        const submitBtn = availabilityForm.querySelector("button[type='submit']") as HTMLButtonElement | null;
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.textContent = "Adding...";
+                        }
 
                         try {
-                            const response = await createAvailability(vendorId, { start_date: startDate, end_date: endDate, notes });
+                            const response: any = await createAvailability(vendorId, { start_date: startDate, end_date: endDate, notes });
                             if (response?.success === false) {
                                 throw new Error(response?.error || response?.message || "Failed to add availability slot.");
                             }
@@ -576,18 +597,19 @@ export async function openEditVendorProfile(userId, existingVendorProfile = null
                             Notify("Availability slot added.", { type: "success", duration: 3000 });
                             availabilityForm.reset();
                             await loadAvailability();
-                        } catch (error) {
+                        } catch (error: any) {
                             console.error("Unable to add availability slot:", error);
                             Notify(error?.message || "Failed to add availability slot.", { type: "error", duration: 3000 });
                         } finally {
-                            submitBtn.disabled = false;
-                            submitBtn.textContent = "Add Slot";
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = "Add Slot";
+                            }
                         }
                     }
                 }
-            });
+            }) as HTMLFormElement;
 
-            // Populate Form Template Declaratively
             availabilityForm.appendChild(createElement("div", { class: "form-row" }, [
                 createElement("label", {}, "Start Date"),
                 createElement("input", { type: "date", name: "start_date", required: "true" })
@@ -620,11 +642,11 @@ export async function openEditVendorProfile(userId, existingVendorProfile = null
                             return;
                         }
 
-                        deleteBtn.disabled = true;
+                        (deleteBtn as HTMLButtonElement).disabled = true;
                         deleteBtn.textContent = "Deleting...";
 
                         try {
-                            const response = await deleteVendor(vendorId);
+                            const response: any = await deleteVendor(vendorId);
 
                             if (response?.success === false) {
                                 throw new Error(response?.error || "Failed to delete vendor profile.");
@@ -657,20 +679,20 @@ export async function openEditVendorProfile(userId, existingVendorProfile = null
                                 duration: 3000
                             });
                         } finally {
-                            deleteBtn.disabled = false;
+                            (deleteBtn as HTMLButtonElement).disabled = false;
                             deleteBtn.textContent = "Delete Vendor Profile";
                         }
                     }
                 }
-            }, "Delete Vendor Profile");
+            }, "Delete Vendor Profile") as HTMLButtonElement;
 
             actions.appendChild(deleteBtn);
             body.appendChild(actions);
 
-            async function loadAvailability() {
+            async function loadAvailability(): Promise<void> {
                 availabilityList.innerHTML = "Loading availability...";
                 try {
-                    const response = await fetchAvailability(vendorId);
+                    const response: any = await fetchAvailability(vendorId!);
                     if (response?.success === false) {
                         throw new Error(response?.error || "Failed to load availability.");
                     }
@@ -689,22 +711,22 @@ export async function openEditVendorProfile(userId, existingVendorProfile = null
                             class: "btn-link btn-small",
                             events: {
                                 click: async () => {
-                                    removeBtn.disabled = true;
+                                    (removeBtn as HTMLButtonElement).disabled = true;
                                     removeBtn.textContent = "Removing...";
                                     try {
-                                        const deleted = await deleteAvailability(vendorId, slot.slotid);
+                                        const deleted: any = await deleteAvailability(vendorId!, slot.slotid);
                                         if (deleted?.success === false) {
                                             throw new Error(deleted?.error || deleted?.message || "Failed to remove slot.");
                                         }
                                         Notify("Slot removed.", { type: "success", duration: 2500 });
                                         await loadAvailability();
-                                    } catch (error) {
+                                    } catch (error: any) {
                                         console.error("Unable to remove availability slot:", error);
                                         Notify(error?.message || "Failed to remove slot.", { type: "error", duration: 3000 });
                                     }
                                 }
                             }
-                        }, "Remove");
+                        }, "Remove") as HTMLButtonElement;
 
                         const slotLabel = `${slot.start_date} → ${slot.end_date}` + (slot.notes ? ` — ${slot.notes}` : "");
                         const slotRow = createElement("div", { class: "availability-slot-row" }, [

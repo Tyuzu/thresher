@@ -13,10 +13,11 @@ import Notify from "../../components/ui/Notify.js";
 
 /**
  * Display the profile content in the profile section container
- * @param {boolean} isLoggedIn 
- * @param {HTMLElement} content 
  */
-async function displayProfile(isLoggedIn, content) {
+async function displayProfile(
+  isLoggedIn: boolean,
+  content: HTMLElement | null
+): Promise<void> {
   if (!content) return;
 
   content.textContent = ""; // Clear existing content
@@ -27,7 +28,7 @@ async function displayProfile(isLoggedIn, content) {
   }
 
   try {
-    const profile = await fetchProfile(isLoggedIn);
+    const profile = await fetchProfile();
 
     if (profile) {
       const profileElement = profilGen(profile, isLoggedIn);
@@ -52,13 +53,12 @@ async function displayProfile(isLoggedIn, content) {
 
 /**
  * Attach event listeners localized to the profile container element
- * @param {HTMLElement} content 
  */
-function attachProfileEventListeners(content) {
+function attachProfileEventListeners(content: HTMLElement | null): void {
   if (!content) return;
 
-  const editButton = content.querySelector('[data-action="edit-profile"]');
-  const deleteButton = content.querySelector('[data-action="delete-profile"]');
+  const editButton = content.querySelector<HTMLElement>('[data-action="edit-profile"]');
+  const deleteButton = content.querySelector<HTMLElement>('[data-action="delete-profile"]');
 
   if (editButton) {
     editButton.addEventListener("click", () => editProfile(content, deleteProfile));
@@ -76,7 +76,7 @@ function attachProfileEventListeners(content) {
     DELETE PROFILE
 ============================================================ */
 
-async function deleteProfile() {
+async function deleteProfile(): Promise<void> {
   if (!getState("token")) {
     Notify("Please log in to delete your profile.", {
       type: "warning",
@@ -101,9 +101,10 @@ async function deleteProfile() {
       dismissible: true
     });
 
-    logout(true);
+    logout();
   } catch (error) {
-    Notify(`Failed to delete profile: ${error.message || "Unknown error"}`, {
+    const err = error as Error;
+    Notify(`Failed to delete profile: ${err.message || "Unknown error"}`, {
       type: "error",
       duration: 3000,
       dismissible: true

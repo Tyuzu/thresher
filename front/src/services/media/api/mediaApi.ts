@@ -6,6 +6,16 @@ import { UploadStore } from "../store/uploadStore.js";
    TYPES & INTERFACES
 ========================= */
 
+export interface MediaItem {
+    mediaid: string | number;
+    url?: string;
+    type: "image" | "video" | string;
+    caption?: string;
+    captionlang?: string;
+    extn?: string;
+    [key: string]: unknown;
+}
+
 export interface MediaUploadResult {
     filename?: string;
     key?: string;

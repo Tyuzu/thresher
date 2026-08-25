@@ -1,6 +1,26 @@
 import { createElement } from "../../../components/createElement.js";
 
-const PRICE_DATA = [
+interface PriceItem {
+    crop: string;
+    category: string;
+    market: string;
+    district: string;
+    state: string;
+    min: number;
+    modal: number;
+    max: number;
+    trend: number;
+    updated: string;
+}
+
+interface AppState {
+    search: string;
+    category: string;
+    view: "grid" | "list";
+    sortBy: string;
+}
+
+const PRICE_DATA: PriceItem[] = [
     { crop: "Wheat", category: "Grains", market: "Pune APMC", district: "Pune", state: "Maharashtra", min: 2350, modal: 2450, max: 2550, trend: 2.4, updated: "10 mins ago" },
     { crop: "Onion", category: "Vegetables", market: "Lasalgaon", district: "Nashik", state: "Maharashtra", min: 1650, modal: 1800, max: 2000, trend: -5.1, updated: "6 mins ago" },
     { crop: "Tomato", category: "Vegetables", market: "Delhi Mandi", district: "Delhi", state: "Delhi", min: 900, modal: 1200, max: 1500, trend: 1.6, updated: "12 mins ago" },
@@ -8,43 +28,43 @@ const PRICE_DATA = [
     { crop: "Soybean", category: "Legumes", market: "Indore", district: "Indore", state: "Madhya Pradesh", min: 4800, modal: 4950, max: 5100, trend: 3.2, updated: "8 mins ago" }
 ];
 
-const state = {
+const state: AppState = {
     search: "",
     category: "All",
     view: "grid", 
     sortBy: "default" 
 };
 
-let appContainer;
-let gridContainer;
-let searchInputRef;
+let appContainer: HTMLElement | null = null;
+let gridContainer: HTMLElement | null = null;
+let searchInputRef: HTMLInputElement | null = null;
 
-const categories = ["All", ...new Set(PRICE_DATA.map(x => x.category))];
-const trendingCrops = ["Onion", "Wheat", "Tomato"];
+const categories: string[] = ["All", ...Array.from(new Set(PRICE_DATA.map(x => x.category)))];
+const trendingCrops: string[] = ["Onion", "Wheat", "Tomato"];
 
-function getProcessedData() {
+function getProcessedData(): PriceItem[] {
     const result = PRICE_DATA.filter(item => {
         const matchesSearch = item.crop.toLowerCase().includes(state.search) || 
-                              item.market.toLowerCase().includes(state.search) ||
-                              item.district.toLowerCase().includes(state.search);
+                            item.market.toLowerCase().includes(state.search) ||
+                            item.district.toLowerCase().includes(state.search);
         const matchesCategory = state.category === "All" || item.category === state.category;
         return matchesSearch && matchesCategory;
     });
 
     if (state.sortBy === "high-low") {
-result.sort((a, b) => b.modal - a.modal);
-}
+        result.sort((a, b) => b.modal - a.modal);
+    }
     if (state.sortBy === "low-high") {
-result.sort((a, b) => a.modal - b.modal);
-}
+        result.sort((a, b) => a.modal - b.modal);
+    }
     if (state.sortBy === "trend") {
-result.sort((a, b) => Math.abs(b.trend) - Math.abs(a.trend));
-}
+        result.sort((a, b) => Math.abs(b.trend) - Math.abs(a.trend));
+    }
 
     return result;
 }
 
-function createHeaderComponent() {
+function createHeaderComponent(): HTMLElement {
     const title = createElement("h1", { class: "mp-title" }, ["Live Mandi Market Prices"]);
     
     searchInputRef = createElement("input", {
@@ -53,12 +73,13 @@ function createHeaderComponent() {
         class: "mp-search-input",
         value: state.search,
         events: {
-            input: e => {
-                state.search = e.target.value.toLowerCase();
+            input: (e: Event) => {
+                const target = e.target as HTMLInputElement;
+                state.search = target.value.toLowerCase();
                 renderGrid();
             }
         }
-    });
+    }) as HTMLInputElement;
 
     const suggestionLabel = createElement("span", { class: "mp-suggest-label" }, ["Trending:"]);
     const suggestionContainer = createElement("div", { class: "mp-suggest-box" }, [
@@ -68,7 +89,9 @@ function createHeaderComponent() {
             events: {
                 click: () => {
                     state.search = crop.toLowerCase();
-                    searchInputRef.value = crop;
+                    if (searchInputRef) {
+                        searchInputRef.value = crop;
+                    }
                     renderGrid();
                 }
             }
@@ -80,8 +103,9 @@ function createHeaderComponent() {
     const sortDropdown = createElement("select", {
         class: "mp-sort-select",
         events: {
-            change: e => {
-                state.sortBy = e.target.value;
+            change: (e: Event) => {
+                const target = e.target as HTMLSelectElement;
+                state.sortBy = target.value;
                 renderGrid();
             }
         }
@@ -97,10 +121,11 @@ function createHeaderComponent() {
         const btn = createElement("button", {
             class: `mp-filter-btn ${state.category === cat ? "active" : ""}`,
             events: {
-                click: (e) => {
+                click: (e: Event) => {
                     state.category = cat;
                     document.querySelectorAll(".mp-filter-btn").forEach(b => b.classList.remove("active"));
-                    e.target.classList.add("active");
+                    const target = e.target as HTMLElement;
+                    target.classList.add("active");
                     renderGrid();
                 }
             }
@@ -111,9 +136,10 @@ function createHeaderComponent() {
     const toggleBtn = createElement("button", {
         class: "mp-view-toggle",
         events: {
-            click: (e) => {
+            click: (e: Event) => {
                 state.view = state.view === "grid" ? "list" : "grid";
-                e.target.textContent = state.view === "grid" ? "Horizontal List View" : "Compact Grid View";
+                const target = e.target as HTMLElement;
+                target.textContent = state.view === "grid" ? "Horizontal List View" : "Compact Grid View";
                 renderGrid();
             }
         }
@@ -124,7 +150,7 @@ function createHeaderComponent() {
     return createElement("div", { class: "mp-dashboard-header" }, [title, searchWrapper, controlBar]);
 }
 
-function createPriceCard(item) {
+function createPriceCard(item: PriceItem): HTMLElement {
     const isPositive = item.trend >= 0;
     const trendClass = item.trend === 0 ? "neutral" : isPositive ? "positive" : "negative";
     const trendIcon = item.trend === 0 ? "•" : isPositive ? "▲" : "▼";
@@ -155,7 +181,6 @@ function createPriceCard(item) {
     });
     const customProgressBarRangeLine = createElement("div", { class: "mp-range-track-line" }, [visualTrackIndicator]);
     
-    // Explicit empty objects passed instead of null to match createElement signatures safely
     const minBound = createElement("span", {}, [`₹${item.min.toLocaleString("en-IN")}`]);
     const maxBound = createElement("span", {}, [`₹${item.max.toLocaleString("en-IN")}`]);
     const progressLabelContainer = createElement("div", { class: "mp-range-labels-wrapper" }, [minBound, maxBound]);
@@ -171,7 +196,7 @@ function createPriceCard(item) {
     return createElement("div", { class: `mp-price-card ${state.view}-layout ${cardBorderHighlight}` }, [cardHeader, infoSec, priceMatrix]);
 }
 
-function createEmptyState() {
+function createEmptyState(): HTMLElement {
     return createElement("button", { 
         class: "mp-empty-state-reset",
         events: {
@@ -183,21 +208,21 @@ function createEmptyState() {
                 filterBtns.forEach(b => b.classList.remove("active"));
                 const initialTab = document.querySelector(".mp-filter-btn");
                 if (initialTab) {
-initialTab.classList.add("active");
-}
+                    initialTab.classList.add("active");
+                }
                 if (searchInputRef) {
-searchInputRef.value = "";
-}
+                    searchInputRef.value = "";
+                }
                 renderGrid();
             }
         }
     }, ["No market data matched. Click here to clear all filters."]);
 }
 
-function renderGrid() {
+function renderGrid(): void {
     if (!gridContainer) {
-return;
-}
+        return;
+    }
     
     gridContainer.className = `mp-grid-container layout-${state.view}`;
     gridContainer.innerHTML = "";
@@ -210,14 +235,16 @@ return;
     }
 
     activeDataset.forEach(item => {
-        gridContainer.appendChild(createPriceCard(item));
+        if (gridContainer) {
+            gridContainer.appendChild(createPriceCard(item));
+        }
     });
 }
 
-export function displayBazarBhav(rootContainer) {
+export function displayBazarBhav(rootContainer: HTMLElement | null): void {
     if (!rootContainer) {
-return;
-}
+        return;
+    }
     appContainer = rootContainer;
     appContainer.innerHTML = ""; 
     

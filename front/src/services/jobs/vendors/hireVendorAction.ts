@@ -3,17 +3,17 @@ import { hireEventVendor, removeEventVendor } from "./vendorService.js";
 import { dispatchVendorEvent, VENDOR_EVENTS } from "./vendorEvents.js";
 import { normalizeErrorMessage } from "./vendorUtils.js";
 
-function isAlreadyHiredMessage(message) {
+function isAlreadyHiredMessage(message: unknown): boolean {
     const lower = String(message || "").toLowerCase();
     return lower.includes("already hired") || lower.includes("already exists") || lower.includes("duplicate");
 }
 
-function isNotFoundMessage(message) {
+function isNotFoundMessage(message: unknown): boolean {
     const lower = String(message || "").toLowerCase();
     return lower.includes("not found") || lower.includes("missing");
 }
 
-export async function hireVendor(eventId, vendorId, vendorName) {
+export async function hireVendor(eventId: string, vendorId: string, vendorName?: string): Promise<boolean> {
     if (!eventId || !vendorId) {
         Notify("Event ID and Vendor ID are required to hire vendors.", {
             type: "error",
@@ -23,7 +23,7 @@ export async function hireVendor(eventId, vendorId, vendorName) {
     }
 
     try {
-        const result = await hireEventVendor(eventId, vendorId);
+        const result: any = await hireEventVendor(eventId, vendorId);
 
         if (result?.success === false) {
             const message = normalizeErrorMessage(result);
@@ -61,7 +61,7 @@ export async function hireVendor(eventId, vendorId, vendorName) {
         });
 
         return true;
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Error hiring vendor:", error);
 
         const message = normalizeErrorMessage(error);
@@ -87,7 +87,7 @@ export async function hireVendor(eventId, vendorId, vendorName) {
     }
 }
 
-export async function removeVendor(eventId, vendorId, vendorName) {
+export async function removeVendor(eventId: string, vendorId: string, vendorName?: string): Promise<boolean> {
     if (!eventId || !vendorId) {
         Notify("Invalid event or vendor ID.", {
             type: "error",
@@ -97,7 +97,7 @@ export async function removeVendor(eventId, vendorId, vendorName) {
     }
 
     try {
-        const result = await removeEventVendor(eventId, vendorId);
+        const result: any = await removeEventVendor(eventId, vendorId);
 
         if (result?.success === false) {
             throw new Error(normalizeErrorMessage(result) || "Failed to remove vendor.");
@@ -116,7 +116,7 @@ export async function removeVendor(eventId, vendorId, vendorName) {
         });
 
         return true;
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Error removing vendor:", error);
         Notify("Failed to remove vendor. Please try again.", {
             type: "error",

@@ -1,15 +1,38 @@
-
 import { renderAnalyticsPage } from "../analytics/analyticsService";
+import Notify from "../../components/ui/Notify.js";
 
-// View Analytics (placeholder)
-export async function analyticsPlace(anacon, isLoggedIn, placeId) {
-    if (!isLoggedIn) {
-        Notify("Please log in to view your event analytics.", { type: "warning", duration: 3000, dismissible: true });
-        return;
-    }
+export interface AnalyticsOptions {
+  container: HTMLElement;
+  isLoggedIn: boolean;
+  entityType: string;
+  entityId: string;
+}
 
-    confirm("Do you want to view event analytics?");
+/**
+ * View Analytics for a specific place
+ */
+export async function analyticsPlace(
+  anacon: HTMLElement, 
+  isLoggedIn: boolean, 
+  placeId: string
+): Promise<void> {
+  if (!isLoggedIn) {
+    Notify("Please log in to view your event analytics.", { 
+      type: "warning", 
+      duration: 3000, 
+      dismissible: true 
+    });
+    return;
+  }
 
-    // For a specific event
-    renderAnalyticsPage({ container: anacon, isLoggedIn: true, entityType: "places", entityId: placeId });
+  const userConfirmed = confirm("Do you want to view event analytics?");
+  if (!userConfirmed) return;
+
+  // Render page for a specific place
+  renderAnalyticsPage({ 
+    container: anacon, 
+    isLoggedIn: true, 
+    entityType: "places", 
+    entityId: placeId 
+  });
 }

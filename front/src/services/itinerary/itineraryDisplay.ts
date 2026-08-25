@@ -1,3 +1,4 @@
+// itineraryDisplay.ts
 import { apiFetch } from "../../api/api.js";
 import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
@@ -6,13 +7,45 @@ import { navigate } from "../../routes/navigate.js";
 import { getState } from "../../state/state.js";
 import { editItinerary } from "./itineraryEdit.js";
 
-function clear(node) {
-  while (node.firstChild) {
-node.removeChild(node.firstChild);
-}
+interface Visit {
+  start_time?: string;
+  end_time?: string;
+  location?: string;
+  transport?: string;
+  [key: string]: unknown;
 }
 
-function displayItinerary(isLoggedIn, root) {
+interface Day {
+  date?: string;
+  visits?: Visit[];
+  [key: string]: unknown;
+}
+
+interface Itinerary {
+  itineraryid?: string | number;
+  userid?: string | number;
+  name?: string;
+  status?: string;
+  published?: boolean;
+  start_date?: string;
+  end_date?: string;
+  description?: string;
+  days?: Day[];
+  [key: string]: unknown;
+}
+
+interface UserState {
+  userid?: string | number;
+  [key: string]: unknown;
+}
+
+function clear(node: HTMLElement): void {
+  while (node.firstChild) {
+    node.removeChild(node.firstChild);
+  }
+}
+
+function displayItinerary(isLoggedIn: boolean, root: HTMLElement): void {
   clear(root);
 
   if (!isLoggedIn) {
@@ -24,20 +57,20 @@ function displayItinerary(isLoggedIn, root) {
 
   const rightPane = createElement("div", { class: "itinerary-right" }, [
     createElement("p", {}, ["Select an itinerary to see details here."])
-  ]);
+  ]) as HTMLElement;
 
-  const listDiv = createElement("div", {}, []);
+  const listDiv = createElement("div", {}, []) as HTMLElement;
 
   root.append(
     createElement("div", { class: "itinerary-layout" }, [
       createElement("div", { class: "itinerary-left" }, [
         createSearchForm(listDiv),
-        Button(
-          "Create Itinerary",
-          "create-itinerary",
-          { click: () => navigate("/create-itinerary") },
-          "itinerary-create-btn"
-        ),
+        Button({
+          title: "Create Itinerary",
+          id: "create-itinerary",
+          events: { click: () => navigate("/create-itinerary") },
+          classes: "itinerary-create-btn"
+        }),
         listDiv
       ]),
       rightPane
@@ -48,32 +81,36 @@ function displayItinerary(isLoggedIn, root) {
 
   /* ---------- API ---------- */
 
-  async function loadItineraries() {
+  async function loadItineraries(): Promise<void> {
     setListMessage("Loading…");
     try {
-      renderList(await apiFetch("/itineraries"));
+      const resp = (await apiFetch("/itineraries")) as Itinerary[] | { data?: Itinerary[];[key: string]: unknown };
+      const items = Array.isArray(resp) ? resp : (resp?.data || []);
+      renderList(items);
     } catch (_err) {
       setListMessage("Error loading itineraries.");
     }
   }
 
-  async function searchItineraries(qs) {
+  async function searchItineraries(qs: string): Promise<void> {
     setListMessage("Searching…");
     try {
-      renderList(await apiFetch(`/itineraries/search?${qs}`));
+      const resp = (await apiFetch(`/itineraries/search?${qs}`)) as Itinerary[] | { data?: Itinerary[];[key: string]: unknown };
+      const items = Array.isArray(resp) ? resp : (resp?.data || []);
+      renderList(items);
     } catch (_err) {
       setListMessage("Error searching itineraries.");
     }
   }
 
-  function setListMessage(msg) {
+  function setListMessage(msg: string): void {
     clear(listDiv);
     listDiv.append(createElement("p", {}, [msg]));
   }
 
   /* ---------- Rendering ---------- */
 
-  function renderList(items = []) {
+  function renderList(items: Itinerary[] = []): void {
     clear(listDiv);
 
     if (!items.length) {
@@ -81,45 +118,57 @@ function displayItinerary(isLoggedIn, root) {
       return;
     }
 
-    const ul = createElement("ul", { class: "itinerary-list" }, []);
+    const ul = createElement("ul", { class: "itinerary-list" }, []) as HTMLElement;
     items.forEach(it => ul.append(createListItem(it)));
     listDiv.append(ul);
   }
 
-  function createListItem(it = {}) {
-    const isCreator = getState("user").userid === it.userid;
+  function createListItem(it: Itinerary = {}): HTMLElement {
+    const currentUser = getState("user") as UserState | null;
+    const isCreator = currentUser?.userid === it.userid;
+    const itineraryId = it.itineraryid ?? "";
 
     const li = createElement("li", { class: "itinerary-list-item" }, [
       createElement("strong", {}, [it.name || "Untitled"]),
       createElement("span", {}, [` (${it.status || "Unknown"}) `])
-    ]);
+    ]) as HTMLElement;
 
     li.append(
-      Button("View", `view-${it.itineraryid}`, {
-        click: () => openViewModal(it.itineraryid)
-      }, "itinerary-btn secondary"),
+      Button({
+        title: "View", id: `view-${itineraryId}`, events: {
+          click: () => openViewModal(itineraryId)
+        }, classes: "itinerary-btn secondary"
+      }),
 
-      Button("Fork", `fork-${it.itineraryid}`, {
-        click: () => forkItinerary(it.itineraryid)
-      }, "itinerary-btn secondary")
+      Button({
+        title: "Fork", id: `fork-${itineraryId}`, events: {
+          click: () => forkItinerary(itineraryId)
+        }, classes: "itinerary-btn secondary"
+      })
     );
 
     if (isCreator) {
       li.append(
-        Button("Edit", `edit-${it.itineraryid}`, {
-          click: () => editItinerary(rightPane, true, it.itineraryid)
-        }, "itinerary-btn"),
+        Button({
+          title: "Edit", id: `edit-${itineraryId}`, events: {
+            click: () => editItinerary(rightPane, true, itineraryId)
+          }, classes: "itinerary-btn"
+        }),
 
-        Button("Delete", `del-${it.itineraryid}`, {
-          click: () => deleteItinerary(it.itineraryid)
-        }, "itinerary-btn danger")
+        Button({
+          title: "Delete", id: `del-${itineraryId}`, events: {
+            click: () => deleteItinerary(itineraryId)
+          }, classes: "itinerary-btn danger"
+        })
       );
 
       if (!it.published) {
         li.append(
-          Button("Publish", `pub-${it.itineraryid}`, {
-            click: () => publishItinerary(it.itineraryid)
-          }, "itinerary-btn success")
+          Button({
+            title: "Publish", id: `pub-${itineraryId}`, events: {
+              click: () => publishItinerary(itineraryId)
+            }, classes: "itinerary-btn success"
+          })
         );
       }
     }
@@ -129,17 +178,23 @@ function displayItinerary(isLoggedIn, root) {
 
   /* ---------- View ---------- */
 
-  async function openViewModal(id) {
-    const { dialog } = Modal({
+  async function openViewModal(id: string | number): Promise<void> {
+    const modalResult = Modal({
       title: "Loading…",
       content: createElement("p", {}, ["Loading itinerary…"]),
       size: "large"
     });
 
-    const body = dialog.querySelector(".modal-body");
+    const dialog = modalResult.dialog || (modalResult as unknown as { container?: HTMLElement }).container;
+    const body = dialog?.querySelector(".modal-body") as HTMLElement | null;
+
+    if (!body) {
+      return;
+    }
 
     try {
-      const it = await apiFetch(`/itineraries/all/${id}`);
+      const resp = (await apiFetch(`/itineraries/all/${id}`)) as { data?: Itinerary;[key: string]: unknown };
+      const it = resp?.data || (resp as Itinerary);
       clear(body);
       body.append(renderDetails(it));
     } catch {
@@ -148,13 +203,14 @@ function displayItinerary(isLoggedIn, root) {
     }
   }
 
-  function renderDetails(it = {}) {
+  function renderDetails(it: Itinerary = {}): HTMLElement {
     const days = it.days || [];
+    const statusClass = it.status ? String(it.status) : "N/A";
 
     const wrap = createElement("div", { class: "itinerary-container enhanced" }, [
       createElement("h2", { class: "itinerary-title" }, [it.name || "Untitled"]),
       createElement("div", { class: "itinerary-meta" }, [
-        createElement("span", { class: `status ${it.status}` }, [
+        createElement("span", { class: `status ${statusClass}` }, [
           `Status: ${it.status || "N/A"}`
         ]),
         createElement("span", {}, [
@@ -164,7 +220,7 @@ function displayItinerary(isLoggedIn, root) {
       createElement("p", { class: "itinerary-description" }, [
         it.description || "No description provided."
       ])
-    ]);
+    ]) as HTMLElement;
 
     if (!days.length) {
       wrap.append(createElement("p", {}, ["No schedule available."]));
@@ -178,7 +234,7 @@ function displayItinerary(isLoggedIn, root) {
         createElement("h3", { class: "day-heading" }, [
           `Day ${i + 1} — ${day.date || "Unknown"}`
         ])
-      ]);
+      ]) as HTMLElement;
 
       if (!visits.length) {
         dayBlock.append(createElement("p", {}, ["No visits."]));
@@ -189,13 +245,14 @@ function displayItinerary(isLoggedIn, root) {
       // Sort visits by start time
       visits.sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""));
 
-      const timeline = createElement("div", { class: "timeline" }, []);
+      const timeline = createElement("div", { class: "timeline" }, []) as HTMLElement;
 
       visits.forEach((v, idx) => {
-        const validTime =
+        const validTime = Boolean(
           v.start_time &&
           v.end_time &&
-          v.start_time < v.end_time;
+          v.start_time < v.end_time
+        );
 
         const visitCard = createElement(
           "div",
@@ -240,37 +297,37 @@ function displayItinerary(isLoggedIn, root) {
 
   /* ---------- Mutations ---------- */
 
-  async function deleteItinerary(id) {
+  async function deleteItinerary(id: string | number): Promise<void> {
     if (!confirm("Delete this itinerary?")) {
-return;
-}
+      return;
+    }
     await apiFetch(`/itineraries/${id}`, "DELETE");
     loadItineraries();
   }
 
-  async function forkItinerary(id) {
+  async function forkItinerary(id: string | number): Promise<void> {
     await apiFetch(`/itineraries/${id}/fork`, "POST");
     loadItineraries();
   }
 
-  async function publishItinerary(id) {
+  async function publishItinerary(id: string | number): Promise<void> {
     await apiFetch(`/itineraries/${id}/publish`, "PUT");
     loadItineraries();
   }
 
   /* ---------- Search ---------- */
 
-  function createSearchForm(_listDiv) {
+  function createSearchForm(_listDiv: HTMLElement): HTMLFormElement {
     const form = createElement("form", { class: "itinerary-search-form" }, [
       createElement("input", { name: "start_date", placeholder: "Start Date (YYYY-MM-DD)" }),
       createElement("input", { name: "location", placeholder: "Location" }),
       createElement("input", { name: "status", placeholder: "Status (Draft/Confirmed)" }),
       createElement("button", { type: "submit" }, ["Search"])
-    ]);
+    ]) as HTMLFormElement;
 
     form.addEventListener("submit", e => {
       e.preventDefault();
-      const qs = new URLSearchParams(new FormData(form)).toString();
+      const qs = new URLSearchParams(new FormData(form) as unknown as Record<string, string>).toString();
       searchItineraries(qs);
     });
 
