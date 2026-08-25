@@ -1,16 +1,20 @@
 import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
-import { generateEventForm } from "./createOrEditEvent.js";
+import { generateEventForm, EventFormInputData } from "./createOrEditEvent.js";
 import Notify from "../../components/ui/Notify.js";
 
 /** Create a new event */
-function createEvent(isLoggedIn, container) {
+function createEvent(isLoggedIn: boolean, container: HTMLElement): void {
     // Simply generate a blank form
     generateEventForm(isLoggedIn, container);
 }
 
 /** Edit an existing event */
-async function editEvent(isLoggedIn, eventId, container) {
+async function editEvent(
+    isLoggedIn: boolean, 
+    eventId: string | number, 
+    container: HTMLElement
+): Promise<void> {
     if (!isLoggedIn) {
         Notify("Please log in to edit an event.", { type: "warning", duration: 3000, dismissible: true });
         navigate("/login");
@@ -18,11 +22,12 @@ async function editEvent(isLoggedIn, eventId, container) {
     }
 
     try {
-        const eventData = await apiFetch(`/events/event/${eventId}`);
+        const eventData: EventFormInputData = await apiFetch(`/events/event/${eventId}`);
         generateEventForm(isLoggedIn, container, eventData);
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Error fetching event data:", error);
-        Notify(`Error loading event: ${error.message}`, { type: "error", duration: 3000, dismissible: true });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        Notify(`Error loading event: ${errorMessage}`, { type: "error", duration: 3000, dismissible: true });
     }
 }
 

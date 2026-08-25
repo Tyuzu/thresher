@@ -11,61 +11,94 @@ import { editEvent } from "./creadit.js";
 import { displayTickets } from "../tickets/displayTickets.js";
 import { displayMerchandise } from "../merch/merchService.js";
 import { displayMedia } from "../media/ui/mediaGallery.js";
-// import { persistTabs } from "../../utils/persistTabs.js";
 import { createTabs } from "../../utils/persistTabs.js";
 import { showSeatingBanner } from "../tickets/seatingBanner.js";
 import { displayEventNews } from "./eventMoreTabs.js";
 
+// --- Type Definitions / Interfaces ---
 
-async function displayEventMerch(container, eventID, isCreator, isLoggedIn) {
-  try {
-    const response = await apiFetch(`/merch/event/${eventID}`);
-    const merchItems = response?.data ?? [];
-
-    const holder = createElement("div", { id: "edittabs" }, []);
-    container.append(holder);
-
-    displayMerchandise(
-      container,
-      merchItems,
-      "event",
-      eventID,
-      isCreator,
-      isLoggedIn
-    );
-  } catch (err) {
-    console.error("Error loading merch:", err);
-    const msg = createElement("p", {}, ["Error loading merch."]);
-    container.replaceChildren(msg);
-  }
+export interface EventData {
+    id: string | number;
+    creatorid: string | number;
+    date: string | Date;
+    seating?: unknown;
+    contactInfo?: unknown;
+    success?: boolean;
+    error?: string;
+    [key: string]: unknown;
 }
 
-// --- Helpers ---
+export interface TabItem {
+    title: string;
+    id: string;
+    render: (container: HTMLElement) => void | Promise<void>;
+}
 
-const confirmAndExecute = async (message, action, successMessage, errorMessage) => {
+// --- Helper Functions ---
+
+async function displayEventMerch(
+    container: HTMLElement, 
+    eventID: string | number, 
+    isCreator: boolean, 
+    isLoggedIn: boolean
+): Promise<void> {
+    try {
+        const response = await apiFetch(`/merch/event/${eventID}`);
+        const merchItems = response?.data ?? [];
+
+        const holder = createElement("div", { id: "edittabs" }, []);
+        container.append(holder);
+
+        displayMerchandise(
+            container,
+            merchItems,
+            "event",
+            eventID,
+            isCreator,
+            isLoggedIn
+        );
+    } catch (err) {
+        console.error("Error loading merch:", err);
+        const msg = createElement("p", {}, ["Error loading merch."]);
+        container.replaceChildren(msg);
+    }
+}
+
+const confirmAndExecute = async (
+    message: string, 
+    action: () => Promise<void>, 
+    successMessage: string, 
+    errorMessage: string
+): Promise<void> => {
     if (confirm(message)) {
         try {
             await action();
             Notify(successMessage, { type: "success", duration: 3000, dismissible: true });
-        } catch (error) {
-            Notify(`${errorMessage}: ${error.message}`, { type: "error", duration: 3000, dismissible: true });
+        } catch (error: unknown) {
+            const errMessage = error instanceof Error ? error.message : String(error);
+            Notify(`${errorMessage}: ${errMessage}`, { type: "error", duration: 3000, dismissible: true });
         }
     }
 };
 
-const getEventStatus = (eventDate) => new Date(eventDate) <= new Date() ? "ongoing" : "active";
+const getEventStatus = (eventDate: string | Date): "ongoing" | "active" => 
+    new Date(eventDate) <= new Date() ? "ongoing" : "active";
 
-const createVenue = async (container, eventId, seating, isLoggedIn) => {
-    const venueContainer = createElement('div', { id: 'event-venue', class: 'venue-container' });
+const createVenue = async (
+    container: HTMLElement, 
+    eventId: string | number, 
+    seating: any, 
+    isLoggedIn: boolean
+): Promise<void> => {
+    const venueContainer = createElement('div', { id: 'event-venue', class: 'venue-container' }) as HTMLElement;
     await displayEventVenue(venueContainer, isLoggedIn, eventId, seating);
     container.appendChild(venueContainer);
 };
 
 // --- Core Functions ---
 
-
 // Fetch Event Data
-async function fetchEventData(eventId) {
+async function fetchEventData(eventId: string | number): Promise<EventData> {
     const eventData = await apiFetch(`/events/event/${eventId}`);
 
     // Check if there was an API error
@@ -82,8 +115,13 @@ async function fetchEventData(eventId) {
 }
 
 // Setup Event Tabs
-const setupTabs = (eventData, eventId, isCreator, isLoggedIn) => {
-    const tabs = [];
+const setupTabs = (
+    eventData: EventData, 
+    eventId: string | number, 
+    isCreator: boolean, 
+    isLoggedIn: boolean
+): TabItem[] => {
+    const tabs: TabItem[] = [];
     const status = getEventStatus(eventData.date);
 
     if (status === "active") {
@@ -105,13 +143,18 @@ const setupTabs = (eventData, eventId, isCreator, isLoggedIn) => {
     return tabs;
 };
 
-async function displayEvent(isLoggedIn, eventId, content) {
-    const container = createElement('div', { class: "eventpage" }, []);
+async function displayEvent(
+    isLoggedIn: boolean, 
+    eventId: string | number, 
+    content: HTMLElement
+): Promise<void> {
+    const container = createElement('div', { class: "eventpage" }, []) as HTMLElement;
     content.appendChild(container);
 
     try {
         const eventData = await fetchEventData(eventId);
-        const isCreator = getState("user").userid === eventData.creatorid && isLoggedIn;
+        const userState = getState("user");
+        const isCreator = userState?.userid === eventData.creatorid && isLoggedIn;
 
         await displayEventDetails(container, eventData, isCreator, isLoggedIn);
 
@@ -134,15 +177,15 @@ async function displayEvent(isLoggedIn, eventId, content) {
             await createVenue(container, eventId, eventData.seating, isLoggedIn);
         }
 
-    } catch (error) {
+    } catch (error: unknown) {
         container.replaceChildren();
+        const errorMessage = error instanceof Error ? error.message : String(error);
         container.appendChild(
-            createElement("h1", {}, [`Error loading event details: ${error.message}`])
+            createElement("h1", {}, [`Error loading event details: ${errorMessage}`])
         );
         Notify("Failed to load event details. Please try again later.", { type: "error", duration: 3000, dismissible: true });
     }
 }
-
 
 // --- Exports ---
 export {

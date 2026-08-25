@@ -1,4 +1,19 @@
-async function displaySeatingMap(venueList, place, _eventid, _isLoggedIn) {
+// Define the structure of a single seat
+export interface Seat {
+    row: number;
+    col: number;
+    status: "available" | "booked" | "VIP" | string;
+}
+
+/**
+ * Displays the seating map inside the given container element.
+ */
+async function displaySeatingMap(
+    venueList: HTMLElement, 
+    place: string, 
+    _eventid: string | number, 
+    isLoggedIn: boolean
+): Promise<void> {
     venueList.innerHTML = ''; // Clear existing content
 
     // Create a container for the venue
@@ -19,15 +34,17 @@ async function displaySeatingMap(venueList, place, _eventid, _isLoggedIn) {
 
     venueList.appendChild(container);
 
-    // Get seating data from API or mock data (if no backend yet)
-    const seatData = await fetchSeatData(_eventid);
+    // Get seating data from API or mock data
+    const seatData: Seat[] = await fetchSeatData(_eventid);
 
     // Render the seating chart
     renderSeatingChart(canvas, seatData, isLoggedIn);
 }
 
-// Function to fetch seat availability from the backend (replace with actual API call)
-async function fetchSeatData(_eventid) {
+/**
+ * Function to fetch seat availability from the backend
+ */
+async function fetchSeatData(_eventid: string | number): Promise<Seat[]> {
     // Simulated data structure
     return [
         { row: 1, col: 1, status: "available" },
@@ -40,11 +57,19 @@ async function fetchSeatData(_eventid) {
     ];
 }
 
-// Function to render the seating chart
-function renderSeatingChart(canvas, seatData, isLoggedIn) {
+/**
+ * Function to render the seating chart on the canvas
+ */
+function renderSeatingChart(
+    canvas: HTMLCanvasElement, 
+    seatData: Seat[], 
+    isLoggedIn: boolean
+): void {
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     const seatSize = 40; // Size of each seat
-    const padding = 10; // Space between seats
+    const padding = 10;  // Space between seats
 
     // Draw seats
     seatData.forEach(({ row, col, status }) => {
@@ -52,7 +77,7 @@ function renderSeatingChart(canvas, seatData, isLoggedIn) {
         const y = row * (seatSize + padding);
 
         // Seat colors based on status
-        let color;
+        let color: string;
         if (status === "available") {
             color = "green";
         } else if (status === "booked") {
@@ -73,7 +98,7 @@ function renderSeatingChart(canvas, seatData, isLoggedIn) {
 
     // Handle seat selection if user is logged in
     if (isLoggedIn) {
-        canvas.addEventListener("click", (event) => {
+        canvas.addEventListener("click", (event: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;

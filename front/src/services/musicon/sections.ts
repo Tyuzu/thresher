@@ -1,38 +1,38 @@
-// sections.js
 import { createElement } from "../../components/createElement.js";
 import Notify from "../../components/ui/Notify.js";
 import { getState } from "../../state/state.js";
 import { createSongRow } from "./songUI.js";
+import { Song, Player } from "./types.js";
 
-
-/**
- * renderSongsSection
- * - uses DocumentFragment to reduce reflows
- * - keeps internal allSongs array and updates player queue when load more appends
- */
-export function renderSongsSection(title, songs, container, player = null, batchSelection = null, loadMore = null) {
-    const isL = Boolean(getState("user").userid);
+export function renderSongsSection(
+    title: string, 
+    songs: Song[], 
+    container: HTMLElement, 
+    player: Player | null = null, 
+    batchSelection: Set<string> | null = null, 
+    loadMore: (() => Promise<Song[]>) | null = null
+): void {
+    const userState = getState("user") as { userid?: string };
+    const isL = Boolean(userState?.userid);
     if (!songs?.length) {
-return;
-}
+        return;
+    }
     const section = createElement("div", { class: "music-section" }, [createElement("h3", {}, [title])]);
     const list = createElement("div", { class: "songs-table" });
 
-    // Use fragment to append all at once
     const frag = document.createDocumentFragment();
-    const allSongs = songs.slice(); // local copy
+    const allSongs = songs.slice();
     songs.forEach((song, idx) => frag.appendChild(createSongRow(song, idx, player, batchSelection, container, isL)));
     list.append(frag);
     section.append(list);
 
-    // if loadMore is provided, attach smart loading that maintains queue and indices
     if (typeof loadMore === "function") {
-        const loadMoreBtn = createElement("button", {}, ["Load More"]);
+        const loadMoreBtn = createElement("button", {}, ["Load More"]) as HTMLButtonElement;
         let loading = false;
         loadMoreBtn.addEventListener("click", async () => {
             if (loading) {
-return;
-}
+                return;
+            }
             loading = true;
             loadMoreBtn.disabled = true;
             const moreSongs = await loadMore();
@@ -49,18 +49,16 @@ return;
                 allSongs.push(s);
             });
             list.append(frag2);
-            // Update player queue to full combined list if player supports it
             if (player?.setQueue) {
-player.setQueue(allSongs);
-}
+                player.setQueue(allSongs);
+            }
         });
         section.append(loadMoreBtn);
     }
 
     container.append(section);
 
-    // Set queue initially using provided songs array
     if (player?.setQueue) {
-player.setQueue(songs.slice());
-}
+        player.setQueue(songs.slice());
+    }
 }

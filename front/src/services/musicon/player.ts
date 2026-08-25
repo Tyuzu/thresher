@@ -1,3 +1,8 @@
+import { createElement } from "../../components/createElement.js";
+import Notify from "../../components/ui/Notify.js";
+import { getContentContainer } from "./uiHelpers.js";
+import { Song } from "./types.js";
+import { RepeatMode, PlayerStateShape, PlayerInterface } from "./playerTypes.js";
 
 // Constants
 const DEFAULT_VOLUME = 1;
@@ -7,12 +12,22 @@ const PROGRESS_BAR_STEP = 0.1;
 const VOLUME_MIN = 0;
 const VOLUME_MAX = 1;
 const VOLUME_STEP = 0.01;
-const REPEAT_MODES = ["all", "one", "none"];
+const REPEAT_MODES: RepeatMode[] = ["all", "one", "none"];
 const SHUFFLE_TEXT = "Shuffle";
 const REPEAT_TEXT = "Repeat";
 
 // PlayerState class to manage player state
-class PlayerState {
+class PlayerState implements PlayerStateShape {
+    audio: HTMLAudioElement | null;
+    currentSong: Song | null;
+    currentIndex: number;
+    queue: Song[];
+    repeat: RepeatMode;
+    shuffle: boolean;
+    volume: number;
+    crossfadeDuration: number;
+    _fadeInterval: any | null;
+
     constructor() {
         this.audio = null;
         this.currentSong = null;
@@ -25,7 +40,7 @@ class PlayerState {
         this._fadeInterval = null;
     }
 
-    getState() {
+    getState(): PlayerStateShape {
         return {
             audio: this.audio,
             currentSong: this.currentSong,
@@ -39,14 +54,14 @@ class PlayerState {
         };
     }
 
-    reset() {
+    reset(): void {
         this.currentIndex = -1;
         this.currentSong = null;
         this.queue = [];
         this._clearFadeInterval();
     }
 
-    _clearFadeInterval() {
+    _clearFadeInterval(): void {
         if (this._fadeInterval) {
             clearInterval(this._fadeInterval);
             this._fadeInterval = null;
@@ -56,18 +71,20 @@ class PlayerState {
 
 // AudioPlayer class to handle audio playback logic
 class AudioPlayer {
-    constructor(state) {
+    state: PlayerState;
+
+    constructor(state: PlayerState) {
         this.state = state;
     }
 
-    async play(song, idx = undefined, startTime = 0) {
+    async play(song: Song, idx: number | undefined = undefined, startTime: number = 0): Promise<void> {
         if (!song || !song.audioUrl) {
-return;
-}
+            return;
+        }
         const audio = this.state.audio;
         if (!audio) {
-return;
-}
+            return;
+        }
 
         // if same song playing -> toggle pause
         if (this.state.currentSong === song && !audio.paused) {
@@ -82,8 +99,8 @@ return;
             audio.play();
             this.state.currentSong = song;
             if (typeof idx === "number") {
-this.state.currentIndex = idx;
-}
+                this.state.currentIndex = idx;
+            }
         };
 
         if (audio.src && !audio.paused && this.state.crossfadeDuration > 0 && this.state.currentSong) {
@@ -101,31 +118,35 @@ this.state.currentIndex = idx;
                     audio.volume = this.state.volume;
                     switchSong();
                 } else {
-audio.volume = Math.max(0, vol);
-}
+                    audio.volume = Math.max(0, vol);
+                }
             }, step);
         } else {
             switchSong();
         }
     }
 
-    playNext() {
+    playNext(): void {
         if (!this.state.queue?.length) {
-return;
-}
-        this.state.currentIndex = this.state.shuffle ? Math.floor(Math.random() * this.state.queue.length) : (this.state.currentIndex + 1) % this.state.queue.length;
+            return;
+        }
+        this.state.currentIndex = this.state.shuffle 
+            ? Math.floor(Math.random() * this.state.queue.length) 
+            : (this.state.currentIndex + 1) % this.state.queue.length;
         this.play(this.state.queue[this.state.currentIndex], this.state.currentIndex);
     }
 
-    playPrev() {
+    playPrev(): void {
         if (!this.state.queue?.length) {
-return;
-}
-        this.state.currentIndex = this.state.shuffle ? Math.floor(Math.random() * this.state.queue.length) : (this.state.currentIndex - 1 + this.state.queue.length) % this.state.queue.length;
+            return;
+        }
+        this.state.currentIndex = this.state.shuffle 
+            ? Math.floor(Math.random() * this.state.queue.length) 
+            : (this.state.currentIndex - 1 + this.state.queue.length) % this.state.queue.length;
         this.play(this.state.queue[this.state.currentIndex], this.state.currentIndex);
     }
 
-    setQueue(songs) {
+    setQueue(songs: Song[]): void {
         this.state.queue = Array.isArray(songs) ? songs.slice() : [];
         this.state.currentIndex = -1;
     }
@@ -133,7 +154,17 @@ return;
 
 // PlayerUI class to handle UI creation and event setup
 class PlayerUI {
-    constructor(container, state, audioPlayer) {
+    container: HTMLElement;
+    state: PlayerState;
+    audioPlayer: AudioPlayer;
+    footer: HTMLElement | null;
+    audio: HTMLAudioElement | null;
+    progressBar: HTMLInputElement | null;
+    volumeSlider: HTMLInputElement | null;
+    repeatBtn: HTMLElement | null;
+    shuffleBtn: HTMLElement | null;
+
+    constructor(container: HTMLElement, state: PlayerState, audioPlayer: AudioPlayer) {
         this.container = container;
         this.state = state;
         this.audioPlayer = audioPlayer;
@@ -145,14 +176,14 @@ class PlayerUI {
         this.shuffleBtn = null;
     }
 
-    _createAudioElement() {
-        this.audio = createElement("audio", { id: "songs-audio" });
+    _createAudioElement(): HTMLAudioElement {
+        this.audio = createElement("audio", { id: "songs-audio" }) as HTMLAudioElement;
         this.audio.volume = this.state.volume;
         this.state.audio = this.audio;
         return this.audio;
     }
 
-    _createControls() {
+    _createControls(): { prevBtn: HTMLElement; playBtn: HTMLElement; pauseBtn: HTMLElement; nextBtn: HTMLElement } {
         const prevBtn = createElement("button", { class: "prev-btn" }, ["⏮"]);
         const playBtn = createElement("button", { class: "play-btn" }, ["▶"]);
         const pauseBtn = createElement("button", { class: "pause-btn" }, ["⏸"]);
@@ -160,67 +191,71 @@ class PlayerUI {
 
         this.repeatBtn = createElement("button", { class: "repeat-btn" }, [REPEAT_TEXT]);
         this.shuffleBtn = createElement("button", { class: "shuffle-btn" }, [SHUFFLE_TEXT]);
-        this.volumeSlider = createElement("input", { type: "range", min: VOLUME_MIN, max: VOLUME_MAX, step: VOLUME_STEP, value: this.state.volume });
-        this.progressBar = createElement("input", { type: "range", min: 0, max: PROGRESS_BAR_MAX, step: PROGRESS_BAR_STEP, value: 0, class: "progress-bar" });
+        this.volumeSlider = createElement("input", { type: "range", min: VOLUME_MIN, max: VOLUME_MAX, step: VOLUME_STEP, value: String(this.state.volume) }) as HTMLInputElement;
+        this.progressBar = createElement("input", { type: "range", min: "0", max: String(PROGRESS_BAR_MAX), step: String(PROGRESS_BAR_STEP), value: "0", class: "progress-bar" }) as HTMLInputElement;
 
         return { prevBtn, playBtn, pauseBtn, nextBtn };
     }
 
-    _setupEventListeners(audio, prevBtn, playBtn, pauseBtn, nextBtn) {
+    _setupEventListeners(audio: HTMLAudioElement, prevBtn: HTMLElement, playBtn: HTMLElement, pauseBtn: HTMLElement, nextBtn: HTMLElement): void {
         prevBtn.addEventListener("click", () => this.audioPlayer.playPrev());
         nextBtn.addEventListener("click", () => this.audioPlayer.playNext());
         playBtn.addEventListener("click", () => {
- if (audio.src) {
-audio.play();
-} 
-});
+            if (audio.src) {
+                audio.play();
+            } 
+        });
         pauseBtn.addEventListener("click", () => {
- if (audio.src) {
-audio.pause();
-} 
-});
+            if (audio.src) {
+                audio.pause();
+            } 
+        });
 
-        this.repeatBtn.addEventListener("click", () => {
+        this.repeatBtn?.addEventListener("click", () => {
             const currentIndex = REPEAT_MODES.indexOf(this.state.repeat);
             this.state.repeat = REPEAT_MODES[(currentIndex + 1) % REPEAT_MODES.length];
             Notify(`Repeat mode: ${this.state.repeat}`);
         });
 
-        this.shuffleBtn.addEventListener("click", () => {
+        this.shuffleBtn?.addEventListener("click", () => {
             this.state.shuffle = !this.state.shuffle;
-            this.shuffleBtn.classList.toggle("active", this.state.shuffle);
+            this.shuffleBtn?.classList.toggle("active", this.state.shuffle);
             Notify(`Shuffle: ${this.state.shuffle ? "ON" : "OFF"}`);
         });
 
-        this.volumeSlider.addEventListener("input", () => {
-            audio.volume = Number(this.volumeSlider.value);
-            this.state.volume = audio.volume;
+        this.volumeSlider?.addEventListener("input", () => {
+            if (this.volumeSlider) {
+                audio.volume = Number(this.volumeSlider.value);
+                this.state.volume = audio.volume;
+            }
         });
 
         audio.addEventListener("timeupdate", () => {
-            this.progressBar.value = (audio.currentTime / audio.duration) * PROGRESS_BAR_MAX || 0;
+            if (this.progressBar) {
+                this.progressBar.value = String((audio.currentTime / audio.duration) * PROGRESS_BAR_MAX || 0);
+            }
         });
 
-        this.progressBar.addEventListener("input", () => {
-            audio.currentTime = (this.progressBar.value / PROGRESS_BAR_MAX) * audio.duration;
+        this.progressBar?.addEventListener("input", () => {
+            if (this.progressBar) {
+                audio.currentTime = (Number(this.progressBar.value) / PROGRESS_BAR_MAX) * audio.duration;
+            }
         });
 
         audio.addEventListener("ended", () => {
             if (this.state.repeat === "one") {
                 const cur = this.state.queue[this.state.currentIndex];
                 if (cur) {
-this.audioPlayer.play(cur, this.state.currentIndex, 0);
-}
+                    this.audioPlayer.play(cur, this.state.currentIndex, 0);
+                }
             } else {
-this.audioPlayer.playNext();
-}
+                this.audioPlayer.playNext();
+            }
         });
 
-        // update UI when metadata loads (duration)
         audio.addEventListener("loadedmetadata", () => {
             const cur = this.state.currentSong;
             if (cur) {
-                // update matching song-row meta to show duration if missing
                 const content = getContentContainer(this.container);
                 const row = content.querySelector(`.song-row[data-songid="${cur.songid}"]`);
                 if (row) {
@@ -228,10 +263,9 @@ this.audioPlayer.playNext();
                     if (metaEl) {
                         const minutes = Math.floor(audio.duration / 60);
                         const seconds = Math.floor(audio.duration % 60).toString().padStart(2, "0");
-                        // replace children safely
                         while (metaEl.firstChild) {
-metaEl.removeChild(metaEl.firstChild);
-}
+                            metaEl.removeChild(metaEl.firstChild);
+                        }
                         metaEl.append(createElement("span", {}, [`${cur.genre || ""} • ${minutes}:${seconds}`]));
                     }
                 }
@@ -239,13 +273,13 @@ metaEl.removeChild(metaEl.firstChild);
         });
     }
 
-    _createFooter() {
+    _createFooter(): void {
         this.footer = this.container.querySelector(".songs-footer");
         if (this.footer) {
-            const audio = this.footer.querySelector("#songs-audio");
+            const audio = this.footer.querySelector("#songs-audio") as HTMLAudioElement;
             if (audio) {
-this.state.audio = audio;
-}
+                this.state.audio = audio;
+            }
             return;
         }
 
@@ -257,10 +291,13 @@ this.state.audio = audio;
         const audio = this._createAudioElement();
         const { prevBtn, playBtn, pauseBtn, nextBtn } = this._createControls();
 
-        // footer.append(prevBtn, playBtn, pauseBtn, nextBtn, repeatBtn, shuffleBtn, volumeSlider, progressBar, audio);
         playcon.append(prevBtn, playBtn, pauseBtn, nextBtn);
-        progresscon.append(this.repeatBtn, this.shuffleBtn, this.progressBar, audio);
-        volumecon.append(this.volumeSlider);
+        if (this.repeatBtn && this.shuffleBtn && this.progressBar) {
+            progresscon.append(this.repeatBtn, this.shuffleBtn, this.progressBar, audio);
+        }
+        if (this.volumeSlider) {
+            volumecon.append(this.volumeSlider);
+        }
         this.footer.append(volumecon, playcon, progresscon);
         this.container.append(this.footer);
 
@@ -268,90 +305,90 @@ this.state.audio = audio;
     }
 }
 
-import { createElement } from "../../components/createElement.js";
-import Notify from "../../components/ui/Notify.js";
-import { getContentContainer } from "./uiHelpers.js";
-
 // ------------------------ Player (encapsulated) ------------------------
-let activePlayer = null; // tracks most recent player
+let activePlayer: PlayerInterface | null = null;
 
 class Player {
-    constructor(container) {
+    container: HTMLElement;
+    state: PlayerState;
+    audioPlayer: AudioPlayer;
+    ui: PlayerUI;
+
+    constructor(container: HTMLElement) {
         this.container = container;
         this.state = new PlayerState();
         this.audioPlayer = new AudioPlayer(this.state);
         this.ui = new PlayerUI(container, this.state, this.audioPlayer);
 
-        // create footer & audio once
         this.ui._createFooter();
-        // wire keyboard activation via global activePlayer handled below
     }
 
-    async play(song, idx = undefined, startTime = 0) {
+    async play(song: Song, idx: number | undefined = undefined, startTime: number = 0): Promise<void> {
         return this.audioPlayer.play(song, idx, startTime);
     }
 
-    playNext() {
+    playNext(): void {
         this.audioPlayer.playNext();
     }
 
-    playPrev() {
+    playPrev(): void {
         this.audioPlayer.playPrev();
     }
 
-    setQueue(songs) {
+    setQueue(songs: Song[]): void {
         this.audioPlayer.setQueue(songs);
     }
 
-    reset() {
+    reset(): void {
         this.state.reset();
         if (this.state.audio) {
-this.state.audio.pause();
-}
+            this.state.audio.pause();
+        }
     }
 
-    getState() {
+    getState(): PlayerStateShape {
         return this.state.getState();
     }
 }
 
-export function initPlayer(container) {
+export function initPlayer(container: HTMLElement): PlayerInterface {
     const player = new Player(container);
     activePlayer = {
-        play: (song, idx, startTime) => {
- player.play(song, idx, startTime); activePlayer = activePlayer; 
-},
+        play: async (song, idx, startTime) => {
+            await player.play(song, idx, startTime);
+            activePlayer = activePlayer;
+        },
         setQueue: (songs) => player.setQueue(songs),
         playNext: () => player.playNext(),
         playPrev: () => player.playPrev(),
         reset: () => player.reset(),
         getState: () => player.getState()
     };
-    // assign activePlayer to the real Player instance for global keyboard handler compatibility
     activePlayer._playerInstance = player;
     return activePlayer;
 }
 
 // Keyboard shortcuts (global)
-document.addEventListener("keydown", (e) => {
+document.addEventListener("keydown", (e: KeyboardEvent) => {
     if (!activePlayer) {
-return;
-}
+        return;
+    }
     const st = activePlayer.getState();
     if (!st || !st.audio) {
-return;
-}
+        return;
+    }
     const tag = document.activeElement?.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA") {
-return;
-}
+        return;
+    }
     if (e.code === "Space") {
- e.preventDefault(); st.audio.paused ? st.audio.play() : st.audio.pause(); 
-}
+        e.preventDefault(); 
+        st.audio.paused ? st.audio.play() : st.audio.pause(); 
+    }
     if (e.code === "ArrowRight") {
-activePlayer.playNext();
-}
+        activePlayer.playNext();
+    }
     if (e.code === "ArrowLeft") {
-activePlayer.playPrev();
-}
+        activePlayer.playPrev();
+    }
 });

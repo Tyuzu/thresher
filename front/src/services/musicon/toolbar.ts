@@ -5,9 +5,10 @@ import { createPlaylistCard } from "./cards.js";
 import { renderSongsSection } from "./sections.js";
 import { getContentContainer, showLoadingOverlay, hideLoadingOverlay } from "./uiHelpers.js";
 import { renderCardGrid } from "./cardGrid.js";
+import { Player } from "./types.js";
 
-export function ensureToolbar(container, player, isLoggedIn) {
-    let toolbar = container.querySelector(".music-toolbar");
+export function ensureToolbar(container: HTMLElement, player: Player, isLoggedIn: boolean): HTMLElement {
+    let toolbar = container.querySelector(".music-toolbar") as HTMLElement;
     if (toolbar) {
         return toolbar;
     }
@@ -33,7 +34,7 @@ export function ensureToolbar(container, player, isLoggedIn) {
         );
     });
 
-    const createPlaylistBtn = createElement("button", {}, ["Create Playlist"]);
+    const createPlaylistBtn = createElement("button", {}, ["Create Playlist"]) as HTMLButtonElement;
     createPlaylistBtn.addEventListener("click", async () => {
         if (!isLoggedIn) {
             Notify("Login required", { type: "info" });
@@ -51,7 +52,6 @@ export function ensureToolbar(container, player, isLoggedIn) {
             if (res?.success) {
                 MusicAPI.invalidate();
                 Notify("Playlist created successfully", { type: "success" });
-                // Re-fetch playlists directly to avoid importing displayMusic
                 viewPlaylistsBtn.click();
             } else {
                 Notify("Failed to create playlist", { type: "error" });
@@ -85,7 +85,7 @@ export function ensureToolbar(container, player, isLoggedIn) {
     return toolbar;
 }
 
-export function ensureBackButton(container, onClick) {
+export function ensureBackButton(container: HTMLElement, onClick: () => void): void {
     if (container.querySelector(".back-btn")) {
         return;
     }

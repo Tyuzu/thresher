@@ -7,20 +7,58 @@ import { displayEventFAQs } from "./eventFAQHelper.js";
 // import { displaySeatingMap } from "./seatingMap.js";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
 
+// --- Type Definitions / Interfaces ---
 
-async function displayEventReviews(reviewsContainer, eventId, isCreator, isLoggedIn) {
+export interface FAQItem {
+    id: string | number;
+    question: string;
+    answer: string;
+}
+
+export interface LostAndFoundItem {
+    id: string | number;
+    type: "lost" | "found";
+    name: string;
+    description: string;
+    reportedBy: string;
+}
+
+export interface LivestreamAngle {
+    name: string;
+    url: string;
+}
+
+export interface LivestreamResponse {
+    angles: LivestreamAngle[];
+}
+
+async function displayEventReviews(
+    reviewsContainer: HTMLElement,
+    eventId: string | number,
+    isCreator: boolean,
+    isLoggedIn: boolean
+): Promise<void> {
     displayReviews(reviewsContainer, isCreator, isLoggedIn, "event", eventId);
 }
 
-async function displayEventVenue(venueList, isLoggedIn, eventID, seatingplan) {
+async function displayEventVenue(
+    venueList: HTMLElement,
+    isLoggedIn: boolean,
+    eventID: string | number,
+    seatingplan: string
+): Promise<void> {
     // displaySeatingMap(venueList, place, eventid, isLoggedIn);
     // loadMap(venueList, isLoggedIn, { type: "event", id: eventID });
     const imgx = resolveImagePath(EntityType.EVENT, PictureType.SEATING, seatingplan);
     venueList.appendChild(Imagex({ src: imgx }));
 }
 
-async function displayEventFAQ(faqContainer, isCreator, eventId) {
-    let faqs = [];
+async function displayEventFAQ(
+    faqContainer: HTMLElement,
+    isCreator: boolean,
+    eventId: string | number
+): Promise<void> {
+    let faqs: FAQItem[] = [];
     try {
         const response = await apiFetch(`/faqs/event/${eventId}`);
         faqs = response?.data ?? [];
@@ -33,63 +71,84 @@ async function displayEventFAQ(faqContainer, isCreator, eventId) {
     displayEventFAQs(isCreator, faqContainer, eventId, faqs);
 }
 
-async function displayLostAndFound(lnfContainer, isCreator, eventId) {
+async function displayLostAndFound(
+    lnfContainer: HTMLElement,
+    isCreator: boolean,
+    eventId: string | number
+): Promise<void> {
     lnfContainer.appendChild(createElement("h2", {}, ["Lost And Found"]));
     lnfContainer.appendChild(createElement("p", {}, ["Did anyone lose or find something?"]));
 
     // Container for buttons + form
-    const actionsContainer = createElement("div", { id: "lostFoundActions" }, []);
+    const actionsContainer = createElement("div", { id: "lostFoundActions" }, []) as HTMLElement;
     lnfContainer.appendChild(actionsContainer);
 
     // Form section (initially empty, shows when a button is clicked)
-    const formSection = createElement("div", { id: "lostFoundForm" }, []);
+    const formSection = createElement("div", { id: "lostFoundForm" }, []) as HTMLElement;
 
     // Helper: show form
-    function showForm(type) {
+    function showForm(type: "lost" | "found"): void {
         formSection.innerHTML = "";
         formSection.appendChild(createElement("h3", {}, [`Report ${type === "lost" ? "Lost" : "Found"} Item`]));
 
-        const nameInput = createElement("input", { type: "text", placeholder: "Item name" });
-        const descInput = createElement("textarea", { placeholder: "Description" });
+        const nameInput = createElement("input", { type: "text", placeholder: "Item name" }) as HTMLInputElement;
+        const descInput = createElement("textarea", { placeholder: "Description" }) as HTMLTextAreaElement;
 
-        const submitBtn = Button("Submit", "", {
-            click: async () => {
-                const name = nameInput.value.trim();
-                const description = descInput.value.trim();
-                if (!name) {
-                    return alert("Name is required");
-                }
+        // Updated to use ButtonOptions object structure
+        const submitBtn = Button({
+            title: "Submit",
+            classes: "buttonx primary",
+            events: {
+                click: async () => {
+                    const name = nameInput.value.trim();
+                    const description = descInput.value.trim();
+                    if (!name) {
+                        alert("Name is required");
+                        return;
+                    }
 
-                const newItem = { type, name, description };
-                try {
-                    await apiFetch(`/events/${eventId}/lostfound`, "POST", newItem);
-                    lnfContainer.innerHTML = "";
-                    await displayLostAndFound(lnfContainer, isCreator, eventId);
-                } catch (_err) {
-                    alert("Failed to add item.");
+                    const newItem = { type, name, description };
+                    try {
+                        await apiFetch(`/events/${eventId}/lostfound`, "POST", newItem);
+                        lnfContainer.innerHTML = "";
+                        await displayLostAndFound(lnfContainer, isCreator, eventId);
+                    } catch (_err) {
+                        alert("Failed to add item.");
+                    }
                 }
             }
-        }, "buttonx primary");
+        });
 
         formSection.appendChild(nameInput);
         formSection.appendChild(descInput);
         formSection.appendChild(submitBtn);
     }
 
-    // Two buttons (available to everyone)
-    const btnLost = Button("I lost something", "btnLost", {
-        click: () => showForm("lost")
-    }, "buttonx primary");
-    const btnFound = Button("I found something", "btnFound", {
-        click: () => showForm("found")
-    }, "buttonx primary");
+    // Two buttons (available to everyone) updated to use ButtonOptions object structure
+    const btnLost = Button({
+        title: "I lost something",
+        id: "btnLost",
+        classes: "buttonx primary",
+        events: {
+            click: () => showForm("lost")
+        }
+    });
+
+    const btnFound = Button({
+        title: "I found something",
+        id: "btnFound",
+        classes: "buttonx primary",
+        events: {
+            click: () => showForm("found")
+        }
+    });
 
     actionsContainer.appendChild(btnLost);
     actionsContainer.appendChild(btnFound);
     actionsContainer.appendChild(formSection);
 
     // Fetch items (after rendering buttons + form placeholder)
-    let items = [];
+    let items: LostAndFoundItem[] = [];
     try {
         items = await apiFetch(`/events/${eventId}/lostfound`);
     } catch (_err) {
@@ -98,12 +157,12 @@ async function displayLostAndFound(lnfContainer, isCreator, eventId) {
     }
 
     // Items list
-    const itemsList = createElement("div", { id: "lostFoundItems" }, []);
+    const itemsList = createElement("div", { id: "lostFoundItems" }, []) as HTMLElement;
     if (items.length === 0) {
         itemsList.appendChild(createElement("p", {}, ["No items reported yet."]));
     } else {
         items.forEach(item => {
-            const itemEl = createElement("div", { "data-id": item.id }, [
+            const itemEl = createElement("div", { "data-id": String(item.id) }, [
                 createElement("p", {}, [`[${item.type.toUpperCase()}] ${item.name}`]),
                 createElement("p", {}, [`Description: ${item.description}`]),
                 createElement("p", {}, [`Reported by: ${item.reportedBy}`])
@@ -114,17 +173,28 @@ async function displayLostAndFound(lnfContainer, isCreator, eventId) {
     lnfContainer.appendChild(itemsList);
 }
 
-async function displayContactDetails(container, _isCreator, _contacts) {
+async function displayContactDetails(
+    container: HTMLElement,
+    _isCreator: boolean,
+    _contacts: unknown
+): Promise<void> {
     container.appendChild(createElement('h2', "", ["ContactDetails"]));
     container.appendChild(createElement('p', "", ["Does anybody need anything?"]));
 }
 
-
-async function displayLivestream(divcontainer, eventId, isLoggedIn) {
-    displayEventLiveStream(divcontainer, eventId, isLoggedIn);
+async function displayLivestream(
+    divcontainer: HTMLElement,
+    eventId: string | number,
+    isLoggedIn: boolean
+): Promise<void> {
+    await displayEventLiveStream(divcontainer, eventId, isLoggedIn);
 }
 
-async function displayEventLiveStream(divcontainer, eventId, isLoggedIn) {
+async function displayEventLiveStream(
+    divcontainer: HTMLElement,
+    eventId: string | number,
+    isLoggedIn: boolean
+): Promise<void> {
     if (!isLoggedIn) {
         divcontainer.innerHTML = "<p>Please log in to watch.</p>";
         return;
@@ -141,7 +211,8 @@ async function displayEventLiveStream(divcontainer, eventId, isLoggedIn) {
             return;
         }
 
-        const { angles } = await response.json();
+        const data: LivestreamResponse = await response.json();
+        const angles = data.angles;
 
         if (!angles || !angles.length) {
             divcontainer.innerHTML = "<p>No livestream available.</p>";

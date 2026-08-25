@@ -10,7 +10,7 @@ import { renderCardGrid } from "./cardGrid.js";
 
 let currentRenderToken = 0;
 
-export async function displayMusic(rootContainer, isLoggedIn) {
+export async function displayMusic(rootContainer: HTMLElement, isLoggedIn: boolean): Promise<void> {
     if (!rootContainer) {
         return;
     }

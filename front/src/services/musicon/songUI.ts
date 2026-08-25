@@ -1,41 +1,42 @@
-// songUI.js
 import { createElement } from "../../components/createElement.js";
 import Notify from "../../components/ui/Notify.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import { MusicAPI } from "./fetchers.js";
+import { Song, Player } from "./types.js";
+import { setButtonTextSafely } from "./uiHelpers.js";
 
-
-
-// ------------------------ Add to Playlist Button in Song Row (with caching/error handling) ------------------------
-export function createAddToPlaylistBtn(song, player, container, isLoggedIn) {
+export function createAddToPlaylistBtn(
+    song: Song, 
+    player: Player, 
+    container: HTMLElement, 
+    isLoggedIn: boolean
+): HTMLElement {
     const btn = createElement("button", { class: "add-to-playlist-btn" }, ["➕ Add to Playlist"]);
     btn.addEventListener("click", async () => {
         if (!isLoggedIn) {
-return Notify("You must be logged in to add songs to playlists", { type: "info" });
-}
+            return Notify("You must be logged in to add songs to playlists", { type: "info" });
+        }
 
         try {
-            // try cached playlists first
             const playlists = await MusicAPI.playlists();
             if (!playlists.length) {
                 Notify("No playlists available", { type: "info" });
                 return;
             }
 
-            // prompt user for selection
             const choice = prompt(`Select playlist by number:\n${playlists.map((pl, idx) => `${idx + 1}. ${pl.name}`).join("\n")}`);
+            if (!choice) return;
+            
             const index = parseInt(choice, 10) - 1;
             if (isNaN(index) || !playlists[index]) {
-return Notify("Invalid selection", { type: "error" });
-}
+                return Notify("Invalid selection", { type: "error" });
+            }
 
-            // const playlistID = playlists[index].playlistID;
             const playlistID = playlists[index].playlistID || playlists[index].playlistid;
 
             const res = await MusicAPI.addSongToPlaylist(playlistID, { songid: song.songid });
             if (res?.success) {
                 Notify(`Added "${song.title}" to playlist "${playlists[index].name}"`);
-                // optionally refresh cached playlists if API returns new playlist data (skip heavy refresh by default)
             } else if (res?.error && (String(res.error).toLowerCase().includes("unauthorized") || String(res.error).toLowerCase().includes("401") || String(res.error).toLowerCase().includes("403"))) {
                 Notify("You are not authorized. Please log in.", { type: "info" });
             } else {
@@ -49,24 +50,23 @@ return Notify("Invalid selection", { type: "error" });
     return btn;
 }
 
-// ------------------------ Play / Like / Add Buttons ------------------------
-export function createPlayButton(song, idx, player = null) {
-    const btn = createElement("button", { class: "song-play-btn" }, ["▶"]);
+export function createPlayButton(song: Song, idx: number, player: Player | null = null): HTMLButtonElement {
+    const btn = createElement("button", { class: "song-play-btn" }, ["▶"]) as HTMLButtonElement;
     if (!song.audioUrl) {
- btn.disabled = true; return btn; 
-}
+        btn.disabled = true; 
+        return btn; 
+    }
     if (player) {
         btn.addEventListener("click", () => player.play(song, idx));
-        // store reference for potential UI toggles
         song._playBtn = btn;
     }
     return btn;
 }
 
-export function createLikeButton(song, isLoggedIn) {
+export function createLikeButton(song: Song, isLoggedIn: boolean): HTMLElement {
     const btn = createElement("button", { class: "like-btn" }, [
         song.liked ? "❤️" : "🤍"
-    ]);
+    ]) as HTMLButtonElement;
 
     let pending = false;
 
@@ -77,8 +77,8 @@ export function createLikeButton(song, isLoggedIn) {
         }
 
         if (pending) {
-return;
-}
+            return;
+        }
         pending = true;
         btn.disabled = true;
 
@@ -112,42 +112,44 @@ return;
     return btn;
 }
 
-// ------------------------ Song Row + render optimizations ------------------------
-export function createSongRow(song, idx, player = null, batchSelection = null, container = null, isLoggedIn = false) {
-    // Resolve images/urls
+export function createSongRow(
+    song: Song, 
+    idx: number, 
+    player: Player | null = null, 
+    batchSelection: Set<string> | null = null, 
+    container: HTMLElement | null = null, 
+    isLoggedIn: boolean = false
+): HTMLElement {
     song.poster = song.poster ? resolveImagePath(EntityType.SONG, PictureType.THUMB, song.poster) : "/placeholder.png";
     song.audioUrl = song.audioUrl ? resolveImagePath(EntityType.SONG, PictureType.AUDIO, song.audioUrl) : null;
 
     const playBtn = createPlayButton(song, idx, player);
-    const poster = createElement("img", { src: song.poster, alt: song.title, class: "song-poster" });
+    const poster = createElement("img", { src: song.poster, alt: song.title || "", class: "song-poster" });
     const title = createElement("div", { class: "song-title" }, [song.title || "Untitled"]);
 
-    // precompute duration string if provided, else leave blank placeholder
     const duration = song.duration || "";
     const meta = createElement("div", { class: "song-meta" }, [ `${song.genre || ""} • ${duration}` ]);
 
-    const rowChildren = [playBtn, poster, title, meta];
+    const rowChildren: HTMLElement[] = [playBtn, poster, title, meta];
 
-    // Add "Add to Playlist" button (uses cached playlists)
     if (player && container) {
         const addBtn = createAddToPlaylistBtn(song, player, container, isLoggedIn);
         rowChildren.push(addBtn);
     }
 
-    // Add Like/Unlike button
     if (isLoggedIn) {
         const likeBtn = createLikeButton(song, isLoggedIn);
         rowChildren.push(likeBtn);
     }
 
     if (batchSelection) {
-        const checkbox = createElement("input", { type: "checkbox" });
+        const checkbox = createElement("input", { type: "checkbox" }) as HTMLInputElement;
         checkbox.addEventListener("change", () => {
             if (checkbox.checked) {
-batchSelection.add(song.songid);
-} else {
-batchSelection.delete(song.songid);
-}
+                batchSelection.add(song.songid);
+            } else {
+                batchSelection.delete(song.songid);
+            }
         });
         rowChildren.unshift(checkbox);
     }
@@ -155,4 +157,3 @@ batchSelection.delete(song.songid);
     const row = createElement("div", { class: "song-row", "data-songid": song.songid }, rowChildren);
     return row;
 }
-
