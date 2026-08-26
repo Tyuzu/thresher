@@ -2,7 +2,7 @@
 
 import { createElement } from "../../components/createElement.js";
 import { Imagex } from "../../components/base/Imagex.js";
-import { apiFetch, SRC_URL } from "../../api/api.js";
+import { SRC_URL } from "../../api/api.js";
 import { 
     smoothZoom, 
     handleTouchStart, 
@@ -12,6 +12,7 @@ import {
     resetTransformState 
 } from "../../components/ui/zoomBox/zoomboxHelpers.js";
 import { handlePointerDown, handlePointerMove, handlePointerUp } from "./pointerEvents.js";
+import { fetchGtaMapData, fetchGtaMapDistance } from "./api.js";
 
 // ---------- Interfaces ----------
 
@@ -621,7 +622,7 @@ export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean,
             svgMeasureLayer.appendChild(line);
 
             try {
-                const res: any = await apiFetch(`/gta/map/distance?x1=${p1.x}&y1=${p1.y}&x2=${p2.x}&y2=${p2.y}`);
+                const res: any = await fetchGtaMapDistance(p1.x, p1.y, p2.x, p2.y);
                 const data = res?.data || res;
 
                 const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -868,11 +869,13 @@ export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean,
             svgRouteLayer.innerHTML = "";
             detailsPanel.classList.add("hidden");
 
-            let endpoint = `/gta/map?entity=${state.activeEntity}&auth=${isLoggedIn}`;
-            if (initialMarker) endpoint += `&marker=${initialMarker}`;
-            if (initialX !== null && initialY !== null) endpoint += `&x=${initialX}&y=${initialY}`;
-
-            const response: any = await apiFetch(endpoint);
+            const response: any = await fetchGtaMapData(
+                state.activeEntity,
+                isLoggedIn,
+                initialMarker,
+                initialX,
+                initialY
+            );
             const mapData = response?.data || response;
 
             state.locations = mapData?.locations || [];

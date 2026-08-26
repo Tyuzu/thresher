@@ -1,13 +1,17 @@
 import {
-    createMediaApi,
     uploadFile,
     uploadFiles,
     cancelUpload,
     cancelAllUploads,
     postMedia,
-    MediaItem,
     MediaUploadResult
 } from "../media/api/mediaApi.js";
+import {
+    fetchMedia,
+    deleteMedia,
+    postMediaFanmade,
+    type MediaItem
+} from "./api.js";
 import { createElement } from "../../components/createElement.js";
 import {
     lazyMediaObserver,
@@ -35,12 +39,6 @@ import { Button } from "../../components/base/Button.js";
 import Notify from "../../components/ui/Notify.js";
 import { UploadStore } from "../media/store/uploadStore.js";
 
-// Create fanmade-specific API
-const fanmadeApi = createMediaApi("fanmade");
-export const fetchMedia = fanmadeApi.fetchMedia.bind(fanmadeApi);
-export const deleteMedia = fanmadeApi.deleteMedia.bind(fanmadeApi);
-export const postMediaFanmade = fanmadeApi.postMedia.bind(fanmadeApi);
-
 // Re-export upload functions, store, and queue tools from the media API
 export {
     uploadFile,
@@ -51,6 +49,7 @@ export {
 export {
     UploadStore
 } from "../media/store/uploadStore.js";
+export { fetchMedia, deleteMedia, postMediaFanmade } from "./api.js";
 
 function buildMediaFragment(
     mediaData: MediaItem[],

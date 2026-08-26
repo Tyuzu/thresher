@@ -1,5 +1,5 @@
 import { formatCurrency } from "../../types/api.types.js";
-import { apiFetch } from "../../api/api.js";
+import { validateCouponCode as validateCouponCodeApi, requestWalletTopup as requestWalletTopupApi } from "./api.js";
 
 /* ───────────────────────────────────────── */
 /* Types & Interfaces */
@@ -79,16 +79,7 @@ export async function validateCouponCode(
 ): Promise<CouponValidationResult> {
   if (!couponCode?.trim()) return { valid: false, discount: 0 };
   
-  try {
-    const response = await apiFetch<CouponApiResponse>('/cart/validate-coupon', 'POST', {
-      coupon_code: couponCode,
-      cart_total: cartTotal
-    });
-    return response?.data || { valid: false, discount: 0 };
-  } catch (error: any) {
-    console.error('Coupon alignment verification error:', error);
-    return { valid: false, discount: 0, reason: error?.message || 'Validation failed' };
-  }
+  return await validateCouponCodeApi(couponCode, cartTotal);
 }
 
 export function formatWalletBalance(balanceInPaise: number): string {
@@ -140,14 +131,5 @@ export async function requestWalletTopup(
   amount: number,
   paymentMethod: string
 ): Promise<TopupResponse | undefined> {
-  try {
-    const res = await apiFetch<{ data?: TopupResponse }>('/wallet/topup', 'POST', {
-      amount,
-      payment_method: paymentMethod
-    });
-    return res?.data;
-  } catch (err) {
-    console.error("Topup submission broken:", err);
-    throw err;
-  }
+  return await requestWalletTopupApi(amount, paymentMethod);
 }

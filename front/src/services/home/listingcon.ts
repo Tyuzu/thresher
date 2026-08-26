@@ -1,6 +1,6 @@
 import { createElement, ChildInput } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
+import { fetchHomeCards } from "./api.js";
 import Button from "../../components/base/Button.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import Imagex from "../../components/base/Imagex.js";
@@ -75,7 +75,7 @@ function createCardSection() {
   const DEFAULT_LIMIT = 20;
 
   const fetchPage = async (category: string, skip: number, limit: number) =>
-    apiFetch<any[]>(`/homecards?category=${encodeURIComponent(category)}&skip=${skip}&limit=${limit}`, "GET");
+    fetchHomeCards(category, skip, limit);
 
   const showMessage = (msg: string) => createElement("p", { class: "status-message" }, [msg]);
   const makeLoadMoreButton = (category: CategoryKey) =>

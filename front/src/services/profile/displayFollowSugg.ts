@@ -1,15 +1,9 @@
-import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
+import { fetchFollowSuggestions, type SuggestedUser } from "./api.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import { createElement } from "../../components/createElement.js";
 import Notify from "../../components/ui/Notify.js";
 import Imagex from "../../components/base/Imagex.js";
-
-interface SuggestedUser {
-  userid: string | number;
-  username?: string;
-  bio?: string;
-}
 
 /* ============================================================
     DISPLAY FOLLOW SUGGESTIONS
@@ -27,9 +21,7 @@ async function displayFollowSuggestions(
   suggestionsSection.replaceChildren(); // Clear previous content
 
   try {
-    const suggestions = (await apiFetch(
-      `/suggestions/follow?userid=${userid}`
-    )) as SuggestedUser[];
+    const suggestions = await fetchFollowSuggestions(userid);
 
     if (Array.isArray(suggestions) && suggestions.length > 0) {
       const heading = createElement("h3", {}, ["Suggested Users to Follow:"]);

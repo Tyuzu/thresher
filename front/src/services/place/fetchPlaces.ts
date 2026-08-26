@@ -1,8 +1,6 @@
-import { apiFetch } from "../../api/api.js";
 import Notify from "../../components/ui/Notify.js";
 import { Place } from "./placeDetails.js";
-
-export type QueryParams = Record<string, string | number | boolean>;
+import { fetchPlacesApi, type QueryParams } from "./api.js";
 
 /**
  * Fetch paginated places with optional filters.
@@ -17,31 +15,14 @@ async function fetchPlaces(
   limit: number = 20,
   queryParams: QueryParams = {}
 ): Promise<Place[] | null> {
-  const abortController = new AbortController();
-  const signal = abortController.signal;
-
-  // Convert all params to string values for URLSearchParams
-  const params = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-    ...Object.fromEntries(
-      Object.entries(queryParams).map(([key, value]) => [key, String(value)])
-    )
-  });
-
   try {
-    const places = await apiFetch<Place[]>(
-      `/places/places?${params.toString()}`,
-      "GET",
-      null,
-      { signal }
-    );
-    return Array.isArray(places) ? places : [];
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
+    const places = await fetchPlacesApi(page, limit, queryParams);
+    if (places === null) {
       return null;
     }
-    
+
+    return places;
+  } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error fetching places:", error);
     Notify(`Error fetching places: ${message}`, {

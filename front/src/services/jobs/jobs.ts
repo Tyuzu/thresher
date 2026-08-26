@@ -1,10 +1,10 @@
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
-import { apiFetch } from "../../api/api.js";
 import Modal from "../../components/ui/Modal.js";
 import Notify from "../../components/ui/Notify.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import { buildCard } from "../baitos/baitoslisting/JobCard.js";
+import { createJob, fetchJobsByEntity } from "./api.js";
 
 interface JobPayload {
   category: string;
@@ -157,11 +157,7 @@ export function jobsHire(container: HTMLElement, entityType: string, entityId: s
     }
 
     try {
-      const newJob = await apiFetch<JobItem>(
-        `/jobs/${entityType}/${entityId}`,
-        "POST",
-        JSON.stringify(jobData)
-      );
+      const newJob = await createJob(entityType, entityId, jobData);
 
       if (!newJob || !newJob.baitoid) {
         throw new Error("Failed to create job");
@@ -213,7 +209,7 @@ export async function displayPlaceJobs(
   container.append(...elements, jobsContainer);
 
   try {
-    const response = await apiFetch<JobsApiResponse>(`/jobs/${entityType}/${entityId}`);
+    const response = await fetchJobsByEntity(entityType, entityId);
     const jobs = Array.isArray(response?.jobs) ? response.jobs : [];
 
     if (jobs.length === 0) {

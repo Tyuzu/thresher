@@ -1,6 +1,6 @@
 import { setState, getState } from '../../state/state.js';
-import { apiFetch } from "../../api/api.js";
 import { fetchProfile } from './fetchProfile.js';
+import { toggleActionRequest } from './api.js';
 import Notify from "../../components/ui/Notify.js";
 
 interface ToggleLabels {
@@ -55,7 +55,7 @@ async function toggleAction({
   button.dataset.active = String(!isActive);
 
   try {
-    const response = (await apiFetch(apiEndpoint, httpMethod)) as Response | undefined;
+    const response = (await toggleActionRequest(apiEndpoint, httpMethod)) as Response | undefined;
 
     // Support both raw Response objects and parsed JSON payloads
     if (response && typeof response.ok === "boolean" && !response.ok) {

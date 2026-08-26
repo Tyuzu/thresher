@@ -1,6 +1,6 @@
 import "../../../../css/ui/createTabs.css";
-import { apiFetch } from "../../../api/api.js";
 import { createElement } from "../../../components/createElement.js";
+import { fetchFarmDetails } from "../api.js";
 import Button, { ButtonOptions } from "../../../components/base/Button.js";
 import { editFarm } from "./editFarm.js";
 import { getState } from "../../../state/state.js";
@@ -68,7 +68,7 @@ export async function displayFarm(
 
   let farmRes: FarmApiResponse | undefined;
   try {
-    farmRes = await apiFetch(`/farms/farm/${farmId}`);
+    farmRes = await fetchFarmDetails(farmId);
   } catch (error) {
     console.error("Failed to fetch farm details:", error);
   }

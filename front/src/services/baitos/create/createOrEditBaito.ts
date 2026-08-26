@@ -2,7 +2,7 @@
 
 import { createElement } from "../../../components/createElement";
 import { navigate } from "../../../routes/navigate";
-import { apiFetch } from "../../../api/api";
+import { updateBaito, createBaito } from "../api.js";
 import { createFormGroup } from "../../../components/form/createFormGroupEnhanced";
 import Notify from "../../../components/ui/Notify";
 
@@ -300,12 +300,12 @@ export async function createOrEditBaito({
         try {
             if (mode === "edit") {
                 Notify("Updating baito...", { type: "info", duration: 3000, dismissible: true });
-                await apiFetch(`/baitos/baito/${baito.baitoid}`, "PUT", payload);
+                await updateBaito(baito.baitoid, payload);
                 Notify("Baito updated successfully!", { type: "success", duration: 3000, dismissible: true });
                 navigate(`/baito/${baito.baitoid}`);
             } else {
                 Notify("Creating baito...", { type: "info", duration: 3000, dismissible: true });
-                const res = (await apiFetch("/baitos/baito", "POST", payload)) as { baitoid?: string | number };
+                const res = (await createBaito(payload)) as { baitoid?: string | number };
                 Notify("Baito created successfully!", { type: "success", duration: 3000, dismissible: true });
                 if (res?.baitoid) {
                     navigate(`/baito/${res.baitoid}`);

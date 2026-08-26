@@ -1,6 +1,6 @@
 // src/ui/cart/cartService.ts
-import { apiFetch } from "../../api/api.js";
 import Notify from "../../components/ui/Notify.js";
+import { addCartItem } from "./api.js";
 
 /**
  * Cart configuration.
@@ -215,7 +215,7 @@ export async function addToCart(options: AddToCartOptions = {}): Promise<boolean
   };
 
   try {
-    const response = await apiFetch("/cart", "POST", payload);
+    const response = await addCartItem(payload);
 
     if (typeof onCartUpdated === "function") {
       try {

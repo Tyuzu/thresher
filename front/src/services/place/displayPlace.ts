@@ -1,6 +1,6 @@
 import { getState } from "../../state/state.js";
-import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
+import { getPlaceById } from "./api.js";
 import { renderPlaceDetails } from "./renderPlaceDetails.js";
 import { displayMedia } from "../media/ui/mediaGallery.js";
 import { displayReviews } from "../reviews/displayReviews.js";
@@ -30,17 +30,19 @@ export interface PlaceCoordinates {
 }
 
 export interface Place {
-  placeid?: string;
-  createdBy?: string;
+  placeid?: string | number;
+  createdBy?: string | number;
   name?: string;
-  category?: string;
-  address?: string;
+  banner?: string;
   description?: string;
+  address?: string;
+  category?: string;
   short_desc?: string;
   capacity?: number;
   tags?: string[];
-  banner?: string;
   coordinates?: PlaceCoordinates;
+  created_at?: string | Date | null;
+  updated_at?: string | Date | null;
   [key: string]: unknown;
 }
 
@@ -65,7 +67,7 @@ export default async function displayPlace(
   }
 
   try {
-    const placeData = await apiFetch<Place>(`/places/place/${placeId}`);
+    const placeData = await getPlaceById(placeId);
     if (!placeData || typeof placeData !== "object") {
       throw new Error("Invalid place data received.");
     }

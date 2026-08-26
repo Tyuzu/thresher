@@ -1,6 +1,6 @@
-import { apiFetch } from "../../api/api.js";
 import { createElement, ElementAttributes } from "../../components/createElement.js";
 import { navigate } from "../../routes/navigate.js";
+import { fetchRelatedPosts } from "./api.js";
 
 /* ---------------------- TYPES ---------------------- */
 export interface PostSummary {
@@ -27,14 +27,7 @@ export async function renderRelatedPosts(post: PostSummary): Promise<HTMLElement
   ]);
 
   try {
-    const category = encodeURIComponent(post.category || "");
-    const subcategory = encodeURIComponent(post.subcategory || "");
-    const postId = encodeURIComponent(post.postid);
-
-    // Fetch related posts from backend
-    const data = (await apiFetch(
-      `/posts/post/${postId}/related?postid=${postId}&category=${category}&subcategory=${subcategory}`
-    )) as RelatedPostsResponse | undefined;
+    const data = await fetchRelatedPosts(post.postid, post.category, post.subcategory);
 
     if (!data?.related?.length) {
       container.appendChild(createElement("p", {}, ["No related posts found."]));

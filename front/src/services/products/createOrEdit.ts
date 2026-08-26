@@ -1,6 +1,6 @@
-import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
+import { saveFarmItem, deleteFarmItem } from "./api.js";
 import Button from "../../components/base/Button.js";
 import { CategoryOption, FarmItem, ItemPayload, ItemType } from "./types.js";
 
@@ -226,7 +226,7 @@ export function renderItemForm(
           }
 
           try {
-            await apiFetch(`/farm/${type}/${itemData.productid}`, "DELETE");
+            await deleteFarmItem(type, itemData.productid);
             onDone();
           } catch (err: any) {
             if (err?.status === 403) {
@@ -273,14 +273,7 @@ export function renderItemForm(
         featured: (elements.featured as HTMLInputElement).checked
       };
 
-      const url =
-        mode === "create"
-          ? `/farm/${type}`
-          : `/farm/${type}/${itemData?.productid}`;
-
-      const method = mode === "create" ? "POST" : "PUT";
-
-      const res = await apiFetch(url, method, payload);
+      const res = await saveFarmItem(type, payload, mode, itemData?.productid);
 
       if (!res || !res.productid) {
         throw new Error("Request failed");

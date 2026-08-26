@@ -1,6 +1,6 @@
 // manageMembers.ts
 
-import { apiFetch } from "../../api/api.js";
+import { updateMember } from "./api.js";
 import { manageBandMembers } from "./createOrEditMembers.js";
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
@@ -101,9 +101,9 @@ export function createUploadControls(member: BandMember, artist: Artist, img: HT
 
             const filename = uploaded.filename || "";
 
-            await apiFetch(
-                `/artists/${artist.artistid}/members/${member.memberid}`,
-                "PUT",
+            await updateMember(
+                artist.artistid,
+                member.memberid,
                 {
                     image: filename
                 }

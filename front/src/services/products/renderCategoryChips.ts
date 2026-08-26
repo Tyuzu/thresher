@@ -1,6 +1,6 @@
 import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
+import { fetchFarmCategories } from "./api.js";
 import { ItemType } from "./types.js";
 
 export async function renderCategoryChips(
@@ -14,9 +14,7 @@ export async function renderCategoryChips(
   let categories: string[] = [];
 
   try {
-    const query = new URLSearchParams({ type }).toString();
-    const fetched = await apiFetch(`/farm/items/categories?${query}`);
-    categories = Array.isArray(fetched) ? fetched.filter(Boolean) : [];
+    categories = await fetchFarmCategories(type);
   } catch (_) {
     categories = [];
   }

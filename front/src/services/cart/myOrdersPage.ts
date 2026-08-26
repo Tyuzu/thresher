@@ -1,8 +1,8 @@
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
 import { buildOrdersPage } from "./orders/builders.js";
 import { normalizeOrders } from "./orders/orderutils.js";
 import { OrderPageState } from "./orders/types.js";
+import { getMyOrders } from "./api.js";
 
 /**
  * Renders and coordinates the User Orders page.
@@ -46,7 +46,7 @@ export async function displayMyOrders(
   render();
 
   try {
-    const res: any = await apiFetch("/order/mine", "GET");
+    const res: any = await getMyOrders();
 
     // Handle both array response and wrapped object response structure configurations safely
     const ordersData = Array.isArray(res) ? res : res?.orders;

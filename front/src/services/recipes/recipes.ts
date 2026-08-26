@@ -3,8 +3,8 @@ import { Button } from "../../components/base/Button.js";
 import Imagex from "../../components/base/Imagex.js";
 import { navigate } from "../../routes/navigate.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
-import { apiFetch } from "../../api/api.js";
 import { createRecipe } from "./createOrEditRecipe.js";
+import { fetchRecipes } from "./api.js";
 import { adspace } from "../../services/ads/newads.js";
 import { t } from "../../i18n/i18n.js";
 import { createMainLayout } from "../../components/layout/mainLayout.js";
@@ -90,8 +90,7 @@ export async function displayRecipes(container: HTMLElement, isLoggedIn: boolean
   // ---------- FETCH RECIPES ----------
   let recipes: Recipe[] = [];
   try {
-    const resp = await apiFetch("/recipes?offset=0&limit=5000");
-    recipes = Array.isArray(resp) ? resp : resp?.recipes || [];
+    recipes = await fetchRecipes();
   } catch (err) {
     console.error("Failed to load recipes", err);
   }

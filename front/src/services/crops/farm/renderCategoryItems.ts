@@ -1,5 +1,5 @@
-import { apiFetch } from "../../../api/api.js";
 import { displayCropCard } from "../crop/displayCropCard.js";
+import { fetchCategoryItems } from "../api.js";
 
 export interface CategoryFilters {
   minPrice?: string | number;
@@ -67,9 +67,8 @@ export async function renderCategoryItems(
     }
 
     const queryString = params.toString();
-    const endpoint = `/crops${queryString ? `?${queryString}` : ""}`;
 
-    const res = (await apiFetch(endpoint)) as CategoryItemsResponse;
+    const res = (await fetchCategoryItems(queryString)) as CategoryItemsResponse;
 
     if (!res?.success || !Array.isArray(res?.crops) || res.crops.length === 0) {
       container.replaceChildren();

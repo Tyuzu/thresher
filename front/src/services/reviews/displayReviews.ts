@@ -1,7 +1,7 @@
 import "../../../css/subpages/reviews.css";
 import { Button } from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
+import { fetchReviews } from "./api.js";
 import { handleAddReview, handleEditReview, handleDeleteReview } from "./createReview.js";
 import { fetchUserMeta } from "../../utils/usersMeta.js";
 import Datex from "../../components/base/Datex.js";
@@ -76,7 +76,7 @@ async function displayReviews(
 
   let reviews: Review[];
   try {
-    reviews = await apiFetch<Review[]>(`/reviews/${entityType}/${entityId}`);
+    reviews = await fetchReviews(entityType, entityId);
   } catch {
     reviewsContainer.append(
       createElement("p", { class: "error-message" }, ["Failed to load reviews."])

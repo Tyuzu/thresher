@@ -1,9 +1,16 @@
 import { createElement } from "../../components/createElement.js";
 import { reportEntity } from "../reporting/reporting.js";
-import { apiFetch } from "../../api/api.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import { createTabs } from "../../utils/persistTabs.js";
 import Imagex from "../../components/base/Imagex.js";
+import {
+    fetchHashtagTopPosts,
+    fetchHashtagLatestPosts,
+    fetchHashtagPeople,
+    fetchHashtagMedia,
+    type HashtagPostItem,
+    type HashtagUserItem
+} from "./api.js";
 
 /* =========================
    TYPES & INTERFACES
@@ -43,7 +50,7 @@ async function renderTopTab(
     container.appendChild(loading);
 
     try {
-        const posts = await apiFetch<PostItem[]>(`/hashtags/hashtag/${hashtag}/top?page=${page}&limit=${limit}`);
+        const posts = await fetchHashtagTopPosts(hashtag, page, limit);
         container.textContent = "";
 
         if (!Array.isArray(posts) || !posts.length) {
@@ -81,7 +88,7 @@ async function renderLatestTab(
     container.appendChild(loading);
 
     try {
-        const posts = await apiFetch<PostItem[]>(`/hashtags/hashtag/${hashtag}/latest?page=${page}&limit=${limit}`);
+        const posts = await fetchHashtagLatestPosts(hashtag, page, limit);
         container.textContent = "";
 
         if (!Array.isArray(posts) || !posts.length) {
@@ -119,7 +126,7 @@ async function renderPeopleTab(
     container.appendChild(loading);
 
     try {
-        const people = await apiFetch<UserItem[]>(`/hashtags/hashtag/${hashtag}/people?page=${page}&limit=${limit}`);
+        const people = await fetchHashtagPeople(hashtag, page, limit);
         container.textContent = "";
 
         if (!Array.isArray(people) || !people.length) {
@@ -157,7 +164,7 @@ async function renderMediaTab(
     container.appendChild(loading);
 
     try {
-        const posts = await apiFetch<PostItem[]>(`/hashtags/hashtag/${hashtag}?page=${page}&limit=${limit}`);
+        const posts = await fetchHashtagMedia(hashtag, page, limit);
         container.textContent = "";
 
         if (!Array.isArray(posts) || !posts.length) {

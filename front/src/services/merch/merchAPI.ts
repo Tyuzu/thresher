@@ -1,5 +1,4 @@
 // merchAPI.ts
-import { apiFetch } from "../../api/api.js";
 import Modal from "../../components/ui/Modal.js";
 import Notify from "../../components/ui/Notify.js";
 import { createElement } from "../../components/createElement.js";
@@ -9,6 +8,12 @@ import Imagex from "../../components/base/Imagex.js";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
 import { uploadFile } from "../media/api/mediaApi.js";
 import { uid } from "../media/ui/mediaUploadForm.js";
+import {
+    createMerchItem,
+    deleteMerchItem,
+    fetchMerchDetails,
+    updateMerchItem
+} from "./api.js";
 
 // --- Add Merchandise ---
 async function addMerchandise(
@@ -83,11 +88,7 @@ async function addMerchandise(
         // ---------------------------------
         // API
         // ---------------------------------
-        const resp = await apiFetch(`/merch/${entityType}/${eventId}`, "POST", payload) as {
-            data?: { merchid?: string | number; [key: string]: unknown };
-            message?: string;
-            [key: string]: unknown;
-        };
+        const resp = await createMerchItem(entityType, eventId, payload);
 
         if (!resp?.data?.merchid) {
             throw new Error(resp?.message || "Invalid server response.");
@@ -127,10 +128,7 @@ async function deleteMerch(entityType: string, merchId: string, eventId: string)
         return;
     }
     try {
-        const resp = await apiFetch(`/merch/${entityType}/${eventId}/${merchId}`, "DELETE") as {
-            success?: boolean;
-            message?: string;
-        };
+        const resp = await deleteMerchItem(entityType, eventId, merchId);
         if (resp.success) {
             Notify("Merchandise deleted successfully!", { type: "success" });
             const merchItem = document.getElementById(`merch-${merchId}`);
@@ -149,26 +147,18 @@ async function deleteMerch(entityType: string, merchId: string, eventId: string)
 // --- Edit Merchandise ---
 async function editMerchForm(entityType: string, merchId: string, eventId: string): Promise<void> {
     try {
-        const resp = await apiFetch(`/merch/${entityType}/${eventId}/${merchId}`, "GET") as {
-            data?: {
-                name?: string;
-                price?: number;
-                discount?: number;
-                stock?: number;
-                [key: string]: unknown;
-            };
-        };
-        const data = resp?.data;
-        if (!data) {
+        const resp = await fetchMerchDetails(entityType, eventId, merchId);
+        const data = resp?.data ?? resp;
+        if (!data || typeof data !== "object") {
             throw new Error("Merchandise not found.");
         }
 
         const form = createElement("form", { id: "edit-merch-form" }) as HTMLFormElement;
         const fields = [
-            { label: "Name:", type: "text", id: "merchName", value: data.name ?? "", required: true },
-            { label: "Price:", type: "number", id: "merchPrice", value: data.price ?? 0, required: true, step: 0.01 },
-            { label: "Discount (%)", type: "number", id: "merch-discount", value: data.discount || 0, step: 0.01, min: 0, max: 100 },
-            { label: "Stock:", type: "number", id: "merchStock", value: data.stock ?? 0, required: true }
+            { label: "Name:", type: "text", id: "merchName", value: String((data as any).name ?? ""), required: true },
+            { label: "Price:", type: "number", id: "merchPrice", value: Number((data as any).price ?? 0), required: true, step: 0.01 },
+            { label: "Discount (%)", type: "number", id: "merch-discount", value: Number((data as any).discount ?? 0), step: 0.01, min: 0, max: 100 },
+            { label: "Stock:", type: "number", id: "merchStock", value: Number((data as any).stock ?? 0), required: true }
         ];
         fields.forEach(f => form.appendChild(createFormGroup(f)));
 
@@ -199,11 +189,7 @@ async function editMerchForm(entityType: string, merchId: string, eventId: strin
                 stock: parseInt(stockEl?.value || "0", 10)
             };
             try {
-                const updateResp = await apiFetch(
-                    `/merch/${entityType}/${eventId}/${merchId}`,
-                    "PUT",
-                    merchData
-                ) as { success?: boolean; message?: string };
+                const updateResp = await updateMerchItem(entityType, eventId, merchId, merchData);
                 if (updateResp.success) {
                     Notify("Merchandise updated successfully!", { type: "success" });
                     closeModal();

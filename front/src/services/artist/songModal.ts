@@ -1,5 +1,5 @@
 // songsTab.ts
-import { apiFetch } from "../../api/api.js";
+import { saveSong } from "./api.js";
 import { createElement } from "../../components/createElement.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import Modal from "../../components/ui/Modal.js";
@@ -207,22 +207,11 @@ export function openSongModal({ mode, song = {}, artistID, container, _container
             // SAVE SONG
             // ---------------------------------
 
-            const url = isEdit
-                ? `/artists/${artistID}/songs/${encodeURIComponent(String(song.songid))}/edit`
-                : `/artists/${artistID}/songs`;
-
-            const method = isEdit ? "PUT" : "POST";
-
-            await apiFetch(
-                url,
-                method,
-                payload,
-                {
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
+            await saveSong(artistID, song.songid ?? null, payload, isEdit, {
+                headers: {
+                    "Content-Type": "application/json"
                 }
-            );
+            });
 
             closeModal();
 

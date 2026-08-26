@@ -1,9 +1,9 @@
-import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { Button } from "../../components/base/Button.js";
 import { formatCurrency, Paise, toPaise } from "../../types/api.types.js";
 import { v4 as uuidv4 } from "uuid";
 import Notify from "../../components/ui/Notify.js";
+import { transferWallet } from "./api.js";
 
 /* ───────────────────────────────────────── */
 /* Types & Interfaces */
@@ -83,17 +83,13 @@ export function WalletTransfer({ onBalanceChange }: WalletTransferProps): HTMLEl
         transferBtn.textContent = "Transferring Safely...";
 
         try {
-          const res = await apiFetch<WalletTransferResponse>(
-            "/wallet/transfer",
-            "POST",
-            { 
-              recipient_id: recipient, 
-              amount: amountPaise, 
-              note: note || undefined 
-            }, 
-            { 
-              headers: { "Idempotency-Key": transferIdempotencyKey } 
-            }
+          const res = await transferWallet(
+            {
+              recipient_id: recipient,
+              amount: amountPaise,
+              note: note || undefined
+            },
+            transferIdempotencyKey
           );
 
           if (res?.success) {

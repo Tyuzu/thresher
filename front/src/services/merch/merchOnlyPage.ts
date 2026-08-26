@@ -1,8 +1,8 @@
 // eventMerchPage.ts
 import { displayMerchandise } from "./merchUI.js";
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
 import { getState } from "../../state/state.js";
+import { fetchEventById } from "../event/api.js";
 import Notify from "../../components/ui/Notify.js";
 import Datex from "../../components/base/Datex.js";
 import { MerchItem } from "./merchUI.js";
@@ -25,7 +25,7 @@ interface EventData {
 }
 
 async function fetchEventData(eventId: string): Promise<EventData> {
-    const eventData = (await apiFetch(`/events/event/${eventId}`)) as EventData;
+    const eventData = (await fetchEventById(eventId)) as EventData;
 
     // Check if there was an API error
     if (eventData?.success === false) {

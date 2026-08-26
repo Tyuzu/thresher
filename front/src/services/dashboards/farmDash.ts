@@ -1,8 +1,8 @@
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
 import { createTabs } from "../../utils/persistTabs.js";
 import { displayOrders } from "../crops/orders/orders.js";
 import { displayMyFarm } from "../crops/farm/myFarms.js";
+import { getFarmDashboard } from "./api.js";
 
 interface CropItem {
   name?: string;
@@ -136,8 +136,8 @@ function renderOverviewTab(container: HTMLElement): void {
 
   container.appendChild(loading);
 
-  apiFetch<FarmDashResponse>("/dash/farms", "GET")
-    .then((response) => {
+  getFarmDashboard()
+    .then((response: FarmDashResponse) => {
       container.replaceChildren();
 
       if (!response?.success || !response?.farm) {

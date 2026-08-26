@@ -1,8 +1,8 @@
 // --- Imports ---
 import { getState } from "../../state/state.js";
-import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
 import { createElement } from "../../components/createElement.js";
+import { fetchEventById, fetchEventMerch } from "./api.js";
 import Notify from "../../components/ui/Notify.js";
 
 import { displayEventDetails } from "./displayEventDetails.js";
@@ -44,7 +44,7 @@ async function displayEventMerch(
     isLoggedIn: boolean
 ): Promise<void> {
     try {
-        const response = await apiFetch(`/merch/event/${eventID}`);
+        const response = await fetchEventMerch(eventID);
         const merchItems = response?.data ?? [];
 
         const holder = createElement("div", { id: "edittabs" }, []);
@@ -100,7 +100,7 @@ const createVenue = async (
 
 // Fetch Event Data
 async function fetchEventData(eventId: string | number): Promise<EventData> {
-    const eventData = await apiFetch(`/events/event/${eventId}`);
+    const eventData = await fetchEventById(eventId);
 
     // Check if there was an API error
     if (eventData?.success === false) {

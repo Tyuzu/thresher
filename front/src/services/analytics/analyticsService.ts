@@ -1,5 +1,5 @@
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
+import { getAnalytics } from "./api.js";
 import Notify from "../../components/ui/Notify.js";
 import Datex from "../../components/base/Datex.js";
 
@@ -194,11 +194,7 @@ export async function renderAnalyticsPage({
   }
 
   try {
-    const endpoint = entityId
-      ? `/antics/${entityType}/${entityId}`
-      : `/antics/${entityType}/all`;
-
-    const data = (await apiFetch(endpoint)) as AnalyticsData | null;
+    const data = (await getAnalytics(entityType, entityId)) as AnalyticsData | null;
 
     if (!data || !data.metrics) {
       Notify("No analytics data found.", { type: "warning", dismissible: true });

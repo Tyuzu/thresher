@@ -3,7 +3,7 @@
 import { createElement } from "../../components/createElement";
 import { Button } from "../../components/base/Button";
 import { navigate } from "../../routes/navigate";
-import { apiFetch } from "../../api/api";
+import { fetchLatestBaitos } from "./api.js";
 import { adspace } from "../../services/ads/newads";
 import { buildCard } from "./baitoslisting/JobCard";
 import { createMainLayout } from "../../components/layout/mainLayout";
@@ -113,7 +113,7 @@ export async function displayBaitos(container: HTMLElement, isLoggedIn: boolean)
     // ---------- FETCH JOBS ----------
     let allJobs: Job[] = [];
     try {
-        const resp = await apiFetch("/baitos/latest");
+        const resp = await fetchLatestBaitos();
         if (Array.isArray(resp)) {
             allJobs = resp;
         } else if (resp && typeof resp === "object") {

@@ -1,28 +1,13 @@
-import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
 import { createElement } from "../../components/createElement.js";
 import ToggleSwitch from "../../components/ui/ToggleSwitch.js";
-
-// --- Type Definitions ---
-
-export type ControlType = "toggle" | "select" | "time" | "number" | "text" | string;
-
-export interface SettingSchemaItem {
-  type: string;
-  label: string;
-  description: string;
-  control: ControlType;
-  category?: string;
-  options?: string[];
-}
-
-export type SettingsValues = Record<string, unknown>;
-
-export interface ApiResponse<T = unknown> {
-  status?: string;
-  data?: T;
-  message?: string;
-}
+import {
+  loadSettingsRequest,
+  updateSettingRequest,
+  type ApiResponse,
+  type SettingSchemaItem,
+  type SettingsValues
+} from "./api.js";
 
 // --- UI Helpers ---
 
@@ -67,9 +52,7 @@ function showToast(message: string, isError = false): void {
 
 async function updateSetting(type: string, value: unknown): Promise<boolean> {
   try {
-    const response = (await apiFetch("/settings", "PATCH", {
-      [type]: value
-    })) as ApiResponse | undefined;
+    const response = await updateSettingRequest(type, value);
 
     if (!response || response.status !== "success") {
       throw new Error(response?.message || "Update failed");
@@ -85,22 +68,7 @@ async function updateSetting(type: string, value: unknown): Promise<boolean> {
 }
 
 async function loadSettings(): Promise<{ schema: SettingSchemaItem[]; values: SettingsValues }> {
-  const [schemaRes, valuesRes] = await Promise.all([
-    apiFetch("/settings/schema") as Promise<ApiResponse<SettingSchemaItem[]> | SettingSchemaItem[]>,
-    apiFetch("/settings") as Promise<ApiResponse<SettingsValues> | SettingsValues>
-  ]);
-
-  const rawSchema = (schemaRes as ApiResponse<SettingSchemaItem[]>)?.data || schemaRes;
-
-  if (!Array.isArray(rawSchema)) {
-    throw new Error("Invalid schema received from server");
-  }
-
-  const values =
-    (valuesRes as ApiResponse<SettingsValues>)?.data ||
-    ((valuesRes && typeof valuesRes === "object" ? valuesRes : {}) as SettingsValues);
-
-  return { schema: rawSchema as SettingSchemaItem[], values };
+  return await loadSettingsRequest();
 }
 
 // --- Dynamic Control Factories ---

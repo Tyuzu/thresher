@@ -1,7 +1,7 @@
 // toggleAction.ts
 
 import { getState } from '../../state/state.js';
-import { apiFetch } from "../../api/api.js";
+import { followEntity } from "./api.js";
 import Notify from "../../components/ui/Notify.js";
 
 interface ToggleLabels {
@@ -57,7 +57,7 @@ export async function toggleAction({
     button.dataset.active = String(!isActive);
 
     try {
-        const response = (await apiFetch(apiEndpoint, action)) as ApiResponse;
+        const response = (await followEntity(apiPath, entityId, action as "PUT" | "DELETE")) as ApiResponse;
         button.disabled = false;
 
         if (response && response.ok === false) {

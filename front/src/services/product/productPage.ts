@@ -1,25 +1,10 @@
-import { apiFetch } from "../../api/api.js";
 import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
+import { fetchProductById, type ProductDetail } from "./api.js";
 import Imagex from "../../components/base/Imagex.js";
 import Notify from "../../components/ui/Notify.js";
 import { addToCart, isValidCartQuantity } from "../cart/addToCart.js";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
-
-interface ProductDetail {
-  productid?: string;
-  name?: string;
-  description?: string;
-  category?: string;
-  price?: number | string;
-  discount?: number | string;
-  quantity?: number | string;
-  unit?: string;
-  type?: string;
-  banner?: string;
-  photo?: string;
-  images?: string | string[];
-}
 
 function normalizeProductImage(item: ProductDetail): string {
   const raw = item.banner || item.photo || item.images;
@@ -58,7 +43,7 @@ export async function displayProduct(
   contentContainer.appendChild(wrapper);
 
   try {
-    const product = await apiFetch<ProductDetail>(`/products/${encodeURIComponent(safeType)}/${encodeURIComponent(safeId)}`);
+    const product = await fetchProductById(safeType, safeId);
 
     if (!product || !product.productid) {
       wrapper.replaceChildren(createElement("p", {}, ["Product not found."]));

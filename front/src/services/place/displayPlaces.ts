@@ -3,8 +3,8 @@ import { Button } from "../../components/base/Button.js";
 import { navigate } from "../../routes/navigate.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import Imagex from "../../components/base/Imagex.js";
-import { apiFetch } from "../../api/api.js";
 import { adspace } from "../../services/ads/newads.js";
+import { listPlacesRequest } from "./api.js";
 import { createMainLayout } from "../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../components/layout/asideLayout.js";
 import { Place } from "./placeDetails.js";
@@ -105,7 +105,7 @@ export async function displayPlaces(
   // ---------- FETCH PLACES ----------
   let places: Place[] = [];
   try {
-    const resp = await apiFetch<PlacesResponse | Place[]>("/places/places?page=1&limit=100");
+    const resp = await listPlacesRequest();
     if (Array.isArray(resp)) {
       places = resp;
     } else {

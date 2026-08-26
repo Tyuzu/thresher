@@ -1,4 +1,4 @@
-import { fetchUserProfileData } from "../profile/fetchProfile.js";
+import { fetchUserProfileData } from "./api.js";
 import { renderEntityData } from "./entityRenderer.js";
 import Notify from "../../components/ui/Notify.js";
 import type { EntityType } from "./types.js";

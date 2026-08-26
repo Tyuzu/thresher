@@ -1,6 +1,6 @@
 import { API_URL, getState } from "../../state/state.js";
-import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
+import { createEventRequest, updateEventRequest } from "./api.js";
 import { createElement } from "../../components/createElement.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import { Button } from "../../components/base/Button.js";
@@ -157,7 +157,7 @@ async function submitEvent(
     try {
         const url = eventId ? `/events/event/${eventId}` : `/events/event`;
         const method = eventId ? "PUT" : "POST";
-        const result: any = await apiFetch(url, method, formData);
+        const result: any = eventId ? await updateEventRequest(eventId, formData) : await createEventRequest(formData);
 
         Notify(`Event ${eventId ? "updated" : "created"} successfully: ${result?.title || ""}`, { type: "success", duration: 3000, dismissible: true });
         if (!eventId && result?.eventid) {

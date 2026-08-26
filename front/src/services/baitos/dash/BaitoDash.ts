@@ -1,6 +1,6 @@
 // BaitoDash.ts
 
-import { apiFetch } from "../../../api/api";
+import { getApplications, deleteApplication, getMine, getApplicants } from "../api.js";
 import { createElement } from "../../../components/createElement";
 import { formatRelativeTime } from "../../../utils/dateUtils";
 import { navigate } from "../../../routes/navigate";
@@ -54,7 +54,7 @@ export async function baitoApplicantDash(container: HTMLElement): Promise<void> 
 
     let applications: Application[] = [];
     try {
-        applications = (await apiFetch("/baitos/applications")) as Application[];
+        applications = (await getApplications()) as Application[];
     } catch {
         wrapper.appendChild(createElement("p", { class: "error" }, ["❌ Failed to load applications."]));
         return;
@@ -134,7 +134,7 @@ export async function baitoApplicantDash(container: HTMLElement): Promise<void> 
                                     events: {
                                         click: async () => {
                                             try {
-                                                await apiFetch(`/baitos/applications/${app._id}`, "DELETE");
+                                                await deleteApplication(app._id);
                                                 Notify("Application withdrawn", { type: "success", duration: 3000 });
                                                 modalInstance.close();
                                                 baitoApplicantDash(container);
@@ -216,7 +216,7 @@ export async function baitoEmployerDash(container: HTMLElement): Promise<void> {
 
     let jobs: BaitoJob[] = [];
     try {
-        jobs = (await apiFetch("/baitos/mine")) as BaitoJob[]; 
+        jobs = (await getMine()) as BaitoJob[]; 
     } catch {
         container.appendChild(createElement("p", { class: "error" }, ["❌ Failed to load your baito listings."]));
         return;
@@ -236,7 +236,7 @@ export async function baitoEmployerDash(container: HTMLElement): Promise<void> {
 export async function showApplicantsModal(job: BaitoJob): Promise<void> {
     let applicants: Applicant[] = [];
     try {
-        applicants = (await apiFetch(`/baitos/baito/${job.baitoid}/applicants`)) as Applicant[];
+        applicants = (await getApplicants(job.baitoid)) as Applicant[];
     } catch {
         Notify("Failed to fetch applicants", { type: "error", duration: 3000 });
         return;

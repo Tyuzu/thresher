@@ -1,32 +1,15 @@
-import { apiFetch } from "../../api/api.js";
 import Datex from "../../components/base/Datex.js";
 import { createElement, ChildInput } from "../../components/createElement.js";
 import Modal from "../../components/ui/Modal.js";
 import { Button } from "../../components/base/Button.js";
+import { cancelTicketRequest, fetchMyTickets, type UserTicket } from "./api.js";
 import { printTicketPDF } from "./printTicket.js";
-
-export type TicketStatus = "Active" | "Transferred" | "Cancelled" | string;
-
-export interface UserTicket {
-  ticketid: string | number;
-  uniquecode: string;
-  buyername: string;
-  purchasedate: string | number | Date;
-  status: TicketStatus;
-  canceled?: boolean;
-  refundstatus?: string;
-  transferredto?: string;
-  [key: string]: unknown;
-}
 
 export async function listMyTickets(eventid: string | number): Promise<void> {
   const container = createElement("div", {}, []);
 
   try {
-    const tickets = await apiFetch<UserTicket[]>(
-      `/ticket/mytickets/${eventid}`,
-      "GET"
-    );
+    const tickets = await fetchMyTickets(eventid);
 
     if (!tickets || tickets.length === 0) {
       container.append(
@@ -75,11 +58,7 @@ export async function listMyTickets(eventid: string | number): Promise<void> {
                   }
 
                   try {
-                    await apiFetch(
-                      `/ticket/cancel/${eventid}`,
-                      "POST",
-                      { uniquecode: ticket.uniquecode }
-                    );
+                    await cancelTicketRequest(eventid, ticket.uniquecode);
                     listMyTickets(eventid);
                   } catch {
                     alert("Failed to cancel ticket.");

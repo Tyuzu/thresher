@@ -1,5 +1,5 @@
 import { createElement } from "../../../components/createElement.js";
-import { apiFetch } from "../../../api/api.js";
+import { fetchMyFarms } from "../api.js";
 
 export interface Crop {
   name?: string;
@@ -44,7 +44,7 @@ export async function displayMyFarm(container: HTMLElement | null): Promise<void
   container.appendChild(page);
 
   try {
-    const res = (await apiFetch("/dash/farms")) as MyFarmApiResponse;
+    const res = (await fetchMyFarms()) as MyFarmApiResponse;
 
     if (!res?.success || !res?.farm) {
       content.appendChild(

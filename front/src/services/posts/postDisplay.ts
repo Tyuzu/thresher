@@ -1,7 +1,8 @@
 /* eslint-disable no-unused-vars */
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
 import Button from "../../components/base/Button.js";
+import { fetchPostById } from "./api.js";
+import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
 import { formatRelativeTime } from "../../utils/dateUtils.js";
 import { editPost } from "./createOrEditPost.js";
@@ -189,7 +190,7 @@ export async function displayPost(
 
   let post: Post | undefined;
   try {
-    const resp = await apiFetch(`/posts/post/${encodeURIComponent(postId)}`);
+    const resp = await fetchPostById(postId);
     post = resp?.post as Post | undefined;
   } catch (err) {
     page.appendChild(renderError("Failed to load post."));

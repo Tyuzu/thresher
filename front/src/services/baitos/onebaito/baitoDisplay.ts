@@ -1,7 +1,8 @@
 // baitoDisplay.ts
 
 import { createElement } from "../../../components/createElement";
-import { SRC_URL, apiFetch } from "../../../api/api";
+import { SRC_URL } from "../../../api/api";
+import { deleteBaito, applyToBaito, reportBaito, fetchRelated, getBaito } from "../api.js";
 import { getState } from "../../../state/state";
 import { navigate } from "../../../routes/navigate";
 import { createOrEditBaito } from "../create/createOrEditBaito";
@@ -133,7 +134,7 @@ function renderOwnerControls(baito: Baito, container: HTMLElement, isLoggedIn: b
                         return;
                     }
                     try {
-                        await apiFetch(`/baitos/baito/${baito.baitoid}`, "DELETE");
+                        await deleteBaito(baito.baitoid);
                         Notify("✅ Deleted", { type: "success", duration: 3000, dismissible: true });
                         navigate("/baitos");
                     } catch {
@@ -202,7 +203,7 @@ function renderApplicantControls(baito: Baito, baitoid: string | number, isOwner
                     try {
                         const form = new FormData();
                         form.append("pitch", pitch.trim());
-                        const res = (await apiFetch(`/baitos/baito/${baitoid}/apply`, "POST", form)) as { success?: boolean; message?: string };
+                        const res = (await applyToBaito(baitoid, form)) as { success?: boolean; message?: string };
                         Notify(res?.success ? "✅ Application sent!" : (res?.message || "Applied successfully"), { type: "success", duration: 3000, dismissible: true });
                         btn.textContent = "Applied";
                     } catch {
@@ -241,7 +242,7 @@ function renderApplicantControls(baito: Baito, baitoid: string | number, isOwner
                     const reason = window.prompt("Why are you reporting this job?");
                     if (!reason?.trim()) return;
                     try {
-                        await apiFetch(`/baitos/baito/${baitoid}/report`, "POST", { reason: reason.trim() });
+                        await reportBaito(baitoid, { reason: reason.trim() });
                         Notify("✅ Report submitted", { type: "success", duration: 3000, dismissible: true });
                     } catch {
                         Notify("❌ Failed to report", { type: "error", duration: 3000, dismissible: true });
@@ -275,7 +276,7 @@ function renderApplicantControls(baito: Baito, baitoid: string | number, isOwner
 /** Fetch related jobs */
 async function fetchSimilarJobs(category: string, excludeId: string | number): Promise<Baito[]> {
     try {
-        const jobs = (await apiFetch(`/baitos/related?category=${encodeURIComponent(category)}&exclude=${excludeId}`)) as Baito[] || [];
+        const jobs = (await fetchRelated(category, excludeId)) as Baito[] || [];
         return jobs.filter(j => j.baitoid !== excludeId);
     } catch {
         console.warn("Failed to load similar jobs");
@@ -391,7 +392,7 @@ export async function displayBaito(
     contentContainer.replaceChildren();
     
     try {
-        const baito = (await apiFetch(`/baitos/baito/${baitoid}`)) as Baito;
+        const baito = (await getBaito(baitoid)) as Baito;
         if (!baito) {
             throw new Error("Baito not found");
         }

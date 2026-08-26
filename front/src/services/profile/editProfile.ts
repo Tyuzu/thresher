@@ -1,21 +1,12 @@
 import { getState, setState } from "../../state/state.js";
-import { apiFetch } from "../../api/api.js";
 import { handleError } from "../../utils/utils.js";
+import { updateProfileData, type UserProfile } from "./api.js";
 import { navigate } from "../../routes/navigate.js";
 import { showLoadingMessage, removeLoadingMessage } from "./profileHelpers.js";
 import { generateFormField } from "./generators.js";
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
 import Notify from "../../components/ui/Notify.js";
-
-interface UserProfile {
-  username?: string;
-  name?: string;
-  email?: string;
-  bio?: string;
-  phone_number?: string;
-  [key: string]: unknown;
-}
 
 /* ============================================================
     EDIT PROFILE VIEW
@@ -169,11 +160,7 @@ async function updateProfile(formData: FormData): Promise<void> {
       updateFormData.append(key, val)
     );
 
-    const updatedProfile = (await apiFetch(
-      "/profile/edit",
-      "PUT",
-      updateFormData
-    )) as Record<string, unknown> | null;
+    const updatedProfile = await updateProfileData(updatedFields);
 
     if (!updatedProfile) {
       throw new Error("No response received for the profile update.");

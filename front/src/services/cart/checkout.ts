@@ -1,7 +1,7 @@
 // src/ui/cart/checkoutPage.ts
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
 import { displayPayment } from "./payment.js";
+import { getCart, validateCoupon as validateCartCoupon, createCheckoutSession } from "./api.js";
 
 // --- INTERFACES & TYPES ---
 export interface CheckoutItem {
@@ -49,19 +49,14 @@ const calculateSubtotal = (items: CheckoutItem[] = []): number =>
 
 /* ────────────────────── Coupon API (UX only) ────────────────────── */
 
-async function validateCoupon({ code, subtotal }: { code: string; subtotal: number }): Promise<{ valid: boolean | null; discount: number; message: string }> {
+async function validateCouponPreview({ code, subtotal }: { code: string; subtotal: number }): Promise<{ valid: boolean | null; discount: number; message: string }> {
   if (!code?.trim()) {
     return { valid: null, discount: 0, message: "" };
   }
 
   try {
     try {
-      const res: any = await apiFetch("/coupon/validate", "POST", {
-        code: code.trim(),
-        cart: subtotal,
-        entityId: "general",
-        entityType: "cart"
-      });
+      const res: any = await validateCartCoupon(code, subtotal);
 
       if (res?.valid) {
         const discount = Math.max(0, Number(res.discount) || 0);
@@ -136,7 +131,7 @@ function renderAddressForm(container: HTMLElement, { items, onSubmit }: { items:
     feedback.replaceChildren("Validating…");
 
     try {
-      const result = await validateCoupon({ code, subtotal });
+      const result = await validateCouponPreview({ code, subtotal });
       
       if (currentRequest !== requestId) return;
 
@@ -292,7 +287,7 @@ async function handleCheckout({
   try {
     const itemsByCategory = groupByCategory(items);
 
-    const session: any = await apiFetch("/checkout/session", "POST", {
+    const session: any = await createCheckoutSession({
       address,
       items: itemsByCategory,
       coupon: couponCode || null
@@ -354,7 +349,7 @@ export async function displayCheckout(container: HTMLElement | null, passedItems
     let items: CheckoutItem[];
     
     if (!passedItems) {
-      const cartData: any = await apiFetch("/cart", "GET");
+      const cartData: any = await getCart();
       items = Array.isArray(cartData) 
         ? cartData 
         : Object.values(cartData || {}).filter(Boolean).flat() as CheckoutItem[];

@@ -1,6 +1,17 @@
-import { apiFetch } from "../../api/api.js";
 import MenuCard from "../../components/ui/MenuCard.js";
 import Button from "../../components/base/Button.js";
+import {
+    type MenuItem as ApiMenuItem,
+    type ApiResponse as ApiMenuResponse,
+    type StockResponse as ApiStockResponse,
+    fetchMenuByPlace,
+    fetchMenuItem,
+    createMenuItem,
+    updateMenuItem,
+    deleteMenuItem,
+    getMenuStock,
+    confirmMenuPurchase
+} from "./api.js";
 import { createElement } from "../../components/createElement.js";
 import Modal, { ModalResult } from "../../components/ui/Modal.js";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
@@ -14,25 +25,6 @@ import { showPaymentModal } from "../pay/pay.js";
    TYPES & INTERFACES
 ========================= */
 
-export interface MenuItem {
-    menuid: string | number;
-    name: string;
-    price: number;
-    discount?: number;
-    stock: number;
-    menu_pic?: string;
-    [key: string]: unknown;
-}
-
-export interface ApiResponse<T = unknown> {
-    success?: boolean;
-    data?: T;
-    message?: string;
-}
-
-export interface StockResponse {
-    stock: number;
-}
 
 export interface PaymentResult {
     success: boolean;
@@ -99,11 +91,7 @@ async function addMenu(
             menu_pic: uploadedImage?.filename || uploadedImage?.key || ""
         };
 
-        const response = await apiFetch<ApiResponse<MenuItem>>(
-            `/places/menu/${placeId}`,
-            "POST",
-            payload
-        );
+        const response = await createMenuItem(placeId, payload);
 
         if (response?.data?.menuid) {
             Notify("Menu added successfully!", {
@@ -181,7 +169,7 @@ async function deleteMenu(menuId: string | number, placeId: string | number): Pr
     }
 
     try {
-        const response = await apiFetch<ApiResponse>(`/places/menu/${placeId}/${menuId}`, "DELETE");
+        const response = await deleteMenuItem(placeId, menuId);
         if (response.success) {
             Notify("Menu deleted successfully!", { type: "success", duration: 3000, dismissible: true });
             const menuItem = document.getElementById(`menu-${menuId}`);
@@ -198,7 +186,7 @@ async function deleteMenu(menuId: string | number, placeId: string | number): Pr
 
 /** Create a MenuCard element */
 function createMenuCard(
-    menu: MenuItem,
+    menu: ApiMenuItem,
     isCreator: boolean,
     isLoggedIn: boolean,
     placeId: string | number
@@ -220,7 +208,7 @@ function createMenuCard(
 /** Edit Menu Form Modal */
 async function editMenuForm(menuId: string | number, placeId: string | number): Promise<void> {
     try {
-        const menu = await apiFetch<MenuItem>(`/places/menu/${placeId}/${menuId}`, "GET");
+        const menu = await fetchMenuItem(placeId, menuId);
         const form = createElement("form", { id: "edit-menu-form" }) as HTMLFormElement;
 
         const fields: FormGroupConfig[] = [
@@ -276,11 +264,7 @@ async function editMenuForm(menuId: string | number, placeId: string | number): 
             };
 
             try {
-                const res = await apiFetch<ApiResponse>(
-                    `/places/menu/${placeId}/${menuId}`,
-                    "PUT",
-                    JSON.stringify(updatedMenu)
-                );
+                const res = await updateMenuItem(placeId, menuId, updatedMenu);
 
                 if (res.success) {
                     Notify("Menu updated successfully!", { type: "success", duration: 3000 });
@@ -310,7 +294,7 @@ export async function displayMenu(
     const menuList = createElement("div", { class: "hvflex menulist" });
     container.appendChild(menuList);
 
-    const menuData = await apiFetch<MenuItem[]>(`/places/menu/${placeId}`);
+    const menuData = await fetchMenuByPlace(placeId);
 
     if (isCreator) {
         const addBtn = Button({
@@ -332,7 +316,7 @@ export async function displayMenu(
 }
 
 /** Prompt quantity and optional note, then payment */
-async function promptMenuNote(menu: MenuItem, placeId: string | number): Promise<void> {
+async function promptMenuNote(menu: ApiMenuItem, placeId: string | number): Promise<void> {
     const quantityInput = createElement("input", { type: "number", min: 1, value: 1 }) as HTMLInputElement;
     const noteInput = createElement("textarea", {
         rows: 3,
@@ -356,9 +340,7 @@ async function promptMenuNote(menu: MenuItem, placeId: string | number): Promise
         }
 
         try {
-            const { stock } = await apiFetch<StockResponse>(
-                `/places/menu/${placeId}/${menu.menuid}/stock`
-            );
+            const { stock } = await getMenuStock(placeId, menu.menuid);
 
             if (stock <= 0) {
                 Notify("❌ Out of stock.", { type: "warning" });
@@ -384,11 +366,7 @@ async function promptMenuNote(menu: MenuItem, placeId: string | number): Promise
                 return;
             }
 
-            const res = await apiFetch<ApiResponse>(
-                `/places/menu/${placeId}/${menu.menuid}/confirm-purchase`,
-                "POST",
-                { quantity, note }
-            );
+            const res = await confirmMenuPurchase(placeId, menu.menuid, { quantity, note });
 
             if (res.success) {
                 Notify("Menu purchased successfully!", { type: "success" });

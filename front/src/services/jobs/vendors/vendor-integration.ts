@@ -9,8 +9,8 @@ import {
     normalizeVendorList
 } from "./vendorUtils.js";
 import { dispatchVendorEvent, VENDOR_EVENTS } from "./vendorEvents.js";
-import { apiFetch } from "../../../api/api.js";
 import { deleteVendor } from "./vendorService.js";
+import { fetchUserById } from "../api.js";
 import Notify from "../../../components/ui/Notify.js";
 import { createElement } from "../../../components/createElement.js";
 
@@ -221,7 +221,7 @@ export async function addVendorSelectionToEventCreation(eventId: string, formEle
 
 export async function showVendorProfile(userId: string, container: HTMLElement): Promise<void> {
     try {
-        const user: any = await apiFetch(`/users/${userId}`, "GET");
+        const user: any = await fetchUserById(userId);
 
         if (user?.success === false) {
             console.error("API error loading user:", user.error);
@@ -514,7 +514,7 @@ export async function openEditVendorProfile(
 
     try {
         if (!vendorData) {
-            const user: any = await apiFetch(`/users/${userId}`, "GET");
+            const user: any = await fetchUserById(userId);
 
             if (user?.success === false) {
                 throw new Error(user?.error || "Failed to load vendor profile.");

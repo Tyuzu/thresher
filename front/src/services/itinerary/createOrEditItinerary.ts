@@ -1,9 +1,9 @@
 // createOrEditItinerary.ts
-import { apiFetch } from "../../api/api.js";
 import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
 import Notify from "../../components/ui/Notify.js";
 import { navigate } from "../../routes/navigate.js";
+import { createItineraryRequest, updateItineraryRequest, fetchItineraryById, type ItineraryApiItem } from "./api.js";
 
 let dayCount = 0;
 
@@ -365,7 +365,9 @@ export async function renderItineraryForm(container: HTMLElement, isLoggedIn: bo
 
       const method = mode === "edit" ? "PUT" : "POST";
 
-      const response = await apiFetch(url, method, payload);
+      const response = mode === "edit"
+        ? await updateItineraryRequest(itinerary?.itineraryid ?? "", payload)
+        : await createItineraryRequest(payload);
 
       if (!response) {
         throw new Error("Server returned an empty response.");
@@ -395,8 +397,8 @@ export async function editItinerary(container: HTMLElement, isLoggedIn: boolean,
   clearNode(container);
 
   try {
-    const response = (await apiFetch(`/itineraries/all/${id}`)) as { data?: Itinerary;[key: string]: unknown };
-    const it = response?.data || (response as Itinerary);
+    const response = await fetchItineraryById(id);
+    const it = ((response as { data?: ItineraryApiItem })?.data ?? (response as ItineraryApiItem)) as Itinerary;
 
     if (!it) {
       throw new Error("Itinerary not found.");

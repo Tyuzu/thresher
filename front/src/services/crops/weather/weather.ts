@@ -1,6 +1,6 @@
-import { apiFetch } from "../../../api/api.js";
 import { createElement } from "../../../components/createElement.js";
 import Button from "../../../components/base/Button.js";
+import { fetchWeather } from "../api.js";
 
 interface WeatherData {
   icon?: string;
@@ -12,8 +12,8 @@ interface WeatherData {
   rain24h: number;
 }
 
-async function fetchWeather(): Promise<WeatherData> {
-  const res = await apiFetch("/weather");
+async function loadWeather(): Promise<WeatherData> {
+  const res = await fetchWeather();
   return res as WeatherData;
 }
 
@@ -51,7 +51,7 @@ export function renderWeatherDetails(): HTMLElement {
   const load = () => {
     section.textContent = "Loading weather...";
 
-    fetchWeather()
+    loadWeather()
       .then((data) => {
         section.replaceChildren(...renderContent(data, load));
       })

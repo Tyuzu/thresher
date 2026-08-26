@@ -1,5 +1,5 @@
-import { apiFetch } from "../../api/api.js";
 import { uploadFiles } from "../media/api/mediaApi.js";
+import { uploadNewChatFiles } from "./api.js";
 
 export type UploadKeyType = "photo" | "video" | "audio" | "file";
 
@@ -88,14 +88,10 @@ export function setupFileUpload(
         throw new Error("No files uploaded.");
       }
 
-      await apiFetch(
-        "/newchat/upload",
-        "POST",
-        {
-          chat: chatid,
-          files: successfulUploads
-        }
-      );
+      await uploadNewChatFiles({
+        chat: chatid,
+        files: successfulUploads
+      });
 
       fileInput.value = "";
     } catch (err: any) {

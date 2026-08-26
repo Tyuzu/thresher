@@ -1,6 +1,6 @@
 // albumsAndEventsTab.ts
 
-import { apiFetch } from "../../api/api.js";
+import { getAlbums, getMerch, getEvents, createEvent, addArtistToEvent } from "./api.js";
 import { displayMerchandise } from "../merch/merchUI.js";
 import { createElement } from "../../components/createElement.js";
 import Modal from "../../components/ui/Modal.js";
@@ -47,7 +47,7 @@ export async function renderAlbumsTab(artistID: string | number, isCreator: bool
 
     let albums: Album[] = [];
     try {
-        albums = (await apiFetch(`/artists/${artistID}/albums`, "GET")) as Album[];
+        albums = (await getAlbums(artistID)) as Album[];
     } catch {
         const msg = createElement("p", {}, ["Error loading albums."]);
         container.append(msg);
@@ -90,8 +90,7 @@ export async function renderAlbumsTab(artistID: string | number, isCreator: bool
 
 export async function renderMerchTab(container: HTMLElement, artistID: string | number, isCreator: boolean, isLoggedIn: boolean): Promise<void> {
     try {
-        const response = (await apiFetch(`/artists/${artistID}/merch`, "GET")) as { data?: any[] };
-        const merchItems = response?.data ?? [];
+        const merchItems = (await getMerch(artistID))?.data ?? [];
 
         const holder = createElement("div", { id: "edittabs" }, []) as HTMLElement;
         container.append(holder);
@@ -113,7 +112,7 @@ export async function renderMerchTab(container: HTMLElement, artistID: string | 
 
 export async function renderEventsTab(container: HTMLElement, artistID: string | number, isCreator: boolean): Promise<void> {
     try {
-        const events = (await apiFetch(`/artists/${artistID}/events`, "GET")) as ArtistEvent[];
+        const events = (await getEvents(artistID)) as ArtistEvent[];
         container.replaceChildren();
 
         if (isCreator) {
@@ -194,8 +193,8 @@ function openEventModal(artistID: string | number, eventsContainer: HTMLElement)
         e.preventDefault();
         const data = Object.fromEntries(new FormData(form));
 
-        try {
-            await apiFetch(`/artists/${artistID}/events`, "POST", data);
+            try {
+            await createEvent(artistID, data);
             modalInstance?.close();
 
             if (eventsContainer) {
@@ -233,7 +232,7 @@ function openAddToEventModal(artistID: string | number): void {
 
         const data = Object.fromEntries(new FormData(form));
         try {
-            await apiFetch(`/artists/${artistID}/events/addtoevent`, "PUT", data);
+            await addArtistToEvent(artistID, data);
             modalInstance?.close();
         } catch (err) {
             console.error("Error adding artist to event", err);

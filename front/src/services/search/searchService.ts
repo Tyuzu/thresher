@@ -1,4 +1,3 @@
-import { SEARCH_URL } from "../../state/state.js";
 import Notify from "../../components/ui/Notify.js";
 import { createTabs } from "../../utils/persistTabs.js";
 import { createElement } from "../../components/createElement.js";
@@ -6,20 +5,14 @@ import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePath
 import { createIconButton } from "../../utils/svgIconButton.js";
 import { searchSVG } from "../../components/svgs/featherSVGs.js";
 import { debounce } from "../../utils/deutils.js";
+import {
+  fetchAutocompleteSuggestions,
+  fetchSearchResults,
+  type SearchItem,
+  type SearchResult
+} from "./api.js";
 
 // --- Types & Interfaces ---
-
-export interface SearchItem {
-  id?: string;
-  entityid?: string;
-  title?: string;
-  description?: string;
-  image?: string;
-  createdAt?: string;
-  [key: string]: unknown;
-}
-
-export type SearchResult = SearchItem[] | Record<string, SearchItem[]>;
 
 export interface TabData {
   id: string;
@@ -51,28 +44,11 @@ function renderEmpty(container: HTMLElement): void {
   container.appendChild(createElement("p", { class: "empty-state" }, ["No results found."]));
 }
 
-// --- API Layer ---
-
-async function apiFetch<T>(endpoint: string): Promise<T | null> {
-  try {
-    const res = await fetch(endpoint);
-    if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
-    
-    const text = await res.text();
-    return text ? (JSON.parse(text) as T) : null;
-  } catch (err) {
-    const error = err as Error;
-    Notify(`API error: ${error.message}`, { type: "error", duration: 3000 });
-    return null;
-  }
-}
-
-async function fetchSearchResults(tabId: string, query: string, container: HTMLElement): Promise<void> {
+async function fetchResults(tabId: string, query: string, container: HTMLElement): Promise<void> {
   container.textContent = "Loading...";
 
   try {
-    const url = `${SEARCH_URL}/search/${tabId}?query=${encodeURIComponent(query)}`;
-    const results = await apiFetch<SearchResult>(url);
+    const results = await fetchSearchResults(tabId, query);
     displaySearchResults(tabId, results, container);
   } catch (err) {
     Notify("Error fetching search results.", { type: "error", duration: 3000 });
@@ -135,7 +111,7 @@ export async function displaySearchForm(container: HTMLElement): Promise<void> {
       ...tab,
       render: async (tabContainer: HTMLElement) => {
         if (!searchQuery) return;
-        await fetchSearchResults(tab.id, searchQuery, tabContainer);
+        await fetchResults(tab.id, searchQuery, tabContainer);
       }
     })),
     "search-tabs",
@@ -153,7 +129,7 @@ export async function displaySearchForm(container: HTMLElement): Promise<void> {
   const refreshCurrentTab = () => {
     const active = document.querySelector<HTMLElement>(".tab-content.active");
     if (active) {
-      fetchSearchResults(currentTab, searchQuery, active);
+      fetchResults(currentTab, searchQuery, active);
     }
   };
 
@@ -212,15 +188,7 @@ async function handleAutocomplete(event: Event): Promise<void> {
     autocompleteController?.abort();
     autocompleteController = new AbortController();
 
-    const res = await fetch(`${SEARCH_URL}/ac?prefix=${encodeURIComponent(query)}`, {
-      signal: autocompleteController.signal
-    });
-
-    let suggestions: string[] = await res.json();
-    if (!Array.isArray(suggestions)) {
-      suggestions = [];
-    }
-
+    const suggestions = await fetchAutocompleteSuggestions(query);
     autocompleteCache.set(query, suggestions);
     renderSuggestions(suggestions, list);
   } catch (error) {
@@ -252,7 +220,7 @@ function renderSuggestions(suggestions: string[], list: HTMLElement): void {
       
       const activeTab = document.querySelector<HTMLElement>(".tab-content.active");
       if (activeTab) {
-        fetchSearchResults(currentTab, searchQuery, activeTab);
+        fetchResults(currentTab, searchQuery, activeTab);
       }
     });
 

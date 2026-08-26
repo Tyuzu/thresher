@@ -1,7 +1,7 @@
-import { apiFetch } from "../../api/api.js";
 import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
 import Notify from "../../components/ui/Notify.js";
+import { removeCartItem, updateCartItem, clearCart, updateCartCategory } from "./api.js";
 
 // --- INTERFACES & TYPES ---
 export interface CartItem {
@@ -62,27 +62,19 @@ function buildPayload(base: Record<string, any>, entityId?: string | number, ent
 
 export const CartAPI = {
   remove(itemId: string | number, category: string, entityId?: string | number, entityType?: string): Promise<any> {
-    return apiFetch(
-      "/cart/item",
-      "DELETE",
-      buildPayload({ itemId, category }, entityId, entityType)
-    );
+    return removeCartItem(buildPayload({ itemId, category }, entityId, entityType));
   },
 
   updateQty(itemId: string | number, category: string, quantity: number, entityId?: string | number, entityType?: string): Promise<any> {
-    return apiFetch(
-      "/cart/item",
-      "PATCH",
-      buildPayload({ itemId, category, quantity }, entityId, entityType)
-    );
+    return updateCartItem(buildPayload({ itemId, category, quantity }, entityId, entityType));
   },
 
   clear(): Promise<any> {
-    return apiFetch("/cart", "DELETE");
+    return clearCart();
   },
 
   updateCategory(category: string, items: CartItem[]): Promise<any> {
-    return apiFetch("/cart/update", "POST", { category, items });
+    return updateCartCategory(category, items);
   }
 };
 

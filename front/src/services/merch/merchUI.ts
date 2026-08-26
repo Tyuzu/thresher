@@ -15,6 +15,7 @@ import { createFormGroup } from "../../components/form/createFormGroupEnhanced.j
 import { addToCart, isValidCartQuantity } from "../cart/addToCart.js";
 import { getState } from "../../state/state.js";
 import { showPaymentModal } from "../pay/pay.js";
+import { confirmMerchPurchase } from "./api.js";
 import { addMerchandise } from "./merchAPI.js";
 
 // External declarations for unprovided helpers
@@ -44,11 +45,6 @@ interface ModalInstance {
   close: () => void;
 }
 
-interface ApiResponse<T = unknown> {
-  success?: boolean;
-  message?: string;
-  data?: T;
-}
 
 const MAX_CART_QUANTITY = 99;
 const MAX_PURCHASE_NOTE_LENGTH = 1000;
@@ -378,18 +374,12 @@ async function displayMerchandise(
                           return;
                         }
 
-                        const purchaseUrl = `/merch/${encodePathSegment(
-                          entityType
-                        )}/${encodePathSegment(
-                          eventId
-                        )}/${encodePathSegment(
-                          merch.merchid
-                        )}/confirm-purchase`;
-
-                        const resp = await apiFetch<ApiResponse>(purchaseUrl, "POST", {
-                          quantity,
-                          note
-                        });
+                        const resp = await confirmMerchPurchase(
+                          entityType,
+                          eventId,
+                          merch.merchid,
+                          { quantity, note }
+                        );
 
                         if (resp?.success) {
                           Notify("Merchandise purchased successfully!", {

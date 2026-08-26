@@ -2,7 +2,7 @@
 
 import { createElement } from "../../../components/createElement";
 import { Button } from "../../../components/base/Button";
-import { apiFetch } from "../../../api/api";
+import { getWorker, getSlots } from "../api.js";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths";
 import { navigate } from "../../../routes/navigate";
 import Imagex from "../../../components/base/Imagex";
@@ -38,7 +38,7 @@ export async function displayWorkerProfile(
 
     let worker: Worker | null = null;
     try {
-        worker = await apiFetch(`/baitos/worker/${workerId}`) as Worker;
+        worker = await getWorker(workerId) as Worker;
     } catch (e) {
         container.replaceChildren(
             createElement("p", { class: "error-msg" }, ["⚠️ Failed to load worker profile."])
@@ -138,14 +138,7 @@ export async function displayWorkerProfile(
 
 // ===== HELPERS =====
 
-async function getSlots(workerId: string | number): Promise<Slot[]> {
-    try {
-        const res = await apiFetch(`/bookings/slots?entityId=${workerId}`) as SlotsApiResponse;
-        return res?.slots || [];
-    } catch {
-        return [];
-    }
-}
+// slots are provided by baitos API helper via `getSlots`
 
 function createNextAvailability(slots: Slot[]): HTMLElement {
     if (!slots?.length) {

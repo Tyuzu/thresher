@@ -1,8 +1,8 @@
-import { chatFetch } from "../../api/api.js";
 import { getState } from "../../state/state.js";
 import { navigate } from "../../routes/navigate.js";
 import { displayNewChat } from "./displayNewchat.js";
 import { renderSharedChatList } from "../chat/sharedChatList.js";
+import { fetchNewChats, initNewChat } from "./api.js";
 
 export interface ChatMessage {
   text?: string;
@@ -24,7 +24,7 @@ export async function displayChats(
     isLoggedIn,
     loginText: "Please log in to view chats.",
     emptyText: "No chats found.",
-    fetchChats: async () => chatFetch("/api/v1/newchats/all", "GET"),
+    fetchChats: async () => fetchNewChats(),
     renderChat: (
       chatView: HTMLElement,
       chat: ChatItem,
@@ -60,11 +60,7 @@ export async function userNewChatInit(
       userB: targetUserId
     };
 
-    const data: { chatid?: string | number } = await chatFetch(
-      "/api/v1/newchats/init",
-      "POST",
-      payload
-    );
+    const data = await initNewChat(payload);
 
     if (!data?.chatid) {
       throw new Error("Chat ID missing in response");

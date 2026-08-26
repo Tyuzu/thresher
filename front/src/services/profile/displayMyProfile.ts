@@ -1,6 +1,6 @@
 import { getState } from "../../state/state.js";
-import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
+import { deleteProfileRequest } from "./api.js";
 import { logout } from "../auth/authService.js";
 import { fetchProfile } from "./fetchProfile.js";
 import profilGen from "./profilegen.js";
@@ -93,7 +93,7 @@ async function deleteProfile(): Promise<void> {
   if (!confirmDelete) return;
 
   try {
-    await apiFetch("/profile/delete", "DELETE");
+    await deleteProfileRequest();
 
     Notify("Profile deleted successfully.", {
       type: "success",

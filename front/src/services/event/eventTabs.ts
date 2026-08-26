@@ -1,9 +1,10 @@
 import { Button } from "../../components/base/Button.js";
 import { Imagex } from "../../components/base/Imagex.js";
-import { API_URL, apiFetch } from "../../api/api.js";
+import { API_URL } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { displayReviews } from "../reviews/displayReviews.js";
 import { displayEventFAQs } from "./eventFAQHelper.js";
+import { createLostAndFoundItem, fetchFaqsForEvent, fetchLostAndFoundForEvent } from "./api.js";
 // import { displaySeatingMap } from "./seatingMap.js";
 import { EntityType, PictureType, resolveImagePath } from "../../utils/imagePaths.js";
 
@@ -60,7 +61,7 @@ async function displayEventFAQ(
 ): Promise<void> {
     let faqs: FAQItem[] = [];
     try {
-        const response = await apiFetch(`/faqs/event/${eventId}`);
+        const response = await fetchFaqsForEvent(eventId);
         faqs = response?.data ?? [];
     } catch (err) {
         console.error("Failed to load FAQs:", err);
@@ -109,7 +110,7 @@ async function displayLostAndFound(
 
                     const newItem = { type, name, description };
                     try {
-                        await apiFetch(`/events/${eventId}/lostfound`, "POST", newItem);
+                        await createLostAndFoundItem(eventId, newItem);
                         lnfContainer.innerHTML = "";
                         await displayLostAndFound(lnfContainer, isCreator, eventId);
                     } catch (_err) {
@@ -150,7 +151,7 @@ async function displayLostAndFound(
     // Fetch items (after rendering buttons + form placeholder)
     let items: LostAndFoundItem[] = [];
     try {
-        items = await apiFetch(`/events/${eventId}/lostfound`);
+        items = await fetchLostAndFoundForEvent(eventId);
     } catch (_err) {
         lnfContainer.appendChild(createElement("p", {}, ["Failed to load items."]));
         return;

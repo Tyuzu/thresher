@@ -1,5 +1,5 @@
-import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
+import { getPlaceById, updatePlaceRequest, deletePlaceRequest } from "./api.js";
 import { navigate } from "../../routes/navigate.js";
 import Notify from "../../components/ui/Notify.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
@@ -42,7 +42,7 @@ async function editPlaceForm(
   }
 
   try {
-    const place = await apiFetch<Place>(`/places/place/${placeId}`);
+    const place = await getPlaceById(placeId);
     content.innerHTML = "";
 
     const detectedMainCategory =
@@ -274,7 +274,7 @@ async function updatePlace(
   formData.append("tags", JSON.stringify(tags));
 
   try {
-    const result = await apiFetch<UpdatePlaceResponse>(`/places/place/${placeId}`, "PUT", formData);
+    const result = await updatePlaceRequest(placeId, formData);
     Notify(`Place updated successfully: ${result.name}`, {
       type: "success",
       duration: 3000,
@@ -304,7 +304,7 @@ async function deletePlace(isLoggedIn: boolean, placeId: string): Promise<void> 
   }
   if (confirm("Are you sure you want to delete this place?")) {
     try {
-      await apiFetch(`/places/place/${placeId}`, "DELETE");
+      await deletePlaceRequest(placeId);
       Notify("Place deleted successfully.", {
         type: "success",
         duration: 3000,

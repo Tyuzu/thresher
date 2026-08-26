@@ -1,6 +1,12 @@
 import { createElement } from "../../../components/createElement.js";
-import { apiFetch } from "../../../api/api.js";
 import { RefundRequest, RefundStatus, Order, StateMutatedCallback } from "./types.js";
+import {
+  approveRefundRequest as approveRefundRequestApi,
+  rejectRefundRequest as rejectRefundRequestApi,
+  getAdminRefunds,
+  submitRefundRequest as submitRefundRequestApi,
+  fetchMyRefunds as fetchMyRefundsApi
+} from "../api.js";
 
 /**
  * Render refund requests section for admin dashboard
@@ -198,9 +204,7 @@ async function handleApproveRefund(
   if (notes === null) return;
 
   try {
-    await apiFetch(`/refunds/${refundId}/approve`, "POST", {
-      notes: notes.trim(),
-    });
+    await approveRefundRequestApi(refundId, notes);
     alert("Refund approved successfully");
 
     if (typeof onStateMutated === "function") {
@@ -228,9 +232,7 @@ async function handleRejectRefund(
   }
 
   try {
-    await apiFetch(`/refunds/${refundId}/reject`, "POST", {
-      notes: notes.trim(),
-    });
+    await rejectRefundRequestApi(refundId, notes);
     alert("Refund rejected successfully");
 
     if (typeof onStateMutated === "function") {
@@ -283,7 +285,7 @@ export async function fetchAdminRefunds(
     if (status) params.append("status", status);
     if (orderType) params.append("order_type", orderType);
 
-    return await apiFetch(`/refunds/all?${params.toString()}`, "GET");
+    return await getAdminRefunds(status, orderType, skip, limit);
   } catch (err) {
     console.error("Failed to fetch refunds:", err);
     throw err;
@@ -393,10 +395,7 @@ export function renderRefundRequestForm(
 
 export async function submitRefundRequest(orderId: string, reason: string): Promise<any> {
   try {
-    return await apiFetch("/refunds/request", "POST", {
-      order_id: orderId,
-      reason: reason,
-    });
+    return await submitRefundRequestApi(orderId, reason);
   } catch (err) {
     console.error("Failed to submit refund request:", err);
     throw err;
@@ -405,7 +404,7 @@ export async function submitRefundRequest(orderId: string, reason: string): Prom
 
 export async function fetchMyRefunds(skip: number = 0, limit: number = 10): Promise<RefundRequest[]> {
   try {
-    return await apiFetch(`/refunds/my-requests?skip=${Number(skip)}&limit=${Number(limit)}`, "GET");
+    return await fetchMyRefundsApi(skip, limit);
   } catch (err) {
     console.error("Failed to fetch refund requests:", err);
     throw err;

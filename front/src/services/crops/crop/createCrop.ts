@@ -1,7 +1,7 @@
 import { createCommonCropForm } from "./createOrEditCrop";
-import { apiFetch } from "../../../api/api";
 import Notify from "../../../components/ui/Notify";
 import { navigate } from "../../../routes/navigate";
+import { createCropForFarm } from "../api.js";
 
 export type CloseModalCallback = () => void;
 
@@ -18,7 +18,7 @@ export async function createCrop(
             submitBtn.disabled = true;
 
             try {
-                await apiFetch(`/farms/farm/${farmId}/crops`, "POST", formData);
+                await createCropForFarm(farmId, formData);
 
                 Notify("✅ Crop created successfully.", {
                     type: "success",

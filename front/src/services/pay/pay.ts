@@ -1,9 +1,9 @@
 import "../../../css/subpages/payoptions.css";
 import Modal from "../../components/ui/Modal.js";
-import { stripeFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { STRIPE_PUB_KEY } from "./pubkey.js";
 import { Button } from "../../components/base/Button.js";
+import { createPaymentIntent, recordPaymentSuccess } from "./api.js";
 
 /* ───────────────────────────────────────── */
 /* Types & Interfaces */
@@ -142,7 +142,7 @@ async function payViaStripe({ paymentType = "purchase", entityType, entityId }: 
 
   try {
     stripe = await loadStripeJs(STRIPE_PUB_KEY);
-    const res = await stripeFetch("/create-payment-intent", "POST", { paymentType, entityType, entityId });
+    const res = await createPaymentIntent({ paymentType, entityType, entityId });
     if (!res?.clientSecret) throw new Error("Missing client secret from gateway");
     clientSecret = res.clientSecret;
   } catch (err: any) {
@@ -196,8 +196,11 @@ async function payViaStripe({ paymentType = "purchase", entityType, entityId }: 
 
                 if (error) throw error;
 
-                await stripeFetch("/payment-success", "POST", {
-                  paymentType, entityType, entityId, paymentIntentId: paymentIntent.id
+                await recordPaymentSuccess({
+                  paymentType,
+                  entityType,
+                  entityId,
+                  paymentIntentId: paymentIntent.id
                 });
 
                 msgEl.textContent = "Payment Verified Successfully!";

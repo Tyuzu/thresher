@@ -1,6 +1,6 @@
 // toggleLike.ts
 
-import { apiFetch } from "../../api/api.js";
+import { toggleLike as apiToggleLike } from "./api.js";
 
 export interface ToggleLikeResponse {
     liked: boolean;
@@ -17,10 +17,8 @@ export async function toggleLike(
     entityId: string | number
 ): Promise<ToggleLikeResponse> {
     try {
-        const path = `/likes/${entityType}/like/${entityId}`;
-        const response = (await apiFetch(path, "PUT")) as ToggleLikeResponse | null;
+        const response = (await apiToggleLike(entityType, entityId)) as ToggleLikeResponse | null;
 
-        // Expecting: { liked: boolean, count: number }
         if (response && typeof response.liked === "boolean" && typeof response.count === "number") {
             return response;
         }

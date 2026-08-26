@@ -1,8 +1,8 @@
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
-import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
+import { saveRecipeRequest } from "./api.js";
 import { Recipe, IngredientAlternative } from "./types/recipe.js";
 
 type FormMode = "create" | "edit";
@@ -253,7 +253,7 @@ function renderRecipeForm(
     const method = mode === "edit" ? "PUT" : "POST";
 
     try {
-      const result = await apiFetch(endpoint, method, formData);
+      const result = await saveRecipeRequest(formData, mode, recipe?.recipeid);
       if (mode === "create") {
         form.reset();
       }

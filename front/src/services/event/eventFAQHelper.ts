@@ -1,9 +1,9 @@
 import { Button } from "../../components/base/Button.js";
 import Modal from "../../components/ui/Modal.js";
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
 import { Accordion } from "../../components/ui/Accordion.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
+import { createFaqForEvent } from "./api.js";
 
 // --- Type Definitions ---
 
@@ -114,7 +114,7 @@ function showFaqForm(
         }
 
         try {
-            const response = await apiFetch(`/events/event/${eventId}/faqs`, "POST", { title, content });
+            const response = await createFaqForEvent(eventId, title, content);
 
             if (response?.success) {
                 renderFaqItem(title, content, faqContainer);

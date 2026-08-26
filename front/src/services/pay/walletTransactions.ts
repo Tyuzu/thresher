@@ -1,10 +1,10 @@
-import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { Button } from "../../components/base/Button.js";
 import { formatCurrency, Paise } from "../../types/api.types.js";
 import { v4 as uuidv4 } from "uuid";
 import Datex from "../../components/base/Datex.js";
 import Notify from "../../components/ui/Notify.js";
+import { getWalletTransactions, refundWalletTransaction } from "./api.js";
 
 /* ───────────────────────────────────────── */
 /* Types & Interfaces */
@@ -72,9 +72,7 @@ export function WalletTransactions({ onBalanceChange }: WalletTransactionsProps)
     container.querySelectorAll(".load-more, .txn-error").forEach((el) => el.remove());
 
     try {
-      const res = await apiFetch<TransactionResponse | TransactionItem[]>(
-        `/wallet/transactions?skip=${skip}&limit=${limit}`
-      );
+      const res = await getWalletTransactions(skip, limit);
 
       const transactions = Array.isArray(res) ? res : res?.transactions;
 
@@ -121,12 +119,7 @@ export function WalletTransactions({ onBalanceChange }: WalletTransactionsProps)
 
                 refundBtn.disabled = true;
                 try {
-                  const refundRes = await apiFetch<RefundResponse>(
-                    "/wallet/refund",
-                    "POST", 
-                    { transaction_id: txn.id },
-                    { headers: { "Idempotency-Key": refundIdempotencyKeys[txn.id] } }
-                  );
+                  const refundRes = await refundWalletTransaction(txn.id, refundIdempotencyKeys[txn.id]);
 
                   if (refundRes?.success) {
                     Notify("Reversion payload complete.", { type: "success" });

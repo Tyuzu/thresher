@@ -1,23 +1,7 @@
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
 import Imagex from "../../components/base/Imagex.js";
-import type { EntityType, EntityItem } from "./types.js";
-
-// Fetch user profile data for a specific entity type
-export async function fetchUserProfileData(
-  username: string,
-  entityType: EntityType
-): Promise<EntityItem[]> {
-  try {
-    const response = await apiFetch<EntityItem[]>(
-      `/user/${username}/udata?entity_type=${entityType}`
-    );
-    return response;
-  } catch (error) {
-    console.error(`Error fetching ${entityType} data for user:`, error);
-    throw error;
-  }
-}
+import { fetchUserProfileData } from "./api.js";
+import type { EntityItem } from "./types.js";
 
 // Renders posts in a 3-column grid
 export async function othusrdata(kc: HTMLElement, userid: string): Promise<void> {

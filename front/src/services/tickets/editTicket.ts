@@ -1,28 +1,12 @@
-import { apiFetch } from "../../api/api.js";
 import { createElement, ChildInput } from "../../components/createElement.js";
 import { Button } from "../../components/base/Button.js";
-
-export interface TicketData {
-  ticketid: string | number;
-  name: string;
-  price: number;
-  quantity: number;
-  currency: string;
-  color?: string;
-  seatstart?: number;
-  seatend?: number;
-  [key: string]: unknown;
-}
-
-export interface TicketPayload {
-  name: string;
-  price: number;
-  quantity: number;
-  currency: string;
-  color: string;
-  seatstart: number;
-  seatend: number;
-}
+import {
+  fetchTicketData,
+  updateTicketRequest,
+  deleteTicketRequest,
+  type TicketData,
+  type TicketPayload
+} from "./api.js";
 
 /* ────────── Edit Ticket ────────── */
 async function editTicket(
@@ -31,10 +15,7 @@ async function editTicket(
   onRefresh?: () => void
 ): Promise<void> {
   try {
-    const ticketData = await apiFetch<TicketData>(
-      `/ticket/event/${eventId}/${ticketId}`,
-      "GET"
-    );
+    const ticketData = await fetchTicketData(ticketId, eventId);
 
     if (!ticketData || !ticketData.ticketid) {
       alert("Failed to load ticket data.");
@@ -168,11 +149,7 @@ async function updateTicket(
   }
 
   try {
-    await apiFetch(
-      `/ticket/event/${eventId}/${ticketId}`,
-      "PUT",
-      payload
-    );
+    await updateTicketRequest(ticketId, eventId, payload);
 
     clearTicketForm();
     triggerRefresh(onRefresh);
@@ -207,10 +184,7 @@ async function deleteTicket(
   }
 
   try {
-    await apiFetch(
-      `/ticket/event/${eventId}/${ticketId}`,
-      "DELETE"
-    );
+    await deleteTicketRequest(ticketId, eventId);
 
     triggerRefresh(onRefresh);
   } catch (err) {

@@ -1,21 +1,15 @@
 import { getState } from "../../state/state.js";
-import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import Modal from "../../components/ui/Modal.js";
 import Notify from "../../components/ui/Notify.js";
 import Button from "../../components/base/Button.js";
+import { submitAppeal, submitReport, type ApiResponse } from "./api.js";
 
 export type TargetType = "post" | "comment" | "user" | "item" | string;
 
 export interface ReportReasonOption {
   value: string;
   label: string;
-}
-
-export interface ApiResponse {
-  reportId?: string;
-  appealId?: string;
-  error?: string;
 }
 
 export interface ApiError extends Error {
@@ -154,7 +148,7 @@ export function reportEntity(
     };
 
     try {
-      const res = (await apiFetch("/report", "POST", payload)) as ApiResponse;
+      const res = await submitReport(payload);
 
       if (res?.reportId) {
         setReportedLocally(userId, targetType, targetId);
@@ -252,11 +246,11 @@ export function appealContent(targetId: string, targetType: TargetType): void {
     messageP.textContent = "";
 
     try {
-      const res = (await apiFetch("/appeals", "POST", {
+      const res = await submitAppeal({
         targetId,
         targetType,
         reason: textarea.value.trim()
-      })) as ApiResponse;
+      });
 
       if (res?.appealId) {
         close();

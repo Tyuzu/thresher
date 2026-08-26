@@ -1,5 +1,5 @@
-import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
+import { fetchPostById, savePostRequest } from "./api.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import Button from "../../components/base/Button.js";
 import { capitalize } from "../profile/profileHelpers.js";
@@ -72,7 +72,7 @@ export interface Post {
   hashtags?: string[];
   category?: string;
   subcategory?: string;
-  blocks?: Block[];
+  blocks?: Block[] | unknown[];
   [key: string]: unknown;
 }
 
@@ -482,7 +482,7 @@ async function renderPostEditor({
 
   if (mode === "edit" && postId) {
     try {
-      const data = (await apiFetch(`/posts/post/${postId}`)) as { post?: Post };
+      const data = await fetchPostById(postId);
       existingPost = data?.post || null;
     } catch {
       contentContainer.replaceChildren(
@@ -581,7 +581,11 @@ async function renderPostEditor({
   };
 
   const blockManager = createBlockManager(blocksContainer, blocksTextarea, uploadCtx);
-  blockManager.setBlocks(Array.isArray(existingPost?.blocks) ? existingPost.blocks : []);
+  blockManager.setBlocks(
+    Array.isArray(existingPost?.blocks)
+      ? (existingPost.blocks as Block[])
+      : []
+  );
 
   const addBlockButtons = createElement("div", { class: "block-buttons" });
 
@@ -700,11 +704,7 @@ async function renderPostEditor({
         try {
           // Send FormData correctly through apiFetch body arguments
           // Send FormData correctly through apiFetch arguments
-          const res = (await apiFetch(
-            endpoint,
-            mode === "create" ? "POST" : "PATCH",
-            formData
-          )) as { postid?: string | number };
+          const res = await savePostRequest(formData, mode === "edit", postId);
 
           messageBox.replaceChildren(createElement("span", {}, ["Saved successfully"]));
           if (res?.postid) {

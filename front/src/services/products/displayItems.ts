@@ -1,6 +1,6 @@
-import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
+import { fetchFarmItems } from "./api.js";
 import { renderItemForm } from "./createOrEdit.js";
 import { renderItemCard } from "./renderItemCard.js";
 import { renderCategoryChips } from "./renderCategoryChips.js";
@@ -90,8 +90,7 @@ export async function displayItems(
   let total = 0;
 
   try {
-    const qs = new URLSearchParams({ type, limit: String(limit), offset: String(offset), search, category });
-    const result = await apiFetch(`/farm/items?${qs.toString()}`);
+    const result = await fetchFarmItems(type, { limit, offset, search, category });
     items = result.items || [];
     total = result.total ?? items.length;
   } catch (err) {

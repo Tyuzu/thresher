@@ -4,7 +4,7 @@ import { getState } from "../../../state/state";
 import { displayWorkerProfile } from "./displayWorkerProfile";
 import { displayManageWorkerProfile } from "./displayManageWorkerProfile";
 import { displayCreateOrEditBaitoProfile } from "../create/createBaitoProfile";
-import { apiFetch } from "../../../api/api";
+import { getWorker } from "../api.js";
 import { createElement } from "../../../components/createElement";
 import { Worker } from "./WorkerModal";
 
@@ -22,7 +22,7 @@ export async function displayWorkerPage(
     // Fetch worker to check ownership
     let worker: Worker | null = null;
     try {
-        worker = (await apiFetch(`/baitos/worker/${workerId}`)) as Worker;
+        worker = (await getWorker(workerId)) as Worker;
     } catch (_e) {
         contentContainer.replaceChildren(
             createElement("p", { class: "error-msg" }, ["⚠️ Failed to load worker profile."])

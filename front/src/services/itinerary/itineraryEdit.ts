@@ -1,6 +1,6 @@
 // itineraryService.ts
-import { apiFetch } from "../../api/api.js";
 import { renderItineraryForm } from "./createOrEditItinerary.js";
+import { fetchItineraryById, type ItineraryApiItem } from "./api.js";
 
 interface Itinerary {
     id?: string | number;
@@ -12,7 +12,7 @@ export async function editItinerary(
     isLoggedIn: boolean,
     id: string | number
 ): Promise<void> {
-    const response = (await apiFetch(`/itineraries/all/${id}`)) as { data?: Itinerary; [key: string]: unknown };
-    const itinerary = response?.data || response;
+    const response = await fetchItineraryById(id);
+    const itinerary = ((response as { data?: ItineraryApiItem })?.data ?? (response as ItineraryApiItem)) as Itinerary;
     renderItineraryForm(container, isLoggedIn, "edit", itinerary);
 }

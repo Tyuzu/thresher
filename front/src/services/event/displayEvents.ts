@@ -3,8 +3,8 @@ import { Button } from "../../components/base/Button.js";
 import Imagex from "../../components/base/Imagex.js";
 import { navigate } from "../../routes/navigate.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
-import { apiFetch } from "../../api/api.js";
 import { adspace } from "../../services/ads/newads.js";
+import { fetchEventsPage } from "./api.js";
 import Datex from "../../components/base/Datex.js";
 import { createMainLayout } from "../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../components/layout/asideLayout.js";
@@ -115,7 +115,7 @@ export async function displayEvents(isLoggedIn: boolean, container: HTMLElement)
     // ---------- FETCH EVENTS ----------
     let events: EventItem[] = [];
     try {
-        const resp = await apiFetch("/events/events?page=1&limit=1000");
+        const resp = await fetchEventsPage(1, 1000);
         events = Array.isArray(resp) ? resp : resp?.data || resp?.events || [];
     } catch (err) {
         console.error("Failed to load events", err);

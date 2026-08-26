@@ -1,10 +1,10 @@
 /* eslint-disable no-console */
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
 import { showPaymentModal } from "../pay/pay.js";
 import Notify from "../../components/ui/Notify.js";
 import Button from "../../components/base/Button.js";
 import { printInvoice } from "./invoice.js";
+import { createCartOrder } from "./api.js";
 
 // --- INTERFACES & TYPES ---
 interface OrderItem {
@@ -143,7 +143,7 @@ async function createOrder({ items, address, couponCode }: { items: OrderItem[];
     coupon: couponCode || null
   };
 
-  const res: any = await apiFetch("/order", "POST", payload);
+  const res: any = await createCartOrder(payload);
 
   if (!res?.success) {
     throw new Error(res?.message || "Order creation failed");

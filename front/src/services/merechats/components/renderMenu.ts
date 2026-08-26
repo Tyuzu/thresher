@@ -1,6 +1,6 @@
 import Button from "../../../components/base/Button.js";
 import { createElement } from "../../../components/createElement.js";
-import { mereFetch } from "../../../api/api.js";
+import { deleteMessage, updateMessage } from "../api.js";
 
 // Message interface representing the expected input structure
 export interface MenuMessagePayload {
@@ -95,11 +95,7 @@ async function handleEdit(id: string): Promise<void> {
     return;
   }
 
-  await mereFetch(
-    `/merechats/messages/${id}`,
-    "PUT",
-    { content: text.trim() }
-  );
+  await updateMessage(id, text.trim());
 }
 
 /**
@@ -114,8 +110,5 @@ async function handleDelete(id: string): Promise<void> {
     return;
   }
 
-  await mereFetch(
-    `/merechats/messages/${id}`,
-    "DELETE"
-  );
+  await deleteMessage(id);
 }

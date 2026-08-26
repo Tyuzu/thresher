@@ -1,5 +1,14 @@
-import { apiFetch } from "../../../api/api";
 import { OrderData } from "./orderHelpers";
+import {
+  acceptFarmOrder,
+  rejectFarmOrder,
+  deliverFarmOrder,
+  markFarmOrderPaid,
+  bulkAcceptFarmOrders,
+  bulkRejectFarmOrders,
+  bulkDeliverFarmOrders,
+  fetchIncomingFarmOrders
+} from "../api.js";
 
 export interface OrderFilters {
   status?: string;
@@ -21,7 +30,7 @@ export interface BulkOperationResponse {
 // Single Order Actions
 export async function acceptOrder(orderId: string | number): Promise<boolean> {
   try {
-    const response = await apiFetch(`/farmorders/order/${orderId}/accept`, "POST");
+    const response = await acceptFarmOrder(orderId);
     return Boolean(response?.success);
   } catch (err) {
     console.error(`Failed to accept order ${orderId}:`, err);
@@ -31,7 +40,7 @@ export async function acceptOrder(orderId: string | number): Promise<boolean> {
 
 export async function rejectOrder(orderId: string | number): Promise<boolean> {
   try {
-    const response = await apiFetch(`/farmorders/order/${orderId}/reject`, "POST");
+    const response = await rejectFarmOrder(orderId);
     return Boolean(response?.success);
   } catch (err) {
     console.error(`Failed to reject order ${orderId}:`, err);
@@ -41,7 +50,7 @@ export async function rejectOrder(orderId: string | number): Promise<boolean> {
 
 export async function markOrderDelivered(orderId: string | number): Promise<boolean> {
   try {
-    const response = await apiFetch(`/farmorders/order/${orderId}/deliver`, "POST");
+    const response = await deliverFarmOrder(orderId);
     return Boolean(response?.success);
   } catch (err) {
     console.error(`Failed to mark order ${orderId} as delivered:`, err);
@@ -51,7 +60,7 @@ export async function markOrderDelivered(orderId: string | number): Promise<bool
 
 export async function markOrderPaid(orderId: string | number): Promise<boolean> {
   try {
-    const response = await apiFetch(`/farmorders/order/${orderId}/markpaid`, "POST");
+    const response = await markFarmOrderPaid(orderId);
     return Boolean(response?.success);
   } catch (err) {
     console.error(`Failed to mark order ${orderId} as paid:`, err);
@@ -62,7 +71,7 @@ export async function markOrderPaid(orderId: string | number): Promise<boolean> 
 // Bulk Order Actions
 export async function bulkAcceptOrders(orderIds: (string | number)[]): Promise<BulkOperationResponse> {
   try {
-    const response = await apiFetch("/farmorders/bulk/accept", "POST", { orderIds });
+    const response = await bulkAcceptFarmOrders(orderIds);
 
     return {
       success: Boolean(response?.success),
@@ -86,7 +95,7 @@ export async function bulkAcceptOrders(orderIds: (string | number)[]): Promise<B
 
 export async function bulkRejectOrders(orderIds: (string | number)[]): Promise<BulkOperationResponse> {
   try {
-    const response = await apiFetch("/farmorders/bulk/reject", "POST", { orderIds });
+    const response = await bulkRejectFarmOrders(orderIds);
 
     return {
       success: Boolean(response?.success),
@@ -110,7 +119,7 @@ export async function bulkRejectOrders(orderIds: (string | number)[]): Promise<B
 
 export async function bulkMarkOrdersDelivered(orderIds: (string | number)[]): Promise<BulkOperationResponse> {
   try {
-    const response = await apiFetch("/farmorders/bulk/deliver", "POST", { orderIds });
+    const response = await bulkDeliverFarmOrders(orderIds);
 
     return {
       success: Boolean(response?.success),
@@ -148,7 +157,7 @@ export async function fetchIncomingOrders(filters: OrderFilters = {}): Promise<O
       ? `/orders/incoming?${params.toString()}`
       : "/orders/incoming";
 
-    const response = await apiFetch(url);
+    const response = await fetchIncomingFarmOrders(url);
 
     if (!response?.success || !Array.isArray(response.orders)) {
       throw new Error("Invalid response");

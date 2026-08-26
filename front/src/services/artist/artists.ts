@@ -5,7 +5,7 @@ import { Button } from "../../components/base/Button.js";
 import Imagex from "../../components/base/Imagex.js";
 import { navigate } from "../../routes/navigate.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
-import { apiFetch } from "../../api/api.js";
+import { listArtists } from "./api.js";
 import { adspace } from "../../services/ads/newads.js";
 import { createMainLayout } from "../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../components/layout/asideLayout.js";
@@ -84,7 +84,7 @@ export async function displayArtists(container: HTMLElement, isLoggedIn: boolean
     // ---------- FETCH ARTISTS ----------
     let allArtists: Artist[] = [];
     try {
-        const resp = (await apiFetch("/artists?offset=0&limit=5000", "GET")) as ArtistsApiResponse | Artist[];
+        const resp = (await listArtists(0, 5000)) as ArtistsApiResponse | Artist[];
         if (Array.isArray(resp)) {
             allArtists = resp;
         } else {

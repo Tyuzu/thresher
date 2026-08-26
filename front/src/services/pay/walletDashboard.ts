@@ -3,8 +3,8 @@ import { WalletTransactions } from "./walletTransactions.js";
 import { WalletTransfer } from "./walletTransfer.js";
 import { createElement } from "../../components/createElement.js";
 import { Button } from "../../components/base/Button.js";
-import { apiFetch } from "../../api/api.js";
 import Notify from "../../components/ui/Notify.js";
+import { createWalletAccount, getWalletBalance } from "./api.js";
 
 /* ───────────────────────────────────────── */
 /* Types & Interfaces */
@@ -42,7 +42,7 @@ export function WalletDashboard(): HTMLElement {
 
   async function checkAndRender(): Promise<void> {
     try {
-      const res = await apiFetch<WalletBalanceResponse>("/wallet/balance");
+      const res = await getWalletBalance();
 
       container.replaceChildren(); // Clear loading state
 
@@ -80,7 +80,7 @@ export function WalletDashboard(): HTMLElement {
           createBtn.textContent = "Creating Account...";
 
           try {
-            const res = await apiFetch<WalletCreateResponse>("/wallet/create", "POST");
+            const res = await createWalletAccount();
             if (res?.success) {
               Notify("Wallet account created successfully!", { type: "success" });
               await checkAndRender(); // Re-check and render the full dashboard

@@ -1,8 +1,8 @@
 import "../../../css/subpages/reviews.css";
-import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import Button from "../../components/base/Button.js";
+import { createReviewRequest, updateReviewRequest, deleteReviewRequest } from "./api.js";
 import type { Review, OnDoneCallback } from "./reviewTypes.js";
 
 function handleAddReview(
@@ -56,10 +56,7 @@ function handleAddReview(
     }
 
     try {
-      await apiFetch(`/reviews/${entityType}/${entityId}`, "POST", {
-        rating,
-        comment
-      });
+      await createReviewRequest(entityType, entityId, { rating, comment });
       container.replaceChildren();
       onDone();
     } catch (err: any) {
@@ -123,11 +120,10 @@ function handleEditReview(
       return;
     }
 
-    await apiFetch(
-      `/reviews/${entityType}/${entityId}/${review.reviewid}`,
-      "PUT",
-      { rating, comment }
-    );
+    await updateReviewRequest(entityType, entityId, review.reviewid, {
+      rating,
+      comment
+    });
 
     onDone();
   });
@@ -143,7 +139,7 @@ async function handleDeleteReview(
     return;
   }
 
-  await apiFetch(`/reviews/${entityType}/${entityId}/${reviewId}`, "DELETE");
+  await deleteReviewRequest(entityType, entityId, reviewId);
   onDone();
 }
 

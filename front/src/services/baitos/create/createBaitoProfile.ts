@@ -2,7 +2,7 @@
 
 import { createElement } from "../../../components/createElement";
 import { navigate } from "../../../routes/navigate";
-import { apiFetch } from "../../../api/api";
+import { getWorker, createProfile, updateProfile } from "../api.js";
 import { createFormGroup } from "../../../components/form/createFormGroupEnhanced";
 import Button from "../../../components/base/Button";
 import Notify from "../../../components/ui/Notify";
@@ -102,7 +102,7 @@ export async function displayCreateOrEditBaitoProfile(
     // Prefill when editing
     if (mode === "edit" && workerId) {
         try {
-            const worker = (await apiFetch(`/baitos/worker/${workerId}`)) as WorkerProfileData;
+                const worker = (await getWorker(workerId)) as WorkerProfileData;
             
             const setVal = (id: string, val: any) => {
                 const el = form.querySelector(`#${id}`) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
@@ -223,12 +223,12 @@ export async function displayCreateOrEditBaitoProfile(
         try {
             if (mode === "create") {
                 Notify("Creating profile...", { type: "info", duration: 3000, dismissible: true });
-                await apiFetch("/baitos/profile", "POST", payload);
+                await createProfile(payload);
                 localStorage.removeItem("baitoProfileDraft");
                 Notify("Profile created successfully!", { type: "success", duration: 3000, dismissible: true });
             } else {
                 Notify("Updating profile...", { type: "info", duration: 3000, dismissible: true });
-                await apiFetch(`/baitos/profile/${workerId}`, "PUT", payload);
+                await updateProfile(workerId, payload);
                 Notify("Profile updated successfully!", { type: "success", duration: 3000, dismissible: true });
             }
             navigate("/baitos/hire");

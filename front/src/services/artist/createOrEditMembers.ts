@@ -1,7 +1,7 @@
 // createOrEditMembers.ts
 
 import { navigate } from "../../routes/navigate.js";
-import { apiFetch } from "../../api/api.js";
+import { getArtist, deleteMember, addMember, updateMember } from "./api.js";
 import Button from "../../components/base/Button.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import { createElement } from "../../components/createElement.js";
@@ -57,7 +57,7 @@ export async function manageBandMembers(artistID: string | number, container: HT
     container.append(heading, membersContainer, addBtn, saveBtn);
 
     try {
-        const artist = (await apiFetch(`/artists/${artistID}`, "GET")) as ArtistData;
+        const artist = (await getArtist(artistID)) as ArtistData;
         (artist?.members || []).forEach(m =>
             addBandMember(m, membersContainer)
         );
@@ -86,13 +86,13 @@ async function saveBandMembers(artistID: string | number, container: HTMLElement
 
         if (status === "removed") {
             if (!memberID.startsWith("new-")) {
-                await apiFetch(`/artists/${artistID}/members/${memberID}`, "DELETE");
+                await deleteMember(artistID, memberID);
             }
             continue;
         }
 
         if (status === "new") {
-            await apiFetch(`/artists/${artistID}/members`, "POST", {
+            await addMember(artistID, {
                 name,
                 role,
                 dob,
@@ -102,7 +102,7 @@ async function saveBandMembers(artistID: string | number, container: HTMLElement
         }
 
         if (status === "updated") {
-            await apiFetch(`/artists/${artistID}/members/${memberID}`, "PUT", {
+            await updateMember(artistID, memberID, {
                 name,
                 role,
                 dob,
@@ -243,7 +243,7 @@ async function fetchMemberData(
     }
 
     try {
-        const artist = (await apiFetch(`/artists/${artistID}`, "GET")) as ArtistData;
+        const artist = (await getArtist(artistID)) as ArtistData;
 
         if (!artist?.name) {
             Notify("Artist not found.", { type: "error", duration: 2000 });

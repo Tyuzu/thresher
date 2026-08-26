@@ -1,9 +1,16 @@
 import "../../../css/subpages/notices1.css";
-import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
 import Modal, { ModalResult } from "../../components/ui/Modal.js";
 import Datex from "../../components/base/Datex.js";
+import {
+  fetchNotices,
+  createNotice,
+  updateNotice,
+  deleteNotice,
+  type Notice as ApiNotice,
+  type DeleteNoticeResponse as ApiDeleteNoticeResponse
+} from "./api.js";
 
 /* ------------------------------------------------------
    Types & Interfaces
@@ -18,7 +25,7 @@ export interface Notice {
 }
 
 export interface OpenNoticeFormOptions {
-  notice?: Partial<Notice>;
+  notice?: Partial<ApiNotice>;
   entityType: string;
   entityId: string | number;
   container: HTMLElement;
@@ -34,37 +41,6 @@ export interface OpenNoticeModalOptions {
 
 export interface DeleteNoticeResponse {
   success?: boolean;
-}
-
-/** --- API Helpers --- */
-async function fetchNotices(entityType: string, entityId: string | number): Promise<Notice[]> {
-  const res: unknown = await apiFetch(`/notices/${entityType}/${entityId}`, "GET");
-  return Array.isArray(res) ? (res as Notice[]) : [];
-}
-
-async function createNotice(
-  entityType: string,
-  entityId: string | number,
-  data: { title: string; content: string }
-): Promise<Notice | null> {
-  return apiFetch<Notice>(`/notices/${entityType}/${entityId}`, "POST", data);
-}
-
-async function updateNotice(
-  entityType: string,
-  entityId: string | number,
-  noticeId: string | number,
-  data: { title: string; content: string }
-): Promise<Notice | null> {
-  return apiFetch<Notice>(`/notices/${entityType}/${entityId}/${noticeId}`, "PUT", data);
-}
-
-async function deleteNotice(
-  entityType: string,
-  entityId: string | number,
-  noticeId: string | number
-): Promise<DeleteNoticeResponse | null> {
-  return apiFetch<DeleteNoticeResponse>(`/notices/${entityType}/${entityId}/${noticeId}`, "DELETE");
 }
 
 /** --- Modal Form for Add/Edit --- */

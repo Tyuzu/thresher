@@ -1,5 +1,5 @@
-import { apiFetch } from "../../../api/api.js";
 import { createFarmForm } from "./createOrEditFarm.js";
+import { updateFarm } from "../api.js";
 
 // Define interface for the Farm object adjust properties as needed
 export interface Farm {
@@ -34,12 +34,7 @@ export function editFarm(
         isEdit: true,
         farm,
         onSubmit: async (formData: Record<string, any> | FormData): Promise<void> => {
-            const res: ApiResponse = await apiFetch(
-                `/farms/farm/${farm.farmid}`,
-                "PUT",
-                formData,
-                {}
-            );
+            const res: ApiResponse = await updateFarm(String(farm.farmid ?? ""), formData);
 
             if (res.success) {
                 if (typeof onSuccess === "function") {

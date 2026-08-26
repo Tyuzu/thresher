@@ -1,6 +1,6 @@
 // src/utils/activityLogger.ts
 import { generateUUID } from "../../utils/genUUID.js";
-import { API_URL } from "../../api/api.js";
+import { sendActivityBatch } from "./api.js";
 
 // --- Types & Interfaces ---
 export type EventType =
@@ -40,7 +40,7 @@ export interface BatchPayload {
 }
 
 // --- Constants ---
-const ENDPOINT = "/scitylana/event";
+// endpoint moved to activity API helper
 const STORAGE_KEY = "__analytics_queue_v2__";
 const INTERVAL_MS = 10000;
 const MAX_BATCH = 20;
@@ -149,23 +149,12 @@ async function flush(isUnloading = false): Promise<void> {
 
   const jsonPayload = JSON.stringify(payload);
 
-  // Modern unload mechanism: sendBeacon -> keepalive fetch
+  // Modern unload mechanism and regular POST are handled by helper
   if (isUnloading) {
-    const endpointUrl = `${API_URL}${ENDPOINT}`;
-    let sent = false;
-
-    if (navigator.sendBeacon) {
-      const blob = new Blob([jsonPayload], { type: "application/json" });
-      sent = navigator.sendBeacon(endpointUrl, blob);
-    }
-
-    if (!sent) {
-      void fetch(endpointUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: jsonPayload,
-        keepalive: true,
-      }).catch(() => {});
+    try {
+      await sendActivityBatch(payload, true);
+    } catch {
+      // best-effort
     }
 
     removeFlushedItems(eventsToSend);
@@ -173,23 +162,15 @@ async function flush(isUnloading = false): Promise<void> {
   }
 
   try {
-    const res = await fetch(`${API_URL}${ENDPOINT}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: jsonPayload,
-    });
+    await sendActivityBatch(payload, false);
 
-    if (res.ok) {
-      removeFlushedItems(eventsToSend);
+    removeFlushedItems(eventsToSend);
 
-      retryDelay = 1000;
-      isSyncing = false;
+    retryDelay = 1000;
+    isSyncing = false;
 
-      if (getStorageQueue().length >= MAX_BATCH) {
-        void flush();
-      }
-    } else {
-      throw new Error(`HTTP ${res.status}`);
+    if (getStorageQueue().length >= MAX_BATCH) {
+      void flush();
     }
   } catch {
     isSyncing = false;

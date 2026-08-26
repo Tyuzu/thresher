@@ -1,11 +1,19 @@
 // itineraryDisplay.ts
-import { apiFetch } from "../../api/api.js";
 import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
 import Modal from "../../components/ui/Modal.js";
 import { navigate } from "../../routes/navigate.js";
 import { getState } from "../../state/state.js";
 import { editItinerary } from "./itineraryEdit.js";
+import {
+  fetchItineraries,
+  searchItinerariesApi,
+  fetchItineraryById,
+  deleteItineraryRequest,
+  forkItineraryRequest,
+  publishItineraryRequest,
+  type ItineraryApiItem
+} from "./api.js";
 
 interface Visit {
   start_time?: string;
@@ -84,20 +92,20 @@ function displayItinerary(isLoggedIn: boolean, root: HTMLElement): void {
   async function loadItineraries(): Promise<void> {
     setListMessage("Loading…");
     try {
-      const resp = (await apiFetch("/itineraries")) as Itinerary[] | { data?: Itinerary[];[key: string]: unknown };
-      const items = Array.isArray(resp) ? resp : (resp?.data || []);
-      renderList(items);
+      const resp = await fetchItineraries();
+      const items = Array.isArray(resp) ? (resp as ItineraryApiItem[]) : ((resp as { data?: ItineraryApiItem[] })?.data || []);
+      renderList(items as Itinerary[]);
     } catch (_err) {
       setListMessage("Error loading itineraries.");
     }
   }
 
-  async function searchItineraries(qs: string): Promise<void> {
+  async function searchItinerariesList(qs: string): Promise<void> {
     setListMessage("Searching…");
     try {
-      const resp = (await apiFetch(`/itineraries/search?${qs}`)) as Itinerary[] | { data?: Itinerary[];[key: string]: unknown };
-      const items = Array.isArray(resp) ? resp : (resp?.data || []);
-      renderList(items);
+      const resp = await searchItinerariesApi(qs);
+      const items = Array.isArray(resp) ? (resp as ItineraryApiItem[]) : ((resp as { data?: ItineraryApiItem[] })?.data || []);
+      renderList(items as Itinerary[]);
     } catch (_err) {
       setListMessage("Error searching itineraries.");
     }
@@ -193,8 +201,8 @@ function displayItinerary(isLoggedIn: boolean, root: HTMLElement): void {
     }
 
     try {
-      const resp = (await apiFetch(`/itineraries/all/${id}`)) as { data?: Itinerary;[key: string]: unknown };
-      const it = resp?.data || (resp as Itinerary);
+      const resp = await fetchItineraryById(id);
+      const it = ((resp as { data?: ItineraryApiItem })?.data ?? (resp as ItineraryApiItem)) as Itinerary;
       clear(body);
       body.append(renderDetails(it));
     } catch {
@@ -301,17 +309,17 @@ function displayItinerary(isLoggedIn: boolean, root: HTMLElement): void {
     if (!confirm("Delete this itinerary?")) {
       return;
     }
-    await apiFetch(`/itineraries/${id}`, "DELETE");
+    await deleteItineraryRequest(id);
     loadItineraries();
   }
 
   async function forkItinerary(id: string | number): Promise<void> {
-    await apiFetch(`/itineraries/${id}/fork`, "POST");
+    await forkItineraryRequest(id);
     loadItineraries();
   }
 
   async function publishItinerary(id: string | number): Promise<void> {
-    await apiFetch(`/itineraries/${id}/publish`, "PUT");
+    await publishItineraryRequest(id);
     loadItineraries();
   }
 
@@ -328,7 +336,7 @@ function displayItinerary(isLoggedIn: boolean, root: HTMLElement): void {
     form.addEventListener("submit", e => {
       e.preventDefault();
       const qs = new URLSearchParams(new FormData(form) as unknown as Record<string, string>).toString();
-      searchItineraries(qs);
+      searchItinerariesList(qs);
     });
 
     return form;

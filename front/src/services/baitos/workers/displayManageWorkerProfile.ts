@@ -2,7 +2,7 @@
 
 import { createElement } from "../../../components/createElement";
 import { Button } from "../../../components/base/Button";
-import { apiFetch } from "../../../api/api";
+import { getWorker, deleteWorker, getBookingsForWorker } from "../api.js";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths";
 import { navigate } from "../../../routes/navigate";
 import Imagex from "../../../components/base/Imagex";
@@ -40,7 +40,7 @@ export async function displayManageWorkerProfile(
 
     let worker: Worker | null = null;
     try {
-        worker = (await apiFetch(`/baitos/worker/${workerId}`)) as Worker;
+        worker = (await getWorker(workerId)) as Worker;
     } catch (e) {
         container.replaceChildren(createElement("p", { class: "error-msg" }, ["⚠️ Failed to load profile."]));
         return;
@@ -163,7 +163,7 @@ export async function displayManageWorkerProfile(
                                 }
                                 try {
                                     Notify("Deleting profile...", { type: "info" });
-                                    await apiFetch(`/baitos/worker/${worker!.baitoWorkerId}`, "DELETE");
+                                    await deleteWorker(worker!.baitoWorkerId);
                                     Notify("Profile deleted.", { type: "success" });
                                     navigate("/baitos/hire");
                                 } catch (err: any) {
@@ -262,7 +262,7 @@ function renderDetail(icon: string, label: string, value: any): HTMLElement | nu
 
 async function loadWorkerBookings(workerId: string | number, container: HTMLElement): Promise<void> {
     try {
-        const res = (await apiFetch(`/bookings/bookings?entityType=worker&entityId=${workerId}`)) as BookingsApiResponse;
+        const res = (await getBookingsForWorker(workerId)) as BookingsApiResponse;
         const bookings = res?.bookings || [];
 
         if (!bookings.length) {

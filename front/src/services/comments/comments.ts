@@ -1,7 +1,7 @@
 import "../../../css/subpages/comments.css";
-import { apiFetch } from "../../api/api.js";
 import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
+import { getComments, createComment } from "./api.js";
 import { fetchUserMeta } from "../../utils/usersMeta.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
 import Imagex from "../../components/base/Imagex.js";
@@ -93,9 +93,7 @@ async function fetchComments(
     console.warn("page: ", page);
     console.warn("sort: ", sort);
     try {
-        const res = await apiFetch(
-            `/comments/${entityType}/${entityId}?sort=${mapSort(sort)}&page=${page}`
-        );
+        const res = await getComments(entityType, entityId, mapSort(sort), page);
         return Array.isArray(res) ? (res as CommentItem[]) : [];
     } catch (err) {
         console.error("Failed to fetch comments", err);
@@ -291,11 +289,7 @@ async function handleSubmit(e: SubmitEvent | Event, key: string): Promise<void> 
     }
 
     try {
-        const newComment = await apiFetch<CommentItem>(
-            `/comments/${state.entityType}/${state.entityId}`,
-            "POST",
-            { content }
-        );
+        const newComment = await createComment(state.entityType, state.entityId, content) as CommentItem;
 
         const usersMeta = await getUsersMeta([newComment.createdBy]);
         const user = usersMeta[newComment.createdBy] || {};

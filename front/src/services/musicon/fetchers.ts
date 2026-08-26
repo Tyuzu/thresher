@@ -1,28 +1,5 @@
-import { HttpMethod, musicFetch } from "../../api/api.js";
 import { Playlist, Song, Album } from "./types.js";
-
-interface ApiResponse<T = any> {
-    success: boolean;
-    data?: T;
-    error?: string;
-}
-
-async function apiRequest<T = any>(endpoint: string, method: HttpMethod = "GET", body: any = null): Promise<ApiResponse<T>> {
-    try {
-        const res = await musicFetch(endpoint, method, body);
-        return res || { success: false };
-    } catch (err: any) {
-        return { success: false, error: err?.message || "Network error" };
-    }
-}
-
-async function safeFetch<T = any>(endpoint: string): Promise<T[]> {
-    const res = await apiRequest<T[]>(endpoint);
-    if (res?.success && Array.isArray(res.data)) {
-        return res.data;
-    }
-    return [];
-}
+import { apiRequest, safeFetch, type ApiResponse } from "./api.js";
 
 export const MusicAPI = {
     _cache: {

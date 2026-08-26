@@ -1,9 +1,9 @@
 // src/ui/cart/cartPage.ts
 import { createElement } from "../../components/createElement.js";
 import { renderCartCategory, CartItem, CartData, SectionTotals } from "./cartUtils.js";
-import { apiFetch } from "../../api/api.js";
 import { displayCheckout } from "./checkout.js";
 import Button from "../../components/base/Button.js";
+import { getCart } from "./api.js";
 
 /**
  * Display the user's cart dynamically.
@@ -21,7 +21,7 @@ export async function displayCart(content: HTMLElement | null, isLoggedIn: boole
 
   let serverCart: any;
   try {
-    serverCart = await apiFetch("/cart", "GET");
+    serverCart = await getCart();
   } catch (err) {
     console.error("Cart fetch failed:", err);
     renderMessage(container, "Failed to load cart. Try again.");

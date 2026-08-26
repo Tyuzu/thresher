@@ -1,5 +1,5 @@
 import { createElement } from "../../../components/createElement.js";
-import { apiFetch } from "../../../api/api.js";
+import { fetchFarms as fetchFarmList } from "../api.js";
 import {
   renderFarmCards,
   renderFeaturedFarm,
@@ -86,7 +86,7 @@ function getTopRated(farms: Farm[], limit = 3): Farm[] {
 
 async function fetchFarms(page: number): Promise<Farm[]> {
   try {
-    const res = await apiFetch(`/farms?page=${page}&limit=${PAGE_SIZE}`) as FetchFarmsResponse;
+    const res = await fetchFarmList(page, PAGE_SIZE) as FetchFarmsResponse;
     return Array.isArray(res?.farms) ? res.farms : [];
   } catch (error) {
     console.error("Failed to fetch farms:", error);

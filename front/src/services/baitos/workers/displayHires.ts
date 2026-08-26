@@ -4,7 +4,7 @@ import { createElement } from "../../../components/createElement";
 import { Button } from "../../../components/base/Button";
 import { navigate } from "../../../routes/navigate";
 import { renderWorkerList } from "./WorkerList";
-import { apiFetch } from "../../../api/api";
+import { listWorkers } from "../api.js";
 import { adspace } from "../../../services/ads/newads";
 import { createMainLayout } from "../../../components/layout/mainLayout";
 import { createAsideContent } from "../../../components/layout/asideLayout";
@@ -104,7 +104,7 @@ export async function displayHireWorkers(
     // ---------- FETCH WORKERS ----------
     let allWorkers: Worker[] = [];
     try {
-        const resp = (await apiFetch("/baitos/workers?page=1&limit=5000")) as Worker[] | WorkersApiResponse;
+        const resp = (await listWorkers(1, 5000)) as Worker[] | WorkersApiResponse;
         allWorkers = Array.isArray(resp) ? resp : resp?.data || resp?.workers || [];
     } catch (err) {
         console.error("Failed to load workers", err);

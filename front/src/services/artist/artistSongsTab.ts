@@ -1,5 +1,5 @@
 // songsTab.ts (refactored for immutable song objects)
-import { apiFetch } from "../../api/api.js";
+import { getArtistSongs, deleteArtistSong } from "./api.js";
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
@@ -33,7 +33,7 @@ export interface PlayerInstance {
 // ------------------------ Helpers ------------------------
 async function fetchSongs(artistID: string | number): Promise<Song[]> {
     try {
-        return (await apiFetch(`/artists/${artistID}/songs`, "GET")) as Song[];
+        return (await getArtistSongs(artistID)) as Song[];
     } catch (err) {
         console.error("Error fetching songs:", err);
         return [];
@@ -76,8 +76,8 @@ function createSongActions(song: Song, artistID: string | number, container: HTM
             if (!confirm(`Delete "${song.title}"?`)) {
                 return;
             }
-            if (song.songid !== undefined && song.songid !== null) {
-                await apiFetch(`/artists/${artistID}/songs/${encodeURIComponent(song.songid)}`, "DELETE");
+                if (song.songid !== undefined && song.songid !== null) {
+                await deleteArtistSong(artistID, song.songid);
             }
             delBtn.closest(".song-row")?.remove();
             Notify("Song deleted");

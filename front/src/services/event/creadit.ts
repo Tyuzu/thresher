@@ -1,7 +1,7 @@
-import { apiFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
 import { generateEventForm, EventFormInputData } from "./createOrEditEvent.js";
 import Notify from "../../components/ui/Notify.js";
+import { fetchEventById } from "./api.js";
 
 /** Create a new event */
 function createEvent(isLoggedIn: boolean, container: HTMLElement): void {
@@ -22,7 +22,7 @@ async function editEvent(
     }
 
     try {
-        const eventData: EventFormInputData = await apiFetch(`/events/event/${eventId}`);
+        const eventData: EventFormInputData = await fetchEventById(eventId);
         generateEventForm(isLoggedIn, container, eventData);
     } catch (error: unknown) {
         console.error("Error fetching event data:", error);

@@ -1,6 +1,6 @@
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
 import { getState } from "../../state/state.js";
+import { fetchRecipeById } from "./api.js";
 import { persistTabs } from "../../utils/persistTabs.js";
 import { displayMedia } from "../media/ui/mediaGallery.js";
 
@@ -40,7 +40,7 @@ export async function displayRecipe(
   let recipe: Recipe;
 
   try {
-    recipe = await apiFetch(`/recipes/recipe/${recipeid}`);
+    recipe = await fetchRecipeById(recipeid);
   } catch {
     container.replaceChildren(
       createElement("p", {}, ["Recipe not found or failed to load."])

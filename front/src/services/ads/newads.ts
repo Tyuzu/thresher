@@ -1,6 +1,7 @@
 import "../../../css/subpages/sda.css";
 import { createElement } from "../../components/createElement.js";
 import { t } from "../../i18n/i18n.js";
+import { fetchAdPayload, trackImpression, trackClick } from "./api.js";
 
 // --- Types & Interfaces ---
 
@@ -94,9 +95,7 @@ const impressionObserver: IntersectionObserver | null =
 
               if (adId && tracked !== "true") {
                 slotEl.setAttribute("data-impression-tracked", "true");
-                if (typeof navigator !== "undefined" && navigator.sendBeacon) {
-                  navigator.sendBeacon(`/api/v1/sda/track-impression?id=${encodeURIComponent(adId)}`);
-                }
+                trackImpression(adId);
                 impressionObserver?.unobserve(slotEl);
               }
             }
@@ -115,17 +114,7 @@ async function defaultAdNetworkFetcher(slotEl: HTMLElement): Promise<void> {
   const position = slotEl.getAttribute("data-position") || "";
   const category = slotEl.getAttribute("data-category") || "";
 
-  const queryParams = new URLSearchParams({ page, position, category });
-  const response = await fetch(`/api/v1/sda/sda?${queryParams.toString()}`, {
-    method: "GET",
-    headers: { Accept: "application/json" }
-  });
-
-  if (!response.ok) {
-    throw new Error(`Ad API error HTTP ${response.status}`);
-  }
-
-  const rawData = (await response.json()) as RawAdPayload;
+  const rawData = (await fetchAdPayload({ page, position, category })) as RawAdPayload;
 
   const adData: AdData = {
     id: rawData.id || rawData.ID || "",
@@ -177,9 +166,7 @@ async function defaultAdNetworkFetcher(slotEl: HTMLElement): Promise<void> {
 
   // Click Tracking Listener
   anchor.addEventListener("click", () => {
-    if (adData.id && typeof navigator !== "undefined" && navigator.sendBeacon) {
-      navigator.sendBeacon(`/api/v1/sda/track-click?id=${encodeURIComponent(adData.id)}`);
-    }
+    if (adData.id) trackClick(adData.id);
   });
 
   slotEl.appendChild(anchor);

@@ -1,7 +1,7 @@
 // createOrEditArtist.ts
 
 import { navigate } from "../../routes/navigate.js";
-import { apiFetch } from "../../api/api.js";
+import { createArtist as apiCreateArtist, updateArtist as apiUpdateArtist, deleteArtist as apiDeleteArtist } from "./api.js";
 import Button from "../../components/base/Button.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import { createElement } from "../../components/createElement.js";
@@ -66,7 +66,7 @@ export async function editArtist(
 async function submitArtistForm(section: HTMLElement): Promise<void> {
     const formData = collectFormData(section);
     try {
-        const response = (await apiFetch("/artists", "POST", formData)) as { artistid: string | number };
+        const response = (await apiCreateArtist(formData)) as { artistid: string | number };
         Notify("Artist created successfully!", { type: "success", duration: 3000 });
         navigate(`/artist/${response.artistid}`);
     } catch (err: any) {
@@ -78,7 +78,7 @@ async function submitArtistForm(section: HTMLElement): Promise<void> {
 async function updateArtistForm(artistID: string | number, section: HTMLElement): Promise<void> {
     const formData = collectFormData(section);
     try {
-        await apiFetch(`/artists/${artistID}`, "PUT", formData);
+        await apiUpdateArtist(artistID, formData);
         Notify("Artist updated successfully", { type: "success", duration: 3000 });
         navigate(`/artist/${artistID}`);
     } catch (err: any) {
@@ -267,7 +267,7 @@ export async function deleteArtistForm(
     }
 
     try {
-        await apiFetch(`/artists/${artistID}`, "DELETE");
+        await apiDeleteArtist(artistID);
         Notify("Artist deleted successfully.", { type: "success", duration: 3000 });
         navigate("/artists");
     } catch (err: any) {

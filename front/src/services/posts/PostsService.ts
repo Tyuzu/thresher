@@ -1,8 +1,8 @@
 import { createElement, ElementAttributes } from "../../components/createElement.js";
 import { Button } from "../../components/base/Button.js";
 import { navigate } from "../../routes/navigate.js";
-import { apiFetch } from "../../api/api.js";
 import { adspace } from "../../services/ads/newads.js";
+import { fetchPosts, type Post, type PostsApiResponse } from "./api.js";
 import Imagex from "../../components/base/Imagex.js";
 import Datex from "../../components/base/Datex.js";
 import { resolveImagePath, EntityType, PictureType } from "../../utils/imagePaths.js";
@@ -10,21 +10,6 @@ import { createMainLayout } from "../../components/layout/mainLayout.js";
 import { createAsideContent } from "../../components/layout/asideLayout.js";
 
 /* ---------------------- TYPES ---------------------- */
-export interface Post {
-  postid: string | number;
-  title?: string;
-  thumb?: string;
-  category?: string;
-  subcategory?: string;
-  createdAt?: string | number | Date;
-  username?: string;
-}
-
-export interface PostsApiResponse {
-  data?: Post[];
-  posts?: Post[];
-}
-
 export type PostsFetchResult = Post[] | PostsApiResponse;
 
 export interface AsideSection {
@@ -117,7 +102,7 @@ export async function displayPosts(
   const list = createElement("div", { class: "posts-list" });
 
   try {
-    const resp = (await apiFetch("/posts?page=1&limit=100")) as PostsFetchResult | undefined;
+    const resp = (await fetchPosts(1, 100)) as PostsFetchResult | undefined;
     
     let posts: Post[] = [];
     if (Array.isArray(resp)) {

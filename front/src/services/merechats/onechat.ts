@@ -12,8 +12,8 @@ import {
   PendingMessage,
   ChatMessage
 } from "./chatSocket.js";
-import { mereFetch } from "../../api/api.js";
 import { throttle } from "../../utils/deutils.js";
+import { merechatFetch } from "./api.js";
 import { getState } from "../../state/state.js";
 import { t } from "./i18n.js";
 import { uploadAttachment } from "./uploadAttachment.js";
@@ -21,8 +21,6 @@ import { uploadAttachment } from "./uploadAttachment.js";
 /* ───────────────────────────────────────── */
 /* Types & Interfaces                       */
 /* ───────────────────────────────────────── */
-
-export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 export interface OutgoingMessagePayload {
   type: "message" | "typing";
@@ -42,12 +40,12 @@ export interface UserState {
 
 export async function safemereFetch<T = unknown>(
   url: string,
-  method: HttpMethod = "GET",
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" = "GET",
   body: string | FormData | null = null,
   options: Record<string, unknown> = {}
 ): Promise<T | null> {
   try {
-    return await mereFetch(url, method, body, options) as T;
+    return await merechatFetch<T>(url, method, body, options);
   } catch {
     return null;
   }
@@ -124,11 +122,11 @@ async function sendMessageRESTFallback(
   targetContainer: HTMLElement | null
 ): Promise<void> {
   try {
-    const msg = await mereFetch(
-      `/merechats/chat/${encodeURIComponent(chatid)}/message`,
+    const msg = await merechatFetch<ChatMessage>(
+      `/merechats/chat/${encodeURIComponent(String(chatid))}/message`,
       "POST",
       JSON.stringify({ content, clientId })
-    ) as ChatMessage;
+    );
 
     reconcilePending(chatid, clientId, msg, targetContainer);
   } catch (e) {

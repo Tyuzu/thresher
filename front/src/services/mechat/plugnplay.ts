@@ -1,7 +1,7 @@
-import { mereFetch } from "../../api/api.js";
 import { navigate } from "../../routes/navigate.js";
 import { getState } from "../../state/state.js";
 import { userNewChatInit } from "../newchat/newchats.js";
+import { startMeChat } from "./api.js";
 
 /* =========================
    TYPES & INTERFACES
@@ -39,11 +39,7 @@ export async function meChat(
     } else {
         const participants = [userId, otherUserId];
 
-        const chat = await mereFetch<ChatResponse>("/merechats/start", "POST", {
-            participants,
-            entityType,
-            entityId
-        });
+        const chat = await startMeChat(participants, entityType, entityId);
 
         if (chat?.chatid) {
             navigate(`/merechats/${chat.chatid}`);

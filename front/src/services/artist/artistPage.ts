@@ -6,7 +6,7 @@ import {
     renderAlbumsTab
 } from "./artistTabs.js";
 import { renderSongsTab } from "./artistSongsTab.js";
-import { apiFetch } from "../../api/api.js";
+import { getArtist } from "./api.js";
 import { deleteArtistForm } from "./createOrEditArtist.js";
 import { createOrEditArtist, ExistingArtist } from "./createOrEditArtist.js";
 import { createElement } from "../../components/createElement.js";
@@ -118,7 +118,7 @@ export async function displayArtist(content: HTMLElement, artistID: string | num
     content.appendChild(contentContainer);
 
     try {
-        const artist = (await apiFetch(`/artists/${artistID}`, "GET")) as ArtistProfile;
+        const artist = (await getArtist(artistID)) as ArtistProfile;
         if (!artist) {
             contentContainer.appendChild(createElement("p", {}, ["Artist not found."]));
             return;
@@ -350,7 +350,7 @@ function renderCreatorActions(artist: ArtistProfile, container: HTMLElement, isL
 
     actions.push(Button("✏️ Edit Artist", "", {
         click: async () => {
-            const existingArtist = (await apiFetch(`/artists/${artist.artistid}`, "GET")) as ExistingArtist;
+            const existingArtist = (await getArtist(artist.artistid)) as ExistingArtist;
             const editContainer = document.getElementById("editartist") || container;
             createOrEditArtist({
                 isLoggedIn,

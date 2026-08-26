@@ -1,13 +1,11 @@
 import { getState, setState } from "../../state/state.js";
-import { apiFetch } from "../../api/api.js";
 import Notify from "../../components/ui/Notify.js";
-
-interface UserProfile {
-  userid?: string | number;
-  id?: string | number;
-  username?: string;
-  [key: string]: unknown;
-}
+import {
+  fetchMyProfile,
+  fetchUserProfileByUsername,
+  fetchUserProfileData as fetchUserProfileDataApi,
+  type UserProfile
+} from "./api.js";
 
 interface AuthState {
   accessToken?: string;
@@ -50,7 +48,7 @@ async function fetchProfile(): Promise<UserProfile | null> {
   }
 
   try {
-    const profile = (await apiFetch("/profile/profile", "GET")) as UserProfile | null;
+    const profile = await fetchMyProfile();
 
     if (!profile) {
       setState({ userProfile: null }, true);
@@ -88,7 +86,7 @@ async function fetchUserProfile(username: string): Promise<UserProfile | null> {
   const encodedUsername = encodeURIComponent(username.trim());
 
   try {
-    const data = (await apiFetch(`/user/${encodedUsername}`, "GET")) as UserProfile | null;
+    const data = await fetchUserProfileByUsername(username);
 
     if (!data || typeof data !== "object") {
       return null;
@@ -130,10 +128,7 @@ async function fetchUserProfileData(
   const encodedEntityType = encodeURIComponent(entityType.trim());
 
   try {
-    return await apiFetch(
-      `/user/${encodedUsername}/data?entity_type=${encodedEntityType}`,
-      "GET"
-    );
+    return await fetchUserProfileDataApi(username, entityType);
   } catch (error) {
     const err = error as Error;
     if (err?.name === "AbortError") {

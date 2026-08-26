@@ -1,6 +1,5 @@
 // merchPage.ts
 import { createElement } from "../../components/createElement.js";
-import { apiFetch } from "../../api/api.js";
 import Button from "../../components/base/Button.js";
 import { addToCart, isValidCartQuantity } from "../cart/addToCart.js";
 import { getState } from "../../state/state.js";
@@ -10,6 +9,7 @@ import Datex from "../../components/base/Datex.js";
 import Modal from "../../components/ui/Modal.js";
 import Notify from "../../components/ui/Notify.js";
 import { showPaymentModal } from "../pay/pay.js";
+import { confirmMerchPurchase, fetchMerchById } from "./api.js";
 
 const MAX_CART_QUANTITY = 99;
 
@@ -76,9 +76,9 @@ export async function displayMerch(
     contentContainer.appendChild(merchContainer);
 
     try {
-        const resp = await apiFetch(`/merch/${encodeURIComponent(merchID)}`, "GET");
-        const data = resp?.data;
-        
+        const resp = await fetchMerchById(merchID);
+        const data = (resp?.data ?? resp) as Record<string, any>;
+
         if (!data?.merchid) {
             merchContainer.replaceChildren(createElement("p", {
                 style: "color:red;"
@@ -310,10 +310,10 @@ export async function displayMerch(
                                                 return;
                                             }
 
-                                            const targetEntityType = entityType || data.entity_type;
-                                            const targetEntityId = entityId || data.entity_id;
+                                            const targetEntityType = String(entityType || data.entity_type || "event");
+                                            const targetEntityId = String(entityId || data.entity_id || "");
 
-                                            const confirmResp = await apiFetch(`/merch/${targetEntityType}/${targetEntityId}/${data.merchid}/confirm-purchase`, "POST", {
+                                            const confirmResp = await confirmMerchPurchase(targetEntityType, targetEntityId, String(data.merchid), {
                                                 quantity: qty,
                                                 note
                                             });
@@ -367,7 +367,7 @@ export async function displayMerch(
         if (data.description) {
             detailsContainer.appendChild(createElement("p", {
                 style: "margin-top:12px;font-size:1em;line-height:1.4;"
-            }, [data.description]));
+            }, [String(data.description)]));
         }
 
         topSection.append(imgContainer, detailsContainer);
@@ -382,15 +382,15 @@ export async function displayMerch(
 
         if (data.entity_type && data.entity_id) {
             metaInfo.appendChild(createElement("a", {
-                href: `/${encodeURIComponent(data.entity_type)}/${encodeURIComponent(data.entity_id)}`,
+                href: `/${encodeURIComponent(String(data.entity_type))}/${encodeURIComponent(String(data.entity_id))}`,
                 style: "color:#1976D2;text-decoration:none;"
-            }, [`View related ${data.entity_type}`]));
+            }, [`View related ${String(data.entity_type)}`]));
         }
         if (data.created_at) {
-            metaInfo.appendChild(createElement("p", {}, [`Created At: ${new Date(data.created_at).toLocaleString()}`]));
+            metaInfo.appendChild(createElement("p", {}, [`Created At: ${new Date(String(data.created_at)).toLocaleString()}`]));
         }
         if (data.updatedAt) {
-            metaInfo.appendChild(createElement("p", {}, [`Last Updated: ${Datex(data.updatedAt)}`]));
+            metaInfo.appendChild(createElement("p", {}, [`Last Updated: ${Datex(String(data.updatedAt))}`]));
         }
         if (data.merchid) {
             metaInfo.appendChild(createElement("p", {}, [`Merch ID: ${data.merchid}`]));

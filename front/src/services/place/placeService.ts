@@ -1,14 +1,8 @@
-import { apiFetch } from "../../api/api.js";
 import Notify from "../../components/ui/Notify.js";
 import { navigate } from "../../routes/navigate.js";
 import displayPlace from "./displayPlace.js";
 import { editPlaceForm, updatePlace, deletePlace } from "./editPlace.js";
-
-export interface CreatePlaceResponse {
-  placeid: string;
-  name: string;
-  [key: string]: unknown;
-}
+import { createPlaceRequest, type CreatePlaceResponse } from "./api.js";
 
 /**
  * Client-side validation of the FormData before sending to backend.
@@ -50,7 +44,7 @@ async function createPlace(formData: FormData): Promise<CreatePlaceResponse> {
 
     Notify("Creating place...", { type: "info", dismissible: true, duration: 3000 });
     
-    const result = await apiFetch<CreatePlaceResponse>('/places/place', 'POST', formData);
+    const result = await createPlaceRequest(formData);
 
     Notify(`Place created successfully: ${result.name}`, { type: "success", dismissible: true, duration: 3000 });
     navigate('/place/' + result.placeid);

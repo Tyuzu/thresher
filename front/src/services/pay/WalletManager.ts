@@ -1,9 +1,9 @@
 import { createElement } from "../../components/createElement.js";
 import { Button } from "../../components/base/Button.js";
-import { apiFetch } from "../../api/api.js";
 import { formatCurrency, Paise, toPaise } from "../../types/api.types.js";
 import { v4 as uuidv4 } from "uuid";
 import Notify from "../../components/ui/Notify.js";
+import { getWalletBalance, topupWallet } from "./api.js";
 
 /* ───────────────────────────────────────── */
 /* Types & Interfaces */
@@ -74,12 +74,7 @@ export function WalletManager(): WalletManagerInstance {
 
         topupBtn.disabled = true;
         try {
-          const res = await apiFetch<WalletTopupResponse>(
-            "/wallet/topup",
-            "POST",
-            { amount: amountPaise, method },
-            { headers: { "Idempotency-Key": currentIdempotencyKey } }
-          );
+          const res = await topupWallet(amountPaise, method, currentIdempotencyKey);
 
           if (res?.success) {
             Notify(res.message || "Top-up successful", { type: "success" });
@@ -103,7 +98,7 @@ export function WalletManager(): WalletManagerInstance {
 
   async function loadBalance(): Promise<void> {
     try {
-      const res = await apiFetch<WalletBalanceResponse>("/wallet/balance");
+      const res = await getWalletBalance();
       if (res && res.balance !== undefined) {
         balanceEl.textContent = `Wallet Balance: ${formatCurrency(res.balance)}`;
       } else {

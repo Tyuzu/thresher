@@ -12,7 +12,7 @@ import {
 } from "../../utils/utils.js";
 import { fetchProfile } from "../profile/fetchProfile.js";
 import Notify from "../../components/ui/Notify.js";
-import { apiFetch } from "../../api/api.js";
+import { registerUser, loginUser, logoutUser } from "./api.js";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.js";
 
 /* =========================================================
@@ -283,19 +283,7 @@ export async function signup(payload: SignupPayload = {}): Promise<boolean> {
   const hideSpinner = LoadingSpinner();
 
   try {
-    await apiFetch(
-      "/auth/register",
-      "POST",
-      {
-        username,
-        email,
-        password
-      },
-      {
-        credentials: "include",
-        auth: false
-      }
-    );
+    await registerUser(username, email, password);
 
     Notify("Signup successful! You can now log in.", {
       type: "success",
@@ -349,18 +337,7 @@ export async function login(payload: LoginPayload = {}): Promise<boolean> {
   const hideSpinner = LoadingSpinner();
 
   try {
-    const response = (await apiFetch(
-      "/auth/login",
-      "POST",
-      {
-        username,
-        password
-      },
-      {
-        credentials: "include",
-        auth: false
-      }
-    )) as AuthResponseData;
+    const response = (await loginUser(username, password)) as AuthResponseData;
 
     const authPayload = extractAuthPayload(response, username);
 
@@ -447,13 +424,8 @@ export async function login(payload: LoginPayload = {}): Promise<boolean> {
 ========================================================= */
 
 export async function logout(): Promise<void> {
-  try {
-    await apiFetch("/auth/logout", "POST", null, {
-      credentials: "include",
-      headers: {
-        "X-Refresh-Intent": "1"
-      }
-    });
+    try {
+    await logoutUser();
   } catch {
     // Logout must clear local authentication even if the server request fails.
   } finally {
