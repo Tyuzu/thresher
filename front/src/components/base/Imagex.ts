@@ -76,4 +76,4 @@ const Imagex = (attributes: ImagexAttributes = {}): HTMLElement => {
 };
 
 export default Imagex;
-export { Imagex };
+export { Imagex as ImagexComponent };

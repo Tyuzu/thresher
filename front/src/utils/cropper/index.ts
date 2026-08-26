@@ -13,6 +13,7 @@ import { FilterManager } from "./filters.js";
 import {
     createCropper,
     destroyCropper,
+    resizeCropper,
     rotateLeft,
     rotateRight,
     zoomIn,

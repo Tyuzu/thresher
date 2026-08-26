@@ -1,4 +1,4 @@
-import { abortInflightApiRequests } from "../api/api.js";
+import { abortInflightApiRequests } from "../api/apiAuth.js";
 import { saveScroll } from "../state/state.js";
 import { track } from "../services/activity/metrics.js";
 

@@ -1,7 +1,7 @@
-import { apiFetch } from "../../../api/api.js";
-import { createElement } from "../../../components/createElement.js";
-import { createFormGroup } from "../../../components/form/createFormGroupEnhanced.js";
-import Button from "../../../components/base/Button.js";
+import { apiFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
+import Button from "../../components/base/Button.js";
 import { CategoryOption, FarmItem, ItemPayload, ItemType } from "./types.js";
 
 export function renderItemForm(

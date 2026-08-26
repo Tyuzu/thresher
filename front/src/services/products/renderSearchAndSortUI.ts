@@ -1,4 +1,4 @@
-import { createElement } from "../../../components/createElement.js";
+import { createElement } from "../../components/createElement.js";
 import { ItemType } from "./types.js";
 
 function debounce<T extends (...args: any[]) => void>(fn: T, delay = 300): (...args: Parameters<T>) => void {

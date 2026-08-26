@@ -1,10 +1,10 @@
-import { apiFetch } from "../../../api/api.js";
-import { createElement } from "../../../components/createElement.js";
-import Button from "../../../components/base/Button.js";
+import { apiFetch } from "../../api/api.js";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
 import { renderItemForm } from "./createOrEdit.js";
 import { renderItemCard } from "./renderItemCard.js";
 import { renderCategoryChips } from "./renderCategoryChips.js";
-import { capitalize } from "../../profile/profileHelpers.js";
+import { capitalize } from "../profile/profileHelpers.js";
 import { renderSearchAndSortUI } from "./renderSearchAndSortUI.js";
 import { renderPagination } from "./renderPagination.js";
 import { DisplayItemsOptions, FarmItem, ItemType } from "./types.js";

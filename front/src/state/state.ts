@@ -1,7 +1,7 @@
 import { apiConfig } from "../config/env.js";
 
 /* =========================================================
-   TYPES & INTERFACES
+    TYPES & INTERFACES
 ========================================================= */
 export interface User {
     id?: string | number;
@@ -34,13 +34,14 @@ export interface AppState {
     isLoading: boolean;
     unreadMessages: number;
     unreadNotifications: number;
+    isLoggedIn: boolean;
     [key: string]: any; // To allow fallback for dynamically accessed properties
 }
 
 export type StateListener = (value: any, state: AppState) => void;
 
 /* =========================================================
-   API CONFIG EXPORTS
+    API CONFIG EXPORTS
 ========================================================= */
 export const {
     MAIN_URL,
@@ -62,14 +63,14 @@ export const {
 } = apiConfig;
 
 /* =========================================================
-   STATE KEYS
+    STATE KEYS
 ========================================================= */
 const allowedKeys = new Set<string>([
     "token", "user", "username", "userProfile", "socket",
     "roles", "permissions", "auth", "environment", "lang",
     "lastPath", "currentRoute", "routeCache", "routeState",
     "currentChatId", "isLoading", "userid", "unreadMessages",
-    "unreadNotifications"
+    "unreadNotifications", "isLoggedIn"
 ]);
 
 const PERSISTED_KEYS = new Set<string>([
@@ -80,14 +81,14 @@ const PERSISTED_KEYS = new Set<string>([
 const SESSION_KEYS = new Set<string>(["token"]);
 
 const AUTH_ALIAS_KEYS = new Set<string>([
-    "token", "user", "roles", "permissions", "username", "userid"
+    "token", "user", "roles", "permissions", "username", "userid", "isLoggedIn"
 ]);
 
 const ROUTE_CACHE_KEY = "routeCache";
 const ROUTE_STATE_KEY = "routeState";
 
 /* =========================================================
-   STORAGE
+    STORAGE
 ========================================================= */
 function readSessionStorage(key: string): string | null {
     try {
@@ -214,7 +215,7 @@ function readPersistentNumber(key: string, fallback = 0): number {
 }
 
 /* =========================================================
-   LEGACY TOKEN MIGRATION
+    LEGACY TOKEN MIGRATION
 ========================================================= */
 function migrateLegacyToken(): void {
     const sessionToken = readSessionStorage("token");
@@ -235,7 +236,7 @@ function migrateLegacyToken(): void {
 migrateLegacyToken();
 
 /* =========================================================
-   ROUTE CACHE & SCROLL STATE
+    ROUTE CACHE & SCROLL STATE
 ========================================================= */
 const routeCache = new Map<any, any>();
 const routeState = new Map<any, any>();
@@ -266,7 +267,7 @@ export function restoreScroll(container: HTMLElement | null, location: any): voi
 }
 
 /* =========================================================
-   LISTENERS
+    LISTENERS
 ========================================================= */
 const listeners = new Map<string, Set<StateListener>>();
 const deepListeners = new Map<string, Set<StateListener>>();
@@ -274,7 +275,7 @@ const notifyQueue = new Set<string>();
 let notifyPending = false;
 
 /* =========================================================
-   PATH ACCESS
+    PATH ACCESS
 ========================================================= */
 function getValueByPath(path: string, source: any = state): any {
     if (!path) {
@@ -284,7 +285,7 @@ function getValueByPath(path: string, source: any = state): any {
 }
 
 /* =========================================================
-   NOTIFICATION QUEUE
+    NOTIFICATION QUEUE
 ========================================================= */
 function scheduleNotify(key: string): void {
     if (!key) {
@@ -347,7 +348,7 @@ function scheduleNotify(key: string): void {
 }
 
 /* =========================================================
-   AUTH NORMALIZATION
+    AUTH NORMALIZATION
 ========================================================= */
 function normalizeRoles(roles: any): string[] {
     if (!Array.isArray(roles)) {
@@ -384,7 +385,7 @@ function normalizeAuth(authValue: Partial<AuthState> = {}, previousAuth: Partial
 }
 
 /* =========================================================
-   INITIAL STATE
+    INITIAL STATE
 ========================================================= */
 const initialToken = readSessionStorage("token");
 const initialUser = readPersistentJSON<User>("user", null);
@@ -416,11 +417,12 @@ const rawState: AppState = {
     currentChatId: null,
     isLoading: false,
     unreadMessages: initialUnreadMessages,
-    unreadNotifications: initialUnreadNotifications
+    unreadNotifications: initialUnreadNotifications,
+    isLoggedIn: Boolean(initialToken || initialUser?.id || initialUser?.userid)
 };
 
 /* =========================================================
-   AUTH ALIAS HELPERS
+    AUTH ALIAS HELPERS
 ========================================================= */
 function getAuthAlias(key: string): any {
     switch (key) {
@@ -432,6 +434,11 @@ function getAuthAlias(key: string): any {
             return Array.isArray(rawState.auth?.roles) ? rawState.auth.roles : [];
         case "permissions":
             return Array.isArray(rawState.auth?.permissions) ? rawState.auth.permissions : [];
+        case "isLoggedIn": {
+            const user = rawState.auth?.user;
+            const hasUserValidId = Boolean(user && typeof user === "object" && (user.id || user.userid));
+            return Boolean(rawState.auth?.isAuthenticated || rawState.auth?.accessToken || hasUserValidId);
+        }
         case "username": {
             const user = rawState.auth?.user;
             if (user && typeof user === "object") {
@@ -465,6 +472,17 @@ function updateAuthUserProperty(property: string, value: any): void {
     }
 }
 
+function triggerAuthNotifications(): void {
+    scheduleNotify("token");
+    scheduleNotify("user");
+    scheduleNotify("username");
+    scheduleNotify("userid");
+    scheduleNotify("roles");
+    scheduleNotify("permissions");
+    scheduleNotify("isLoggedIn");
+    scheduleNotify("auth");
+}
+
 function setAuthAlias(key: string, value: any): void {
     const currentAuth = rawState.auth;
     switch (key) {
@@ -475,8 +493,7 @@ function setAuthAlias(key: string, value: any): void {
                 accessToken: token,
                 isAuthenticated: Boolean(token)
             }, currentAuth);
-            scheduleNotify("token");
-            scheduleNotify("auth");
+            triggerAuthNotifications();
             break;
         }
         case "user": {
@@ -484,10 +501,25 @@ function setAuthAlias(key: string, value: any): void {
                 ...currentAuth,
                 user: value || null
             }, currentAuth);
-            scheduleNotify("user");
-            scheduleNotify("username");
-            scheduleNotify("userid");
-            scheduleNotify("auth");
+            triggerAuthNotifications();
+            break;
+        }
+        case "isLoggedIn": {
+            const isLoggedIn = Boolean(value);
+            if (!isLoggedIn) {
+                rawState.auth = normalizeAuth({
+                    ...currentAuth,
+                    accessToken: null,
+                    user: null,
+                    isAuthenticated: false
+                }, currentAuth);
+            } else {
+                rawState.auth = normalizeAuth({
+                    ...currentAuth,
+                    isAuthenticated: true
+                }, currentAuth);
+            }
+            triggerAuthNotifications();
             break;
         }
         case "roles": {
@@ -496,6 +528,7 @@ function setAuthAlias(key: string, value: any): void {
                 roles: normalizeRoles(value)
             }, currentAuth);
             scheduleNotify("roles");
+            scheduleNotify("isLoggedIn");
             scheduleNotify("auth");
             break;
         }
@@ -513,6 +546,7 @@ function setAuthAlias(key: string, value: any): void {
             scheduleNotify("username");
             scheduleNotify("user");
             scheduleNotify("auth.user");
+            scheduleNotify("isLoggedIn");
             scheduleNotify("auth");
             break;
         }
@@ -521,6 +555,7 @@ function setAuthAlias(key: string, value: any): void {
             scheduleNotify("userid");
             scheduleNotify("user");
             scheduleNotify("auth.user");
+            scheduleNotify("isLoggedIn");
             scheduleNotify("auth");
             break;
         }
@@ -530,7 +565,7 @@ function setAuthAlias(key: string, value: any): void {
 }
 
 /* =========================================================
-   REACTIVE PROXY
+    REACTIVE PROXY
 ========================================================= */
 const proxyCache = new WeakMap<object, Map<string, any>>();
 
@@ -572,7 +607,6 @@ function createReactiveObject<T extends object>(obj: T, path: string[] = []): T 
 
             const value = Reflect.get(target, prop, receiver);
 
-            // Fixed: cast value to 'any'
             if (shouldProxy(value as any)) {
                 return getCachedProxy(value as any, path.concat(String(prop)));
             }
@@ -588,13 +622,7 @@ function createReactiveObject<T extends object>(obj: T, path: string[] = []): T 
             if (path.length === 0 && key === "auth") {
                 const previous = (target as any).auth;
                 (target as any).auth = normalizeAuth(value, previous);
-                scheduleNotify("auth");
-                scheduleNotify("token");
-                scheduleNotify("user");
-                scheduleNotify("username");
-                scheduleNotify("userid");
-                scheduleNotify("roles");
-                scheduleNotify("permissions");
+                triggerAuthNotifications();
                 return true;
             }
             if (path.length === 0 && key === "isLoading") {
@@ -629,9 +657,11 @@ function createReactiveObject<T extends object>(obj: T, path: string[] = []): T 
                     scheduleNotify("user");
                     scheduleNotify("username");
                     scheduleNotify("userid");
+                    scheduleNotify("isLoggedIn");
                 }
                 if (path[1] === "accessToken") {
                     scheduleNotify("token");
+                    scheduleNotify("isLoggedIn");
                 }
                 if (path[1] === "roles") {
                     scheduleNotify("roles");
@@ -666,12 +696,12 @@ function createReactiveObject<T extends object>(obj: T, path: string[] = []): T 
 }
 
 /* =========================================================
-   CREATE PUBLIC STATE
+    CREATE PUBLIC STATE
 ========================================================= */
 const state = getCachedProxy(rawState, []) as AppState;
 
 /* =========================================================
-   PUBLIC STATE READ
+    PUBLIC STATE READ
 ========================================================= */
 function getStateValue(key: string): any {
     if (AUTH_ALIAS_KEYS.has(key)) {
@@ -687,7 +717,7 @@ function getStateValue(key: string): any {
 }
 
 /* =========================================================
-   SET STATE
+    SET STATE
 ========================================================= */
 function persistStateKey(key: string, value: any): void {
     if (SESSION_KEYS.has(key)) {
@@ -715,13 +745,7 @@ function setAuthState(value: Partial<AuthState>, persist = false): void {
     const previous = rawState.auth;
     const next = normalizeAuth(value, previous);
     rawState.auth = next;
-    scheduleNotify("auth");
-    scheduleNotify("token");
-    scheduleNotify("user");
-    scheduleNotify("username");
-    scheduleNotify("userid");
-    scheduleNotify("roles");
-    scheduleNotify("permissions");
+    triggerAuthNotifications();
     if (persist) {
         persistStateKey("token", next.accessToken);
         persistStateKey("user", next.user);
@@ -755,6 +779,15 @@ function setState(keyOrObject: string | Record<string, any>, persistOrValue: boo
                     break;
                 case "user":
                     authUpdates.user = value || null;
+                    break;
+                case "isLoggedIn":
+                    if (!value) {
+                        authUpdates.accessToken = null;
+                        authUpdates.user = null;
+                        authUpdates.isAuthenticated = false;
+                    } else {
+                        authUpdates.isAuthenticated = true;
+                    }
                     break;
                 case "roles":
                     authUpdates.roles = normalizeRoles(value);
@@ -824,7 +857,7 @@ function setState(keyOrObject: string | Record<string, any>, persistOrValue: boo
 }
 
 /* =========================================================
-   GET STATE
+    GET STATE
 ========================================================= */
 function buildPublicSnapshot(): Partial<AppState> & Record<string, any> {
     return {
@@ -846,7 +879,8 @@ function buildPublicSnapshot(): Partial<AppState> & Record<string, any> {
         isLoading: state.isLoading,
         userid: getAuthAlias("userid"),
         unreadMessages: state.unreadMessages,
-        unreadNotifications: state.unreadNotifications
+        unreadNotifications: state.unreadNotifications,
+        isLoggedIn: getAuthAlias("isLoggedIn")
     };
 }
 
@@ -865,7 +899,7 @@ function getState(key?: string | null): any {
 }
 
 /* =========================================================
-   SUBSCRIPTIONS
+    SUBSCRIPTIONS
 ========================================================= */
 function subscribe(key: string, fn: StateListener): () => void {
     if (typeof fn !== "function") {
@@ -929,6 +963,7 @@ function clearState(persist = true): void {
     setState({
         token: null,
         user: null,
+        isLoggedIn: false,
         userProfile: {},
         roles: [],
         permissions: [],

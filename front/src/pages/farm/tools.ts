@@ -1,6 +1,6 @@
 
 import "../../../css/farmstyles/protools2.css";
-import { displayItems } from "../../services/crops/products/displayItems.js";
+import { displayItems } from "../../services/products/displayItems.js";
 
 export async function Products(
   isLoggedIn: boolean,

@@ -1,408 +1,391 @@
-import { createUserControls } from "../farm/displayFarmHelpers";
-import { createElement } from "../../../components/createElement";
-import { apiFetch } from "../../../api/api";
-import { navigate } from "../../../routes/navigate";
-import Imagex from "../../../components/base/Imagex";
-import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths";
-import Notify from "../../../components/ui/Notify";
-import Button from "../../../components/base/Button";
+import { createElement } from "../../../components/createElement.js";
+import { apiFetch } from "../../../api/api.js";
+import { guessCategoryFromName } from "./displayCropshelpers.js";
+import { navigate } from "../../../routes/navigate.js";
+import { resolveImagePath, PictureType, EntityType } from "../../../utils/imagePaths.js";
+import Imagex from "../../../components/base/Imagex.js";
+import { debounce } from "../../../utils/deutils.js";
+import Button from "../../../components/base/Button.js";
+import { createMainLayout } from "../../../components/layout/mainLayout.js";
+import { createAsideContent } from "../../../components/layout/asideLayout.js";
 
 // --- Types & Interfaces ---
 
-export interface AvailabilityDay {
-    enabled?: boolean;
-    from?: string;
-    to?: string;
+export interface Crop {
+  name: string;
+  minPrice?: number;
+  maxPrice?: number;
+  availableCount?: number;
+  unit?: string;
+  banner?: string;
+  tags?: string[];
+  seasonMonths?: number[];
+  price?: number;
+  quantity?: number;
+  farmName?: string;
 }
 
-export type AvailabilityMap = Record<string, AvailabilityDay>;
+export type CategorizedCrops = Record<string, Crop[]>;
 
-export interface CropListing {
-    cropid: string;
-    farmid: string;
-    farmName?: string;
-    breed?: string;
-    banner?: string;
-    location?: string;
-    pricePerKg?: number;
-    unit?: string;
-    availableQtyKg?: number;
-    inventoryValue?: number;
-    outOfStock?: boolean;
-    featured?: boolean;
-    avgRating?: number;
-    reviewCount?: number;
-    favoritesCount?: number;
-    harvestDate?: string;
-    plantedDate?: string;
-    lastSoldAt?: string;
-    availability?: AvailabilityMap;
-    phone?: string;
-    tags?: string[];
+interface FilterOptions {
+  term: string;
+  tags: Set<string>;
+  sortBy: string;
 }
 
-export interface CropApiResponse {
-    success: boolean;
-    name?: string;
-    category?: string;
-    total?: number;
-    listings?: CropListing[];
+interface InterfaceState {
+  cropData: CategorizedCrops;
+  categories: string[];
+  currentTab: string | null;
+  activeTags: Set<string>;
+  searchBox: HTMLInputElement;
+  sortSelect: HTMLSelectElement;
+  tabs: Record<string, HTMLElement>;
+  tabButtons: HTMLElement;
 }
 
-export interface FilterValues {
-    location: string;
-    breed: string;
-    minPrice: number | null;
-    maxPrice: number | null;
-    minQty: number | null;
-    maxQty: number | null;
-    harvestDate: string | null;
+interface RawCropType {
+  Name?: string;
+  MinPrice?: number;
+  MaxPrice?: number;
+  AvailableCount?: number;
+  Unit?: string;
+  Banner?: string;
 }
 
-export interface SetupFilterInteractionsParams {
-    filterForm: HTMLFormElement;
-    toggleFiltersBtn: HTMLElement;
-    listings: CropListing[];
-    onFiltered: (data: CropListing[]) => void;
+interface CropsApiResponse {
+  cropTypes?: RawCropType[];
 }
 
 /**
- * Creates a lightweight debounced function wrapper.
+ * Creates formatted promo items/list configuration for createAsideContent sections.
  */
-function debounce<T extends (...args: unknown[]) => void>(fn: T, delay = 300): (...args: Parameters<T>) => void {
-    let timer: ReturnType<typeof setTimeout>;
-    return (...args: Parameters<T>) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn(...args), delay);
-    };
+function createPromoSection(title: string, items: string[]) {
+  return {
+    title,
+    className: "promo-box",
+    content: createElement(
+      "ul",
+      { class: "promo-list" },
+      items.map((item) => createElement("li", {}, [item]))
+    )
+  };
 }
 
-/**
- * Main entry function to fetch and display crop listings.
- */
-export async function displayCrop(
-    content: HTMLElement,
-    cropID: string | number,
-    isLoggedIn: boolean
-): Promise<void> {
-    const container = createElement("div", { class: "croppage" }) as HTMLElement;
-    content.replaceChildren(container);
+export function cropAside(_cropData: CategorizedCrops) {
+  return createAsideContent({
+    title: "Market Highlights",
+    actions: [
+      Button({
+        title: "Buy Products",
+        id: "buyprds-crp-btn",
+        events: { click: () => navigate("/products") },
+        classes: "action-btn buttonx primary"
+      }),
 
-    try {
-        const resp = await apiFetch<CropApiResponse>(`/crops/crop/${cropID}?page=1&limit=100`);
-        if (!resp?.success || !Array.isArray(resp?.listings) || resp.listings.length === 0) {
-            Notify("No listings found for this crop.", { type: "error", dismissible: true });
-            return;
-        }
+      Button({
+        title: "See Recipes",
+        id: "recipes-crp-btn",
+        events: { click: () => navigate("/recipes") },
+        classes: "buttonx secondary"
+      }),
 
-        const listings = resp.listings;
-
-        // 1. Header UI
-        const header = createElement("header", { class: "crop-header" }, [
-            createElement(
-                "h1",
-                {
-                    class: "crop-title",
-                    events: { click: () => navigate(`/aboutcrop/${cropID}`) },
-                    style: { fontSize: "2rem", cursor: "pointer" }
-                },
-                [`${resp.name || "Crop"} (${resp.category || "Uncategorized"})`]
-            ),
-            createElement("p", { class: "crop-meta" }, [`Total Listings: ${resp.total ?? listings.length}`])
-        ]) as HTMLElement;
-
-        // 2. Setup Filters & Listings Wrapper
-        const toggleFiltersBtn = Button({ title: "Filters", classes: "toggle-filters-btn buttonx" });
-        const filterForm = createFilterForm();
-        const listingsWrapper = createElement("section", { class: "crop-listings" }) as HTMLElement;
-
-        // 3. Render Handler
-        const renderListings = (data: CropListing[]): void => {
-            listingsWrapper.replaceChildren();
-            if (!data || data.length === 0) {
-                listingsWrapper.appendChild(
-                    createElement("p", { class: "no-results" }, ["No listings match the selected filters."]) as HTMLElement
-                );
-                return;
-            }
-
-            const fragment = document.createDocumentFragment();
-            data.forEach((listing) => {
-                fragment.appendChild(createListingCard(listing, resp.name || "Crop", isLoggedIn));
-            });
-            listingsWrapper.appendChild(fragment);
-        };
-
-        // Initial Population
-        renderListings(listings);
-
-        // 4. Interaction Binding
-        setupFilterInteractions({
-            filterForm,
-            toggleFiltersBtn,
-            listings,
-            onFiltered: renderListings
-        });
-
-        container.append(header, toggleFiltersBtn, filterForm, listingsWrapper);
-    } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load crop details.";
-        Notify(errorMessage, { type: "error", dismissible: true });
+      Button({
+        title: "List Your Farm",
+        id: "newfrm-btn",
+        events: { click: () => navigate("/create-farm") },
+        classes: "buttonx secondary"
+      })
+    ],
+    sections: [
+      createPromoSection("💸 Active Deals", [
+        "🧃 Buy 2 kg Tomatoes, get 10% off!",
+        "🥭 Fresh Mangoes now ₹40/kg!"
+      ]),
+      createPromoSection("📅 Seasonal Picks", [
+        "🍉 Watermelons are ripe this week",
+        "🌽 Baby corn harvest starting soon"
+      ]),
+      createPromoSection("📊 Crop Trends", [
+        "📈 Onion prices up 12% this week",
+        "📉 Cauliflower down due to surplus"
+      ]),
+      createPromoSection("🔔 Announcements", [
+        "🛠 Maintenance scheduled this Friday",
+        "🚚 New delivery zones added in Karnal"
+      ]),
+      createPromoSection("📷 Farmer's Showcase", [
+        "🏞️ Featured: Ajay’s organic carrot patch",
+        "🧑‍🌾 Share your crop stories with us!"
+      ])
+    ],
+    showAd: true,
+    adOptions: {
+      layout: "vertical"
     }
+  });
 }
 
-/**
- * Factory function to build the filtering form layout.
- */
-function createFilterForm(): HTMLFormElement {
-    const fields = [
-        { id: "filter-location", label: "Location", type: "text", placeholder: "e.g. Nagoya" },
-        { id: "filter-breed", label: "Breed", type: "text", placeholder: "e.g. Koshihikari" },
-        { id: "filter-min-price", label: "Price Min (¥/kg)", type: "number", placeholder: "Min", min: 0 },
-        { id: "filter-max-price", label: "Price Max (¥/kg)", type: "number", placeholder: "Max", min: 0 },
-        { id: "filter-min-qty", label: "Qty Min (Kg)", type: "number", placeholder: "Min", min: 0 },
-        { id: "filter-max-qty", label: "Qty Max (Kg)", type: "number", placeholder: "Max", min: 0 },
-        { id: "filter-harvest", label: "Harvest Date", type: "date" }
-    ];
+// --- Helpers & Utils ---
 
-    const filterRows = fields.map((f) =>
-        createElement("div", { class: "filter-row" }, [
-            createElement("label", { for: f.id }, [f.label]),
-            createElement("input", {
-                type: f.type,
-                id: f.id,
-                placeholder: f.placeholder || "",
-                ...(f.min !== undefined && { min: String(f.min) })
-            })
-        ])
+function filterAndSortCrops(crops: Crop[] = [], { term, tags, sortBy }: FilterOptions): Crop[] {
+  const searchTerm = term.toLowerCase();
+
+  return crops
+    .filter(crop => {
+      const matchesTerm = crop.name?.toLowerCase().includes(searchTerm);
+      const matchesTags = [...tags].every(tag => crop.tags?.includes(tag));
+      return matchesTerm && matchesTags;
+    })
+    .sort((a, b) =>
+      sortBy === "az"
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name)
     );
-
-    return createElement(
-        "form",
-        { class: "filter-controls", "aria-label": "Filter crop listings" },
-        [
-            createElement("fieldset", {}, [
-                createElement("legend", {}, ["Filters"]),
-                ...filterRows
-            ]),
-            createElement("div", { class: "filter-actions" }, [
-                createElement("button", { type: "button", id: "apply-filters" }, ["Apply"]),
-                createElement("button", { type: "button", id: "reset-filters" }, ["Reset"])
-            ])
-        ]
-    ) as HTMLFormElement;
 }
 
-/**
- * Handles input change handlers, filtering calculations, and toggle mechanics.
- */
-function setupFilterInteractions({
-    filterForm,
-    toggleFiltersBtn,
-    listings,
-    onFiltered
-}: SetupFilterInteractionsParams): void {
-    const inputs = {
-        location: filterForm.querySelector<HTMLInputElement>("#filter-location"),
-        breed: filterForm.querySelector<HTMLInputElement>("#filter-breed"),
-        minPrice: filterForm.querySelector<HTMLInputElement>("#filter-min-price"),
-        maxPrice: filterForm.querySelector<HTMLInputElement>("#filter-max-price"),
-        minQty: filterForm.querySelector<HTMLInputElement>("#filter-min-qty"),
-        maxQty: filterForm.querySelector<HTMLInputElement>("#filter-max-qty"),
-        harvestDate: filterForm.querySelector<HTMLInputElement>("#filter-harvest")
-    };
-
-    const applyButton = filterForm.querySelector<HTMLButtonElement>("#apply-filters");
-    const resetButton = filterForm.querySelector<HTMLButtonElement>("#reset-filters");
-
-    if (!inputs.location || !inputs.breed || !inputs.minPrice || !inputs.maxPrice || 
-        !inputs.minQty || !inputs.maxQty || !inputs.harvestDate || !applyButton || !resetButton) {
-        Notify("Unable to initialize crop filters.", { type: "error", dismissible: true });
-        return;
-    }
-
-    const validInputs = inputs as Record<keyof typeof inputs, HTMLInputElement>;
-
-    const applyFilters = (): void => {
-        const filters: FilterValues = {
-            location: validInputs.location.value.trim().toLowerCase(),
-            breed: validInputs.breed.value.trim().toLowerCase(),
-            minPrice: parseFloat(validInputs.minPrice.value) || null,
-            maxPrice: parseFloat(validInputs.maxPrice.value) || null,
-            minQty: parseFloat(validInputs.minQty.value) || null,
-            maxQty: parseFloat(validInputs.maxQty.value) || null,
-            harvestDate: validInputs.harvestDate.value || null
-        };
-
-        if (filters.minPrice && filters.maxPrice && filters.minPrice > filters.maxPrice) {
-            Notify("Invalid price range (min > max).", { type: "warning", dismissible: true });
-            return;
-        }
-        if (filters.minQty && filters.maxQty && filters.minQty > filters.maxQty) {
-            Notify("Invalid quantity range (min > max).", { type: "warning", dismissible: true });
-            return;
-        }
-
-        const filteredListings = listings.filter((listing) => {
-            const locationMatch = !filters.location || (listing?.location || "").toLowerCase().includes(filters.location);
-            const breedMatch = !filters.breed || (listing?.breed || "").toLowerCase().includes(filters.breed);
-
-            const priceMatch =
-                (!filters.minPrice || (listing?.pricePerKg ?? 0) >= filters.minPrice) &&
-                (!filters.maxPrice || (listing?.pricePerKg ?? 0) <= filters.maxPrice);
-
-            const qtyMatch =
-                (!filters.minQty || (listing?.availableQtyKg ?? 0) >= filters.minQty) &&
-                (!filters.maxQty || (listing?.availableQtyKg ?? 0) <= filters.maxQty);
-
-            let harvestMatch = true;
-            if (filters.harvestDate) {
-                if (!listing?.harvestDate) {
-                    harvestMatch = false;
-                } else {
-                    const parsed = new Date(listing.harvestDate);
-                    harvestMatch = !isNaN(parsed.getTime()) && parsed.toISOString().split("T")[0] === filters.harvestDate;
-                }
-            }
-
-            return locationMatch && breedMatch && priceMatch && qtyMatch && harvestMatch;
-        });
-
-        onFiltered(filteredListings);
-    };
-
-    const debouncedApply = debounce(applyFilters, 250);
-
-    Object.values(validInputs).forEach((input) => {
-        input.addEventListener("input", debouncedApply);
-    });
-
-    const resetFilters = (): void => {
-        filterForm.reset();
-        onFiltered(listings);
-        filterForm.classList.remove("open");
-    };
-
-    toggleFiltersBtn.addEventListener("click", () => filterForm.classList.toggle("open"));
-    applyButton.addEventListener("click", () => {
-        applyFilters();
-        filterForm.classList.remove("open");
-    });
-    resetButton.addEventListener("click", resetFilters);
-
-    filterForm.addEventListener("keydown", (e: KeyboardEvent) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            applyFilters();
-            filterForm.classList.remove("open");
-        }
-    });
+function formatPrice(value?: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0
+  }).format(value || 0);
 }
 
-/**
- * Component factory to build individual listing card elements.
- */
-function createListingCard(listing: CropListing, cropName: string, isLoggedIn: boolean): HTMLElement {
-    const imageSrc = resolveImagePath(EntityType.CROP, PictureType.THUMB, listing?.banner);
-    const farmName = listing?.farmName || "Unnamed Farm";
+function formatPriceRange(min?: number, max?: number): string {
+  return `${formatPrice(min)} - ${formatPrice(max)}`;
+}
 
-    const imageSection = createElement("div", { class: "listing-image" }, [
-        Imagex({ src: imageSrc, alt: listing?.breed || farmName, loading: "lazy" })
+function isSeasonal(crop: Crop): boolean {
+  const currentMonth = new Date().getMonth() + 1;
+  return Array.isArray(crop.seasonMonths) && crop.seasonMonths.includes(currentMonth);
+}
+
+function formatCropSlug(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, "_");
+}
+
+// --- Component Renderers ---
+
+export function renderCropCard(crop: Crop, mode: "catalogue" | "listing" = "catalogue"): HTMLElement {
+  const card = createElement("div", { class: "crop-card" });
+  const cropSlug = formatCropSlug(crop.name);
+
+  card.addEventListener("click", () => navigate(`/crop/${cropSlug}`));
+
+  const img = Imagex({
+    src: resolveImagePath(EntityType.CROP, PictureType.THUMB, crop.banner),
+    alt: crop.name,
+    class: "crop-card-image",
+    loading: "lazy"
+  });
+
+  const title = createElement("h4", {}, [crop.name]);
+
+  if (mode === "catalogue") {
+    const info = createElement("p", { class: "crop-info" }, [
+      `${formatPriceRange(crop.minPrice, crop.maxPrice)} per ${crop.unit} • ${crop.availableCount} listings`
     ]);
 
-    const detailRows = [
-        createElement("h3", { class: "farm-link" }, [
-            createElement(
-                "a",
-                { events: { click: () => navigate(`/farm/${listing.farmid}`) } },
-                [farmName]
-            )
-        ]),
-        createElement("p", {}, [`Breed: ${listing?.breed || "Not specified"}`]),
-        createElement("p", {}, [`Location: ${listing?.location || "Unknown"}`]),
-        createElement("p", {}, [`Price: ₹${Number(listing?.pricePerKg || 0).toLocaleString()}/${listing?.unit || "kg"}`]),
-        createElement("p", {}, [`Available: ${listing?.availableQtyKg ?? 0} ${listing?.unit || "kg"}`]),
-        createElement("p", {}, [`Inventory Value: ₹${Number(listing?.inventoryValue || 0).toLocaleString()}`]),
-        createElement("p", {}, [`Status: ${listing?.outOfStock ? "Out of Stock" : getStockStatus(listing?.availableQtyKg || 0)}`]),
-        createElement("p", {}, [`Featured: ${listing?.featured ? "Yes" : "No"}`]),
-        createElement("p", {}, [`Rating: ${listing?.avgRating || 0} (${listing?.reviewCount || 0} reviews)`]),
-        createElement("p", {}, [`Favorites: ${listing?.favoritesCount || 0}`]),
-        createElement("p", {}, [`Harvest Date: ${listing?.harvestDate ? new Date(listing.harvestDate).toLocaleDateString() : "N/A"}`]),
-        createElement("p", {}, [`Planted Date: ${listing?.plantedDate ? new Date(listing.plantedDate).toLocaleDateString() : "N/A"}`]),
-        createElement("p", {}, [`Last Sold: ${listing?.lastSoldAt ? formatRelativeDate(listing.lastSoldAt) : "Never"}`]),
-        createElement("p", {}, [`Availability: ${formatAvailability(listing?.availability)}`]),
-        createElement("p", {}, [`Phone: ${listing?.phone || "N/A"}`]),
-        listing?.tags?.length ? createElement("p", {}, [`Tags: ${listing.tags.join(", ")}`]) : null
-    ].filter((node): node is HTMLHeadingElement => Boolean(node));
+    const inSeason = isSeasonal(crop);
+    const seasonLabel = inSeason ? "🟢 In Season" : "🔴 Off Season";
+    const seasonClass = inSeason ? "in-season" : "off-season";
 
-    const detailsSection = createElement("div", { class: "listing-details" }, detailRows);
-
-    const cropData = {
-        name: cropName,
-        cropid: listing?.cropid,
-        pricePerKg: listing?.pricePerKg,
-        unit: "kg",
-        breed: listing?.breed,
-        quantity: listing?.availableQtyKg ?? 0
-    };
-
-    const controls = createUserControls(
-        cropData,
-        farmName,
-        listing?.farmid,
-        isLoggedIn,
-        listing?.availableQtyKg,
-        listing?.cropid
+    const season = createElement("p", { class: `season-indicator ${seasonClass}` }, [seasonLabel]);
+    
+    const tags = createElement(
+      "div",
+      { class: "tag-wrap" },
+      (crop.tags || []).map(tag => createElement("span", { class: "tag-pill" }, [tag]))
     );
 
-    const controlsSection = createElement("div", { class: "listing-controls" }, controls);
+    const btn = Button({
+      title: "View Farms",
+      type: "button",
+      events: { click: () => navigate(`/crop/${cropSlug}`) },
+      classes: "buttonx"
+    });
 
-    return createElement("div", { class: "listing-card" }, [
-        imageSection,
-        createElement("div", { class: "listing-content" }, [detailsSection, controlsSection])
-    ]) as HTMLElement;
+    const contentWrapper = createElement("div", { class: "nimgcon" }) as HTMLElement;
+    contentWrapper.append(title, info, season, tags, btn);
+    card.append(img, contentWrapper);
+  } else if (mode === "listing") {
+    card.append(
+      title,
+      createElement("p", {}, [`💰 ${formatPrice(crop.price)} per ${crop.unit}`]),
+      createElement("p", {}, [`📦 In Stock: ${crop.quantity}`]),
+      createElement("p", {}, [`👨‍🌾 Farm: ${crop.farmName || "Unknown"}`])
+    );
+  }
+
+  return card;
 }
 
-/**
- * Decodes availability hours object mapping into a human-readable string.
- */
-function formatAvailability(availability?: AvailabilityMap): string {
-    if (!availability || typeof availability !== "object") {
-        return "N/A";
+// --- Interface State Management ---
+
+export function renderCropInterface(container: HTMLElement, cropData: CategorizedCrops): void {
+  const mainContent = createElement("div", { class: "catalogue-main" });
+
+  const searchBox = createElement("input", {
+    type: "text",
+    name: "search",
+    placeholder: "Search crops…",
+    class: "search-box"
+  }) as HTMLInputElement;
+
+  const sortSelect = createElement("select", { class: "sort-box", name: "sortby" }, [
+    createElement("option", { value: "az" }, ["A → Z"]),
+    createElement("option", { value: "za" }, ["Z → A"])
+  ]) as HTMLSelectElement;
+
+  const controls = createElement("div", { class: "top-controls" }, [searchBox, sortSelect]);
+  const tabButtons = createElement("div", { class: "tabs" });
+  const tabsWrapper = createElement("div", { id: "catalogue-container" });
+
+  mainContent.append(
+    createElement("h2", {}, ["All Crops"]),
+    controls,
+    tabButtons,
+    tabsWrapper
+  );
+
+  const categories = Object.keys(cropData);
+  const state: InterfaceState = {
+    cropData,
+    categories,
+    currentTab: categories[0] || null,
+    activeTags: new Set(),
+    searchBox,
+    sortSelect,
+    tabs: {},
+    tabButtons
+  };
+
+  categories.forEach((cat, index) => {
+    const isFirst = index === 0;
+    const count = cropData[cat]?.length || 0;
+    
+    const btn = createElement(
+      "button",
+      { 
+        class: `buttonx ${isFirst ? "active" : ""}`,
+        disabled: count === 0
+      },
+      [`${cat.charAt(0).toUpperCase() + cat.slice(1)} (${count})`]
+    ) as HTMLButtonElement;
+
+    btn.onclick = () => {
+      state.currentTab = cat;
+      updateAllTabs(state);
+    };
+
+    tabButtons.appendChild(btn);
+
+    const pane = createElement("div", { class: "tab-content", id: cat });
+    state.tabs[cat] = pane;
+    tabsWrapper.appendChild(pane);
+  });
+
+  sortSelect.onchange = () => updateAllTabs(state);
+  searchBox.addEventListener("input", debounce(() => updateAllTabs(state)));
+
+  updateAllTabs(state);
+
+  const layout = createMainLayout({
+    mainContent: [mainContent],
+    asideContent: cropAside(cropData),
+    pageClass: "catalogue-layout",
+    showMainAd: true,
+    mainAdPlacement: "top"
+  });
+
+  container.appendChild(layout);
+}
+
+function updateAllTabs(state: InterfaceState): void {
+  const { categories, currentTab, tabButtons, tabs } = state;
+  if (!currentTab) return;
+
+  updateTab(currentTab, state);
+
+  categories.forEach(cat => {
+    const pane = tabs[cat];
+    if (pane) {
+      pane.style.display = cat === currentTab ? "flex" : "none";
+    }
+  });
+
+  Array.from(tabButtons.children).forEach(btn => {
+    const htmlBtn = btn as HTMLElement;
+    const btnCategory = htmlBtn.dataset.category || htmlBtn.textContent?.split(" (")[0].trim().toLowerCase() || "";
+    htmlBtn.classList.toggle("active", btnCategory === currentTab.toLowerCase());
+  });
+}
+
+function updateTab(category: string, state: InterfaceState): void {
+  const { cropData, tabs, searchBox, sortSelect, activeTags } = state;
+  const container = tabs[category];
+
+  if (!container) return;
+
+  container.replaceChildren();
+
+  const filtered = filterAndSortCrops(cropData[category], {
+    term: searchBox.value.trim(),
+    tags: activeTags,
+    sortBy: sortSelect.value
+  });
+
+  if (filtered.length === 0) {
+    container.appendChild(
+      createElement("p", { class: "empty-category" }, ["No crops available."])
+    );
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  filtered.forEach(crop => fragment.appendChild(renderCropCard(crop)));
+  container.appendChild(fragment);
+}
+
+// --- Main Entrypoint ---
+
+export async function displayCrops(content: HTMLElement): Promise<void> {
+  const contentContainer = createElement("div", { class: "cropspage" });
+  content.replaceChildren(contentContainer);
+
+  const categorized: CategorizedCrops = {};
+
+  try {
+    const response = await apiFetch<CropsApiResponse>("/crops/types");
+
+    if (!response?.cropTypes || !Array.isArray(response.cropTypes)) {
+      throw new Error("Invalid response format: 'cropTypes' array missing");
     }
 
-    const activeDays = Object.entries(availability)
-        .filter(([_, value]) => value && value.enabled)
-        .map(([day, value]) => {
-            const capitalized = day.charAt(0).toUpperCase() + day.slice(1);
-            return `${capitalized}: ${value.from || ""}-${value.to || ""}`;
-        });
+    response.cropTypes.forEach((raw: RawCropType) => {
+      if (!raw.Name) return;
 
-    return activeDays.length > 0 ? activeDays.join(", ") : "Closed";
-}
+      const crop: Crop = {
+        name: raw.Name,
+        minPrice: raw.MinPrice,
+        maxPrice: raw.MaxPrice,
+        availableCount: raw.AvailableCount,
+        unit: raw.Unit,
+        banner: raw.Banner || "placeholder.jpg",
+        tags: [],
+        seasonMonths: []
+      };
 
-/**
- * Calculates human-readable elapsed relative time.
- */
-function formatRelativeDate(dateString?: string): string {
-    if (!dateString) return "N/A";
+      const category = guessCategoryFromName(crop.name);
+      if (!categorized[category]) {
+        categorized[category] = [];
+      }
+      categorized[category].push(crop);
+    });
+  } catch (err) {
+    console.error("Error fetching crops:", err);
+  }
 
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "N/A";
-
-    const diffDays = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diffDays <= 0) return "Today";
-    if (diffDays === 1) return "1 day ago";
-    return `${diffDays} days ago`;
-}
-
-/**
- * Maps numerical stock amounts to descriptive state strings.
- */
-function getStockStatus(qty: number): string {
-    if (qty <= 0) return "Out of Stock";
-    if (qty <= 5) return "Low Stock";
-    if (qty <= 20) return "Limited Stock";
-    return "In Stock";
+  renderCropInterface(contentContainer, categorized);
 }

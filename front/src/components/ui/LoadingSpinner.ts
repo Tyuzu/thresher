@@ -58,4 +58,4 @@ const LoadingSpinner: LoadingSpinnerFunction = Object.assign(
 );
 
 export default LoadingSpinner;
-export { LoadingSpinner };
+export { LoadingSpinner as LoadingSpinnerComponent };

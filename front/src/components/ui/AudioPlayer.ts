@@ -245,4 +245,4 @@ function AudioPlayer(audioSrc: AudioSourceOptions): HTMLDivElement {
 }
 
 export default AudioPlayer;
-export { AudioPlayer };
+export { AudioPlayer as AudioPlayerComponent };

@@ -1,4 +1,4 @@
-import "../../css/ui/createTabs.css";
+import "../../../../css/ui/createTabs.css";
 import { apiFetch } from "../../../api/api.js";
 import { createElement } from "../../../components/createElement.js";
 import Button, { ButtonOptions } from "../../../components/base/Button.js";

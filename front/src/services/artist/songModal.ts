@@ -287,5 +287,3 @@ function setupFilePreview(input: HTMLInputElement, preview: HTMLAudioElement | H
         }
     });
 }
-
-export { openSongModal };

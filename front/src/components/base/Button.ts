@@ -43,4 +43,4 @@ const Button = ({
 };
 
 export default Button;
-export { Button };
+export { Button as ButtonComponent };

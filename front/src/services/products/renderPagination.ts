@@ -1,5 +1,5 @@
-import { createElement } from "../../../components/createElement.js";
-import Button from "../../../components/base/Button.js";
+import { createElement } from "../../components/createElement.js";
+import Button from "../../components/base/Button.js";
 
 export function renderPagination(
   container: HTMLElement,

@@ -146,26 +146,25 @@ function renderUserSection(): HTMLDivElement {
 
   function update(): void {
     container.replaceChildren();
-    const token = getState("token");
-    const user = (getState("user") || {}) as UserState;
-    const userid = user.id || user.userid || null;
+    const isLoggedIn = getState("isLoggedIn") ?? Boolean(getState("user")?.id || getState("user")?.userid);
 
-    if (token && userid) {
+    if (isLoggedIn) {
       container.append(createProfileSection());
     } else {
-      const loginBtn = Button("Login", "login-button", {
-        click: () => {
-          navigate("/login");
-        }
-      }, "login-btn", { border: "none", cursor: "pointer" });
+      const loginBtn = Button({
+        title: "Login", id: "login-button", events: {
+          click: () => {
+            navigate("/login");
+          }
+        }, classes: "login-btn", styles: { border: "none", cursor: "pointer" }
+      });
 
       container.append(loginBtn);
     }
   }
 
-  subscribe("token", update);
+  subscribe("isLoggedIn", update);
   subscribe("user", update);
-  subscribe("userProfile.role", update);
 
   update();
   return container;
@@ -173,9 +172,9 @@ function renderUserSection(): HTMLDivElement {
 
 function buildNav(): HTMLDivElement {
   const nav = createElement("div", { class: "header-content" }, []) as HTMLDivElement;
-  const token = getState("token");
+  const isLoggedIn = getState("isLoggedIn") ?? Boolean(getState("user")?.id || getState("user")?.userid);
 
-  if (token) {
+  if (isLoggedIn) {
     const createLinks: DropdownMenuItem[] = [
       { href: "/create-farm", text: "Farm" },
       { href: "/create-recipe", text: "Recipe" }
@@ -201,8 +200,8 @@ function enableNavAutoUpdate(initialNavRef: HTMLDivElement): void {
     navRef = newNav;
   }
 
-  subscribe("token", updateNav);
-  subscribe("userProfile.role", updateNav);
+  subscribe("isLoggedIn", updateNav);
+  subscribe("user", updateNav);
 }
 
 function createHeader(): void {

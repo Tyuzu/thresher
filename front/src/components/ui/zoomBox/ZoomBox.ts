@@ -1,19 +1,21 @@
-import "../../../css/ui/ZoomBox.css";
+import "../../../../css/ui/ZoomBox.css";
 import { createElement } from "../../createElement.js";
 import {
-  createOverlay,
   createImageElement,
-  createVideoElement,
-  applyDarkMode,
-  preloadImages,
   smoothZoom,
   handleMouseDown,
   createNavigationButtons,
-  createCloseButton,
   createZoomButtons,
   handleKeyboard,
   ZoomBoxState
 } from "./zoomboxHelpers.js";
+import {
+  createOverlay,
+  createCloseButton,
+  applyDarkMode,
+  createVideoElement,
+  preloadImages
+} from "./zoomBoxTypes.js";
 import { dispatchZoomBoxEvent } from "../../../utils/eventDispatcher.js";
 
 type MediaType = "video" | "image";
@@ -202,4 +204,4 @@ const ZoomBox = (mediaItems: string[], initialIndex: number = 0): void => {
 };
 
 export default ZoomBox;
-export { ZoomBox };
+export { ZoomBox as ZoomBoxComponent };

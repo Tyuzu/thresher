@@ -1,6 +1,6 @@
-import Button from "../../../components/base/Button.js";
-import { createElement } from "../../../components/createElement.js";
-import { apiFetch } from "../../../api/api.js";
+import Button from "../../components/base/Button.js";
+import { createElement } from "../../components/createElement.js";
+import { apiFetch } from "../../api/api.js";
 import { ItemType } from "./types.js";
 
 export async function renderCategoryChips(

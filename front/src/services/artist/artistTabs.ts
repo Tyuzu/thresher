@@ -88,7 +88,7 @@ export async function renderAlbumsTab(artistID: string | number, isCreator: bool
     return container;
 }
 
-async function renderMerchTab(container: HTMLElement, artistID: string | number, isCreator: boolean, isLoggedIn: boolean): Promise<void> {
+export async function renderMerchTab(container: HTMLElement, artistID: string | number, isCreator: boolean, isLoggedIn: boolean): Promise<void> {
     try {
         const response = (await apiFetch(`/artists/${artistID}/merch`, "GET")) as { data?: any[] };
         const merchItems = response?.data ?? [];
@@ -110,7 +110,7 @@ async function renderMerchTab(container: HTMLElement, artistID: string | number,
     }
 }
 
-async function renderEventsTab(container: HTMLElement, artistID: string | number, isCreator: boolean): Promise<void> {
+export async function renderEventsTab(container: HTMLElement, artistID: string | number, isCreator: boolean): Promise<void> {
     try {
         const events = (await apiFetch(`/artists/${artistID}/events`, "GET")) as ArtistEvent[];
         container.replaceChildren();
@@ -240,8 +240,3 @@ function openAddToEventModal(artistID: string | number): void {
     });
 }
 
-export {
-    renderAlbumsTab,
-    renderMerchTab,
-    renderEventsTab
-};

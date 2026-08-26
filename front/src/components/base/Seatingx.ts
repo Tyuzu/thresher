@@ -68,4 +68,4 @@ export function Seatingx({
 };
 
 export default Seatingx;
-export { Seatingx };
+export { Seatingx as SeatingxComponent };

@@ -45,5 +45,3 @@ export async function RenderImagePost(
 
   mediaContainer.appendChild(imageList);
 }
-
-export { RenderImagePost };

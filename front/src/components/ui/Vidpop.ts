@@ -137,4 +137,4 @@ function removePopup(popupElement: CleanableElement | null): void {
 }
 
 export default Vidpop;
-export { Vidpop, removePopup };
+export { Vidpop as VidpopComponent, removePopup };

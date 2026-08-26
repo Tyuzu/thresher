@@ -119,4 +119,4 @@ const MerchCard = ({
 };
 
 export default MerchCard;
-export { MerchCard };
+export { MerchCard as MerchCardComponent };

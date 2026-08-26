@@ -47,4 +47,4 @@ function Datex(
 }
 
 export default Datex;
-export { Datex };
+export { Datex as DatexComponent };

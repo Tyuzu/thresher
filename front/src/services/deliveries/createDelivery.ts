@@ -203,5 +203,4 @@ export async function CreateDelivery(
   contentContainer.appendChild(pageWrapper);
 }
 
-export { CreateDelivery, CreateDelivery as Createdelivery };
 export default CreateDelivery;

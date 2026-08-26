@@ -106,4 +106,4 @@ const VidPlay = (
 };
 
 export default VidPlay;
-export { VidPlay };
+export { VidPlay as VidPlayComponent };

@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "vite",
     "preview": "vite preview",
-    "prebuild": "node scripts/generate-manifest.js",
+    "prebuild": "node --experimental-strip-types scripts/generate-manifest.ts",
     "build": "npm run generate-sitemap && vite build",
     "build:analyze": "vite build --analyze",
-    "generate-sitemap": "node scripts/generate-sitemap.js",
+    "generate-sitemap": "node --experimental-strip-types scripts/generate-sitemap.ts",
     "lint": "eslint js/ --fix",
     "lint:check": "eslint js/",
     "format": "prettier --write .",
@@ -19,6 +19,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cropperjs": "^2.2.0",
     "hls.js": "^1.6.10",
     "rollup-plugin-visualizer": "^7.0.1",
     "terser": "^5.43.1",

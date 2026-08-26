@@ -50,4 +50,4 @@ const NoLink = (
 };
 
 export default NoLink;
-export { NoLink };
+export { NoLink as NoLinkComponent };
