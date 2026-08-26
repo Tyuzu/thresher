@@ -1,7 +1,14 @@
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
-import VideoPlayer from '../../../components/ui/VideoPlayer.mjs';
+// RenderVideoPost.ts
 
-async function RenderVideoPost(mediaContainer, media, media_url = "", resolution) {
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import VideoPlayer from '../../../components/ui/VideoPlayer.js';
+
+export async function RenderVideoPost(
+    mediaContainer: HTMLElement, 
+    media: string[], 
+    media_url: string = "", 
+    resolution?: any
+): Promise<void> {
     media.forEach(videoSrc => {
         const posterPath = resolveImagePath(EntityType.CHAT, PictureType.POSTER, `${media_url}.jpg`);
         const videox = VideoPlayer({
@@ -15,5 +22,3 @@ async function RenderVideoPost(mediaContainer, media, media_url = "", resolution
         mediaContainer.appendChild(videox);
     });
 }
-
-export { RenderVideoPost };

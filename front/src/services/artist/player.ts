@@ -1,10 +1,38 @@
-// player.js
+// player.ts
 import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
 import { playSVG, pauseSVG } from "../../components/svgs/featherSVGs";
 
+// ------------------------ Interfaces & Types ------------------------
+
+export interface Song {
+    songid?: string | number;
+    title?: string;
+    audioUrl?: string;
+    audioextn?: string;
+    _playBtn?: HTMLElement | null;
+    [key: string]: any;
+}
+
+interface PlayerState {
+    container: HTMLElement | null;
+    audio: HTMLAudioElement | null;
+    currentPlayBtn: HTMLElement | null;
+    currentIndex: number;
+    songQueue: Song[];
+    isShuffle: boolean;
+    isAutoplay: boolean;
+}
+
+export interface PlayerController {
+    play: (song: Song, idx: number) => void;
+    playNext: () => void;
+    setQueue: (songs: Song[]) => void;
+    reset: () => void;
+}
+
 // ------------------------ Player State ------------------------
-const state = {
+const state: PlayerState = {
     container: null,
     audio: null,
     currentPlayBtn: null,
@@ -15,21 +43,21 @@ const state = {
 };
 
 // ------------------------ DOM Helpers ------------------------
-function updatePlayButtonIcon(btn, isPlaying) {
+function updatePlayButtonIcon(btn: HTMLElement | null, isPlaying: boolean): void {
     if (!btn) {
-return;
-}
+        return;
+    }
     btn.replaceChildren(isPlaying ? pauseSVG : playSVG);
 }
 
 // ------------------------ Footer Creation ------------------------
-export function createPlayerFooter(container) {
+export function createPlayerFooter(container: HTMLElement): void {
     if (state.audio) {
-return;
-} // Already initialized
+        return;
+    } // Already initialized
 
-    const footer = createElement("footer", { class: "songs-footer" });
-    const audio = createElement("audio", { id: "songs-audio", controls: true });
+    const footer = createElement("footer", { class: "songs-footer" }) as HTMLElement;
+    const audio = createElement("audio", { id: "songs-audio", controls: true }) as HTMLAudioElement;
     state.audio = audio;
 
     const shuffleBtn = Button("Shuffle", "button", {
@@ -37,33 +65,33 @@ return;
             state.isShuffle = !state.isShuffle;
             shuffleBtn.classList.toggle("active", state.isShuffle);
         }
-    }, "shuffle-btn");
+    }, "shuffle-btn") as HTMLElement;
 
     const autoplayBtn = Button("Autoplay", "button", {
         click: () => {
             state.isAutoplay = !state.isAutoplay;
             autoplayBtn.classList.toggle("active", state.isAutoplay);
         }
-    }, "autoplay-btn");
+    }, "autoplay-btn") as HTMLElement;
 
     footer.append(shuffleBtn, autoplayBtn, audio);
     container.append(footer);
 
     audio.addEventListener("ended", () => {
         if (state.isAutoplay) {
-playNextSong();
-}
+            playNextSong();
+        }
     });
 }
 
 // ------------------------ Playback Logic ------------------------
-function playSong(song) {
+function playSong(song: Song): void {
     if (!state.audio || !song.audioUrl) {
-return;
-}
+        return;
+    }
 
     // Pause if same song already playing
-    if (state.audio.src.endsWith(`${song.audioextn}`) && !state.audio.paused) {
+    if (state.audio.src.endsWith(`${song.audioextn ?? ""}`) && !state.audio.paused) {
         state.audio.pause();
         updatePlayButtonIcon(state.currentPlayBtn, false);
         return;
@@ -73,18 +101,18 @@ return;
     updatePlayButtonIcon(state.currentPlayBtn, false);
 
     // Load new song
-    state.audio.src = `${song.audioUrl}${song.audioextn}`;
+    state.audio.src = `${song.audioUrl}${song.audioextn ?? ""}`;
     state.audio.play();
 
-    state.currentPlayBtn = song._playBtn;
+    state.currentPlayBtn = song._playBtn ?? null;
     updatePlayButtonIcon(state.currentPlayBtn, true);
 }
 
-function playNextSong() {
+function playNextSong(): void {
     const { songQueue } = state;
     if (!songQueue.length) {
-return;
-}
+        return;
+    }
 
     state.currentIndex = state.isShuffle
         ? Math.floor(Math.random() * songQueue.length)
@@ -92,24 +120,24 @@ return;
 
     const nextSong = songQueue[state.currentIndex];
     if (nextSong) {
-playSong(nextSong);
-}
+        playSong(nextSong);
+    }
 }
 
 // ------------------------ State Control ------------------------
-function setSongQueue(songs) {
+function setSongQueue(songs: Song[]): void {
     state.songQueue = songs || [];
     state.currentIndex = -1;
 }
 
-function setCurrentIndex(idx) {
+function setCurrentIndex(idx: number): void {
     state.currentIndex = idx;
 }
 
-function resetPlayer() {
+function resetPlayer(): void {
     if (state.audio) {
-state.audio.pause();
-}
+        state.audio.pause();
+    }
     state.container = null;
     state.audio = null;
     state.currentPlayBtn = null;
@@ -120,15 +148,15 @@ state.audio.pause();
 }
 
 // ------------------------ Public Interface ------------------------
-function initPlayer(container) {
+function initPlayer(container: HTMLElement): PlayerController {
     if (!container) {
-throw new Error("Container is required for player");
-}
+        throw new Error("Container is required for player");
+    }
     state.container = container;
     createPlayerFooter(container);
 
     return {
-        play: (song, idx) => {
+        play: (song: Song, idx: number) => {
             setCurrentIndex(idx);
             playSong(song);
         },

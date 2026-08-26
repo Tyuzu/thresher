@@ -1,6 +1,6 @@
-// src/ui/cart/cartPage.js
+// src/ui/cart/cartPage.ts
 import { createElement } from "../../components/createElement.js";
-import { renderCartCategory } from "./cartUtils.js";
+import { renderCartCategory, CartItem, CartData, SectionTotals } from "./cartUtils.js";
 import { apiFetch } from "../../api/api.js";
 import { displayCheckout } from "./checkout.js";
 import Button from "../../components/base/Button.js";
@@ -8,7 +8,9 @@ import Button from "../../components/base/Button.js";
 /**
  * Display the user's cart dynamically.
  */
-export async function displayCart(content, isLoggedIn) {
+export async function displayCart(content: HTMLElement | null, isLoggedIn: boolean): Promise<void> {
+  if (!content) return;
+
   const container = createElement("div", { class: "cartpage" });
   content.replaceChildren(container);
 
@@ -17,7 +19,7 @@ export async function displayCart(content, isLoggedIn) {
     return;
   }
 
-  let serverCart;
+  let serverCart: any;
   try {
     serverCart = await apiFetch("/cart", "GET");
   } catch (err) {
@@ -27,7 +29,7 @@ export async function displayCart(content, isLoggedIn) {
   }
 
   // Maintain a dynamically up-to-date registry mapping categories to their active item states
-  const groupedRegistry = groupCartByCategory(serverCart);
+  const groupedRegistry: CartData = groupCartByCategory(serverCart);
   const categories = Object.keys(groupedRegistry).filter(
     cat => Array.isArray(groupedRegistry[cat]) && groupedRegistry[cat].length
   );
@@ -41,7 +43,7 @@ export async function displayCart(content, isLoggedIn) {
     type: "button",
     class: "back-button",
     events: {
-      click: (e) => {
+      click: (e: MouseEvent) => {
         e.preventDefault();
         history.back();
       }
@@ -52,7 +54,7 @@ export async function displayCart(content, isLoggedIn) {
 
   container.replaceChildren(backButton, titleHeader);
 
-  const sectionTotals = {};
+  const sectionTotals: SectionTotals = {};
   const grandTotalText = createElement("h3", { class: "grand-total" });
 
   categories.forEach(category => {
@@ -66,13 +68,13 @@ export async function displayCart(content, isLoggedIn) {
     });
   });
 
-  const checkoutAllBtn = Button(
-    "Checkout All",
-    "checkout-all-btn",
-    {
+  const checkoutAllBtn = Button({
+    title: "Checkout All",
+    id: "checkout-all-btn",
+    events: {
       click: () => {
         // Extract fresh items from the current registry state instead of stale closures
-        const allItems = Object.values(groupedRegistry).flat().filter(Boolean);
+        const allItems = Object.values(groupedRegistry).flat().filter(Boolean) as CartItem[];
         
         // Remove zero-quantity or deleted item records before proceeding
         const activeItems = allItems.filter(item => (Number(item.quantity) || 0) > 0);
@@ -85,8 +87,8 @@ export async function displayCart(content, isLoggedIn) {
         displayCheckout(container, activeItems);
       }
     },
-    "buttonx primary"
-  );
+    classes: "buttonx primary"
+  }) as HTMLButtonElement;
 
   const grandBox = createElement("div", { class: "grand-box" }, [
     grandTotalText,
@@ -98,7 +100,7 @@ export async function displayCart(content, isLoggedIn) {
 
   /* ---------------- Internals ---------------- */
 
-  function updateGrandTotal() {
+  function updateGrandTotal(): void {
     const total = Object.values(sectionTotals).reduce(
       (sum, val) => sum + (Number(val) || 0),
       0
@@ -115,17 +117,17 @@ export async function displayCart(content, isLoggedIn) {
 /**
  * Group cart items by category and merge duplicates safely
  */
-function groupCartByCategory(cartData) {
+function groupCartByCategory(cartData: any): CartData {
   if (!cartData || typeof cartData !== "object") return {};
 
-  let rawItems = [];
+  let rawItems: CartItem[] = [];
   if (Array.isArray(cartData)) {
     rawItems = cartData;
   } else {
-    rawItems = Object.values(cartData).filter(Boolean).flat();
+    rawItems = Object.values(cartData).filter(Boolean).flat() as CartItem[];
   }
 
-  const byCategory = {};
+  const byCategory: Record<string, CartItem[]> = {};
   rawItems.forEach(it => {
     if (!it) return;
     const cat = String(it.category || "unknown").trim().toLowerCase();
@@ -135,10 +137,10 @@ function groupCartByCategory(cartData) {
     byCategory[cat].push(it);
   });
 
-  const grouped = {};
+  const grouped: CartData = {};
   // Safeguard against prototype pollution using explicit Object.keys looping arrays
   Object.keys(byCategory).forEach(cat => {
-    const map = {};
+    const map: Record<string, CartItem> = {};
     byCategory[cat].forEach(it => {
       if (!it) return;
       const key = `${it.itemId || "null"}__${it.entityId || "null"}`;
@@ -146,7 +148,7 @@ function groupCartByCategory(cartData) {
         map[key] = { ...it };
         map[key].quantity = Number(map[key].quantity) || 0;
       } else {
-        map[key].quantity += (Number(it.quantity) || 0);
+        map[key].quantity = (Number(map[key].quantity) || 0) + (Number(it.quantity) || 0);
       }
     });
     grouped[cat] = Object.values(map);
@@ -155,7 +157,9 @@ function groupCartByCategory(cartData) {
   return grouped;
 }
 
-function renderMessage(container, message) {
+function renderMessage(container: HTMLElement, message: string): void {
   if (!container) return;
   container.replaceChildren(createElement("p", { class: "cart-message-info" }, [String(message)]));
 }
+
+export default displayCart;

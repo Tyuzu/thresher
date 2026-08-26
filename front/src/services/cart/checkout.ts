@@ -1,14 +1,47 @@
-// src/ui/cart/checkoutPage.js
+// src/ui/cart/checkoutPage.ts
 import { createElement } from "../../components/createElement.js";
 import { apiFetch } from "../../api/api.js";
 import { displayPayment } from "./payment.js";
 
+// --- INTERFACES & TYPES ---
+export interface CheckoutItem {
+  itemId?: string | number;
+  id?: string | number;
+  price?: number;
+  quantity?: number;
+  category?: string;
+  entityId?: string | number;
+  entityType?: string;
+  itemName?: string;
+  discount?: number;
+  [key: string]: any;
+}
+
+export interface AddressFormPayload {
+  address: string;
+  couponCode: string;
+}
+
+export interface SummaryProps {
+  items: CheckoutItem[];
+  address: string;
+  couponCode: string;
+}
+
+export interface CheckoutHandlerProps {
+  container: HTMLElement;
+  button: HTMLButtonElement;
+  items: CheckoutItem[];
+  address: string;
+  couponCode: string;
+}
+
 /* ────────────────────── Helpers ────────────────────── */
 
-const toRupees = (p = 0) => p / 100;
-const formatPrice = v => `₹${v.toFixed(2)}`;
+const toRupees = (p: number = 0): number => p / 100;
+const formatPrice = (v: number): string => `₹${v.toFixed(2)}`;
 
-const calculateSubtotal = (items = []) =>
+const calculateSubtotal = (items: CheckoutItem[] = []): number =>
   items.reduce(
     (sum, i) => sum + toRupees(i.price) * (Number(i.quantity) || 0),
     0
@@ -16,14 +49,14 @@ const calculateSubtotal = (items = []) =>
 
 /* ────────────────────── Coupon API (UX only) ────────────────────── */
 
-async function validateCoupon({ code, subtotal }) {
+async function validateCoupon({ code, subtotal }: { code: string; subtotal: number }): Promise<{ valid: boolean | null; discount: number; message: string }> {
   if (!code?.trim()) {
     return { valid: null, discount: 0, message: "" };
   }
 
   try {
     try {
-      const res = await apiFetch("/coupon/validate", "POST", {
+      const res: any = await apiFetch("/coupon/validate", "POST", {
         code: code.trim(),
         cart: subtotal,
         entityId: "general",
@@ -64,39 +97,39 @@ async function validateCoupon({ code, subtotal }) {
 
 /* ────────────────────── Address Form ────────────────────── */
 
-function renderAddressForm(container, { items, onSubmit }) {
+function renderAddressForm(container: HTMLElement, { items, onSubmit }: { items: CheckoutItem[]; onSubmit: (data: AddressFormPayload) => void }): void {
   const subtotal = calculateSubtotal(items);
-  const form = createElement("form", { class: "address-form" });
+  const form = createElement("form", { class: "address-form" }) as HTMLFormElement;
 
   const addressInput = createElement("textarea", {
     required: true,
     rows: "3",
     class: "address-input",
     placeholder: "Flat No, Street, City, State, ZIP"
-  });
+  }) as HTMLTextAreaElement;
 
   const couponInput = createElement("input", {
     type: "text",
     class: "coupon-input",
     placeholder: "Enter coupon code (optional)"
-  });
+  }) as HTMLInputElement;
 
   const feedback = createElement("div", { class: "coupon-feedback" });
   const submitBtn = createElement("button", { class: "primary-button", type: "submit" }, [
     "Proceed to Checkout"
-  ]);
+  ]) as HTMLButtonElement;
 
-  let debounceTimer = null;
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   let requestId = 0;
   let isValidating = false; // FIXED: Lock form transition during flight network processing
 
   const couponState = {
     code: "",
-    valid: null,
+    valid: null as boolean | null,
     discount: 0
   };
 
-  const executeValidation = async (code) => {
+  const executeValidation = async (code: string) => {
     const currentRequest = ++requestId;
     isValidating = true;
     submitBtn.disabled = true;
@@ -145,7 +178,7 @@ function renderAddressForm(container, { items, onSubmit }) {
     debounceTimer = setTimeout(() => executeValidation(code), 400);
   });
 
-  form.onsubmit = async (e) => {
+  form.onsubmit = async (e: Event) => {
     e.preventDefault();
 
     // FIXED: Catch rapid submission attempts while validation timers are actively in-flight
@@ -177,7 +210,7 @@ function renderAddressForm(container, { items, onSubmit }) {
 
 /* ────────────────────── Summary View ────────────────────── */
 
-function renderSummary(container, { items, address, couponCode }) {
+function renderSummary(container: HTMLElement, { items, address, couponCode }: SummaryProps): void {
   const subtotal = calculateSubtotal(items);
   const itemDiscountTotal = items.reduce((sum, i) => {
     const price = toRupees(i.price);
@@ -215,15 +248,15 @@ function renderSummary(container, { items, address, couponCode }) {
       { style: "font-weight:bold; margin-top: 8px;" },
       ["Final total will be calculated securely at payment"]
     )
-  ].filter(Boolean));
+  ].filter(Boolean) as HTMLElement[]);
 
   const btn = createElement(
     "button",
     { class: "primary-button" },
     ["Proceed to Payment"]
-  );
+  ) as HTMLButtonElement;
 
-  btn.onclick = (e) => {
+  btn.onclick = (e: MouseEvent) => {
     e.preventDefault();
     handleCheckout({
       container,
@@ -252,14 +285,14 @@ async function handleCheckout({
   items,
   address,
   couponCode
-}) {
+}: CheckoutHandlerProps): Promise<void> {
   button.disabled = true;
   button.textContent = "Processing…";
 
   try {
     const itemsByCategory = groupByCategory(items);
 
-    const session = await apiFetch("/checkout/session", "POST", {
+    const session: any = await apiFetch("/checkout/session", "POST", {
       address,
       items: itemsByCategory,
       coupon: couponCode || null
@@ -269,7 +302,7 @@ async function handleCheckout({
       ...session,
       couponCode
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
     button.disabled = false;
     button.textContent = "Proceed to Payment";
@@ -281,8 +314,8 @@ async function handleCheckout({
  * Group items by category for checkout
  * SECURITY: Never send prices to backend - backend looks them up from database
  */
-function groupByCategory(items = []) {
-  const grouped = {};
+function groupByCategory(items: CheckoutItem[] | Record<string, CheckoutItem[]> = []): Record<string, CheckoutItem[]> {
+  const grouped: Record<string, CheckoutItem[]> = {};
   const normalizedItems = Array.isArray(items) ? items : Object.values(items || {});
   
   normalizedItems.forEach(item => {
@@ -310,7 +343,7 @@ function groupByCategory(items = []) {
 
 /* ────────────────────── Main Entry ────────────────────── */
 
-export async function displayCheckout(container, passedItems = null) {
+export async function displayCheckout(container: HTMLElement | null, passedItems: CheckoutItem[] | Record<string, CheckoutItem[]> | null = null): Promise<void> {
   if (!container) return;
   
   container.replaceChildren(
@@ -318,18 +351,18 @@ export async function displayCheckout(container, passedItems = null) {
   );
 
   try {
-    let items = passedItems;
+    let items: CheckoutItem[];
     
-    if (!items) {
-      const cartData = await apiFetch("/cart", "GET");
+    if (!passedItems) {
+      const cartData: any = await apiFetch("/cart", "GET");
       items = Array.isArray(cartData) 
         ? cartData 
-        : Object.values(cartData || {}).filter(Boolean).flat();
+        : Object.values(cartData || {}).filter(Boolean).flat() as CheckoutItem[];
     } else {
       // FIXED: Safely verify collection alignment shape before calling flattening maps
       items = Array.isArray(passedItems) 
         ? passedItems 
-        : Object.values(passedItems || {}).filter(Boolean).flat();
+        : Object.values(passedItems || {}).filter(Boolean).flat() as CheckoutItem[];
     }
 
     if (!items.length) {
@@ -354,3 +387,5 @@ export async function displayCheckout(container, passedItems = null) {
     );
   }
 }
+
+export default displayCheckout;

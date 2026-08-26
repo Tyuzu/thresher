@@ -15,17 +15,48 @@ import {
   updateDeliveryStatus
 } from "../../services/deliveries/deliveriesApi.js";
 
-// Keep active tracker references at module scope or attach cleanup to container
-let activeWatchId = null;
+// Interface definitions for API payloads and objects
+interface GpsPayload {
+  lat: number;
+  lng: number;
+  heading: number;
+  speed: number;
+}
 
-export function stopGpsTracker() {
+interface DeliveryLocation {
+  address?: string;
+}
+
+interface DeliveryJob {
+  deliveryid?: string | number;
+  id?: string | number;
+  pickup_loc?: DeliveryLocation;
+  dropoff_loc?: DeliveryLocation;
+  status?: string;
+}
+
+interface ActiveDeliveriesResponse {
+  deliveries?: DeliveryJob[];
+  [key: string]: any;
+}
+
+interface DriverStatusResponse {
+  is_online?: boolean;
+  status?: string;
+  [key: string]: any;
+}
+
+// Keep active tracker references at module scope or attach cleanup to container
+let activeWatchId: number | null = null;
+
+export function stopGpsTracker(): void {
   if (activeWatchId !== null) {
     navigator.geolocation.clearWatch(activeWatchId);
     activeWatchId = null;
   }
 }
 
-export async function DriverDashboard(container, isLoggedIn) {
+export async function DriverDashboard(container: HTMLElement | null, isLoggedIn: boolean): Promise<void> {
   const contentContainer = (container && typeof container === "object" && container.nodeType)
     ? container
     : null;
@@ -43,9 +74,24 @@ export async function DriverDashboard(container, isLoggedIn) {
 
   // --- ASIDE / SIDEBAR ACTIONS ---
   const asideChildren = [
-    Button("Available Jobs Feed", "btn-jobs-feed", { click: () => navigate("/deliveries/available") }, "buttonx primary"),
-    Button("Earnings History", "btn-earnings", { click: () => navigate("/driver/earnings") }, "buttonx secondary"),
-    Button("SOS / Support", "btn-support", { click: () => alert("Connecting to Dispatcher...") }, "buttonx danger"),
+    Button({
+      title: "Available Jobs Feed",
+      id: "btn-jobs-feed",
+      events: { click: () => navigate("/deliveries/available") },
+      classes: "buttonx primary"
+    }),
+    Button({
+      title: "Earnings History",
+      id: "btn-earnings",
+      events: { click: () => navigate("/driver/earnings") },
+      classes: "buttonx secondary"
+    }),
+    Button({
+      title: "SOS / Support",
+      id: "btn-support",
+      events: { click: () => alert("Connecting to Dispatcher...") },
+      classes: "buttonx danger"
+    }),
     adspace("aside", PAGE_NAME, {
       layout: "vertical", width: 300, height: 250, refreshInterval: 30000
     })
@@ -76,6 +122,11 @@ export async function DriverDashboard(container, isLoggedIn) {
   contentContainer.append(layout);
   const mainElement = layout.querySelector("main") || layout.querySelector(".layout-main");
 
+  if (!mainElement) {
+    console.error("DriverDashboard: Main element layout target not found.");
+    return;
+  }
+
   // State Indicators
   const statusIndicator = createElement("span", {
     class: "driver-status-badge offline",
@@ -89,7 +140,7 @@ export async function DriverDashboard(container, isLoggedIn) {
   }, ["GPS Idle"]);
 
   // Start High-Accuracy Position Tracking
-  const startGpsTracker = () => {
+  const startGpsTracker = (): void => {
     if (!navigator.geolocation) {
       locationReadout.textContent = "Geolocation is not supported by your browser.";
       return;
@@ -99,7 +150,7 @@ export async function DriverDashboard(container, isLoggedIn) {
 
     activeWatchId = navigator.geolocation.watchPosition(
       async (position) => {
-        const payload = {
+        const payload: GpsPayload = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
           heading: position.coords.heading || 0,
@@ -110,7 +161,7 @@ export async function DriverDashboard(container, isLoggedIn) {
           await sendGPSLocation(payload);
           const speedKmH = Math.round((payload.speed || 0) * 3.6);
           locationReadout.textContent = `📍 Live GPS: ${payload.lat.toFixed(4)}, ${payload.lng.toFixed(4)} (${speedKmH} km/h)`;
-        } catch (err) {
+        } catch (err: any) {
           locationReadout.textContent = `⚠️ GPS Sync Failed: ${err?.message || "Network Error"}`;
         }
       },
@@ -122,37 +173,42 @@ export async function DriverDashboard(container, isLoggedIn) {
   };
 
   // Toggle Driver Online / Offline Status Button
-  const toggleStatusBtn = Button("Go Online", "btn-toggle-online", {
-    click: async () => {
-      const isCurrentlyOnline = statusIndicator.classList.contains("online");
-      toggleStatusBtn.disabled = true;
+  const toggleStatusBtn = Button({
+    title: "Go Online",
+    id: "btn-toggle-online",
+    events: {
+      click: async () => {
+        const isCurrentlyOnline = statusIndicator.classList.contains("online");
+        (toggleStatusBtn as HTMLButtonElement).disabled = true;
 
-      try {
-        if (isCurrentlyOnline) {
-          await setDriverOffline();
-          statusIndicator.textContent = "OFFLINE";
-          statusIndicator.className = "driver-status-badge offline";
-          toggleStatusBtn.textContent = "Go Online";
-          toggleStatusBtn.setAttribute("aria-label", "Switch duty status to online");
-          stopGpsTracker();
-          locationReadout.textContent = "GPS Tracking Stopped";
-          Notify("Driver status set to Offline", { type: "info" });
-        } else {
-          await setDriverOnline();
-          statusIndicator.textContent = "ONLINE";
-          statusIndicator.className = "driver-status-badge online";
-          toggleStatusBtn.textContent = "Go Offline";
-          toggleStatusBtn.setAttribute("aria-label", "Switch duty status to offline");
-          startGpsTracker();
-          Notify("Driver status set to Online", { type: "success" });
+        try {
+          if (isCurrentlyOnline) {
+            await setDriverOffline();
+            statusIndicator.textContent = "OFFLINE";
+            statusIndicator.className = "driver-status-badge offline";
+            toggleStatusBtn.textContent = "Go Online";
+            toggleStatusBtn.setAttribute("aria-label", "Switch duty status to online");
+            stopGpsTracker();
+            locationReadout.textContent = "GPS Tracking Stopped";
+            Notify("Driver status set to Offline", { type: "info" });
+          } else {
+            await setDriverOnline();
+            statusIndicator.textContent = "ONLINE";
+            statusIndicator.className = "driver-status-badge online";
+            toggleStatusBtn.textContent = "Go Offline";
+            toggleStatusBtn.setAttribute("aria-label", "Switch duty status to offline");
+            startGpsTracker();
+            Notify("Driver status set to Online", { type: "success" });
+          }
+        } catch (err: any) {
+          Notify(err?.message || "Failed to update driver status", { type: "error" });
+        } finally {
+          (toggleStatusBtn as HTMLButtonElement).disabled = false;
         }
-      } catch (err) {
-        Notify(err?.message || "Failed to update driver status", { type: "error" });
-      } finally {
-        toggleStatusBtn.disabled = false;
       }
-    }
-  }, "btn-primary");
+    },
+    classes: "btn-primary"
+  });
 
   toggleStatusBtn.setAttribute("aria-label", "Switch duty status to online");
 
@@ -201,10 +257,10 @@ export async function DriverDashboard(container, isLoggedIn) {
   mainElement.append(dashboardWrapper);
 
   // Load Active Deliveries Component
-  const loadDeliveries = async () => {
+  const loadDeliveries = async (): Promise<void> => {
     try {
-      const activeRes = await fetchActiveDeliveries();
-      const activeDeliveries = Array.isArray(activeRes) ? activeRes : activeRes?.deliveries || [];
+      const activeRes: any = await fetchActiveDeliveries();
+      const activeDeliveries: DeliveryJob[] = Array.isArray(activeRes) ? activeRes : activeRes?.deliveries || [];
       activeJobsContainer.replaceChildren();
 
       if (activeDeliveries.length === 0) {
@@ -224,27 +280,35 @@ export async function DriverDashboard(container, isLoggedIn) {
 
         const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dropoffAddr)}`;
 
-        const navBtn = Button("Navigate Map", `btn-nav-${jobId}`, {
-          click: () => window.open(navUrl, "_blank")
-        }, "buttonx secondary");
+        const navBtn = Button({
+          title: "Navigate Map",
+          id: `btn-nav-${jobId}`,
+          events: { click: () => window.open(navUrl, "_blank") },
+          classes: "buttonx secondary"
+        });
         navBtn.setAttribute("aria-label", `Navigate to dropoff address for Job ${jobId}`);
 
-        const completeBtn = Button("Complete Handover", `btn-complete-${jobId}`, {
-          click: async () => {
-            const otp = prompt("Enter Handover Verification OTP:");
-            if (!otp) return;
+        const completeBtn = Button({
+          title: "Complete Handover",
+          id: `btn-complete-${jobId}`,
+          events: {
+            click: async () => {
+              const otp = prompt("Enter Handover Verification OTP:");
+              if (!otp) return;
 
-            try {
-              completeBtn.disabled = true;
-              await updateDeliveryStatus(jobId, { status: "DELIVERED", otp });
-              Notify("Delivery completed successfully!", { type: "success" });
-              await loadDeliveries(); // Re-fetch list instead of whole view re-render
-            } catch (err) {
-              Notify(err?.message || "Verification failed.", { type: "error" });
-              completeBtn.disabled = false;
+              try {
+                (completeBtn as HTMLButtonElement).disabled = true;
+                await updateDeliveryStatus(jobId, { status: "DELIVERED", otp });
+                Notify("Delivery completed successfully!", { type: "success" });
+                await loadDeliveries(); // Re-fetch list instead of whole view re-render
+              } catch (err: any) {
+                Notify(err?.message || "Verification failed.", { type: "error" });
+                (completeBtn as HTMLButtonElement).disabled = false;
+              }
             }
-          }
-        }, "buttonx primary");
+          },
+          classes: "buttonx primary"
+        });
         completeBtn.setAttribute("aria-label", `Complete handover for Job ${jobId}`);
 
         const card = createElement("article", {
@@ -288,7 +352,7 @@ export async function DriverDashboard(container, isLoggedIn) {
 
   // Initial Hydration
   try {
-    const statusRes = await fetchDriverStatus();
+    const statusRes: DriverStatusResponse = await fetchDriverStatus();
     if (statusRes?.is_online || statusRes?.status === "online") {
       statusIndicator.textContent = "ONLINE";
       statusIndicator.className = "driver-status-badge online";
@@ -302,7 +366,7 @@ export async function DriverDashboard(container, isLoggedIn) {
   }
 }
 
-function createMetricCard(label, value) {
+function createMetricCard(label: string, value: string): HTMLElement {
   return createElement("div", { class: "metric-card" }, [
     createElement("dl", {}, [
       createElement("dt", { class: "metric-label" }, [label]),

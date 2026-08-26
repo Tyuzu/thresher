@@ -1,133 +1,165 @@
-import Modal from "../../components/ui/Modal.js";
+// src/ui/cart/cartPage.ts
 import { createElement } from "../../components/createElement.js";
-import { navigate } from "../../routes/navigate.js";
+import { renderCartCategory, CartItem, CartData, SectionTotals } from "./cartUtils.js";
 import { apiFetch } from "../../api/api.js";
+import { displayCheckout } from "./checkout.js";
+import Button from "../../components/base/Button.js";
 
 /**
- * Opens a robust cart preview drawer modal container.
+ * Display the user's cart dynamically.
  */
-export async function openCartModal() {
-  // 1. Immediately establish container wrapper frame and render local loading UI indicators ahead of network loops
-  const wrapper = createElement("div", {
-    style: "padding: 1rem; display: flex; flex-direction: column; gap: 1rem; min-height: 120px;"
-  });
-  
-  const loadingIndicator = createElement("p", { style: "text-align: center; color: var(--color-text-muted);" }, ["⏳ Loading cart contents..."]);
-  wrapper.appendChild(loadingIndicator);
+export async function displayCart(content: HTMLElement | null, isLoggedIn: boolean): Promise<void> {
+  if (!content) return;
 
-  // 2. Initialize modal frame context cleanly ahead of long-running network operations
-  const modalInstance = Modal({
-    title: "Cart Preview",
-    content: wrapper,
-    size: "medium",
-    closeOnOverlayClick: true,
-    onClose: () => {
-      // FIXED: Safely avoid the destructive circular reference crash
-      console.log("Cart preview modal context clean closed.");
-    }
-  });
+  const container = createElement("div", { class: "cartpage" });
+  content.replaceChildren(container);
 
-  let cart = [];
+  if (!isLoggedIn) {
+    renderMessage(container, "Please log in to view your cart.");
+    return;
+  }
+
+  let serverCart: any;
   try {
-    const resp = await apiFetch("/cart", "GET");
-    
-    // Defensive sanitization: gracefully flatten array maps across raw database storage boundaries
-    if (resp && typeof resp === "object") {
-      if (Array.isArray(resp)) {
-        cart = resp;
-      } else {
-        cart = Object.values(resp).filter(Boolean).flat();
+    serverCart = await apiFetch("/cart", "GET");
+  } catch (err) {
+    console.error("Cart fetch failed:", err);
+    renderMessage(container, "Failed to load cart. Try again.");
+    return;
+  }
+
+  // Maintain a dynamically up-to-date registry mapping categories to their active item states
+  const groupedRegistry: CartData = groupCartByCategory(serverCart);
+  const categories = Object.keys(groupedRegistry).filter(
+    cat => Array.isArray(groupedRegistry[cat]) && groupedRegistry[cat].length
+  );
+
+  if (!categories.length) {
+    renderMessage(container, "Your cart is empty.");
+    return;
+  }
+
+  const backButton = createElement("button", {
+    type: "button",
+    class: "back-button",
+    events: {
+      click: (e: MouseEvent) => {
+        e.preventDefault();
+        history.back();
       }
     }
-  } catch (err) {
-    console.error("Cart preview network fetch failure:", err);
-    wrapper.appendChild(createElement("p", { style: "color: var(--color-error);" }, ["❌ Failed to load cart items."]));
-  } finally {
-    // Safely eject active loading state indicators from container shell bounds
-    loadingIndicator.remove();
-  }
+  }, ["← Back"]);
 
-  // 3. Build state interface conditions based on cleaned datasets
-  if (!cart.length) {
-    wrapper.appendChild(createElement("p", { style: "text-align: center; margin: 1.5rem 0;" }, ["🛒 Your cart is empty."]));
-    wrapper.appendChild(createElement("p", { style: "text-align: center; font-size: 0.9rem; color: var(--color-text-muted);" }, ["Add items to see them here."]));
-  } else {
-    const grouped = groupCart(cart);
-    const list = createElement("ul", { style: "list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto;" });
+  const titleHeader = createElement("h2", {}, ["Your Cart"]);
 
-    grouped.forEach(item => {
-      const quantity = Number(item.quantity) || 0;
-      const basePriceInPaise = Number(item.price) || 0;
-      
-      const label = `${item.itemName || "Unknown Item"} (${quantity} ${item.unit || "unit"})`;
-      const entityInfo = item.entityName ? ` from ${item.entityName}` : "";
-      
-      // Convert raw backend currency structures cleanly (Paise -> INR)
-      const lineItemTotalRupees = (basePriceInPaise / 100) * quantity;
-      const priceDisplayString = `₹${lineItemTotalRupees.toFixed(2)}`;
+  container.replaceChildren(backButton, titleHeader);
 
-      const li = createElement("li", {
-        style: "display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--color-border-light);"
-      }, [
-        createElement("span", { style: "font-size: 0.95rem;" }, [label + entityInfo]),
-        createElement("span", { style: "font-weight: 500;" }, [priceDisplayString])
-      ]);
-      list.appendChild(li);
+  const sectionTotals: SectionTotals = {};
+  const grandTotalText = createElement("h3", { class: "grand-total" });
+
+  categories.forEach(category => {
+    renderCartCategory({
+      cart: groupedRegistry, // Pass registry reference down for inline sub-mutations
+      category,
+      sectionTotals,
+      updateGrandTotal,
+      displayCheckout,
+      contentContainer: container
     });
-
-    // FIXED: Correct conversion calculation across aggregate matrix boundaries (Paise -> INR conversion match)
-    const rawTotalPaise = grouped.reduce((sum, item) => sum + ((Number(item.quantity) || 0) * (Number(item.price) || 0)), 0);
-    const grandTotalRupees = rawTotalPaise / 100;
-
-    wrapper.appendChild(createElement("h4", { style: "margin: 0 0 0.5rem 0;" }, ["🛒 Your Cart"]));
-    wrapper.appendChild(list);
-    wrapper.appendChild(createElement("p", {
-      style: "font-weight: bold; text-align: right; margin-top: 1rem; font-size: 1.1rem; color: var(--color-text);"
-    }, [`Total: ₹${grandTotalRupees.toFixed(2)}`]));
-  }
-
-  // 4. Mount unified system action buttons
-  const goToCartButton = createElement("button", {
-    style: `
-      margin-top: 1rem;
-      padding: 0.6rem 1.2rem;
-      background-color: var(--color-accent, #007bff);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      width: 100%;
-      font-weight: 500;
-      cursor: pointer;
-    `
-  }, ["Go to Cart"]);
-
-  goToCartButton.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (modalInstance && typeof modalInstance.close === "function") {
-      modalInstance.close();
-    }
-    navigate("/cart");
   });
 
-  wrapper.appendChild(goToCartButton);
+  const checkoutAllBtn = Button({
+    title: "Checkout All",
+    id: "checkout-all-btn",
+    events: {
+      click: () => {
+        // Extract fresh items from the current registry state instead of stale closures
+        const allItems = Object.values(groupedRegistry).flat().filter(Boolean) as CartItem[];
+        
+        // Remove zero-quantity or deleted item records before proceeding
+        const activeItems = allItems.filter(item => (Number(item.quantity) || 0) > 0);
+
+        if (!activeItems.length) {
+          alert("There are no active items in your cart to checkout.");
+          return;
+        }
+        
+        displayCheckout(container, activeItems);
+      }
+    },
+    classes: "buttonx primary"
+  }) as HTMLButtonElement;
+
+  const grandBox = createElement("div", { class: "grand-box" }, [
+    grandTotalText,
+    checkoutAllBtn
+  ]);
+
+  container.appendChild(grandBox);
+  updateGrandTotal();
+
+  /* ---------------- Internals ---------------- */
+
+  function updateGrandTotal(): void {
+    const total = Object.values(sectionTotals).reduce(
+      (sum, val) => sum + (Number(val) || 0),
+      0
+    );
+    grandTotalText.replaceChildren(`Grand Total: ₹${total.toFixed(2)}`);
+    
+    // Disable checkout button dynamically if cart total drops to zero
+    if (total <= 0) {
+      checkoutAllBtn.disabled = true;
+    }
+  }
 }
 
 /**
- * Safely compresses multiple product rows matching similar structural identities.
+ * Group cart items by category and merge duplicates safely
  */
-function groupCart(items) {
-  if (!Array.isArray(items)) return [];
-  
-  const map = {};
-  items.forEach(it => {
+function groupCartByCategory(cartData: any): CartData {
+  if (!cartData || typeof cartData !== "object") return {};
+
+  let rawItems: CartItem[] = [];
+  if (Array.isArray(cartData)) {
+    rawItems = cartData;
+  } else {
+    rawItems = Object.values(cartData).filter(Boolean).flat() as CartItem[];
+  }
+
+  const byCategory: Record<string, CartItem[]> = {};
+  rawItems.forEach(it => {
     if (!it) return;
-    const key = `${it.itemId || "null"}__${it.entityId || "null"}`;
-    if (!map[key]) {
-      map[key] = { ...it };
-      map[key].quantity = Number(map[key].quantity) || 0;
-    } else {
-      map[key].quantity += (Number(it.quantity) || 0);
+    const cat = String(it.category || "unknown").trim().toLowerCase();
+    if (!byCategory[cat]) {
+      byCategory[cat] = [];
     }
+    byCategory[cat].push(it);
   });
-  return Object.values(map);
+
+  const grouped: CartData = {};
+  // Safeguard against prototype pollution using explicit Object.keys looping arrays
+  Object.keys(byCategory).forEach(cat => {
+    const map: Record<string, CartItem> = {};
+    byCategory[cat].forEach(it => {
+      if (!it) return;
+      const key = `${it.itemId || "null"}__${it.entityId || "null"}`;
+      if (!map[key]) {
+        map[key] = { ...it };
+        map[key].quantity = Number(map[key].quantity) || 0;
+      } else {
+        map[key].quantity = (Number(map[key].quantity) || 0) + (Number(it.quantity) || 0);
+      }
+    });
+    grouped[cat] = Object.values(map);
+  });
+
+  return grouped;
 }
+
+function renderMessage(container: HTMLElement, message: string): void {
+  if (!container) return;
+  container.replaceChildren(createElement("p", { class: "cart-message-info" }, [String(message)]));
+}
+
+export default displayCart;

@@ -1,13 +1,41 @@
-// src/ui/cart/printInvoice.js
+// src/ui/cart/printInvoice.ts
 import Notify from "../../components/ui/Notify.js";
+
+// --- INTERFACES & TYPES ---
+export interface InvoiceItem {
+  price?: number;
+  quantity?: number;
+  itemName?: string;
+  name?: string;
+  [key: string]: any;
+}
+
+export interface InvoiceOrder {
+  orderid?: string | number;
+  createdAt?: string | number;
+  created_at?: string | number;
+  status?: string;
+  paymentStatus?: string;
+  payment_status?: string;
+  customerName?: string;
+  customer_name?: string;
+  phone?: string;
+  address?: string;
+  subtotal?: number;
+  discount?: number;
+  tax?: number;
+  delivery?: number;
+  total?: number;
+  [key: string]: any;
+}
 
 /* ────────────────────── Core Functional Helpers ────────────────────── */
 
-function toRupees(amount) {
+function toRupees(amount?: number): number {
   return Number(amount || 0) / 100;
 }
 
-function formatINR(amount) {
+function formatINR(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
@@ -18,7 +46,7 @@ function formatINR(amount) {
 /**
  * Defensive XSS Sanitizer to safeguard HTML string templates
  */
-function escapeHTML(str) {
+function escapeHTML(str: any): string {
   if (!str) return "";
   return String(str)
     .replace(/&/g, "&amp;")
@@ -30,7 +58,7 @@ function escapeHTML(str) {
 
 /* ────────────────────── Main Print Processing ────────────────────── */
 
-export function printInvoice(order, items = []) {
+export function printInvoice(order: InvoiceOrder, items: InvoiceItem[] | Record<string, InvoiceItem[]> = []): void {
   if (!order || typeof order !== "object") {
     Notify("Invalid order data payload", { type: "error", duration: 3000 });
     return;
@@ -46,8 +74,10 @@ export function printInvoice(order, items = []) {
     return;
   }
 
+  const flattenedItems = Array.isArray(items) ? items : Object.values(items || {}).flat();
+
   // FIXED: Escaped all dynamic array property maps securely against code injection vulnerabilities
-  const itemRows = (Array.isArray(items) ? items : [])
+  const itemRows = flattenedItems
     .map(item => {
       const price = toRupees(item.price || 0);
       const total = price * (Number(item.quantity) || 0);
@@ -204,3 +234,5 @@ export function printInvoice(order, items = []) {
 
   invoiceWindow.document.close();
 }
+
+export default printInvoice;

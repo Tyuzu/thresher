@@ -1,5 +1,5 @@
 // eventMerchPage.ts
-import { displayMerchandise } from "./merchService.js";
+import { displayMerchandise } from "./merchUI.js";
 import { createElement } from "../../components/createElement.js";
 import { apiFetch } from "../../api/api.js";
 import { getState } from "../../state/state.js";

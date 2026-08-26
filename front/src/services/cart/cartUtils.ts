@@ -3,32 +3,65 @@ import Button from "../../components/base/Button.js";
 import { createElement } from "../../components/createElement.js";
 import Notify from "../../components/ui/Notify.js";
 
+// --- INTERFACES & TYPES ---
+export interface CartItem {
+  itemId?: string | number;
+  id?: string | number;
+  entityId?: string | number;
+  entityType?: string;
+  category?: string;
+  quantity?: number;
+  price?: number;
+  itemName?: string;
+  itemType?: string;
+  entityName?: string;
+  [key: string]: any;
+}
+
+export type CartData = Record<string, CartItem[]>;
+export type SectionTotals = Record<string, number>;
+
+export interface RenderCartCategoryProps {
+  cart?: CartData;
+  category?: string;
+  contentContainer: HTMLElement;
+  sectionTotals?: SectionTotals;
+  updateGrandTotal: () => void;
+  displayCheckout: (container: HTMLElement, items: CartItem[]) => void;
+}
+
+interface QtyTimerContext {
+  timerId: ReturnType<typeof setTimeout>;
+  resolve?: (value?: unknown) => void;
+  promise?: Promise<void>;
+}
+
 /* ────────────────────── Constants & Helpers ────────────────────── */
 
-const toRupees = (paise = 0) => paise / 100;
-const formatPrice = (value = 0) => `₹${value.toFixed(2)}`;
-const normalize = (v) => typeof v === "string" ? v.trim().toLowerCase() : "";
-const capitalize = (str = "") => str ? str[0].toUpperCase() + str.slice(1) : "";
+const toRupees = (paise: number = 0): number => paise / 100;
+const formatPrice = (value: number = 0): string => `₹${value.toFixed(2)}`;
+const normalize = (v: any): string => typeof v === "string" ? v.trim().toLowerCase() : "";
+const capitalize = (str: string = ""): string => str ? str[0].toUpperCase() + str.slice(1) : "";
 
-const qtyUpdateTimers = new Map();
+const qtyUpdateTimers = new Map<string, QtyTimerContext>();
 
-const getItemIdentityKey = (item) => 
+const getItemIdentityKey = (item: CartItem): string => 
   `${item?.itemId ?? "unknown"}__${item?.entityId ?? "none"}`;
 
-const getQtyTimerKey = (item, category) =>
+const getQtyTimerKey = (item: CartItem, category: string): string =>
   `${normalize(category)}:${getItemIdentityKey(item)}:${normalize(item?.entityType)}`;
 
 /* ────────────────────── API Layer ────────────────────── */
 
-function buildPayload(base, entityId, entityType) {
+function buildPayload(base: Record<string, any>, entityId?: string | number, entityType?: string): Record<string, any> {
   const payload = { ...base };
-  if (entityId) payload.entityId = entityId;
+  if (entityId !== undefined && entityId !== null) payload.entityId = entityId;
   if (entityType) payload.entityType = normalize(entityType);
   return payload;
 }
 
 export const CartAPI = {
-  remove(itemId, category, entityId, entityType) {
+  remove(itemId: string | number, category: string, entityId?: string | number, entityType?: string): Promise<any> {
     return apiFetch(
       "/cart/item",
       "DELETE",
@@ -36,7 +69,7 @@ export const CartAPI = {
     );
   },
 
-  updateQty(itemId, category, quantity, entityId, entityType) {
+  updateQty(itemId: string | number, category: string, quantity: number, entityId?: string | number, entityType?: string): Promise<any> {
     return apiFetch(
       "/cart/item",
       "PATCH",
@@ -44,11 +77,11 @@ export const CartAPI = {
     );
   },
 
-  clear() {
+  clear(): Promise<any> {
     return apiFetch("/cart", "DELETE");
   },
 
-  updateCategory(category, items) {
+  updateCategory(category: string, items: CartItem[]): Promise<any> {
     return apiFetch("/cart/update", "POST", { category, items });
   }
 };
@@ -62,7 +95,7 @@ export function renderCartCategory({
   sectionTotals = {},
   updateGrandTotal,
   displayCheckout
-}) {
+}: RenderCartCategoryProps): void {
   const items = cart[category];
 
   if (!Array.isArray(items) || !items.length) {
@@ -77,11 +110,11 @@ export function renderCartCategory({
     createElement("h3", {}, [])
   ]);
 
-  const checkoutBtn = Button(
-    "Checkout",
-    "checkoutbtn",
-    {
-      click: async (e) => {
+  const checkoutBtn = Button({
+    title: "Checkout",
+    id: "checkoutbtn",
+    events: {
+      click: async (e: MouseEvent) => {
         e.preventDefault();
         // FIXED: Flush pending debounce updates to guarantee data consistency before checkout
         await flushCategoryTimers();
@@ -90,8 +123,8 @@ export function renderCartCategory({
         }
       }
     },
-    "buttonx primary"
-  );
+    classes: "buttonx primary"
+  });
 
   section.append(header, cardsContainer, subtotalDisplay, checkoutBtn);
   contentContainer.appendChild(section);
@@ -100,7 +133,7 @@ export function renderCartCategory({
 
   /* ────────────────────── Internal Logic ────────────────────── */
 
-  function render() {
+  function render(): void {
     if (!items.length) {
       cleanup();
       return;
@@ -111,19 +144,22 @@ export function renderCartCategory({
     updateTotals();
   }
 
-  function updateHeader() {
-    header.firstChild.textContent = `${capitalize(category)} (${items.length})`;
+  function updateHeader(): void {
+    const headingEl = header.firstChild as HTMLElement;
+    if (headingEl) {
+      headingEl.textContent = `${capitalize(category)} (${items.length})`;
+    }
     checkoutBtn.textContent = `Checkout ${capitalize(category)}`;
   }
 
-  function renderItems() {
+  function renderItems(): void {
     // FIXED: Build the UI from the current state rather than stale list offsets
     cardsContainer.replaceChildren(
       ...items.map((item) => createCard(item))
     );
   }
 
-  function updateTotals() {
+  function updateTotals(): void {
     const subtotal = items.reduce(
       (sum, x) => sum + toRupees(x.price) * (Number(x.quantity) || 1),
       0
@@ -138,7 +174,7 @@ export function renderCartCategory({
     );
   }
 
-  function cleanup() {
+  function cleanup(): void {
     for (const item of items) {
       clearQtyTimer(item);
     }
@@ -149,7 +185,7 @@ export function renderCartCategory({
     updateGrandTotal();
   }
 
-  function createCard(item) {
+  function createCard(item: CartItem): HTMLElement {
     const price = toRupees(item.price);
     const qty = Number(item.quantity) || 1;
     const targetKey = getItemIdentityKey(item);
@@ -162,7 +198,7 @@ export function renderCartCategory({
     ]);
   }
 
-  function createDetails(it) {
+  function createDetails(it: CartItem): HTMLElement {
     const nodes = [createElement("p", {}, [`Item: ${it.itemName || "Item"}`])];
     if (it.itemType) nodes.push(createElement("p", {}, [`Type: ${it.itemType}`]));
     if (it.entityName) {
@@ -171,48 +207,54 @@ export function renderCartCategory({
     return createElement("div", { class: "cart-card-details" }, nodes);
   }
 
-  function createQuantityControls(targetKey, qty) {
+  function createQuantityControls(targetKey: string, qty: number): HTMLElement {
     return createElement("div", { class: "quantity-line" }, [
       createElement("span", {}, ["Qty:"]),
-      Button("−", "", { click: () => changeQtyByIdentity(targetKey, -1) }, "buttonx subtle"),
+      Button({
+        title: "−",
+        events: { click: () => changeQtyByIdentity(targetKey, -1) },
+        classes: "buttonx subtle"
+      }),
       createElement("span", { class: "quantity-value" }, [String(qty)]),
-      Button("+", "", { click: () => changeQtyByIdentity(targetKey, 1) }, "buttonx subtle")
+      Button({
+        title: "+",
+        events: { click: () => changeQtyByIdentity(targetKey, 1) },
+        classes: "buttonx subtle"
+      })
     ]);
   }
 
-  function createPricing(price, qty) {
+  function createPricing(price: number, qty: number): HTMLElement {
     return createElement("div", { class: "cart-card-pricing" }, [
       createElement("p", {}, [`Unit Price: ${formatPrice(price)}`]),
       createElement("p", {}, [`Subtotal: ${formatPrice(price * qty)}`])
     ]);
   }
 
-  function createActions(item, targetKey) {
+  function createActions(item: CartItem, targetKey: string): HTMLElement {
     return createElement("div", { class: "action-row" }, [
-      Button(
-        "✕ Remove",
-        "",
-        { click: () => handleRemoveByIdentity(item, targetKey) },
-        "buttonx danger"
-      ),
-      Button(
-        "♡ Save for Later",
-        "",
-        {
+      Button({
+        title: "✕ Remove",
+        events: { click: () => handleRemoveByIdentity(item, targetKey) },
+        classes: "buttonx danger"
+      }),
+      Button({
+        title: "♡ Save for Later",
+        events: {
           click: () => alert(`Saved "${item.itemName || "item"}" for later`)
         },
-        "buttonx secondary"
-      )
+        classes: "buttonx secondary"
+      })
     ]);
   }
 
   // FIXED: Look up items by identifier key instead of array indices to prevent index shifting bugs
-  async function handleRemoveByIdentity(item, targetKey) {
+  async function handleRemoveByIdentity(item: CartItem, targetKey: string): Promise<void> {
     try {
       clearQtyTimer(item);
 
       await CartAPI.remove(
-        item.itemId,
+        item.itemId!,
         category,
         item.entityId,
         item.entityType
@@ -225,13 +267,13 @@ export function renderCartCategory({
 
       Notify("Item removed from cart", { type: "success", duration: 2000 });
       render();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       Notify("Failed to remove item", { type: "error", duration: 3000 });
     }
   }
 
-  function clearQtyTimer(item) {
+  function clearQtyTimer(item: CartItem): void {
     const key = getQtyTimerKey(item, category);
     const executionContext = qtyUpdateTimers.get(key);
 
@@ -241,20 +283,20 @@ export function renderCartCategory({
     }
   }
 
-  function scheduleQtyUpdate(item) {
+  function scheduleQtyUpdate(item: CartItem): void {
     const key = getQtyTimerKey(item, category);
     clearQtyTimer(item);
 
-    let resolvePromise;
+    let resolvePromise!: (value?: unknown) => void;
     const flushPromise = new Promise((res) => { resolvePromise = res; });
 
     const timerId = setTimeout(async () => {
       qtyUpdateTimers.delete(key);
       try {
         await CartAPI.updateQty(
-          item.itemId,
+          item.itemId!,
           category,
-          item.quantity,
+          item.quantity!,
           item.entityId,
           item.entityType
         );
@@ -270,8 +312,8 @@ export function renderCartCategory({
     qtyUpdateTimers.set(key, { timerId, resolve: resolvePromise, promise: flushPromise });
   }
 
-  async function flushCategoryTimers() {
-    const activeFlushes = [];
+  async function flushCategoryTimers(): Promise<void> {
+    const activeFlushes: Promise<void>[] = [];
     for (const [key, ctx] of qtyUpdateTimers.entries()) {
       if (key.startsWith(`${normalize(category)}:`)) {
         clearTimeout(ctx.timerId);
@@ -283,9 +325,9 @@ export function renderCartCategory({
           if (!targetItem) return;
           try {
             await CartAPI.updateQty(
-              targetItem.itemId,
+              targetItem.itemId!,
               category,
-              targetItem.quantity,
+              targetItem.quantity!,
               targetItem.entityId,
               targetItem.entityType
             );
@@ -301,7 +343,7 @@ export function renderCartCategory({
     }
   }
 
-  function changeQtyByIdentity(targetKey, delta) {
+  function changeQtyByIdentity(targetKey: string, delta: number): void {
     const item = items.find(it => getItemIdentityKey(it) === targetKey);
     if (!item) return;
 
@@ -312,3 +354,5 @@ export function renderCartCategory({
     scheduleQtyUpdate(item);
   }
 }
+
+export default renderCartCategory;

@@ -1,20 +1,36 @@
-import { apiFetch } from "../../../api/api";
+// displayPlaceNearby.ts
+
+import { apiFetch } from "../../../api/api.js";
 import { createElement } from "../../../components/createElement.js";
-import Button from "../../../components/base/Button";
+import Button from "../../../components/base/Button.js";
 import { navigate } from "../../../routes";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 import Imagex from "../../../components/base/Imagex.js";
 
-let allPlaces = [];
+// ---------------------------------
+// INTERFACES & TYPES
+// ---------------------------------
+
+export interface NearbyPlace {
+    placeid?: string | number;
+    name?: string;
+    category?: string;
+    banner?: string;
+    capacity?: number;
+    reviewCount?: number;
+    [key: string]: any;
+}
+
+let allPlaces: NearbyPlace[] = [];
 let activeCategory = "All";
-let placeCardsCache = {}; // category => array of card elements
+let placeCardsCache: Record<string, HTMLElement[]> = {}; // category => array of card elements
 
 let currentView = "grid"; // "grid" or "list"
 
-export async function displayPlaceNearby(container, placeId) {
+export async function displayPlaceNearby(container: HTMLElement, placeId: string | number): Promise<void> {
     clearElement(container);
 
-    const nearbyPlaces = await apiFetch(`/suggestions/places/nearby?place=${placeId}&lat=28.6139&lng=77.2090`);
+    const nearbyPlaces = (await apiFetch(`/suggestions/places/nearby?place=${placeId}&lat=28.6139&lng=77.2090`, "GET")) as NearbyPlace[];
     if (!Array.isArray(nearbyPlaces) || nearbyPlaces.length === 0) {
         container.appendChild(createElement("p", {}, ["No nearby Places found."]));
         return;
@@ -27,9 +43,9 @@ export async function displayPlaceNearby(container, placeId) {
     const controlsBar = createElement("div", { class: "places-controls" }, [
         buildFilterBar(categories),
         buildViewToggle()
-    ]);
+    ]) as HTMLElement;
 
-    const contentWrapper = createElement("div", { class: `places-wrapper ${currentView}`, id: "places-wrapper" }, []);
+    const contentWrapper = createElement("div", { class: `places-wrapper ${currentView}`, id: "places-wrapper" }, []) as HTMLElement;
 
     container.appendChild(controlsBar);
     container.appendChild(contentWrapper);
@@ -38,18 +54,18 @@ export async function displayPlaceNearby(container, placeId) {
     showCategory(activeCategory, contentWrapper);
 }
 
-function buildViewToggle() {
-    const toggleWrapper = createElement("div", { class: "view-toggle" }, []);
+function buildViewToggle(): HTMLElement {
+    const toggleWrapper = createElement("div", { class: "view-toggle" }, []) as HTMLElement;
 
     const gridBtn = createElement("button", 
         currentView === "grid" ? { class: "active" } : {}, 
         ["🔳 Grid"]
-    );
+    ) as HTMLButtonElement;
 
     const listBtn = createElement("button", 
         currentView === "list" ? { class: "active" } : {}, 
         ["📋 List"]
-    );
+    ) as HTMLButtonElement;
 
     gridBtn.addEventListener("click", () => {
         if (currentView !== "grid") {
@@ -70,8 +86,7 @@ function buildViewToggle() {
     return toggleWrapper;
 }
 
-
-function updateView() {
+function updateView(): void {
     const wrapper = document.getElementById("places-wrapper");
     if (wrapper) {
         wrapper.classList.remove("grid", "list");
@@ -82,42 +97,42 @@ function updateView() {
     const toggle = document.querySelector(".view-toggle");
     if (toggle) {
         toggle.querySelectorAll("button").forEach(btn => {
+            const btnText = btn.textContent || "";
             btn.classList.toggle("active", 
-                (currentView === "grid" && btn.textContent.includes("Grid")) ||
-                (currentView === "list" && btn.textContent.includes("List"))
+                (currentView === "grid" && btnText.includes("Grid")) ||
+                (currentView === "list" && btnText.includes("List"))
             );
         });
     }
 }
 
-
-function clearElement(el) {
+function clearElement(el: HTMLElement): void {
     while (el.firstChild) {
-el.removeChild(el.firstChild);
-}
+        el.removeChild(el.firstChild);
+    }
 }
 
-function getCategories(places) {
+function getCategories(places: NearbyPlace[]): string[] {
     return ["All", ...new Set(places.map(p => p.category || "Uncategorized"))];
 }
 
-function buildFilterBar(categories) {
-    const filterBar = createElement("div", { id: "category-filter", class: "filter-bar" }, []);
+function buildFilterBar(categories: string[]): HTMLElement {
+    const filterBar = createElement("div", { id: "category-filter", class: "filter-bar" }, []) as HTMLElement;
     categories.forEach(category => {
         const button = createElement("button", {
             class: category === activeCategory ? "filter-button buttonx active" : "filter-button buttonx"
-        }, [category]);
+        }, [category]) as HTMLButtonElement;
 
         button.addEventListener("click", () => {
             if (activeCategory === category) {
-return;
-}
+                return;
+            }
             activeCategory = category;
             updateFilterButtons(filterBar, category);
             const wrapper = document.getElementById("places-wrapper");
             if (wrapper) {
-showCategory(category, wrapper);
-}
+                showCategory(category, wrapper);
+            }
         });
 
         filterBar.appendChild(button);
@@ -125,13 +140,13 @@ showCategory(category, wrapper);
     return filterBar;
 }
 
-function updateFilterButtons(filterBar, selectedCategory) {
-    [...filterBar.children].forEach(btn => {
+function updateFilterButtons(filterBar: HTMLElement, selectedCategory: string): void {
+    ([...filterBar.children] as HTMLElement[]).forEach(btn => {
         btn.classList.toggle("active", btn.textContent === selectedCategory);
     });
 }
 
-function buildPlaceCardsCache() {
+function buildPlaceCardsCache(): void {
     placeCardsCache = {};
 
     const allCategoryCards = allPlaces.map((place, index) => placeCard(place, index));
@@ -145,7 +160,7 @@ function buildPlaceCardsCache() {
     });
 }
 
-function showCategory(category, wrapper) {
+function showCategory(category: string, wrapper: HTMLElement): void {
     clearElement(wrapper);
 
     const cards = placeCardsCache[category] || [];
@@ -159,9 +174,10 @@ function showCategory(category, wrapper) {
     });
 }
 
-function placeCard(place, index = 0) {
-    // const imgSrc = place.imageUrl || "/images/place-placeholder.jpg";
-    const imgSrc = resolveImagePath(EntityType.PLACE, PictureType.THUMB, place.banner);
+function placeCard(place: NearbyPlace, index: number = 0): HTMLElement {
+    const imgSrc = place.banner 
+        ? resolveImagePath(EntityType.PLACE, PictureType.THUMB, place.banner) 
+        : "";
 
     const card = createElement("div", {
         class: "nearby-item",
@@ -177,9 +193,13 @@ function placeCard(place, index = 0) {
             createElement("p", {}, [`⭐ Review Count: ${place.reviewCount ?? 0}`]),
         ]),
         Button("View Details", `nearby-btn-${index}`, {
-            click: () => navigate(`/place/${place.placeid}`)
+            click: () => {
+                if (place.placeid !== undefined && place.placeid !== null) {
+                    navigate(`/place/${place.placeid}`);
+                }
+            }
         }),
-    ]);
+    ]) as HTMLElement;
 
     return card;
 }

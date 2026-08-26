@@ -1,37 +1,71 @@
+// displayPlaceEvents.ts
+
 import { SRC_URL, apiFetch } from "../../../api/api.js";
 import Button from "../../../components/base/Button.js";
 import Datex from "../../../components/base/Datex.js";
 import { createElement } from "../../../components/createElement.js";
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 
-// ─── Events (Arena) ────────────────────────────────────────────────────────────
-let allEvents = [];
+// ---------------------------------
+// INTERFACES & TYPES
+// ---------------------------------
+
+export interface PlaceEvent {
+    eventid?: string | number;
+    title: string;
+    category?: string;
+    banner_image?: string;
+    start_date_time?: string | number | Date;
+    end_date_time?: string | number | Date;
+    placename?: string;
+    description?: string;
+    [key: string]: any;
+}
+
+interface EventsApiResponse {
+    events?: PlaceEvent[];
+    total?: number;
+    [key: string]: any;
+}
+
+let allEvents: PlaceEvent[] = [];
 let activeEventCategory = "All";
 
-export async function displayPlaceEvents(container, placeId, _isCreator, _isLoggedIn) {
+export async function displayPlaceEvents(
+    container: HTMLElement,
+    placeId: string | number,
+    _isCreator?: boolean,
+    _isLoggedIn?: boolean
+): Promise<void> {
     fetchAndDisplayEvents(container, placeId, 1, 10);
 }
 
-function fetchAndDisplayEvents(container, placeid, page = 1, limit = 10) {
+function fetchAndDisplayEvents(
+    container: HTMLElement,
+    placeid: string | number,
+    page: number = 1,
+    limit: number = 10
+): void {
     container.innerHTML = ''; // Clear old content
 
     const endpoint = `/place/${placeid}/events?page=${page}&limit=${limit}`;
 
-    apiFetch(endpoint)
-        .then(data => {
-            if (data.events !== null && data.events !== undefined) {
+    apiFetch(endpoint, "GET")
+        .then((resp) => {
+            const data = resp as EventsApiResponse;
+            if (data && data.events !== null && data.events !== undefined) {
                 allEvents = data.events;
-                const total = data.total;
+                const total = data.total ?? 0;
 
                 // Get unique categories from events
                 const categories = ["All", ...new Set(allEvents.map(e => e.category || "Uncategorized"))];
 
                 // Render filter bar
-                const filterBar = createElement("div", { class: "filter-bar" }, []);
+                const filterBar = createElement("div", { class: "filter-bar" }, []) as HTMLElement;
                 categories.forEach(category => {
                     const btn = createElement("button", {
                         class: category === activeEventCategory ? "filter-button active" : "filter-button"
-                    }, [category]);
+                    }, [category]) as HTMLButtonElement;
 
                     btn.addEventListener("click", () => {
                         activeEventCategory = category;
@@ -68,16 +102,16 @@ function fetchAndDisplayEvents(container, placeid, page = 1, limit = 10) {
 }
 
 // Helper to update active filter button UI
-function updateEventFilterButtons(filterBar, selectedCategory) {
-    [...filterBar.children].forEach(btn => {
+function updateEventFilterButtons(filterBar: HTMLElement, selectedCategory: string): void {
+    ([...filterBar.children] as HTMLElement[]).forEach(btn => {
         btn.classList.toggle("active", btn.textContent === selectedCategory);
     });
 }
 
-function renderEvents(container, events) {
+function renderEvents(container: HTMLElement, events: PlaceEvent[]): void {
     container.innerHTML = ''; // Clear old events
 
-    const containerx = createElement('div', { class: "hvflex" }, []);
+    const containerx = createElement('div', { class: "hvflex" }, []) as HTMLElement;
     container.appendChild(containerx);
 
     const filtered = activeEventCategory === "All"
@@ -103,7 +137,6 @@ function renderEvents(container, events) {
 
         if (event.banner_image) {
             const banner = document.createElement('img');
-            // banner.src = `${SRC_URL}/eventpic/banner/thumb/${event.banner_image}`;
             banner.src = resolveImagePath(EntityType.USER, PictureType.THUMB, `${event.banner_image}`);
             banner.alt = event.title;
             banner.style.width = '100%';
@@ -113,10 +146,8 @@ function renderEvents(container, events) {
         }
 
         const time = document.createElement('p');
-        // const start = new Date(event.start_date_time).toLocaleString();
-        const start = Datex(event.start_date_time, true);
-        // const end = new Date(event.end_date_time).toLocaleString();
-        const end = Datex(event.end_date_time, true);
+        const start = event.start_date_time ? String(Datex(event.start_date_time, true)) : "";
+        const end = event.end_date_time ? String(Datex(event.end_date_time, true)) : "";
         time.textContent = `From: ${start} To: ${end}`;
         card.appendChild(time);
 
@@ -129,13 +160,20 @@ function renderEvents(container, events) {
     });
 }
 
-function renderPaginationControls(container, total, currentPage, limit, rootContainer, placeid) {
+function renderPaginationControls(
+    container: HTMLElement,
+    total: number,
+    currentPage: number,
+    limit: number,
+    rootContainer: HTMLElement,
+    placeid: string | number
+): void {
     container.innerHTML = '';
     const totalPages = Math.ceil(total / limit);
 
     for (let i = 1; i <= totalPages; i++) {
         const btn = document.createElement('button');
-        btn.textContent = i;
+        btn.textContent = String(i);
         btn.disabled = i === currentPage;
         btn.style.marginRight = '5px';
 
@@ -148,10 +186,14 @@ function renderPaginationControls(container, total, currentPage, limit, rootCont
     }
 }
 
-function openEventModal(event) {
+function openEventModal(event: PlaceEvent): void {
     const modal = document.getElementById('event-modal');
     const overlay = document.getElementById('modal-overlay');
     const content = document.getElementById('modal-content');
+
+    if (!modal || !overlay || !content) {
+        return;
+    }
 
     content.innerHTML = ''; // Clear old content
 
@@ -164,8 +206,9 @@ function openEventModal(event) {
     content.appendChild(desc);
 
     const time = document.createElement('p');
-    // time.textContent = `From ${new Date(event.start_date_time).toLocaleString()} to ${new Date(event.end_date_time).toLocaleString()}`;
-    time.textContent = `From ${Datex(event.start_date_time, true)} to ${Datex(event.end_date_time, true)}`;
+    const start = event.start_date_time ? String(Datex(event.start_date_time, true)) : "";
+    const end = event.end_date_time ? String(Datex(event.end_date_time, true)) : "";
+    time.textContent = `From ${start} to ${end}`;
     content.appendChild(time);
 
     const category = document.createElement('p');
@@ -190,21 +233,21 @@ function openEventModal(event) {
     overlay.style.display = 'block';
 }
 
-function createModalIfNotExists() {
+function createModalIfNotExists(): void {
     if (document.getElementById('event-modal')) {
-return;
-}
+        return;
+    }
 
     const modal = createElement("div", {
         id: "event-modal", class: "event-modal",
-    }, []);
+    }, []) as HTMLElement;
 
     const closeBtn = Button("Close", "", {
         click: () => {
             modal.style.display = 'none';
             overlay.style.display = 'none';
         }
-    }, "buttonx secondary");
+    }, "buttonx secondary") as HTMLElement;
     modal.appendChild(closeBtn);
 
     const content = document.createElement('div');
@@ -220,9 +263,8 @@ return;
     overlay.style.right = '0';
     overlay.style.bottom = '0';
     overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-    overlay.style.zIndex = 999;
+    overlay.style.zIndex = "999";
 
     document.body.appendChild(overlay);
     document.body.appendChild(modal);
 }
-

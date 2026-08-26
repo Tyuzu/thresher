@@ -1,19 +1,28 @@
-import { createElement } from "../../components/createElement.js";
-import { Imagex } from "../../components/base/Imagex.js";
-import { apiFetch, SRC_URL } from "../../api/api.js";
+// zoomboxMouseHelpers.ts
+
 import {
     updateTransform,
     resetTransformState
 } from "../../components/ui/zoomBox/zoomboxHelpers.js";
-import {dispatchZoomBoxEvent} from "../../utils/eventDispatcher.js";
+import { dispatchZoomBoxEvent } from "../../utils/eventDispatcher.js";
+import { ZoomBoxState } from "./pointerEvents.js"; // Or define inline if in a separate file
+
+// ---------- Extended Interfaces ----------
+
+export interface MouseZoomBoxState extends ZoomBoxState {
+    lastMouseX?: number;
+    lastMouseY?: number;
+}
+
+// ---------- Mouse Handlers ----------
 
 /**
  * Standalone mouse move handler for panning zoomed images
- * @param {MouseEvent} e - Browser mousemove event
- * @param {Object} state - The ZoomBox transform state object
- * @param {HTMLElement} img - Target image element
+ * @param e - Browser mousemove event
+ * @param state - The ZoomBox transform state object
+ * @param img - Target image element
  */
-export function handleMouseMove(e, state, img) {
+export function handleMouseMove(e: MouseEvent, state: MouseZoomBoxState, img: HTMLElement): void {
     if (!state || !state.isDragging || state.zoomLevel <= 1 || !img) return;
     
     e.preventDefault();
@@ -52,11 +61,11 @@ export function handleMouseMove(e, state, img) {
 
 /**
  * Ends dragging state and triggers smooth inertia animation.
- * @param {MouseEvent} e - Browser mouseup event
- * @param {Object} state - The ZoomBox transform state object
- * @param {HTMLElement} img - Target image element
+ * @param e - Browser mouseup event
+ * @param state - The ZoomBox transform state object
+ * @param img - Target image element
  */
-export function handleMouseUp(e, state, img) {
+export function handleMouseUp(e: MouseEvent, state: MouseZoomBoxState, img: HTMLElement): void {
     if (!state || !state.isDragging || !img) return;
 
     state.isDragging = false;
@@ -108,11 +117,11 @@ export function handleMouseUp(e, state, img) {
 
 /**
  * Initiates the dragging state and tracks initial mouse coordinates.
- * @param {MouseEvent} e - Browser mousedown event
- * @param {Object} state - The ZoomBox transform state object
- * @param {HTMLElement} img - Target image element
+ * @param e - Browser mousedown event
+ * @param state - The ZoomBox transform state object
+ * @param img - Target image element
  */
-export function handleMouseDown(e, state, img) {
+export function handleMouseDown(e: MouseEvent, state: MouseZoomBoxState, img: HTMLElement): void {
     if (!state || state.zoomLevel <= 1 || !img) return;
 
     // Prevent native image drag behavior

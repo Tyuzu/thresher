@@ -12,7 +12,42 @@ import {
   getProofOfDelivery
 } from "../../services/deliveries/deliveriesApi.js";
 
-export async function DeliveryTracking(container, deliveryId, isLoggedIn) {
+// Interface definitions
+interface CurrentLocation {
+  lat?: number | string;
+  lng?: number | string;
+  [key: string]: any;
+}
+
+interface DeliveryTrackingData {
+  status?: string;
+  current_location?: CurrentLocation;
+  eta?: string | number;
+  [key: string]: any;
+}
+
+interface DeliveryEvent {
+  created_at?: string | number;
+  timestamp?: string | number;
+  status?: string;
+  event_type?: string;
+  description?: string;
+  [key: string]: any;
+}
+
+interface ProofOfDelivery {
+  url?: string;
+  timestamp?: string | number;
+  recipient_name?: string;
+  notes?: string;
+  [key: string]: any;
+}
+
+export async function DeliveryTracking(
+  container: HTMLElement | null,
+  deliveryId: string | number,
+  isLoggedIn?: boolean
+): Promise<void> {
   const contentContainer = (container && typeof container === "object" && container.nodeType)
     ? container
     : null;
@@ -27,8 +62,18 @@ export async function DeliveryTracking(container, deliveryId, isLoggedIn) {
 
   // --- ASIDE & QUICK ACTIONS ---
   const actionButtons = [
-    Button("← Back to Deliveries", "btn-back", { click: () => navigate("/deliveries") }, "buttonx secondary"),
-    Button("Refresh Status", "btn-refresh", { click: () => DeliveryTracking(container, deliveryId, isLoggedIn) }, "buttonx primary")
+    Button({
+      title: "← Back to Deliveries",
+      id: "btn-back",
+      events: { click: () => navigate("/deliveries") },
+      classes: "buttonx secondary"
+    }),
+    Button({
+      title: "Refresh Status",
+      id: "btn-refresh",
+      events: { click: () => DeliveryTracking(container, deliveryId, isLoggedIn) },
+      classes: "buttonx primary"
+    })
   ];
 
   const actionsWrapper = createElement("div", { class: "aside-actions-group" }, actionButtons);
@@ -76,6 +121,11 @@ export async function DeliveryTracking(container, deliveryId, isLoggedIn) {
   contentContainer.append(layout);
   const mainElement = layout.querySelector(".layout-main");
 
+  if (!mainElement) {
+    console.error("DeliveryTracking: Main layout container element missing.");
+    return;
+  }
+
   const pageWrapper = createElement("div", { class: "tracking-container" }, [
     createElement("div", { class: "tracking-loading" }, ["Fetching tracking details..."])
   ]);
@@ -91,10 +141,15 @@ export async function DeliveryTracking(container, deliveryId, isLoggedIn) {
       getProofOfDelivery(deliveryId)
     ]);
 
-    const tracking = trackingData.status === "fulfilled" ? trackingData.value : {};
-    const events = eventsData.status === "fulfilled" ? (Array.isArray(eventsData.value) ? eventsData.value : eventsData.value?.events || []) : [];
-    const history = statusHistory.status === "fulfilled" ? (Array.isArray(statusHistory.value) ? statusHistory.value : statusHistory.value?.history || []) : [];
-    const proof = proofData.status === "fulfilled" ? proofData.value : null;
+    const tracking: DeliveryTrackingData = trackingData.status === "fulfilled" ? trackingData.value : {};
+    
+    const eventsVal: any = eventsData.status === "fulfilled" ? eventsData.value : [];
+    const events: DeliveryEvent[] = Array.isArray(eventsVal) ? eventsVal : eventsVal?.events || [];
+    
+    const historyVal: any = statusHistory.status === "fulfilled" ? statusHistory.value : [];
+    const history: DeliveryEvent[] = Array.isArray(historyVal) ? historyVal : historyVal?.history || [];
+    
+    const proof: ProofOfDelivery | null = proofData.status === "fulfilled" ? proofData.value : null;
 
     pageWrapper.replaceChildren();
 
@@ -153,7 +208,7 @@ export async function DeliveryTracking(container, deliveryId, isLoggedIn) {
       );
     } else {
       const combinedLogs = [...history, ...events].sort(
-        (a, b) => new Date(b.created_at || b.timestamp || 0) - new Date(a.created_at || a.timestamp || 0)
+        (a, b) => new Date(b.created_at || b.timestamp || 0).getTime() - new Date(a.created_at || a.timestamp || 0).getTime()
       );
 
       combinedLogs.forEach((log) => {
@@ -177,7 +232,7 @@ export async function DeliveryTracking(container, deliveryId, isLoggedIn) {
     ]);
 
     // --- 5. PROOF OF DELIVERY PANEL ---
-    let proofSection = null;
+    let proofSection: HTMLElement | null = null;
     if (proof && proof.url) {
       proofSection = createElement("div", { class: "tracking-section proof-section" }, [
         createElement("h3", { class: "section-title" }, ["Proof of Delivery"]),
@@ -192,7 +247,7 @@ export async function DeliveryTracking(container, deliveryId, isLoggedIn) {
             proof.recipient_name ? createElement("p", {}, [createElement("strong", {}, ["Received By: "]), proof.recipient_name]) : "",
             proof.timestamp ? createElement("p", {}, [createElement("strong", {}, ["Signed At: "]), Datex(proof.timestamp, true)]) : "",
             proof.notes ? createElement("p", { class: "proof-notes" }, [createElement("strong", {}, ["Notes: "]), proof.notes]) : ""
-          ])
+          ].filter(Boolean))
         ])
       ]);
     }
@@ -200,7 +255,7 @@ export async function DeliveryTracking(container, deliveryId, isLoggedIn) {
     pageWrapper.append(stepper, summaryPanel, mapSection, historySection);
     if (proofSection) pageWrapper.append(proofSection);
 
-  } catch (err) {
+  } catch (err: any) {
     pageWrapper.replaceChildren(
       createElement("div", { class: "tracking-error" }, [
         err?.message || "Failed to load live tracking data."

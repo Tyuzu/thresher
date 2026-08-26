@@ -9,7 +9,7 @@ import { displayEventDetails } from "./displayEventDetails.js";
 import { displayEventVenue, displayEventFAQ, displayEventReviews, displayLostAndFound, displayContactDetails } from "./eventTabs.js";
 import { editEvent } from "./creadit.js";
 import { displayTickets } from "../tickets/displayTickets.js";
-import { displayMerchandise } from "../merch/merchService.js";
+import { displayMerchandise } from "../merch/merchUI.js";
 import { displayMedia } from "../media/ui/mediaGallery.js";
 import { createTabs } from "../../utils/persistTabs.js";
 import { showSeatingBanner } from "../tickets/seatingBanner.js";

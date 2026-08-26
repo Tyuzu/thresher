@@ -1,26 +1,51 @@
+// displayPlaceProducts.ts
+
 import { showLoading, showError } from "./helpers.js";
 import { apiFetch } from "../../../api/api.js";
 
+// ---------------------------------
+// INTERFACES & TYPES
+// ---------------------------------
 
+export interface Product {
+    productid: string | number;
+    name: string;
+    price: number | string;
+    [key: string]: any;
+}
 
-export async function displayPlaceProducts(container, placeId, isCreator, isLoggedIn) {
+interface FormFieldConfig {
+    name: string;
+    placeholder: string;
+    value?: string | number;
+    type?: string;
+}
+
+export async function displayPlaceProducts(
+    container: HTMLElement,
+    placeId: string | number,
+    isCreator: boolean,
+    isLoggedIn: boolean
+): Promise<void> {
     container.textContent = "";
     showLoading(container);
 
     try {
-        const products = await apiFetch(`/place/${placeId}/products`);
+        const products = (await apiFetch(`/place/${placeId}/products`, "GET")) as Product[];
         container.textContent = "";
         container.appendChild(createElement("h3", {}, ["Products"]));
 
-        const section = createElement("div", { class: "product-section" });
-        products.forEach(product => section.appendChild(renderProduct(product, placeId, isCreator, isLoggedIn, container)));
+        const section = createElement("div", { class: "product-section" }) as HTMLElement;
+        products.forEach(product => 
+            section.appendChild(renderProduct(product, placeId, isCreator, isLoggedIn, container))
+        );
         container.appendChild(section);
 
         if (isCreator) {
             const addBtn = createButton("Add Product", async function () {
                 const form = createProductForm(
                     [
-                        { name: "name", placeholder: "Name", type : "text" },
+                        { name: "name", placeholder: "Name", type: "text" },
                         { name: "price", placeholder: "Price", type: "number" }
                     ],
                     async (data, _formEl) => {
@@ -36,7 +61,7 @@ export async function displayPlaceProducts(container, placeId, isCreator, isLogg
                 );
                 container.appendChild(form);
                 addBtn.disabled = true;
-            });
+            }) as HTMLButtonElement;
             container.appendChild(addBtn);
         }
 
@@ -46,31 +71,37 @@ export async function displayPlaceProducts(container, placeId, isCreator, isLogg
     }
 }
 
-function renderProduct(item, placeId, isCreator, isLoggedIn, container) {
+function renderProduct(
+    item: Product,
+    placeId: string | number,
+    isCreator: boolean,
+    isLoggedIn: boolean,
+    container: HTMLElement
+): HTMLElement {
     const itemDiv = createElement("div", { class: "product-item" }, [
         createElement("h4", {}, [item.name]),
         createElement("p", {}, [`Price: ₹${item.price}`])
-    ]);
+    ]) as HTMLElement;
 
     if (isLoggedIn) {
         itemDiv.appendChild(createButton("Buy", async () => {
             try {
                 await apiFetch(`/place/${placeId}/products/${item.productid}/buy`, "POST");
                 alert(`Purchased ${item.name}`);
-            } catch (e) {
+            } catch (e: any) {
                 alert(`Purchase failed: ${e.message}`);
             }
         }));
     }
 
     if (isCreator) {
-        const originalClone = itemDiv.cloneNode(true);
+        const originalClone = itemDiv.cloneNode(true) as HTMLElement;
 
         const editBtn = createButton("Edit", () => {
             const form = createProductForm(
                 [
-                    { name: "name", placeholder: "Name", value: item.name },
-                    { name: "price", placeholder: "Price", value: item.price }
+                    { name: "name", placeholder: "Name", value: item.name, type: "text" },
+                    { name: "price", placeholder: "Price", value: item.price, type: "number" }
                 ],
                 async (data, _formEl) => {
                     await apiFetch(`/place/${placeId}/products/${item.productid}`, "PUT", JSON.stringify(data), {
@@ -87,12 +118,12 @@ function renderProduct(item, placeId, isCreator, isLoggedIn, container) {
 
         const deleteBtn = createButton("Delete", async () => {
             if (!confirm(`Delete product "${item.name}"?`)) {
-return;
-}
+                return;
+            }
             try {
                 await apiFetch(`/place/${placeId}/products/${item.productid}`, "DELETE");
                 displayPlaceProducts(container, placeId, isCreator, isLoggedIn);
-            } catch (e) {
+            } catch (e: any) {
                 alert(`Delete failed: ${e.message}`);
             }
         });
@@ -104,7 +135,7 @@ return;
     return itemDiv;
 }
 
-function createButton(label, onClick) {
+function createButton(label: string, onClick: (e: MouseEvent) => void): HTMLButtonElement {
     const btn = document.createElement("button");
     btn.textContent = label;
     btn.type = "button";
@@ -112,7 +143,7 @@ function createButton(label, onClick) {
     return btn;
 }
 
-function createElement(tag, attrs = {}, children = []) {
+function createElement(tag: string, attrs: Record<string, string> = {}, children: (string | Node)[] = []): HTMLElement {
     const el = document.createElement(tag);
     for (const [key, val] of Object.entries(attrs)) {
         el.setAttribute(key, val);
@@ -123,23 +154,29 @@ function createElement(tag, attrs = {}, children = []) {
     return el;
 }
 
-function createProductForm(fields, onSubmit, onCancel) {
+function createProductForm(
+    fields: FormFieldConfig[],
+    onSubmit: (data: Record<string, string>, form: HTMLFormElement) => void,
+    onCancel?: (form: HTMLFormElement) => void
+): HTMLFormElement {
     const form = document.createElement("form");
     form.className = "inline-form";
 
-    fields.forEach(({ name, placeholder, value = "", type }) => {
+    fields.forEach(({ name, placeholder, value = "", type = "text" }) => {
         const input = document.createElement("input");
         input.name = name;
         input.type = type;
         input.placeholder = placeholder;
-        input.value = value;
+        input.value = String(value);
         input.required = true;
         form.appendChild(input);
     });
 
     form.appendChild(createButton("Save", (e) => {
         e.preventDefault();
-        const data = Object.fromEntries(fields.map(({ name }) => [name, form.elements[name].value]));
+        const data: Record<string, string> = Object.fromEntries(
+            fields.map(({ name }) => [name, (form.elements.namedItem(name) as HTMLInputElement)?.value || ""])
+        );
         onSubmit(data, form);
     }));
 

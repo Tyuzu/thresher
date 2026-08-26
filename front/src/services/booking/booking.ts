@@ -1,27 +1,93 @@
+// bookingManager.ts
+
 import { createElement } from "../../components/createElement.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
 import Notify from "../../components/ui/Notify.js";
 import { fetchUserMeta } from "../../utils/usersMeta.js";
 import { genId, bookingStorage, bookingApi } from "./bookingApi.js";
 
+// ---------- Interfaces ----------
+
+export interface BookingItem {
+    id: string;
+    userid: string;
+    entityType: string;
+    entityId: string;
+    slotId?: string;
+    tierId?: string;
+    tierName?: string;
+    date: string;
+    start: string;
+    end?: string;
+    seats?: number;
+    pricePaid?: number;
+    status?: string;
+}
+
+export interface PricingTier {
+    id: string;
+    entityType: string;
+    entityId: string;
+    name: string;
+    price: number;
+    capacity: number;
+    timeRange?: [string, string];
+    daysOfWeek?: number[];
+    features?: string[];
+    createdAt?: number;
+}
+
+export interface BookingSlot {
+    id: string;
+    date: string;
+    start: string;
+    end?: string;
+    capacity: number;
+    tierId?: string;
+    tierName?: string;
+}
+
+export interface BookingApiInstance {
+    apiListBookings: () => Promise<BookingItem[]>;
+    apiCancelBooking: (id: string) => Promise<boolean>;
+    apiListTiers: () => Promise<PricingTier[]>;
+    apiDeleteTier: (id: string) => Promise<any>;
+    apiCreateTier: (tier: PricingTier) => Promise<any>;
+    apiListSlots: () => Promise<BookingSlot[]>;
+    apiDeleteSlot: (id: string) => Promise<boolean>;
+    apiGenerateSlotsFromTier: (tierId: string, start: string, end: string) => Promise<any>;
+    apiCreateBooking: (payload: any) => Promise<{ ok: boolean; reason?: string }>;
+}
+
+export interface DisplayBookingOptions {
+    entityType: string;
+    entityId: string;
+    entityCategory?: string;
+    userId?: string;
+    isAdmin?: boolean;
+}
+
+type RefreshFunction = () => Promise<any> | void;
+
 // ---------- Helpers ----------
-function confirmAction(message, action) {
+
+function confirmAction(message: string, action: () => any): void {
     if (window.confirm(message)) {
-        return action();
+        action();
     }
 }
 
-function notifyError(reason, map = {}) {
-    const msg = map?.[reason] || "Operation failed. Please try again.";
+function notifyError(reason?: string, map: Record<string, string> = {}): void {
+    const msg = (reason && map?.[reason]) || "Operation failed. Please try again.";
     Notify(msg, { type: "error", duration: 3000 });
 }
 
-function notifySuccess(msg, duration = 2000) {
+function notifySuccess(msg: string, duration: number = 2000): void {
     Notify(msg, { type: "success", duration });
 }
 
-function withRefresh(action, refreshers = []) {
-    return async (...args) => {
+function withRefresh(action: (...args: any[]) => Promise<any>, refreshers: RefreshFunction[] = []) {
+    return async (...args: any[]) => {
         const ok = await action(...args);
         if (ok) {
             for (const fn of refreshers) {
@@ -32,13 +98,14 @@ function withRefresh(action, refreshers = []) {
 }
 
 // ---------- Bookings list ----------
-function createBookingsList(api, userId, isAdmin) {
-    const bookingsList = createElement("section", { class: "bookings-list-container" }, []);
+
+function createBookingsList(api: BookingApiInstance, userId: string, isAdmin: boolean) {
+    const bookingsList = createElement("section", { class: "bookings-list-container" }, []) as HTMLElement;
     let showCancelled = false;
 
-    async function renderBookings() {
+    async function renderBookings(): Promise<void> {
         bookingsList.replaceChildren();
-        let bookings = [];
+        let bookings: BookingItem[] = [];
         try {
             bookings = await api.apiListBookings();
         } catch (err) {
@@ -52,8 +119,8 @@ function createBookingsList(api, userId, isAdmin) {
         }
 
         const activeBookings = bookings.filter(b => b.status !== "cancelled");
-        bookings.sort((a, b) => new Date(`${a.date}T${a.start}`) - new Date(`${b.date}T${b.start}`));
-        const userIds = [...new Set(bookings.map(b => b.userid))].filter(id => id && id !== "guest");
+        bookings.sort((a, b) => new Date(`${a.date}T${a.start}`).getTime() - new Date(`${b.date}T${b.start}`).getTime());
+        const userIds = [...new Set(bookings.map(b => b.userid))].filter((id): id is string => Boolean(id) && id !== "guest");
         const userMeta = await fetchUserMeta(userIds);
         const totalSeats = activeBookings.reduce((s, b) => s + (b.seats || 1), 0);
 
@@ -90,7 +157,7 @@ function createBookingsList(api, userId, isAdmin) {
             const tierNote = b.tierName ? ` — Tier: ${b.tierName}` : "";
             const label = `${idx + 1}. ${username} — ${b.date} @ ${timeRange}${seatsNote}${statusNote}${tierNote}`;
 
-            const itemChildren = [createElement("span", {}, [label])];
+            const itemChildren: HTMLElement[] = [createElement("span", {}, [label]) as HTMLElement];
 
             if (isCurrentUser && !isAdmin && b.status !== "cancelled") {
                 const cancelBtn = createElement("button", {
@@ -118,7 +185,7 @@ function createBookingsList(api, userId, isAdmin) {
                     }
                 }, ["Cancel"]);
 
-                itemChildren.push(createElement("div", { class: "slot-actions" }, [cancelBtn]));
+                itemChildren.push(createElement("div", { class: "slot-actions" }, [cancelBtn]) as HTMLElement);
             }
 
             const item = createElement("li", {
@@ -135,10 +202,18 @@ function createBookingsList(api, userId, isAdmin) {
 }
 
 // ---------- Tier Management (Admin) ----------
-function renderTierManager(api, container, refreshSlots, entityType, entityId, onTierChange) {
+
+function renderTierManager(
+    api: BookingApiInstance, 
+    container: HTMLElement, 
+    refreshSlots: RefreshFunction, 
+    entityType: string, 
+    entityId: string, 
+    onTierChange?: () => void
+): void {
     const tierList = createElement("div", { class: "tier-list" });
 
-    async function refreshTiers() {
+    async function refreshTiers(): Promise<void> {
         tierList.replaceChildren();
         const tiers = await api.apiListTiers();
         if (!tiers.length) {
@@ -183,15 +258,16 @@ function renderTierManager(api, container, refreshSlots, entityType, entityId, o
     const form = createElement("form", {
         class: "tier-form",
         events: {
-            submit: withRefresh(async (e) => {
+            submit: withRefresh(async (e: SubmitEvent) => {
                 e.preventDefault();
-                const tier = {
+                const formEl = e.currentTarget as HTMLFormElement;
+                const tier: PricingTier = {
                     id: genId(),
                     entityType,
                     entityId,
-                    name: form.querySelector("#tier-name").value || "Untitled",
-                    price: Math.max(0, parseFloat(form.querySelector("#tier-price").value || "0")),
-                    capacity: Math.max(1, parseInt(form.querySelector("#tier-capacity").value || "1", 10)),
+                    name: (formEl.querySelector("#tier-name") as HTMLInputElement)?.value || "Untitled",
+                    price: Math.max(0, parseFloat((formEl.querySelector("#tier-price") as HTMLInputElement)?.value || "0")),
+                    capacity: Math.max(1, parseInt((formEl.querySelector("#tier-capacity") as HTMLInputElement)?.value || "1", 10)),
                     timeRange: ["09:00", "17:00"],
                     daysOfWeek: [1, 2, 3, 4, 5],
                     features: [],
@@ -199,7 +275,7 @@ function renderTierManager(api, container, refreshSlots, entityType, entityId, o
                 };
                 await api.apiCreateTier(tier);
                 notifySuccess("Tier added");
-                form.reset();
+                formEl.reset();
                 onTierChange?.();
                 return true;
             }, [refreshTiers])
@@ -217,10 +293,18 @@ function renderTierManager(api, container, refreshSlots, entityType, entityId, o
 }
 
 // ---------- Admin UI ----------
-function renderAdminUi(api, storage, modalContent, refreshBookings, entityType, entityId) {
+
+function renderAdminUi(
+    api: BookingApiInstance, 
+    storage: any, 
+    modalContent: HTMLElement, 
+    refreshBookings: RefreshFunction, 
+    entityType: string, 
+    entityId: string
+): void {
     const adminSlotsContainer = createElement("div", { class: "admin-slots-container" }, []);
 
-    const renderAdminSlots = async () => {
+    const renderAdminSlots = async (): Promise<void> => {
         adminSlotsContainer.replaceChildren();
         const [slots, bookings] = await Promise.all([api.apiListSlots(), api.apiListBookings()]);
 
@@ -229,7 +313,7 @@ function renderAdminUi(api, storage, modalContent, refreshBookings, entityType, 
             return;
         }
 
-        slots.sort((a, b) => new Date(`${a.date}T${a.start}`) - new Date(`${b.date}T${b.start}`));
+        slots.sort((a, b) => new Date(`${a.date}T${a.start}`).getTime() - new Date(`${b.date}T${b.start}`).getTime());
         slots.forEach(slot => {
             const bookedSeats = bookings
                 .filter(b => b.slotId === slot.id)
@@ -277,11 +361,12 @@ function renderAdminUi(api, storage, modalContent, refreshBookings, entityType, 
     const tierGenForm = createElement("form", {
         class: "slot-gen-panel",
         events: {
-            submit: withRefresh(async (e) => {
+            submit: withRefresh(async (e: SubmitEvent) => {
                 e.preventDefault();
-                const tierId = tierGenForm.querySelector("#tier-select").value;
-                const start = dateRangeStart.querySelector("input").value;
-                const end = dateRangeEnd.querySelector("input").value;
+                const formEl = e.currentTarget as HTMLFormElement;
+                const tierId = (formEl.querySelector("#tier-select") as HTMLSelectElement).value;
+                const start = (dateRangeStart.querySelector("input") as HTMLInputElement).value;
+                const end = (dateRangeEnd.querySelector("input") as HTMLInputElement).value;
 
                 if (new Date(start) > new Date(end)) {
                     notifyError("invalid-dates", { "invalid-dates": "Start Date must be prior to End Date" });
@@ -302,8 +387,9 @@ function renderAdminUi(api, storage, modalContent, refreshBookings, entityType, 
 
     modalContent.appendChild(adminSection);
 
-    async function refreshTierDropdown() {
-        const select = tierSelect.querySelector("select");
+    async function refreshTierDropdown(): Promise<void> {
+        const select = tierSelect.querySelector("select") as HTMLSelectElement;
+        if (!select) return;
         select.replaceChildren(createElement("option", { value: "" }, ["Choose a tier"]));
         const tiers = await api.apiListTiers();
         tiers.forEach(t => {
@@ -318,11 +404,20 @@ function renderAdminUi(api, storage, modalContent, refreshBookings, entityType, 
 }
 
 // ---------- User UI ----------
-function renderUserUi(api, storage, modalContent, userId, refreshBookings, entityType, entityId) {
+
+function renderUserUi(
+    api: BookingApiInstance, 
+    storage: any, 
+    modalContent: HTMLElement, 
+    userId: string, 
+    refreshBookings: RefreshFunction, 
+    entityType: string, 
+    entityId: string
+): void {
     const slotsContainer = createElement("div", { "data-slots-container": "true", class: "slots-container" }, []);
     modalContent.appendChild(slotsContainer);
 
-    function renderTierBookingSection(tiers, bookings) {
+    function renderTierBookingSection(tiers: PricingTier[], bookings: BookingItem[]): HTMLElement {
         if (!tiers.length) {
             return createElement("section", { class: "tier-booking-section" }, [
                 createElement("h3", {}, ["Book by Tier"]),
@@ -354,14 +449,15 @@ function renderUserUi(api, storage, modalContent, userId, refreshBookings, entit
             const form = createElement("form", {
                 class: "tier-booking-form",
                 events: {
-                    submit: withRefresh(async (e) => {
+                    submit: withRefresh(async (e: SubmitEvent) => {
                         e.preventDefault();
                         if (rem <= 0) return false;
 
-                        const dateValue = form.querySelector(`#tier-date-${tier.id}`).value;
+                        const formEl = e.currentTarget as HTMLFormElement;
+                        const dateValue = (formEl.querySelector(`#tier-date-${tier.id}`) as HTMLInputElement).value;
                         const seatsToBook = Math.max(
                             1,
-                            Math.min(parseInt(form.querySelector(`#tier-seats-${tier.id}`).value || "1", 10), rem)
+                            Math.min(parseInt((formEl.querySelector(`#tier-seats-${tier.id}`) as HTMLInputElement).value || "1", 10), rem)
                         );
 
                         const payload = {
@@ -407,7 +503,7 @@ function renderUserUi(api, storage, modalContent, userId, refreshBookings, entit
         ]);
     }
 
-    async function refreshSlots() {
+    async function refreshSlots(): Promise<void> {
         slotsContainer.replaceChildren();
         const [slots, bookings, tiers] = await Promise.all([
             api.apiListSlots(), api.apiListBookings(), api.apiListTiers()
@@ -416,7 +512,7 @@ function renderUserUi(api, storage, modalContent, userId, refreshBookings, entit
         if (!slots.length) {
             slotsContainer.appendChild(createElement("div", { class: "empty-state" }, ["No predefined slots available."]));
         } else {
-            slots.sort((a, b) => new Date(`${a.date}T${a.start}`) - new Date(`${b.date}T${b.start}`));
+            slots.sort((a, b) => new Date(`${a.date}T${a.start}`).getTime() - new Date(`${b.date}T${b.start}`).getTime());
             for (const slot of slots) {
                 const tier = tiers.find(t => t.id === slot.tierId);
                 const bookedSeats = bookings.filter(b => b.slotId === slot.id && b.status !== "cancelled").reduce((s, bb) => s + (bb.seats || 1), 0);
@@ -439,12 +535,13 @@ function renderUserUi(api, storage, modalContent, userId, refreshBookings, entit
                 const form = createElement("form", {
                     class: "slot-actions",
                     events: {
-                        submit: withRefresh(async (e) => {
+                        submit: withRefresh(async (e: SubmitEvent) => {
                             e.preventDefault();
                             if (rem <= 0) return false;
+                            const formEl = e.currentTarget as HTMLFormElement;
                             const seatsToBook = Math.max(
                                 1,
-                                Math.min(parseInt(form.querySelector(`#seats-${slot.id}`).value || "1", 10), rem)
+                                Math.min(parseInt((formEl.querySelector(`#seats-${slot.id}`) as HTMLInputElement).value || "1", 10), rem)
                             );
                             const payload = {
                                 userId, entityType, entityId,
@@ -489,7 +586,17 @@ function renderUserUi(api, storage, modalContent, userId, refreshBookings, entit
 }
 
 // ---------- Modal ----------
-function openBookingModal(api, storage, entityType, entityId, entityCategory, userId, isAdmin, refreshBookings) {
+
+function openBookingModal(
+    api: BookingApiInstance, 
+    storage: any, 
+    entityType: string, 
+    entityId: string, 
+    entityCategory?: string, 
+    userId: string = "guest", 
+    isAdmin: boolean = false, 
+    refreshBookings: RefreshFunction
+): void {
     if (document.getElementById("booking-modal")) {
         return;
     }
@@ -499,7 +606,7 @@ function openBookingModal(api, storage, entityType, entityId, entityCategory, us
     ]);
     const body = createElement("div", { class: "booking-modal-body" }, []);
 
-    let modalOverlay;
+    let modalOverlay: HTMLElement;
     const closeBtn = createElement("button", {
         type: "button",
         class: "btn btn-secondary",
@@ -527,10 +634,11 @@ function openBookingModal(api, storage, entityType, entityId, entityCategory, us
 }
 
 // ---------- Main Entry ----------
+
 export function displayBooking(
-    { entityType, entityId, entityCategory, userId = "guest", isAdmin = false },
-    bookingContainer
-) {
+    { entityType, entityId, entityCategory, userId = "guest", isAdmin = false }: DisplayBookingOptions,
+    bookingContainer: HTMLElement
+): { refresh: RefreshFunction } {
     const storage = bookingStorage(entityType, entityId);
     const api = bookingApi(entityType, entityId, storage, userId);
 

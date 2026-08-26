@@ -1,154 +1,206 @@
-import { createElement } from "../../components/createElement.js";
-import { Button } from "../../components/base/Button.js";
-import { navigate } from "../../routes/navigate.js";
-import { apiFetch } from "../../api/api.js";
-import { adspace } from "../../services/ads/newads.js";
-import { buildCard } from "./baitoslisting/JobCard.js";
-import { createMainLayout } from "../../components/layout/mainLayout.js";
-import { createAsideContent } from "../../components/layout/asideLayout.js";
+// displayBaitos.ts
 
-export async function displayBaitos(container, isLoggedIn) {
-  container.replaceChildren();
+import { createElement } from "../../components/createElement";
+import { Button } from "../../components/base/Button";
+import { navigate } from "../../routes/navigate";
+import { apiFetch } from "../../api/api";
+import { adspace } from "../../services/ads/newads";
+import { buildCard } from "./baitoslisting/JobCard";
+import { createMainLayout } from "../../components/layout/mainLayout";
+import { createAsideContent } from "../../components/layout/asideLayout";
 
-  const PAGE_NAME = "baitos";
+// ---------------------------------
+// INTERFACES & TYPES
+// ---------------------------------
 
-  // ---------- SIDEBAR CONTENT ----------
-  // Language selector
-  const langSelect = createElement("select", { id: "lang-toggle" });
-  ["EN", "JP"].forEach(lang =>
-    langSelect.appendChild(createElement("option", { value: lang.toLowerCase() }, [lang]))
-  );
-  langSelect.value = localStorage.getItem("baito-lang") || "en";
-  langSelect.addEventListener("change", e => {
-    localStorage.setItem("baito-lang", e.target.value);
-    navigate(window.location.pathname);
-  });
-  const asideContent = createAsideContent({
-    title: "Actions",
-    actions: isLoggedIn
-      ? [
-        Button("Create Baito", "ct-baito-btn", { click: () => navigate("/create-baito") }, "buttonx"),
-        Button("See Dashboard", "see-dash-btn", { click: () => navigate("/baitos/dash") }, "buttonx"),
-        Button("Create Baito Profile", "", { click: () => navigate("/baitos/create-profile") }, "buttonx secondary"),
-        Button("Hire Workers", "", { click: () => navigate("/baitos/hire") }, "buttonx secondary")
-      ]
-      : [],
-    children: [langSelect],
-    showAd: true,
-    page: PAGE_NAME,
-    adPosition: "aside",
-    adPlacement: "bottom",
-    adOptions: {
-      layout: "vertical",
-      width: "100%",
-      height: 320,
-      refreshInterval: 30000
-    }
-  });
+export interface Job {
+    id?: string | number;
+    title?: string;
+    description?: string;
+    [key: string]: any;
+}
 
-  // ---------- MAIN CONTENT ----------
-  const searchInput = createElement("input", { type: "text", placeholder: "Search jobs...", class: "sort-box" });
-  const filterContainer = createElement("div", { class: "baitos-filters" }, [searchInput]);
-  const list = createElement("div", { class: "baitos-list" });
+interface JobsApiResponse {
+    data?: Job[];
+    jobs?: Job[];
+    [key: string]: any;
+}
 
-  const mainContent = [
-    createElement("h1", {}, ["Baitos"]),
-    filterContainer,
-    adspace("inbody", PAGE_NAME, {
-      layout: "horizontal",
-      width: 728,
-      height: 90,
-      refreshInterval: 45000
-    }),
-    list
-  ];
+export async function displayBaitos(container: HTMLElement, isLoggedIn: boolean): Promise<void> {
+    container.replaceChildren();
 
-  // ---------- RENDER LAYOUT ----------
-  const layout = createMainLayout({
-    mainContent,
-    asideContent,
-    pageClass: "baitos-page"
-  });
-  container.append(layout);
+    const PAGE_NAME = "baitos";
 
-  // ---------- FETCH JOBS ----------
-  let allJobs = [];
-  try {
-    const resp = await apiFetch("/baitos/latest");
-    allJobs = Array.isArray(resp) ? resp : resp?.data || resp?.jobs || [];
-  } catch (err) {
-    console.error("Failed to load baitos", err);
-  }
-
-  let currentPage = 1;
-  const pageSize = 10;
-
-  function paginate(items, page) {
-    const start = (page - 1) * pageSize;
-    return items.slice(start, start + pageSize);
-  }
-
-  function renderJobs(filtered) {
-    list.replaceChildren();
-    const paged = paginate(filtered, currentPage);
-
-    if (!paged.length) {
-      list.append(createElement("p", {}, ["No jobs found."]));
-      return;
-    }
-
-    paged.forEach((job, idx) => {
-      list.append(buildCard(job));
-
-      // Inject an in-list native ad every 5 job items
-      if ((idx + 1) % 5 === 0) {
-        list.append(
-          adspace("inlist", PAGE_NAME, {
-            layout: "vertical",
-            width: "100%",
-            height: 120
-          })
-        );
-      }
+    // ---------- SIDEBAR CONTENT ----------
+    // Language selector
+    const langSelect = createElement("select", { id: "lang-toggle" }) as HTMLSelectElement;
+    ["EN", "JP"].forEach(lang =>
+        langSelect.appendChild(createElement("option", { value: lang.toLowerCase() }, [lang]))
+    );
+    langSelect.value = localStorage.getItem("baito-lang") || "en";
+    langSelect.addEventListener("change", (e: Event) => {
+        const target = e.target as HTMLSelectElement;
+        localStorage.setItem("baito-lang", target.value);
+        navigate(window.location.pathname);
     });
 
-    // Pagination
-    const totalPages = Math.ceil(filtered.length / pageSize);
-    if (totalPages > 1) {
-      const pager = createElement("div", { class: "baitos-pager" });
+    const asideContent = createAsideContent({
+        title: "Actions",
+        actions: isLoggedIn
+            ? [
+                Button({
+                    title: "Create Baito",
+                    id: "ct-baito-btn",
+                    events: { click: () => navigate("/create-baito") },
+                    classes: "buttonx"
+                }),
+                Button({
+                    title: "See Dashboard",
+                    id: "see-dash-btn",
+                    events: { click: () => navigate("/baitos/dash") },
+                    classes: "buttonx"
+                }),
+                Button({
+                    title: "Create Baito Profile",
+                    events: { click: () => navigate("/baitos/create-profile") },
+                    classes: "buttonx secondary"
+                }),
+                Button({
+                    title: "Hire Workers",
+                    events: { click: () => navigate("/baitos/hire") },
+                    classes: "buttonx secondary"
+                })
+            ]
+            : [],
+        children: [langSelect],
+        showAd: true,
+        page: PAGE_NAME,
+        adPosition: "aside",
+        adPlacement: "bottom",
+        adOptions: {
+            layout: "vertical",
+            width: "100%",
+            height: 320,
+            refreshInterval: 30000
+        }
+    });
 
-      if (currentPage > 1) {
-        pager.append(Button("Prev", "", {
-          click: () => {
-            currentPage--;
-            renderJobs(filtered);
-          }
-        }, "buttonx secondary"));
-      }
+    // ---------- MAIN CONTENT ----------
+    const searchInput = createElement("input", { type: "text", placeholder: "Search jobs...", class: "sort-box" }) as HTMLInputElement;
+    const filterContainer = createElement("div", { class: "baitos-filters" }, [searchInput]);
+    const list = createElement("div", { class: "baitos-list" }) as HTMLElement;
 
-      if (currentPage < totalPages) {
-        pager.append(Button("Next", "", {
-          click: () => {
-            currentPage++;
-            renderJobs(filtered);
-          }
-        }, "buttonx secondary"));
-      }
+    const mainContent = [
+        createElement("h1", {}, ["Baitos"]),
+        filterContainer,
+        adspace("inbody", PAGE_NAME, {
+            layout: "horizontal",
+            width: 728,
+            height: 90,
+            refreshInterval: 45000
+        }),
+        list
+    ];
 
-      list.append(pager);
+    // ---------- RENDER LAYOUT ----------
+    const layout = createMainLayout({
+        mainContent,
+        asideContent,
+        pageClass: "baitos-page"
+    });
+    container.append(layout);
+
+    // ---------- FETCH JOBS ----------
+    let allJobs: Job[] = [];
+    try {
+        const resp = await apiFetch("/baitos/latest");
+        if (Array.isArray(resp)) {
+            allJobs = resp;
+        } else if (resp && typeof resp === "object") {
+            const apiData = resp as JobsApiResponse;
+            allJobs = apiData.data || apiData.jobs || [];
+        }
+    } catch (err) {
+        console.error("Failed to load baitos", err);
     }
-  }
 
-  // ---------- FILTER LOGIC ----------
-  function applyFilters() {
-    const keyword = searchInput.value.toLowerCase();
-    const filtered = allJobs.filter(job => (job.title || "").toLowerCase().includes(keyword));
-    currentPage = 1;
-    renderJobs(filtered);
-  }
+    let currentPage = 1;
+    const pageSize = 10;
 
-  searchInput.addEventListener("input", applyFilters);
+    function paginate(items: Job[], page: number): Job[] {
+        const start = (page - 1) * pageSize;
+        return items.slice(start, start + pageSize);
+    }
 
-  // Initial render
-  renderJobs(allJobs);
+    function renderJobs(filtered: Job[]): void {
+        list.replaceChildren();
+        const paged = paginate(filtered, currentPage);
+
+        if (!paged.length) {
+            list.append(createElement("p", {}, ["No jobs found."]));
+            return;
+        }
+
+        paged.forEach((job, idx) => {
+            list.append(buildCard(job));
+
+            // Inject an in-list native ad every 5 job items
+            if ((idx + 1) % 5 === 0) {
+                list.append(
+                    adspace("inlist", PAGE_NAME, {
+                        layout: "vertical",
+                        width: "100%",
+                        height: 120
+                    })
+                );
+            }
+        });
+
+        // Pagination
+        const totalPages = Math.ceil(filtered.length / pageSize);
+        if (totalPages > 1) {
+            const pager = createElement("div", { class: "baitos-pager" });
+
+            if (currentPage > 1) {
+                pager.append(Button({
+                    title: "Prev",
+                    events: {
+                        click: () => {
+                            currentPage--;
+                            renderJobs(filtered);
+                        }
+                    },
+                    classes: "buttonx secondary"
+                }));
+            }
+
+            if (currentPage < totalPages) {
+                pager.append(Button({
+                    title: "Next",
+                    events: {
+                        click: () => {
+                            currentPage++;
+                            renderJobs(filtered);
+                        }
+                    },
+                    classes: "buttonx secondary"
+                }));
+            }
+
+            list.append(pager);
+        }
+    }
+
+    // ---------- FILTER LOGIC ----------
+    function applyFilters(): void {
+        const keyword = searchInput.value.toLowerCase();
+        const filtered = allJobs.filter(job => (job.title || "").toLowerCase().includes(keyword));
+        currentPage = 1;
+        renderJobs(filtered);
+    }
+
+    searchInput.addEventListener("input", applyFilters);
+
+    // Initial render
+    renderJobs(allJobs);
 }

@@ -17,7 +17,67 @@ import {
   updateDeliveryStatus
 } from "../../services/deliveries/deliveriesApi.js";
 
-export async function displayDelivery(container, deliveryId, options = {}) {
+// Interface definitions
+interface DeliveryLocation {
+  address?: string;
+}
+
+interface CurrentLocation {
+  lat?: number | string;
+  lng?: number | string;
+  [key: string]: any;
+}
+
+interface DeliveryItem {
+  deliveryid?: string | number;
+  id?: string | number;
+  status?: string;
+  payout?: number | string;
+  pickup_loc?: DeliveryLocation;
+  pickup_contact?: string;
+  dropoff_loc?: DeliveryLocation;
+  dropoff_contact?: string;
+  vehicle_type?: string;
+  created_at?: string | number;
+  handover_otp?: string;
+  courier_name?: string;
+  courier_id?: string | number;
+  [key: string]: any;
+}
+
+interface DeliveryTracking {
+  status?: string;
+  eta?: string | number;
+  current_location?: CurrentLocation;
+  [key: string]: any;
+}
+
+interface DeliveryEvent {
+  created_at?: string | number;
+  timestamp?: string | number;
+  status?: string;
+  event_type?: string;
+  description?: string;
+  [key: string]: any;
+}
+
+interface ProofOfDelivery {
+  url?: string;
+  timestamp?: string | number;
+  recipient_name?: string;
+  [key: string]: any;
+}
+
+interface DisplayDeliveryOptions {
+  userRole?: string;
+  [key: string]: any;
+}
+
+export async function displayDelivery(
+  container: HTMLElement | null,
+  deliveryId: string | number,
+  options: DisplayDeliveryOptions = {}
+): Promise<void> {
   const contentContainer = (container && typeof container === "object" && container.nodeType)
     ? container
     : null;
@@ -33,17 +93,32 @@ export async function displayDelivery(container, deliveryId, options = {}) {
 
   // --- 1. ASIDE LAYOUT ---
   const actionButtons = [
-    Button("← Back to Deliveries", "btn-back-del", { click: () => navigate("/deliveries") }, "buttonx secondary")
+    Button({
+      title: "← Back to Deliveries",
+      id: "btn-back-del",
+      events: { click: () => navigate("/deliveries") },
+      classes: "buttonx secondary"
+    })
   ];
 
   if (userRole === "sender") {
     actionButtons.push(
-      Button("Create New Delivery", "btn-crt-del", { click: () => navigate("/delivery/create") }, "buttonx primary")
+      Button({
+        title: "Create New Delivery",
+        id: "btn-crt-del",
+        events: { click: () => navigate("/delivery/create") },
+        classes: "buttonx primary"
+      })
     );
   }
 
   actionButtons.push(
-    Button("Refresh View", "btn-refresh-del", { click: () => displayDelivery(container, deliveryId, options) }, "buttonx primary")
+    Button({
+      title: "Refresh View",
+      id: "btn-refresh-del",
+      events: { click: () => displayDelivery(container, deliveryId, options) },
+      classes: "buttonx primary"
+    })
   );
 
   const actionsWrapper = createElement("div", { class: "aside-actions-group" }, actionButtons);
@@ -91,6 +166,11 @@ export async function displayDelivery(container, deliveryId, options = {}) {
   contentContainer.append(layout);
   const mainElement = layout.querySelector("main") || layout.querySelector(".layout-main");
 
+  if (!mainElement) {
+    console.error("displayDelivery: Main layout container element missing.");
+    return;
+  }
+
   const pageWrapper = createElement("div", { class: "delivery-details-container" }, [
     createElement("div", { class: "deliveries-loading", role: "status", "aria-live": "polite" }, [
       "Fetching delivery details and live tracking..."
@@ -111,11 +191,16 @@ export async function displayDelivery(container, deliveryId, options = {}) {
 
     pageWrapper.replaceChildren();
 
-    const item = itemRes.status === "fulfilled" ? itemRes.value : {};
-    const tracking = trackingRes.status === "fulfilled" ? trackingRes.value : {};
-    const events = eventsRes.status === "fulfilled" ? (Array.isArray(eventsRes.value) ? eventsRes.value : eventsRes.value?.events || []) : [];
-    const history = historyRes.status === "fulfilled" ? (Array.isArray(historyRes.value) ? historyRes.value : historyRes.value?.history || []) : [];
-    const proof = proofRes.status === "fulfilled" ? proofRes.value : null;
+    const item: DeliveryItem = itemRes.status === "fulfilled" ? itemRes.value : {};
+    const tracking: DeliveryTracking = trackingRes.status === "fulfilled" ? trackingRes.value : {};
+    
+    const eventsVal: any = eventsRes.status === "fulfilled" ? eventsRes.value : [];
+    const events: DeliveryEvent[] = Array.isArray(eventsVal) ? eventsVal : eventsVal?.events || [];
+    
+    const historyVal: any = historyRes.status === "fulfilled" ? historyRes.value : [];
+    const history: DeliveryEvent[] = Array.isArray(historyVal) ? historyVal : historyVal?.history || [];
+    
+    const proof: ProofOfDelivery | null = proofRes.status === "fulfilled" ? proofRes.value : null;
 
     const currentStatus = (item.status || tracking.status || "CREATED").toUpperCase();
     const statusClass = `status-badge status-${currentStatus.toLowerCase()}`;
@@ -136,7 +221,7 @@ export async function displayDelivery(container, deliveryId, options = {}) {
           const isCurrent = idx === currentStepIndex && currentStatus !== "CANCELLED";
           const stepClass = `stepper-step ${isCompleted ? "completed" : "pending"}`;
 
-          const stepAttrs = { class: stepClass };
+          const stepAttrs: Record<string, any> = { class: stepClass };
           if (isCurrent) stepAttrs["aria-current"] = "step";
 
           return createElement("li", stepAttrs, [
@@ -160,15 +245,15 @@ export async function displayDelivery(container, deliveryId, options = {}) {
         ]),
         tracking.current_location
           ? createElement("p", { class: "map-subtitle" }, [
-            "Current Loc: ",
-            createElement("span", { class: "coordinates" }, [`${tracking.current_location.lat}, ${tracking.current_location.lng}`])
-          ])
+              "Current Loc: ",
+              createElement("span", { class: "coordinates" }, [`${tracking.current_location.lat}, ${tracking.current_location.lng}`])
+            ])
           : "",
         etaDate
           ? createElement("p", { class: "map-subtitle" }, [
-            "ETA: ",
-            createElement("time", { datetime: etaDate.toISOString() }, [Datex(tracking.eta, true)])
-          ])
+              "ETA: ",
+              createElement("time", { datetime: etaDate.toISOString() }, [Datex(tracking.eta, true)])
+            ])
           : ""
       ].filter(Boolean))
     ]);
@@ -178,87 +263,112 @@ export async function displayDelivery(container, deliveryId, options = {}) {
 
     if (userRole === "courier") {
       if (currentStatus === "AVAILABLE" || currentStatus === "CREATED") {
-        const claimBtn = Button(`Claim Delivery (${payout})`, "btn-claim", {
-          click: async () => {
-            try {
-              await claimDelivery(id);
-              Notify("Delivery claimed! Heading to pickup.", { type: "success" });
-              displayDelivery(container, deliveryId, options);
-            } catch (err) {
-              Notify(err?.message || "Failed to claim delivery.", { type: "error" });
+        const claimBtn = Button({
+          title: `Claim Delivery (${payout})`,
+          id: "btn-claim",
+          events: {
+            click: async () => {
+              try {
+                await claimDelivery(id);
+                Notify("Delivery claimed! Heading to pickup.", { type: "success" });
+                displayDelivery(container, deliveryId, options);
+              } catch (err: any) {
+                Notify(err?.message || "Failed to claim delivery.", { type: "error" });
+              }
             }
-          }
-        }, "btn-primary");
+          },
+          classes: "btn-primary"
+        });
         claimBtn.setAttribute("aria-label", `Claim delivery #${id} for ${payout}`);
         actionsContainer.append(claimBtn);
       } else if (currentStatus === "CLAIMED") {
-        const pickupBtn = Button("Mark Package Picked Up", "btn-pickup", {
-          click: async () => handleStatusUpdate(id, "PICKED_UP", container, options)
-        }, "btn-primary");
+        const pickupBtn = Button({
+          title: "Mark Package Picked Up",
+          id: "btn-pickup",
+          events: {
+            click: async () => handleStatusUpdate(id, "PICKED_UP", container, options)
+          },
+          classes: "btn-primary"
+        });
         pickupBtn.setAttribute("aria-label", `Mark package for delivery #${id} as picked up`);
         actionsContainer.append(pickupBtn);
       } else if (currentStatus === "PICKED_UP") {
-        const transitBtn = Button("Start Transit to Dropoff", "btn-transit", {
-          click: async () => handleStatusUpdate(id, "IN_TRANSIT", container, options)
-        }, "btn-primary");
+        const transitBtn = Button({
+          title: "Start Transit to Dropoff",
+          id: "btn-transit",
+          events: {
+            click: async () => handleStatusUpdate(id, "IN_TRANSIT", container, options)
+          },
+          classes: "btn-primary"
+        });
         transitBtn.setAttribute("aria-label", `Start transit for delivery #${id}`);
         actionsContainer.append(transitBtn);
       } else if (currentStatus === "IN_TRANSIT") {
-        const completeBtn = Button("Complete Delivery (Verify OTP)", "btn-complete", {
-          click: async () => {
-            const otp = prompt("Enter Handover OTP code from recipient:");
-            if (otp) {
-              await handleStatusUpdate(id, "DELIVERED", container, options, { otp });
+        const completeBtn = Button({
+          title: "Complete Delivery (Verify OTP)",
+          id: "btn-complete",
+          events: {
+            click: async () => {
+              const otp = prompt("Enter Handover OTP code from recipient:");
+              if (otp) {
+                await handleStatusUpdate(id, "DELIVERED", container, options, { otp });
+              }
             }
-          }
-        }, "btn-success");
+          },
+          classes: "btn-success"
+        });
         completeBtn.setAttribute("aria-label", `Complete delivery #${id} with handover OTP`);
         actionsContainer.append(completeBtn);
       }
     }
 
     if (userRole === "sender" && (currentStatus === "CREATED" || currentStatus === "AVAILABLE")) {
-      const cancelBtn = Button("Cancel Delivery Order", "btn-cancel-delivery", {
-        click: async () => {
-          if (confirm("Are you sure you want to cancel this delivery request?")) {
-            try {
-              await cancelDelivery(id);
-              Notify("Delivery cancelled successfully", { type: "success" });
-              navigate("/deliveries");
-            } catch (err) {
-              Notify(err?.message || "Failed to cancel delivery", { type: "error" });
+      const cancelBtn = Button({
+        title: "Cancel Delivery Order",
+        id: "btn-cancel-delivery",
+        events: {
+          click: async () => {
+            if (confirm("Are you sure you want to cancel this delivery request?")) {
+              try {
+                await cancelDelivery(id);
+                Notify("Delivery cancelled successfully", { type: "success" });
+                navigate("/deliveries");
+              } catch (err: any) {
+                Notify(err?.message || "Failed to cancel delivery", { type: "error" });
+              }
             }
           }
-        }
-      }, "btn-danger");
+        },
+        classes: "btn-danger"
+      });
       cancelBtn.setAttribute("aria-label", `Cancel delivery order #${id}`);
       actionsContainer.append(cancelBtn);
     }
 
     // --- 7. ACTIVITY LOGS ---
     const combinedLogs = [...history, ...events].sort(
-      (a, b) => new Date(b.created_at || b.timestamp || 0) - new Date(a.created_at || a.timestamp || 0)
+      (a, b) => new Date(b.created_at || b.timestamp || 0).getTime() - new Date(a.created_at || a.timestamp || 0).getTime()
     );
 
     const historyList = createElement("ol", { class: "tracking-history-list" },
       combinedLogs.length === 0
         ? [createElement("li", { class: "empty-history" }, ["No status updates recorded yet."])]
         : combinedLogs.map((log) => {
-          const rawTimestamp = log.created_at || log.timestamp || Date.now();
-          const logDate = new Date(rawTimestamp);
+            const rawTimestamp = log.created_at || log.timestamp || Date.now();
+            const logDate = new Date(rawTimestamp);
 
-          return createElement("li", { class: "history-item" }, [
-            createElement("div", { class: "history-timestamp" }, [
-              createElement("time", { datetime: logDate.toISOString() }, [Datex(rawTimestamp, true)])
-            ]),
-            createElement("div", { class: "history-event" }, [log.status || log.event_type || "Event logged"]),
-            log.description ? createElement("div", { class: "history-desc" }, [log.description]) : ""
-          ].filter(Boolean));
-        })
+            return createElement("li", { class: "history-item" }, [
+              createElement("div", { class: "history-timestamp" }, [
+                createElement("time", { datetime: logDate.toISOString() }, [Datex(rawTimestamp, true)])
+              ]),
+              createElement("div", { class: "history-event" }, [log.status || log.event_type || "Event logged"]),
+              log.description ? createElement("div", { class: "history-desc" }, [log.description]) : ""
+            ].filter(Boolean));
+          })
     );
 
     // --- 8. PROOF OF DELIVERY ---
-    let proofSection = null;
+    let proofSection: HTMLElement | null = null;
     if (proof?.url) {
       const proofDate = proof.timestamp ? new Date(proof.timestamp) : null;
 
@@ -268,31 +378,44 @@ export async function displayDelivery(container, deliveryId, options = {}) {
       }, [
         createElement("h3", { id: `proof-heading-${id}` }, ["Proof of Delivery"]),
         createElement("figure", { class: "proof-content" }, [
-          createElement("button", {
-            type: "button",
-            class: "proof-image-btn",
+          Button({
+            title: "",
+            classes: "proof-image-btn",
+            events: { click: () => window.open(proof.url, "_blank") },
             "aria-label": "Open proof of delivery photo in new tab",
-            events: { click: () => window.open(proof.url, "_blank") }
-          }, [
-            createElement("img", {
-              src: proof.url,
-              alt: `Proof of Delivery photograph for order #${id}`,
-              class: "proof-image"
-            })
-          ]),
+            type: "button"
+          }), // Alternative wrapper or image tag handled below via children pattern structure
           createElement("figcaption", { class: "proof-details" }, [
             proof.recipient_name
               ? createElement("p", {}, [createElement("strong", {}, ["Received By: "]), proof.recipient_name])
               : "",
             proofDate
               ? createElement("p", {}, [
-                createElement("strong", {}, ["Signed At: "]),
-                createElement("time", { datetime: proofDate.toISOString() }, [Datex(proof.timestamp, true)])
-              ])
+                  createElement("strong", {}, ["Signed At: "]),
+                  createElement("time", { datetime: proofDate.toISOString() }, [Datex(proof.timestamp, true)])
+                ])
               : ""
           ].filter(Boolean))
         ])
       ]);
+      
+      // Fix proof image node injection inside figure properly matching original structure
+      const figureEl = proofSection.querySelector("figure");
+      if (figureEl) {
+        const imgBtn = createElement("button", {
+          type: "button",
+          class: "proof-image-btn",
+          "aria-label": "Open proof of delivery photo in new tab",
+          events: { click: () => window.open(proof.url, "_blank") }
+        }, [
+          createElement("img", {
+            src: proof.url,
+            alt: `Proof of Delivery photograph for order #${id}`,
+            class: "proof-image"
+          })
+        ]);
+        figureEl.prepend(imgBtn);
+      }
     }
 
     // --- 9. DETAILS CARD RENDER ---
@@ -357,7 +480,7 @@ export async function displayDelivery(container, deliveryId, options = {}) {
     ]);
 
     pageWrapper.appendChild(card);
-  } catch (err) {
+  } catch (err: any) {
     pageWrapper.replaceChildren(
       createElement("div", { class: "deliveries-error", role: "alert" }, [
         err?.message || "Failed to load delivery details."
@@ -366,12 +489,18 @@ export async function displayDelivery(container, deliveryId, options = {}) {
   }
 }
 
-async function handleStatusUpdate(deliveryId, newStatus, container, options, extraPayload = {}) {
+async function handleStatusUpdate(
+  deliveryId: string | number,
+  newStatus: string,
+  container: HTMLElement | null,
+  options: DisplayDeliveryOptions,
+  extraPayload: Record<string, any> = {}
+): Promise<void> {
   try {
     await updateDeliveryStatus(deliveryId, { status: newStatus, ...extraPayload });
     Notify(`Delivery status updated to ${newStatus}`, { type: "success" });
     displayDelivery(container, deliveryId, options);
-  } catch (err) {
+  } catch (err: any) {
     Notify(err?.message || `Failed to update status to ${newStatus}`, { type: "error" });
   }
 }

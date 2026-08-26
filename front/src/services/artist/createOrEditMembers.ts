@@ -1,4 +1,4 @@
-// createOrEditMembers.js
+// createOrEditMembers.ts
 
 import { navigate } from "../../routes/navigate.js";
 import { apiFetch } from "../../api/api.js";
@@ -7,12 +7,36 @@ import { createFormGroup } from "../../components/form/createFormGroupEnhanced.j
 import { createElement } from "../../components/createElement.js";
 import Notify from "../../components/ui/Notify.js";
 
+// ---------------------------------
+// INTERFACES & TYPES
+// ---------------------------------
+
+export interface BandMemberData {
+    memberid?: string | number;
+    name?: string;
+    role?: string;
+    dob?: string;
+    image?: string;
+    [key: string]: any;
+}
+
+export interface ArtistData {
+    artistid?: string | number;
+    name?: string;
+    dob?: string;
+    photo?: string;
+    members?: BandMemberData[];
+    [key: string]: any;
+}
+
+type MemberStatus = "unchanged" | "new" | "updated" | "removed";
+
 // ENTRY
-export async function manageBandMembers(artistID, container) {
+export async function manageBandMembers(artistID: string | number, container: HTMLElement): Promise<void> {
     container.replaceChildren();
 
-    const heading = createElement("h2", {}, ["Manage Band Members"]);
-    const membersContainer = createElement("div", { id: "band-members-container" });
+    const heading = createElement("h2", {}, ["Manage Band Members"]) as HTMLElement;
+    const membersContainer = createElement("div", { id: "band-members-container" }) as HTMLElement;
 
     const addBtn = Button(
         "Add Member",
@@ -20,7 +44,7 @@ export async function manageBandMembers(artistID, container) {
         { click: () => addBandMember(null, membersContainer) },
         "buttonx",
         {}
-    );
+    ) as HTMLElement;
 
     const saveBtn = Button(
         "Save Members",
@@ -28,12 +52,12 @@ export async function manageBandMembers(artistID, container) {
         { click: () => saveBandMembers(artistID, membersContainer) },
         "buttonx",
         {}
-    );
+    ) as HTMLElement;
 
     container.append(heading, membersContainer, addBtn, saveBtn);
 
     try {
-        const artist = await apiFetch(`/artists/${artistID}`, "GET");
+        const artist = (await apiFetch(`/artists/${artistID}`, "GET")) as ArtistData;
         (artist?.members || []).forEach(m =>
             addBandMember(m, membersContainer)
         );
@@ -43,17 +67,17 @@ export async function manageBandMembers(artistID, container) {
 }
 
 // SAVE ONLY CHANGES
-async function saveBandMembers(artistID, container) {
-    const rows = container.querySelectorAll(".band-member");
+async function saveBandMembers(artistID: string | number, container: HTMLElement): Promise<void> {
+    const rows = container.querySelectorAll<HTMLElement>(".band-member");
 
     for (const row of rows) {
-        const status = row.dataset.status;
-        const memberID = row.dataset.id;
+        const status = row.dataset.status as MemberStatus;
+        const memberID = row.dataset.id || "";
 
-        const name = row.querySelector("input[id^='member-name-']")?.value.trim() || "";
-        const role = row.querySelector("input[id^='member-role-']")?.value.trim() || "";
-        const dob = row.querySelector("input[id^='member-dob-']")?.value || "";
-        const image = row.querySelector("input[id^='member-image-']")?.value || "";
+        const name = row.querySelector<HTMLInputElement>("input[id^='member-name-']")?.value.trim() || "";
+        const role = row.querySelector<HTMLInputElement>("input[id^='member-role-']")?.value.trim() || "";
+        const dob = row.querySelector<HTMLInputElement>("input[id^='member-dob-']")?.value || "";
+        const image = row.querySelector<HTMLInputElement>("input[id^='member-image-']")?.value || "";
 
         if (!name && status !== "removed") {
             Notify("Member name is required.", { type: "warning", duration: 2000 });
@@ -92,19 +116,19 @@ async function saveBandMembers(artistID, container) {
 }
 
 // ADD / EDIT MEMBER ROW
-function addBandMember(existing, container) {
+function addBandMember(existing: BandMemberData | null, container: HTMLElement): void {
     if (!container) {
- return; 
-}
+        return; 
+    }
 
     const data = existing || {};
     const memberID = data.memberid || `new-${crypto.randomUUID()}`;
 
     const memberDiv = createElement("div", {
         class: "band-member",
-        "data-id": memberID,
+        "data-id": String(memberID),
         "data-status": existing ? "unchanged" : "new"
-    });
+    }) as HTMLElement;
 
     const refArtistField = createFormGroup({
         type: "text",
@@ -112,7 +136,7 @@ function addBandMember(existing, container) {
         label: "Reference Artist ID (optional)",
         placeholder: "Paste artist ID to copy data",
         value: ""
-    });
+    }) as HTMLElement;
 
     const nameField = createFormGroup({
         type: "text",
@@ -121,7 +145,7 @@ function addBandMember(existing, container) {
         required: true,
         placeholder: "Member name",
         value: data.name || ""
-    });
+    }) as HTMLElement;
 
     const roleField = createFormGroup({
         type: "text",
@@ -129,23 +153,23 @@ function addBandMember(existing, container) {
         label: "Role (optional)",
         placeholder: "Role or instrument",
         value: data.role || ""
-    });
+    }) as HTMLElement;
 
     const dobField = createFormGroup({
         type: "date",
         id: `member-dob-${memberID}`,
         label: "DOB (optional)",
         value: data.dob || ""
-    });
+    }) as HTMLElement;
 
     // Hidden image field
     const imageField = createFormGroup({
         type: "hidden",
         id: `member-image-${memberID}`,
         value: data.image || ""
-    });
+    }) as HTMLElement;
 
-    const markUpdated = () => {
+    const markUpdated = (): void => {
         if (memberDiv.dataset.status === "unchanged") {
             memberDiv.dataset.status = "updated";
         }
@@ -169,7 +193,7 @@ function addBandMember(existing, container) {
         },
         "",
         {}
-    );
+    ) as HTMLElement;
 
     const removeBtn = Button(
         "Remove",
@@ -182,7 +206,7 @@ function addBandMember(existing, container) {
         },
         "remove-member-btn buttonx",
         {}
-    );
+    ) as HTMLElement;
 
     const refRow = createElement(
         "div",
@@ -203,8 +227,15 @@ function addBandMember(existing, container) {
 }
 
 // FETCH ARTIST → COPY INTO MEMBER
-async function fetchMemberData(refField, nameField, roleField, dobField, imageField, row) {
-    const artistID = refField.querySelector("input")?.value.trim();
+async function fetchMemberData(
+    refField: HTMLElement, 
+    nameField: HTMLElement, 
+    roleField: HTMLElement, 
+    dobField: HTMLElement, 
+    imageField: HTMLElement, 
+    row: HTMLElement
+): Promise<void> {
+    const artistID = refField.querySelector<HTMLInputElement>("input")?.value.trim();
 
     if (!artistID) {
         Notify("Enter an artist ID first.", { type: "warning", duration: 2000 });
@@ -212,18 +243,21 @@ async function fetchMemberData(refField, nameField, roleField, dobField, imageFi
     }
 
     try {
-        const artist = await apiFetch(`/artists/${artistID}`, "GET");
+        const artist = (await apiFetch(`/artists/${artistID}`, "GET")) as ArtistData;
 
         if (!artist?.name) {
             Notify("Artist not found.", { type: "error", duration: 2000 });
             return;
         }
 
-        nameField.querySelector("input").value = artist.name || "";
-        dobField.querySelector("input").value = artist.dob || "";
+        const nameInput = nameField.querySelector<HTMLInputElement>("input");
+        if (nameInput) nameInput.value = artist.name || "";
+
+        const dobInput = dobField.querySelector<HTMLInputElement>("input");
+        if (dobInput) dobInput.value = artist.dob || "";
 
         // Copy artist photo → member image
-        const imgInput = imageField.querySelector("input");
+        const imgInput = imageField.querySelector<HTMLInputElement>("input");
         if (imgInput) {
             imgInput.value = artist.photo || "";
         }

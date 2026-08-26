@@ -1,7 +1,13 @@
-import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
-import AudioPlayer from '../../../components/ui/AudioPlayer.mjs';
+// RenderAudioPost.ts
 
-async function RenderAudioPost(mediaContainer, media_url = "", resolution) {
+import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
+import AudioPlayer from '../../../components/ui/AudioPlayer.js';
+
+export async function RenderAudioPost(
+    mediaContainer: HTMLElement, 
+    media_url: string = "", 
+    resolution?: any
+): Promise<void> {
     const audioSrc = resolveImagePath(EntityType.CHAT, PictureType.AUDIO, `${media_url}.mp3`);
     const posterPath = resolveImagePath(EntityType.CHAT, PictureType.THUMB, `${media_url}.jpg`);
 
@@ -16,5 +22,3 @@ async function RenderAudioPost(mediaContainer, media_url = "", resolution) {
 
     mediaContainer.appendChild(audiox);
 }
-
-export { RenderAudioPost };

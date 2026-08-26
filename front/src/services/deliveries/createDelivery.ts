@@ -6,10 +6,18 @@ import Notify from "../../components/ui/Notify.js";
 import { createDeliveryRequest } from "../../services/deliveries/deliveriesApi.js";
 import { navigate } from "../../routes/navigate.js";
 
-async function CreateDelivery(container, isLoggedIn) {
+// --- INTERFACES & TYPES ---
+interface ValidatableElement extends HTMLElement {
+  validate?: () => boolean;
+}
+
+export async function CreateDelivery(
+  container?: HTMLElement | null,
+  isLoggedIn?: boolean | HTMLElement | null
+): Promise<void> {
   const contentContainer = (container && typeof container === "object" && container.nodeType)
     ? container
-    : ((isLoggedIn && typeof isLoggedIn === "object" && isLoggedIn.nodeType) ? isLoggedIn : null);
+    : ((isLoggedIn && typeof isLoggedIn === "object" && (isLoggedIn as HTMLElement).nodeType) ? (isLoggedIn as HTMLElement) : null);
 
   if (!contentContainer) {
     console.error("CreateDelivery: Missing DOM container element.");
@@ -19,12 +27,12 @@ async function CreateDelivery(container, isLoggedIn) {
   contentContainer.innerHTML = "";
 
   // Dynamic form submit handler
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: Event) => {
     e.preventDefault();
-    const formElement = e.target;
+    const formElement = e.target as HTMLFormElement;
 
     // Validate form inputs programmatically before sending network requests
-    const inputs = Array.from(formElement.querySelectorAll("input, textarea, select"));
+    const inputs = Array.from(formElement.querySelectorAll("input, textarea, select")) as ValidatableElement[];
     let isFormValid = true;
 
     inputs.forEach((input) => {
@@ -43,19 +51,19 @@ async function CreateDelivery(container, isLoggedIn) {
 
     const payload = {
       pickup_loc: {
-        address: formData.get("pickupAddress"),
-        lat: parseFloat(formData.get("pickupLat") || 0),
-        lng: parseFloat(formData.get("pickupLng") || 0)
+        address: formData.get("pickupAddress") as string,
+        lat: parseFloat((formData.get("pickupLat") as string) || "0"),
+        lng: parseFloat((formData.get("pickupLng") as string) || "0")
       },
       dropoff_loc: {
-        address: formData.get("dropoffAddress"),
-        lat: parseFloat(formData.get("dropoffLat") || 0),
-        lng: parseFloat(formData.get("dropoffLng") || 0)
+        address: formData.get("dropoffAddress") as string,
+        lat: parseFloat((formData.get("dropoffLat") as string) || "0"),
+        lng: parseFloat((formData.get("dropoffLng") as string) || "0")
       }
     };
 
     try {
-      const res = await createDeliveryRequest(payload);
+      const res: any = await createDeliveryRequest(payload);
       const deliveryId = res?.deliveryid ?? res?.id;
       Notify("Delivery scheduled successfully!", { type: "success" });
 
@@ -64,20 +72,21 @@ async function CreateDelivery(container, isLoggedIn) {
       } else {
         navigate("/deliveries");
       }
-    } catch (err) {
+    } catch (err: any) {
       Notify(err?.message || "Failed to schedule delivery", { type: "error" });
     }
   };
 
   // Reusable address validator callback
-  const validateAddress = (val) => {
-    if (!val || !val.trim()) return "Address is required.";
-    if (val.trim().length < 5) return "Address must be at least 5 characters long.";
+  const validateAddress = (val: any): string | null => {
+    const strVal = String(val || "");
+    if (!strVal.trim()) return "Address is required.";
+    if (strVal.trim().length < 5) return "Address must be at least 5 characters long.";
     return null;
   };
 
   // Reusable latitude/longitude validator callback
-  const validateCoordinate = (val) => {
+  const validateCoordinate = (val: any): string | null => {
     if (val === "" || val === null || val === undefined) return null; // Optional field
     const num = Number(val);
     if (isNaN(num)) return "Must be a valid number.";
@@ -85,7 +94,7 @@ async function CreateDelivery(container, isLoggedIn) {
   };
 
   // --- Form Group Declarations ---
-  
+
   // Pickup Fields
   const pickupAddressGroup = createFormGroup({
     type: "text",
@@ -151,6 +160,14 @@ async function CreateDelivery(container, isLoggedIn) {
     additionalProps: { step: "any" }
   });
 
+  // Submit Button using the object-configuration syntax
+  const submitButton = Button({
+    title: "Submit Delivery Order",
+    id: "btn-submit-delivery",
+    classes: "btn-primary",
+    attributes: { type: "submit" }
+  });
+
   // Assemble Form DOM tree
   const form = createElement("form", {
     class: "delivery-form",
@@ -172,7 +189,7 @@ async function CreateDelivery(container, isLoggedIn) {
       dropoffLngGroup
     ]),
 
-    Button("Submit Delivery Order", "btn-submit-delivery", {}, "btn-primary", { type: "submit" })
+    submitButton
   ]);
 
   const pageWrapper = createElement("div", { class: "create-section" }, [

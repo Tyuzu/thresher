@@ -1,11 +1,40 @@
+// toggleAction.ts
+
 import { getState } from '../../state/state.js';
 import { apiFetch } from "../../api/api.js";
 import Notify from "../../components/ui/Notify.js";
 
+interface ToggleLabels {
+    on: string;
+    off: string;
+}
+
+interface ToggleActionOptions {
+    entityId: string | number;
+    entityType: string;
+    button: HTMLButtonElement;
+    apiPath: string;
+    labels: ToggleLabels;
+    actionName: string;
+}
+
+interface ApiResponse {
+    ok?: boolean;
+    status?: number;
+    [key: string]: any;
+}
+
 /**
  * Generic toggle action for follow/subscribe actions
  */
-async function toggleAction({ entityId, entityType, button, apiPath, labels, actionName }) {
+export async function toggleAction({ 
+    entityId, 
+    entityType, 
+    button, 
+    apiPath, 
+    labels, 
+    actionName 
+}: ToggleActionOptions): Promise<void> {
     if (!getState("token")) {
         Notify("Please log in first.", { type: "warning", duration: 3000, dismissible: true });
         return;
@@ -20,7 +49,7 @@ async function toggleAction({ entityId, entityType, button, apiPath, labels, act
     const action = isActive ? "DELETE" : "PUT";
     const apiEndpoint = `${apiPath}${entityId}`;
 
-    const originalText = button.textContent;
+    const originalText = button.textContent || "";
 
     // Optimistically update UI
     button.disabled = true;
@@ -28,33 +57,34 @@ async function toggleAction({ entityId, entityType, button, apiPath, labels, act
     button.dataset.active = String(!isActive);
 
     try {
-        const response = await apiFetch(apiEndpoint, action);
+        const response = (await apiFetch(apiEndpoint, action)) as ApiResponse;
         button.disabled = false;
 
-        if (!response.ok) {
-            throw new Error(`Server responded with ${response.status}`);
+        if (response && response.ok === false) {
+            throw new Error(`Server responded with ${response.status || "unknown status"}`);
         }
 
         Notify(
             `You have ${!isActive ? actionName : `un${actionName}`} this ${entityType}.`,
             { type: "success", duration: 3000, dismissible: true }
         );
-    } catch (error) {
+    } catch (error: any) {
         // Rollback on failure
         button.textContent = originalText;
         button.dataset.active = String(isActive);
         button.disabled = false;
 
         console.error(`Error toggling ${actionName}:`, error);
-        Notify(`Failed to update ${actionName}: ${error.message}`, { type: "error", duration: 3000, dismissible: true });
+        Notify(`Failed to update ${actionName}: ${error?.message || "Unknown error"}`, { type: "error", duration: 3000, dismissible: true });
     }
 }
+
+// External reference stub for FollowUser if needed
+declare function FollowUser(button: HTMLButtonElement, userId: string | number): void;
 
 /**
  * Legacy wrapper for user follow button
  */
-function toggleFollow(userId, followButton) {
+export function toggleFollow(userId: string | number, followButton: HTMLButtonElement): void {
     FollowUser(followButton, userId);
 }
-
-export { toggleFollow, toggleAction };

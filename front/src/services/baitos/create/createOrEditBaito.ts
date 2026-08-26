@@ -1,248 +1,323 @@
-// createOrEditBaito.js
+// createOrEditBaito.ts
 
-import { createElement } from "../../../components/createElement.js";
-import { navigate } from "../../../routes/navigate.js";
-import { apiFetch } from "../../../api/api.js";
-import { createFormGroup } from "../../../components/form/createFormGroupEnhanced.js";
-import Notify from "../../../components/ui/Notify.js";
+import { createElement } from "../../../components/createElement";
+import { navigate } from "../../../routes/navigate";
+import { apiFetch } from "../../../api/api";
+import { createFormGroup } from "../../../components/form/createFormGroupEnhanced";
+import Notify from "../../../components/ui/Notify";
+
+// ---------------------------------
+// INTERFACES & TYPES
+// ---------------------------------
+
+interface CategoryMap {
+    [key: string]: string[];
+}
+
+interface BaitoData {
+    baitoid?: string | number;
+    category?: string;
+    subcategory?: string;
+    title?: string;
+    workHours?: string;
+    lastdate?: string | number | Date;
+    duration?: string;
+    description?: string;
+    requirements?: string;
+    tags?: string[];
+    location?: string;
+    wage?: string | number;
+    benefits?: string;
+    phone?: string;
+    email?: string;
+    [key: string]: any;
+}
+
+export interface CreateOrEditBaitoOptions {
+    mode?: "create" | "edit";
+    baito?: BaitoData;
+    isLoggedIn?: boolean;
+    contentContainer?: HTMLElement | null;
+}
+
+interface ValidationResult {
+    fd: FormData;
+    requiredFields: {
+        title: string;
+        workHours: string;
+        description: string;
+        requirements: string;
+        location: string;
+        wage: FormDataEntryValue | null;
+        phone: string;
+        category: FormDataEntryValue | null;
+        subcategory: FormDataEntryValue | null;
+        [key: string]: any;
+    };
+}
 
 // --- Category Data ---
-const categoryMap = {
-  Food: ["Waiter", "Cook", "Delivery", "Cleaning", "Dishwasher", "Barista"],
-  Health: ["Reception", "Cleaner", "Helper", "Caregiver", "Nurse Assistant"],
-  Retail: ["Cashier", "Stock", "Floor Staff", "Merchandiser"],
-  Hospitality: ["Housekeeping", "Front Desk", "Server", "Bartender", "Event Staff"],
-  Office: ["Clerical", "Data Entry", "Receptionist", "Assistant"],
-  Education: ["Tutor", "Teaching Assistant", "Language Teacher", "Childcare"],
-  Logistics: ["Warehouse", "Delivery", "Driver", "Mover"],
-  IT: ["Support", "Testing", "Junior Developer", "Web Admin"],
-  Creative: ["Designer", "Photographer", "Editor", "Content Creator"],
-  Construction: ["Laborer", "Helper", "Carpenter", "Painter"],
-  Other: ["Manual Labor", "Seasonal Work", "Event Help", "Miscellaneous"]
+const categoryMap: CategoryMap = {
+    Food: ["Waiter", "Cook", "Delivery", "Cleaning", "Dishwasher", "Barista"],
+    Health: ["Reception", "Cleaner", "Helper", "Caregiver", "Nurse Assistant"],
+    Retail: ["Cashier", "Stock", "Floor Staff", "Merchandiser"],
+    Hospitality: ["Housekeeping", "Front Desk", "Server", "Bartender", "Event Staff"],
+    Office: ["Clerical", "Data Entry", "Receptionist", "Assistant"],
+    Education: ["Tutor", "Teaching Assistant", "Language Teacher", "Childcare"],
+    Logistics: ["Warehouse", "Delivery", "Driver", "Mover"],
+    IT: ["Support", "Testing", "Junior Developer", "Web Admin"],
+    Creative: ["Designer", "Photographer", "Editor", "Content Creator"],
+    Construction: ["Laborer", "Helper", "Carpenter", "Painter"],
+    Other: ["Manual Labor", "Seasonal Work", "Event Help", "Miscellaneous"]
 };
 
 // --- Utility: build select options ---
-function populateSelect(select, options, selectedValue = "") {
-  select.replaceChildren();
-  const placeholder = createElement("option", { value: "", disabled: true, selected: !selectedValue }, ["Select role type"]);
-  select.appendChild(placeholder);
-  options.forEach(opt => {
-    const isSelected = opt === selectedValue;
-    const o = createElement("option", { value: opt, ...(isSelected && { selected: true }) }, [opt]);
-    select.appendChild(o);
-  });
-  select.value = selectedValue || "";
+function populateSelect(select: HTMLSelectElement, options: string[], selectedValue: string = ""): void {
+    select.replaceChildren();
+    const placeholder = createElement("option", { value: "", disabled: true, selected: !selectedValue }, ["Select role type"]) as HTMLOptionElement;
+    select.appendChild(placeholder);
+    options.forEach(opt => {
+        const isSelected = opt === selectedValue;
+        const o = createElement("option", { value: opt, ...(isSelected && { selected: true }) }, [opt]) as HTMLOptionElement;
+        select.appendChild(o);
+    });
+    select.value = selectedValue || "";
 }
 
-function formatDateInputValue(value) {
-  if (!value) return "";
-  const date = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
+function formatDateInputValue(value: any): string {
+    if (!value) return "";
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
 }
 
 // --- Create all form groups ---
-function buildForm(baito) {
-  const form = createElement("form", { enctype: "multipart/form-data", class: "baito-form" });
+function buildForm(baito: BaitoData) {
+    const form = createElement("form", { enctype: "multipart/form-data", class: "baito-form" }) as HTMLFormElement;
 
-  // Category + subcategory (Note: added 'name' property for FormData extraction)
-  const categoryGroup = createFormGroup({
-    label: "Job Category",
-    type: "select",
-    id: "category-main",
-    name: "category-main",
-    required: true,
-    placeholder: "Select category",
-    options: Object.keys(categoryMap).map(k => ({ value: k, label: k })),
-    value: baito.category || ""
-  });
+    // Category + subcategory (Note: added 'name' property for FormData extraction)
+    const categoryGroup = createFormGroup({
+        label: "Job Category",
+        type: "select",
+        id: "category-main",
+        name: "category-main",
+        required: true,
+        placeholder: "Select category",
+        options: Object.keys(categoryMap).map(k => ({ value: k, label: k })),
+        value: baito.category || ""
+    });
 
-  const subcategoryGroup = createFormGroup({
-    label: "Role Type",
-    type: "select",
-    id: "category-sub",
-    name: "category-sub",
-    required: true,
-    placeholder: "Select role type",
-    options: [],
-    value: baito.subcategory || ""
-  });
+    const subcategoryGroup = createFormGroup({
+        label: "Role Type",
+        type: "select",
+        id: "category-sub",
+        name: "category-sub",
+        required: true,
+        placeholder: "Select role type",
+        options: [],
+        value: baito.subcategory || ""
+    });
 
-  form.append(categoryGroup, subcategoryGroup);
+    form.append(categoryGroup, subcategoryGroup);
 
-  // Define character counter elements with fallback defaults
-  const descLength = baito.description ? baito.description.length : 0;
-  const reqLength = baito.requirements ? baito.requirements.length : 0;
-  
-  const descriptionCounter = createElement("small", { class: "char-count" }, [`${descLength} characters`]);
-  const reqCounter = createElement("small", { class: "char-count" }, [`${reqLength} characters`]);
+    // Define character counter elements with fallback defaults
+    const descLength = baito.description ? baito.description.length : 0;
+    const reqLength = baito.requirements ? baito.requirements.length : 0;
+    
+    const descriptionCounter = createElement("small", { class: "char-count" }, [`${descLength} characters`]) as HTMLElement;
+    const reqCounter = createElement("small", { class: "char-count" }, [`${reqLength} characters`]) as HTMLElement;
 
-  // Fields definition (Added 'name' tags matching your payload logic)
-  const fields = [
-    { label: "Job Title", type: "text", id: "baito-title", name: "baito-title", required: true, value: baito.title || "", placeholder: "Enter job title" },
-    { label: "Working Hours", type: "text", id: "baito-workinghours", name: "baito-workinghours", required: true, value: baito.workHours || "", placeholder: "e.g. 9:00-17:00" },
-    { label: "Application Deadline", type: "date", id: "baito-lastdate", name: "baito-lastdate", value: formatDateInputValue(baito.lastdate), placeholder: "Select deadline" },
-    { label: "Job Duration", type: "text", id: "baito-duration", name: "baito-duration", value: baito.duration || "", placeholder: "e.g. 2 weeks or 1 month" },
-    { label: "Description", type: "textarea", id: "baito-description", name: "baito-description", required: true, value: baito.description || "", placeholder: "Job description", additionalNodes: [descriptionCounter] },
-    { label: "Requirements", type: "textarea", id: "baito-requirements", name: "baito-requirements", required: true, value: baito.requirements || "", placeholder: "Requirements", additionalNodes: [reqCounter] },
-    { label: "Tags (comma separated)", type: "text", id: "baito-tags", name: "baito-tags", value: (baito.tags || []).join(", "), placeholder: "e.g. part-time, weekend" },
-    { label: "Location", type: "text", id: "baito-location", name: "baito-location", required: true, value: baito.location || "", placeholder: "Enter location" },
-    { label: "Wage per Hour", type: "number", id: "baito-wage", name: "baito-wage", required: true, value: baito.wage || "", additionalProps: { min: 1 }, placeholder: "Wage Per Hour" },
-    { label: "Benefits", type: "text", id: "baito-benefits", name: "baito-benefits", value: baito.benefits || "", placeholder: "e.g. Free meals, transport allowance" },
-    { label: "Phone Number", type: "text", id: "baito-phone", name: "baito-phone", required: true, value: baito.phone || "", placeholder: "Enter phone number" },
-    { label: "Email", type: "email", id: "baito-email", name: "baito-email", value: baito.email || "", placeholder: "Enter email address" },
-  ];
+    // Fields definition (Added 'name' tags matching your payload logic)
+    const fields = [
+        { label: "Job Title", type: "text", id: "baito-title", name: "baito-title", required: true, value: baito.title || "", placeholder: "Enter job title" },
+        { label: "Working Hours", type: "text", id: "baito-workinghours", name: "baito-workinghours", required: true, value: baito.workHours || "", placeholder: "e.g. 9:00-17:00" },
+        { label: "Application Deadline", type: "date", id: "baito-lastdate", name: "baito-lastdate", value: formatDateInputValue(baito.lastdate), placeholder: "Select deadline" },
+        { label: "Job Duration", type: "text", id: "baito-duration", name: "baito-duration", value: baito.duration || "", placeholder: "e.g. 2 weeks or 1 month" },
+        { label: "Description", type: "textarea", id: "baito-description", name: "baito-description", required: true, value: baito.description || "", placeholder: "Job description", additionalNodes: [descriptionCounter] },
+        { label: "Requirements", type: "textarea", id: "baito-requirements", name: "baito-requirements", required: true, value: baito.requirements || "", placeholder: "Requirements", additionalNodes: [reqCounter] },
+        { label: "Tags (comma separated)", type: "text", id: "baito-tags", name: "baito-tags", value: (baito.tags || []).join(", "), placeholder: "e.g. part-time, weekend" },
+        { label: "Location", type: "text", id: "baito-location", name: "baito-location", required: true, value: baito.location || "", placeholder: "Enter location" },
+        { label: "Wage per Hour", type: "number", id: "baito-wage", name: "baito-wage", required: true, value: baito.wage || "", additionalProps: { min: 1 }, placeholder: "Wage Per Hour" },
+        { label: "Benefits", type: "text", id: "baito-benefits", name: "baito-benefits", value: baito.benefits || "", placeholder: "e.g. Free meals, transport allowance" },
+        { label: "Phone Number", type: "text", id: "baito-phone", name: "baito-phone", required: true, value: baito.phone || "", placeholder: "Enter phone number" },
+        { label: "Email", type: "email", id: "baito-email", name: "baito-email", value: baito.email || "", placeholder: "Enter email address" },
+    ];
 
-  fields.forEach(f => form.appendChild(createFormGroup(f)));
-  return { form, descriptionCounter, reqCounter };
+    fields.forEach(f => form.appendChild(createFormGroup(f)));
+    return { form, descriptionCounter, reqCounter };
 }
 
 // --- Validation ---
-function validateForm(form) {
-  const fd = new FormData(form);
-  
-  const requiredFields = {
-    title: fd.get("baito-title")?.trim(),
-    workHours: fd.get("baito-workinghours")?.trim(),
-    description: fd.get("baito-description")?.trim(),
-    requirements: fd.get("baito-requirements")?.trim(),
-    location: fd.get("baito-location")?.trim(),
-    wage: fd.get("baito-wage"),
-    phone: fd.get("baito-phone")?.trim(),
-    category: fd.get("category-main"),
-    subcategory: fd.get("category-sub")
-  };
+function validateForm(form: HTMLFormElement): ValidationResult | null {
+    const fd = new FormData(form);
+    
+    const requiredFields = {
+        title: fd.get("baito-title")?.toString().trim() || "",
+        workHours: fd.get("baito-workinghours")?.toString().trim() || "",
+        description: fd.get("baito-description")?.toString().trim() || "",
+        requirements: fd.get("baito-requirements")?.toString().trim() || "",
+        location: fd.get("baito-location")?.toString().trim() || "",
+        wage: fd.get("baito-wage"),
+        phone: fd.get("baito-phone")?.toString().trim() || "",
+        category: fd.get("category-main"),
+        subcategory: fd.get("category-sub")
+    };
 
-  // Visual error indicator clean up
-  form.querySelectorAll(".form-group-error").forEach(el => el.classList.remove("form-group-error"));
+    // Visual error indicator clean up
+    form.querySelectorAll(".form-group-error").forEach(el => el.classList.remove("form-group-error"));
 
-  let hasError = false;
-  Object.entries(requiredFields).forEach(([key, val]) => {
-    if (!val) {
-      hasError = true;
-      // Match back to correct ID to highlight errors
-      let targetId = `baito-${key.toLowerCase()}`;
-      if (key === "workHours") targetId = "baito-workinghours";
-      if (key === "category") targetId = "category-main";
-      if (key === "subcategory") targetId = "category-sub";
-      
-      const inputEl = form.querySelector(`#${targetId}`);
-      if (inputEl) {
-        inputEl.closest(".form-group")?.classList.add("form-group-error");
-      }
+    let hasError = false;
+    Object.entries(requiredFields).forEach(([key, val]) => {
+        if (!val) {
+            hasError = true;
+            // Match back to correct ID to highlight errors
+            let targetId = `baito-${key.toLowerCase()}`;
+            if (key === "workHours") targetId = "baito-workinghours";
+            if (key === "category") targetId = "category-main";
+            if (key === "subcategory") targetId = "category-sub";
+            
+            const inputEl = form.querySelector(`#${targetId}`);
+            if (inputEl) {
+                inputEl.closest(".form-group")?.classList.add("form-group-error");
+            }
+        }
+    });
+
+    if (hasError) {
+        Notify("Please fill in all required fields.", { type: "warning", duration: 3000, dismissible: true });
+        return null;
     }
-  });
 
-  if (hasError) {
-    Notify("Please fill in all required fields.", { type: "warning", duration: 3000, dismissible: true });
-    return null;
-  }
-
-  const deadline = fd.get("baito-lastdate")?.toString().trim();
-  const duration = fd.get("baito-duration")?.toString().trim();
-  if (!deadline && !duration) {
-    Notify("Please enter either an application deadline or a job duration.", { type: "warning", duration: 3000, dismissible: true });
-    return null;
-  }
-  if (Number(requiredFields.wage) <= 0) {
-    Notify("Wage must be greater than 0.", { type: "warning", duration: 3000, dismissible: true });
-    return null;
-  }
-  return { fd, requiredFields };
+    const deadline = fd.get("baito-lastdate")?.toString().trim();
+    const duration = fd.get("baito-duration")?.toString().trim();
+    if (!deadline && !duration) {
+        Notify("Please enter either an application deadline or a job duration.", { type: "warning", duration: 3000, dismissible: true });
+        return null;
+    }
+    if (requiredFields.wage !== null && Number(requiredFields.wage) <= 0) {
+        Notify("Wage must be greater than 0.", { type: "warning", duration: 3000, dismissible: true });
+        return null;
+    }
+    return { fd, requiredFields };
 }
 
 // --- Payload builder ---
-function buildPayload(fd, requiredFields) {
-  const payload = new FormData();
-  Object.entries(requiredFields).forEach(([k, v]) => payload.append(k, v));
+function buildPayload(fd: FormData, requiredFields: Record<string, any>): FormData {
+    const payload = new FormData();
+    Object.entries(requiredFields).forEach(([k, v]) => {
+        if (v !== null && v !== undefined) {
+            payload.append(k, String(v));
+        }
+    });
 
-  const optionalFields = [
-    { payloadKey: "tags", fdKey: "baito-tags" },
-    { payloadKey: "benefits", fdKey: "baito-benefits" },
-    { payloadKey: "email", fdKey: "baito-email" },
-    { payloadKey: "lastDateToApply", fdKey: "baito-lastdate" },
-    { payloadKey: "duration", fdKey: "baito-duration" }
-  ];
+    const optionalFields = [
+        { payloadKey: "tags", fdKey: "baito-tags" },
+        { payloadKey: "benefits", fdKey: "baito-benefits" },
+        { payloadKey: "email", fdKey: "baito-email" },
+        { payloadKey: "lastDateToApply", fdKey: "baito-lastdate" },
+        { payloadKey: "duration", fdKey: "baito-duration" }
+    ];
 
-  optionalFields.forEach(({ payloadKey, fdKey }) => {
-    const value = fd.get(fdKey)?.toString().trim();
-    if (value) {
-      payload.append(payloadKey, value);
-    }
-  });
+    optionalFields.forEach(({ payloadKey, fdKey }) => {
+        const value = fd.get(fdKey)?.toString().trim();
+        if (value) {
+            payload.append(payloadKey, value);
+        }
+    });
 
-  return payload;
+    return payload;
 }
 
 // --- Main function ---
-export async function createOrEditBaito({ mode = "create", baito = {}, isLoggedIn = false, contentContainer = null }) {
-  const container = contentContainer || document.querySelector("#content");
-  container.replaceChildren();
+export async function createOrEditBaito({ 
+    mode = "create", 
+    baito = {}, 
+    isLoggedIn = false, 
+    contentContainer = null 
+}: CreateOrEditBaitoOptions): Promise<void> {
+    const container = contentContainer || document.querySelector("#content");
+    if (!container) return;
+    container.replaceChildren();
 
-  if (mode === "create" && !isLoggedIn) {
-    Notify("You must be logged in to post a job (baito).", { type: "warning", duration: 3000, dismissible: true });
-    navigate("/login");
-    return;
-  }
-
-  const section = createElement("div", { class: "create-section" });
-  container.appendChild(section);
-
-  const { form, descriptionCounter, reqCounter } = buildForm(baito);
-
-  // --- Subcategory init ---
-  const subSelect = form.querySelector("#category-sub");
-  if (baito.category && categoryMap[baito.category]) {
-    populateSelect(subSelect, categoryMap[baito.category], baito.subcategory);
-  }
-
-  // --- Event bindings ---
-  form.querySelector("#category-main").addEventListener("change", e => {
-    populateSelect(subSelect, categoryMap[e.target.value] || []);
-  });
-
-  form.querySelector("#baito-description").addEventListener("input", e => {
-    descriptionCounter.textContent = `${e.target.value.length} characters`;
-  });
-  form.querySelector("#baito-requirements").addEventListener("input", e => {
-    reqCounter.textContent = `${e.target.value.length} characters`;
-  });
-
-  // --- Submit ---
-  const submitBtn = createElement("button", { type: "submit", class: "btn btn-primary btn-submit" },
-    [mode === "edit" ? "Update Baito" : "Create Baito"]);
-
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
-    submitBtn.disabled = true;
-
-    const result = validateForm(form);
-    if (!result) {
-      submitBtn.disabled = false; 
-      return; 
+    if (mode === "create" && !isLoggedIn) {
+        Notify("You must be logged in to post a job (baito).", { type: "warning", duration: 3000, dismissible: true });
+        navigate("/login");
+        return;
     }
 
-    const { fd, requiredFields } = result;
-    const payload = buildPayload(fd, requiredFields);
+    const section = createElement("div", { class: "create-section" }) as HTMLElement;
+    container.appendChild(section);
 
-    try {
-      if (mode === "edit") {
-        Notify("Updating baito...", { type: "info", duration: 3000, dismissible: true });
-        await apiFetch(`/baitos/baito/${baito.baitoid}`, "PUT", payload);
-        Notify("Baito updated successfully!", { type: "success", duration: 3000, dismissible: true });
-        navigate(`/baito/${baito.baitoid}`);
-      } else {
-        Notify("Creating baito...", { type: "info", duration: 3000, dismissible: true });
-        const res = await apiFetch("/baitos/baito", "POST", payload);
-        Notify("Baito created successfully!", { type: "success", duration: 3000, dismissible: true });
-        navigate(`/baito/${res.baitoid}`);
-      }
-    } catch (err) {
-      Notify(`Error: ${err.message || "Failed to save baito."}`, { type: "error", duration: 3000, dismissible: true });
-    } finally {
-      submitBtn.disabled = false;
+    const { form, descriptionCounter, reqCounter } = buildForm(baito);
+
+    // --- Subcategory init ---
+    const subSelect = form.querySelector("#category-sub") as HTMLSelectElement;
+    if (baito.category && categoryMap[baito.category] && subSelect) {
+        populateSelect(subSelect, categoryMap[baito.category], baito.subcategory);
     }
-  });
 
-  form.appendChild(submitBtn);
-  section.append(createElement("h2", { class: "form-title" }, [mode === "edit" ? "Edit Baito" : "Create Baito"]), form);
+    // --- Event bindings ---
+    const mainCategorySelect = form.querySelector("#category-main");
+    if (mainCategorySelect && subSelect) {
+        mainCategorySelect.addEventListener("change", (e: Event) => {
+            const target = e.target as HTMLSelectElement;
+            populateSelect(subSelect, categoryMap[target.value] || []);
+        });
+    }
+
+    const descInput = form.querySelector("#baito-description");
+    if (descInput) {
+        descInput.addEventListener("input", (e: Event) => {
+            const target = e.target as HTMLTextAreaElement;
+            descriptionCounter.textContent = `${target.value.length} characters`;
+        });
+    }
+
+    const reqInput = form.querySelector("#baito-requirements");
+    if (reqInput) {
+        reqInput.addEventListener("input", (e: Event) => {
+            const target = e.target as HTMLTextAreaElement;
+            reqCounter.textContent = `${target.value.length} characters`;
+        });
+    }
+
+    // --- Submit ---
+    const submitBtn = createElement("button", { type: "submit", class: "btn btn-primary btn-submit" },
+        [mode === "edit" ? "Update Baito" : "Create Baito"]) as HTMLButtonElement;
+
+    form.addEventListener("submit", async (e: Event) => {
+        e.preventDefault();
+        submitBtn.disabled = true;
+
+        const result = validateForm(form);
+        if (!result) {
+            submitBtn.disabled = false; 
+            return; 
+        }
+
+        const { fd, requiredFields } = result;
+        const payload = buildPayload(fd, requiredFields);
+
+        try {
+            if (mode === "edit") {
+                Notify("Updating baito...", { type: "info", duration: 3000, dismissible: true });
+                await apiFetch(`/baitos/baito/${baito.baitoid}`, "PUT", payload);
+                Notify("Baito updated successfully!", { type: "success", duration: 3000, dismissible: true });
+                navigate(`/baito/${baito.baitoid}`);
+            } else {
+                Notify("Creating baito...", { type: "info", duration: 3000, dismissible: true });
+                const res = (await apiFetch("/baitos/baito", "POST", payload)) as { baitoid?: string | number };
+                Notify("Baito created successfully!", { type: "success", duration: 3000, dismissible: true });
+                if (res?.baitoid) {
+                    navigate(`/baito/${res.baitoid}`);
+                }
+            }
+        } catch (err: any) {
+            Notify(`Error: ${err?.message || "Failed to save baito."}`, { type: "error", duration: 3000, dismissible: true });
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+
+    form.appendChild(submitBtn);
+    section.append(createElement("h2", { class: "form-title" }, [mode === "edit" ? "Edit Baito" : "Create Baito"]), form);
 }

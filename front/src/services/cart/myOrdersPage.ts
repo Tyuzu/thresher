@@ -3,12 +3,55 @@ import { apiFetch } from "../../api/api.js";
 import { buildOrdersPage } from "./orders/builders.js";
 import { normalizeOrders } from "./orders/orderutils.js";
 
+// --- INTERFACES & TYPES ---
+export interface OrderItem {
+  id?: string | number;
+  itemId?: string | number;
+  name?: string;
+  quantity?: number;
+  price?: number;
+  [key: string]: any;
+}
+
+export interface Order {
+  id?: string | number;
+  orderId?: string | number;
+  orderid?: string | number;
+  status?: string;
+  created_at?: string | number;
+  items?: OrderItem[];
+  [key: string]: any;
+}
+
+export interface OrderFilters {
+  status: string;
+  date: string;
+  [key: string]: any;
+}
+
+export interface OrdersState {
+  orders: Order[];
+  loading: boolean;
+  filters: OrderFilters;
+  currentPage: number;
+  expandedOrders: Set<string | number>;
+  [key: string]: any;
+}
+
 /**
  * Renders and coordinates the User Orders page.
  * @param {HTMLElement} container - Target parent node element wrapper.
  * @param {boolean} isLoggedIn - Authentication state.
  */
-export async function displayMyOrders(container, isLoggedIn) {
+export async function displayMyOrders(
+  container: HTMLElement | null,
+  isLoggedIn?: boolean
+): Promise<void> {
+  if (!container || !container.nodeType) {
+    console.error("displayMyOrders: Missing DOM container element.");
+    return;
+  }
+
   container.replaceChildren();
 
   if (!isLoggedIn) {
@@ -19,7 +62,7 @@ export async function displayMyOrders(container, isLoggedIn) {
   }
 
   // Reactive state store
-  const state = {
+  const state: OrdersState = {
     orders: [],
     loading: true, // Let builders flag loading views if needed
     filters: {
@@ -27,7 +70,7 @@ export async function displayMyOrders(container, isLoggedIn) {
       date: "",
     },
     currentPage: 1,
-    expandedOrders: new Set(),
+    expandedOrders: new Set<string | number>(),
   };
 
   const render = () => {
@@ -38,7 +81,7 @@ export async function displayMyOrders(container, isLoggedIn) {
   render();
 
   try {
-    const res = await apiFetch("/order/mine", "GET");
+    const res: any = await apiFetch("/order/mine", "GET");
 
     // Handle both array response and wrapped object response structure configurations safely
     const ordersData = Array.isArray(res) ? res : res?.orders;
@@ -52,7 +95,7 @@ export async function displayMyOrders(container, isLoggedIn) {
     // SAFE UPDATE: We leave state.filters and state.expandedOrders completely alone 
     // so any interaction made during transmission isn't erased.
     render();
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to fetch user orders:", err);
     state.loading = false;
     
@@ -64,3 +107,5 @@ export async function displayMyOrders(container, isLoggedIn) {
     );
   }
 }
+
+export default displayMyOrders;

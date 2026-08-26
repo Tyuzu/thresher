@@ -6,23 +6,63 @@ import Notify from "../../components/ui/Notify.js";
 import Button from "../../components/base/Button.js";
 import { printInvoice } from "./invoice.js";
 
+// --- INTERFACES & TYPES ---
+interface OrderItem {
+  itemId?: string | number;
+  quantity?: number;
+  category?: string;
+  entityId?: string | number;
+  entityType?: string;
+  price?: number;
+  itemName?: string;
+  name?: string;
+  [key: string]: any;
+}
+
+interface SessionData {
+  items?: OrderItem[] | Record<string, OrderItem[]>;
+  category?: string;
+  address?: string;
+  couponCode?: string;
+  [key: string]: any;
+}
+
+interface OrderPayload {
+  address?: string;
+  items: Record<string, OrderItem[]>;
+  coupon?: string | null;
+}
+
+interface OrderData {
+  orderid?: string | number;
+  orderId?: string | number;
+  OrderID?: string | number;
+  subtotal?: number;
+  discount?: number;
+  tax?: number;
+  delivery?: number;
+  total?: number;
+  totalAmount?: number;
+  [key: string]: any;
+}
+
 /* ────────────────────── Helpers ────────────────────── */
 
-const formatINR = value =>
+const formatINR = (value: number): string =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR"
   }).format(value);
 
-const toRupees = paise => (paise || 0) / 100;
+const toRupees = (paise?: number): number => (paise || 0) / 100;
 
-const flattenItems = items =>
+const flattenItems = (items: OrderItem[] | Record<string, OrderItem[]> = []): OrderItem[] =>
   Array.isArray(items)
     ? items
     : Object.values(items || {}).flat();
 
-function groupByCategory(items = []) {
-  return items.reduce((acc, item) => {
+function groupByCategory(items: OrderItem[] = []): Record<string, OrderItem[]> {
+  return items.reduce((acc: Record<string, OrderItem[]>, item) => {
     const key = item.category;
 
     if (!key) {
@@ -48,7 +88,7 @@ function groupByCategory(items = []) {
 
 /* ────────────────────── Renderers ────────────────────── */
 
-function renderItems(items) {
+function renderItems(items: OrderItem[] | Record<string, OrderItem[]>): HTMLElement {
   const list = createElement("ul", {});
 
   flattenItems(items).forEach(item => {
@@ -68,7 +108,7 @@ function renderItems(items) {
   return list;
 }
 
-function renderTotalsFromBackend(order) {
+function renderTotalsFromBackend(order: OrderData): HTMLElement {
   const subtotal = toRupees(order.subtotal || 0);
   const discount = toRupees(order.discount || 0);
   const tax = toRupees(order.tax || 0);
@@ -96,14 +136,14 @@ function renderTotalsFromBackend(order) {
 
 /* ────────────────────── API ────────────────────── */
 
-async function createOrder({ items, address, couponCode }) {
-  const payload = {
+async function createOrder({ items, address, couponCode }: { items: OrderItem[]; address?: string; couponCode?: string }): Promise<OrderData & { orderid: string | number; total: number }> {
+  const payload: OrderPayload = {
     address,
     items: groupByCategory(items),
     coupon: couponCode || null
   };
 
-  const res = await apiFetch("/order", "POST", payload);
+  const res: any = await apiFetch("/order", "POST", payload);
 
   if (!res?.success) {
     throw new Error(res?.message || "Order creation failed");
@@ -124,7 +164,7 @@ async function createOrder({ items, address, couponCode }) {
   };
 }
 
-async function processPayment(orderId, total) {
+async function processPayment(orderId: string | number, total: number): Promise<any> {
   // FIXED: Propagate error rejections up so the main catch block knows why it failed
   return await showPaymentModal({
     paymentType: "purchase",
@@ -137,13 +177,13 @@ async function processPayment(orderId, total) {
 
 /* ────────────────────── Main Entry ────────────────────── */
 
-export function displayPayment(container, sessionData = {}) {
+export function displayPayment(container: HTMLElement, sessionData: SessionData = {}): void {
   container.replaceChildren(
     createElement("h2", {}, ["Order Summary"])
   );
 
   let items = flattenItems(sessionData.items);
-  let createdOrder = null; // FIXED: State variable to track an already created order tracking reference
+  let createdOrder: (OrderData & { orderid: string | number; total: number }) | null = null; // FIXED: State variable to track an already created order tracking reference
 
   if (sessionData.category) {
     items = items.filter(item => item.category === sessionData.category);
@@ -159,19 +199,19 @@ export function displayPayment(container, sessionData = {}) {
   const totalsContainer = createElement("div", {});
   container.append(totalsContainer);
 
-  const confirmBtn = Button(
-    "Pay & Place Order",
-    "confirm-order-btn",
-    { click: () => handleConfirm() },
-    "primary-button"
-  );
+  const confirmBtn = Button({
+    title: "Pay & Place Order",
+    id: "confirm-order-btn",
+    events: { click: () => handleConfirm() },
+    classes: "primary-button"
+  });
 
   container.append(confirmBtn);
 
   async function handleConfirm() {
-    if (confirmBtn.disabled) return;
+    if (confirmBtn.hasAttribute("disabled") || (confirmBtn as HTMLButtonElement).disabled) return;
     
-    confirmBtn.disabled = true;
+    (confirmBtn as HTMLButtonElement).disabled = true;
     confirmBtn.textContent = "Processing…";
 
     try {
@@ -213,17 +253,17 @@ export function displayPayment(container, sessionData = {}) {
         ]
       );
 
-      const printBtn = Button(
-        "Print Invoice",
-        "print-invoice-btn",
-        { click: () => printInvoice(createdOrder, items) },
-        "secondary-button"
-      );
+      const printBtn = Button({
+        title: "Print Invoice",
+        id: "print-invoice-btn",
+        events: { click: () => printInvoice(createdOrder!, items) },
+        classes: "secondary-button"
+      });
 
       successContainer.append(printBtn);
       container.replaceChildren(successContainer);
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Checkout process error:", err);
 
       Notify(err?.message || "Order processing failed", {
@@ -231,8 +271,10 @@ export function displayPayment(container, sessionData = {}) {
         duration: 4000
       });
 
-      confirmBtn.disabled = false;
+      (confirmBtn as HTMLButtonElement).disabled = false;
       confirmBtn.textContent = createdOrder ? "Retry Payment" : "Pay & Place Order";
     }
   }
 }
+
+export default displayPayment;

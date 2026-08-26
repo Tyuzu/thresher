@@ -1,17 +1,53 @@
+// bookingApi.ts
+
 import { apiFetch } from "../../api/api.js";
+import { BookingItem, PricingTier, BookingSlot } from "./bookingManager.js";
+
+// ---------- Interfaces ----------
+
+export interface BookingApiInstance {
+    apiListSlots: () => Promise<BookingSlot[]>;
+    apiCreateSlot: (slot: BookingSlot) => Promise<BookingSlot>;
+    apiDeleteSlot: (slotId: string) => Promise<boolean>;
+    apiListTiers: () => Promise<PricingTier[]>;
+    apiCreateTier: (tier: PricingTier) => Promise<PricingTier>;
+    apiDeleteTier: (tierId: string) => Promise<boolean>;
+    apiGenerateSlotsFromTier: (tierId: string, startDate: string, endDate: string) => Promise<BookingSlot[]>;
+    apiListBookings: () => Promise<BookingItem[]>;
+    apiCreateBooking: (payload: Record<string, any>) => Promise<{ ok: boolean; reason?: string; booking?: BookingItem }>;
+    apiCancelBooking: (bookingId: string) => Promise<boolean>;
+}
+
+export interface BookingStorageInstance {
+    localSaveSlot: (slot: BookingSlot) => void;
+    localGetSlots: () => BookingSlot[];
+    localDeleteSlot: (slotId: string) => boolean;
+    localSaveTier: (tier: PricingTier) => void;
+    localGetTiers: () => PricingTier[];
+    localDeleteTier: (tierId: string) => boolean;
+    localGenerateSlotsFromTier: (tier: PricingTier, range: { startDate: string; endDate: string }) => BookingSlot[];
+    localSaveBooking: (b: BookingItem) => void;
+    localGetBookings: () => BookingItem[];
+    localCancelBooking: (bookingId: string, userIdArg: string) => boolean;
+    localGetDateCap: (date: string) => number | null;
+    localSetDateCap: (date: string, cap: number) => void;
+    BOOKING_KEY: string;
+}
 
 // ---------- Small helpers ----------
-export function genId() {
+
+export function genId(): string {
     return `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 // ---------- API wrappers ----------
+
 /**
- * Determines if an caught error is a network connectivity failure.
+ * Determines if a caught error is a network connectivity failure.
  * If the server responded with an HTTP status code (e.g., 400, 409, 500), 
  * we must respect that response instead of falling back to local storage.
  */
-function isNetworkError(err) {
+function isNetworkError(err: any): boolean {
     // If the error object contains a response or status, it was processed by the server.
     if (err && (err.status || err.statusCode || err.response)) {
         return false;
@@ -19,9 +55,14 @@ function isNetworkError(err) {
     return true; 
 }
 
-export function bookingApi(entityType, entityId, storage, userId) {
+export function bookingApi(
+    entityType: string, 
+    entityId: string, 
+    storage: BookingStorageInstance, 
+    userId: string
+): BookingApiInstance {
     // ----- Slots -----
-    async function apiListSlots() {
+    async function apiListSlots(): Promise<BookingSlot[]> {
         try {
             const res = await apiFetch(
                 `/bookings/slots?entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`
@@ -36,7 +77,7 @@ export function bookingApi(entityType, entityId, storage, userId) {
         }
     }
 
-    async function apiCreateSlot(slot) {
+    async function apiCreateSlot(slot: BookingSlot): Promise<BookingSlot> {
         try {
             const res = await apiFetch(`/bookings/slots`, "POST", slot);
             return res.slot;
@@ -49,7 +90,7 @@ export function bookingApi(entityType, entityId, storage, userId) {
         }
     }
 
-    async function apiDeleteSlot(slotId) {
+    async function apiDeleteSlot(slotId: string): Promise<boolean> {
         try {
             await apiFetch(`/bookings/slots/${slotId}`, "DELETE");
             return true;
@@ -62,7 +103,7 @@ export function bookingApi(entityType, entityId, storage, userId) {
     }
 
     // ----- Tiers -----
-    async function apiListTiers() {
+    async function apiListTiers(): Promise<PricingTier[]> {
         try {
             const res = await apiFetch(
                 `/bookings/tiers?entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`
@@ -77,7 +118,7 @@ export function bookingApi(entityType, entityId, storage, userId) {
         }
     }
 
-    async function apiCreateTier(tier) {
+    async function apiCreateTier(tier: PricingTier): Promise<PricingTier> {
         try {
             const res = await apiFetch(`/bookings/tiers`, "POST", tier);
             return res.tier;
@@ -90,7 +131,7 @@ export function bookingApi(entityType, entityId, storage, userId) {
         }
     }
 
-    async function apiDeleteTier(tierId) {
+    async function apiDeleteTier(tierId: string): Promise<boolean> {
         try {
             await apiFetch(`/bookings/tiers/${tierId}`, "DELETE");
             return true;
@@ -103,7 +144,7 @@ export function bookingApi(entityType, entityId, storage, userId) {
     }
 
     // ----- Auto-generate slots from tier -----
-    async function apiGenerateSlotsFromTier(tierId, startDate, endDate) {
+    async function apiGenerateSlotsFromTier(tierId: string, startDate: string, endDate: string): Promise<BookingSlot[]> {
         try {
             const res = await apiFetch(
                 `/bookings/tiers/${tierId}/generate-slots`,
@@ -122,7 +163,7 @@ export function bookingApi(entityType, entityId, storage, userId) {
     }
 
     // ----- Bookings -----
-    async function apiListBookings() {
+    async function apiListBookings(): Promise<BookingItem[]> {
         try {
             const res = await apiFetch(
                 `/bookings/bookings?entityType=${encodeURIComponent(entityType)}&entityId=${encodeURIComponent(entityId)}`
@@ -137,10 +178,10 @@ export function bookingApi(entityType, entityId, storage, userId) {
         }
     }
 
-    async function apiCreateBooking(payload) {
+    async function apiCreateBooking(payload: Record<string, any>): Promise<{ ok: boolean; reason?: string; booking?: BookingItem }> {
         try {
             return await apiFetch(`/bookings/bookings`, "POST", payload);
-        } catch (err) {
+        } catch (err: any) {
             if (!isNetworkError(err)) {
                 // Return server validation payload to the UI safely
                 return { ok: false, reason: err.message || "server-error" };
@@ -151,7 +192,7 @@ export function bookingApi(entityType, entityId, storage, userId) {
             if (!all[entityType]) all[entityType] = {};
             if (!all[entityType][entityId]) all[entityType][entityId] = [];
 
-            const bookings = all[entityType][entityId];
+            const bookings: BookingItem[] = all[entityType][entityId];
             const seatsToBook = Math.max(1, parseInt(payload.seats || 1, 10));
 
             // Enforce one booking per user per date locally
@@ -195,18 +236,19 @@ export function bookingApi(entityType, entityId, storage, userId) {
                 }
             }
 
-            const stored = {
+            const stored: BookingItem = {
                 id: genId(),
                 slotId: payload.slotId || null,
                 tierId: payload.tierId || null,
-                userId: payload.userid,
+                userid: payload.userid,
+                entityType,
+                entityId,
                 date: payload.date,
                 start: payload.start,
                 end: payload.end || payload.start,
                 seats: seatsToBook,
                 pricePaid: payload.pricePaid || null,
-                status: "active",
-                createdAt: new Date().toISOString()
+                status: "active"
             };
 
             storage.localSaveBooking(stored);
@@ -214,7 +256,7 @@ export function bookingApi(entityType, entityId, storage, userId) {
         }
     }
 
-    async function apiCancelBooking(bookingId) {
+    async function apiCancelBooking(bookingId: string): Promise<boolean> {
         try {
             await apiFetch(`/bookings/bookings/${bookingId}`, "DELETE");
             return true;
@@ -234,23 +276,24 @@ export function bookingApi(entityType, entityId, storage, userId) {
 }
 
 // ---------- LocalStorage helpers ----------
-export function bookingStorage(entityType, entityId) {
+
+export function bookingStorage(entityType: string, entityId: string): BookingStorageInstance {
     const SLOT_KEY = "entity_slots";
     const TIER_KEY = "entity_tiers";
     const BOOKING_KEY = "entity_bookings";
     const DATE_CAP_KEY = "entity_date_caps";
 
-    const readJson = key => {
+    const readJson = (key: string): Record<string, any> => {
         try {
             return JSON.parse(localStorage.getItem(key) || "{}");
         } catch {
             return {};
         }
     };
-    const writeJson = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+    const writeJson = (key: string, value: any): void => localStorage.setItem(key, JSON.stringify(value));
 
     // ----- Slots -----
-    function localSaveSlot(slot) {
+    function localSaveSlot(slot: BookingSlot): void {
         const all = readJson(SLOT_KEY);
         if (!all[entityType]) {
             all[entityType] = {};
@@ -262,30 +305,30 @@ export function bookingStorage(entityType, entityId) {
         writeJson(SLOT_KEY, all);
     }
 
-    function localGetSlots() {
+    function localGetSlots(): BookingSlot[] {
         const all = readJson(SLOT_KEY);
         return all[entityType]?.[entityId] || [];
     }
 
-    function localDeleteSlot(slotId) {
+    function localDeleteSlot(slotId: string): boolean {
         const all = readJson(SLOT_KEY);
         if (!all[entityType]?.[entityId]) {
             return false;
         }
-        all[entityType][entityId] = all[entityType][entityId].filter(s => s.id !== slotId);
+        all[entityType][entityId] = all[entityType][entityId].filter((s: BookingSlot) => s.id !== slotId);
         writeJson(SLOT_KEY, all);
 
         // Cascade delete bookings for slot
         const bookings = readJson(BOOKING_KEY);
         if (bookings[entityType]?.[entityId]) {
-            bookings[entityType][entityId] = bookings[entityType][entityId].filter(b => b.slotId !== slotId);
+            bookings[entityType][entityId] = bookings[entityType][entityId].filter((b: BookingItem) => b.slotId !== slotId);
             writeJson(BOOKING_KEY, bookings);
         }
         return true;
     }
 
     // ----- Tiers -----
-    function localSaveTier(tier) {
+    function localSaveTier(tier: PricingTier): void {
         const all = readJson(TIER_KEY);
         if (!all[entityType]) {
             all[entityType] = {};
@@ -297,23 +340,23 @@ export function bookingStorage(entityType, entityId) {
         writeJson(TIER_KEY, all);
     }
 
-    function localGetTiers() {
+    function localGetTiers(): PricingTier[] {
         const all = readJson(TIER_KEY);
         return all[entityType]?.[entityId] || [];
     }
 
-    function localDeleteTier(tierId) {
+    function localDeleteTier(tierId: string): boolean {
         const all = readJson(TIER_KEY);
         if (!all[entityType]?.[entityId]) {
             return false;
         }
-        all[entityType][entityId] = all[entityType][entityId].filter(t => t.id !== tierId);
+        all[entityType][entityId] = all[entityType][entityId].filter((t: PricingTier) => t.id !== tierId);
         writeJson(TIER_KEY, all);
         return true;
     }
 
-    function localGenerateSlotsFromTier(tier, { startDate, endDate }) {   // ✅ keys aligned
-        const slots = [];
+    function localGenerateSlotsFromTier(tier: PricingTier, { startDate, endDate }: { startDate: string; endDate: string }): BookingSlot[] {
+        const slots: BookingSlot[] = [];
         const start = new Date(startDate);
         const end = new Date(endDate);
 
@@ -326,10 +369,10 @@ export function bookingStorage(entityType, entityId) {
             const [startH, startM] = (tier.timeRange?.[0] || "09:00").split(":").map(Number);
             const [endH, endM] = (tier.timeRange?.[1] || "17:00").split(":").map(Number);
 
-            const slot = {
+            const slot: BookingSlot = {
                 id: genId(),
                 tierId: tier.id,
-                entityType, entityId,
+                tierName: tier.name,
                 date: dateStr,
                 start: `${String(startH).padStart(2, "0")}:${String(startM).padStart(2, "0")}`,
                 end: `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`,
@@ -341,9 +384,8 @@ export function bookingStorage(entityType, entityId) {
         return slots;
     }
 
-
     // ----- Bookings -----
-    function localSaveBooking(b) {
+    function localSaveBooking(b: BookingItem): void {
         const all = readJson(BOOKING_KEY);
         if (!all[entityType]) {
             all[entityType] = {};
@@ -355,32 +397,37 @@ export function bookingStorage(entityType, entityId) {
         writeJson(BOOKING_KEY, all);
     }
 
-    function localGetBookings() {
+    function localGetBookings(): BookingItem[] {
         const all = readJson(BOOKING_KEY);
         return all[entityType]?.[entityId] || [];
     }
 
-    function localCancelBooking(bookingId, userIdArg) {
+    function localCancelBooking(bookingId: string, userIdArg: string): boolean {
         const all = readJson(BOOKING_KEY);
         if (!all[entityType]?.[entityId]) {
             return false;
         }
 
-        const before = all[entityType][entityId].length;
-        all[entityType][entityId] = all[entityType][entityId].map(b =>
+        const bookings: BookingItem[] = all[entityType][entityId];
+        const target = bookings.find(b => b.id === bookingId && b.userid === userIdArg);
+        if (!target) {
+            return false;
+        }
+
+        all[entityType][entityId] = bookings.map(b =>
             b.id === bookingId && b.userid === userIdArg ? { ...b, status: "cancelled" } : b
         );
         writeJson(BOOKING_KEY, all);
-        return all[entityType][entityId].length === before;
+        return true;
     }
 
     // ----- Date caps -----
-    function localGetDateCap(date) {
+    function localGetDateCap(date: string): number | null {
         const all = readJson(DATE_CAP_KEY);
         return all[entityType]?.[entityId]?.[date] ?? null;
     }
 
-    function localSetDateCap(date, cap) {
+    function localSetDateCap(date: string, cap: number): void {
         const all = readJson(DATE_CAP_KEY);
         if (!all[entityType]) {
             all[entityType] = {};

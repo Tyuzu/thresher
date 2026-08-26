@@ -1,19 +1,33 @@
-import { createElement } from "../../components/createElement.js";
-import { Imagex } from "../../components/base/Imagex.js";
-import { apiFetch, SRC_URL } from "../../api/api.js";
 import {
     updateTransform,
     resetTransformState
 } from "../../components/ui/zoomBox/zoomboxHelpers.js";
 import { dispatchZoomBoxEvent } from "../../utils/eventDispatcher.js";
 
+// ---------- Interfaces ----------
+
+export interface ZoomBoxState {
+    isDragging: boolean;
+    zoomLevel: number;
+    panX: number;
+    panY: number;
+    startX: number;
+    startY: number;
+    velocityX: number;
+    velocityY: number;
+    lastPointerX?: number;
+    lastPointerY?: number;
+}
+
+// ---------- Pointer Handlers ----------
+
 /**
  * Standalone pointer move handler for panning zoomed images
- * @param {PointerEvent} e - Browser pointermove event
- * @param {Object} state - The ZoomBox transform state object
- * @param {HTMLElement} img - Target image element
+ * @param e - Browser pointermove event
+ * @param state - The ZoomBox transform state object
+ * @param img - Target image element
  */
-export function handlePointerMove(e, state, img) {
+export function handlePointerMove(e: PointerEvent, state: ZoomBoxState, img: HTMLElement): void {
     if (!state || !state.isDragging || state.zoomLevel <= 1 || !img) return;
     
     e.preventDefault();
@@ -52,16 +66,17 @@ export function handlePointerMove(e, state, img) {
 
 /**
  * Ends dragging state, releases pointer capture, and triggers smooth inertia animation.
- * @param {PointerEvent} e - Browser pointerup/pointercancel event
- * @param {Object} state - The ZoomBox transform state object
- * @param {HTMLElement} img - Target image element
+ * @param e - Browser pointerup/pointercancel event
+ * @param state - The ZoomBox transform state object
+ * @param img - Target image element
  */
-export function handlePointerUp(e, state, img) {
+export function handlePointerUp(e: PointerEvent, state: ZoomBoxState, img: HTMLElement): void {
     if (!state || !state.isDragging || !img) return;
 
     // Release pointer capture if active target holds it
-    if (e.target && typeof e.target.releasePointerCapture === "function" && e.target.hasPointerCapture(e.pointerId)) {
-        e.target.releasePointerCapture(e.pointerId);
+    const target = e.target as HTMLElement | null;
+    if (target && typeof target.releasePointerCapture === "function" && target.hasPointerCapture(e.pointerId)) {
+        target.releasePointerCapture(e.pointerId);
     }
 
     state.isDragging = false;
@@ -113,19 +128,20 @@ export function handlePointerUp(e, state, img) {
 
 /**
  * Initiates dragging state and captures pointer interactions.
- * @param {PointerEvent} e - Browser pointerdown event
- * @param {Object} state - The ZoomBox transform state object
- * @param {HTMLElement} img - Target image element
+ * @param e - Browser pointerdown event
+ * @param state - The ZoomBox transform state object
+ * @param img - Target image element
  */
-export function handlePointerDown(e, state, img) {
+export function handlePointerDown(e: PointerEvent, state: ZoomBoxState, img: HTMLElement): void {
     if (!state || state.zoomLevel <= 1 || !img) return;
 
     // Prevent native drag behaviors
     e.preventDefault();
 
     // Capture pointer so drag events stay attached even outside the viewport
-    if (e.target && typeof e.target.setPointerCapture === "function") {
-        e.target.setPointerCapture(e.pointerId);
+    const target = e.target as HTMLElement | null;
+    if (target && typeof target.setPointerCapture === "function") {
+        target.setPointerCapture(e.pointerId);
     }
 
     state.isDragging = true;

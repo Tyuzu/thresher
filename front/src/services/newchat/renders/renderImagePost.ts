@@ -1,8 +1,22 @@
+// RenderImagePost.ts
+
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
 import Imagex from "../../../components/base/Imagex.js";
 import Sightbox from "../../../components/ui/Sightbox_zoom.js";
 
-async function RenderImagePost(mediaContainer, media) {
+interface ImageMediaItem {
+    src: string;
+    [key: string]: any;
+}
+
+function startZoombox(img: string[], _index: number): void {
+    Sightbox(img, "image");
+}
+
+export async function RenderImagePost(
+    mediaContainer: HTMLElement, 
+    media: ImageMediaItem[]
+): Promise<void> {
     const mediaClasses = [
         'PostPreviewImageView_-one__-6MMx',
         'PostPreviewImageView_-two__WP8GL',
@@ -13,6 +27,7 @@ async function RenderImagePost(mediaContainer, media) {
         'PostPreviewImageView_-seven__65gnj',
         'PostPreviewImageView_-eight__SoycA'
     ];
+    
     const classIndex = Math.min(media.length - 1, mediaClasses.length - 1);
     const assignedClass = mediaClasses[classIndex];
 
@@ -41,10 +56,3 @@ async function RenderImagePost(mediaContainer, media) {
 
     mediaContainer.appendChild(imageList);
 }
-
-async function startZoombox(img, _index) {
-    // ZoomBox(img, index);
-    Sightbox(img, "image");
-}
-
-export { RenderImagePost };

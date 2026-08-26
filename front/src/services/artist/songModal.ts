@@ -1,4 +1,4 @@
-// songsTab.js
+// songsTab.ts
 import { apiFetch } from "../../api/api.js";
 import { createElement } from "../../components/createElement.js";
 import { createFormGroup } from "../../components/form/createFormGroupEnhanced.js";
@@ -7,16 +7,44 @@ import Imagex from "../../components/base/Imagex.js";
 import Notify from "../../components/ui/Notify.js";
 import { uploadFile } from "../media/api/mediaApi.js";
 
+// ---------------------------------
+// INTERFACES & TYPES
+// ---------------------------------
 
-function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
+export interface Song {
+    songid?: string | number;
+    title?: string;
+    genre?: string;
+    duration?: string;
+    description?: string;
+    audio?: string;
+    audioextn?: string;
+    poster?: string;
+    posterextn?: string;
+}
 
+export interface OpenSongModalOptions {
+    mode: "create" | "edit";
+    song?: Song;
+    artistID: string | number;
+    _container?: HTMLElement;
+    _isCreator?: boolean;
+}
+
+interface UploadResponse {
+    filename?: string;
+    key?: string;
+    extension?: string;
+}
+
+export function openSongModal({ mode, song = {}, artistID, _container, _isCreator }: OpenSongModalOptions): void {
     const isEdit = mode === "edit";
 
     const form = createSongForm(song);
 
     const modalInstance = Modal({
         title: isEdit
-            ? `Edit Song: ${song.title}`
+            ? `Edit Song: ${song.title ?? ""}`
             : "Upload New Song",
 
         content: form,
@@ -28,16 +56,16 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
         autofocusSelector: 'input[name="title"]'
     });
 
-    const closeModal = () => {
+    const closeModal = (): void => {
         modalInstance?.close();
     };
 
-    const audioInput = form.querySelector('input[name="audio"]');
-    const durationInput = form.querySelector('input[name="duration"]');
-    const titleInput = form.querySelector('input[name="title"]');
-    const submitBtn = form.querySelector('button[type="submit"]');
+    const audioInput = form.querySelector('input[name="audio"]') as HTMLInputElement;
+    const durationInput = form.querySelector('input[name="duration"]') as HTMLInputElement;
+    const titleInput = form.querySelector('input[name="title"]') as HTMLInputElement;
+    const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
 
-    let durationLoaded = Boolean(durationInput.value);
+    let durationLoaded: boolean = Boolean(durationInput.value);
 
     submitBtn.disabled = !durationLoaded;
 
@@ -46,13 +74,10 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
     // ---------------------------------
 
     audioInput.addEventListener("change", () => {
-
         const file = audioInput.files?.[0];
 
         durationLoaded = false;
-
         submitBtn.disabled = true;
-
         durationInput.value = "";
 
         if (!file) {
@@ -61,7 +86,6 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
 
         // autofill title
         if (!titleInput.value) {
-
             titleInput.value = file.name.replace(
                 /\.[^/.]+$/,
                 ""
@@ -71,11 +95,9 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
         const audioEl = document.createElement("audio");
 
         audioEl.preload = "metadata";
-
         audioEl.src = URL.createObjectURL(file);
 
         audioEl.addEventListener("loadedmetadata", () => {
-
             URL.revokeObjectURL(audioEl.src);
 
             const totalSeconds = Math.floor(audioEl.duration);
@@ -85,15 +107,12 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
             }
 
             const mins = Math.floor(totalSeconds / 60);
-
             const secs = (totalSeconds % 60)
                 .toString()
                 .padStart(2, "0");
 
             durationInput.value = `${mins}:${secs}`;
-
             durationLoaded = true;
-
             submitBtn.disabled = false;
         });
     });
@@ -102,23 +121,24 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
     // FORM SUBMIT
     // ---------------------------------
 
-    form.addEventListener("submit", async (e) => {
-
+    form.addEventListener("submit", async (e: Event) => {
         e.preventDefault();
 
         if (!durationLoaded) {
-
             Notify(
                 "Audio duration not loaded yet",
                 "error"
             );
-
             return;
         }
 
         try {
-
-            const uploadedFiles = {};
+            const uploadedFiles: {
+                audio?: string;
+                audioextn?: string;
+                poster?: string;
+                posterextn?: string;
+            } = {};
 
             // ---------------------------------
             // AUDIO UPLOAD
@@ -127,21 +147,15 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
             const audioFile = audioInput.files?.[0];
 
             if (audioFile) {
-
-                const res = await uploadFile({
+                const res = (await uploadFile({
                     id: `audio-${Date.now()}`,
-
                     entityType: "song",
                     entityId: String(song.songid || ""),
-
                     file: audioFile
-                });
+                })) as UploadResponse;
 
-                uploadedFiles.audio =
-                    res.filename || res.key;
-
-                uploadedFiles.audioextn =
-                    res.extension || ".m4a";
+                uploadedFiles.audio = res.filename || res.key;
+                uploadedFiles.audioextn = res.extension || ".m4a";
             }
 
             // ---------------------------------
@@ -150,65 +164,41 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
 
             const posterInput = form.querySelector(
                 'input[name="poster"]'
-            );
+            ) as HTMLInputElement;
 
             const posterFile = posterInput.files?.[0];
 
             if (posterFile) {
-
-                const res = await uploadFile({
+                const res = (await uploadFile({
                     id: `poster-${Date.now()}`,
-
                     entityType: "song",
                     entityId: String(song.songid || ""),
-
                     file: posterFile
-                });
+                })) as UploadResponse;
 
-                uploadedFiles.poster =
-                    res.filename || res.key;
-
-                uploadedFiles.posterextn =
-                    res.extension || ".png";
+                uploadedFiles.poster = res.filename || res.key;
+                uploadedFiles.posterextn = res.extension || ".png";
             }
 
             // ---------------------------------
             // PAYLOAD
             // ---------------------------------
 
-            const payload = {
-
+            const payload: Song = {
                 title: titleInput.value.trim(),
-
-                genre: form
-                    .querySelector('[name="genre"]')
-                    .value
-                    .trim(),
-
+                genre: (form.querySelector('[name="genre"]') as HTMLInputElement).value.trim(),
                 duration: durationInput.value.trim(),
-
-                description: form
-                    .querySelector('[name="description"]')
-                    .value
-                    .trim() || ""
+                description: (form.querySelector('[name="description"]') as HTMLInputElement).value.trim() || ""
             };
 
             if (uploadedFiles.audio) {
-
-                payload.audio =
-                    uploadedFiles.audio;
-
-                payload.audioextn =
-                    uploadedFiles.audioextn;
+                payload.audio = uploadedFiles.audio;
+                payload.audioextn = uploadedFiles.audioextn;
             }
 
             if (uploadedFiles.poster) {
-
-                payload.poster =
-                    uploadedFiles.poster;
-
-                payload.posterextn =
-                    uploadedFiles.posterextn;
+                payload.poster = uploadedFiles.poster;
+                payload.posterextn = uploadedFiles.posterextn;
             }
 
             // ---------------------------------
@@ -216,12 +206,10 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
             // ---------------------------------
 
             const url = isEdit
-                ? `/artists/${artistID}/songs/${encodeURIComponent(song.songid)}/edit`
+                ? `/artists/${artistID}/songs/${encodeURIComponent(String(song.songid))}/edit`
                 : `/artists/${artistID}/songs`;
 
-            const method = isEdit
-                ? "PUT"
-                : "POST";
+            const method = isEdit ? "PUT" : "POST";
 
             await apiFetch(
                 url,
@@ -241,8 +229,7 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
                 "success"
             );
 
-        } catch (err) {
-
+        } catch (err: any) {
             console.error(err);
 
             Notify(
@@ -254,15 +241,15 @@ function openSongModal({ mode, song = {}, artistID, _container, _isCreator }) {
 }
 
 // ------------------------ Song Form ------------------------
-function createSongForm(song = {}) {
-    const audioPreview = createElement("audio", { controls: true, style: "display:none; margin-top:10px;" });
-    const imagePreview = Imagex({ style: "display:none; max-height:120px; margin-top:10px;" });
+function createSongForm(song: Song = {}): HTMLFormElement {
+    const audioPreview = createElement("audio", { controls: true, style: "display:none; margin-top:10px;" }) as HTMLAudioElement;
+    const imagePreview = Imagex({ style: "display:none; max-height:120px; margin-top:10px;" }) as HTMLElement;
 
-    const audioGroup = createFormGroup({ type: "file", name: "audio", label: "Audio File", accept: "audio/*", additionalNodes: [audioPreview] });
-    const imageGroup = createFormGroup({ type: "file", name: "poster", label: "Poster Image", accept: "image/*", additionalNodes: [imagePreview] });
+    const audioGroup = createFormGroup({ type: "file", name: "audio", label: "Audio File", accept: "audio/*", additionalNodes: [audioPreview] }) as HTMLElement;
+    const imageGroup = createFormGroup({ type: "file", name: "poster", label: "Poster Image", accept: "image/*", additionalNodes: [imagePreview] }) as HTMLElement;
 
-    setupFilePreview(audioGroup.querySelector("input"), audioPreview, "audio");
-    setupFilePreview(imageGroup.querySelector("input"), imagePreview, "image");
+    setupFilePreview(audioGroup.querySelector("input") as HTMLInputElement, audioPreview, "audio");
+    setupFilePreview(imageGroup.querySelector("input") as HTMLInputElement, imagePreview, "image");
 
     return createElement("form", { class: "song-form" }, [
         createFormGroup({ type: "text", id: "title", name: "title", label: "Title", value: song.title || "", placeholder: "Song Title", required: true }),
@@ -272,26 +259,33 @@ function createSongForm(song = {}) {
         audioGroup,
         imageGroup,
         createElement("button", { type: "submit" }, [song.songid ? "Save Changes" : "Add Song"]),
-    ]);
+    ]) as HTMLFormElement;
 }
 
 // ------------------------ File Preview ------------------------
-function setupFilePreview(input, preview, type) {
+function setupFilePreview(input: HTMLInputElement, preview: HTMLAudioElement | HTMLElement, type: "audio" | "image"): void {
     input.addEventListener("change", () => {
-        const file = input.files[0];
+        const file = input.files?.[0];
         if (!file) {
-            preview.style.display = "none"; return;
+            preview.style.display = "none";
+            return;
         }
 
         const url = URL.createObjectURL(file);
         if (type === "audio" && file.type.startsWith("audio/")) {
-            preview.src = url; preview.load(); preview.style.display = "block";
+            const audioEl = preview as HTMLAudioElement;
+            audioEl.src = url;
+            audioEl.load();
+            audioEl.style.display = "block";
         }
         if (type === "image" && file.type.startsWith("image/")) {
-            preview.src = url; preview.style.display = "block";
+            preview.style.display = "block";
+            // If Imagex uses standard img src or dataset assignment, handle accordingly:
+            if ("src" in preview) {
+                (preview as HTMLImageElement).src = url;
+            }
         }
     });
 }
 
-// export { renderSongsTab, openSongModal };
 export { openSongModal };
