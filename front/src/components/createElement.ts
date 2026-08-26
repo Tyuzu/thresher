@@ -13,8 +13,8 @@ type FlatChild = Node | string | number;
 
 export interface ElementAttributes {
   events?: Record<string, EventListenerOrEventListenerObject>;
-  style?: Partial<CSSStyleDeclaration> | Record<string, string>;
-  styles?: Partial<CSSStyleDeclaration> | Record<string, string>;
+  styles?: Partial<CSSStyleDeclaration> | Record<string, string> | string;
+  style?: string | Partial<CSSStyleDeclaration> | Record<string, string>;
   class?: string;
   dataset?: Record<string, string>;
   [key: string]: unknown;
@@ -63,6 +63,13 @@ export function createElement(
   attributes: ElementAttributes | null = {},
   children: ChildInput = []
 ): HTMLElement {
+  // Allow shorthand calls where attributes may be passed as an empty string
+  // e.g. createElement('h2', '', ['Title']) — normalize that to no attributes
+  if (attributes !== null && (typeof attributes === 'string' || typeof attributes === 'number' || attributes instanceof Node || Array.isArray(attributes))) {
+    children = attributes as unknown as ChildInput;
+    attributes = {};
+  }
+
   const element = document.createElement(tag);
   const safeAttributes = attributes || {};
 

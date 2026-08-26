@@ -142,11 +142,11 @@ export async function displayArtist(content: HTMLElement, artistID: string | num
         const buttonRow = createElement("div", { class: "hflex hcen" }) as HTMLElement;
 
         const subscribeButton = Button(isSubscribed ? "Unsubscribe" : "Subscribe", "", {
-            click: () => SubscribeToArtist(subscribeButton as HTMLElement, artist.artistid)
-        }, "buttonx") as HTMLElement;
+            click: () => SubscribeToArtist(subscribeButton as HTMLButtonElement, artist.artistid)
+        }, "buttonx") as HTMLButtonElement;
 
         const reportButton = Button("Report", "report-btn", {
-            click: () => reportEntity(artistID, "artist")
+            click: () => reportEntity(String(artistID), "artist")
         }, "buttonx") as HTMLElement;
 
         const fundBtn = Button(
@@ -263,7 +263,7 @@ function getSocialIcon(platform: string): string {
 }
 
 // --- SUBSCRIBE ---
-function SubscribeToArtist(followBtn: HTMLElement, artistId: string | number): void {
+function SubscribeToArtist(followBtn: HTMLButtonElement, artistId: string | number): void {
     toggleAction({
         entityId: artistId,
         entityType: "artist",
@@ -290,7 +290,7 @@ function renderOverviewTab(container: HTMLElement, artist: ArtistProfile, isCrea
         artistDiv.appendChild(renderManageMembersButton(artist.artistid, container));
     }
     if (artist.members && artist.members.length > 0) {
-        artistDiv.appendChild(renderBandMembers(artist, isCreator));
+        artistDiv.appendChild(renderBandMembers(artist as any, isCreator));
     }
     
     renderAlbumsTab(artist.artistid, isCreator)

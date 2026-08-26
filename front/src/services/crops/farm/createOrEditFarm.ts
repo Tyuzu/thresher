@@ -38,7 +38,7 @@ export type OnSubmitHandler = (formOrData?: HTMLElement | FormData) => Promise<S
 export interface CreateFarmFormProps {
   isEdit?: boolean;
   farm?: FarmData;
-  onSubmit: (formData: FormData) => Promise<SubmitResult>;
+  onSubmit: (formData: FormData | FarmData) => Promise<SubmitResult>;
 }
 
 export function createInputField(

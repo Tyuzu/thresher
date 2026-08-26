@@ -5,47 +5,7 @@ import { createFormGroup } from "../../components/form/createFormGroupEnhanced.j
 import Notify from "../../components/ui/Notify.js";
 import { fetchUserMeta } from "../../utils/usersMeta.js";
 import { genId, bookingStorage, bookingApi } from "./bookingApi.js";
-
-// ---------- Interfaces ----------
-
-export interface BookingItem {
-    id: string;
-    userid: string;
-    entityType: string;
-    entityId: string;
-    slotId?: string;
-    tierId?: string;
-    tierName?: string;
-    date: string;
-    start: string;
-    end?: string;
-    seats?: number;
-    pricePaid?: number;
-    status?: string;
-}
-
-export interface PricingTier {
-    id: string;
-    entityType: string;
-    entityId: string;
-    name: string;
-    price: number;
-    capacity: number;
-    timeRange?: [string, string];
-    daysOfWeek?: number[];
-    features?: string[];
-    createdAt?: number;
-}
-
-export interface BookingSlot {
-    id: string;
-    date: string;
-    start: string;
-    end?: string;
-    capacity: number;
-    tierId?: string;
-    tierName?: string;
-}
+import { BookingItem, PricingTier, BookingSlot } from "./bookingManager.js";
 
 export interface BookingApiInstance {
     apiListBookings: () => Promise<BookingItem[]>;
@@ -595,7 +555,7 @@ function openBookingModal(
     entityCategory?: string, 
     userId: string = "guest", 
     isAdmin: boolean = false, 
-    refreshBookings: RefreshFunction
+    refreshBookings?: RefreshFunction
 ): void {
     if (document.getElementById("booking-modal")) {
         return;

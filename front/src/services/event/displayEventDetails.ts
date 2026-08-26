@@ -39,7 +39,7 @@ interface FieldConfigItem {
 
 interface ActionItem {
     text: string;
-    onClick: () => void | Promise<void>;
+    onClick: () => void | Promise<unknown>;
     classes?: string[];
 }
 
@@ -65,14 +65,15 @@ const getEventColorClass = (type?: string): string => {
 const createDetailItems = (config: FieldConfigItem[], data: EventDetailData): HTMLElement => {
     const details = createElement("div", { class: "eventpage-details" }) as HTMLElement;
     config.forEach(({ key, label, tag, classes, formatter }) => {
-        let value = data[key];
+        let value: unknown = data[key];
         if (!value) {
             return;
         }
         if (formatter) {
             value = formatter(value);
         }
-        details.appendChild(createElement(tag, { class: classes.join(" ") }, [label ? `${label}: ${value}` : value]));
+        const child = label ? `${label}: ${String(value)}` : String(value);
+        details.appendChild(createElement(tag as string, { class: classes.join(" ") }, [child]));
     });
     return details;
 };
@@ -235,9 +236,9 @@ function createInfoSection(eventData: EventDetailData, isCreator: boolean, isLog
     }
     
     if (isLoggedIn) {
-        actions.push({ text: 'Hire Vendors', onClick: () => hireVendors(evanacon, isCreator, isLoggedIn, eventData.eventid), classes: ['analytics-btn', "buttonx"] });
+        actions.push({ text: 'Hire Vendors', onClick: () => hireVendors(evanacon, isCreator, isLoggedIn, String(eventData.eventid)), classes: ['analytics-btn', "buttonx"] });
     } else {
-        actions.push({ text: 'Report Event', onClick: () => reportEntity(eventData.eventid, 'event') });
+        actions.push({ text: 'Report Event', onClick: () => reportEntity(String(eventData.eventid), 'event') });
     }
 
     eventInfo.append(
@@ -284,8 +285,8 @@ export async function displayEventDetails(
 // Delete Event
 async function deleteEvent(isLoggedIn: boolean, eventId: string | number): Promise<void> {
     if (!isLoggedIn) {
-        // Assuming Notify is available globally or imported if needed, keep structure clean
         return;
     }
-    // confirmAndExecute is assumed to be handled elsewhere or imported contextually
+    void eventId;
+    return;
 }

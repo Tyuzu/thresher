@@ -20,7 +20,7 @@ export interface ImagexAttributes extends Omit<Partial<HTMLImageElement>, "event
  * - Prevents infinite error loops
  * - Leverages declarative events and attributes from createElement
  */
-const Imagex = (attributes: ImagexAttributes = {}): HTMLElement => {
+const Imagex = (attributes: ImagexAttributes = {}, _children?: any[]): HTMLElement => {
   const {
     fallback = "/assets/icon-192.png",
     decodeAsync = true,
@@ -75,5 +75,6 @@ const Imagex = (attributes: ImagexAttributes = {}): HTMLElement => {
   return createElement("img", rest);
 };
 
+export { Imagex };
 export default Imagex;
 export { Imagex as ImagexComponent };

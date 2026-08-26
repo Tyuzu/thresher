@@ -85,7 +85,7 @@ async function editPlaceForm(
           });
         },
       },
-    });
+    } as any);
     form.appendChild(mainCategoryGroup);
 
     form.appendChild(

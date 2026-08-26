@@ -60,7 +60,7 @@ function buildMediaFragment(
     prefix: string = "media"
 ): DocumentFragment {
     const frag = document.createDocumentFragment();
-    const grouped = groupMedia(mediaData);
+    const grouped = groupMedia(mediaData as any);
     for (const group of grouped) {
         const wrapper = createElement("div", {
             class: `${prefix}-group`
@@ -87,7 +87,7 @@ function buildMediaFragment(
                     figure.append(...translation);
                 }
             }
-            const actions = createMediaActions(media, entityType, entityId, isLoggedIn, confirmDelete, prefix);
+            const actions = createMediaActions(media as any, entityType, entityId, isLoggedIn, confirmDelete, prefix);
             figure.append(actions);
             wrapper.append(figure);
         });
@@ -152,7 +152,7 @@ export async function displayFanMedia(
     }) as HTMLElement;
     content.append(loader);
     try {
-        const mediaData = await fetchMedia<MediaItem[]>(entityType, entityId);
+        const mediaData = await fetchMedia(entityType, entityId) as MediaItem[];
         loader.remove();
         if (!Array.isArray(mediaData) || mediaData.length === 0) {
             content.append(createElement("p", {}, ["No media available."]));
@@ -423,7 +423,7 @@ async function submitGroupedUploads(
     };
 
     try {
-        const res = await postMediaFanmade<any>(entityType, entityId, payload);
+        const res = await postMediaFanmade(entityType, entityId, payload) as any;
         if (Array.isArray(res)) {
             ready.forEach((u: any, i: number) => {
                 UploadStore.update(u.id, {
@@ -481,7 +481,7 @@ function renderUploads(uploadsDiv: HTMLElement, submit: HTMLElement): void {
         }, [
             createElement("div", {
                 class: "upload-progress-bar",
-                style: `width:${u.progress || 0}%`
+                    style: (`width:${u.progress || 0}%`) as any
             })
         ]);
 

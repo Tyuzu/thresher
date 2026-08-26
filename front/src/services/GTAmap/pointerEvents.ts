@@ -2,19 +2,18 @@ import {
     updateTransform,
     resetTransformState
 } from "../../components/ui/zoomBox/zoomboxHelpers.js";
+import type { ZoomBoxState as SharedZoomBoxState } from "../../components/ui/zoomBox/zoomBoxTypes.js";
 import { dispatchZoomBoxEvent } from "../../utils/eventDispatcher.js";
 
 // ---------- Interfaces ----------
 
-export interface ZoomBoxState {
+export interface ZoomBoxState extends SharedZoomBoxState {
     isDragging: boolean;
-    zoomLevel: number;
-    panX: number;
-    panY: number;
     startX: number;
     startY: number;
     velocityX: number;
     velocityY: number;
+    currentIndex: number;
     lastPointerX?: number;
     lastPointerY?: number;
 }

@@ -46,6 +46,10 @@ export async function displayDeliveries(
     ? container
     : ((isLoggedIn && typeof isLoggedIn === "object" && (isLoggedIn as HTMLElement).nodeType) ? (isLoggedIn as HTMLElement) : null);
 
+  if (typeof isLoggedIn === "boolean" && !isLoggedIn && !container) {
+    return;
+  }
+
   if (!contentContainer) {
     console.error("displayDeliveries: Missing DOM container element.");
     return;

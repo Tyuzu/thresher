@@ -1,13 +1,6 @@
 import { createControls } from "./controls.js";
 import { QualityOption } from "../Vidpop.js";
-import { setupSubtitles } from "./subtitles.js";
-
-export interface SubtitleTrack {
-  src: string;
-  label?: string;
-  srclang?: string;
-  [key: string]: unknown;
-}
+import { setupSubtitles, SubtitleSource } from "./subtitles.js";
 
 /**
  * Generates a video player with quality selection, subtitles, and advanced controls.
@@ -16,7 +9,7 @@ async function generateVideoPlayer(
   mediaSrc: string,
   poster: string,
   qualities: QualityOption[],
-  subtitles: SubtitleTrack[],
+  subtitles: SubtitleSource[],
   videoid: string | number
 ): Promise<HTMLDivElement> {
   const videoPlayer = document.createElement("div");

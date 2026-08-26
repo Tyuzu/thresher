@@ -58,6 +58,9 @@ export interface FormGroupConfig {
   placeholder?: string;
   required?: boolean;
   accept?: string;
+  min?: number;
+  max?: number;
+  step?: number;
   options?: SelectOption[];
   multiple?: boolean;
   validator?: ValidatorFn | null;

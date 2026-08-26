@@ -2,41 +2,7 @@ import { createElement } from "../../components/createElement.js";
 import { apiFetch } from "../../api/api.js";
 import { buildOrdersPage } from "./orders/builders.js";
 import { normalizeOrders } from "./orders/orderutils.js";
-
-// --- INTERFACES & TYPES ---
-export interface OrderItem {
-  id?: string | number;
-  itemId?: string | number;
-  name?: string;
-  quantity?: number;
-  price?: number;
-  [key: string]: any;
-}
-
-export interface Order {
-  id?: string | number;
-  orderId?: string | number;
-  orderid?: string | number;
-  status?: string;
-  created_at?: string | number;
-  items?: OrderItem[];
-  [key: string]: any;
-}
-
-export interface OrderFilters {
-  status: string;
-  date: string;
-  [key: string]: any;
-}
-
-export interface OrdersState {
-  orders: Order[];
-  loading: boolean;
-  filters: OrderFilters;
-  currentPage: number;
-  expandedOrders: Set<string | number>;
-  [key: string]: any;
-}
+import { OrderPageState } from "./orders/types.js";
 
 /**
  * Renders and coordinates the User Orders page.
@@ -61,17 +27,16 @@ export async function displayMyOrders(
     return;
   }
 
-  // Reactive state store
-  const state: OrdersState = {
+  // Reactive state store (use canonical OrderPageState)
+  const state: OrderPageState = {
     orders: [],
-    loading: true, // Let builders flag loading views if needed
     filters: {
       status: "",
       date: "",
     },
     currentPage: 1,
-    expandedOrders: new Set<string | number>(),
-  };
+    expandedOrders: new Set<string>(),
+  } as unknown as OrderPageState;
 
   const render = () => {
     container.replaceChildren(buildOrdersPage(state, render));
@@ -89,7 +54,7 @@ export async function displayMyOrders(
       throw new Error("Invalid format received from orders data provider engine.");
     }
 
-    state.loading = false;
+    (state as any).loading = false;
     state.orders = normalizeOrders(ordersData);
     
     // SAFE UPDATE: We leave state.filters and state.expandedOrders completely alone 
@@ -97,7 +62,7 @@ export async function displayMyOrders(
     render();
   } catch (err: any) {
     console.error("Failed to fetch user orders:", err);
-    state.loading = false;
+    (state as any).loading = false;
     
     container.replaceChildren(
       createElement("section", { class: "user-orders-page" }, [

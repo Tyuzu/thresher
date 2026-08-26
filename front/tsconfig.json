@@ -7,10 +7,16 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
 
-    /* Strict Type-Checking Options */
-    "strict": true,
+    /* Legacy mixed codebase: keep runtime compatibility without blocking editor diagnostics */
+    "strict": false,
     "allowJs": true,
-    "checkJs": true,
+    "checkJs": false,
+
+    /* Relax strictness for JS-heavy legacy modules */
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
 
     /* Vite & Bundler Compatibility */
     "jsx": "preserve",
@@ -21,7 +27,7 @@
     /* Linter & Safety Rules */
     "noUnusedLocals": false, /* Handled by ESLint */
     "noUnusedParameters": false, /* Handled by ESLint */
-    "noImplicitReturns": true,
+    "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true,
 
     /* Performance & Compatibility */

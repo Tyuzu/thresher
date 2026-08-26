@@ -1,4 +1,3 @@
-import Cropper from "cropperjs";
 import { ensureCropper } from "./loader.js";
 import {
     buildUI,
@@ -33,7 +32,7 @@ export function openCropperWithCropperJSBoundedFixedBox({
     type = "avatar"
 }: OpenCropperOptions): Promise<Blob | null> {
     return new Promise((resolve) => {
-        let cropper: Cropper | null = null;
+        let cropper: ReturnType<typeof createCropper> | null = null;
         let objectUrl: string | null = null;
 
         const previousOverflow = lockBodyScroll();

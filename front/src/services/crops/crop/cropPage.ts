@@ -352,9 +352,7 @@ function createListingCard(listing: CropListing, cropName: string, isLoggedIn: b
     cropData,
     farmName,
     listing?.farmid,
-    isLoggedIn,
-    listing?.availableQtyKg,
-    listing?.cropid
+    isLoggedIn
   );
 
   const controlsSection = createElement("div", { class: "listing-controls" }, controls);

@@ -287,7 +287,7 @@ async function submitGroupedUploads(
     };
 
     try {
-        const res = await postMedia<unknown[]>(entityType, entityId, payload);
+        const res = await postMedia(entityType, entityId, payload) as any;
         if (Array.isArray(res)) {
             ready.forEach((u, i) =>
                 UploadStore.update(u.id, { serverData: res[i] } as Partial<CustomUploadItem>)

@@ -1,16 +1,14 @@
+import type { ErrorTracker } from "./errors.js";
+
 /* =========================================================
    GLOBAL TYPE DECLARATIONS
 ========================================================= */
-interface ErrorTrackerDetails {
+type PerformanceMetricDetails = Record<string, unknown> & {
   name: string;
   entryType: string;
   duration: number;
   threshold: number;
-}
-
-interface ErrorTracker {
-  trackMetric: (eventName: string, details: ErrorTrackerDetails) => void;
-}
+};
 
 declare global {
   interface Window {
@@ -60,18 +58,18 @@ export function processPerformanceEntry(entry: PerformanceEntry): void {
 }
 
 export function reportPerformanceIssue(entry: PerformanceEntry, threshold: number): void {
-  const details: ErrorTrackerDetails = {
+  const details: PerformanceMetricDetails = {
     name: entry.name || "unknown",
     entryType: entry.entryType,
     duration: Math.round(entry.duration),
     threshold
   };
-  
+
   console.warn(`[PERF] Slow ${entry.entryType}:`, details);
 
   if (window.__errorTracker?.trackMetric) {
     try {
-      window.__errorTracker.trackMetric("performance_degradation", details);
+      window.__errorTracker.trackMetric("performance_degradation", details as Record<string, unknown>);
     } catch (error: unknown) {
       console.warn("[PERF] Metric tracking failed:", error);
     }

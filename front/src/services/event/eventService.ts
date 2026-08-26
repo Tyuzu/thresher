@@ -18,8 +18,9 @@ import { displayEventNews } from "./eventMoreTabs.js";
 // --- Type Definitions / Interfaces ---
 
 export interface EventData {
-    id: string | number;
-    creatorid: string | number;
+    id?: string | number;
+    eventid?: string | number;
+    creatorid?: string | number;
     date: string | Date;
     seating?: unknown;
     contactInfo?: unknown;
@@ -51,11 +52,11 @@ async function displayEventMerch(
 
         displayMerchandise(
             container,
-            merchItems,
             "event",
             eventID,
             isCreator,
-            isLoggedIn
+            isLoggedIn,
+            merchItems
         );
     } catch (err) {
         console.error("Error loading merch:", err);
@@ -111,6 +112,16 @@ async function fetchEventData(eventId: string | number): Promise<EventData> {
         throw new Error("No event data received from server.");
     }
 
+    // Ensure eventid is available for downstream callers
+    if (!eventData.eventid && eventData.id) {
+        try {
+            // coerce to string/number as originally expected
+            (eventData as any).eventid = eventData.id;
+        } catch (e) {
+            // ignore
+        }
+    }
+
     return eventData;
 }
 
@@ -156,10 +167,10 @@ async function displayEvent(
         const userState = getState("user");
         const isCreator = userState?.userid === eventData.creatorid && isLoggedIn;
 
-        await displayEventDetails(container, eventData, isCreator, isLoggedIn);
+        await displayEventDetails(container, eventData as any, isCreator, isLoggedIn);
 
         if (eventData?.seating) {
-            container.appendChild(showSeatingBanner(eventData, isCreator));
+            container.appendChild(showSeatingBanner(eventData as any, isCreator));
         }
 
         const tabs = setupTabs(eventData, eventId, isCreator, isLoggedIn);

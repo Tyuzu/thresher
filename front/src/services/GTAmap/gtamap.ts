@@ -86,6 +86,9 @@ export interface GtaMapState {
     isDragging: boolean;
     startX: number;
     startY: number;
+    velocityX: number;
+    velocityY: number;
+    currentIndex: number;
     activeEntity: string;
 
     floors: GtaFloor[];
@@ -130,6 +133,9 @@ export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean,
         isDragging: false,
         startX: 0,
         startY: 0,
+        velocityX: 0,
+        velocityY: 0,
+        currentIndex: 0,
         activeEntity: urlParams.get("entity") || entity,
 
         floors: [],
@@ -203,7 +209,7 @@ export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean,
             class: "gta-btn-zoom-in",
             events: {
                 click: () => {
-                    smoothZoom({ deltaY: -1, clientX: mapViewport.clientWidth / 2, clientY: mapViewport.clientHeight / 2 } as WheelEvent, transformLayer, state, mapViewport);
+                    smoothZoom({ deltaY: -1, clientX: mapViewport.clientWidth / 2, clientY: mapViewport.clientHeight / 2 } as WheelEvent, mapImage, state, mapViewport);
                     applyTransform();
                 }
             }
@@ -212,7 +218,7 @@ export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean,
             class: "gta-btn-zoom-out",
             events: {
                 click: () => {
-                    smoothZoom({ deltaY: 1, clientX: mapViewport.clientWidth / 2, clientY: mapViewport.clientHeight / 2 } as WheelEvent, transformLayer, state, mapViewport);
+                    smoothZoom({ deltaY: 1, clientX: mapViewport.clientWidth / 2, clientY: mapViewport.clientHeight / 2 } as WheelEvent, mapImage, state, mapViewport);
                     applyTransform();
                 }
             }
@@ -725,7 +731,7 @@ export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean,
 
     mapViewport.addEventListener("wheel", (e: WheelEvent) => {
         e.preventDefault();
-        smoothZoom(e, transformLayer, state, mapViewport);
+        smoothZoom(e, mapImage, state, mapViewport);
         applyTransform();
     }, { passive: false });
 

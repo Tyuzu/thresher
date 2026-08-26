@@ -9,8 +9,11 @@ interface ImageMediaItem {
     [key: string]: any;
 }
 
-function startZoombox(img: string[], _index: number): void {
-    Sightbox(img, "image");
+function startZoombox(img: string[], index: number): void {
+    const src = Array.isArray(img) ? img[index] : (img as unknown as string);
+    if (typeof src === "string") {
+        Sightbox(src, "image");
+    }
 }
 
 export async function RenderImagePost(

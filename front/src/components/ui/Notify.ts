@@ -15,18 +15,29 @@ export interface NotifyOptions {
   dismissible?: boolean;
 }
 
+function normalizeNotifyOptions(
+  options?: NotifyOptions | NotificationType
+): NotifyOptions & { type: NotificationType } {
+  if (typeof options === "string") {
+    return { title: "", type: options as NotificationType, duration: 0, dismissible: true };
+  }
+  return {
+    title: "",
+    duration: 0,
+    dismissible: true,
+    ...options,
+    type: options && typeof options === "object" && options.type ? options.type : (typeof options === "string" ? options : "info")
+  };
+}
+
 /**
  * Creates and renders a floating notification alert node.
  */
 const Notify = (
   message: string,
-  {
-    title = "",
-    type = "info",
-    duration = 0,
-    dismissible = true,
-  }: NotifyOptions = {}
+  options?: NotifyOptions | NotificationType
 ): HTMLDivElement => {
+  const { title = "", type = "info", duration = 0, dismissible = true } = normalizeNotifyOptions(options);
   // Track browser window timeouts
   let hideTimeoutId: number | null = null;
   let removeTimeoutId: number | null = null;

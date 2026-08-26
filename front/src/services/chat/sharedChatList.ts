@@ -99,7 +99,7 @@ function extractCurrentUserId(): string | number {
     return rawUser ?? "";
   }
 
-  return userState ?? "";
+  return (typeof userState === "string" || typeof userState === "number") ? userState : "";
 }
 
 function createChatListItem<T = GenericChat, UserType = string | number>(

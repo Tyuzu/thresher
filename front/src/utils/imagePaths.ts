@@ -1,6 +1,7 @@
 import { SRC_URL } from "../state/state.js";
 
 export const EntityType = {
+  DEFAULT: "default",
   ARTIST: "artist",
   BAITO: "baito",
   BLOGPOST: "blogpost",
@@ -29,10 +30,12 @@ export const EntityType = {
 export type EntityType = (typeof EntityType)[keyof typeof EntityType];
 
 export const PictureType = {
+  STATIC: "static",
   AUDIO: "audio",
   BANNER: "banner",
   DOCUMENT: "document",
   FILE: "file",
+  GALLERY: "gallery",
   MEMBER: "member",
   PHOTO: "photo",
   POSTER: "poster",
@@ -45,10 +48,12 @@ export const PictureType = {
 export type PictureType = (typeof PictureType)[keyof typeof PictureType];
 
 const PictureSubfolders: Record<PictureType, string> = {
+  [PictureType.STATIC]: "static",
   [PictureType.AUDIO]: "audio",
   [PictureType.BANNER]: "banner",
   [PictureType.DOCUMENT]: "docs",
   [PictureType.FILE]: "files",
+  [PictureType.GALLERY]: "gallery",
   [PictureType.MEMBER]: "member",
   [PictureType.PHOTO]: "photo",
   [PictureType.POSTER]: "poster",

@@ -21,5 +21,5 @@ export interface PlayerInterface {
     playPrev: () => void;
     reset: () => void;
     getState: () => PlayerStateShape;
-    _playerInstance?: Player;
+    _playerInstance?: unknown;
 }

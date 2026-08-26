@@ -101,7 +101,7 @@ async function addMerchandise(
             duration: 3000
         });
 
-        displayNewMerchandise(resp.data, merchList);
+        displayNewMerchandise(resp.data as any, merchList);
         clearMerchForm();
 
     } catch (err: unknown) {
@@ -166,8 +166,8 @@ async function editMerchForm(entityType: string, merchId: string, eventId: strin
         const form = createElement("form", { id: "edit-merch-form" }) as HTMLFormElement;
         const fields = [
             { label: "Name:", type: "text", id: "merchName", value: data.name ?? "", required: true },
-            { label: "Price:", type: "number", id: "merchPrice", value: data.price ?? 0, required: true, step: "0.01" },
-            { label: "Discount (%)", type: "number", id: "merch-discount", value: data.discount || 0, step: "0.01", min: "0", max: "100" },
+            { label: "Price:", type: "number", id: "merchPrice", value: data.price ?? 0, required: true, step: 0.01 },
+            { label: "Discount (%)", type: "number", id: "merch-discount", value: data.discount || 0, step: 0.01, min: 0, max: 100 },
             { label: "Stock:", type: "number", id: "merchStock", value: data.stock ?? 0, required: true }
         ];
         fields.forEach(f => form.appendChild(createFormGroup(f)));

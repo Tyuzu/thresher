@@ -1,7 +1,7 @@
 // RenderAudioPost.ts
 
 import { resolveImagePath, EntityType, PictureType } from "../../../utils/imagePaths.js";
-import AudioPlayer from '../../../components/ui/AudioPlayer.js';
+import AudioPlayer, { LyricLine } from "../../../components/ui/AudioPlayer.js";
 
 export async function RenderAudioPost(
     mediaContainer: HTMLElement, 

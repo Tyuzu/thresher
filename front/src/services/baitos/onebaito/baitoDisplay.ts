@@ -101,7 +101,12 @@ function renderExpandableDescription(text: string = ""): HTMLElement {
 
 /** Edit job wrapper */
 function editBaito(baito: Baito, isLoggedIn: boolean, container: HTMLElement): void {
-    createOrEditBaito({ isLoggedIn, contentContainer: container, baito, mode: "edit" });
+    // createOrEditBaito expects BaitoData with requirements as string
+    const normalized = {
+        ...baito,
+        requirements: Array.isArray(baito.requirements) ? (baito.requirements as string[]).join("\n") : (baito.requirements || "")
+    } as any;
+    createOrEditBaito({ isLoggedIn, contentContainer: container, baito: normalized, mode: "edit" });
 }
 
 /** Owner controls */

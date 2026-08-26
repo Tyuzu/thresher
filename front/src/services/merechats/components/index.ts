@@ -14,11 +14,11 @@ export interface User {
 }
 
 export interface RawMessage {
-  id?: string;
-  messageid?: string;
-  sender?: string | User | null;
+  id?: string | number;
+  messageid?: string | number;
+  sender?: string | number | User | null;
   senderName?: string;
-  userid?: string;
+  userid?: string | number;
   content?: string;
   media?: unknown;
   deleted?: boolean;
@@ -143,7 +143,7 @@ function renderHeader(data: NormalizedMessage, msg: RawMessage): ReturnType<type
    Body Renderer
 --------------------------*/
 function renderBody(data: NormalizedMessage, msg: RawMessage): ReturnType<typeof createElement> {
-  const nodes: unknown[] = [];
+  const nodes: Array<Node | string | number | HTMLElement> = [];
 
   if (data.content) {
     const text =
@@ -154,7 +154,7 @@ function renderBody(data: NormalizedMessage, msg: RawMessage): ReturnType<typeof
     nodes.push(text);
   }
 
-  const mediaNode = renderMedia(msg);
+  const mediaNode = renderMedia(msg as any);
   if (mediaNode) {
     nodes.push(mediaNode);
   }
@@ -173,7 +173,7 @@ export function renderMessage(msg: RawMessage): ReturnType<typeof createElement>
   const user = getState("user")?.userid as string | User | undefined;
   const data = normalizeMessage(msg, user);
 
-  const avatar = renderAvatar(msg, {
+  const avatar = renderAvatar(msg as any, {
     isMine: data.isMine
   });
 

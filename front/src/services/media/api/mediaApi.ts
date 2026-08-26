@@ -8,8 +8,9 @@ import { UploadStore } from "../store/uploadStore.js";
 
 export interface MediaItem {
     mediaid: string | number;
+    creatorid?: string | number;
     url?: string;
-    type: "image" | "video" | string;
+    type?: "image" | "video" | string;
     caption?: string;
     captionlang?: string;
     extn?: string;

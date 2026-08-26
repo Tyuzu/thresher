@@ -48,19 +48,15 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             const lower = id.toLowerCase();
 
-            // Vendor chunking
             if (id.includes('node_modules')) {
+              if (lower.includes('cropperjs')) return 'vendor-cropper';
               if (lower.includes('hls.js')) return 'vendor-hls';
-              return 'vendor';
+              if (lower.includes('uuid')) return 'vendor-uuid';
+              return 'vendor-core';
             }
 
-            // Explicit feature chunking for distinct domain bundles
             if (lower.includes('/pages/farm/') || lower.includes('/pages/crop/')) return 'feature-farms';
-            // if (lower.includes('/pages/events/')) return 'feature-events';
-            // if (lower.includes('/pages/baitos/')) return 'feature-baito';
-            // if (lower.includes('/pages/posts/') || lower.includes('/pages/tumblr/')) return 'feature-social';
             if (lower.includes('/pages/merechats/') || lower.includes('/pages/newchats/') || lower.includes('/pages/discord/')) return 'feature-chats';
-            // if (lower.includes('/pages/admin/')) return 'feature-admin';
           },
 
           experimentalMinChunkSize: 5000,

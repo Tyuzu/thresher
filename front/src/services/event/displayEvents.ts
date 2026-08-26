@@ -195,9 +195,9 @@ function createEventCard(ev: EventItem): HTMLElement {
     const statusLabel = createElement(
         "span",
         {
-            style: `font-size:0.75rem;padding:2px 6px;border-radius:4px;background:${
+            style: (`font-size:0.75rem;padding:2px 6px;border-radius:4px;background:${
                 isPast ? "#888" : "#28a745"
-            };color:white;margin-left:8px;`,
+            };color:white;margin-left:8px;`) as any,
         },
         [isPast ? "Past" : "Upcoming"]
     );
@@ -207,7 +207,7 @@ function createEventCard(ev: EventItem): HTMLElement {
         src: bannerUrl,
         alt: `${ev.title || "Event"} Banner`,
         loading: "lazy",
-        style: "width:100%;aspect-ratio:16/9;object-fit:cover;",
+        style: ("width:100%;aspect-ratio:16/9;object-fit:cover;") as any,
     });
 
     const bannerLink = createElement(
@@ -220,7 +220,7 @@ function createEventCard(ev: EventItem): HTMLElement {
     );
 
     const eventInfo = createElement("div", { class: "event-info" }, [
-        createElement("div", { style: "display:flex;align-items:center;gap:8px;" }, [
+        createElement("div", { style: ("display:flex;align-items:center;gap:8px;") as any }, [
             createElement("h2", {}, [ev.title || "Untitled"]),
             statusLabel,
             saveToggle,

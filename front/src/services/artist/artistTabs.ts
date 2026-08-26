@@ -96,13 +96,14 @@ export async function renderMerchTab(container: HTMLElement, artistID: string | 
         const holder = createElement("div", { id: "edittabs" }, []) as HTMLElement;
         container.append(holder);
 
+        // displayMerchandise signature: (container, entityType, eventId, isCreator, isLoggedIn, merchData)
         displayMerchandise(
             container,
-            merchItems,
             "artist",
             artistID,
             isCreator,
-            isLoggedIn
+            isLoggedIn,
+            merchItems
         );
     } catch {
         const msg = createElement("p", {}, ["Error loading merch."]);

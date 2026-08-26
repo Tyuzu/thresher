@@ -1,8 +1,11 @@
-import Cropper from "cropperjs";
 import { IFilterManager } from "./types.js";
 
+type CropperCompatInstance = {
+  getCroppedCanvas?: (options?: Record<string, unknown>) => HTMLCanvasElement | null;
+};
+
 export interface ExportBlobOptions {
-  cropper: Cropper;
+  cropper: CropperCompatInstance;
   cropWidth: number;
   cropHeight: number;
   filterManager?: IFilterManager | null;
@@ -59,12 +62,12 @@ export async function exportBlob({
     throw new Error("Cropper instance is missing.");
   }
 
-  const canvas = cropper.getCroppedCanvas({
+  const canvas = cropper.getCroppedCanvas?.({
     width: cropWidth,
     height: cropHeight,
     imageSmoothingEnabled: true,
     imageSmoothingQuality: "high"
-  });
+  }) ?? null;
 
   if (!canvas) {
     throw new Error("getCroppedCanvas returned null. Ensure image is loaded properly.");

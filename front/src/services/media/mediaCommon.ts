@@ -15,7 +15,7 @@ export type MediaType = "image" | "video" | "unknown";
 
 export interface MediaItem {
     mediaid: string | number;
-    creatorid: string | number;
+    creatorid?: string | number;
     url: string;
     mediaGroupId?: string;
     type?: string;
@@ -206,7 +206,7 @@ export async function confirmDelete(
     }
 
     try {
-        const res = await deleteMedia<DeleteResponse>(mediaId, entityType, entityId);
+        const res = await deleteMedia(mediaId, entityType, entityId) as any;
 
         if (res.success === true) {
             const item = document.querySelector<HTMLElement>(

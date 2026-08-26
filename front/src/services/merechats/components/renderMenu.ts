@@ -77,7 +77,7 @@ export function renderMenu(msg: MenuMessagePayload): HTMLElement | null {
               }
             }
           })
-      ].filter((btn): btn is HTMLElement => Boolean(btn)) // clean type guard filter
+      ].filter(Boolean) as HTMLElement[] // clean type guard filter
     )
   ]) as HTMLElement;
 }

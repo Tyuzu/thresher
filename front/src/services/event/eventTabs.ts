@@ -68,7 +68,7 @@ async function displayEventFAQ(
         faqContainer.replaceChildren(msg);
         return;
     }
-    displayEventFAQs(isCreator, faqContainer, eventId, faqs);
+    displayEventFAQs(isCreator, faqContainer, eventId, faqs as any);
 }
 
 async function displayLostAndFound(
@@ -178,8 +178,8 @@ async function displayContactDetails(
     _isCreator: boolean,
     _contacts: unknown
 ): Promise<void> {
-    container.appendChild(createElement('h2', "", ["ContactDetails"]));
-    container.appendChild(createElement('p', "", ["Does anybody need anything?"]));
+    container.appendChild(createElement('h2', {}, ["ContactDetails"]));
+    container.appendChild(createElement('p', {}, ["Does anybody need anything?"]));
 }
 
 async function displayLivestream(
@@ -200,14 +200,14 @@ async function displayEventLiveStream(
         return;
     }
 
-    divcontainer.appendChild(createElement('h2', "", ["Livestream"]));
+    divcontainer.appendChild(createElement('h2', {}, ["Livestream"]));
 
     try {
         // Fetch available angles
         const response = await fetch(`${API_URL}/livestream/${eventId}`);
 
         if (response.status === 404) {
-            divcontainer.appendChild(createElement("p", "", ["No livestream available."]));
+            divcontainer.appendChild(createElement("p", {}, ["No livestream available."]));
             return;
         }
 
@@ -247,7 +247,7 @@ async function displayEventLiveStream(
         video.play();
     } catch (err) {
         console.error("Failed to load livestream:", err);
-        divcontainer.appendChild(createElement("p", "", ["Error loading livestream."]));
+        divcontainer.appendChild(createElement("p", {}, ["Error loading livestream."]));
     }
 }
 

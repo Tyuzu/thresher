@@ -3,7 +3,7 @@
 ========================================================= */
 export type ErrorContext = Record<string, unknown>;
 
-interface ErrorTracker {
+export interface ErrorTracker {
   track?: (error: Error, context?: ErrorContext) => void;
   trackMetric?: (eventName: string, details: Record<string, unknown>) => void;
 }

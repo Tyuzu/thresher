@@ -7,7 +7,7 @@ export async function Deliveries(
   contentContainer: HTMLElement
 ): Promise<void> {
   contentContainer.innerHTML = "";
-  displayDeliveries(contentContainer, isLoggedIn);
+  displayDeliveries(isLoggedIn, contentContainer);
 }
 
 export default Deliveries;

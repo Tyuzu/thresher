@@ -102,9 +102,9 @@ export function WalletTransactions({ onBalanceChange }: WalletTransactionsProps)
         metaEl.appendChild(renderStatusBadge(txn.status));
 
         const dateEl = Datex(txn.created_at as string);
-        if (dateEl instanceof Node) {
+        if (dateEl && typeof dateEl === "object" && 'nodeType' in (dateEl as any)) {
           (dateEl as HTMLElement).classList.add("txn-date");
-          metaEl.appendChild(dateEl);
+          metaEl.appendChild(dateEl as unknown as Node);
         } else {
           metaEl.appendChild(createElement("span", { class: "txn-date" }, [String(dateEl)]));
         }

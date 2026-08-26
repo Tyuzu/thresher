@@ -2,7 +2,7 @@
 
 import { createElement } from "../../../components/createElement";
 import { HireWorkerCard } from "./WorkerCard";
-import { Worker } from "./openHireWorkerModal"; // Assuming Worker interface is exported from there or defined here
+import { Worker } from "./WorkerModal"; // import Worker interface from WorkerModal
 
 export function renderWorkerList(
     listEl: HTMLElement,

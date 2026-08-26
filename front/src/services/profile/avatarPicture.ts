@@ -107,7 +107,7 @@ export async function updateAvatar(): Promise<boolean> {
     AVATAR COMPONENT
 ============================================================ */
 
-export function createAvatar(profile: UserProfile = {}): HTMLElement {
+export function createAvatar(profile: UserProfile = {} as UserProfile): HTMLElement {
   const profileArea = createElement("div", { class: "profile_area" });
   const thumb = createElement("span", { class: "thumb" });
 

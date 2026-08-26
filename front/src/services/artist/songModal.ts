@@ -24,11 +24,13 @@ export interface Song {
 }
 
 export interface OpenSongModalOptions {
-    mode: "create" | "edit";
+    mode: "create" | "edit" | "upload";
     song?: Song;
     artistID: string | number;
+    container?: HTMLElement;
     _container?: HTMLElement;
     _isCreator?: boolean;
+    isCreator?: boolean;
 }
 
 interface UploadResponse {
@@ -37,8 +39,11 @@ interface UploadResponse {
     extension?: string;
 }
 
-export function openSongModal({ mode, song = {}, artistID, _container, _isCreator }: OpenSongModalOptions): void {
+export function openSongModal({ mode, song = {}, artistID, container, _container, _isCreator, isCreator }: OpenSongModalOptions): void {
     const isEdit = mode === "edit";
+    const safeContainer = container ?? _container ?? document.body;
+    void safeContainer;
+    void isCreator;
 
     const form = createSongForm(song);
 
@@ -125,10 +130,7 @@ export function openSongModal({ mode, song = {}, artistID, _container, _isCreato
         e.preventDefault();
 
         if (!durationLoaded) {
-            Notify(
-                "Audio duration not loaded yet",
-                "error"
-            );
+            Notify("Audio duration not loaded yet", { type: "error" });
             return;
         }
 
@@ -224,29 +226,23 @@ export function openSongModal({ mode, song = {}, artistID, _container, _isCreato
 
             closeModal();
 
-            Notify(
-                "Song saved successfully",
-                "success"
-            );
+            Notify("Song saved successfully", { type: "success" });
 
         } catch (err: any) {
             console.error(err);
 
-            Notify(
-                `Upload failed: ${err.message}`,
-                "error"
-            );
+            Notify(`Upload failed: ${err.message}`, { type: "error" });
         }
     });
 }
 
 // ------------------------ Song Form ------------------------
 function createSongForm(song: Song = {}): HTMLFormElement {
-    const audioPreview = createElement("audio", { controls: true, style: "display:none; margin-top:10px;" }) as HTMLAudioElement;
-    const imagePreview = Imagex({ style: "display:none; max-height:120px; margin-top:10px;" }) as HTMLElement;
+    const audioPreview = createElement("audio", { controls: true, style: { display: "none", marginTop: "10px" } }) as HTMLAudioElement;
+    const imagePreview = Imagex({ style: "display:none;max-height:120px;margin-top:10px;" } as any) as HTMLImageElement;
 
-    const audioGroup = createFormGroup({ type: "file", name: "audio", label: "Audio File", accept: "audio/*", additionalNodes: [audioPreview] }) as HTMLElement;
-    const imageGroup = createFormGroup({ type: "file", name: "poster", label: "Poster Image", accept: "image/*", additionalNodes: [imagePreview] }) as HTMLElement;
+    const audioGroup = createFormGroup({ type: "file", name: "audio", label: "Audio File", accept: "audio/*", additionalNodes: [audioPreview] as Node[] }) as HTMLElement;
+    const imageGroup = createFormGroup({ type: "file", name: "poster", label: "Poster Image", accept: "image/*", additionalNodes: [imagePreview] as Node[] }) as HTMLElement;
 
     setupFilePreview(audioGroup.querySelector("input") as HTMLInputElement, audioPreview, "audio");
     setupFilePreview(imageGroup.querySelector("input") as HTMLInputElement, imagePreview, "image");
@@ -279,11 +275,9 @@ function setupFilePreview(input: HTMLInputElement, preview: HTMLAudioElement | H
             audioEl.style.display = "block";
         }
         if (type === "image" && file.type.startsWith("image/")) {
-            preview.style.display = "block";
-            // If Imagex uses standard img src or dataset assignment, handle accordingly:
-            if ("src" in preview) {
-                (preview as HTMLImageElement).src = url;
-            }
+            const img = preview as HTMLImageElement;
+            img.style.display = "block";
+            img.src = url;
         }
     });
 }

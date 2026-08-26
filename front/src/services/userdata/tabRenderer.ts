@@ -12,7 +12,7 @@ async function renderTabContent(
   try {
     container.textContent = "Loading...";
     const data = await fetchUserProfileData(username, entityType);
-    renderEntityData(container, data, entityType);
+    renderEntityData(container, data as any, entityType);
   } catch (error) {
     console.error(`Error fetching data for ${entityType}:`, error);
     Notify(`Failed to load ${entityType} data. Please try again.`, {

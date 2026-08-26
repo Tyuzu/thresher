@@ -22,7 +22,7 @@ export async function RenderAudioPost(
     controls: true,
     muted: false,
     className: 'post-audio',
-    lyricsData: lyrics,
+    lyricsData: Array.isArray(lyrics) ? (lyrics as any[]) : [],
     resolutions: resolution
   });
 

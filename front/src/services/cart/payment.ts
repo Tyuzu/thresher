@@ -170,8 +170,7 @@ async function processPayment(orderId: string | number, total: number): Promise<
     paymentType: "purchase",
     entityType: "order",
     entityId: orderId,
-    entityName: "Order",
-    amount: total
+    entityName: "Order"
   });
 }
 

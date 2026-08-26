@@ -83,7 +83,16 @@ export async function renderCategoryItems(
     const fragment = document.createDocumentFragment();
 
     res.crops.forEach((crop: CropItem) => {
-      const card = displayCropCard(crop);
+      const cardData = {
+        name: crop.name || "",
+        price: Number(crop.price || 0),
+        unit: (crop as any).unit || "kg",
+        quantity: Number((crop as any).quantity || 0),
+        banner: (crop as any).banner,
+        farmName: (crop as any).farmName,
+        cropid: crop.id
+      };
+      const card = displayCropCard(cardData);
       if (card) fragment.appendChild(card);
     });
 

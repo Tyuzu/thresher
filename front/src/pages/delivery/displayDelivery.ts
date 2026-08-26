@@ -8,5 +8,5 @@ export async function Delivery(
   deliveryid: string,
   contentContainer: HTMLElement
 ): Promise<void> {
-  await displayDelivery(contentContainer, deliveryid, isLoggedIn);
+  await displayDelivery(contentContainer, deliveryid);
 }

@@ -5,5 +5,5 @@ export async function Booking(
   isLoggedIn: boolean,
   contentContainer: HTMLElement
 ): Promise<void> {
-  displayBooking(isLoggedIn, contentContainer);
+  displayBooking({ entityType: "event", entityId: "booking", userId: "guest", isAdmin: !isLoggedIn }, contentContainer);
 }

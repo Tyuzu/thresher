@@ -120,7 +120,7 @@ export async function userProfileCard(
           }
         },
         [profile.isFollowing ? "Unfollow" : "Follow"]
-      );
+      ) as HTMLButtonElement;
 
       elements.push(followBtn);
     }

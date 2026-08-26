@@ -7,5 +7,5 @@ export async function EditItinerary(
   contentContainer: HTMLElement
 ): Promise<void> {
   contentContainer.innerHTML = "";
-  editItinerary(isLoggedIn, contentContainer, id);
+  editItinerary(contentContainer, isLoggedIn, id);
 }

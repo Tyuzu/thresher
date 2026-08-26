@@ -6,5 +6,6 @@ export async function CreateCrop(
   contentContainer: HTMLElement
 ): Promise<void> {
   contentContainer.innerHTML = "";
-  createCrop(isLoggedIn, contentContainer);
+  const node = await createCrop("");
+  if (node) contentContainer.appendChild(node);
 }

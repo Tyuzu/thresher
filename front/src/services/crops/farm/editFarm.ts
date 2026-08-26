@@ -3,7 +3,7 @@ import { createFarmForm } from "./createOrEditFarm.js";
 
 // Define interface for the Farm object adjust properties as needed
 export interface Farm {
-    farmid: string | number;
+    farmid?: string | number;
     name?: string;
     [key: string]: any;
 }

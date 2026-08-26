@@ -4,21 +4,22 @@ import { resolveImagePath, EntityType, PictureType } from "../../../utils/imageP
 import VideoPlayer from '../../../components/ui/VideoPlayer.js';
 
 export async function RenderVideoPost(
-    mediaContainer: HTMLElement, 
-    media: string[], 
-    media_url: string = "", 
-    resolution?: any
+    mediaContainer: HTMLElement,
+    media: string[],
+    media_url: string | { controls?: boolean; "aria-label"?: string } = "",
+    resolution?: unknown
 ): Promise<void> {
-    media.forEach(videoSrc => {
-        const posterPath = resolveImagePath(EntityType.CHAT, PictureType.POSTER, `${media_url}.jpg`);
+    const options = typeof media_url === "string" ? { controls: true, "aria-label": "Video message" } : media_url;
+    media.forEach((videoSrc) => {
+        const posterPath = resolveImagePath(EntityType.CHAT, PictureType.POSTER, `${typeof media_url === "string" ? media_url : videoSrc}.jpg`);
         const videox = VideoPlayer({
             src: videoSrc,
-            className: 'post-video',
             muted: true,
             poster: posterPath,
-            controls: false,
-        }, media_url[0], resolution);
+            controls: Boolean(options.controls),
+            autoplay: false,
+        }, typeof media_url === "string" ? media_url : videoSrc);
 
-        mediaContainer.appendChild(videox);
+        mediaContainer.appendChild(videox as HTMLElement);
     });
 }

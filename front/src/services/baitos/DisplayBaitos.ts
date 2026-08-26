@@ -142,7 +142,7 @@ export async function displayBaitos(container: HTMLElement, isLoggedIn: boolean)
         }
 
         paged.forEach((job, idx) => {
-            list.append(buildCard(job));
+            list.append(buildCard(job as any));
 
             // Inject an in-list native ad every 5 job items
             if ((idx + 1) % 5 === 0) {

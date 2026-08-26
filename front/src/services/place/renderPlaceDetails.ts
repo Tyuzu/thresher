@@ -21,8 +21,8 @@ export interface Place {
   address?: string;
   category?: string;
   coordinates?: PlaceCoordinates;
-  created_at: string | Date;
-  updated_at: string | Date;
+  created_at?: string | Date | null;
+  updated_at?: string | Date | null;
 }
 
 interface MetadataField {

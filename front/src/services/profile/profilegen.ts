@@ -122,7 +122,7 @@ function appendChildren(parent: HTMLElement | null, ...children: unknown[]): voi
 ============================================================ */
 
 function profilGen(
-  profile: UserProfile = {},
+  profile: UserProfile = {} as UserProfile,
   isLoggedIn: boolean = false,
   onLoadUserData: LoadUserDataCallback | null = null
 ): HTMLElement {
@@ -165,7 +165,7 @@ function profilGen(
       events: {
         click: () => {
           if (typeof onLoadUserData === "function") {
-            onLoadUserData(isLoggedIn, udata, profile.username || profile.userid);
+            onLoadUserData(isLoggedIn, udata, String(profile.username || profile.userid));
           }
         }
       }
@@ -175,7 +175,7 @@ function profilGen(
   } else {
     const kc = createElement("div");
     if (profile.userid) {
-      othusrdata(kc, profile.userid);
+      othusrdata(kc, String(profile.userid));
     }
     appendChildren(section, kc);
   }

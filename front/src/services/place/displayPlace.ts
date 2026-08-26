@@ -167,7 +167,7 @@ function renderPlaceDetailsSection(
   contentContainer: HTMLElement
 ): void {
   try {
-    renderPlaceDetails(isLoggedIn, editSection, placeData, isCreator);
+    renderPlaceDetails(isLoggedIn, editSection, placeData as any, isCreator);
     contentContainer.appendChild(editSection);
   } catch (err) {
     console.warn("Failed to render edit section:", err);
@@ -232,7 +232,7 @@ function buildPlaceTabs(
     id: "info-tab",
     render: (container: HTMLElement) => {
       try {
-        displayPlaceInfo(container, placeData, isCreator);
+        displayPlaceInfo(container, placeData as any, isCreator);
       } catch (err) {
         container.textContent = "Failed to load info.";
         console.warn(err);

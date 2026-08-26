@@ -144,7 +144,7 @@ function createSongsList(songs: Song[], artistID: string | number, player: Playe
 // ------------------------ Main Renderer ------------------------
 async function renderSongsTab(container: HTMLElement, artistID: string | number, isCreator: boolean): Promise<void> {
     resetPlayer();
-    const player = initPlayer(container) as PlayerInstance; // handles internal play button state
+    const player = initPlayer(container) as unknown as PlayerInstance; // handles internal play button state
     const songs = await fetchSongs(artistID);
 
     container.replaceChildren();

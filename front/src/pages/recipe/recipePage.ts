@@ -4,9 +4,9 @@ import { displayRecipe } from "../../services/recipes/recipePage.js";
 
 export async function Recipe(
   isLoggedIn: boolean,
-  recipe: string | Record<string, unknown>,
+  recipeid: string | number,
   contentContainer: HTMLElement
 ): Promise<void> {
   contentContainer.innerHTML = "";
-  displayRecipe(contentContainer, isLoggedIn, recipe);
+  displayRecipe(contentContainer, isLoggedIn, recipeid);
 }

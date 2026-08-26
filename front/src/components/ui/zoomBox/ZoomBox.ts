@@ -6,9 +6,9 @@ import {
   handleMouseDown,
   createNavigationButtons,
   createZoomButtons,
-  handleKeyboard,
-  ZoomBoxState
+  handleKeyboard
 } from "./zoomboxHelpers.js";
+import type { ZoomBoxState } from "./zoomBoxTypes.js";
 import {
   createOverlay,
   createCloseButton,

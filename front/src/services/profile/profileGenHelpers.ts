@@ -12,8 +12,8 @@ import { meChat } from "../mechat/plugnplay.js";
 ============================================================ */
 
 export interface UserProfile {
-    userid: string | number;
-    username: string;
+    userid?: string | number;
+    username?: string;
     name?: string;
     bio?: string;
     is_following?: boolean;
@@ -22,6 +22,7 @@ export interface UserProfile {
     wallet_balance?: number;
     followerscount?: number;
     followscount?: number;
+    [key: string]: unknown;
 }
 
 export interface InfoItem {
@@ -80,7 +81,7 @@ function createProfileDetails(profile: UserProfile, isLoggedIn: boolean): HTMLDi
 /**
  * Handles toggling the follow state for a user entity.
  */
-function FollowUser(followBtn: HTMLElement, userId: string | number): void {
+function FollowUser(followBtn: HTMLButtonElement, userId: string | number): void {
     toggleAction({
         entityId: userId,
         entityType: "user",
@@ -123,18 +124,15 @@ function createProfileActions(profile: UserProfile, isLoggedIn: boolean): HTMLDi
 
     // Profile Actions for other users (Follow, Message, Report)
     if (isLoggedIn && profile.userid !== currentUser) {
-        const followOptions: ButtonOptions = {
+        const followButton = Button({
             title: profile.is_following ? "Unfollow" : "Follow",
             id: "follow-btn",
-            events: {
-                click: () => FollowUser(followButton, profile.userid)
-            },
             classes: "btn follow-button",
             styles: { backgroundColor: "green" },
             "data-action": "toggle-follow",
             "data-userid": String(profile.userid)
-        };
-        const followButton = Button(followOptions);
+        });
+        followButton.addEventListener("click", () => FollowUser(followButton, profile.userid));
         profileActions.appendChild(followButton);
 
         const sendMessageOptions: ButtonOptions = {

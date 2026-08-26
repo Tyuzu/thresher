@@ -38,5 +38,6 @@ const Accordion = (sections: AccordionSection[] = []): HTMLDivElement => {
   return container;
 };
 
+export { Accordion };
 export default Accordion;
 export { Accordion as AccordionComponent };

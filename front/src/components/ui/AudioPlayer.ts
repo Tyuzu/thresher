@@ -10,7 +10,11 @@ export interface LyricLine {
 export interface AudioSourceOptions {
   src: string;
   poster?: string;
+  className?: string;
+  controls?: boolean;
+  muted?: boolean;
   lyricsData?: LyricLine[];
+  resolutions?: string | number;
 }
 
 function AudioPlayer(audioSrc: AudioSourceOptions): HTMLDivElement {

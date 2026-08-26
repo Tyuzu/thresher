@@ -110,8 +110,8 @@ function renderStaticLayout(): void {
     if (!header || !nav || !footer) return;
 
     if (!layoutState.headerRendered) {
-        const h = createheader();
-        if (h) header.replaceChildren(h);
+        // createheader mutates the header element directly
+        createheader();
         layoutState.headerRendered = true;
     }
     if (!layoutState.navRendered) {
@@ -129,8 +129,8 @@ function renderStaticLayout(): void {
 function refreshStaticLayout(): void {
     const { header, nav } = getElements();
     if (header) {
-        const updatedHeader = createheader();
-        if (updatedHeader) header.replaceChildren(updatedHeader);
+        // createheader updates header in place
+        createheader();
     }
     if (nav) {
         const updatedNav = createNav();
@@ -157,22 +157,23 @@ export async function loadContent(
     const result = await render(parsed.fullPath, main);
 
     /* --- ROUTER REDIRECT --- */
-    if (result?.redirect) {
+    const routeResult = result as any;
+    if (routeResult && typeof routeResult.redirect === "string" && routeResult.redirect) {
         if (redirectDepth >= 10) {
             throw new Error("Too many consecutive route redirects.");
         }
-        const browserTarget = toBrowserTarget(result.redirect, parsed.mode);
+        const browserTarget = toBrowserTarget(routeResult.redirect, parsed.mode);
         history.replaceState(null, "", browserTarget);
 
         track("route_redirect", {
             from: parsed.fullPath,
-            to: result.redirect
+            to: routeResult.redirect
         });
 
         await loadContent(getCurrentAppLocation(), {
             redirectDepth: redirectDepth + 1
         });
-        return result;
+        return routeResult;
     }
 
     /* --- NAVIGATION UI --- */

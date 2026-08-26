@@ -18,7 +18,7 @@ import {
   subtitles,
 } from "../vidpopHelpers/vutils.js";
 
-type KeyAction = () => void | Promise<void>;
+type KeyAction = () => void | Promise<unknown>;
 
 export function setupHotkeys(video: HTMLVideoElement): () => void {
   const isInput = (el: HTMLElement): boolean =>

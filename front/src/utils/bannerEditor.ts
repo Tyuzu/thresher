@@ -1,9 +1,6 @@
-import "../../css/inistyles/cropper.css";
-import "../../css/inistyles/imagecropper1.css";
 import Modal from "../components/ui/Modal.js";
 import { createElement } from "../components/createElement.js";
 import Notify from "../components/ui/Notify.js";
-import { openCropper } from "./cropper/index.js";
 import { bannerFetch } from "../api/api.js";
 import { resolveImagePath, PictureType } from "./imagePaths.js";
 import { SRC_URL } from "../state/state.js";
@@ -69,6 +66,23 @@ function isValidPublicUrl(rawUrl: string): boolean {
     } catch {
         return false;
     }
+}
+
+let cropperLoader: Promise<typeof import("./cropper/index.js")> | null = null;
+
+async function loadCropperEditor(): Promise<typeof import("./cropper/index.js")> {
+    if (cropperLoader) return cropperLoader;
+
+    cropperLoader = (async () => {
+        await Promise.all([
+            import("../../css/inistyles/cropper.css"),
+            import("../../css/inistyles/imagecropper1.css")
+        ]);
+
+        return import("./cropper/index.js");
+    })();
+
+    return cropperLoader;
 }
 
 /* ────────── Public API ────────── */
@@ -257,6 +271,7 @@ async function getCroppedImage(imageType: string): Promise<Blob | null> {
     const file = await pickFile();
     if (!file) return null;
 
+    const { openCropper } = await loadCropperEditor();
     return openCropper({ file, type: imageType });
 }
 
@@ -288,6 +303,7 @@ async function getImageFromUrl({ crop = false, imageType = "" } = {}): Promise<I
 
         const file = new File([blob], "remote-image.png", { type: blob.type });
 
+        const { openCropper } = await loadCropperEditor();
         return await openCropper({
             file,
             type: imageType

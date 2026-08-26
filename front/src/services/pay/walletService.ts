@@ -1,4 +1,4 @@
-import { WalletDashboard } from "./WalletDashboard.js";
+import { WalletDashboard } from "./walletDashboard.js";
 
 /**
  * Renders the wallet dashboard component into the provided DOM container.

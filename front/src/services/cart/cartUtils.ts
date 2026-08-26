@@ -33,7 +33,7 @@ export interface RenderCartCategoryProps {
 interface QtyTimerContext {
   timerId: ReturnType<typeof setTimeout>;
   resolve?: (value?: unknown) => void;
-  promise?: Promise<void>;
+  promise?: Promise<unknown>;
 }
 
 /* ────────────────────── Constants & Helpers ────────────────────── */

@@ -85,7 +85,7 @@ export async function updateBanner(): Promise<boolean> {
     BANNER COMPONENT
 ============================================================ */
 
-export function createBanner(profile: UserProfile = {}, isCreator: boolean = false): HTMLElement {
+export function createBanner(profile: UserProfile = {} as UserProfile, isCreator: boolean = false): HTMLElement {
   return Bannerx({
     isCreator,
     bannerkey: profile.banner || "",

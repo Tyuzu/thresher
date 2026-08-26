@@ -21,7 +21,7 @@ async function displayEventFAQs(
     faques: FAQItemData[]
 ): Promise<void> {
     faqContainer.innerHTML = "";
-    faqContainer.appendChild(createElement("h2", "", ["FAQs"]));
+    faqContainer.appendChild(createElement("h2", {}, ["FAQs"]));
 
     if (isCreator) {
         // Updated to use ButtonOptions object structure

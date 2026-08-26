@@ -169,7 +169,7 @@ export function jobsHire(container: HTMLElement, entityType: string, entityId: s
 
       const wrapper = container.querySelector(".places-wrapper");
       if (wrapper) {
-        const card = buildCard(newJob);
+          const card = buildCard(newJob as any);
         if (card) {
           wrapper.appendChild(card);
         }
@@ -225,7 +225,7 @@ export async function displayPlaceJobs(
 
     const fragment = document.createDocumentFragment();
     jobs.forEach(job => {
-      const card = buildCard(job);
+        const card = buildCard(job as any);
       if (card) {
         fragment.appendChild(card);
       }

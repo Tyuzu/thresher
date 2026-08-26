@@ -7,6 +7,8 @@ import {
   ZoomBoxState
 } from "./zoomBoxTypes.js";
 
+export type { ZoomBoxState } from "./zoomBoxTypes.js";
+
 /* =========================
    Transformation & Zoom Logic
    ========================= */

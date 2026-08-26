@@ -5,6 +5,7 @@ export interface Song {
     duration?: string;
     poster?: string | null;
     audioUrl?: string | null;
+    audioextn?: string;
     liked?: boolean;
     _playBtn?: HTMLButtonElement;
 }

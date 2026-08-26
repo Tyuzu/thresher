@@ -1,14 +1,25 @@
 import Cropper from "cropperjs";
 import { CreateCropperOptions } from "./types.js";
 
+type CropperCompatInstance = {
+  destroy?: () => void;
+  crop?: () => void;
+  rotate?: (angle: number) => void;
+  zoom?: (scale: number) => void;
+  reset?: () => void;
+  getCroppedCanvas?: (options?: Record<string, unknown>) => HTMLCanvasElement | null;
+  getContainerData?: () => { width: number; height: number };
+  setCropBoxData?: (data: { left: number; top: number; width: number; height: number }) => void;
+};
+
 export function createCropper({
   image,
   aspectRatio,
   cropTargetW,
   cropTargetH,
   onReady
-}: CreateCropperOptions): Cropper {
-  const CropperClass = window.Cropper || Cropper;
+}: CreateCropperOptions): CropperCompatInstance {
+  const CropperClass = (window as any).Cropper || (Cropper as any);
 
   if (!CropperClass) {
     throw new Error("CropperJS is not loaded.");
@@ -33,75 +44,79 @@ export function createCropper({
     cropBoxMovable: false,
     aspectRatio,
 
-    ready(this: Cropper) {
+    ready(this: CropperCompatInstance) {
       try {
         centerCropBox(this, cropTargetW, cropTargetH);
-        this.crop();
+        this.crop?.();
       } catch {
         try {
-          this.crop();
-        } catch { /* noop */ }
+          this.crop?.();
+        } catch {
+          // noop
+        }
       }
 
-      onReady?.(this);
+      onReady?.(this as any);
     }
-  });
+  }) as CropperCompatInstance;
 
   return cropperInstance;
 }
 
-export function destroyCropper(cropper: Cropper | null): void {
-  cropper?.destroy();
+export function destroyCropper(cropper: CropperCompatInstance | null): void {
+  cropper?.destroy?.();
 }
 
-export function rotateLeft(cropper: Cropper | null): void {
-  cropper?.rotate(-90);
+export function rotateLeft(cropper: CropperCompatInstance | null): void {
+  cropper?.rotate?.(-90);
 }
 
-export function rotateRight(cropper: Cropper | null): void {
-  cropper?.rotate(90);
+export function rotateRight(cropper: CropperCompatInstance | null): void {
+  cropper?.rotate?.(90);
 }
 
-export function zoomIn(cropper: Cropper | null, amount = 0.1): void {
-  cropper?.zoom(amount);
+export function zoomIn(cropper: CropperCompatInstance | null, amount = 0.1): void {
+  cropper?.zoom?.(amount);
 }
 
-export function zoomOut(cropper: Cropper | null, amount = 0.1): void {
-  cropper?.zoom(-amount);
+export function zoomOut(cropper: CropperCompatInstance | null, amount = 0.1): void {
+  cropper?.zoom?.(-amount);
 }
 
-export function resizeCropper(cropper: Cropper | null): void {
+export function resizeCropper(cropper: CropperCompatInstance | null): void {
   if (!cropper) return;
-  
+
   try {
-    // In v1.5.13, reset() recalculates container dimensions and resets crop box
-    cropper.reset();
-  } catch (_) {}
+    cropper.reset?.();
+  } catch {
+    // noop
+  }
 }
 
 export function getCroppedCanvas(
-  cropper: Cropper | null,
+  cropper: CropperCompatInstance | null,
   width: number,
   height: number
 ): HTMLCanvasElement | null {
   if (!cropper) return null;
 
-  return cropper.getCroppedCanvas({
+  return cropper.getCroppedCanvas?.({
     width,
     height,
     imageSmoothingEnabled: true,
     imageSmoothingQuality: "high"
-  });
+  }) ?? null;
 }
 
 export function centerCropBox(
-  cropper: Cropper | null,
+  cropper: CropperCompatInstance | null,
   cropTargetW: number,
   cropTargetH: number
 ): void {
   if (!cropper) return;
 
-  const container = cropper.getContainerData();
+  const container = cropper.getContainerData?.();
+  if (!container) return;
 
   const fitScale = Math.min(
     1,
@@ -112,7 +127,7 @@ export function centerCropBox(
   const cropWidth = cropTargetW * fitScale;
   const cropHeight = cropTargetH * fitScale;
 
-  cropper.setCropBoxData({
+  cropper.setCropBoxData?.({
     left: (container.width - cropWidth) / 2,
     top: (container.height - cropHeight) / 2,
     width: cropWidth,
