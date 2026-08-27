@@ -14,7 +14,8 @@ export function createAddToPlaylistBtn(
     const btn = createElement("button", { class: "add-to-playlist-btn" }, ["➕ Add to Playlist"]);
     btn.addEventListener("click", async () => {
         if (!isLoggedIn) {
-            return Notify("You must be logged in to add songs to playlists", { type: "info" });
+            Notify("You must be logged in to add songs to playlists", { type: "info" });
+            return;
         }
 
         try {
@@ -29,7 +30,8 @@ export function createAddToPlaylistBtn(
             
             const index = parseInt(choice, 10) - 1;
             if (isNaN(index) || !playlists[index]) {
-                return Notify("Invalid selection", { type: "error" });
+                Notify("Invalid selection", { type: "error" });
+                return;
             }
 
             const playlistID = playlists[index].playlistID || playlists[index].playlistid;

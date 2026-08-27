@@ -7,5 +7,5 @@ export async function Vendors(
   contentContainer: HTMLElement
 ): Promise<void> {
   contentContainer.innerHTML = "";
-  await hireVendors(contentContainer, isLoggedIn, null);
+  await hireVendors(contentContainer, false, isLoggedIn);
 }

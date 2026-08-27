@@ -98,7 +98,7 @@ export async function baitoApplicantDash(container: HTMLElement): Promise<void> 
                 createElement("p", { class: "meta" }, [`📍 ${app.location || "Unknown"} • 💴 ¥${app.wage || "?"}/hr`]),
                 createElement("p", { class: "status" }, [`📌 Status: ${app.status || "Pending"}`]),
                 createElement("p", {}, [`📝 Pitch: ${app.pitch || "—"}`]),
-                createElement("p", {}, [`📅 ${formatRelativeTime(app.submittedAt)}`])
+                createElement("p", {}, [`📅 ${formatRelativeTime(app.submittedAt ?? Date.now())}`])
             );
 
             if (app.feedback) {
@@ -248,10 +248,10 @@ export async function showApplicantsModal(job: BaitoJob): Promise<void> {
         content.appendChild(createElement("p", {}, ["No applications yet."]));
     } else {
         applicants.forEach(app => {
-            const row = createElement("div", { class: "app-card" }, [
+                const row = createElement("div", { class: "app-card" }, [
                 createElement("strong", {}, [app.username || "Applicant"]),
                 createElement("p", {}, [app.pitch || "(No pitch)"]),
-                createElement("p", { class: "muted" }, [`📅 ${formatRelativeTime(app.submittedAt)}`])
+                createElement("p", { class: "muted" }, [`📅 ${formatRelativeTime(app.submittedAt ?? Date.now())}`])
             ]) as HTMLElement;
 
             row.addEventListener("click", () => {

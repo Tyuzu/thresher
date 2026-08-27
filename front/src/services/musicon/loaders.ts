@@ -56,10 +56,12 @@ async function loadSongs(
                 click: () => {
                     const selected = songs.filter(s => batchSelection?.has(s.songid));
                     if (!selected.length) {
-                        return Notify("No songs selected", { type: "info" });
+                        Notify("No songs selected", { type: "info" });
+                        return;
                     }
                     player?.setQueue?.(selected);
                     Notify(`${selected.length} songs added to queue`);
+                    return;
                 }
             }
         });
@@ -72,7 +74,8 @@ async function loadSongs(
                 click: async () => {
                     const selected = Array.from(batchSelection!);
                     if (!selected.length) {
-                        return Notify("No songs selected", { type: "info" });
+                        Notify("No songs selected", { type: "info" });
+                        return;
                     }
                     try {
                         await Promise.all(selected.map(id => MusicAPI.removeSongFromPlaylist(fetchParams[0], id)));
@@ -84,6 +87,7 @@ async function loadSongs(
                         console.error("[remove] Error:", err);
                         Notify("Failed to remove songs", { type: "error" });
                     }
+                    return;
                 }
             }
         });

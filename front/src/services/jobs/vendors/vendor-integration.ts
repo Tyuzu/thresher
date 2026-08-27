@@ -550,10 +550,10 @@ export async function openEditVendorProfile(
                     await onSuccess(detail);
                 }
             },
-            {
+                {
                 mode: "edit",
                 vendorId,
-                initialData: vendorData
+                initialData: vendorData ?? undefined
             }
         );
 

@@ -54,7 +54,15 @@ export function showCategoryBrowser(container: HTMLElement | null): void {
     if (!activeTab) return;
 
     const category = activeTab.dataset.category || activeTab.id.replace("-tab", "");
-    renderCategoryItems(activeTab, category, filters);
+    // Map local FilterState to the CategoryFilters shape expected by renderCategoryItems
+    renderCategoryItems(activeTab, category, {
+      minPrice: filters.minPrice,
+      maxPrice: filters.maxPrice,
+      inStock: filters.inStock,
+      region: filters.region,
+      lat: filters.lat ?? undefined,
+      lng: filters.lng ?? undefined
+    });
   };
 
   // Debounced wrapper to prevent rapid re-renders on filter changes
@@ -78,7 +86,14 @@ export function showCategoryBrowser(container: HTMLElement | null): void {
     title,
     render: (el: HTMLElement) => {
       el.dataset.category = category;
-      return renderCategoryItems(el, category, filters);
+      return renderCategoryItems(el, category, {
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice,
+        inStock: filters.inStock,
+        region: filters.region,
+        lat: filters.lat ?? undefined,
+        lng: filters.lng ?? undefined
+      });
     }
   }));
 

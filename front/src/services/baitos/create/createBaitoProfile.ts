@@ -228,7 +228,7 @@ export async function displayCreateOrEditBaitoProfile(
                 Notify("Profile created successfully!", { type: "success", duration: 3000, dismissible: true });
             } else {
                 Notify("Updating profile...", { type: "info", duration: 3000, dismissible: true });
-                await updateProfile(workerId, payload);
+                await updateProfile(workerId as string | number, payload);
                 Notify("Profile updated successfully!", { type: "success", duration: 3000, dismissible: true });
             }
             navigate("/baitos/hire");

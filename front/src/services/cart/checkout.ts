@@ -311,7 +311,11 @@ async function handleCheckout({
  */
 function groupByCategory(items: CheckoutItem[] | Record<string, CheckoutItem[]> = []): Record<string, CheckoutItem[]> {
   const grouped: Record<string, CheckoutItem[]> = {};
-  const normalizedItems = Array.isArray(items) ? items : Object.values(items || {});
+  
+  // Flatten union input into a clean single array of CheckoutItem
+  const normalizedItems: CheckoutItem[] = Array.isArray(items)
+    ? items
+    : Object.values(items || {}).flat();
   
   normalizedItems.forEach(item => {
     if (!item) return;

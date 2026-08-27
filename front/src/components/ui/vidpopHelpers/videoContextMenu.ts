@@ -86,7 +86,7 @@ export function setupVideoContextMenu(
       {
         label: "Picture in Picture",
         action: () => {
-          if (document.pictureInPictureEnabled && video.requestPictureInPicture) {
+          if (document.pictureInPictureEnabled && typeof (video.requestPictureInPicture as any) === "function") {
             togglePictureInPicture(video);
           }
         }

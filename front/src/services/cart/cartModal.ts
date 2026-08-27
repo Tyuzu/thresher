@@ -43,7 +43,7 @@ export async function displayCart(content: HTMLElement | null, isLoggedIn: boole
     type: "button",
     class: "back-button",
     events: {
-      click: (e: MouseEvent) => {
+      click: (e: Event) => {
         e.preventDefault();
         history.back();
       }

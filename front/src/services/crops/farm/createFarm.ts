@@ -30,14 +30,15 @@ export function createFarm(isLoggedIn: boolean, container: HTMLElement | null): 
 
   const form = createFarmForm({
     isEdit: false,
-    onSubmit: async (formData: FarmFormData): Promise<void> => {
-      // Adjusted apiFetch signature to match ApiFetchOptions object parameter
-      const res = await apiFetch<CreateFarmResponse>("/farms", "POST", formData);
+    onSubmit: async (formData: FormData | any): Promise<boolean | void> => {
+      const res = await apiFetch<CreateFarmResponse>("/farms", "POST", formData as any);
 
       if (res?.success && res.id) {
         navigate(`/farm/${res.id}`);
+        return true;
       } else {
         container.textContent = "❌ Failed to create farm. Please try again.";
+        return false;
       }
     }
   });

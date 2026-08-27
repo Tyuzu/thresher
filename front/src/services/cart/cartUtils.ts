@@ -94,6 +94,9 @@ export function renderCartCategory({
     return;
   }
 
+  // Shadow/Alias items into a non-undefined constant for closure safety
+  const categoryItems: CartItem[] = items;
+
   const section = createElement("section", { class: "cart-category" });
   const cardsContainer = createElement("div", { class: "cart-cards" });
   const subtotalDisplay = createElement("p", { class: "cart-subtotal" });
@@ -110,8 +113,8 @@ export function renderCartCategory({
         e.preventDefault();
         // FIXED: Flush pending debounce updates to guarantee data consistency before checkout
         await flushCategoryTimers();
-        if (items.length) {
-          displayCheckout(contentContainer, items);
+        if (categoryItems.length) {
+          displayCheckout(contentContainer, categoryItems);
         }
       }
     },
@@ -126,7 +129,7 @@ export function renderCartCategory({
   /* ────────────────────── Internal Logic ────────────────────── */
 
   function render(): void {
-    if (!items.length) {
+    if (!categoryItems.length) {
       cleanup();
       return;
     }
@@ -139,7 +142,7 @@ export function renderCartCategory({
   function updateHeader(): void {
     const headingEl = header.firstChild as HTMLElement;
     if (headingEl) {
-      headingEl.textContent = `${capitalize(category)} (${items.length})`;
+      headingEl.textContent = `${capitalize(category)} (${categoryItems.length})`;
     }
     checkoutBtn.textContent = `Checkout ${capitalize(category)}`;
   }
@@ -147,12 +150,12 @@ export function renderCartCategory({
   function renderItems(): void {
     // FIXED: Build the UI from the current state rather than stale list offsets
     cardsContainer.replaceChildren(
-      ...items.map((item) => createCard(item))
+      ...categoryItems.map((item) => createCard(item))
     );
   }
 
   function updateTotals(): void {
-    const subtotal = items.reduce(
+    const subtotal = categoryItems.reduce(
       (sum, x) => sum + toRupees(x.price) * (Number(x.quantity) || 1),
       0
     );
@@ -167,7 +170,7 @@ export function renderCartCategory({
   }
 
   function cleanup(): void {
-    for (const item of items) {
+    for (const item of categoryItems) {
       clearQtyTimer(item);
     }
 
@@ -252,9 +255,9 @@ export function renderCartCategory({
         item.entityType
       );
 
-      const realIndex = items.findIndex(it => getItemIdentityKey(it) === targetKey);
+      const realIndex = categoryItems.findIndex(it => getItemIdentityKey(it) === targetKey);
       if (realIndex !== -1) {
-        items.splice(realIndex, 1);
+        categoryItems.splice(realIndex, 1);
       }
 
       Notify("Item removed from cart", { type: "success", duration: 2000 });
@@ -313,7 +316,7 @@ export function renderCartCategory({
         // Execute the microtask immediately
         const task = (async () => {
           qtyUpdateTimers.delete(key);
-          const targetItem = items.find(it => getQtyTimerKey(it, category) === key);
+          const targetItem = categoryItems.find(it => getQtyTimerKey(it, category) === key);
           if (!targetItem) return;
           try {
             await CartAPI.updateQty(
@@ -336,7 +339,7 @@ export function renderCartCategory({
   }
 
   function changeQtyByIdentity(targetKey: string, delta: number): void {
-    const item = items.find(it => getItemIdentityKey(it) === targetKey);
+    const item = categoryItems.find(it => getItemIdentityKey(it) === targetKey);
     if (!item) return;
 
     const newQty = Math.max(1, (Number(item.quantity) || 1) + delta);

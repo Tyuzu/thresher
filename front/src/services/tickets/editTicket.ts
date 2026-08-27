@@ -76,7 +76,7 @@ async function editTicket(
       title: "Update Ticket",
       classes: "buttonx primary",
       events: {
-        click: (e) => {
+        click: (e: MouseEvent) => {
           e.preventDefault();
           form.requestSubmit();
         }
@@ -104,7 +104,7 @@ async function editTicket(
       form
     );
 
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", async (e: Event) => {
       e.preventDefault();
       await updateTicket(ticketId, eventId, onRefresh);
     });

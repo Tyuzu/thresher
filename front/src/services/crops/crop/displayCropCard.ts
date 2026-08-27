@@ -63,7 +63,7 @@ export function displayCropCard(crop: CropCardData): HTMLElement {
                   title: "View Details",
                   classes: "buttonx primary crop-card-btn",
                   events: {
-                      click: (e) => {
+                      click: (e: Event) => {
                           e.stopPropagation();
                           navigate(`/crop/${crop.cropid}`);
                       }

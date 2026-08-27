@@ -54,9 +54,11 @@ export function normalizeCartQuantity(value: unknown): number {
 /**
  * Read a catalog item's ID from an ingredient.
  */
-export function getIngredientItemId(ingredient?: Ingredient | null): string | number | null {
+export function getIngredientItemId(ingredient?: Ingredient | null): string | number | undefined {
   if (!ingredient) {
-    return null;
+    return undefined;
   }
-  return ingredient.itemId ?? ingredient.itemid ?? ingredient.productid ?? ingredient.productId ?? null;
+  return (
+    ingredient.itemId ?? ingredient.itemid ?? ingredient.productid ?? ingredient.productId ?? undefined
+  );
 }

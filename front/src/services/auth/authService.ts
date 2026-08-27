@@ -57,7 +57,7 @@ export interface AuthResponseData {
 }
 
 export interface AuthUser extends RawUserRecord {
-  userid: string | null;
+  userid?: string;
   username: string;
 }
 
@@ -210,7 +210,7 @@ function extractAuthPayload(response: AuthResponseData, fallbackUsername = ""): 
         username: String(rawUser.username ?? username)
       }
     : {
-        userid: userId || null,
+        userid: userId || undefined,
         username: username || ""
       };
 
@@ -283,7 +283,7 @@ export async function signup(payload: SignupPayload = {}): Promise<boolean> {
   const hideSpinner = LoadingSpinner();
 
   try {
-    await registerUser(username, email, password);
+    await registerUser(username as string, email as string, password as string);
 
     Notify("Signup successful! You can now log in.", {
       type: "success",

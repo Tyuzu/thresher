@@ -298,7 +298,7 @@ export async function DriverDashboard(container: HTMLElement | null, isLoggedIn:
 
               try {
                 (completeBtn as HTMLButtonElement).disabled = true;
-                await updateDeliveryStatus(jobId, { status: "DELIVERED", otp });
+                await updateDeliveryStatus(jobId as string | number, { status: "DELIVERED", otp });
                 Notify("Delivery completed successfully!", { type: "success" });
                 await loadDeliveries(); // Re-fetch list instead of whole view re-render
               } catch (err: any) {

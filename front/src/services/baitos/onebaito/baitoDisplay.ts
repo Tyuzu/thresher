@@ -171,7 +171,7 @@ function hasValidDeadline(value: any): boolean {
 
 function isBaitoExpired(baito: Baito): boolean {
     if (!hasValidDeadline(baito?.lastdate)) return false;
-    const deadline = baito.lastdate instanceof Date ? baito.lastdate : new Date(baito.lastdate);
+    const deadline = baito.lastdate instanceof Date ? baito.lastdate : new Date(baito.lastdate ?? Date.now());
     return deadline < new Date();
 }
 
@@ -185,15 +185,18 @@ function renderApplicantControls(baito: Baito, baitoid: string | number, isOwner
             events: {
                 click: async (e: MouseEvent) => {
                     if (expired) {
-                        return Notify("This job is no longer accepting applications.", { type: "warning", duration: 3000, dismissible: true });
+                        Notify("This job is no longer accepting applications.", { type: "warning", duration: 3000, dismissible: true });
+                        return;
                     }
                     if (!isLoggedIn) {
-                        return Notify("Please log in to apply for this job.", { type: "warning", duration: 3000, dismissible: true });
+                        Notify("Please log in to apply for this job.", { type: "warning", duration: 3000, dismissible: true });
+                        return;
                     }
                     const pitch = window.prompt("Write a short message to the employer:");
                     if (pitch === null) return; // User clicked "Cancel"
                     if (!pitch.trim()) {
-                        return Notify("Please write a small pitch message.", { type: "warning", duration: 3000, dismissible: true });
+                        Notify("Please write a small pitch message.", { type: "warning", duration: 3000, dismissible: true });
+                        return;
                     }
 
                     const btn = e.currentTarget as HTMLButtonElement;

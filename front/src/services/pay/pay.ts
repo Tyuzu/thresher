@@ -286,17 +286,16 @@ async function showPaymentModal({
         try {
           if (method === "card") {
             modalRef.close({ redirectingToStripe: true });
-            return await handler();
+            await handler();
+          } else {
+            const result = await handler();
+
+            if (result?.success) {
+              modalRef.close({ success: true, method });
+            } else {
+              setMessage(messageEl, result?.error || "Payment failed");
+            }
           }
-
-          const result = await handler();
-
-          if (result?.success) {
-            modalRef.close({ success: true, method });
-            return;
-          }
-
-          setMessage(messageEl, result?.error || "Payment failed");
         } catch (err: any) {
           console.error("Payment processing error:", err);
           setMessage(messageEl, err?.message || "An unexpected error occurred");

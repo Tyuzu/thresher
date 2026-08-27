@@ -69,7 +69,8 @@ export function WalletManager(): WalletManagerInstance {
         const method = methodSelect.value;
 
         if (amountPaise <= 0) {
-          return Notify("Please enter a valid amount", { type: "warning" });
+          Notify("Please enter a valid amount", { type: "warning" });
+          return;
         }
 
         topupBtn.disabled = true;

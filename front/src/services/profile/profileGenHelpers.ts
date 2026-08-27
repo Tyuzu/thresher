@@ -123,7 +123,7 @@ function createProfileActions(profile: UserProfile, isLoggedIn: boolean): HTMLDi
     }
 
     // Profile Actions for other users (Follow, Message, Report)
-    if (isLoggedIn && profile.userid !== currentUser) {
+    if (isLoggedIn && profile.userid !== undefined && profile.userid !== currentUser) {
         const followButton = Button({
             title: profile.is_following ? "Unfollow" : "Follow",
             id: "follow-btn",
@@ -132,14 +132,14 @@ function createProfileActions(profile: UserProfile, isLoggedIn: boolean): HTMLDi
             "data-action": "toggle-follow",
             "data-userid": String(profile.userid)
         });
-        followButton.addEventListener("click", () => FollowUser(followButton, profile.userid));
+        followButton.addEventListener("click", () => FollowUser(followButton, profile.userid as string | number));
         profileActions.appendChild(followButton);
 
         const sendMessageOptions: ButtonOptions = {
             title: "Send Message",
             id: "send-msg",
             events: {
-                click: () => meChat(profile.userid, "user", currentUser)
+                click: () => meChat(profile.userid as string | number, "user", currentUser)
             },
             classes: "buttonx"
         };

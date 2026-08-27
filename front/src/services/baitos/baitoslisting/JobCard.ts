@@ -79,7 +79,7 @@ export function buildCard(job: BaitoJob): HTMLElement {
         ]),
         createElement("p", { class: "baito-type-shift" }, [typeInfo, " ", shift]),
         createElement("p", { class: "baito-loc-time" }, [
-            `📍 ${job.location || "Unknown"} • ${formatRelativeTime(job.createdAt)}`
+            `📍 ${job.location || "Unknown"} • ${formatRelativeTime(job.createdAt ?? Date.now())}`
         ]),
         ...(badgeTags ? [badgeTags] : []),
         createElement("div", { class: "baito-actions" }, [

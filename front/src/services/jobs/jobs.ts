@@ -220,7 +220,7 @@ export async function displayPlaceJobs(
     }
 
     const fragment = document.createDocumentFragment();
-    jobs.forEach(job => {
+    jobs.forEach((job: JobItem) => {
         const card = buildCard(job as any);
       if (card) {
         fragment.appendChild(card);

@@ -12,8 +12,8 @@ import { createElement } from "../../components/createElement.js";
 type LoadUserDataCallback = (
   isLoggedIn: boolean,
   container: HTMLElement,
-  username?: string
-) => void;
+  username: string
+) => void | Promise<void>;
 
 /* ============================================================
     FORMATTERS & HELPERS

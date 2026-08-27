@@ -585,9 +585,9 @@ function openBookingModal(
     modalOverlay = createElement("div", { id: "booking-modal", class: "booking-overlay" }, [modal]);
 
     if (isAdmin) {
-        renderAdminUi(api, storage, body, refreshBookings, entityType, entityId);
+        renderAdminUi(api, storage, body, refreshBookings ?? (() => {}), entityType, entityId);
     } else {
-        renderUserUi(api, storage, body, userId, refreshBookings, entityType, entityId);
+        renderUserUi(api, storage, body, userId, refreshBookings ?? (() => {}), entityType, entityId);
     }
 
     document.body.appendChild(modalOverlay);

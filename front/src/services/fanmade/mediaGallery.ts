@@ -117,7 +117,7 @@ function buildMediaElement(media: MediaItem, thumbSrc: string, index: number, pr
             "data-index": index
         }) as HTMLElement;
         const vidEl = createElement("div", {}, []) as HTMLElement;
-        generateVideoPlayer(videoSrc, thumbSrc, [], [], media.url).then((videoPlayer: HTMLElement) => {
+        generateVideoPlayer(videoSrc, thumbSrc, [], [], media.url as string).then((videoPlayer: HTMLElement) => {
             vidEl.appendChild(videoPlayer);
         });
         img.addEventListener("click", () => {

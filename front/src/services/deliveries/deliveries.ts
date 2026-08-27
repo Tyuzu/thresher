@@ -217,21 +217,21 @@ export async function displayDeliveries(
     type: "button",
     class: "btn-view-toggle active",
     "aria-pressed": "true",
-    events: { click: (e: MouseEvent) => setViewMode("grid", e.currentTarget as HTMLElement) }
+    events: { click: (e: Event) => setViewMode("grid", e.currentTarget as HTMLElement) }
   }, ["Grid"]);
 
   const btnListMode = createElement("button", {
     type: "button",
     class: "btn-view-toggle",
     "aria-pressed": "false",
-    events: { click: (e: MouseEvent) => setViewMode("list", e.currentTarget as HTMLElement) }
+    events: { click: (e: Event) => setViewMode("list", e.currentTarget as HTMLElement) }
   }, ["List"]);
 
   const btnMapMode = createElement("button", {
     type: "button",
     class: "btn-view-toggle",
     "aria-pressed": "false",
-    events: { click: (e: MouseEvent) => setViewMode("map", e.currentTarget as HTMLElement) }
+    events: { click: (e: Event) => setViewMode("map", e.currentTarget as HTMLElement) }
   }, ["Map"]);
 
   const viewToggleGroup = createElement("div", {

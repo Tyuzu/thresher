@@ -149,15 +149,18 @@ export function reconcilePending(
   const realId = String(serverMsg.messageid);
   const pending = pendingMap.get(clientId) as PendingMessage | undefined;
 
-  if (pending?.el) {
-    if (pending.previewUrl && serverMsg.media) {
+  const p = pending;
+  if (p && p.el instanceof HTMLElement) {
+    if (p.previewUrl && serverMsg.media) {
       serverMsg.media = serverMsg.media || {};
-      serverMsg.media.url = pending.previewUrl;
+      serverMsg.media.url = p.previewUrl;
       serverMsg.media.__local_preview = true;
     }
 
     const freshElement = mountMessage(serverMsg, { container: targetContainer });
-    pending.el.replaceWith(freshElement);
+    if (freshElement) {
+      (p.el as HTMLElement).replaceWith(freshElement);
+    }
   } else if (!rendered.has(realId)) {
     mountMessage(serverMsg, { container: targetContainer });
   }

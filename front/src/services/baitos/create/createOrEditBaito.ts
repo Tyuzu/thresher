@@ -300,7 +300,7 @@ export async function createOrEditBaito({
         try {
             if (mode === "edit") {
                 Notify("Updating baito...", { type: "info", duration: 3000, dismissible: true });
-                await updateBaito(baito.baitoid, payload);
+                await updateBaito(baito.baitoid as string | number, payload);
                 Notify("Baito updated successfully!", { type: "success", duration: 3000, dismissible: true });
                 navigate(`/baito/${baito.baitoid}`);
             } else {

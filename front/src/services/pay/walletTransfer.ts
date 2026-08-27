@@ -72,11 +72,13 @@ export function WalletTransfer({ onBalanceChange }: WalletTransferProps): HTMLEl
         const note = noteInput.value?.trim();
 
         if (!recipient) {
-          return Notify("A valid destination identifier is required", { type: "warning" });
+          Notify("A valid destination identifier is required", { type: "warning" });
+          return;
         }
 
         if (amountPaise <= 0) {
-          return Notify("Please state a transfer amount above ₹0.00", { type: "warning" });
+          Notify("Please state a transfer amount above ₹0.00", { type: "warning" });
+          return;
         }
 
         transferBtn.disabled = true;
