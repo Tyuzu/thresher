@@ -87,7 +87,8 @@ export function createFormGroupWithValidation({
 
         const optionAttrs: Record<string, unknown> = { value: optValue };
         if (optValue === "" && !placeholder) {
-          optionAttrs.disabled = true;
+          // Fixed with bracket notation 👇
+          optionAttrs['disabled'] = true;
         }
 
         const option = createElement("option", optionAttrs, [optLabel]);
@@ -155,15 +156,18 @@ export function createFormGroupWithValidation({
         hiddenInput.value = JSON.stringify(state);
         hiddenInput.dispatchEvent(new Event("change", { bubbles: true }));
       };
-
-      days.forEach(day => {
+days.forEach(day => {
         const key = day.toLowerCase();
 
+        // 1. Ensure a default object exists first to satisfy TypeScript
         state[key] = {
           enabled: availability[key]?.enabled || false,
           from: availability[key]?.from || "09:00",
           to: availability[key]?.to || "17:00"
         };
+
+        // 2. Grab a safe local reference so TypeScript knows it's defined
+        const dayState = state[key]!;
 
         const row = createElement("div", {
           class: "availability-row"
@@ -172,7 +176,7 @@ export function createFormGroupWithValidation({
         const checkbox = createElement("input", {
           type: "checkbox"
         });
-        checkbox.checked = state[key].enabled;
+        checkbox.checked = dayState.enabled;
 
         const dayLabel = createElement("span", {
           class: "availability-day"
@@ -180,19 +184,19 @@ export function createFormGroupWithValidation({
 
         const fromInput = createElement("input", {
           type: "time",
-          value: state[key].from
+          value: dayState.from
         });
 
         const toInput = createElement("input", {
           type: "time",
-          value: state[key].to
+          value: dayState.to
         });
 
         fromInput.disabled = !checkbox.checked;
         toInput.disabled = !checkbox.checked;
 
         checkbox.addEventListener("change", () => {
-          state[key].enabled = checkbox.checked;
+          dayState.enabled = checkbox.checked;
 
           fromInput.disabled = !checkbox.checked;
           toInput.disabled = !checkbox.checked;
@@ -201,12 +205,12 @@ export function createFormGroupWithValidation({
         });
 
         fromInput.addEventListener("input", () => {
-          state[key].from = fromInput.value;
+          dayState.from = fromInput.value;
           updateValue();
         });
 
         toInput.addEventListener("input", () => {
-          state[key].to = toInput.value;
+          dayState.to = toInput.value;
           updateValue();
         });
 
@@ -319,11 +323,11 @@ export function createFormGroupWithValidation({
     }
   }
 
-  // Bind utilities onto element API references
+  // Bind utilities onto element API references (fixed with textContent || "")
   const validatableInput = inputElement as CustomInputElement;
   validatableInput.validate = validateInput;
   validatableInput.isValid = () => validationStateInput.value === "valid";
-  validatableInput.getError = () => errorElement.textContent;
+  validatableInput.getError = () => errorElement.textContent || "";
 
   group.appendChild(inputElement);
   group.appendChild(errorElement);

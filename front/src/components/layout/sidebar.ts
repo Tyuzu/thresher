@@ -142,7 +142,6 @@ function handleLogout(): void {
   console.log("Logging out user...");
   silentLogout();
 }
-
 function attachHandlers(dialog: HTMLElement, closeFn: () => void): void {
   // Delegate click navigation & custom actions
   dialog.addEventListener("click", (e: MouseEvent) => {
@@ -150,14 +149,16 @@ function attachHandlers(dialog: HTMLElement, closeFn: () => void): void {
     if (!target) return;
 
     const navTarget = target.closest<HTMLElement>("[data-nav]");
-    if (navTarget && navTarget.dataset.nav) {
-      navigate(navTarget.dataset.nav);
+    // Use bracket notation here 👇
+    if (navTarget && navTarget.dataset['nav']) {
+      navigate(navTarget.dataset['nav']);
       closeFn();
       return;
     }
 
     const actionTarget = target.closest<HTMLElement>("[data-action]");
-    if (actionTarget?.dataset.action === "logout") {
+    // Use bracket notation here 👇
+    if (actionTarget?.dataset['action'] === "logout") {
       handleLogout();
       closeFn();
       return;

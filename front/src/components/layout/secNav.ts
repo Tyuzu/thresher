@@ -37,7 +37,7 @@ function createMenuItem(
 
   const li = createElement(
     "li",
-    { class: `nav-item${active ? " active" : ""}` },
+    { class: active ? "nav-item active" : "nav-item" },
     [link]
   ) as HTMLLIElement;
 
@@ -77,7 +77,8 @@ export function createSecondaryNav(items: NavItemConfig[] = []): SecondaryNavEle
   };
 
   const menuItems = items.map((item) => {
-    const isMatchingPath = item.href && item.href === currentPath;
+    // Explicitly coerce to a boolean using Boolean() 👇
+    const isMatchingPath = Boolean(item.href && item.href === currentPath);
     const config: NavItemConfig = {
       ...item,
       active: item.active ?? isMatchingPath

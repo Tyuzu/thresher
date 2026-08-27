@@ -28,7 +28,6 @@ export interface UserState {
   role?: string;
   [key: string]: unknown;
 }
-
 function createIconButton(
   svg: string,
   href?: string | null,
@@ -39,7 +38,8 @@ function createIconButton(
 
   const anchor = createElement("div", { class: "iconic-button" }, [icon]) as HTMLDivElement;
   if (href) {
-    (anchor as unknown as Record<string, unknown>).href = href;
+    // Use bracket notation here 👇
+    (anchor as unknown as Record<string, unknown>)['href'] = href;
   }
   if (onClick) {
     anchor.addEventListener("click", onClick as EventListener);

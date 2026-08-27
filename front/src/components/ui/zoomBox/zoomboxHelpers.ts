@@ -270,12 +270,19 @@ export function handleTouchStart(
 ): void {
   if (!state) return;
   if (e.touches.length === 2) {
-    state.initialPinchDistance = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
-    state.initialZoom = state.zoomLevel || 1;
+    const t0 = e.touches[0];
+    const t1 = e.touches[1];
+    if (t0 && t1) {
+      state.initialPinchDistance = Math.hypot(
+        t0.clientX - t1.clientX,
+        t0.clientY - t1.clientY
+      );
+      state.initialZoom = state.zoomLevel || 1;
+    }
   } else if (e.touches.length === 1) {
+    const t0 = e.touches[0];
+    if (!t0) return;
+
     const now = Date.now();
     const tapLength = now - (state.lastTap || 0);
     if (tapLength < 300 && tapLength > 0) {
@@ -288,8 +295,8 @@ export function handleTouchStart(
     }
     state.lastTap = now;
     state.isDragging = true;
-    state.startX = e.touches[0].clientX - (state.panX || 0);
-    state.startY = e.touches[0].clientY - (state.panY || 0);
+    state.startX = t0.clientX - (state.panX || 0);
+    state.startY = t0.clientY - (state.panY || 0);
   }
 }
 
@@ -302,9 +309,13 @@ export function handleTouchMove(
   const container = img.closest(".gta-map-viewport") || img.parentElement;
 
   if (e.touches.length === 2 && state.initialPinchDistance) {
+    const t0 = e.touches[0];
+    const t1 = e.touches[1];
+    if (!t0 || !t1) return;
+
     const newDistance = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
+      t0.clientX - t1.clientX,
+      t0.clientY - t1.clientY
     );
     const prevZoom = state.zoomLevel || 1;
     const scaleFactor = newDistance / state.initialPinchDistance;

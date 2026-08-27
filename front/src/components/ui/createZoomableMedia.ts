@@ -154,15 +154,21 @@ export const createZoomableMedia = (
 
   // === Focal Point Multi-Touch Tracking Geometry ===
   function getTouchCenter(touches: TouchList): { x: number; y: number } {
+    const t0 = touches[0];
+    const t1 = touches[1];
+    if (!t0 || !t1) return { x: 0, y: 0 };
     return {
-      x: (touches[0].clientX + touches[1].clientX) / 2,
-      y: (touches[0].clientY + touches[1].clientY) / 2
+      x: (t0.clientX + t1.clientX) / 2,
+      y: (t0.clientY + t1.clientY) / 2
     };
   }
 
   function getPinchDistance(touches: TouchList): number {
-    const dx = touches[0].clientX - touches[1].clientX;
-    const dy = touches[0].clientY - touches[1].clientY;
+    const t0 = touches[0];
+    const t1 = touches[1];
+    if (!t0 || !t1) return 0;
+    const dx = t0.clientX - t1.clientX;
+    const dy = t0.clientY - t1.clientY;
     return Math.sqrt(dx * dx + dy * dy);
   }
 
@@ -180,13 +186,15 @@ export const createZoomableMedia = (
       state.startX = center.x;
       state.startY = center.y;
     } else if (e.touches.length === 1) {
+      const t0 = e.touches[0];
+      if (!t0) return;
       state.isDragging = state.scale > 1;
-      state.startX = e.touches[0].clientX - state.offsetX;
-      state.startY = e.touches[0].clientY - state.offsetY;
+      state.startX = t0.clientX - state.offsetX;
+      state.startY = t0.clientY - state.offsetY;
       state.velocityX = 0;
       state.velocityY = 0;
-      state.lastMoveX = e.touches[0].clientX;
-      state.lastMoveY = e.touches[0].clientY;
+      state.lastMoveX = t0.clientX;
+      state.lastMoveY = t0.clientY;
     }
   });
 
@@ -212,8 +220,10 @@ export const createZoomableMedia = (
       applyTransform();
     } else if (state.isDragging && e.touches.length === 1) {
       e.preventDefault();
-      const x = e.touches[0].clientX;
-      const y = e.touches[0].clientY;
+      const t0 = e.touches[0];
+      if (!t0) return;
+      const x = t0.clientX;
+      const y = t0.clientY;
       
       state.velocityX = x - state.lastMoveX;
       state.velocityY = y - state.lastMoveY;
@@ -236,7 +246,8 @@ export const createZoomableMedia = (
       state.isDragging = false;
       state.isPinching = false;
       state.zoomIndex = (state.zoomIndex + 1) % state.zoomLevels.length;
-      state.scale = state.zoomLevels[state.zoomIndex];
+      // Fixed: explicitly fall back to 1 if lookup returns undefined
+      state.scale = state.zoomLevels[state.zoomIndex] ?? 1;
       if (state.scale === 1) {
         state.offsetX = 0;
         state.offsetY = 0;

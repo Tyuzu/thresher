@@ -29,19 +29,20 @@ let currentThemeIndex = 0;
  * @param save - Whether to persist to localStorage
  */
 export function applyTheme(theme: Theme, save: boolean = true): void {
-  if (!themes.includes(theme)) return;
+  // Use explicit type assertion to satisfy TypeScript's readonly array check
+  if (!(themes as readonly string[]).includes(theme)) return;
 
   const root = document.documentElement;
 
-  // 1. Set user color scheme attribute for CSS targeting
-  root.dataset.theme = theme;
+  // 1. Set user color scheme attribute using bracket notation for index signature safety
+  root.dataset['theme'] = theme;
   currentThemeIndex = themes.indexOf(theme);
 
   // 2. Sync domain branding class from domainFeatures.js (e.g. 'theme-green', 'theme-purple')
   const domainMeta = getActiveDomainMetadata() as { theme?: string } | undefined;
-  if (domainMeta?.theme) {
-    // Keep domain theme branding class on <html> without stripping user data-theme
-    root.classList.add(domainMeta.theme);
+  const domainTheme = domainMeta?.theme;
+  if (domainTheme) {
+    root.classList.add(domainTheme);
   }
 
   // 3. Persist to localStorage if requested
@@ -56,7 +57,7 @@ export function applyTheme(theme: Theme, save: boolean = true): void {
 export function loadTheme(): void {
   const saved = localStorage.getItem("theme");
 
-  if (saved && themes.includes(saved as Theme)) {
+  if (saved && (themes as readonly string[]).includes(saved)) {
     applyTheme(saved as Theme, false);
   } else {
     // Fall back to OS preference if no theme saved
@@ -71,7 +72,8 @@ export function loadTheme(): void {
  */
 export function toggleTheme(): void {
   currentThemeIndex = (currentThemeIndex + 1) % themes.length;
-  const theme = themes[currentThemeIndex];
+  // Fall back to "light" or ensure it's defined 👇
+  const theme = themes[currentThemeIndex] ?? "light";
   applyTheme(theme, true);
 }
 

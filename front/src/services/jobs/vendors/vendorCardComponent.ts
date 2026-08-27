@@ -21,7 +21,7 @@ export function renderVendorCard(vendor: Record<string, any>, context: VendorCar
 
     const vendorCard = createElement("div", { class: "vendor-card" }, [
         createElement("h5", {}, vendorName),
-        createElement("span", { class: "vendor-category" }, vendor?.category || "General")
+        createElement("span", { class: "vendor-category" }, vendor?.["category"] || "General")
     ]) as HTMLElement;
 
     if (isCreator && hiringStatus) {
@@ -32,17 +32,17 @@ export function renderVendorCard(vendor: Record<string, any>, context: VendorCar
     // Secondary Info Fields Container
     const infoEl = createElement("div", { class: "vendor-info" }) as HTMLElement;
 
-    if (vendor?.location) {
+    if (vendor?.["location"]) {
         infoEl.appendChild(
             createElement("div", {}, [
                 createElement("strong", {}, "Location: "),
-                vendor.location
+                vendor["location"]
             ])
         );
     }
 
-    if (vendor?.description) {
-        infoEl.appendChild(createElement("div", {}, vendor.description));
+    if (vendor?.["description"]) {
+        infoEl.appendChild(createElement("div", {}, vendor["description"]));
     }
 
     if (infoEl.childElementCount > 0) {
@@ -50,17 +50,17 @@ export function renderVendorCard(vendor: Record<string, any>, context: VendorCar
     }
 
     // Ratings Display Line
-    const ratingValue = Number(vendor?.rating || 0);
-    const ratingCount = Number(vendor?.rating_count || 0);
+    const ratingValue = Number(vendor?.["rating"] || 0);
+    const ratingCount = Number(vendor?.["rating_count"] || 0);
     if (ratingValue > 0 || ratingCount > 0) {
         vendorCard.appendChild(createElement("div", { class: "vendor-rating" }, `⭐ ${ratingValue.toFixed(1)} (${ratingCount} reviews)`));
     }
 
     // Shared Details
-    if (vendor?.phone || vendor?.email) {
+    if (vendor?.["phone"] || vendor?.["email"]) {
         const parts: string[] = [];
-        if (vendor.phone) parts.push(`📞 ${vendor.phone}`);
-        if (vendor.email) parts.push(`📧 ${vendor.email}`);
+        if (vendor["phone"]) parts.push(`📞 ${vendor["phone"]}`);
+        if (vendor["email"]) parts.push(`📧 ${vendor["email"]}`);
         vendorCard.appendChild(createElement("div", { class: "vendor-contact" }, parts.join(" | ")));
     }
 

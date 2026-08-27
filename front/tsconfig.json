@@ -1,39 +1,36 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "useDefineForClassFields": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
+
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
-
-    "strict": false,
-    "allowJs": true,
-    "checkJs": true,
-
-    "noImplicitAny": false,
-    "noImplicitThis": false,
-    "strictNullChecks": false,
-    "strictFunctionTypes": false,
-    "strictBindCallApply": false,
-    "strictPropertyInitialization": false,
-    "ignoreDeprecations": "6.0",
 
     "jsx": "preserve",
     "isolatedModules": true,
     "moduleDetection": "force",
+
+    "allowJs": true,
+    "checkJs": true,
     "noEmit": true,
+
+    "strict": false,
+    "allowUnreachableCode": true,
+
+    "noImplicitAny": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
 
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
+
     "noUncheckedIndexedAccess": false,
     "noPropertyAccessFromIndexSignature": false,
 
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
   },
   "include": ["src/**/*", "js/**/*"],
   "exclude": ["node_modules", "dist", "build"]

@@ -260,17 +260,17 @@ export function renderItemForm(
 
     try {
       const payload: ItemPayload = {
-        name: elements.name.value.trim(),
-        category: elements.category.value.trim(),
-        price: parseNumber(elements.price.value, 0),
-        discount: parseNumber(elements.discount.value, 0),
-        quantity: parseInt(elements.quantity.value, 10) || 0,
-        unit: elements.unit.value,
-        sku: elements.sku.value.trim() || null,
-        availableFrom: elements.availableFrom.value || null,
-        availableTo: elements.availableTo.value || null,
-        description: elements.description.value.trim(),
-        featured: (elements.featured as HTMLInputElement).checked
+        name: elements["name"]?.value?.trim() ?? "",
+        category: elements["category"]?.value?.trim() ?? "",
+        price: parseNumber(elements["price"]?.value ?? "", 0),
+        discount: parseNumber(elements["discount"]?.value ?? "", 0),
+        quantity: parseInt(elements["quantity"]?.value ?? "0", 10) || 0,
+        unit: elements["unit"]?.value ?? "",
+        sku: elements["sku"]?.value?.trim() || null,
+        availableFrom: elements["availableFrom"]?.value || null,
+        availableTo: elements["availableTo"]?.value || null,
+        description: elements["description"]?.value?.trim() ?? "",
+        featured: (elements["featured"] as HTMLInputElement)?.checked ?? false
       };
 
       const res = await saveFarmItem(type, payload, mode, itemData?.productid);

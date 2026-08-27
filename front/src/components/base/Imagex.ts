@@ -31,22 +31,22 @@ const Imagex = (attributes: ImagexAttributes = {}, _children?: any[]): HTMLEleme
     ...rest
   } = attributes;
 
-  // 1. Normalize class strings for createElement to parse cleanly
+  // 1. Normalize class strings using bracket notation for index signature safety
   const mergedClass = [className, classes].filter(Boolean).join(" ").trim();
   if (mergedClass) {
-    rest.class = mergedClass;
+    rest['class'] = mergedClass;
   }
 
-  // 2. Set loading and decoding attributes declaratively
-  rest.loading = loading;
+  // 2. Set loading and decoding attributes using bracket notation
+  rest['loading'] = loading;
   if (decodeAsync) {
-    rest.decoding = "async";
+    rest['decoding'] = "async";
   }
 
   let triedFallback = false;
 
-  // 3. Inject our error-handling lifecycle into the events dictionary
-  rest.events = {
+  // 3. Inject error-handling lifecycle using bracket notation
+  rest['events'] = {
     ...events,
     error: (event: Event) => {
       const img = event.currentTarget as HTMLImageElement | null;
@@ -72,7 +72,8 @@ const Imagex = (attributes: ImagexAttributes = {}, _children?: any[]): HTMLEleme
     }
   };
 
-  return createElement("img", rest);
+  // Cast rest as Record<string, any> to satisfy createElement's ElementAttributes parameter check
+  return createElement("img", rest as Record<string, any>);
 };
 
 export { Imagex };

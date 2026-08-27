@@ -13,107 +13,8 @@ import {
 } from "../../components/ui/zoomBox/zoomboxHelpers.js";
 import { handlePointerDown, handlePointerMove, handlePointerUp } from "./pointerEvents.js";
 import { fetchGtaMapData, fetchGtaMapDistance } from "./api.js";
-
-// ---------- Interfaces ----------
-
-export interface GtaFloor {
-    level: number;
-    name?: string;
-    image?: string;
-}
-
-export interface GtaLocation {
-    id?: string;
-    name: string;
-    description?: string;
-    category: string;
-    x: number;
-    y: number;
-    floorLevel?: number;
-    icon?: string;
-    iconUrl?: string;
-    details?: {
-        address?: string;
-        price?: number;
-    };
-    liveEvent?: {
-        isLive: boolean;
-        remainingSecs: number;
-    };
-}
-
-export interface LiveEntity {
-    id: string;
-    type: "vehicle" | "player" | string;
-    name: string;
-    speed: number;
-    heading: number;
-    floor?: number;
-    position: {
-        x: number;
-        y: number;
-    };
-}
-
-export interface TerritoryPoint {
-    x: number;
-    y: number;
-}
-
-export interface Territory {
-    id?: string;
-    name: string;
-    gangName?: string;
-    owner?: string;
-    controlPct: number;
-    color?: string;
-    polygonPoints?: TerritoryPoint[];
-    points?: TerritoryPoint[];
-}
-
-export interface CategoryItem {
-    id: string;
-    label: string;
-    icon?: string;
-    count?: number;
-}
-
-export interface GtaMapState {
-    zoomLevel: number;
-    panX: number;
-    panY: number;
-    angle: number;
-    flip: boolean;
-    isDragging: boolean;
-    startX: number;
-    startY: number;
-    velocityX: number;
-    velocityY: number;
-    currentIndex: number;
-    activeEntity: string;
-
-    floors: GtaFloor[];
-    currentFloor: number | null;
-
-    locations: GtaLocation[];
-    activeCategories: Set<string>;
-    liveEntities: Map<string, LiveEntity>;
-    customWaypoint: TerritoryPoint | null;
-    activeMission: { from: TerritoryPoint; to: TerritoryPoint } | null;
-    deliveryMissions: any[];
-    territories: Territory[];
-    liveEvents: any[];
-
-    isMeasuring: boolean;
-    measurePoints: TerritoryPoint[];
-    cursorCoords: TerritoryPoint;
-    timerIntervals: number[];
-    wsConnection: WebSocket | null;
-    reconnectTimer: number | null;
-    baseMapImageSrc?: string;
-}
-
-// ---------- Main Map Component ----------
+import type { GtaMapState, GtaLocation, LiveEntity, Territory, CategoryItem } from "./gtamap.types";
+import { createMapStructure } from "./gtamap.dom.js";
 
 export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean, entity: string = "ls"): Promise<void> {
     container.innerHTML = "";
@@ -158,126 +59,62 @@ export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean,
         wsConnection: null,
         reconnectTimer: null
     };
-
-    /* =========================================================
-        UI Shell & Layout Setup
-        ========================================================= */
-    const mapWrapper = createElement("div", { class: "gta-map-wrapper" });
-    const entitySelector = createElement("select", {
-        class: "gta-map-selector",
-        events: {
-            change: async (e: Event) => {
-                const target = e.target as HTMLSelectElement;
-                state.activeEntity = target.value;
-                state.currentFloor = null;
-                resetTransformState(state);
-                applyTransform();
-                await loadMapData();
-            }
+    const dom = createMapStructure(container, state, {
+        onEntityChange: async (val: string) => {
+            state.activeEntity = val;
+            state.currentFloor = null;
+            resetTransformState(state);
+            applyTransform();
+            await loadMapData();
+        },
+        copyPermalink: () => copyPermalinkToClipboard(),
+        toggleFullscreen: () => toggleFullscreen(),
+        onMeasureToggle: () => {
+            state.isMeasuring = !state.isMeasuring;
+            state.measurePoints = [];
+            renderMeasurementLayer();
         }
-    }, [
-        createElement("option", { value: "ls", selected: state.activeEntity === "ls" }, ["Los Santos"]),
-        createElement("option", { value: "cp", selected: state.activeEntity === "cp" }, ["Cayo Perico"]),
-        createElement("option", { value: "sa", selected: state.activeEntity === "sa" }, ["San Andreas"])
-    ]) as HTMLSelectElement;
+    });
 
-    const floorSelectorBar = createElement("div", { class: "gta-floor-selector hidden" });
-    const shareBtn = createElement("button", {
-        class: "gta-btn-share",
-        events: { click: () => copyPermalinkToClipboard() }
-    }, ["🔗 Share Link"]);
-    const fullScreenBtn = createElement("button", {
-        class: "gta-btn-fullscreen",
-        events: { click: () => toggleFullscreen() }
-    }, ["⛶"]);
-    const measureBtn = createElement("button", {
-        class: "gta-btn-measure",
-        events: {
-            click: () => {
-                state.isMeasuring = !state.isMeasuring;
-                state.measurePoints = [];
-                measureBtn.classList.toggle("active", state.isMeasuring);
-                renderMeasurementLayer();
-            }
-        }
-    }, ["📏 Ruler"]);
-
-    const zoomControls = createElement("div", { class: "gta-zoom-controls" }, [
-        shareBtn,
+    const {
+        mapWrapper,
+        floorSelectorBar,
         measureBtn,
-        fullScreenBtn,
-        createElement("button", {
-            class: "gta-btn-zoom-in",
-            events: {
-                click: () => {
-                    smoothZoom({ deltaY: -1, clientX: mapViewport.clientWidth / 2, clientY: mapViewport.clientHeight / 2 } as WheelEvent, mapImage, state, mapViewport);
-                    applyTransform();
-                }
-            }
-        }, ["+"]),
-        createElement("button", {
-            class: "gta-btn-zoom-out",
-            events: {
-                click: () => {
-                    smoothZoom({ deltaY: 1, clientX: mapViewport.clientWidth / 2, clientY: mapViewport.clientHeight / 2 } as WheelEvent, mapImage, state, mapViewport);
-                    applyTransform();
-                }
-            }
-        }, ["−"]),
-        createElement("button", {
-            class: "gta-btn-zoom-reset",
-            events: {
-                click: () => {
-                    resetTransformState(state);
-                    applyTransform();
-                }
-            }
-        }, ["Reset"])
-    ]);
-
-    const categoryFilterBar = createElement("div", { class: "gta-category-filters" });
-    const mapHeader = createElement("div", { class: "gta-map-header" }, [
-        createElement("h3", { class: "gta-map-title" }, ["GTA Map Explorer"]),
+        zoomInBtn,
+        zoomOutBtn,
+        zoomResetBtn,
         categoryFilterBar,
-        createElement("div", { class: "gta-map-header-actions" }, [entitySelector, zoomControls])
-    ]);
+        svgTerritoryLayer,
+        svgRouteLayer,
+        svgMeasureLayer,
+        markersOverlay,
+        lockedAreasOverlay,
+        detailsPanel,
+        coordsOverlay,
+        radarCanvas,
+        mapImage,
+        transformLayer,
+        mapViewport
+    } = dom;
 
-    const svgTerritoryLayer = createElement("svg", { class: "gta-map-territories-svg", viewBox: "0 0 100 100", preserveAspectRatio: "none" }) as unknown as SVGElement;
-    const svgRouteLayer = createElement("svg", { class: "gta-map-routes-svg", viewBox: "0 0 100 100", preserveAspectRatio: "none" }) as unknown as SVGElement;
-    const svgMeasureLayer = createElement("svg", { class: "gta-map-measure-svg", viewBox: "0 0 100 100", preserveAspectRatio: "none" }) as unknown as SVGElement;
+    // Wire zoom controls now that DOM elements exist
+    zoomInBtn.addEventListener("click", () => {
+        smoothZoom({ deltaY: -1, clientX: mapViewport.clientWidth / 2, clientY: mapViewport.clientHeight / 2 } as WheelEvent, mapImage, state, mapViewport);
+        applyTransform();
+    });
+    zoomOutBtn.addEventListener("click", () => {
+        smoothZoom({ deltaY: 1, clientX: mapViewport.clientWidth / 2, clientY: mapViewport.clientHeight / 2 } as WheelEvent, mapImage, state, mapViewport);
+        applyTransform();
+    });
+    zoomResetBtn.addEventListener("click", () => {
+        resetTransformState(state);
+        applyTransform();
+    });
 
-    const markersOverlay = createElement("div", { class: "gta-map-markers" });
-    const lockedAreasOverlay = createElement("div", { class: "gta-map-locked-areas" });
-    const detailsPanel = createElement("div", { class: "gta-map-details hidden" });
-    const missionHudPanel = createElement("div", { class: "gta-mission-hud hidden" });
-    const coordsOverlay = createElement("div", { class: "gta-coords-overlay" }, ["X: 0.00 | Y: 0.00"]);
-
-    const radarContainer = createElement("div", { class: "gta-radar-container" });
-    const radarCanvas = createElement("canvas", { class: "gta-radar-canvas", width: "150", height: "150" }) as HTMLCanvasElement;
-    radarContainer.appendChild(radarCanvas);
-
-    let mapImage = Imagex({
-        src: "",
-        fallback: "/assets/maps/loc/fallback_map.png",
-        class: "gta-map-image",
-        alt: "GTA Map",
-        draggable: false
-    }) as HTMLImageElement;
-
-    mapImage.onload = () => {
-        updateRadarView();
-    };
-
-    const transformLayer = createElement("div", { class: "gta-map-transform-layer" }, [
-        mapImage, svgTerritoryLayer, lockedAreasOverlay, svgRouteLayer, svgMeasureLayer, markersOverlay]);
-
-    const mapViewport = createElement("div", { class: "gta-map-viewport" }, [
-        transformLayer, floorSelectorBar, missionHudPanel, coordsOverlay, radarContainer]);
-
-    mapWrapper.appendChild(mapHeader);
-    mapWrapper.appendChild(mapViewport);
-    mapWrapper.appendChild(detailsPanel);
-    container.appendChild(mapWrapper);
+    // Ensure measure button UI updates to reflect state after toggle
+    measureBtn.addEventListener("click", () => {
+        measureBtn.classList.toggle("active", state.isMeasuring);
+    });
 
     /* =========================================================
         Transform & Render Loop
@@ -596,7 +433,10 @@ export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean,
         svgMeasureLayer.innerHTML = "";
         if (!state.isMeasuring || state.measurePoints.length === 0) return;
 
-        const [p1, p2] = state.measurePoints;
+        const p1 = state.measurePoints[0];
+        const p2 = state.measurePoints[1];
+
+        if (!p1) return;
 
         const circle1 = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         circle1.setAttribute("cx", String(p1.x));
@@ -785,7 +625,7 @@ export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean,
                 class: "gta-marker gta-marker-waypoint",
                 style: { left: `${state.customWaypoint.x}%`, top: `${state.customWaypoint.y}%` },
                 events: {
-                    click: (e: MouseEvent) => {
+                    click: (e: Event) => {
                         e.stopPropagation();
                         state.customWaypoint = null;
                         renderAllMarkers();
@@ -808,7 +648,7 @@ export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean,
             class: `gta-marker gta-marker-${loc.category || "default"}`,
             style: { left: `${loc.x}%`, top: `${loc.y}%` },
             events: {
-                click: (e: MouseEvent) => {
+                click: (e: Event) => {
                     e.stopPropagation();
                     showLocationDetails(loc);
                 }
@@ -883,7 +723,7 @@ export async function displayGtaMap(container: HTMLElement, isLoggedIn: boolean,
             state.floors = mapData?.floors || [];
             state.baseMapImageSrc = mapData?.map?.image || `${SRC_URL || ""}/assets/maps/${state.activeEntity}_map.png`;
 
-            mapImage.src = state.baseMapImageSrc;
+            mapImage.src = state.baseMapImageSrc || "";
 
             renderCategoryFilters(mapData?.categories);
             renderFloorSelector();

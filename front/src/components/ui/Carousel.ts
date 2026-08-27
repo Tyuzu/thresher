@@ -22,7 +22,8 @@ const Carousel = (imagesArray: CarouselItem[] = []): HTMLDivElement => {
   const carouselContainer = document.createElement("div");
   carouselContainer.setAttribute("class", "carousel");
 
-  if (!imagesArray || imagesArray.length === 0) {
+  const firstItem = imagesArray[0];
+  if (!imagesArray || imagesArray.length === 0 || !firstItem) {
     return carouselContainer;
   }
 
@@ -30,8 +31,8 @@ const Carousel = (imagesArray: CarouselItem[] = []): HTMLDivElement => {
   imageWrapper.setAttribute("class", "carousel-image-wrapper");
 
   const img = Imagex({
-    src: imagesArray[0].src,
-    alt: imagesArray[0].alt || "Carousel Image",
+    src: firstItem.src,
+    alt: firstItem.alt || "Carousel Image",
     class: "carousel-image",
   }) as HTMLImageElement;
 
@@ -40,8 +41,11 @@ const Carousel = (imagesArray: CarouselItem[] = []): HTMLDivElement => {
 
   function updateImage(index: number): void {
     currentIndex = (index + imagesArray.length) % imagesArray.length;
-    img.setAttribute("src", imagesArray[currentIndex].src);
-    img.setAttribute("alt", imagesArray[currentIndex].alt || "Carousel Image");
+    const currentItem = imagesArray[currentIndex];
+    if (currentItem) {
+      img.setAttribute("src", currentItem.src);
+      img.setAttribute("alt", currentItem.alt || "Carousel Image");
+    }
   }
 
   if (imagesArray.length > 1) {
@@ -63,17 +67,23 @@ const Carousel = (imagesArray: CarouselItem[] = []): HTMLDivElement => {
 
     // Touch swipe support
     imageWrapper.addEventListener("touchstart", (e: TouchEvent) => {
-      startX = e.touches[0].clientX;
+      const touch = e.touches[0];
+      if (touch) {
+        startX = touch.clientX;
+      }
     });
 
     imageWrapper.addEventListener("touchend", (e: TouchEvent) => {
-      endX = e.changedTouches[0].clientX;
-      const diff = endX - startX;
-      if (Math.abs(diff) > 50) {
-        if (diff > 0) {
-          updateImage(currentIndex - 1); // Swipe right -> prev
-        } else {
-          updateImage(currentIndex + 1); // Swipe left -> next
+      const touch = e.changedTouches[0];
+      if (touch) {
+        endX = touch.clientX;
+        const diff = endX - startX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) {
+            updateImage(currentIndex - 1); // Swipe right -> prev
+          } else {
+            updateImage(currentIndex + 1); // Swipe left -> next
+          }
         }
       }
     });

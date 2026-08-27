@@ -64,7 +64,6 @@ export function createElement(
   children: ChildInput = []
 ): HTMLElement {
   // Allow shorthand calls where attributes may be passed as an empty string
-  // e.g. createElement('h2', '', ['Title']) — normalize that to no attributes
   if (attributes !== null && (typeof attributes === 'string' || typeof attributes === 'number' || attributes instanceof Node || Array.isArray(attributes))) {
     children = attributes as unknown as ChildInput;
     attributes = {};
@@ -78,11 +77,15 @@ export function createElement(
     const value = safeAttributes[key];
     if (value === undefined || value === null) continue;
 
-    // 1. Event Subscriptions
-    if (key === "events" && typeof value === "object") {
-      const eventsObj = value as Record<string, EventListenerOrEventListenerObject>;
+    // 1. Event Subscriptions (Fixed)
+    if (key === "events" && typeof value === "object" && value !== null) {
+      const eventsObj = value as Record<string, EventListenerOrEventListenerObject | undefined>;
       for (const eventName in eventsObj) {
-        element.addEventListener(eventName, eventsObj[eventName]);
+        if (!Object.prototype.hasOwnProperty.call(eventsObj, eventName)) continue;
+        const listener = eventsObj[eventName];
+        if (listener) {
+          element.addEventListener(eventName, listener);
+        }
       }
       continue;
     }
@@ -107,7 +110,6 @@ export function createElement(
 
     // 5. Direct Property vs Attribute Binding
     if (key in element && key !== "list" && key !== "type" && key !== "draggable") {
-      // ✅ Fixed with double assertion:
       (element as unknown as Record<string, unknown>)[key] = value;
     } else {
       element.setAttribute(key, String(value));

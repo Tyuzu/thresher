@@ -62,7 +62,7 @@ async function apixFetch<T = any>(
 
     const currentToken = getState("token");
     if (options.auth !== false && currentToken) {
-      fetchOptions.headers.Authorization = `Bearer ${currentToken}`;
+      fetchOptions.headers['Authorization'] = `Bearer ${currentToken}`;
     }
 
     if (body !== null && body !== undefined) {

@@ -171,8 +171,8 @@ function AudioPlayer(audioSrc: AudioSourceOptions): HTMLDivElement {
     speedSelect,
   ]);
 
-  // === LYRICS ENGINE ===
-  const linesData: LyricLine[] = Array.isArray(audioSrc.lyricsData) ? audioSrc.lyricsData : [];
+// === LYRICS ENGINE ===
+  const linesData: LyricLine[] = audioSrc.lyricsData ?? [];
   const lineElements = linesData.map((lyric) =>
     createElement("p", {}, [lyric.text])
   ) as HTMLParagraphElement[];
@@ -192,7 +192,8 @@ function AudioPlayer(audioSrc: AudioSourceOptions): HTMLDivElement {
     let currentActiveIndex = -1;
 
     for (let i = 0; i < linesData.length; i++) {
-      if (currentTime >= linesData[i].time) {
+      const line = linesData[i];
+      if (line && currentTime >= line.time) {
         currentActiveIndex = i;
       } else {
         break;
@@ -200,14 +201,16 @@ function AudioPlayer(audioSrc: AudioSourceOptions): HTMLDivElement {
     }
 
     if (currentActiveIndex !== lastActiveIndex) {
-      if (lastActiveIndex !== -1 && lineElements[lastActiveIndex]) {
-        lineElements[lastActiveIndex].classList.remove("active");
+      if (lastActiveIndex !== -1) {
+        lineElements[lastActiveIndex]?.classList.remove("active");
       }
 
-      if (currentActiveIndex !== -1 && lineElements[currentActiveIndex]) {
+      if (currentActiveIndex !== -1) {
         const activeEl = lineElements[currentActiveIndex];
-        activeEl.classList.add("active");
-        activeEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (activeEl) {
+          activeEl.classList.add("active");
+          activeEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
       }
 
       lastActiveIndex = currentActiveIndex;

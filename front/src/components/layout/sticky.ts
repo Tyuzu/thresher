@@ -47,14 +47,16 @@ function updateNav(container: HTMLElement, extraOptions: StickyExtraOptions = {}
 
     // Custom image/profile element passed from caller
     const imglink: ImgLinkOption = extraOptions?.imglink || null;
-
     // State key snapshot to prevent redundant DOM re-renders
     const nextStateKey = `${isLoggedIn}-${unreadMessages}-${unreadNotifications}-${!!imglink}`;
-    if (container.dataset.stateKey === nextStateKey) {
+
+    // Use bracket notation here 👇
+    if (container.dataset['stateKey'] === nextStateKey) {
         return;
     }
-    container.dataset.stateKey = nextStateKey;
 
+    // And here 👇
+    container.dataset['stateKey'] = nextStateKey;
     const fragment: DocumentFragment = document.createDocumentFragment();
 
     // 1. Sidebar Toggle Button

@@ -59,8 +59,8 @@ export async function displayManageWorkerProfile(
         createEditableWorkerPhoto(worker),
         createElement("div", { class: "header-content" }, [
             createElement("h2", {}, [worker.name || "Your Worker Profile"]),
-            createElement("p", { class: "profile-id" }, [`Worker ID: ${worker.baitoWorkerId}`]),
-            createElement("p", { class: "joined-date" }, [`Joined: ${formatDate(worker.createdAt)}`])
+            createElement("p", { class: "profile-id" }, [`Worker ID: ${worker["baitoWorkerId"]}`]),
+            createElement("p", { class: "joined-date" }, [`Joined: ${formatDate(worker["createdAt"])}`])
         ])
     ]) as HTMLElement;
 
@@ -87,33 +87,38 @@ export async function displayManageWorkerProfile(
             id: "details",
             title: "Details",
             render: (tabContainer: HTMLElement) => {
-                tabContainer.replaceChildren(
+                const aboutCard = worker!.bio ? createSectionCard("About", [
+                    createElement("p", { class: "bio-text" }, [worker!.bio])
+                ]) : undefined;
+
+                const cards = [
                     createSectionCard("Contact Information", [
                         renderDetail("📞", "Phone", worker!.phone),
-                        renderDetail("✉️", "Email", worker!.email),
+                        renderDetail("✉️", "Email", worker["email"]),
                         renderDetail("📍", "Location", worker!.location)
                     ]),
                     createSectionCard("Professional", [
-                        renderDetail("⭐", "Experience", worker!.experience),
-                        renderDetail("🛠️", "Skills", worker!.skills),
-                        renderDetail("🌐", "Languages", worker!.languages),
-                        renderDetail("💰", "Expected Wage", worker!.expectedWage ? `${worker!.expectedWage} ¥/hr` : "Not set"),
-                        renderDetail("💼", "Availability", worker!.availability)
+                        renderDetail("⭐", "Experience", worker["experience"]),
+                        renderDetail("🛠️", "Skills", worker["skills"]),
+                        renderDetail("🌐", "Languages", worker["languages"]),
+                        renderDetail("💰", "Expected Wage", worker["expectedWage"] ? `${worker["expectedWage"]} ¥/hr` : "Not set"),
+                        renderDetail("💼", "Availability", worker["availability"])
                     ]),
-                    worker!.bio ? createSectionCard("About", [
-                        createElement("p", { class: "bio-text" }, [worker!.bio])
-                    ]) : null
-                );
+                    aboutCard
+                ].filter((card): card is HTMLElement => Boolean(card));
+
+                tabContainer.replaceChildren(...cards);
             }
         },
         {
             id: "documents",
             title: "Documents",
             render: (tabContainer: HTMLElement) => {
-                if (worker!.documents?.length) {
+                const docs = worker!["documents"];
+                if (Array.isArray(docs) && docs.length) {
                     tabContainer.replaceChildren(
                         createSectionCard("Your Documents", [
-                            createElement("ul", { class: "document-list" }, worker!.documents.map((doc: string, i: number) =>
+                            createElement("ul", { class: "document-list" }, docs.map((doc: string, i: number) =>
                                 createElement("li", {}, [
                                     createElement("a", {
                                         href: resolveImagePath(EntityType.WORKER, PictureType.DOCUMENT, doc),
@@ -138,8 +143,9 @@ export async function displayManageWorkerProfile(
             id: "bookings",
             title: "Bookings",
             render: (tabContainer: HTMLElement) => {
-                if (worker!.baitoWorkerId !== undefined) {
-                    loadWorkerBookings(worker!.baitoWorkerId, tabContainer);
+                const workerIdValue = worker!["baitoWorkerId"];
+                if (workerIdValue !== undefined) {
+                    loadWorkerBookings(workerIdValue, tabContainer);
                 }
             }
         },
@@ -163,7 +169,7 @@ export async function displayManageWorkerProfile(
                                 }
                                 try {
                                     Notify("Deleting profile...", { type: "info" });
-                                    await deleteWorker(worker!.baitoWorkerId);
+                                    await deleteWorker(worker!["baitoWorkerId"]);
                                     Notify("Profile deleted.", { type: "success" });
                                     navigate("/baitos/hire");
                                 } catch (err: any) {
@@ -180,7 +186,7 @@ export async function displayManageWorkerProfile(
     // ===== ACTION HANDLERS =====
     function editProfile(): void {
         contentContainer.replaceChildren();
-        displayCreateOrEditBaitoProfile(isLoggedIn, contentContainer, "edit", worker!.baitoWorkerId);
+        displayCreateOrEditBaitoProfile(isLoggedIn, contentContainer, "edit", worker!["baitoWorkerId"]);
     }
 
     function updatePhoto(): void {
@@ -191,7 +197,7 @@ export async function displayManageWorkerProfile(
             stateEntityKey: "worker",
             previewElementId: "worker-avatar-img",
             pictureType: PictureType.PHOTO,
-            entityId: worker!.baitoWorkerId ?? ""
+            entityId: worker!["baitoWorkerId"] ?? ""
         });
     }
 
@@ -201,9 +207,9 @@ export async function displayManageWorkerProfile(
             imageType: "gallery",
             stateKey: "images",
             stateEntityKey: "worker",
-            previewElementId: null,
+            previewElementId: "",
             pictureType: PictureType.GALLERY,
-            entityId: worker!.baitoWorkerId ?? ""
+            entityId: worker!["baitoWorkerId"] ?? ""
         });
     }
 
@@ -213,13 +219,13 @@ export async function displayManageWorkerProfile(
             imageType: "document",
             stateKey: "documents",
             stateEntityKey: "worker",
-            previewElementId: null,
+            previewElementId: "",
             pictureType: PictureType.DOCUMENT,
-            entityId: worker!.baitoWorkerId ?? ""
+            entityId: worker!["baitoWorkerId"] ?? ""
         });
     }
 
-    const tabsContainer = createTabs(tabsConfig, `worker-profile-${worker.baitoWorkerId}`, "overview");
+    const tabsContainer = createTabs(tabsConfig, `worker-profile-${worker["baitoWorkerId"]}`, "overview");
 
     main.replaceChildren(header, tabsContainer);
     layout.appendChild(main);

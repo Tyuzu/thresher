@@ -38,18 +38,23 @@ function getCurrentDayIndex(date: Date = new Date()): number {
 }
 
 function getCurrentDayKey(date: Date = new Date()): string {
-  return DAYS[getCurrentDayIndex(date)][0];
+  const dayTuple = DAYS[getCurrentDayIndex(date)];
+  return dayTuple ? dayTuple[0] : "monday";
 }
 
 function formatTime(time?: string): string {
   if (!time) return "--";
-  const [hour, minute] = time.split(":").map(Number);
+  const parts = time.split(":").map(Number);
+  const hour = parts[0] ?? 0;
+  const minute = parts[1] ?? 0;
   return timeFormatter.format(new Date(2000, 0, 1, hour, minute));
 }
 
 function parseMinutes(time?: string): number {
   if (!time) return 0;
-  const [hour, minute] = time.split(":").map(Number);
+  const parts = time.split(":").map(Number);
+  const hour = parts[0] ?? 0;
+  const minute = parts[1] ?? 0;
   return hour * 60 + minute;
 }
 
@@ -61,7 +66,10 @@ function getNextOpening(
 
   for (let offset = 1; offset <= 7; offset++) {
     const index = (currentDayIndex + offset) % 7;
-    const [key, label] = DAYS[index];
+    const dayTuple = DAYS[index];
+    if (!dayTuple) continue;
+
+    const [key, label] = dayTuple;
     const slot = safeAvailability[key];
 
     if (slot?.enabled && slot.from && slot.to) {
@@ -80,7 +88,8 @@ function getStatus(availability?: AvailabilitySchedule | null): StatusResult {
 
   const now = new Date();
   const dayIndex = getCurrentDayIndex(now);
-  const dayKey = DAYS[dayIndex][0];
+  const dayTuple = DAYS[dayIndex];
+  const dayKey = dayTuple ? dayTuple[0] : "monday";
 
   const slot = safeAvailability[dayKey];
 

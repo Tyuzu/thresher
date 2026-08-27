@@ -44,7 +44,7 @@ export interface RouteMeta {
 
 export interface Route {
   path: string;
-  component: () => Promise<Record<string, any>>;
+  component: () => Promise<any>;
   functionName?: string;
   meta?: RouteMeta;
   middleware?: MiddlewareFn[];

@@ -85,10 +85,12 @@ const ContextMenu = (() => {
         removeMenu();
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        if (items.length) items[(idx + 1) % items.length].focus();
+        const nextItem = items[(idx + 1) % items.length];
+        if (nextItem) nextItem.focus();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        if (items.length) items[(idx - 1 + items.length) % items.length].focus();
+        const prevItem = items[(idx - 1 + items.length) % items.length];
+        if (prevItem) prevItem.focus();
       } else if (e.key === "Enter" && current?._action) {
         e.preventDefault();
         current._action();

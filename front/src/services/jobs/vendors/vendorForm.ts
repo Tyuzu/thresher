@@ -11,7 +11,7 @@ interface VendorFormOptions {
 }
 
 export function vendorForm(
-    anacon: HTMLElement,
+    _anacon: HTMLElement,
     isLoggedIn: boolean,
     eventId?: string,
     onSuccess: ((detail: any) => void | Promise<void>) | null = null,
@@ -19,7 +19,7 @@ export function vendorForm(
 ): HTMLFormElement {
     const mode = options.mode === "edit" ? "edit" : "create";
     const initialData = options.initialData || {};
-    const vendorId = options.vendorId ?? initialData.vendorid ?? initialData.vendor_id ?? initialData.vendorId ?? initialData.id ?? null;
+    const vendorId = options.vendorId ?? initialData["vendorid"] ?? initialData["vendor_id"] ?? initialData["vendorId"] ?? initialData["id"] ?? null;
 
     const form = createElement("form", {
         class: mode === "edit" ? "vendor-registration-form vendor-edit-form" : "vendor-registration-form",
@@ -47,7 +47,7 @@ export function vendorForm(
         name: "name",
         required: "true",
         class: "form-input",
-        value: initialData.name ?? initialData.full_name ?? ""
+        value: initialData["name"] ?? initialData["full_name"] ?? ""
     });
 
     const categorySelect = createElement("select", {
@@ -61,7 +61,7 @@ export function vendorForm(
         disabled: "true"
     }, "Select a Category") as HTMLOptionElement;
     
-    if (!initialData.category) {
+    if (!initialData["category"]) {
         placeholderOption.selected = true;
     }
     categorySelect.appendChild(placeholderOption);
@@ -82,8 +82,8 @@ export function vendorForm(
         categorySelect.appendChild(option);
     }
 
-    if (initialData.category) {
-        categorySelect.value = initialData.category;
+    if (initialData["category"]) {
+        categorySelect.value = initialData["category"];
     }
 
     const descriptionInput = createTextarea({
@@ -91,7 +91,7 @@ export function vendorForm(
         placeholder: "Brief description of your services (optional)",
         class: "form-input",
         rows: "3",
-        value: initialData.description ?? ""
+        value: initialData["description"] ?? ""
     });
 
     const emailInput = createInput({
@@ -99,7 +99,7 @@ export function vendorForm(
         placeholder: "Contact Email (optional)",
         name: "email",
         class: "form-input",
-        value: initialData.email ?? ""
+        value: initialData["email"] ?? ""
     });
 
     const phoneInput = createInput({
@@ -107,7 +107,7 @@ export function vendorForm(
         placeholder: "Contact Phone (optional)",
         name: "phone",
         class: "form-input",
-        value: initialData.phone ?? ""
+        value: initialData["phone"] ?? ""
     });
 
     const locationInput = createInput({
@@ -115,7 +115,7 @@ export function vendorForm(
         placeholder: "Location/Service Area (optional)",
         name: "location",
         class: "form-input",
-        value: initialData.location ?? ""
+        value: initialData["location"] ?? ""
     });
 
     const submitButton = createElement("button", {
@@ -272,18 +272,18 @@ async function handleVendorSubmit(
 
 function createInput(attributes: Record<string, any>): HTMLElement {
     const safeAttributes = { ...attributes };
-    if (safeAttributes.className) {
-        safeAttributes.class = safeAttributes.className;
-        delete safeAttributes.className;
+    if (safeAttributes["className"]) {
+        safeAttributes["class"] = safeAttributes["className"];
+        delete safeAttributes["className"];
     }
     return createElement("input", safeAttributes);
 }
 
 function createTextarea(attributes: Record<string, any>): HTMLElement {
     const safeAttributes = { ...attributes };
-    if (safeAttributes.className) {
-        safeAttributes.class = safeAttributes.className;
-        delete safeAttributes.className;
+    if (safeAttributes["className"]) {
+        safeAttributes["class"] = safeAttributes["className"];
+        delete safeAttributes["className"];
     }
     return createElement("textarea", safeAttributes);
 }

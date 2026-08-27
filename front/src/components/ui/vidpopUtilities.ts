@@ -119,22 +119,33 @@ function setupVideoUtilityFunctions(
     if (event.touches.length === 2) {
       event.preventDefault();
       isDragging = false; // Override drag with pinch mechanics
-      initialPinchDistance = Math.hypot(
-        event.touches[0].clientX - event.touches[1].clientX,
-        event.touches[0].clientY - event.touches[1].clientY
-      );
+      const t0 = event.touches[0];
+      const t1 = event.touches[1];
+      if (t0 && t1) {
+        initialPinchDistance = Math.hypot(
+          t0.clientX - t1.clientX,
+          t0.clientY - t1.clientY
+        );
+      }
       initialPinchZoom = zoomLevel;
     } else if (event.touches.length === 1) {
-      handleDragStart(event.touches[0].clientX, event.touches[0].clientY);
+      const t0 = event.touches[0];
+      if (t0) {
+        handleDragStart(t0.clientX, t0.clientY);
+      }
     }
   };
 
   const onTouchMove = (event: TouchEvent): void => {
     if (event.touches.length === 2) {
       event.preventDefault();
+      const t0 = event.touches[0];
+      const t1 = event.touches[1];
+      if (!t0 || !t1) return;
+
       const currentDistance: number = Math.hypot(
-        event.touches[0].clientX - event.touches[1].clientX,
-        event.touches[0].clientY - event.touches[1].clientY
+        t0.clientX - t1.clientX,
+        t0.clientY - t1.clientY
       );
       if (initialPinchDistance === 0) return;
 
@@ -146,7 +157,10 @@ function setupVideoUtilityFunctions(
       constrainPan();
       updateTransform();
     } else if (event.touches.length === 1 && isDragging) {
-      handleDragMove(event.touches[0].clientX, event.touches[0].clientY);
+      const t0 = event.touches[0];
+      if (t0) {
+        handleDragMove(t0.clientX, t0.clientY);
+      }
     }
   };
 
@@ -156,9 +170,12 @@ function setupVideoUtilityFunctions(
       initialPinchDistance = 0;
     } else if (event.touches.length === 1) {
       // Pivot fallback safely back to active dragging anchor points
-      isDragging = true;
-      startX = event.touches[0].clientX - panX;
-      startY = event.touches[0].clientY - panY;
+      const t0 = event.touches[0];
+      if (t0) {
+        isDragging = true;
+        startX = t0.clientX - panX;
+        startY = t0.clientY - panY;
+      }
     }
   };
 

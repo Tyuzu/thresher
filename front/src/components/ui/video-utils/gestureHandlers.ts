@@ -68,8 +68,8 @@ function setupTouch(video: HTMLVideoElement): void {
     (event: TouchEvent) => {
       if (event.touches.length === 1) {
         isDragging = true;
-        startX = event.touches[0].clientX - panX;
-        startY = event.touches[0].clientY - panY;
+        startX = (event.touches[0]?.clientX ?? startX) - panX;
+        startY = (event.touches[0]?.clientY ?? startY) - panY;
       }
     },
     { passive: false }
@@ -81,8 +81,8 @@ function setupTouch(video: HTMLVideoElement): void {
       if (!isDragging || event.touches.length !== 1) {
         return;
       }
-      panX = event.touches[0].clientX - startX;
-      panY = event.touches[0].clientY - startY;
+      panX = (event.touches[0]?.clientX ?? startX) - startX;
+      panY = (event.touches[0]?.clientY ?? startY) - startY;
       constrainPan(video);
       updateTransform(video);
     },
@@ -228,15 +228,15 @@ export function createVideoManipulator(
   const onTouchStart = (e: TouchEvent): void => {
     if (e.touches.length === 1 && zoomLevel > 1) {
       isDragging = true;
-      startX = e.touches[0].clientX - panX;
-      startY = e.touches[0].clientY - panY;
+      startX = (e.touches[0]?.clientX ?? startX) - panX;
+      startY = (e.touches[0]?.clientY ?? startY) - panY;
     }
   };
 
   const onTouchMove = (e: TouchEvent): void => {
     if (!isDragging || e.touches.length !== 1) return;
-    panX = e.touches[0].clientX - startX;
-    panY = e.touches[0].clientY - startY;
+    panX = (e.touches[0]?.clientX ?? startX) - startX;
+    panY = (e.touches[0]?.clientY ?? startY) - startY;
     constrainPan({ width: video.offsetWidth, height: video.offsetHeight });
     updateTransform();
   };

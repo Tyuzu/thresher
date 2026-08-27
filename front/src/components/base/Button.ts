@@ -28,7 +28,12 @@ const Button = (...args: any[]): HTMLButtonElement => {
     if (typeof args[2] === "object" && args[2] !== null) {
       // the old third arg was often an options object
       const third = args[2] as Record<string, unknown>;
-      if (third.events) opts.events = third.events as Record<string, (e: Event) => void>;
+
+      // Use bracket notation here 👇
+      if (third['events']) {
+        opts.events = third['events'] as Record<string, (e: Event) => void>;
+      }
+
       Object.assign(opts, third);
     }
     if (typeof args[3] === "string") opts.classes = args[3];

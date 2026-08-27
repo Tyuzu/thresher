@@ -166,15 +166,15 @@ const BlockPlugins: { [K in BlockType]: BlockPlugin<Extract<Block, { type: K }>>
           });
 
           const imageKey =
-            uploadedImage?.savedname ||
+            uploadedImage?.["savedname"] ||
             uploadedImage?.filename ||
             uploadedImage?.key ||
-            uploadedImage?.name ||
-            uploadedImage?.fileName ||
+            uploadedImage?.["name"] ||
+            uploadedImage?.["fileName"] ||
             "";
 
           const returnedUrl =
-            uploadedImage?.url || uploadedImage?.src || uploadedImage?.path || "";
+            uploadedImage?.url || uploadedImage?.["src"] || uploadedImage?.["path"] || "";
 
           if (!imageKey && !returnedUrl) {
             throw new Error("Image upload failed.");
@@ -386,7 +386,10 @@ function createBlockManager(
         return;
       }
 
-      const [moved] = blocks.splice(fromIndex, 1);
+      const moved = blocks[fromIndex];
+      if (!moved) return;
+
+      blocks.splice(fromIndex, 1);
       blocks.splice(i, 0, moved);
       render();
       sync();
@@ -592,7 +595,8 @@ async function renderPostEditor({
   function renderAddBlockButtons(typeKey: string): void {
     addBlockButtons.replaceChildren();
 
-    const typeCfg = PostTypes[typeKey] || PostTypes.standard;
+    const typeCfg = PostTypes[typeKey] || PostTypes["standard"];
+    if (!typeCfg?.availableBlocks) return;
 
     typeCfg.availableBlocks.forEach((bt) => {
       const btn = Button({
@@ -634,7 +638,8 @@ async function renderPostEditor({
     const currentValues = collectCurrentExtraFieldValues();
     extraFieldsContainer.replaceChildren();
 
-    const cfg = PostTypes[typeKey] || PostTypes.standard;
+    const cfg = PostTypes[typeKey] || PostTypes["standard"];
+    if (!cfg?.fields) return;
 
     cfg.fields.forEach((f) => {
       const fieldValue =
@@ -666,7 +671,8 @@ async function renderPostEditor({
       click: async () => {
         const selectedType = (postTypeGroup.querySelector("select") as HTMLSelectElement)?.value || "";
         const typeKey = selectedType.toLowerCase();
-        const cfg = PostTypes[typeKey] || PostTypes.standard;
+        const cfg = PostTypes[typeKey] || PostTypes["standard"];
+        if (!cfg?.fields) return;
 
         const title = (titleGroup.querySelector("input") as HTMLInputElement)?.value.trim() || "";
         const category = (categoryGroup.querySelector("select") as HTMLSelectElement)?.value.trim() || "";
@@ -699,11 +705,7 @@ async function renderPostEditor({
           JSON.stringify(blockManager.getSanitizedBlocks(), null, 2)
         );
 
-        const endpoint = mode === "create" ? "/posts/post" : `/posts/post/${postId}`;
-
         try {
-          // Send FormData correctly through apiFetch body arguments
-          // Send FormData correctly through apiFetch arguments
           const res = await savePostRequest(formData, mode === "edit", postId);
 
           messageBox.replaceChildren(createElement("span", {}, ["Saved successfully"]));

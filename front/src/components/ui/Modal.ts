@@ -89,12 +89,12 @@ function makeBody(content: ModalContent, instanceId: number): BodyResult {
 
   return { body, descId: body.id };
 }
-
 function simpleDurationMs(el: HTMLElement): number {
   const cs = window.getComputedStyle(el);
   const toMs = (v: string): number => {
     if (!v) return 0;
-    const valueStr = v.split(",")[0].trim();
+    // Added optional chaining and fallback
+    const valueStr = v.split(",")[0]?.trim() ?? ""; 
     if (valueStr.endsWith("ms")) return parseFloat(valueStr) || 0;
     if (valueStr.endsWith("s")) return (parseFloat(valueStr) || 0) * 1000;
     return parseFloat(valueStr) || 0;
@@ -314,6 +314,8 @@ export default function Modal<T = unknown>({
 
       const first = focusables[0];
       const last = focusables[focusables.length - 1];
+
+      if (!first || !last) return;
 
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();

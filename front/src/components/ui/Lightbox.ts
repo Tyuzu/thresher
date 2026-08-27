@@ -61,10 +61,12 @@ const LightBox = (div: LightBoxContent): HTMLDivElement | undefined => {
       const currentIndex = focusable.indexOf(document.activeElement as HTMLElement);
       if (e.shiftKey && currentIndex === 0) {
         e.preventDefault();
-        focusable[focusable.length - 1].focus();
+        const lastEl = focusable[focusable.length - 1];
+        if (lastEl) lastEl.focus();
       } else if (!e.shiftKey && currentIndex === focusable.length - 1) {
         e.preventDefault();
-        focusable[0].focus();
+        const firstEl = focusable[0];
+        if (firstEl) firstEl.focus();
       }
     }
   }

@@ -1,3 +1,5 @@
+// orderutils.ts
+
 import { createElement } from "../../../components/createElement.js";
 import { Order, OrderFilters, OrderItem, OrderPageState } from "./types.js";
 
@@ -15,24 +17,24 @@ export function normalizeOrders(orders: Record<string, any>[]): Order[] {
   return [...orders]
     .map((order): Order => {
       const explicitTime =
-        order.createdAt || order.created_at || order.createdTime || order.timestamp || 0;
+        order["createdAt"] || order["created_at"] || order["createdTime"] || order["timestamp"] || 0;
 
       return {
         ...order,
-        orderId: String(order.orderId || order.orderid || order.id || order.OrderID || ""),
-        orderType: order.orderType || (order.farmId || order.farmid ? "farm" : "regular"),
+        orderId: String(order["orderId"] || order["orderid"] || order["id"] || order["OrderID"] || ""),
+        orderType: order["orderType"] || (order["farmId"] || order["farmid"] ? "farm" : "regular"),
         createdAt: explicitTime,
-        status: order.status || order.orderStatus || "pending",
-        paymentMethod: order.paymentMethod || order.payment || order.paymentStatus || "pending",
-        address: order.address || order.deliveryAddress || order.shippingAddress || "",
-        total: normalizeMoney(order.total),
-        subtotal: normalizeMoney(order.subtotal),
-        discount: normalizeMoney(order.discount),
-        tax: normalizeMoney(order.tax),
-        delivery: normalizeMoney(order.delivery),
-        approvedBy: Array.isArray(order.approvedBy) ? order.approvedBy.filter(Boolean) : [],
-        farmId: order.farmId || order.farmid || "",
-        items: order.items || {},
+        status: order["status"] || order["orderStatus"] || "pending",
+        paymentMethod: order["paymentMethod"] || order["payment"] || order["paymentStatus"] || "pending",
+        address: order["address"] || order["deliveryAddress"] || order["shippingAddress"] || "",
+        total: normalizeMoney(order["total"]),
+        subtotal: normalizeMoney(order["subtotal"]),
+        discount: normalizeMoney(order["discount"]),
+        tax: normalizeMoney(order["tax"]),
+        delivery: normalizeMoney(order["delivery"]),
+        approvedBy: Array.isArray(order["approvedBy"]) ? order["approvedBy"].filter(Boolean) : [],
+        farmId: order["farmId"] || order["farmid"] || "",
+        items: order["items"] || {},
       };
     })
     .sort((a, b) => {

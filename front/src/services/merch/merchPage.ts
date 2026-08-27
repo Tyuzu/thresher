@@ -79,7 +79,7 @@ export async function displayMerch(
         const resp = await fetchMerchById(merchID);
         const data = (resp?.data ?? resp) as Record<string, any>;
 
-        if (!data?.merchid) {
+        if (!data?.["merchid"]) {
             merchContainer.replaceChildren(createElement("p", {
                 style: "color:red;"
             }, ["Failed to fetch merch details."]));
@@ -91,7 +91,7 @@ export async function displayMerch(
         // ------------------------------------------------------------
         // STOCK
         // ------------------------------------------------------------
-        const stock = normalizeStock(data.stock);
+        const stock = normalizeStock(data["stock"]);
         const inStock = stock > 0;
         const maxQuantity = Math.min(stock, MAX_CART_QUANTITY);
 
@@ -111,10 +111,10 @@ export async function displayMerch(
             style: "flex:1 1 300px;text-align:center;"
         }, []) as HTMLElement;
 
-        if (data.merch_pic) {
+        if (data["merch_pic"]) {
             const img = Imagex({
-                src: resolveImagePath(EntityType.MERCH, PictureType.THUMB, data.merch_pic),
-                alt: data.name || "Merch Image",
+                src: resolveImagePath(EntityType.MERCH, PictureType.THUMB, data["merch_pic"]),
+                alt: data["name"] || "Merch Image",
             });
             imgContainer.appendChild(img);
         } else {
@@ -133,9 +133,9 @@ export async function displayMerch(
 
         detailsContainer.appendChild(createElement("h1", {
             style: "margin:0;font-size:1.75em;line-height:1.2;"
-        }, [data.name || "Merchandise"]));
+        }, [data["name"] || "Merchandise"]));
 
-        const numericPrice = Number(data.price);
+        const numericPrice = Number(data["price"]);
         const safePrice = Number.isFinite(numericPrice) && numericPrice >= 0 ? numericPrice : 0;
         const priceText = safePrice.toLocaleString("en-US", {
             minimumFractionDigits: 2,
@@ -210,7 +210,7 @@ export async function displayMerch(
                     setButtonBusy(addToCartBtn, true);
                     try {
                         const success = await addToCart({
-                            itemId: data.merchid,
+                            itemId: data["merchid"],
                             quantity: qty,
                             isLoggedIn: Boolean(getState("token")),
                             onCartUpdated: (response: unknown) => {
@@ -274,7 +274,7 @@ export async function displayMerch(
                     }) as HTMLTextAreaElement;
 
                     const modal = Modal({
-                        title: `Purchase ${data.name || "Merchandise"}`,
+                        title: `Purchase ${data["name"] || "Merchandise"}`,
                         content: createElement("div", {
                             class: "modal-form-group"
                         }, [
@@ -300,8 +300,8 @@ export async function displayMerch(
                                             const paymentResult = await showPaymentModal({
                                                 paymentType: "purchase",
                                                 entityType: "merch",
-                                                entityId: data.merchid,
-                                                entityName: data.name
+                                                entityId: data["merchid"],
+                                                entityName: data["name"]
                                             });
                                             if (!paymentResult || paymentResult.success !== true) {
                                                 Notify("Payment cancelled or failed.", {
@@ -310,10 +310,10 @@ export async function displayMerch(
                                                 return;
                                             }
 
-                                            const targetEntityType = String(entityType || data.entity_type || "event");
-                                            const targetEntityId = String(entityId || data.entity_id || "");
+                                            const targetEntityType = String(entityType || data["entity_type"] || "event");
+                                            const targetEntityId = String(entityId || data["entity_id"] || "");
 
-                                            const confirmResp = await confirmMerchPurchase(targetEntityType, targetEntityId, String(data.merchid), {
+                                            const confirmResp = await confirmMerchPurchase(targetEntityType, targetEntityId, String(data["merchid"]), {
                                                 quantity: qty,
                                                 note
                                             });
@@ -354,7 +354,7 @@ export async function displayMerch(
         buyNowBtn.disabled = !inStock;
 
         actionRow.append(
-            createElement("label", { for: `merch-quantity-${data.merchid}` }, ["Qty:"]),
+            createElement("label", { for: `merch-quantity-${data["merchid"]}` }, ["Qty:"]),
             qtyInput,
             addToCartBtn,
             buyNowBtn
@@ -364,10 +364,10 @@ export async function displayMerch(
         // ------------------------------------------------------------
         // DESCRIPTION
         // ------------------------------------------------------------
-        if (data.description) {
+        if (data["description"]) {
             detailsContainer.appendChild(createElement("p", {
                 style: "margin-top:12px;font-size:1em;line-height:1.4;"
-            }, [String(data.description)]));
+            }, [String(data["description"])]));
         }
 
         topSection.append(imgContainer, detailsContainer);
@@ -380,20 +380,20 @@ export async function displayMerch(
             style: "font-size:0.85em;color:#555;margin-top:24px;display:flex;flex-direction:column;gap:4px;"
         }, []) as HTMLElement;
 
-        if (data.entity_type && data.entity_id) {
+        if (data["entity_type"] && data["entity_id"]) {
             metaInfo.appendChild(createElement("a", {
-                href: `/${encodeURIComponent(String(data.entity_type))}/${encodeURIComponent(String(data.entity_id))}`,
+                href: `/${encodeURIComponent(String(data["entity_type"]))}/${encodeURIComponent(String(data["entity_id"]))}`,
                 style: "color:#1976D2;text-decoration:none;"
-            }, [`View related ${String(data.entity_type)}`]));
+            }, [`View related ${String(data["entity_type"])}`]));
         }
-        if (data.created_at) {
-            metaInfo.appendChild(createElement("p", {}, [`Created At: ${new Date(String(data.created_at)).toLocaleString()}`]));
+        if (data["created_at"]) {
+            metaInfo.appendChild(createElement("p", {}, [`Created At: ${new Date(String(data["created_at"])).toLocaleString()}`]));
         }
-        if (data.updatedAt) {
-            metaInfo.appendChild(createElement("p", {}, [`Last Updated: ${Datex(String(data.updatedAt))}`]));
+        if (data["updatedAt"]) {
+            metaInfo.appendChild(createElement("p", {}, [`Last Updated: ${Datex(String(data["updatedAt"]))}`]));
         }
-        if (data.merchid) {
-            metaInfo.appendChild(createElement("p", {}, [`Merch ID: ${data.merchid}`]));
+        if (data["merchid"]) {
+            metaInfo.appendChild(createElement("p", {}, [`Merch ID: ${data["merchid"]}`]));
         }
         merchContainer.appendChild(metaInfo);
 

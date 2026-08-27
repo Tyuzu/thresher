@@ -5,6 +5,18 @@ import { BookingItem, PricingTier, BookingSlot } from "./bookingManager.js";
 
 // ---------- Interfaces ----------
 
+export interface CreateBookingPayload {
+    seats?: number | string;
+    userid?: string;
+    date?: string;
+    start?: string;
+    end?: string;
+    slotId?: string;
+    tierId?: string;
+    pricePaid?: number;
+    [key: string]: any;
+}
+
 export interface BookingApiInstance {
     apiListSlots: () => Promise<BookingSlot[]>;
     apiCreateSlot: (slot: BookingSlot) => Promise<BookingSlot>;
@@ -14,7 +26,7 @@ export interface BookingApiInstance {
     apiDeleteTier: (tierId: string) => Promise<boolean>;
     apiGenerateSlotsFromTier: (tierId: string, startDate: string, endDate: string) => Promise<BookingSlot[]>;
     apiListBookings: () => Promise<BookingItem[]>;
-    apiCreateBooking: (payload: Record<string, any>) => Promise<{ ok: boolean; reason?: string; booking?: BookingItem }>;
+    apiCreateBooking: (payload: CreateBookingPayload) => Promise<{ ok: boolean; reason?: string; booking?: BookingItem }>;
     apiCancelBooking: (bookingId: string) => Promise<boolean>;
 }
 
@@ -178,7 +190,7 @@ export function bookingApi(
         }
     }
 
-    async function apiCreateBooking(payload: Record<string, any>): Promise<{ ok: boolean; reason?: string; booking?: BookingItem }> {
+    async function apiCreateBooking(payload: CreateBookingPayload): Promise<{ ok: boolean; reason?: string; booking?: BookingItem }> {
         try {
             return await apiFetch(`/bookings/bookings`, "POST", payload);
         } catch (err: any) {
@@ -193,7 +205,8 @@ export function bookingApi(
             if (!all[entityType][entityId]) all[entityType][entityId] = [];
 
             const bookings: BookingItem[] = all[entityType][entityId];
-            const seatsToBook = Math.max(1, parseInt(payload.seats || 1, 10));
+            const rawSeats = payload.seats;
+            const seatsToBook = Math.max(1, parseInt(typeof rawSeats === "number" ? String(rawSeats) : (rawSeats || "1"), 10));
 
             // Enforce one booking per user per date locally
             if (payload.userid && payload.date) {
@@ -238,16 +251,16 @@ export function bookingApi(
 
             const stored: BookingItem = {
                 id: genId(),
-                slotId: payload.slotId || null,
-                tierId: payload.tierId || null,
-                userid: payload.userid,
+                slotId: payload.slotId ?? undefined,
+                tierId: payload.tierId ?? undefined,
+                userid: payload.userid || "",
                 entityType,
                 entityId,
-                date: payload.date,
-                start: payload.start,
-                end: payload.end || payload.start,
+                date: payload.date || "",
+                start: payload.start || "",
+                end: payload.end || payload.start || "",
                 seats: seatsToBook,
-                pricePaid: payload.pricePaid || null,
+                pricePaid: payload.pricePaid ?? undefined,
                 status: "active"
             };
 
@@ -365,7 +378,7 @@ export function bookingStorage(entityType: string, entityId: string): BookingSto
                 continue;
             }
 
-            const dateStr = d.toISOString().split("T")[0];
+            const dateStr = d.toISOString().split("T")[0] || "";
             const [startH, startM] = (tier.timeRange?.[0] || "09:00").split(":").map(Number);
             const [endH, endM] = (tier.timeRange?.[1] || "17:00").split(":").map(Number);
 
