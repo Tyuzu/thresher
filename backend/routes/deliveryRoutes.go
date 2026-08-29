@@ -3,12 +3,12 @@ package routes
 import (
 	"net/http"
 
-	"naevis/infra"
-	"naevis/internal/deliveries"
-	"naevis/internal/deliveries/delwebhooks"
-	"naevis/internal/deliveries/drivers"
-	"naevis/internal/deliveries/tracking"
-	"naevis/middleware"
+	"scav/infra"
+	"scav/internal/deliveries"
+	"scav/internal/deliveries/delwebhooks"
+	"scav/internal/deliveries/drivers"
+	"scav/internal/deliveries/tracking"
+	"scav/middleware"
 
 	"github.com/julienschmidt/httprouter"
 )

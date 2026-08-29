@@ -6,7 +6,7 @@ import (
 	"image"
 	"image/jpeg"
 	"io"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"net"
 	"net/url"
 	"os"

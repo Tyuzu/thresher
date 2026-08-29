@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"naevis/infra"
-	"naevis/internal/farms"
-	"naevis/utils"
+	"scav/infra"
+	"scav/internal/farms"
+	"scav/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

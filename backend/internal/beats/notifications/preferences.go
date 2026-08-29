@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 )
 
 /* =========================

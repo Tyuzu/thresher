@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"naevis/infra"
-	"naevis/infra/db"
-	"naevis/utils"
-	log "naevis/utils/logger"
+	"scav/infra"
+	"scav/infra/db"
+	"scav/utils"
+	log "scav/utils/logger"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

@@ -2,9 +2,9 @@ package songs
 
 import (
 	"context"
-	"naevis/config"
-	"naevis/infra/db"
-	"naevis/internal/artists"
+	"scav/config"
+	"scav/infra/db"
+	"scav/internal/artists"
 	"time"
 )
 

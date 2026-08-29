@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 
 	"github.com/julienschmidt/httprouter"
 )

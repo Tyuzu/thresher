@@ -3,10 +3,10 @@ package artists
 import (
 	"net/http"
 
-	"naevis/infra"
-	"naevis/internal/media"
-	"naevis/internal/merch"
-	"naevis/utils"
+	"scav/infra"
+	"scav/internal/media"
+	"scav/internal/merch"
+	"scav/utils"
 )
 
 func GetArtistsAlbums(app *infra.Deps) http.HandlerFunc {

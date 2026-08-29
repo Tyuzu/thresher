@@ -1,6 +1,6 @@
 package pay
 
-import "naevis/config"
+import "scav/config"
 
 var journalCollection = config.Collections.JournalCollection
 var accountsCollection = config.Collections.AccountsCollection

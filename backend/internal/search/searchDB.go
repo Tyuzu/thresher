@@ -2,9 +2,9 @@ package search
 
 import (
 	"context"
-	"naevis/config"
-	"naevis/infra"
-	"naevis/infra/db"
+	"scav/config"
+	"scav/infra"
+	"scav/infra/db"
 	"strings"
 	"time"
 

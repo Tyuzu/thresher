@@ -1,5 +1,5 @@
 package jobs
 
-import "naevis/config"
+import "scav/config"
 
 var baitosCollection = config.Collections.BaitoCollection

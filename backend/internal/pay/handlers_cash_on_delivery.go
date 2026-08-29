@@ -2,11 +2,11 @@ package pay
 
 import (
 	"encoding/json"
-	"naevis/config/mqevent"
-	"naevis/infra/mq"
-	"naevis/internal/beats/auditlog"
-	"naevis/utils"
-	log "naevis/utils/logger"
+	"scav/config/mqevent"
+	"scav/infra/mq"
+	"scav/internal/beats/auditlog"
+	"scav/utils"
+	log "scav/utils/logger"
 	"net/http"
 	"time"
 )

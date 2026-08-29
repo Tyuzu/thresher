@@ -7,13 +7,13 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/cache"
-	"naevis/infra/db"
-	"naevis/infra/mq"
-	"naevis/middleware"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/cache"
+	"scav/infra/db"
+	"scav/infra/mq"
+	"scav/middleware"
+	"scav/utils"
 )
 
 /* -------------------------------------------------------

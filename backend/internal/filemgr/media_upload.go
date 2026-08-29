@@ -3,7 +3,7 @@ package filemgr
 import (
 	"fmt"
 	"mime/multipart"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"net/http"
 	"path/filepath"
 	"strings"

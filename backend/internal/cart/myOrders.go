@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"naevis/infra"
-	"naevis/internal/auth"
-	"naevis/internal/pay"
-	"naevis/utils"
-	"naevis/utils/logger"
+	"scav/infra"
+	"scav/internal/auth"
+	"scav/internal/pay"
+	"scav/utils"
+	"scav/utils/logger"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

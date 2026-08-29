@@ -1,6 +1,6 @@
 package places
 
-import "naevis/config"
+import "scav/config"
 
 var (
 	eventsCollection   = config.Collections.EventsCollection

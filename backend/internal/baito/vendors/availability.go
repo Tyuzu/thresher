@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/config"
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/utils"
+	"scav/config"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

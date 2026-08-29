@@ -1,5 +1,5 @@
 package userdata
 
-import "naevis/config"
+import "scav/config"
 
 var userdataCollection = config.Collections.UserDataCollection

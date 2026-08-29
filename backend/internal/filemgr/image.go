@@ -5,7 +5,7 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"os"
 	"path/filepath"
 	"strings"

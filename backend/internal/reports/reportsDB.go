@@ -1,6 +1,6 @@
 package reports
 
-import "naevis/config"
+import "scav/config"
 
 /* -------------------------
    Collections

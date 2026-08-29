@@ -2,10 +2,10 @@
 package routes
 
 import (
-	"naevis/infra"
-	"naevis/internal/pay"
-	"naevis/internal/pay/stripe"
-	"naevis/middleware"
+	"scav/infra"
+	"scav/internal/pay"
+	"scav/internal/pay/stripe"
+	"scav/middleware"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"

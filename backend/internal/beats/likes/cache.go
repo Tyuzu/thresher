@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"naevis/infra"
+	"scav/infra"
 )
 
 const likeCacheTTL = 30 * time.Second

@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/internal/artists"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/internal/artists"
+	"scav/utils"
 )
 
 func (p *songPayload) ValidateRequired() error {

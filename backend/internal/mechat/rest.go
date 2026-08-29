@@ -2,18 +2,18 @@ package mechat
 
 import (
 	"encoding/json"
-	"naevis/internal/media"
+	"scav/internal/media"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/db"
-	"naevis/infra/mq"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/db"
+	"scav/infra/mq"
+	"scav/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

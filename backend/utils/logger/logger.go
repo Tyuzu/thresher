@@ -49,7 +49,7 @@ func Sync() error {
 func Writer() io.Writer { return zapWriter{} }
 
 // Compatibility wrappers matching the stdlib `log` package API.
-// This allows existing call sites to `import log "naevis/utils/logger"`
+// This allows existing call sites to `import log "scav/utils/logger"`
 // and keep calling `log.Println`, `log.Printf`, `log.Fatalf`, etc.
 func Print(v ...interface{}) {
 	if L == nil {

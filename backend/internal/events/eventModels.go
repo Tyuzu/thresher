@@ -1,7 +1,7 @@
 package events
 
 import (
-	"naevis/internal/baito/vendors"
+	"scav/internal/baito/vendors"
 	"time"
 )
 

@@ -1,7 +1,7 @@
 package media
 
 import (
-	"naevis/infra"
+	"scav/infra"
 	"net/http"
 )
 

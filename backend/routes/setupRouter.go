@@ -2,8 +2,8 @@ package routes
 
 import (
 	"fmt"
-	"naevis/infra"
-	"naevis/middleware"
+	"scav/infra"
+	"scav/middleware"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"

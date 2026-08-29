@@ -3,8 +3,8 @@ package farms
 import (
 	"net/http"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 )
 
 func GetWeather(app *infra.Deps) http.HandlerFunc {

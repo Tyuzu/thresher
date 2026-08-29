@@ -1,6 +1,6 @@
 package products
 
-import "naevis/config"
+import "scav/config"
 
 var (
 	farmOrdersCollection = config.Collections.FarmOrdersCollection

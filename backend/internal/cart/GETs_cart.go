@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 )
 
 // GetCart returns cart items grouped by category

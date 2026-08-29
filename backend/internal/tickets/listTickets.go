@@ -2,13 +2,13 @@ package tickets
 
 import (
 	"context"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"net/http"
 	"sort"
 	"time"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

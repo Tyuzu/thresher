@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/utils"
 )
 
 // normalizeItinerary ensures slices are never nil

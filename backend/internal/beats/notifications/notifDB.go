@@ -7,8 +7,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"naevis/config"
-	db "naevis/infra/db"
+	"scav/config"
+	db "scav/infra/db"
 )
 
 var (

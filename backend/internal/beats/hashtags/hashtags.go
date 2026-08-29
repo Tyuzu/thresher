@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"naevis/utils"
+	"scav/utils"
 )
 
 // HashtagPost is the shape we return to the frontend grid

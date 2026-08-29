@@ -1,6 +1,6 @@
 package musicon
 
-import "naevis/config"
+import "scav/config"
 
 var (
 	songsCollection     = config.Collections.SongsCollection

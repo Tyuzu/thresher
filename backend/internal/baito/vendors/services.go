@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"naevis/infra"
+	"scav/infra"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

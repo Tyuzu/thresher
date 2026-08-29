@@ -3,14 +3,14 @@ package filemgr
 import (
 	"context"
 	"fmt"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"net/http"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/config"
-	"naevis/infra"
+	"scav/config"
+	"scav/infra"
 )
 
 const maxUploadBytes = 200 << 20 // 200 MB

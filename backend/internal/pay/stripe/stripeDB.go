@@ -1,6 +1,6 @@
 package stripe
 
-import "naevis/config"
+import "scav/config"
 
 var fundingCollection = config.Collections.FundingCollection
 var stripeOrdersCollection = config.Collections.StripeOrdersCollection

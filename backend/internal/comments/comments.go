@@ -11,10 +11,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/utils"
 )
 
 /* =========================

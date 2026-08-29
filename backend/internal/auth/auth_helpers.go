@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"naevis/config"
-	"naevis/middleware"
+	"scav/config"
+	"scav/middleware"
 
 	"github.com/golang-jwt/jwt/v5"
 )

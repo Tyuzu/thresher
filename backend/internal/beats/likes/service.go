@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"naevis/infra"
+	"scav/infra"
 )
 
 type Service struct {

@@ -1,6 +1,6 @@
 package recipes
 
-import "naevis/config"
+import "scav/config"
 
 // central collection name
 var recipeCollection = config.Collections.RecipeCollection

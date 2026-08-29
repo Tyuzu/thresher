@@ -4,15 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"naevis/infra/mq"
-	log "naevis/utils/logger"
+	"scav/infra/mq"
+	log "scav/utils/logger"
 	"net/http"
 	"strings"
 	"time"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/utils"
 )
 
 // ------------------------- DB helpers -------------------------

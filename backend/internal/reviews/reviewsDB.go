@@ -1,6 +1,6 @@
 package reviews
 
-import "naevis/config"
+import "scav/config"
 
 /* -------------------------
    Collection

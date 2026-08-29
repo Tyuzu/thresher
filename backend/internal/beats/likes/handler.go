@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 )
 
 // Helper constructor to instantiate the service with its repository setup

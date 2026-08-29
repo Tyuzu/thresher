@@ -8,9 +8,9 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/infra"
-	"naevis/infra/db"
-	"naevis/utils"
+	"scav/infra"
+	"scav/infra/db"
+	"scav/utils"
 )
 
 /* =========================

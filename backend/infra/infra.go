@@ -10,11 +10,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"naevis/config"
-	"naevis/infra/cache"
-	"naevis/infra/db"
-	"naevis/infra/mq"
-	"naevis/utils/logger"
+	"scav/config"
+	"scav/infra/cache"
+	"scav/infra/db"
+	"scav/infra/mq"
+	"scav/utils/logger"
 )
 
 type Deps struct {

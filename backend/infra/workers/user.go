@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"naevis/infra/mq"
-	"naevis/utils/logger"
+	"scav/infra/mq"
+	"scav/utils/logger"
 )
 
 func handleUserCreated(

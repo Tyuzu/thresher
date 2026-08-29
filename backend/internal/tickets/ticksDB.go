@@ -1,6 +1,6 @@
 package tickets
 
-import "naevis/config"
+import "scav/config"
 
 var ticketsCollection = config.Collections.TicketsCollection
 var bookingsCollection = config.Collections.BookingsCollection

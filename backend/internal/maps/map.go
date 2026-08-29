@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"naevis/utils"
+	"scav/utils"
 
 	"github.com/gorilla/websocket"
 )

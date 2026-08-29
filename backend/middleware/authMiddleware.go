@@ -9,9 +9,9 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"naevis/config"
-	"naevis/infra"
-	log "naevis/utils/logger"
+	"scav/config"
+	"scav/infra"
+	log "scav/utils/logger"
 )
 
 // Helper to write standardized JSON error responses

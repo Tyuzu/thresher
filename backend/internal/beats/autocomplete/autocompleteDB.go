@@ -3,10 +3,10 @@ package autocomplete
 import (
 	"context"
 
-	"naevis/config"
-	db "naevis/infra/db"
-	"naevis/internal/auth"
-	"naevis/internal/places"
+	"scav/config"
+	db "scav/infra/db"
+	"scav/internal/auth"
+	"scav/internal/places"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

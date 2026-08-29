@@ -2,12 +2,12 @@ package products
 
 import (
 	"context"
-	"naevis/infra"
-	"naevis/internal/auth"
-	"naevis/internal/cart"
-	"naevis/internal/farms"
-	"naevis/utils"
-	log "naevis/utils/logger"
+	"scav/infra"
+	"scav/internal/auth"
+	"scav/internal/cart"
+	"scav/internal/farms"
+	"scav/utils"
+	log "scav/utils/logger"
 	"net/http"
 	"time"
 

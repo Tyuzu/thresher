@@ -1,5 +1,5 @@
 package menu
 
-import "naevis/config"
+import "scav/config"
 
 var menuCollection = config.Collections.MenuCollection

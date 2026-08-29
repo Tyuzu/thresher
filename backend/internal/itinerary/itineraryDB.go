@@ -2,8 +2,8 @@ package itinerary
 
 import (
 	"context"
-	"naevis/config"
-	"naevis/infra"
+	"scav/config"
+	"scav/infra"
 )
 
 var ItineraryCollection = config.Collections.ItineraryCollection

@@ -3,8 +3,8 @@ package middleware
 import (
 	"net/http"
 
-	"naevis/utils"
-	"naevis/utils/logger"
+	"scav/utils"
+	"scav/utils/logger"
 )
 
 // SafeError represents a sanitized error for client responses

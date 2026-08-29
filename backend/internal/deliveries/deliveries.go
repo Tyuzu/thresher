@@ -8,8 +8,8 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 )
 
 // Handler for generic status updates (e.g. PATCH /api/v1/deliveries/:deliveryid/status)

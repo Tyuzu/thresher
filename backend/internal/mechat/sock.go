@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"naevis/infra"
-	"naevis/middleware"
-	"naevis/utils"
-	log "naevis/utils/logger"
+	"scav/infra"
+	"scav/middleware"
+	"scav/utils"
+	log "scav/utils/logger"
 
 	"github.com/gorilla/websocket"
 )

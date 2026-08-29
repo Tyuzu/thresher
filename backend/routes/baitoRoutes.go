@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"naevis/infra"
-	"naevis/internal/baito"
-	"naevis/internal/baito/jobs"
-	"naevis/internal/baito/vendors"
-	"naevis/internal/baito/workers"
-	"naevis/internal/booking"
-	"naevis/middleware"
+	"scav/infra"
+	"scav/internal/baito"
+	"scav/internal/baito/jobs"
+	"scav/internal/baito/vendors"
+	"scav/internal/baito/workers"
+	"scav/internal/booking"
+	"scav/middleware"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"

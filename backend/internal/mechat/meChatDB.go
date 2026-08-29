@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"time"
 
-	"naevis/config"
-	"naevis/infra"
-	"naevis/infra/db"
+	"scav/config"
+	"scav/infra"
+	"scav/infra/db"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

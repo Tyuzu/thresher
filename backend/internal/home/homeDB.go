@@ -5,8 +5,8 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/infra"
-	"naevis/infra/db"
+	"scav/infra"
+	"scav/infra/db"
 )
 
 func fetchHomeCardsFromDB(ctx context.Context, app *infra.Deps, category string, skip, limit int) ([]HomeCard, error) {

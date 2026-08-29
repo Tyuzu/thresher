@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"naevis/infra"
-	"naevis/utils"
-	"naevis/utils/logger"
-	log "naevis/utils/logger"
+	"scav/infra"
+	"scav/utils"
+	"scav/utils/logger"
+	log "scav/utils/logger"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

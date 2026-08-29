@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"naevis/infra"
-	log "naevis/utils/logger"
+	"scav/infra"
+	log "scav/utils/logger"
 )
 
 type Repository interface {

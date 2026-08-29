@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"naevis/infra"
-	"naevis/internal/beats/suggestions"
-	"naevis/internal/places"
-	"naevis/utils"
+	"scav/infra"
+	"scav/internal/beats/suggestions"
+	"scav/internal/places"
+	"scav/utils"
 )
 
 func AutocompletePlaces(app *infra.Deps) http.HandlerFunc {

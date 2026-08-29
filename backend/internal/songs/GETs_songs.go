@@ -2,8 +2,8 @@ package songs
 
 import (
 	"context"
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 	"net/http"
 	"time"
 )

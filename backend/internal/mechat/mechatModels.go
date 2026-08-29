@@ -1,7 +1,7 @@
 package mechat
 
 import (
-	"naevis/internal/media"
+	"scav/internal/media"
 	"time"
 )
 

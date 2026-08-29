@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"naevis/infra"
-	"naevis/internal/media"
-	"naevis/internal/media/fanmade"
-	"naevis/internal/posts"
-	"naevis/internal/reviews"
-	"naevis/middleware"
+	"scav/infra"
+	"scav/internal/media"
+	"scav/internal/media/fanmade"
+	"scav/internal/posts"
+	"scav/internal/reviews"
+	"scav/middleware"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"

@@ -3,11 +3,11 @@ package farms
 import (
 	"context"
 
-	"naevis/infra/db"
+	"scav/infra/db"
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/config"
+	"scav/config"
 )
 
 var (

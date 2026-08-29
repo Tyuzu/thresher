@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/infra/cache"
-	"naevis/infra/db"
-	"naevis/internal/auth"
-	"naevis/middleware"
-	"naevis/utils"
+	"scav/infra/cache"
+	"scav/infra/db"
+	"scav/internal/auth"
+	"scav/middleware"
+	"scav/utils"
 )
 
 /* -------------------------------------------------------

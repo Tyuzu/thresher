@@ -9,11 +9,11 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/internal/baito/vendors"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/internal/baito/vendors"
+	"scav/utils"
 )
 
 // Define domain-specific constants for statuses and entity types

@@ -3,7 +3,7 @@ package places
 import (
 	"context"
 	"encoding/json"
-	"naevis/utils"
+	"scav/utils"
 	"net/http"
 	"time"
 

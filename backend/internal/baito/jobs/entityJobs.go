@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/internal/baito"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/internal/baito"
+	"scav/utils"
 )
 
 // ------------------ CREATE ------------------

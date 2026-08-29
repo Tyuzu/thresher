@@ -1,4 +1,4 @@
-module naevis
+module scav
 
 go 1.26.5
 

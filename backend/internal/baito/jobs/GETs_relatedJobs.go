@@ -1,9 +1,9 @@
 package jobs
 
 import (
-	"naevis/infra"
-	"naevis/internal/baito"
-	"naevis/utils"
+	"scav/infra"
+	"scav/internal/baito"
+	"scav/utils"
 	"net/http"
 )
 

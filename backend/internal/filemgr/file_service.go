@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"net/http"
 	"strings"
 )

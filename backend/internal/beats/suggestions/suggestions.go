@@ -2,16 +2,16 @@ package suggestions
 
 import (
 	"context"
-	"naevis/internal/beats/follows"
-	"naevis/internal/places"
-	log "naevis/utils/logger"
+	"scav/internal/beats/follows"
+	"scav/internal/places"
+	log "scav/utils/logger"
 	"net/http"
 	"strconv"
 	"time"
 
-	"naevis/config"
-	"naevis/infra"
-	"naevis/utils"
+	"scav/config"
+	"scav/infra"
+	"scav/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

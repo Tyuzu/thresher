@@ -3,9 +3,9 @@ package follows
 import (
 	"context"
 	"fmt"
-	"naevis/config"
-	"naevis/infra"
-	log "naevis/utils/logger"
+	"scav/config"
+	"scav/infra"
+	log "scav/utils/logger"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

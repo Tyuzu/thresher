@@ -1,6 +1,6 @@
 package newchat
 
-import "naevis/config"
+import "scav/config"
 
 var (
 	chatsCollection    = config.Collections.ChatsCollection

@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"naevis/infra"
-	"naevis/internal/auth"
-	"naevis/internal/cart"
-	"naevis/internal/farms"
-	"naevis/internal/pay"
-	"naevis/utils"
+	"scav/infra"
+	"scav/internal/auth"
+	"scav/internal/cart"
+	"scav/internal/farms"
+	"scav/internal/pay"
+	"scav/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

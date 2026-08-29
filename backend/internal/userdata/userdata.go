@@ -2,8 +2,8 @@ package userdata
 
 import (
 	"context"
-	"naevis/infra"
-	log "naevis/utils/logger"
+	"scav/infra"
+	log "scav/utils/logger"
 	"time"
 )
 

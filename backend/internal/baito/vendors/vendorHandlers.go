@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"naevis/config"
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/utils"
+	"scav/config"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/utils"
 )
 
 func writeJSONError(w http.ResponseWriter, status int, code string, message string) {

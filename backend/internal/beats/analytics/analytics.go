@@ -1,7 +1,7 @@
 package analytics
 
 import (
-	"naevis/utils"
+	"scav/utils"
 	"net/http"
 	"time"
 )

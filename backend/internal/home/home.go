@@ -3,15 +3,15 @@ package home
 import (
 	"context"
 	"math/rand"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"net/http"
 	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 )
 
 // HomeCard response type

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/utils/logger"
+	"scav/utils/logger"
 )
 
 // loggingMiddleware logs each request method, path, remote address, and duration.

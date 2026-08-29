@@ -2,9 +2,9 @@ package vendors
 
 import (
 	"context"
-	"naevis/config"
-	"naevis/infra"
-	"naevis/utils"
+	"scav/config"
+	"scav/infra"
+	"scav/utils"
 	"net/http"
 	"strings"
 	"time"

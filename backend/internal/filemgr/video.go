@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"math"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"net/http"
 	"os"
 	"os/exec"

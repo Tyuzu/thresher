@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/utils/logger"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/utils/logger"
 )
 
 // eventRegistration describes one MQ consumer.

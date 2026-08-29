@@ -4,14 +4,14 @@ import (
 	"context"
 	"net/http"
 
-	"naevis/config"
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/db"
-	"naevis/infra/mq"
-	"naevis/internal/userdata"
-	"naevis/utils"
-	log "naevis/utils/logger"
+	"scav/config"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/db"
+	"scav/infra/mq"
+	"scav/internal/userdata"
+	"scav/utils"
+	log "scav/utils/logger"
 )
 
 func HandleFollowAction(

@@ -2,10 +2,10 @@ package fanmade
 
 import (
 	"context"
-	"naevis/config"
-	"naevis/infra"
-	"naevis/infra/db"
-	"naevis/internal/media"
+	"scav/config"
+	"scav/infra"
+	"scav/infra/db"
+	"scav/internal/media"
 )
 
 var fanmadeMediaCollection = config.Collections.MediaCollection

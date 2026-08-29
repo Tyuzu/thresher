@@ -2,10 +2,10 @@ package places
 
 import (
 	"context"
-	"naevis/infra"
-	"naevis/infra/db"
-	"naevis/internal/events"
-	"naevis/utils"
+	"scav/infra"
+	"scav/infra/db"
+	"scav/internal/events"
+	"scav/utils"
 	"net/http"
 	"strconv"
 	"time"

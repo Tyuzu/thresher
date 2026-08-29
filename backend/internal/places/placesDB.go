@@ -1,5 +1,5 @@
 package places
 
-import "naevis/config"
+import "scav/config"
 
 var placesCollection = config.Collections.PlacesCollection

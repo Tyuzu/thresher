@@ -1,5 +1,5 @@
 package settings
 
-import "naevis/config"
+import "scav/config"
 
 var settingsCollection = config.Collections.SettingsCollection

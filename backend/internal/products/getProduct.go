@@ -2,9 +2,9 @@ package products
 
 import (
 	"context"
-	"naevis/infra"
-	"naevis/internal/farms"
-	"naevis/utils"
+	"scav/infra"
+	"scav/internal/farms"
+	"scav/utils"
 	"net/http"
 )
 

@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"naevis/config"
-	"naevis/middleware"
+	"scav/config"
+	"scav/middleware"
 	"net/http"
 	"time"
 )

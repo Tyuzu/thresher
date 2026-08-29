@@ -1,11 +1,11 @@
 package routes
 
 import (
-	"naevis/infra"
-	"naevis/internal/artists"
-	"naevis/internal/musicon"
-	"naevis/internal/songs"
-	"naevis/middleware"
+	"scav/infra"
+	"scav/internal/artists"
+	"scav/internal/musicon"
+	"scav/internal/songs"
+	"scav/middleware"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"

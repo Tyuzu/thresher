@@ -1,10 +1,10 @@
 package routes
 
 import (
-	"naevis/infra"
-	"naevis/internal/cart"
-	"naevis/internal/merch"
-	"naevis/middleware"
+	"scav/infra"
+	"scav/internal/cart"
+	"scav/internal/merch"
+	"scav/middleware"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"

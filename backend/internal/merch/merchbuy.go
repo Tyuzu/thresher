@@ -2,16 +2,16 @@ package merch
 
 import (
 	"encoding/json"
-	"naevis/infra/mq"
-	log "naevis/utils/logger"
+	"scav/infra/mq"
+	log "scav/utils/logger"
 	"net/http"
 
-	"naevis/config"
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/internal/pay/stripe"
-	"naevis/internal/userdata"
-	"naevis/utils"
+	"scav/config"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/internal/pay/stripe"
+	"scav/internal/userdata"
+	"scav/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

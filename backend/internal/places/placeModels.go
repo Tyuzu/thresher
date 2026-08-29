@@ -1,7 +1,7 @@
 package places
 
 import (
-	"naevis/internal/media"
+	"scav/internal/media"
 	"time"
 )
 

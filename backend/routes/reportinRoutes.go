@@ -3,9 +3,9 @@ package routes
 import (
 	"net/http"
 
-	"naevis/infra"
-	"naevis/internal/reports"
-	"naevis/middleware"
+	"scav/infra"
+	"scav/internal/reports"
+	"scav/middleware"
 
 	"github.com/julienschmidt/httprouter"
 )

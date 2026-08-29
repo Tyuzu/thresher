@@ -2,11 +2,11 @@ package posts
 
 import (
 	"fmt"
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 	"net/http"
 
-	"naevis/infra/db"
+	"scav/infra/db"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

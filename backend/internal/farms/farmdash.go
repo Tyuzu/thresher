@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"naevis/infra"
-	"naevis/internal/cart"
-	"naevis/utils"
+	"scav/infra"
+	"scav/internal/cart"
+	"scav/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

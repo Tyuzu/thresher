@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 )
 
 // SearchAutocomplete handles autocomplete suggestions based on prefix

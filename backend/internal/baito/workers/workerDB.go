@@ -3,8 +3,8 @@ package workers
 import (
 	"context"
 	"errors"
-	"naevis/config"
-	"naevis/infra"
+	"scav/config"
+	"scav/infra"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

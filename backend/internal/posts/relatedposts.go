@@ -2,12 +2,12 @@ package posts
 
 import (
 	"context"
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 	"net/http"
 	"time"
 
-	"naevis/infra/db"
+	"scav/infra/db"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

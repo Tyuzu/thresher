@@ -5,9 +5,9 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/infra"
-	"naevis/internal/auth"
-	"naevis/utils"
+	"scav/infra"
+	"scav/internal/auth"
+	"scav/utils"
 )
 
 // GET /api/v1/subscribes/:type/:id

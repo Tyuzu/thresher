@@ -8,8 +8,8 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 )
 
 func BatchUserLikes(app *infra.Deps) http.HandlerFunc {

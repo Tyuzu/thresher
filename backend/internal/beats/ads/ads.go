@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 )
 
 var (

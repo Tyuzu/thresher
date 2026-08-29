@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/internal/farms"
-	"naevis/utils"
-	log "naevis/utils/logger"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/internal/farms"
+	"scav/utils"
+	log "scav/utils/logger"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

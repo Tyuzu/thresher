@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/utils"
-	"naevis/utils/logger"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/utils"
+	"scav/utils/logger"
 )
 
 /* ------------------ DELETE ------------------ */

@@ -3,7 +3,7 @@ package vendors
 import (
 	"errors"
 
-	"naevis/config"
+	"scav/config"
 )
 
 var (

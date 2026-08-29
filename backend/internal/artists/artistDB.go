@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"naevis/config"
-	"naevis/infra"
-	db "naevis/infra/db"
-	"naevis/internal/events"
-	"naevis/internal/userdata"
+	"scav/config"
+	"scav/infra"
+	db "scav/infra/db"
+	"scav/internal/events"
+	"scav/internal/userdata"
 )
 
 var (

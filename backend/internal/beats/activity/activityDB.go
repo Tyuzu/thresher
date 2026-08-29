@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"naevis/config"
+	"scav/config"
 	"net/http"
 	"strconv"
 	"time"

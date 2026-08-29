@@ -3,10 +3,10 @@ package events
 import (
 	"context"
 
-	"naevis/config"
-	"naevis/infra"
-	"naevis/infra/db"
-	"naevis/utils"
+	"scav/config"
+	"scav/infra"
+	"scav/infra/db"
+	"scav/utils"
 )
 
 var eventsCollection = config.Collections.EventsCollection

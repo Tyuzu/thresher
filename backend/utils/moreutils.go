@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/config"
+	"scav/config"
 )
 
 // ----------------------

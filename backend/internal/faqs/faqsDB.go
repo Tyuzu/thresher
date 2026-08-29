@@ -3,8 +3,8 @@ package faqs
 import (
 	"context"
 
-	"naevis/config"
-	db "naevis/infra/db"
+	"scav/config"
+	db "scav/infra/db"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

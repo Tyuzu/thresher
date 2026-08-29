@@ -1,6 +1,6 @@
 package posts
 
-import "naevis/config"
+import "scav/config"
 
 var blogPostsCollection = config.Collections.BlogPostsCollection
 var usersCollection = config.Collections.UserCollection

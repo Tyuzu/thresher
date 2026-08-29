@@ -6,9 +6,9 @@ import (
 	"slices"
 	"time"
 
-	"naevis/infra"
-	"naevis/internal/beats/follows"
-	"naevis/utils"
+	"scav/infra"
+	"scav/internal/beats/follows"
+	"scav/utils"
 )
 
 /* -------------------------------------------------------

@@ -1,6 +1,6 @@
 package crops
 
-import "naevis/config"
+import "scav/config"
 
 var (
 	cropsCollection      = config.Collections.CropsCollection

@@ -3,8 +3,8 @@ package musicon
 import (
 	"context"
 	"encoding/json"
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 	"net/http"
 	"time"
 

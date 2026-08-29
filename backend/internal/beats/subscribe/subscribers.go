@@ -3,10 +3,10 @@ package subscribe
 import (
 	"net/http"
 
-	"naevis/infra"
-	"naevis/internal/userdata"
-	"naevis/utils"
-	log "naevis/utils/logger"
+	"scav/infra"
+	"scav/internal/userdata"
+	"scav/utils"
+	log "scav/utils/logger"
 )
 
 // Generic subscribe/follow/unfollow handler

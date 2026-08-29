@@ -4,16 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"naevis/infra/mq"
+	"scav/infra/mq"
 	"net/http"
 	"time"
 
-	"naevis/config"
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/internal/beats/auditlog"
-	"naevis/internal/userdata"
-	"naevis/utils"
+	"scav/config"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/internal/beats/auditlog"
+	"scav/internal/userdata"
+	"scav/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

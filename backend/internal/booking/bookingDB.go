@@ -5,8 +5,8 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/config"
-	"naevis/infra/db"
+	"scav/config"
+	"scav/infra/db"
 )
 
 var (

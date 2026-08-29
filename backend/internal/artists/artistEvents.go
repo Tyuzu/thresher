@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/internal/events"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/internal/events"
+	"scav/utils"
 )
 
 func CreateArtistEvent(app *infra.Deps) http.HandlerFunc {

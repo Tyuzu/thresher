@@ -3,9 +3,9 @@ package musicon
 import (
 	"context"
 	"fmt"
-	"naevis/infra"
-	"naevis/utils"
-	log "naevis/utils/logger"
+	"scav/infra"
+	"scav/utils"
+	log "scav/utils/logger"
 	"net/http"
 	"time"
 

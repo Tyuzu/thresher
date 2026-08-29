@@ -1,5 +1,5 @@
 package notices
 
-import "naevis/config"
+import "scav/config"
 
 var noticesCollection = config.Collections.NoticesCollection

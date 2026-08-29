@@ -2,17 +2,17 @@ package media
 
 import (
 	"encoding/json"
-	"naevis/infra/mq"
-	log "naevis/utils/logger"
+	"scav/infra/mq"
+	log "scav/utils/logger"
 	"net/http"
 	"strings"
 	"time"
 
-	"naevis/config"
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/internal/userdata"
-	"naevis/utils"
+	"scav/config"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/internal/userdata"
+	"scav/utils"
 )
 
 type FilePayload struct {

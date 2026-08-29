@@ -1,16 +1,16 @@
 package routes
 
 import (
-	"naevis/infra"
-	"naevis/internal/beats/activity"
-	"naevis/internal/beats/ads"
-	"naevis/internal/beats/analytics"
-	"naevis/internal/beats/autocomplete"
-	"naevis/internal/beats/follows"
-	"naevis/internal/beats/hashtags"
-	"naevis/internal/beats/likes"
-	"naevis/internal/beats/subscribe"
-	"naevis/middleware"
+	"scav/infra"
+	"scav/internal/beats/activity"
+	"scav/internal/beats/ads"
+	"scav/internal/beats/analytics"
+	"scav/internal/beats/autocomplete"
+	"scav/internal/beats/follows"
+	"scav/internal/beats/hashtags"
+	"scav/internal/beats/likes"
+	"scav/internal/beats/subscribe"
+	"scav/middleware"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"

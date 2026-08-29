@@ -2,18 +2,18 @@ package farms
 
 import (
 	"encoding/json"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"net/http"
 	"strings"
 	"time"
 
-	"naevis/config"
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/internal/beats/auditlog"
-	"naevis/middleware"
-	"naevis/utils"
+	"scav/config"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/internal/beats/auditlog"
+	"scav/middleware"
+	"scav/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/utils"
 
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 )
 
 const updateCartTimeout = 8 * time.Second

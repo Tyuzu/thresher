@@ -2,7 +2,7 @@ package newchat
 
 import (
 	"context"
-	"naevis/internal/media"
+	"scav/internal/media"
 	"sync"
 	"time"
 

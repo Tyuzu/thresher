@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"fmt"
-	"naevis/config"
+	"scav/config"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"

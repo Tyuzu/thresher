@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"net/http"
 	"os"
 	"time"
 
-	"naevis/infra"
-	"naevis/utils"
-	"naevis/utils/logger"
+	"scav/infra"
+	"scav/utils"
+	"scav/utils/logger"
 
 	"github.com/joho/godotenv"
 	"github.com/stripe/stripe-go/v83"

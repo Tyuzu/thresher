@@ -1,6 +1,6 @@
 package dels
 
-import "naevis/config"
+import "scav/config"
 
 var messagesCollection = config.Collections.MessagesCollection
 var chatsCollection = config.Collections.ChatsCollection

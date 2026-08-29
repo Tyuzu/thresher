@@ -3,10 +3,10 @@ package userdata
 import (
 	"context"
 	"encoding/json"
-	"naevis/infra"
-	"naevis/middleware"
-	"naevis/utils"
-	log "naevis/utils/logger"
+	"scav/infra"
+	"scav/middleware"
+	"scav/utils"
+	log "scav/utils/logger"
 	"net/http"
 	"time"
 )

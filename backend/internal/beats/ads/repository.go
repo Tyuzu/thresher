@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"naevis/config"
-	"naevis/infra"
+	"scav/config"
+	"scav/infra"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

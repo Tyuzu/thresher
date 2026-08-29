@@ -3,10 +3,10 @@ package products
 import (
 	"context"
 	"encoding/json"
-	"naevis/infra"
-	"naevis/infra/db"
-	"naevis/internal/farms"
-	"naevis/utils"
+	"scav/infra"
+	"scav/infra/db"
+	"scav/internal/farms"
+	"scav/utils"
 	"net/http"
 	"time"
 

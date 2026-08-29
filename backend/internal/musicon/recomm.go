@@ -2,8 +2,8 @@ package musicon
 
 import (
 	"context"
-	"naevis/infra"
-	"naevis/infra/db"
+	"scav/infra"
+	"scav/infra/db"
 	"net/http"
 	"strings"
 	"time"

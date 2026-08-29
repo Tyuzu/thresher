@@ -7,9 +7,9 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"naevis/infra"
-	"naevis/internal/deliveries"
-	"naevis/utils"
+	"scav/infra"
+	"scav/internal/deliveries"
+	"scav/utils"
 )
 
 func CreateWebhook(app *infra.Deps) http.HandlerFunc {

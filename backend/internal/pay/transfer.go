@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/config/mqevent"
-	"naevis/infra/mq"
-	"naevis/utils"
-	log "naevis/utils/logger"
+	"scav/config/mqevent"
+	"scav/infra/mq"
+	"scav/utils"
+	log "scav/utils/logger"
 )
 
 func (p *PaymentService) Transfer(w http.ResponseWriter, r *http.Request) {

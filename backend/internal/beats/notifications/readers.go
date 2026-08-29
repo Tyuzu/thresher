@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"naevis/infra"
-	db "naevis/infra/db"
-	"naevis/utils"
+	"scav/infra"
+	db "scav/infra/db"
+	"scav/utils"
 )
 
 /* =========================

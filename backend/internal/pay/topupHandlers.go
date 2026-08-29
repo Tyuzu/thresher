@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/config/mqevent"
-	"naevis/infra/mq"
-	"naevis/internal/beats/auditlog"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra/mq"
+	"scav/internal/beats/auditlog"
+	"scav/utils"
 )
 
 func (p *PaymentService) TopUp(w http.ResponseWriter, r *http.Request) {

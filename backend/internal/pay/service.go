@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"naevis/infra"
-	"naevis/internal/auth"
-	"naevis/utils"
+	"scav/infra"
+	"scav/internal/auth"
+	"scav/utils"
 )
 
 // ===== Price Resolver =====

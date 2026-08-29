@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"naevis/python"
+	"scav/python"
 	"time"
 
 	"github.com/google/uuid"

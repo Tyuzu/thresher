@@ -3,11 +3,11 @@ package crops
 import (
 	"context"
 	"errors"
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/utils"
-	log "naevis/utils/logger"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/utils"
+	log "scav/utils/logger"
 	"net/http"
 	"time"
 

@@ -7,9 +7,9 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"naevis/infra"
-	"naevis/middleware"
-	"naevis/utils"
+	"scav/infra"
+	"scav/middleware"
+	"scav/utils"
 	"net/http"
 	"time"
 

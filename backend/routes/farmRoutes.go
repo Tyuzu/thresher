@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"naevis/infra"
-	"naevis/internal/farms"
-	"naevis/internal/farms/crops"
-	"naevis/internal/products"
-	"naevis/internal/recipes"
-	"naevis/middleware"
+	"scav/infra"
+	"scav/internal/farms"
+	"scav/internal/farms/crops"
+	"scav/internal/products"
+	"scav/internal/recipes"
+	"scav/middleware"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"

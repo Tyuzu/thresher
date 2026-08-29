@@ -1,7 +1,7 @@
 package pay
 
 import (
-	"naevis/utils"
+	"scav/utils"
 	"net/http"
 	"strconv"
 

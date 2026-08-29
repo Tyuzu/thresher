@@ -3,7 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"html"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"net/http"
 	"regexp"
 	"strings"

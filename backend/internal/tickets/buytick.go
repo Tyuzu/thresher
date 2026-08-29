@@ -3,15 +3,15 @@ package tickets
 import (
 	"context"
 	"encoding/json"
-	log "naevis/utils/logger"
+	log "scav/utils/logger"
 	"net/http"
 	"time"
 
-	"naevis/config/mqevent"
-	"naevis/infra"
-	"naevis/infra/mq"
-	"naevis/internal/beats/auditlog"
-	"naevis/utils"
+	"scav/config/mqevent"
+	"scav/infra"
+	"scav/infra/mq"
+	"scav/internal/beats/auditlog"
+	"scav/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

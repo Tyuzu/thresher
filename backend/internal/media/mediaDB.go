@@ -3,8 +3,8 @@ package media
 import (
 	"context"
 
-	"naevis/config"
-	"naevis/infra"
+	"scav/config"
+	"scav/infra"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

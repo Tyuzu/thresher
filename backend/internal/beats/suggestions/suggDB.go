@@ -1,6 +1,6 @@
 package suggestions
 
-import "naevis/config"
+import "scav/config"
 
 var followingsCollection = config.Collections.FollowingsCollection
 var usersCollection = config.Collections.UserCollection

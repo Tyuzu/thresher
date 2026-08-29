@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"naevis/infra"
-	"naevis/utils"
+	"scav/infra"
+	"scav/utils"
 )
 
 func GetMedia(app *infra.Deps) http.HandlerFunc {
