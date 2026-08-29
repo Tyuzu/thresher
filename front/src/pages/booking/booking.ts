@@ -1,4 +1,4 @@
-import "../../../css/subpages/booking1.css";
+import "../../../css/subpages/booking.css";
 import { displayBooking } from "../../services/booking/booking.js";
 
 export async function Booking(

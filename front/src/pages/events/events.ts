@@ -1,5 +1,5 @@
 
-import "../../../css/inistyles/events6.css";
+import "../../../css/inistyles/events.css";
 import { displayEvents } from "../../services/event/displayEvents.js";
 
 export async function Events(

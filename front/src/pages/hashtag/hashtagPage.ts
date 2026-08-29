@@ -1,4 +1,4 @@
-import "../../../css/inistyles/hashtags1.css";
+import "../../../css/inistyles/hashtags.css";
 import { displayHashtag } from "../../services/hashtag/hashtagService.js";
 
 export async function Hashtag(

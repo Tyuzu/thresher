@@ -1,4 +1,4 @@
-import "../../../css/farmstyles/cart3.css";
+import "../../../css/farmstyles/cart.css";
 import "../../../css/farmstyles/checkout.css";
 
 import { displayCart } from "../../services/cart/cartPage.js";

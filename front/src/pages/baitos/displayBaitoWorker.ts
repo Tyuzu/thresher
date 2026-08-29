@@ -1,5 +1,5 @@
 
-import "../../../css/inistyles/workerpage3.css";
+import "../../../css/inistyles/workerpage.css";
 import { displayWorkerPage } from "../../services/baitos/workers/displayWorkerPage.js";
 
 export async function Worker(

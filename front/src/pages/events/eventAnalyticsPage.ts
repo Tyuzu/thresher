@@ -1,6 +1,6 @@
 
 
-import "../../../css/inistyles/eventpage4.css";
+import "../../../css/inistyles/eventpage.css";
 import { viewEventAnalytics } from "../../services/event/eventAnalytics.js";
 
 export async function EventAnalytics(

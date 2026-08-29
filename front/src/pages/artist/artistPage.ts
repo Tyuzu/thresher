@@ -1,4 +1,4 @@
-import "../../../css/inistyles/artistpage3.css";
+import "../../../css/inistyles/artistpage.css";
 import "../../../css/subpages/artistsongstab.css";
 import "../../../css/subpages/fanmedia.css";
 import "../../../css/subpages/livpage.css";

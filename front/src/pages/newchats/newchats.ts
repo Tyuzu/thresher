@@ -1,5 +1,5 @@
 
-import "../../../css/inistyles/newchat2.css";
+import "../../../css/inistyles/newchat.css";
 import { displayChats } from "../../services/newchat/newchats.js";
 
 export async function NewChats(

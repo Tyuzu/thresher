@@ -1,5 +1,5 @@
 
-import "../../../css/farmstyles/farmpage3.css";
+import "../../../css/farmstyles/farmpage.css";
 import { displayFarm } from "../../services/crops/farm/farmDisplay.js";
 
 export async function Farm(

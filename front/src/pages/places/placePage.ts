@@ -1,6 +1,6 @@
 
-import "../../../css/inistyles/placepage1.css";
-import "../../../css/subpages/nearby1.css";
+import "../../../css/inistyles/placepage.css";
+import "../../../css/subpages/nearby.css";
 import { displayPlace } from "../../services/place/placeService.js";
 
 export async function Place(

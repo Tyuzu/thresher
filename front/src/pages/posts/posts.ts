@@ -1,5 +1,5 @@
 
-import "../../../css/inistyles/posts5.css";
+import "../../../css/inistyles/posts.css";
 import { displayPosts } from "../../services/posts/PostsService.js";
 
 export async function Posts(

@@ -1,5 +1,5 @@
 
-import "../../../css/inistyles/wallet1.css";
+import "../../../css/inistyles/wallet.css";
 import { displayWallet } from "../../services/pay/walletService.js";
 
 export async function Wallet(

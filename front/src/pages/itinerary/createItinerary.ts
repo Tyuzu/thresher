@@ -1,5 +1,5 @@
 
-import "../../../css/inistyles/itinerary5.css";
+import "../../../css/inistyles/itinerary.css";
 import { createItinerary } from "../../services/itinerary/itineraryCreate.js";
 
 export async function CreateItinerary(

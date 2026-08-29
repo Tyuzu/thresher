@@ -1,4 +1,4 @@
-import "../../../css/subpages/notices1.css";
+import "../../../css/subpages/notices.css";
 import { createElement } from "../../components/createElement.js";
 import Button from "../../components/base/Button.js";
 import Modal, { ModalResult } from "../../components/ui/Modal.js";

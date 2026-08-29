@@ -1,4 +1,4 @@
-import "../../../css/ui/TicketCard1.css";
+import "../../../css/ui/TicketCard.css";
 import { createElement } from "../../components/createElement.js"; // Adjust path as needed
 import { applyButtonColors } from "../../utils/lumicolor.js";
 import Button from "../base/Button.js";

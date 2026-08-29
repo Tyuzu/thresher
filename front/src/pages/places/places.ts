@@ -1,4 +1,4 @@
-import "../../../css/inistyles/places6.css";
+import "../../../css/inistyles/places.css";
 import { displayPlaces } from "../../services/place/displayPlaces.js";
 
 export async function Places(

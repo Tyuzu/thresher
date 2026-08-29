@@ -1,5 +1,5 @@
 
-import "../../../css/inistyles/baitopage3.css";
+import "../../../css/inistyles/baitopage.css";
 import { displayBaito } from "../../services/baitos/onebaito/baitoDisplay.js";
 
 export async function Baito(

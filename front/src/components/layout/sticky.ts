@@ -1,4 +1,4 @@
-import "../../../css/layout/sticky5.css";
+import "../../../css/layout/sticky.css";
 import { createElement } from "../createElement.js";
 import { notifSVG, cartSVG, chatSVG, menuSVG } from "../svgs/featherSVGs";
 import { navigate } from "../../routes/navigate.js";
