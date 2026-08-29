@@ -43,7 +43,7 @@
 
 .stepper-step.completed {
   background-color: var(--color-success);
-  color: #ffffff;
+  color: #fff;
 }
 
 .stepper-step.pending {
@@ -101,17 +101,17 @@
 .status-badge.status-dispatched,
 .status-badge.status-in_transit {
   background-color: var(--color-info);
-  color: #ffffff;
+  color: #fff;
 }
 
 .status-badge.status-delivered {
   background-color: var(--color-success);
-  color: #ffffff;
+  color: #fff;
 }
 
 .status-badge.status-cancelled {
   background-color: var(--color-danger);
-  color: #ffffff;
+  color: #fff;
 }
 
 /* 3. Live Map View */
@@ -241,7 +241,7 @@
 }
 
 /* Responsive Adjustments */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .tracking-stepper {
     flex-direction: column;
     align-items: stretch;

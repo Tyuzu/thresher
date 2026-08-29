@@ -11,7 +11,7 @@
   gap: 1rem;
   max-width: 700px;
   margin: 0 auto;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 40%);
 }
 
 /* ---------------------------------------
@@ -34,7 +34,7 @@
 
 .upload-dropzone.dragover {
   border-color: #0a63e8;
-  background: rgba(10, 99, 232, 0.1);
+  background: rgb(10 99 232 / 10%);
 }
 
 .upload-label {
@@ -96,7 +96,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.4rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 40%);
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
@@ -144,7 +144,7 @@
 /* ---------------------------------------
    RESPONSIVE
 --------------------------------------- */
-@media (max-width: 600px) {
+@media (width <= 600px) {
   .upload-container {
     padding: 1rem;
   }

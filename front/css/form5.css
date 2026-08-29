@@ -71,7 +71,7 @@ button[type="submit"]:hover {
   background-color: var(--color-btn-hover-bg);
 }
 
-@media (max-width: 600px) {
+@media (width <= 600px) {
   .crop-edit-form {
     padding: var(--space-md);
   }

@@ -4,7 +4,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgb(0 0 0 / 80%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -35,7 +35,7 @@
 
 .multiview-close-btn {
   position: absolute;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgb(0 0 0 / 60%);
   color: white;
   border: none;
   padding: 10px 15px;

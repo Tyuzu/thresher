@@ -1,6 +1,7 @@
 .itinerary-container {
     max-width: var(--max-width);
     margin: 0 auto;
+
     /* padding: var(--container-padding); */
     background-color: var(--color-bg);
     color: var(--color-fg);

@@ -2,10 +2,11 @@
   position: absolute;
   z-index: 10000;
   min-width: 160px;
+
   /* background: #222; */
   border: 1px solid #444;
   border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 40%);
   padding: 4px 0;
   font-size: 14px;
   user-select: none;

@@ -16,7 +16,7 @@
     background-color: var(--color-bg);
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
     .hyperlocal-home {
         grid-template-columns: 1fr 300px;
     }
@@ -125,7 +125,7 @@
     gap: var(--space-lg);
 }
 
-@media (min-width: 640px) {
+@media (width >= 640px) {
     .auth-forms {
         grid-template-columns: 1fr 1fr;
     }
@@ -157,7 +157,7 @@
 .auth-form input:focus {
     outline: none;
     border-color: var(--color-input-focus);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 0 0 2px rgb(37 99 235 / 20%);
 }
 
 .auth-form button {
@@ -214,5 +214,5 @@
 .search-input:focus {
     outline: none;
     border-color: var(--color-input-focus);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 0 0 2px rgb(37 99 235 / 20%);
 }

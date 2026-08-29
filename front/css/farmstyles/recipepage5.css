@@ -213,7 +213,7 @@ img
     background-color: #fef2f2;
     padding: 2px var(--space-xs);
     border-radius: var(--radius-xs);
-    border: 1px solid rgba(220, 38, 38, 0.2);
+    border: 1px solid rgb(220 38 38 / 20%);
 }
 
 /* Steps Progress & Checklist */
@@ -309,7 +309,7 @@ img
 
 .recipe-actions .buttonx.primary {
     background-color: var(--color-primary);
-    color: #ffffff;
+    color: #fff;
     border: none;
 }
 

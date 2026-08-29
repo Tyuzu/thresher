@@ -63,6 +63,7 @@
 /* === Artist Container === */
 .artist-container {
   padding: var(--space-sm);
+
   /* max-width: var(--max-width-md); */
   margin: var(--space-md) auto;
 }
@@ -101,7 +102,9 @@
 /* === Member Grid === */
 .member-grid {
   display: flex;
+
   /* display: grid; */
+
   /* grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); */
   gap: var(--space-md);
   margin-bottom: var(--space-md);
@@ -110,7 +113,7 @@
 }
 
 /* Optional horizontal scroll for mobile */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .member-grid {
     display: flex;
     overflow-x: auto;
@@ -118,9 +121,11 @@
     padding-bottom: var(--space-sm);
     scroll-snap-type: x mandatory;
   }
+
   .member-card {
     flex: 0 0 auto;
     scroll-snap-align: start;
+
     /* min-width: 120px; */
   }
 }
@@ -147,11 +152,13 @@
 
 .member-photo {
   /* width: 72px; */
+
   /* height: 72px; */
   width: 6rem;
   height: 6rem;
   border-radius: var(--radius-full);
   object-fit: cover;
+
   /* border: 1px solid var(--color-input-border); */
   background: var(--color-space);
   margin-bottom: var(--space-sm);
@@ -217,7 +224,7 @@
 }
 
 .album-block h3 {
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.5rem;
   font-size: 1.2rem;
 }
 
@@ -227,6 +234,7 @@
 
 
 /* Artist Info */
+
 /* .artist-container {
   padding: 12px;
 } */
@@ -242,6 +250,7 @@
 } */
 
 /* Band Members */
+
 /* .band-members {
   margin-top: 16px;
 }
@@ -266,6 +275,7 @@
 } */
 
 /* Socials */
+
 /* .socials {
   margin-top: 16px;
 }
@@ -283,6 +293,7 @@
 } */
 
 /* Edit/Delete Buttons */
+
 /* .edit-artist-btn,
 .del-artist-btn {
   margin-top: 16px;

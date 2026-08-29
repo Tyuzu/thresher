@@ -9,10 +9,10 @@ dialog[data-variant="sheet"] {
   flex-direction: column;
   padding: 0;
   overflow: hidden;
+
   /* Uses your global backdrop, surface, and border tokens */
   background: color-mix(in srgb, var(--color-bg) 88%, transparent);
   backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-top: 1px solid var(--color-border);
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
@@ -241,7 +241,7 @@ dialog[data-variant="sheet"] {
 }
 
 /* --- Tablet / Desktop Centered Sheet Overlay --- */
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .modal-sheet,
   dialog[data-variant="sheet"] {
     top: auto;

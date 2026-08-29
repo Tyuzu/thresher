@@ -79,19 +79,16 @@
 .preview_image_wrap__Q29V8 .PostPreviewImageView_blur_wrap__o8vk\+ {
     align-items: center;
     background-color: #0006;
-    bottom: 0;
+    inset: 0;
     display: flex;
     justify-content: center;
-    left: 0;
     position: absolute;
-    right: 0;
-    top: 0;
 }
 
 .preview_image_wrap__Q29V8 
 
 .preview_image_wrap__Q29V8 {
-    grid-gap: 3px;
+    gap: 3px;
     border-radius: 15px;
 }
 
@@ -145,7 +142,7 @@
 }
 
 .preview_image_wrap__Q29V8.PostPreviewImageView_-bottom_radius__Mmn-- {
-    border-radius: 0 15px 0 15px;
+    border-radius: 0 15px;
 }
 
 .preview_image_wrap__Q29V8.PostPreviewImageView_-artist__WkyUA.PostPreviewImageView_-one__-6MMx {

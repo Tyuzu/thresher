@@ -28,7 +28,7 @@
 }
 
 /* Responsive Desktop Layout (Side-by-Side) */
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .two-column,
   .page-layout {
     /* 
@@ -50,6 +50,7 @@
   min-width: 0; /* Prevents child grid/flex elements from overflowing overflow-x */
   width: 100%;
 }
+
 /*
 .layout-main > section {
   background-color: var(--color-bg);
@@ -71,12 +72,14 @@
 /* ==========================================================================
    Aside Sidebar Layout Adjustments (.layout-aside)
    ========================================================================== */
+
 /* Adjust existing .layout-aside to fit sticky sidebar patterns on desktop */
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .layout-aside {
     position: sticky;
     top: var(--space-md); /* Sticks to top of viewport when scrolling */
-    /*max-height: calc(100vh - var(--space-lg));*/
+
+    /* max-height: calc(100vh - var(--space-lg)); */
     overflow-y: auto; /* Scrollable inside sidebar if content exceeds screen */
     scrollbar-width: thin;
     scrollbar-color: var(--color-border) transparent;
@@ -86,6 +89,7 @@
   .layout-aside::-webkit-scrollbar {
     width: 6px;
   }
+
   .layout-aside::-webkit-scrollbar-thumb {
     background-color: var(--color-border);
     border-radius: var(--radius-full);
@@ -110,5 +114,3 @@
 }
 
 /* Ensures ad spaces naturally push toward the bottom of the container */
-.layout-aside > .advert,
-.layout-aside > 

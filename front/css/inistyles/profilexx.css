@@ -91,7 +91,7 @@
   height: 30px;
   border-radius: var(--radius-circle);
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: #fff;
   border: 2px solid var(--color-card-bg);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
@@ -177,7 +177,7 @@
 }
 
 .logout-btn:hover {
-  background-color: rgba(220, 38, 38, 0.08);
+  background-color: rgb(220 38 38 / 8%);
   border-color: var(--color-danger);
 }
 
@@ -282,6 +282,7 @@
 }
 
 /* Sub-Tab Segment Pill Bar */
+
 /*
 .content-tab-buttons,
 
@@ -306,6 +307,7 @@
   color: var(--color-fg);
 }
 */
+
 /* ── Entity List & Card Items ── */
 .entity-list {
   list-style: none;
@@ -359,7 +361,7 @@
 }
 
 /* ── Responsive adjustments ── */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .statistics {
     gap: var(--space-md);
   }

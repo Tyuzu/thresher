@@ -46,7 +46,7 @@
 .form-group select:focus {
   outline: none;
   border-color: #1976d2;
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+  box-shadow: 0 0 0 3px rgb(25 118 210 / 10%);
 }
 
 /* Input Error State */
@@ -56,7 +56,7 @@
 }
 
 .form-input-error:focus {
-  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+  box-shadow: 0 0 0 3px rgb(211 47 47 / 10%);
 }
 
 /* Error Messages */
@@ -80,7 +80,7 @@
 .form-group input.form-valid:focus,
 .form-group textarea.form-valid:focus,
 .form-group select.form-valid:focus {
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+  box-shadow: 0 0 0 3px rgb(76 175 80 / 10%);
 }
 
 /* Form Buttons */
@@ -108,7 +108,7 @@
 
 .form-buttons button[type="submit"]:hover:not(:disabled) {
   background-color: #1565c0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
 }
 
 .form-buttons button[type="button"] {
@@ -119,7 +119,7 @@
 
 .form-buttons button[type="button"]:hover:not(:disabled) {
   background-color: #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }
 
 .form-buttons button:disabled {
@@ -137,7 +137,7 @@
 .form-group select {
   cursor: pointer;
   appearance: none;
-  -webkit-appearance: none;
+
   /* Added explicit stroke color %23333333 for reliability across light/dark themes */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -191,7 +191,7 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .form-buttons {
     flex-direction: column-reverse;
   }

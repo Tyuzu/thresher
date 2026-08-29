@@ -4,6 +4,7 @@
    ========================================================================== */
 
 /* Main Container & Page Layout */
+
 /* #content.content-main {
   width: 100%;
   max-width: var(--max-width-xl);
@@ -21,7 +22,7 @@
   gap: var(--space-lg);
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .two-column.posts-page {
     grid-template-columns: 1fr 320px;
   }

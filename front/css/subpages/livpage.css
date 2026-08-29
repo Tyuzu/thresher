@@ -54,7 +54,7 @@
   .chat-input {
     flex: 1;
     padding: 0.4rem 0.6rem;
-    border: 1px solid currentColor;
+    border: 1px solid currentcolor;
     border-radius: 3px;
   }
   
@@ -68,14 +68,4 @@
   
   /* --- STATS --- */
   
-  
-  .live-views,
-  
-  
-  /* --- RESPONSIVE --- */
-  @media (max-width: 800px) {
-    
-  
-    
-  }
   

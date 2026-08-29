@@ -87,7 +87,7 @@
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
-  color: #ffffff;
+  color: #fff;
   transition: background-color var(--transition-fast);
 }
 
@@ -169,7 +169,7 @@
 }
 
 /* Responsive Scaling */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .driver-metrics-bar {
     grid-template-columns: 1fr;
   }

@@ -1,26 +1,31 @@
 
 
-.sort-section, 
+.sort-section,
+.filter-section {
+  margin-bottom: 16px;
+}
 
-.sort-section h4, .filter-section h4 {
+.sort-section h4,
+.filter-section h4 {
   margin-bottom: 10px;
   font-size: 18px;
   color: #333;
 }
 
-.sort-form, 
-
-.sort-option, 
-
-.sort-option input, .filter-option input {
+.sort-form,
+.sort-option,
+.sort-option input,
+.filter-option input {
   margin-right: 8px;
 }
 
-.sort-option input[type="radio"], .filter-option input[type="checkbox"] {
+.sort-option input[type="radio"],
+.filter-option input[type="checkbox"] {
   cursor: pointer;
 }
 
-.sort-option span, .filter-option span {
+.sort-option span,
+.filter-option span {
   font-size: 16px;
   color: #555;
 }
@@ -31,22 +36,28 @@
 }
 
 /* Hover and focus effects for better UX */
-.sort-option input[type="radio"]:hover, .filter-option input[type="checkbox"]:hover {
+.sort-option input[type="radio"]:hover,
+.filter-option input[type="checkbox"]:hover {
   background-color: #f0f0f0;
   border-radius: 5px;
 }
 
-.sort-option input[type="radio"]:focus, .filter-option input[type="checkbox"]:focus {
+.sort-option input[type="radio"]:focus,
+.filter-option input[type="checkbox"]:focus {
   outline: 2px solid var(--color-btn-bg);
 }
 
 /* Responsiveness: Stacking vertically on smaller screens */
-@media (max-width: 768px) {
-  
-
-  .sort-section, 
+@media (width <= 768px) {
+  .sort-section,
+  .filter-section {
+    margin-bottom: 12px;
+  }
 }
 
-@media (max-width: 480px) {
-  
+@media (width <= 480px) {
+  .sort-section h4,
+  .filter-section h4 {
+    font-size: 16px;
+  }
 }

@@ -9,7 +9,7 @@
   padding: var(--space-sm);
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .places-page {
     grid-template-columns: 1fr 280px;
   }

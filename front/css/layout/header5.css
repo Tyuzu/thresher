@@ -78,7 +78,7 @@
 .iconic-button .icon svg {
   width: 24px;
   height: 24px;
-  stroke: currentColor;
+  stroke: currentcolor;
   stroke-width: 1.5;
 }
 
@@ -204,7 +204,8 @@
 }
 
 .logout:hover {
-  background-color: rgba(220, 38, 38, 0.08);
+  background-color: rgb(220 38 38 / 8%);
+
   /* Soft red hover tint */
   color: var(--color-danger);
 }

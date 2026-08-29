@@ -9,14 +9,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-
   padding: 12px 14px;
-
   border: 1px solid #dcdcdc;
   border-radius: 10px;
-
   cursor: pointer;
-
   transition:
     border-color 0.2s ease,
     background-color 0.2s ease,
@@ -40,12 +36,9 @@
 
 .payment-message {
   min-height: 20px;
-
   margin-top: 4px;
-
   font-size: 0.92rem;
   line-height: 1.4;
-
   color: #c0392b;
   word-break: break-word;
 }

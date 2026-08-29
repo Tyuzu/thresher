@@ -192,8 +192,7 @@
    Responsive
    =========================== */
 
-@media (max-width: 640px) {
-
+@media (width <= 640px) {
   .postpage {
     margin: 1rem;
   }

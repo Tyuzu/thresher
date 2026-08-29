@@ -2,6 +2,7 @@
 .eventpage {
   display: flex;
   flex-direction: column;
+
   /* padding: 1rem; */
   max-width: 800px;
   margin: auto;
@@ -11,6 +12,7 @@
 .eventpage .eventx-card {
   display: flex;
   flex-direction: column;
+
   /* border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); */
   overflow: hidden;
@@ -81,6 +83,7 @@
 }
 
 /* Status Tag */
+
 /* .eventpage .event-header-row span:first-of-type {
   background-color: #999;
   color: white;
@@ -90,6 +93,7 @@
 } */
 
 /* Save Icon */
+
 /* .eventpage .event-header-row span[title="Save Event"] {
   font-size: 20px;
   color: gray;
@@ -111,6 +115,7 @@
 }
 
 /* Tabs */
+
 /* .eventpage .tabs-container {
   margin-top: 2rem;
 }
@@ -163,7 +168,7 @@
 .eventpage .venue-container img {
   max-width: 100%;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 10%);
 }
 
 .seatingcon {

@@ -2,6 +2,7 @@
   border-top-width: 1px;
   border-right-width: 1px;
   border-bottom-width: 0;
+
   /* border-left-width: 6px;  */
   border-style: solid;
   border-left: 4px solid #ccc;
@@ -12,6 +13,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
+
   /* box-shadow: 0 0 1px #ccc; */
 }
 

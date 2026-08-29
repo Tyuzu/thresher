@@ -7,7 +7,6 @@
   justify-content: center;
 }
 
-.media-group,
 
 
 /* Video Container */
@@ -39,11 +38,12 @@
   cursor: pointer;
   padding: 0.3rem;
 }
+
 /*
 .logoicon svg {
   stroke: #0078d4;
   stroke-width: 2;
-}*/
+} */
 
 /* Actions */
 .media-actions,
@@ -62,15 +62,4 @@
 
 .report-btn {
   background-color: #ffb900;
-}
-
-/* Captions */
-figcaption,
-
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .media-group,
-  
-
 }

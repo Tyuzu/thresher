@@ -86,7 +86,7 @@ input {
 
 .channels button.active {
     background: #404249;
-    color: #ffffff;
+    color: #fff;
 }
 
 /* =========================
@@ -239,7 +239,7 @@ input {
     font-size: 15px;
     line-height: 1.4;
     color: #dbdee1;
-    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .message.pending {

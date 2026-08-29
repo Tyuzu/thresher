@@ -157,7 +157,7 @@
 
 .delete-btn:hover {
   background-color: var(--color-danger);
-  color: #ffffff;
+  color: #fff;
 }
 
 /* ==========================================================================

@@ -79,7 +79,7 @@
   gap: 8px;
   padding: 10px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(255 255 255 / 6%);
   box-sizing: border-box;
 }
 
@@ -118,9 +118,8 @@
 .category-chips {
   flex-wrap: nowrap;
   display: flex;
-  overflow-x: auto;
+  overflow: auto hidden;
   width: 100%;
-  overflow-y: hidden;
   padding-right: 0.4rem;
 }
 
@@ -140,11 +139,11 @@
   background-color: #e0e0e0;
 }
 
-/**/
+/*  */
 
 .category-chips::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
+  width: 0;
+  height: 0;
 }
 
 .category-chips::-webkit-scrollbar-thumb {
@@ -152,29 +151,29 @@
 }
 
 .category-chips div:nth-child(7n-6) {
-  background: #81a1ff url(#);
+  background: #81a1ff url("#");
 }
 
 .category-chips div:nth-child(7n-5) {
-  background: #ecec84 url(#);
+  background: #ecec84 url("#");
 }
 
 .category-chips div:nth-child(7n-4) {
-  background: #ffb69b url(#);
+  background: #ffb69b url("#");
 }
 
 .category-chips div:nth-child(7n-3) {
-  background: #ffacbb url(#);
+  background: #ffacbb url("#");
 }
 
 .category-chips div:nth-child(7n-2) {
-  background: #8bc3e5 url(#);
+  background: #8bc3e5 url("#");
 }
 
 .category-chips div:nth-child(7n-1) {
-  background: #c8bcff url(#);
+  background: #c8bcff url("#");
 }
 
 .category-chips div:nth-child(7n) {
-  background: #7ccaae url(#);
+  background: #7ccaae url("#");
 }

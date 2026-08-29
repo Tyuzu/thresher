@@ -35,7 +35,7 @@
 .filters-section input:focus,
 .filters-section select:focus {
     border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 0 0 3px rgb(37 99 235 / 15%);
 }
 
 #apply-filters-btn {
@@ -58,7 +58,7 @@
     transform: translateY(1px);
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .filters-section {
         flex-direction: column;
         align-items: stretch;

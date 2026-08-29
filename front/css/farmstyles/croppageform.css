@@ -85,7 +85,7 @@
   }
   
   /* --- Mobile responsive --- */
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     .toggle-filters-btn {
       display: block;
     }

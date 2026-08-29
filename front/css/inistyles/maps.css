@@ -6,19 +6,19 @@
   --gta-bg-primary: #0b0e14;
   --gta-bg-surface: #161b22;
   --gta-bg-surface-hover: #21262d;
-  --gta-border-color: rgba(255, 255, 255, 0.1);
+  --gta-border-color: rgb(255 255 255 / 10%);
   --gta-accent: #3fb950;
-  --gta-accent-glow: rgba(63, 185, 80, 0.25);
+  --gta-accent-glow: rgb(63 185 80 / 25%);
   --gta-accent-gold: #f1e05a;
   --gta-accent-intel: #a371f7;
   --gta-accent-shop: #58a6ff;
   --gta-accent-danger: #ef4444;
   --gta-text-main: #f0f6fc;
   --gta-text-muted: #8b949e;
-  --gta-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --gta-font: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, helvetica, arial, sans-serif;
   --gta-radius-sm: 6px;
   --gta-radius-md: 10px;
-  --gta-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --gta-shadow: 0 8px 32px rgb(0 0 0 / 45%);
 }
 
 /* Outer Container Frame */
@@ -144,15 +144,15 @@
 
 .gta-zoom-controls button:hover {
   background-color: var(--gta-bg-surface-hover);
-  color: #ffffff;
+  color: #fff;
 }
 
 .gta-zoom-controls button:active {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgb(255 255 255 / 10%);
 }
 
 .gta-btn-measure.active {
-  background-color: rgba(63, 185, 80, 0.2) !important;
+  background-color: rgb(63 185 80 / 20%) !important;
   color: var(--gta-accent) !important;
   border-color: var(--gta-accent) !important;
 }
@@ -190,11 +190,11 @@
 .gta-filter-chip:hover {
   color: var(--gta-text-main);
   background-color: var(--gta-bg-surface-hover);
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: rgb(255 255 255 / 25%);
 }
 
 .gta-filter-chip.active {
-  background-color: rgba(63, 185, 80, 0.15);
+  background-color: rgb(63 185 80 / 15%);
   color: var(--gta-accent);
   border-color: var(--gta-accent);
   box-shadow: 0 0 10px var(--gta-accent-glow);
@@ -212,7 +212,7 @@
   flex-direction: column;
   gap: 6px;
   z-index: 25;
-  background: rgba(11, 14, 20, 0.85);
+  background: rgb(11 14 20 / 85%);
   backdrop-filter: blur(8px);
   padding: 6px;
   border-radius: var(--gta-radius-sm);
@@ -244,7 +244,7 @@
 
 .gta-floor-btn.active {
   background-color: var(--gta-accent);
-  color: #000000;
+  color: #000;
   border-color: var(--gta-accent);
 }
 
@@ -303,7 +303,7 @@
   width: 150px;
   height: 150px;
   border-radius: 50%;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 0 2px var(--gta-border-color);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 80%), 0 0 0 2px var(--gta-border-color);
   background-color: var(--gta-bg-primary);
   overflow: hidden;
   z-index: 25;
@@ -318,7 +318,7 @@
   border-radius: 50%;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .gta-radar-container {
     width: 110px;
     height: 110px;
@@ -352,14 +352,14 @@
 
 .gta-measure-node {
   fill: var(--gta-accent);
-  stroke: #ffffff;
+  stroke: #fff;
   stroke-width: 0.5;
   filter: drop-shadow(0 0 4px var(--gta-accent));
   vector-effect: non-scaling-stroke;
 }
 
 .gta-measure-text {
-  fill: #ffffff;
+  fill: #fff;
   font-size: 3px;
   font-weight: 700;
   font-family: var(--gta-font);
@@ -401,7 +401,7 @@
 .gta-territory-polygon:hover {
   fill-opacity: 0.65;
   stroke-width: 1.5px;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+  filter: drop-shadow(0 0 8px rgb(255 255 255 / 40%));
 }
 
 /* ==========================================================================
@@ -412,7 +412,7 @@
 
 .gta-event-badge {
   background-color: var(--gta-accent-danger);
-  color: #ffffff;
+  color: #fff;
   font-size: 0.68rem;
   font-weight: 700;
   padding: 1px 6px;
@@ -422,13 +422,15 @@
 
 @keyframes eventPulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 60%);
   }
+
   70% {
-    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 10px rgb(239 68 68 / 0%);
   }
+
   100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 0%);
   }
 }
 
@@ -440,7 +442,7 @@
   position: absolute;
   bottom: 16px;
   left: 16px;
-  background: rgba(11, 14, 20, 0.85);
+  background: rgb(11 14 20 / 85%);
   backdrop-filter: blur(8px);
   border: 1px solid var(--gta-border-color);
   border-radius: var(--gta-radius-sm);
@@ -491,12 +493,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(22, 27, 34, 0.88);
+  background: rgb(22 27 34 / 88%);
   backdrop-filter: blur(6px);
   border: 1px solid var(--gta-border-color);
   border-radius: 20px;
   padding: 4px 10px 4px 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 50%);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   z-index: 12;
 }
@@ -504,8 +506,8 @@
 .gta-marker:hover {
   transform: translate(-50%, -50%) scale(calc(var(--gta-marker-scale, 1) * 1.15));
   z-index: 18;
-  border-color: #ffffff;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
+  border-color: #fff;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 70%);
 }
 
 .gta-marker-img-icon {
@@ -556,7 +558,7 @@
   position: absolute;
   top: 16px;
   left: 16px;
-  background: rgba(11, 14, 20, 0.9);
+  background: rgb(11 14 20 / 90%);
   backdrop-filter: blur(10px);
   border: 1px solid var(--gta-border-color);
   border-left: 4px solid var(--gta-accent);
@@ -587,13 +589,12 @@
   bottom: 20px;
   right: 20px;
   width: 300px;
-  background: rgba(11, 14, 20, 0.88);
+  background: rgb(11 14 20 / 88%);
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--gta-border-color);
   border-radius: var(--gta-radius-md);
   padding: 16px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 60%);
   z-index: 30;
   animation: slideInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -617,12 +618,12 @@
 }
 
 .gta-details-close:hover {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  background-color: rgb(255 255 255 / 10%);
 }
 
 .gta-details-title {
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
   padding-right: 24px;
   font-size: 1rem;
   font-weight: 700;
@@ -630,14 +631,14 @@
 }
 
 .gta-details-desc {
-  margin: 0 0 6px 0;
+  margin: 0 0 6px;
   font-size: 0.85rem;
   line-height: 1.45;
   color: var(--gta-text-muted);
 }
 
 .gta-details-info {
-  margin: 4px 0 0 0;
+  margin: 4px 0 0;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--gta-accent);
@@ -655,8 +656,8 @@
 
 .gta-locked-area {
   position: absolute;
-  background: rgba(239, 68, 68, 0.18);
-  border: 2px dashed rgba(239, 68, 68, 0.6);
+  background: rgb(239 68 68 / 18%);
+  border: 2px dashed rgb(239 68 68 / 60%);
   border-radius: var(--gta-radius-sm);
   backdrop-filter: blur(2px);
   display: flex;
@@ -675,6 +676,7 @@
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

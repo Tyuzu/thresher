@@ -4,10 +4,11 @@
   gap: 1rem;
   max-width: 600px;
   margin: auto;
+
   /* background: #f4f4f4; */
   border-radius: 6px;
   padding: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 10%);
 }
 
 .audio-poster {
@@ -34,6 +35,7 @@
   border: 1px solid #ccc;
   font-size: 14px;
 }
+
 .controls-container input[type="range"] {
   padding: 0;
 }
@@ -106,6 +108,7 @@
   padding: 4px;
   max-width: 400px;
 }
+
 .time-display {
   margin: 0 8px;
 }

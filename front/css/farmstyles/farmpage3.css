@@ -16,7 +16,7 @@
   background-color: var(--color-bg);
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .two-column.farm-layout {
     grid-template-columns: 1fr 340px;
   }

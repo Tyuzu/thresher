@@ -60,7 +60,7 @@
   bottom: 10px;
   right: 10px;
   padding: 2px 6px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgb(0 0 0 / 60%);
   color: #fff;
   font-size: 12px;
   border-radius: 3px;
@@ -74,7 +74,7 @@
   right: 10px;
   font-size: 22px;
   border: none;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgb(0 0 0 / 60%);
   color: #fff;
   cursor: pointer;
   padding: 4px 8px;
@@ -83,7 +83,7 @@
 }
 
 .sightboxz-close:hover {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgb(0 0 0 / 80%);
 }
 
 /* Reset Zoom Button */
@@ -91,7 +91,7 @@
   margin-top: 12px;
   padding: 6px 10px;
   border: none;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgb(0 0 0 / 60%);
   color: #fff;
   font-size: 14px;
   border-radius: 3px;
@@ -101,5 +101,5 @@
 }
 
 .sightboxz .reset-zoom-btn:hover {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgb(0 0 0 / 80%);
 }

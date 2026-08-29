@@ -12,6 +12,7 @@
     border-radius: 4px;
     transition: transform 0.2s;
   }
+
   .gallery img {
     width: 100%;
     max-width: 300px;

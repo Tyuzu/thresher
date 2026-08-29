@@ -20,7 +20,7 @@
 
 .user-orders-page .error-msg {
   color: var(--color-danger, #dc2626);
-  background-color: rgba(220, 38, 38, 0.08);
+  background-color: rgb(220 38 38 / 8%);
   padding: var(--space-sm, 0.75rem) var(--space-md, 1rem);
   border-radius: var(--radius-md, 6px);
   border: 1px solid var(--color-danger, #dc2626);
@@ -32,7 +32,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-sm, 0.75rem);
-  background-color: var(--color-card-bg, #ffffff);
+  background-color: var(--color-card-bg, #fff);
   border: 1px solid var(--color-border-light, #e5e7eb);
   padding: var(--space-sm, 0.75rem) var(--space-md, 1rem);
   border-radius: var(--radius-md, 8px);
@@ -78,7 +78,7 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background-color: var(--color-card-bg, #ffffff);
+  background-color: var(--color-card-bg, #fff);
   border: 1px solid var(--color-border-light, #e5e7eb);
   border-radius: var(--radius-md, 8px);
   overflow: hidden;
@@ -148,7 +148,7 @@
   width: 100%;
   margin-top: var(--space-sm, 0.75rem);
   border-collapse: collapse;
-  background-color: var(--color-card-bg, #ffffff);
+  background-color: var(--color-card-bg, #fff);
   border: 1px solid var(--color-border, #e2e8f0);
   border-radius: var(--radius-sm, 4px);
 }
@@ -174,11 +174,11 @@
 }
 
 .order-card {
-  background-color: var(--color-card-bg, #ffffff);
+  background-color: var(--color-card-bg, #fff);
   border: 1px solid var(--color-border-light, #e5e7eb);
   border-radius: var(--radius-md, 8px);
   padding: var(--space-md, 1rem);
-  box-shadow: var(--shadow-card, 0 1px 3px rgba(0,0,0,0.05));
+  box-shadow: var(--shadow-card, 0 1px 3px rgb(0 0 0 / 5%));
 }
 
 .order-card-header {
@@ -239,7 +239,7 @@
 }
 
 /* ── Responsive adjustments ── */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .user-orders-page .filters {
     flex-direction: column;
     align-items: stretch;

@@ -18,8 +18,8 @@
     border-radius: 18px;
     padding: 20px;
     box-shadow:
-        0 4px 12px rgba(0,0,0,0.04),
-        0 1px 3px rgba(0,0,0,0.08);
+        0 4px 12px rgb(0 0 0 / 4%),
+        0 1px 3px rgb(0 0 0 / 8%);
 }
 
 .settings-category h2 {
@@ -58,7 +58,7 @@
     transform: translateY(-2px);
     border-color: #d0d7de;
     box-shadow:
-        0 8px 18px rgba(0,0,0,0.05);
+        0 8px 18px rgb(0 0 0 / 5%);
 }
 
 /* =========================
@@ -110,7 +110,7 @@
 .setting-control input:focus {
     border-color: #2563eb;
     box-shadow:
-        0 0 0 3px rgba(37,99,235,.15);
+        0 0 0 3px rgb(37 99 235 / 15%);
 }
 
 /* =========================
@@ -132,10 +132,7 @@
 
 .slider {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     cursor: pointer;
     transition: .25s ease;
     border-radius: 999px;
@@ -151,7 +148,7 @@
     border-radius: 50%;
     transition: .25s ease;
     box-shadow:
-        0 1px 4px rgba(0,0,0,.2);
+        0 1px 4px rgb(0 0 0 / 20%);
 }
 
 .toggle-switch input:checked + .slider {
@@ -178,10 +175,8 @@
 .settings-error {
     padding: 14px;
     border-radius: 10px;
-
     background: #fee2e2;
     color: #b91c1c;
-
     font-size: .95rem;
 }
 
@@ -225,9 +220,7 @@
    Mobile
 ========================= */
 
-@media (max-width: 768px) {
-
-
+@media (width <= 768px) {
     .setting-card {
         flex-direction: column;
         align-items: stretch;

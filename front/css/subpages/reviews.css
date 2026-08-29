@@ -4,7 +4,7 @@
     border-radius: 6px;
     padding: 1rem;
     margin-bottom: 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
 }
 
 .review-header {
@@ -63,7 +63,7 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 600px) {
+@media (width <= 600px) {
     .review-header {
         flex-direction: column;
         align-items: flex-start;

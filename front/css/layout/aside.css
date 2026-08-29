@@ -60,6 +60,7 @@
 /* ==========================================================================
    Section Components & Cards
    ========================================================================== */
+
 /*
 .aside-section,
 .layout-aside > div > section,
@@ -127,6 +128,7 @@
   border: 1px solid transparent;
   transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
   width: fit-content;
+
   /* Default Button Style */
   background-color: var(--color-btn-bg);
   color: var(--color-btn-fg);

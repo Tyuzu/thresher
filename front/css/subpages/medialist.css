@@ -22,13 +22,13 @@
   background: #111;
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 40%);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .media-item:hover {
   transform: translateY(-3px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 50%);
 }
 
 /* ---------------------------------------
@@ -71,8 +71,8 @@
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 2.8rem;
-  color: rgba(255,255,255,0.85);
-  text-shadow: 0 0 8px rgba(0,0,0,0.7);
+  color: rgb(255 255 255 / 85%);
+  text-shadow: 0 0 8px rgb(0 0 0 / 70%);
   pointer-events: none;
   user-select: none;
   transition: color 0.2s ease, transform 0.2s ease;
@@ -93,8 +93,8 @@ figcaption {
   font-size: 0.9rem;
   color: #ddd;
   padding: 0.5rem 0.75rem;
-  background: rgba(20,20,20,0.8);
-  border-top: 1px solid rgba(255,255,255,0.05);
+  background: rgb(20 20 20 / 80%);
+  border-top: 1px solid rgb(255 255 255 / 5%);
   min-height: 1.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -127,7 +127,7 @@ figcaption {
 /* ---------------------------------------
    RESPONSIVE TUNING
 --------------------------------------- */
-@media (max-width: 600px) {
+@media (width <= 600px) {
   .media-list {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 0.75rem;

@@ -14,7 +14,9 @@
     "lint:check": "eslint js/",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "ts-migrate": "ts-migrate"
+    "ts-migrate": "ts-migrate",
+    "check-css": "node scripts/check-css.js",
+    "fix-css": "npx stylelint \"css/**/*.css\" --fix"
   },
   "author": "",
   "license": "ISC",
@@ -33,6 +35,8 @@
     "eslint": "^9.39.5",
     "glob": "^13.0.6",
     "prettier": "^3.2.5",
+    "stylelint": "^17.14.1",
+    "stylelint-config-standard": "^40.0.0",
     "ts-migrate": "^0.0.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.67.0",

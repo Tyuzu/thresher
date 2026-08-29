@@ -104,13 +104,13 @@
 
 .button.outline:hover {
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: #fff;
 }
 
 /* Danger / Destructive Variant */
 .button.danger {
   background-color: var(--color-danger);
-  color: #ffffff;
+  color: #fff;
 }
 
 .button.danger:hover {

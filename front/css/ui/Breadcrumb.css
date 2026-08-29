@@ -20,14 +20,14 @@
 }
 
 .breadcrumb__link {
-  color: #0066cc;
+  color: #06c;
   text-decoration: none;
   transition: color 0.15s ease-in-out;
 }
 
 .breadcrumb__link:hover {
   text-decoration: underline;
-  color: #004499;
+  color: #049;
 }
 
 .breadcrumb__text {

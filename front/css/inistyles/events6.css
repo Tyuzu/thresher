@@ -9,7 +9,7 @@
   padding: var(--space-sm);
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .events-page {
     grid-template-columns: 1fr 280px;
   }
@@ -89,12 +89,12 @@
 /* Status Badges */
 .event-info span[style*="background:#888"] {
   background-color: var(--color-secondary) !important;
-  color: #ffffff !important;
+  color: #fff !important;
 }
 
 .event-info span[style*="background:#28a745"] {
   background-color: var(--color-success) !important;
-  color: #ffffff !important;
+  color: #fff !important;
 }
 
 /* Share & Action Buttons within Event Cards */

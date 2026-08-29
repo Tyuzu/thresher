@@ -55,7 +55,7 @@
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background-color: var(--color-bg-input, #ffffff);
+  background-color: var(--color-bg-input, #fff);
   color: var(--color-fg);
   font-size: var(--font-size-sm);
 }
@@ -88,7 +88,7 @@
 
 .btn-view-toggle.active {
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: #fff;
   border-color: var(--color-primary);
 }
 
@@ -226,7 +226,7 @@
 }
 
 /* Responsive Rules */
-@media (max-width: 600px) {
+@media (width <= 600px) {
   .deliveries-toolbar {
     flex-direction: column;
     align-items: stretch;

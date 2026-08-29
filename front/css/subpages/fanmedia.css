@@ -1,9 +1,8 @@
   /* === Gallery Lists === */
   .fanmade-list,
   .media-list {
-    column-count: 3;
+    columns: 200px 3;
     column-gap: var(--space-md);
-    column-width: 200px;
   }
 
   /* === Gallery Groups === */

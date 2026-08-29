@@ -60,17 +60,17 @@
 .status-badge.status-picked_up,
 .status-badge.status-in_transit {
   background-color: var(--color-info);
-  color: #ffffff;
+  color: #fff;
 }
 
 .status-badge.status-delivered {
   background-color: var(--color-success);
-  color: #ffffff;
+  color: #fff;
 }
 
 .status-badge.status-cancelled {
   background-color: var(--color-danger);
-  color: #ffffff;
+  color: #fff;
 }
 
 /* Status Stepper Timeline */
@@ -98,7 +98,7 @@
 
 .stepper-step.completed {
   background-color: var(--color-success);
-  color: #ffffff;
+  color: #fff;
 }
 
 .stepper-step.pending {
@@ -184,7 +184,7 @@
 }
 
 /* Responsive Scaling */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .delivery-card-body {
     grid-template-columns: 1fr;
   }

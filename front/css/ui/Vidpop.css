@@ -8,7 +8,7 @@
   justify-content: center;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
 }
 
 
@@ -17,11 +17,12 @@
   display: none;
   position: absolute;
   bottom: 80px;
+
   /* Default position */
   left: 50%;
   transform: translateX(-50%);
   color: #fff;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgb(0 0 0 / 60%);
   padding: 5px 10px;
   border-radius: 5px;
   font-size: 18px;
@@ -30,6 +31,7 @@
   max-width: 90%;
   overflow-wrap: break-word;
   transition: bottom 0.3s ease;
+
   /* For smooth shifting */
 }
 
@@ -37,9 +39,10 @@
 .dropup-menu {
   position: absolute;
   bottom: 40px;
+
   /* just above the controls bar */
   right: 10px;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgb(0 0 0 / 85%);
   border-radius: 6px;
   padding: 8px;
   display: flex;
@@ -64,6 +67,7 @@
   bottom: 0;
   width: 100%;
   background: linear-gradient(0deg, black, transparent);
+
   /* padding: 10px; */
   color: #fff;
   opacity: 0;
@@ -71,7 +75,7 @@
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* Show Controls on Hover*/
+/* Show Controls on Hover */
 #video-player:hover .controlcon {
   opacity: 1;
   transform: translateY(0);
@@ -79,6 +83,7 @@
 
 #video-player:hover .subtitle-container {
   bottom: 120px;
+
   /* Adjust when controls are visible */
 }
 
@@ -112,6 +117,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem;
+
   /* background-color: #e64a19; */
 }
 
@@ -180,7 +186,7 @@
   transform: translate(-50%, -50%);
   font-weight: bold;
   color: white;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgb(0 0 0 / 60%);
   padding: 8px 12px;
   border-radius: 4px;
   z-index: 999;

@@ -9,11 +9,13 @@
     flex-wrap: wrap;
     margin-bottom: 20px;
   }
+
   .orders-page .filters label {
     display: flex;
     flex-direction: column;
     font-weight: 500;
   }
+
   .orders-page .filters select,
   .orders-page .filters input[type="date"],
   .orders-page .filters button {
@@ -27,6 +29,7 @@
   .orders-page .bulk-actions {
     margin-bottom: 15px;
   }
+
   .orders-page .bulk-actions button {
     margin-right: 10px;
     background-color: #008236;
@@ -36,6 +39,7 @@
     border-radius: 6px;
     cursor: pointer;
   }
+
   .orders-page .bulk-actions button:hover {
     background-color: #027e3c;
   }
@@ -44,18 +48,21 @@
   .orders-page .orders-table {
     width: 100%;
     border-collapse: collapse;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 10%);
   }
+
   .orders-page .orders-table th,
   .orders-page .orders-table td {
     padding: 12px;
     border: 1px solid #ddd;
     text-align: center;
   }
+
   .orders-page .orders-table th {
     /* background-color: #edf2f7; */
     font-weight: 600;
   }
+
   .orders-page .orders-table td button {
     padding: 6px 10px;
     margin: 2px;
@@ -65,6 +72,7 @@
     border-radius: 4px;
     cursor: pointer;
   }
+
   .orders-page .orders-table td button:hover {
     background-color: #015096;
   }
@@ -73,6 +81,7 @@
   .orders-page input[type="checkbox"] {
     transform: scale(1.2);
   }
+
   .orders-table {
     width: 100%;
     border-collapse: collapse;
@@ -85,7 +94,7 @@
     text-align: left;
   }
   
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     .orders-table {
       display: none;
     }

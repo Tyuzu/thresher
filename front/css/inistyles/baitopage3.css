@@ -85,6 +85,7 @@
 
 
 /* Related Jobs */
+
 /* Container for the similar jobs section */
 .baito-related-details {
   margin-top: 16px;
@@ -102,14 +103,14 @@
   overflow: hidden;
   background-color: #fff;
   margin-bottom: 12px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 8%);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 /* Hover effect for cards */
 .baito-related-card.card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 12%);
 }
 
 /* Banner image at the top */

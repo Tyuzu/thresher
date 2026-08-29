@@ -44,15 +44,12 @@
     height: 42px;
     padding: 0 var(--space-md);
     box-sizing: border-box;
-
     font: inherit;
     font-size: var(--font-size-sm);
     color: var(--color-fg);
-
     background: var(--color-input-bg);
     border: 1px solid var(--color-input-border);
     border-radius: var(--radius-md);
-
     outline: none;
     transition:
         border-color var(--transition-fast),
@@ -87,14 +84,11 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-xs);
-
     min-height: 42px;
     padding: 0 var(--space-sm);
-
     color: var(--color-fg);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
-
     white-space: nowrap;
     cursor: pointer;
 }
@@ -123,12 +117,10 @@
     flex-direction: column;
     min-width: 0;
     overflow: hidden;
-
     background: var(--color-card-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-elev-1);
-
     transition:
         transform var(--transition-fast),
         box-shadow var(--transition-fast),
@@ -191,23 +183,18 @@
     position: absolute;
     top: var(--space-md);
     right: var(--space-md);
-
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
     width: 36px;
     height: 36px;
     padding: 0;
-
     color: var(--color-fg);
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-circle);
-
     cursor: pointer;
     box-shadow: var(--shadow-elev-1);
-
     transition:
         color var(--transition-fast),
         background-color var(--transition-fast),
@@ -289,9 +276,7 @@
     align-items: center;
     min-width: 0;
     max-width: 100%;
-
     overflow: hidden;
-
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-sm);
@@ -339,19 +324,14 @@
 .farm-page .button {
     min-height: 38px;
     padding: 0 var(--space-md);
-
     font: inherit;
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
-
     color: var(--color-btn-fg);
     background: var(--color-btn-bg);
-
     border: 1px solid transparent;
     border-radius: var(--radius-md);
-
     cursor: pointer;
-
     transition:
         background-color var(--transition-fast),
         border-color var(--transition-fast),
@@ -394,7 +374,6 @@
 .farm__favorites,
 .farm__ratings {
     padding: var(--space-md);
-
     background: var(--color-card-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
@@ -422,7 +401,6 @@
 .farm__favorites h3,
 .farm__ratings h3 {
     margin: 0 0 var(--space-sm);
-
     color: var(--color-fg);
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-bold);
@@ -433,7 +411,6 @@
 .farm__favorites p,
 .farm__ratings p {
     margin: 0 0 var(--space-xs);
-
     color: var(--color-muted);
     font-size: var(--font-size-sm);
     line-height: var(--line-height-normal);
@@ -454,15 +431,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-
     min-height: 150px;
     padding: var(--space-md);
     box-sizing: border-box;
-
     color: var(--color-muted);
     text-align: center;
     font-size: var(--font-size-sm);
-
     background:
         linear-gradient(
             135deg,
@@ -474,7 +448,6 @@
             var(--color-bg-tertiary) 75%
         );
     background-size: 24px 24px;
-
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
 }
@@ -489,14 +462,12 @@
     height: 170px;
     margin-bottom: var(--space-sm);
     object-fit: cover;
-
     background: var(--color-bg-tertiary);
     border-radius: var(--radius-md);
 }
 
 .farm__featured h4 {
     margin: 0 0 var(--space-xs);
-
     color: var(--color-fg);
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
@@ -521,7 +492,7 @@
    DESKTOP LARGE
    ========================================================= */
 
-@media (min-width: 1280px) {
+@media (width >= 1280px) {
     .farm__grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -535,7 +506,7 @@
    TABLET / SMALL DESKTOP
    ========================================================= */
 
-@media (max-width: 1100px) {
+@media (width <= 1100px) {
     .two-column.farm-page {
         grid-template-columns: minmax(0, 1fr) 280px;
         gap: var(--space-md);
@@ -558,7 +529,7 @@
    TABLET
    ========================================================= */
 
-@media (max-width: 850px) {
+@media (width <= 850px) {
     .two-column.farm-page {
         grid-template-columns: 1fr;
     }
@@ -568,10 +539,10 @@
    MOBILE
    ========================================================= */
 
-@media (max-width: 600px) {/*
+@media (width <= 600px) {/*
     .farmspage {
         padding: var(--space-md) var(--space-sm);
-    }*/
+    } */
 
     .farm__filters {
         grid-template-columns: 1fr;
@@ -599,6 +570,7 @@
     .farm__image {
         height: 210px;
     }
+
     .farm__featured-photo {
         height: 200px;
     }
@@ -608,10 +580,10 @@
    SMALL MOBILE
    ========================================================= */
 
-@media (max-width: 400px) {/*
+@media (width <= 400px) {/*
     .farmspage {
         padding: var(--space-sm);
-    }*/
+    } */
 
     .farm__image {
         height: 180px;

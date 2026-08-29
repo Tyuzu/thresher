@@ -4,7 +4,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0,0,0,0.75);
+    background: rgb(0 0 0 / 75%);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -65,9 +65,7 @@
   }
   
   /* Mobile optimizations */
-  @media (max-width: 480px) {
-    
-    
+  @media (width <= 480px) {
     .crop-buttons button {
       font-size: 1.1rem;
       padding: 1rem;

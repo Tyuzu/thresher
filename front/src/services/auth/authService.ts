@@ -14,6 +14,7 @@ import { fetchProfile } from "../profile/fetchProfile.js";
 import Notify from "../../components/ui/Notify.js";
 import { registerUser, loginUser, logoutUser } from "./api.js";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.js";
+import { navigate } from "../../routes/navigate.js";
 
 /* =========================================================
    TYPES & INTERFACES
@@ -410,21 +411,12 @@ export async function login(payload: LoginPayload = {}): Promise<boolean> {
   }
 }
 
-// /* =========================================================
-//    MANUAL TOKEN REFRESH
-// ========================================================= */
-
-// export async function refreshAccessToken(): Promise<string | null> {
-//   const success = await refreshToken();
-//   return success ? (getState("token") as string) : null;
-// }
-
 /* =========================================================
    LOGOUT
 ========================================================= */
 
 export async function logout(): Promise<void> {
-    try {
+  try {
     await logoutUser();
   } catch {
     // Logout must clear local authentication even if the server request fails.
@@ -461,7 +453,6 @@ export function silentLogout(broadcast = true): void {
   if (typeof window !== "undefined") {
     queueMicrotask(async () => {
       try {
-        const { navigate } = await import("../../routes/navigate.js");
         await navigate("/login", {
           replace: true
         });

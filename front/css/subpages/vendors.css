@@ -39,14 +39,10 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-
     padding: 1.25rem;
-
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgb(255 255 255 / 10%);
     border-radius: 14px;
-
     background: var(--surface-color, #1b1b1b);
-
     transition:
         transform 0.2s ease,
         border-color 0.2s ease,
@@ -55,11 +51,9 @@
 
 .vendor-card:hover {
     transform: translateY(-2px);
-
-    border-color: rgba(255,255,255,0.15);
-
+    border-color: rgb(255 255 255 / 15%);
     box-shadow:
-        0 10px 24px rgba(0,0,0,0.15);
+        0 10px 24px rgb(0 0 0 / 15%);
 }
 
 .vendor-card h5 {
@@ -71,24 +65,18 @@
 .vendor-category {
     display: inline-flex;
     align-items: center;
-
     width: fit-content;
-
     padding: 0.35rem 0.75rem;
-
     border-radius: 999px;
-
     font-size: 0.85rem;
     font-weight: 600;
-
-    background: rgba(255,255,255,0.08);
+    background: rgb(255 255 255 / 8%);
 }
 
 .vendor-info {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-
     font-size: 0.95rem;
     line-height: 1.5;
 }
@@ -106,7 +94,6 @@
 
 .vendor-actions {
     margin-top: auto;
-
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -120,10 +107,8 @@
     cursor: pointer;
     border: none;
     border-radius: 10px;
-
     font-size: 0.95rem;
     font-weight: 600;
-
     transition:
         opacity 0.2s ease,
         transform 0.2s ease;
@@ -163,13 +148,10 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-
     padding: 1.5rem;
-
     border-radius: 14px;
-
     background: var(--surface-color, #1b1b1b);
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgb(255 255 255 / 8%);
 }
 
 .vendor-registration-form h4 {
@@ -178,23 +160,18 @@
 
 .form-input {
     width: 100%;
-
     padding: 0.9rem 1rem;
-
     border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.12);
-
-    background: rgba(255,255,255,0.04);
+    border: 1px solid rgb(255 255 255 / 12%);
+    background: rgb(255 255 255 / 4%);
     color: inherit;
-
     font-size: 0.95rem;
-
     box-sizing: border-box;
 }
 
 .form-input:focus {
     outline: none;
-    border-color: rgba(255,255,255,0.35);
+    border-color: rgb(255 255 255 / 35%);
 }
 
 textarea.form-input {
@@ -220,16 +197,13 @@ textarea.form-input {
 
 .vendor-summary-item {
     padding: 1rem;
-
     border-radius: 12px;
-
-    border: 1px solid rgba(255,255,255,0.08);
-
+    border: 1px solid rgb(255 255 255 / 8%);
     background: var(--surface-color, #1b1b1b);
 }
 
 .vendor-summary-item h4 {
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.5rem;
 }
 
 .rating {
@@ -245,26 +219,19 @@ textarea.form-input {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-
     padding: 1.5rem;
-
     border-radius: 14px;
-
     background: var(--surface-color, #1b1b1b);
-
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgb(255 255 255 / 8%);
 }
 
 .profile-field {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
     gap: 1rem;
-
     padding-bottom: 0.75rem;
-
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgb(255 255 255 / 8%);
 }
 
 .profile-field:last-child {
@@ -285,13 +252,9 @@ textarea.form-input {
 
 .no-vendors-message {
     padding: 2rem;
-
     text-align: center;
-
     border-radius: 12px;
-
-    border: 1px dashed rgba(255,255,255,0.15);
-
+    border: 1px dashed rgb(255 255 255 / 15%);
     opacity: 0.8;
 }
 
@@ -304,28 +267,20 @@ textarea.form-input {
 .modal {
     position: fixed;
     inset: 0;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     padding: 1rem;
-
-    background: rgba(0,0,0,0.65);
-
+    background: rgb(0 0 0 / 65%);
     z-index: 10000;
 }
 
 .modal-content {
     width: 100%;
     max-width: 1200px;
-
     max-height: 90vh;
-
     overflow-y: auto;
-
     border-radius: 16px;
-
     background: var(--background-color, #111);
 }
 
@@ -333,10 +288,8 @@ textarea.form-input {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
     padding: 1rem 1.5rem;
-
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgb(255 255 255 / 8%);
 }
 
 .modal-header h2 {
@@ -350,12 +303,9 @@ textarea.form-input {
 .close-btn {
     border: none;
     background: transparent;
-
     font-size: 2rem;
     line-height: 1;
-
     cursor: pointer;
-
     color: inherit;
 }
 
@@ -369,7 +319,7 @@ textarea.form-input {
    Responsive
 ========================================== */
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .vendor-grid {
         grid-template-columns: 1fr;
     }

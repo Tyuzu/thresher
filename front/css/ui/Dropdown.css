@@ -6,6 +6,7 @@
   .dropdown-button {
     padding: 10px 20px;
     cursor: pointer;
+
     /* background-color: #f1f1f1; */
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -18,7 +19,7 @@
     border: 1px solid #ccc;
     border-radius: 4px;
     min-width: 150px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgb(0 0 0 / 10%);
     z-index: 1000;
   }
   

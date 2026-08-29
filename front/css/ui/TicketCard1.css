@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
   overflow: hidden;
   width: 100%;
   max-width: 320px;
@@ -69,7 +69,7 @@
 }
 
 /* Responsive */
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .ticket-card {
     max-width: 100%;
     margin: 1rem;

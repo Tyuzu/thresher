@@ -50,11 +50,11 @@
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgb(0 0 0 / 10%);
 }
 
 #feedpost-container p {
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
   font-size: 0.9rem;
 }
 
@@ -67,6 +67,7 @@
 #feedpost-container a:hover {
   text-decoration: underline;
 }
+
 .entity-list {
   list-style: none;
   padding: 0;

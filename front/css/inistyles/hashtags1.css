@@ -32,13 +32,13 @@
   position: relative;
   overflow: hidden;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .grid-item:hover {
   transform: scale(1.03);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 15%);
 }
 
 /* Image and video styling */
@@ -51,13 +51,13 @@
 }
 
 /* Responsive tweaks */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .hashtag-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .hashtag-grid {
     grid-template-columns: repeat(2, 1fr);
   }
