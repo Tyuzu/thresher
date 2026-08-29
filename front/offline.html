@@ -6,15 +6,15 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-  <title>You're Offline | Farmium</title>
+  <title>You're Offline | Scav</title>
 
   <meta name="description"
-    content="Farmium is temporarily offline. Check your connection or use the offline tools while your network is restored." />
+    content="Scav is temporarily offline. Check your connection or use the offline tools while your network is restored." />
 
   <meta name="theme-color" content="#ffffff" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Farmium" />
+  <meta name="apple-mobile-web-app-title" content="Scav" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
   <link rel="manifest" href="/manifest.json" />
@@ -261,7 +261,7 @@
       <h1 id="offline-title">You're offline</h1>
 
       <p class="message">
-        Farmium can't reach the network right now.
+        Scav can't reach the network right now.
         Your connection will be checked again automatically.
       </p>
 
@@ -281,7 +281,7 @@
       </div>
 
       <p class="footer-note">
-        If you already opened Farmium recently, some content may still
+        If you already opened Scav recently, some content may still
         be available offline.
       </p>
 
@@ -335,7 +335,7 @@
 
       window.addEventListener("online", () => {
         updateConnectionStatus(true);
-        announce("Connection restored. Returning to Farmium.");
+        announce("Connection restored. Returning to Scav.");
         location.reload();
       });
 

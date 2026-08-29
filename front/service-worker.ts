@@ -1,12 +1,12 @@
 // =====================================================
-// Farmium Service Worker
+// Scav Service Worker
 // SPA + PWA + Offline Support
 // Version: v18
 // =====================================================
 const CACHE_VERSION = "v18";
-const STATIC_CACHE = `farmium-static-${CACHE_VERSION}`;
-const DYNAMIC_CACHE = `farmium-dynamic-${CACHE_VERSION}`;
-const IMAGE_CACHE = `farmium-images-${CACHE_VERSION}`;
+const STATIC_CACHE = `scav-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `scav-dynamic-${CACHE_VERSION}`;
+const IMAGE_CACHE = `scav-images-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
 const OFFWORK_URL = "/offWork.html";
 const APP_SHELL = "/index.html";
@@ -86,7 +86,7 @@ self.addEventListener("activate", (event) => {
                 }
             }
             /*
-             * Remove every cache belonging to an older Farmium
+             * Remove every cache belonging to an older Scav
              * service-worker version.
              */
             const cacheNames = await caches.keys();
@@ -104,7 +104,7 @@ self.addEventListener("activate", (event) => {
             await self.clients.claim();
             console.log("[SW] Activated:", CACHE_VERSION);
             /*
-             * Tell open Farmium tabs that the new worker is active.
+             * Tell open Scav tabs that the new worker is active.
              */
             const windowClients = await self.clients.matchAll({
                 type: "window",
@@ -245,10 +245,10 @@ async function handleNavigation(event, request) {
             <meta charset="UTF-8">
             <meta name="viewport"
               content="width=device-width,initial-scale=1">
-            <title>Farmium Offline</title>
+            <title>Scav Offline</title>
           </head>
           <body>
-            <h1>Farmium is offline</h1>
+            <h1>Scav is offline</h1>
             <p>Please reconnect to the internet and try again.</p>
           </body>
         </html>
@@ -426,12 +426,12 @@ self.addEventListener("push", (event) => {
                 data = event.data.json();
             } catch {
                 data = {
-                    title: "Farmium",
+                    title: "Scav",
                     message: event.data.text(),
                     url: "/",
                 };
             }
-            const title = typeof data.title === "string" && data.title.trim() ? data.title.trim() : "Farmium";
+            const title = typeof data.title === "string" && data.title.trim() ? data.title.trim() : "Scav";
             const message = typeof data.message === "string" ? data.message : "";
             const targetUrl = getSafeNotificationUrl(data.url);
             await self.registration.showNotification(title, {
@@ -462,7 +462,7 @@ self.addEventListener("notificationclick",
                     includeUncontrolled: true,
                 });
                 /*
-                 * Prefer an existing Farmium tab/window.
+                 * Prefer an existing Scav tab/window.
                  */
                 for (const client of windowClients) {
                     try {
@@ -477,7 +477,7 @@ self.addEventListener("notificationclick",
                     }
                 }
                 /*
-                 * No existing Farmium window.
+                 * No existing Scav window.
                  */
                 await self.clients.openWindow(targetUrl);
             })());
@@ -493,7 +493,7 @@ function getSafeNotificationUrl(value) {
         const url = new URL(value, self.location.origin);
         /*
          * Notifications should only navigate within
-         * the Farmium origin.
+         * the Scav origin.
          */
         if (url.origin !== self.location.origin) {
             return "/";
@@ -526,7 +526,7 @@ self.addEventListener("message", (event) => {
      * maintenance operation.
      */
     if (type === "CLEAR_CACHES") {
-        event.waitUntil(clearAllFarmiumCaches());
+        event.waitUntil(clearAllScavCaches());
         return;
     }
     /*
@@ -542,13 +542,13 @@ self.addEventListener("message", (event) => {
 // =====================================================
 // CACHE MANAGEMENT
 // =====================================================
-async function clearAllFarmiumCaches() {
+async function clearAllScavCaches() {
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames.map((cacheName) => {
-        if (cacheName.startsWith("farmium-")) {
+        if (cacheName.startsWith("scav-")) {
             return caches.delete(cacheName);
         }
         return Promise.resolve(false);
     }));
-    console.log("[SW] Farmium caches cleared.");
+    console.log("[SW] Scav caches cleared.");
 }

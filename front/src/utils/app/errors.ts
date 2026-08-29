@@ -50,7 +50,7 @@ export function showApplicationError(): void {
 
   container.innerHTML = `
     <main>
-      <h1>Farmium couldn't start</h1>
+      <h1>Scav couldn't start</h1>
       <p>
         Something went wrong while loading the application.
         Please refresh the page or try again.
@@ -65,7 +65,7 @@ export function showApplicationError(): void {
           cursor:pointer;
         "
       >
-        Refresh Farmium
+        Refresh Scav
       </button>
     </main>
   `;

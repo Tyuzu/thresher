@@ -4,7 +4,7 @@ import { writeFileSync } from "fs";
 const domain = process.env.VITE_DOMAIN || "https://indium.netlify.app";
 
 const manifest = {
-  name: "Farmium",
+  name: "Scav",
   short_name: "SPA",
   start_url: "/?source=homescreen",
   scope: "/",

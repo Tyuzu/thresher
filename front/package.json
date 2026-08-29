@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "dev:host": "vite --host 0.0.0.0 --port 5173",
     "preview": "vite preview --host 0.0.0.0",
     "prebuild": "node --experimental-strip-types scripts/generate-manifest.ts",
     "build": "npm run generate-sitemap && vite build",
@@ -16,8 +17,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "ts-migrate": "ts-migrate",
-    "check-css": "node scripts/check-css.js",
-    "fix-css": "npx stylelint \"css/**/*.css\" --fix"
+    "check:css": "node scripts/check-css.js",
+    "check:project": "node scripts/check-project.mjs",
+    "check:backend": "node scripts/check-backend-health.mjs",
+    "verify": "npm run check:project && npm run check:backend",
+    "fix:css": "npx stylelint \"css/**/*.css\" --fix"
   },
   "author": "scav",
   "license": "ISC",
