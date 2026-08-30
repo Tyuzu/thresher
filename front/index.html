@@ -12,7 +12,10 @@
   <meta name="description"
     content="Scav is a fast, lightweight web application designed for responsive client-side navigation and reliable performance." />
   <meta name="author" content="Scav Team" />
-  <meta name="theme-color" content="#ffffff" />
+
+  <!-- Adaptive browser status bar color -->
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#202124" media="(prefers-color-scheme: dark)" />
 
   <!-- Prevent automatic phone/email detection from changing the UI -->
   <meta name="format-detection" content="telephone=no" />
@@ -61,95 +64,72 @@
   <!-- Critical stylesheet -->
   <link rel="stylesheet" href="/css/style.css" />
 
-  <!-- Main application module -->
+  <!-- Main application module preload and script -->
+  <link rel="modulepreload" href="/src/app.ts" />
   <script type="module" src="/src/app.ts"></script>
 
-  <!--
-    Dynamic SPA head utility.
-
-    Supports:
-      updateHeadTag("title", "Dashboard", "textContent")
-      updateHeadTag("description", "...")
-      updateHeadTag("og:title", "...")
-      updateHeadTag("twitter:title", "...")
-      updateHeadTag("canonical", "/dashboard", "href")
-  -->
+  <!-- Dynamic SPA Head Utility -->
   <script>
     (() => {
-      const META_SELECTOR_PREFIXES = ["og:", "twitter:"];
+      "use strict";
 
-      window.updateHeadTag = (
-        selectorOrKey,
-        value,
-        attr = "content"
-      ) => {
-        if (!selectorOrKey || value == null) {
+      const SITE_BASE_URL = "https://indium.netlify.app";
+
+      window.updateHeadTag = (key, value, attr = "content") => {
+        if (!key || value == null) return;
+
+        const stringKey = String(key);
+        const stringValue = String(value);
+
+        // 1. Handle Document Title
+        if (stringKey === "title") {
+          document.title = stringValue;
           return;
         }
 
-        const key = String(selectorOrKey);
-        const stringValue = String(value);
+        // 2. Handle Canonical URL
+        if (stringKey === "canonical") {
+          let canonicalLink = document.querySelector('link[rel="canonical"]');
+          if (!canonicalLink) {
+            canonicalLink = document.createElement("link");
+            canonicalLink.setAttribute("rel", "canonical");
+            document.head.appendChild(canonicalLink);
+          }
 
+          const fullUrl = stringValue.startsWith("http")
+            ? stringValue
+            : `${SITE_BASE_URL}${stringValue.startsWith("/") ? "" : "/"}${stringValue}`;
+
+          canonicalLink.setAttribute("href", fullUrl);
+          return;
+        }
+
+        // 3. Handle Metadata Tags (Description, Open Graph, Twitter)
         let element = null;
 
-        /*
-         * Direct selector support.
-         *
-         * Avoid treating arbitrary keys as CSS selectors when possible.
-         */
         try {
-          element = document.querySelector(key);
+          element = document.querySelector(stringKey);
         } catch {
           element = null;
         }
 
-        /*
-         * Common metadata-key support.
-         */
         if (!element) {
-          if (key === "title") {
-            element = document.querySelector("title");
-          } else if (key === "canonical") {
-            element = document.querySelector('link[rel="canonical"]');
-          } else {
-            const escapedKey =
-              window.CSS?.escape
-                ? CSS.escape(key)
-                : key.replace(/"/g, '\\"');
+          const escapedKey = window.CSS?.escape
+            ? CSS.escape(stringKey)
+            : stringKey.replace(/"/g, '\\"');
 
-            element = document.querySelector(
-              `meta[name="${escapedKey}"], meta[property="${escapedKey}"]`
-            );
-          }
-        }
-
-        /*
-         * Create missing OG/Twitter metadata when required.
-         */
-        if (
-          !element &&
-          META_SELECTOR_PREFIXES.some((prefix) => key.startsWith(prefix))
-        ) {
-          element = document.createElement("meta");
-
-          element.setAttribute(
-            key.startsWith("og:") ? "property" : "name",
-            key
+          element = document.querySelector(
+            `meta[name="${escapedKey}"], meta[property="${escapedKey}"]`
           );
-
-          document.head.appendChild(element);
         }
 
         if (!element) {
-          return;
-        }
-
-        /*
-         * Title uses textContent rather than an attribute.
-         */
-        if (element.tagName === "TITLE") {
-          element.textContent = stringValue;
-          return;
+          element = document.createElement("meta");
+          element.setAttribute(
+            stringKey.startsWith("og:") ? "property" : "name",
+            stringKey
+          );
+          document.head.appendChild(element);
         }
 
         element.setAttribute(attr, stringValue);
@@ -159,6 +139,9 @@
 </head>
 
 <body>
+  <!-- Accessibility Skip Link -->
+  <a href="#content" class="sr-only focusable">Skip to main content</a>
+
   <noscript>
     <div class="noscript-message" role="alert">
       <h1>JavaScript is required</h1>
@@ -168,12 +151,7 @@
     </div>
   </noscript>
 
-  <!--
-    Application shell.
-
-    The layout containers are intentionally empty because
-    the SPA renderer populates them after initialization.
-  -->
+  <!-- Application shell populated dynamically by SPA router -->
   <div id="app" class="app">
     <header id="pageheader" class="pageheader" role="banner"></header>
 
@@ -183,11 +161,7 @@
 
     <main id="content" class="content-main" tabindex="-1" aria-live="polite"></main>
 
-    <!--
-      Screen-reader announcements can be placed here
-      without visually disrupting the application.
-    -->
-    <div id="announcer" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div id="announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <div id="modalcon" role="region" aria-live="polite" aria-atomic="true"></div>
 

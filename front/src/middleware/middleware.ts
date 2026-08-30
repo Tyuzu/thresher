@@ -104,14 +104,18 @@ function getFullTarget(context: RouteContext): string {
 }
 
 function storeLoginRedirect(context: RouteContext): void {
+  if (typeof window === "undefined") return;
+  
   const target = getFullTarget(context);
-  if (target && target !== "/" && target !== "/login" && target !== "/logout") {
+  const ignoredPaths = ["/", "/login", "/logout", "/404", "/error/403"];
+  
+  if (target && !ignoredPaths.includes(context.path)) {
     sessionStorage.setItem("redirectAfterLogin", target);
   }
 }
 
 /* =========================================================
-   AUTH GUARD
+   GUARDS
 ========================================================= */
 export async function authGuard(context: RouteContext): Promise<GuardResult> {
   const { isAuthenticated } = getAuthState();
@@ -122,9 +126,6 @@ export async function authGuard(context: RouteContext): Promise<GuardResult> {
   return true;
 }
 
-/* =========================================================
-   GUEST GUARD
-========================================================= */
 export async function guestGuard(): Promise<GuardResult> {
   const { isAuthenticated } = getAuthState();
   if (isAuthenticated) {
@@ -133,9 +134,6 @@ export async function guestGuard(): Promise<GuardResult> {
   return true;
 }
 
-/* =========================================================
-   ROLE GUARD
-========================================================= */
 export function roleGuard(allowedRoles: string[] = [], matchMode: MatchMode = "ANY"): GuardFunction {
   return async (context: RouteContext): Promise<GuardResult> => {
     const { isAuthenticated, roles } = getAuthState();
@@ -159,9 +157,6 @@ export function roleGuard(allowedRoles: string[] = [], matchMode: MatchMode = "A
   };
 }
 
-/* =========================================================
-   PERMISSION GUARD
-========================================================= */
 export function permissionGuard(requiredPermissions: string[] = [], matchMode: MatchMode = "ALL"): GuardFunction {
   return async (context: RouteContext): Promise<GuardResult> => {
     const { isAuthenticated, permissions } = getAuthState();
@@ -185,20 +180,22 @@ export function permissionGuard(requiredPermissions: string[] = [], matchMode: M
   };
 }
 
-/* =========================================================
-   ONBOARDING
-========================================================= */
 export async function onboardingGuard(context: RouteContext): Promise<GuardResult> {
   const { isAuthenticated, isProfileComplete } = getAuthState();
-  if (isAuthenticated && context.path !== "/onboarding" && !isProfileComplete) {
-    return "/onboarding";
+  
+  if (isAuthenticated) {
+    // Needs onboarding but trying to go elsewhere
+    if (!isProfileComplete && context.path !== "/onboarding") {
+      return "/onboarding";
+    }
+    // Completed onboarding but trying to visit /onboarding
+    if (isProfileComplete && context.path === "/onboarding") {
+      return "/";
+    }
   }
   return true;
 }
 
-/* =========================================================
-   FEATURE FLAG
-========================================================= */
 export function featureFlagGuard(requiredFeature: string): () => Promise<GuardResult> {
   return async (): Promise<GuardResult> => {
     const state = getState() || {};
@@ -210,10 +207,9 @@ export function featureFlagGuard(requiredFeature: string): () => Promise<GuardRe
   };
 }
 
-/* =========================================================
-   UNSAVED CHANGES
-========================================================= */
 export async function unsavedChangesGuard(): Promise<boolean> {
+  if (typeof window === "undefined") return true;
+
   const state = getState() || {};
   if (state.ui?.hasUnsavedChanges) {
     const confirmed = window.confirm("You have unsaved changes. Are you sure you want to leave?");
@@ -225,9 +221,11 @@ export async function unsavedChangesGuard(): Promise<boolean> {
 }
 
 /* =========================================================
-   TITLE
+   SIDE EFFECTS
 ========================================================= */
 export function titleGuard(context: RouteContext): void {
+  if (typeof document === "undefined") return;
+
   const meta = context.route?.meta || {};
   const { title, description } = meta;
   document.title = title ? `${title} | My App` : "My App";
@@ -242,11 +240,8 @@ export function titleGuard(context: RouteContext): void {
   }
 }
 
-/* =========================================================
-   ANALYTICS
-========================================================= */
 export function analyticsGuard(context: RouteContext): void {
-  if (typeof window.gtag !== "function") {
+  if (typeof window === "undefined" || typeof window.gtag !== "function") {
     return;
   }
   window.gtag("event", "page_view", {
@@ -261,73 +256,47 @@ export function analyticsGuard(context: RouteContext): void {
 export async function metaGuard(context: RouteContext): Promise<GuardResult> {
   const meta = context.route?.meta || {};
 
-  /* -------------------------------------------------------
-      1. UNSAVED CHANGES
-  ------------------------------------------------------- */
+  // 1. Unsaved Changes
   const unsavedResult = await unsavedChangesGuard();
   if (unsavedResult === false) {
     return false;
   }
 
-  /* -------------------------------------------------------
-      2. AUTH / GUEST
-  ------------------------------------------------------- */
+  // 2. Auth & Guest
   if (meta.requiresAuth) {
     const result = await authGuard(context);
-    if (typeof result === "string" || result === false) {
-      return result;
-    }
+    if (typeof result === "string" || result === false) return result;
   }
   if (meta.guestOnly) {
     const result = await guestGuard();
-    if (typeof result === "string" || result === false) {
-      return result;
-    }
+    if (typeof result === "string" || result === false) return result;
   }
 
-  /* -------------------------------------------------------
-      3. ONBOARDING
-  ------------------------------------------------------- */
-  if (meta.requiresOnboarding === true) {
+  // 3. Onboarding
+  if (meta.requiresOnboarding !== undefined) {
     const result = await onboardingGuard(context);
-    if (typeof result === "string" || result === false) {
-      return result;
-    }
+    if (typeof result === "string" || result === false) return result;
   }
 
-  /* -------------------------------------------------------
-      4. ROLES
-  ------------------------------------------------------- */
+  // 4. Roles
   if (Array.isArray(meta.roles) && meta.roles.length > 0) {
     const result = await roleGuard(meta.roles, meta.roleMatchMode || "ANY")(context);
-    if (typeof result === "string" || result === false) {
-      return result;
-    }
+    if (typeof result === "string" || result === false) return result;
   }
 
-  /* -------------------------------------------------------
-      5. PERMISSIONS
-  ------------------------------------------------------- */
+  // 5. Permissions
   if (Array.isArray(meta.permissions) && meta.permissions.length > 0) {
     const result = await permissionGuard(meta.permissions, meta.permMatchMode || "ALL")(context);
-    if (typeof result === "string" || result === false) {
-      return result;
-    }
+    if (typeof result === "string" || result === false) return result;
   }
 
-  /* -------------------------------------------------------
-      6. FEATURE FLAG
-  ------------------------------------------------------- */
+  // 6. Feature Flags
   if (meta.featureFlag) {
     const result = await featureFlagGuard(meta.featureFlag)();
-    if (typeof result === "string" || result === false) {
-      return result;
-    }
+    if (typeof result === "string" || result === false) return result;
   }
 
-  /* -------------------------------------------------------
-      7. SIDE EFFECTS
-  ------------------------------------------------------- */
+  // 7. Side Effects
   titleGuard(context);
   analyticsGuard(context);
   return true;

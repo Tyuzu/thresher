@@ -2,41 +2,33 @@ import { defineConfig, loadEnv } from 'vite';
 import mkcert from 'vite-plugin-mkcert';
 import { visualizer } from 'rollup-plugin-visualizer';
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const isProd = mode === 'production';
+  const isDevServer = command === 'serve';
 
-  // Target Go backend running locally (e.g., http://localhost:4000 or http://127.0.0.1:4000)
+  // Target Go backend running locally
   const BACKEND_TARGET = env.VITE_BACKEND_URL || 'http://localhost:4000';
 
   return {
     root: '.',
 
     plugins: [
-      mkcert(),
-      isProd && visualizer({ open: true }),
+      // Only run HTTPS cert generation during dev server tasks
+      isDevServer && mkcert(),
+      isProd && visualizer({ open: false, filename: 'stats.html' }),
     ].filter(Boolean),
 
     build: {
       outDir: 'dist',
-      minify: isProd ? 'terser' : 'esbuild',
+      // Esbuild is vastly faster; drop console/debugger via esbuild directly
+      minify: 'esbuild',
       chunkSizeWarningLimit: 400,
       assetsInlineLimit: 4096,
       cssCodeSplit: true,
 
       modulePreload: {
         polyfill: true,
-      },
-
-      terserOptions: {
-        compress: {
-          drop_console: isProd,
-          drop_debugger: isProd,
-          passes: 2,
-        },
-        mangle: {
-          safari10: true,
-        },
       },
 
       sourcemap: isProd
@@ -46,17 +38,29 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            const lower = id.toLowerCase();
+            // Normalize path separators for cross-platform compatibility (Windows vs Posix)
+            const normalizedId = id.replace(/\\/g, '/').toLowerCase();
 
-            if (id.includes('node_modules')) {
-              if (lower.includes('cropperjs')) return 'vendor-cropper';
-              if (lower.includes('hls.js')) return 'vendor-hls';
-              if (lower.includes('uuid')) return 'vendor-uuid';
+            if (normalizedId.includes('node_modules')) {
+              if (normalizedId.includes('cropperjs')) return 'vendor-cropper';
+              if (normalizedId.includes('hls.js')) return 'vendor-hls';
+              if (normalizedId.includes('uuid')) return 'vendor-uuid';
               return 'vendor-core';
             }
 
-            if (lower.includes('/pages/farm/') || lower.includes('/pages/crop/')) return 'feature-farms';
-            if (lower.includes('/pages/merechats/') || lower.includes('/pages/newchats/') || lower.includes('/pages/discord/')) return 'feature-chats';
+            if (
+              normalizedId.includes('/pages/farm/') ||
+              normalizedId.includes('/pages/crop/')
+            ) {
+              return 'feature-farms';
+            }
+            if (
+              normalizedId.includes('/pages/merechats/') ||
+              normalizedId.includes('/pages/newchats/') ||
+              normalizedId.includes('/pages/discord/')
+            ) {
+              return 'feature-chats';
+            }
           },
 
           experimentalMinChunkSize: 5000,
@@ -67,7 +71,7 @@ export default defineConfig(({ mode }) => {
             const name = assetInfo.name || assetInfo.names?.[0] || '';
             const ext = name.split('.').pop()?.toLowerCase();
 
-            if (ext && /png|jpe?g|gif|svg/.test(ext)) {
+            if (ext && /png|jpe?g|gif|svg|webp|ico/.test(ext)) {
               return `assets/images/[name]-[hash][extname]`;
             }
 
@@ -90,38 +94,33 @@ export default defineConfig(({ mode }) => {
       },
     },
 
+    esbuild: {
+      // Fast console & debugger dropping without Terser overhead
+      drop: isProd ? ['console', 'debugger'] : [],
+    },
+
     optimizeDeps: {
       include: ['uuid', 'hls.js'],
     },
 
-server: {
+    server: {
       allowedHosts: ['.trycloudflare.com', 'localhost'],
-      https: true,
       
-      hmr: {
-        protocol: 'wss',
-        host: 'localhost',
-        clientPort: 5173,
-      },
-
       proxy: {
-        // Option A: If your Go WS endpoint is under /api/v1 (e.g., wss://localhost:5173/api/v1/ws)
         '/api/v1': {
           target: BACKEND_TARGET,
           changeOrigin: true,
           secure: false,
-          ws: true, // Enables proxying WebSockets / WSS to BACKEND_TARGET
+          ws: true,
         },
 
-        // Option B: If you have a dedicated WebSocket endpoint like /ws or /socket
         '/ws': {
           target: BACKEND_TARGET,
           changeOrigin: true,
           secure: false,
-          ws: true, // Upgrades http(s) requests to ws(s)
+          ws: true,
         },
 
-        // Static uploads/cache proxy
         '/static': {
           target: BACKEND_TARGET,
           changeOrigin: true,

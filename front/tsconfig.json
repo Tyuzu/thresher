@@ -4,7 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
 
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
     "types": ["vite/client"],
 
     "isolatedModules": true,
@@ -25,6 +25,10 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*",
+    "scripts/**/*",
+    "service-worker.ts"
+  ],
   "exclude": ["node_modules", "dist", "build"]
 }

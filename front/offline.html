@@ -3,7 +3,6 @@
 
 <head>
   <meta charset="UTF-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
   <title>You're Offline | Scav</title>
@@ -11,7 +10,7 @@
   <meta name="description"
     content="Scav is temporarily offline. Check your connection or use the offline tools while your network is restored." />
 
-  <meta name="theme-color" content="#ffffff" />
+  <meta id="theme-color-meta" name="theme-color" content="#f7f8fa" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Scav" />
@@ -27,7 +26,8 @@
 
       --accent: #4285f4;
       --accent-dark: #3367d6;
-      --success: #34a853;
+      --success: #1e8e3e;
+      --danger: #d93025;
 
       --background: #f7f8fa;
       --surface: #ffffff;
@@ -127,7 +127,7 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #d93025;
+      background: var(--danger);
     }
 
     .status.online .status-dot {
@@ -191,16 +191,17 @@
     }
 
     .button-secondary {
-      color: #fff;
-      background: var(--success);
+      color: var(--text);
+      background: var(--background);
+      border: 1px solid var(--border);
     }
 
     .button-secondary:hover {
-      opacity: 0.9;
+      background: var(--border);
     }
 
     .button:disabled {
-      opacity: 0.6;
+      opacity: 0.65;
       cursor: not-allowed;
       transform: none;
     }
@@ -241,6 +242,8 @@
         --text: #f1f3f4;
         --muted: #bdc1c6;
         --border: #3c4043;
+        --success: #81c995;
+        --danger: #f28b82;
       }
 
       .offline-icon {
@@ -267,7 +270,7 @@
 
       <div id="connectionStatus" class="status" role="status" aria-live="polite">
         <span class="status-dot" aria-hidden="true"></span>
-        <span id="statusText">Offline</span>
+        <span id="statusText">Offline mode</span>
       </div>
 
       <div class="actions">
@@ -285,22 +288,30 @@
         be available offline.
       </p>
 
-      <p id="announcement" class="sr-only" aria-live="assertive"></p>
+      <div id="announcement" class="sr-only" role="status" aria-live="assertive" aria-atomic="true"></div>
     </section>
   </main>
 
   <script>
     (() => {
+      "use strict";
+
       const retryButton = document.getElementById("retryBtn");
       const status = document.getElementById("connectionStatus");
       const statusText = document.getElementById("statusText");
       const announcement = document.getElementById("announcement");
+      const themeColorMeta = document.getElementById("theme-color-meta");
 
-      let retryTimer = null;
+      let isChecking = false;
+
+      function syncThemeColor() {
+        const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        themeColorMeta.setAttribute("content", isDark ? "#202124" : "#f7f8fa");
+      }
 
       function updateConnectionStatus(isOnline) {
         status.classList.toggle("online", isOnline);
-        statusText.textContent = isOnline ? "Connection restored" : "Offline";
+        statusText.textContent = isOnline ? "Connection restored" : "Offline mode";
       }
 
       function announce(message) {
@@ -310,40 +321,65 @@
         });
       }
 
-      function retry() {
-        if (retryTimer) {
-          clearTimeout(retryTimer);
-        }
+      async function checkServerReachability() {
+        if (!navigator.onLine) return false;
 
+        try {
+          // Send a lightweight HEAD ping to check true network connectivity
+          const response = await fetch("/", {
+            method: "HEAD",
+            cache: "no-store",
+            signal: AbortSignal.timeout(3000)
+          });
+          return response.ok;
+        } catch {
+          return false;
+        }
+      }
+
+      async function retry() {
+        if (isChecking) return;
+
+        isChecking = true;
         retryButton.disabled = true;
         retryButton.textContent = "Checking…";
-        announce("Checking your connection.");
+        announce("Checking your network connection.");
 
-        if (navigator.onLine) {
-          location.reload();
-          return;
-        }
+        const isReachable = await checkServerReachability();
 
-        retryTimer = setTimeout(() => {
+        if (isReachable) {
+          updateConnectionStatus(true);
+          announce("Connection restored. Reloading page.");
+          window.location.reload();
+        } else {
+          updateConnectionStatus(false);
           retryButton.disabled = false;
           retryButton.textContent = "🔄 Try again";
           announce("The connection is still offline.");
-        }, 1200);
+          isChecking = false;
+        }
       }
 
       retryButton.addEventListener("click", retry);
 
-      window.addEventListener("online", () => {
-        updateConnectionStatus(true);
-        announce("Connection restored. Returning to Scav.");
-        location.reload();
+      window.addEventListener("online", async () => {
+        const reachable = await checkServerReachability();
+        if (reachable) {
+          updateConnectionStatus(true);
+          announce("Connection restored. Returning to Scav.");
+          window.location.reload();
+        }
       });
 
       window.addEventListener("offline", () => {
         updateConnectionStatus(false);
-        announce("The connection has been lost.");
+        announce("The network connection has been lost.");
       });
 
+      // Maintain accurate browser theme-color
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncThemeColor);
+
+      syncThemeColor();
       updateConnectionStatus(navigator.onLine);
     })();
   </script>

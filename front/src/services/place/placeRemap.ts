@@ -1,5 +1,4 @@
 import { createElement } from "../../components/createElement.js";
-import { displayGenericMap } from "../../remap/displayGenericMap.js";
 
 export interface LocationCoordinates {
   lat: number;
@@ -77,17 +76,27 @@ export function displayPlacesMap(options: PlacesMapOptions = {}): HTMLElement {
     enableTouch: true,
   };
 
-  const mapOptions: Required<PlacesMapOptions> = { ...defaultOptions, ...options };
+  // Deep merge for nested option objects to prevent property loss
+  const mapOptions: Required<PlacesMapOptions> = {
+    ...defaultOptions,
+    ...options,
+    defaultLocation: {
+      ...defaultOptions.defaultLocation,
+      ...options.defaultLocation,
+    },
+    mapBounds: {
+      ...defaultOptions.mapBounds,
+      ...options.mapBounds,
+    },
+  };
+
   const container = createElement("div", { class: "mapcon" }) as HTMLElement;
 
-  // Helper to generate random markers within bounds
   const generateMarkers = (bounds: MapBounds, count: number): MapMarker[] => {
     const types: MarkerType[] = ["event", "shop", "enemy", "place"];
     return Array.from({ length: count }, (_, i) => {
-      const lat =
-        bounds.minLat + Math.random() * (bounds.maxLat - bounds.minLat);
-      const lon =
-        bounds.minLon + Math.random() * (bounds.maxLon - bounds.minLon);
+      const lat = bounds.minLat + Math.random() * (bounds.maxLat - bounds.minLat);
+      const lon = bounds.minLon + Math.random() * (bounds.maxLon - bounds.minLon);
       const type = types[i % types.length];
       return {
         lat,
@@ -98,17 +107,14 @@ export function displayPlacesMap(options: PlacesMapOptions = {}): HTMLElement {
     });
   };
 
-  const initMap = (lat: number, lon: number): unknown => {
+  const initMap = (lat: number, lon: number): void => {
     const { mapBounds, mapWidth, mapHeight } = mapOptions;
 
-    // Pixel conversion functions
     const lonToX = (lonVal: number): number =>
-      ((lonVal - mapBounds.minLon) / (mapBounds.maxLon - mapBounds.minLon)) *
-      mapWidth;
+      ((lonVal - mapBounds.minLon) / (mapBounds.maxLon - mapBounds.minLon)) * mapWidth;
 
     const latToY = (latVal: number): number =>
-      ((mapBounds.maxLat - latVal) / (mapBounds.maxLat - mapBounds.minLat)) *
-      mapHeight;
+      ((mapBounds.maxLat - latVal) / (mapBounds.maxLat - mapBounds.minLat)) * mapHeight;
 
     const finalOptions: GenericMapConfig = {
       ...mapOptions,
@@ -118,11 +124,18 @@ export function displayPlacesMap(options: PlacesMapOptions = {}): HTMLElement {
       latToY,
     };
 
-    return displayGenericMap(container, finalOptions);
+    displayGenericMap(container, finalOptions);
   };
 
-  // Initialize map with default location
   initMap(mapOptions.defaultLocation.lat, mapOptions.defaultLocation.lon);
 
   return container;
+}
+
+export function displayGenericMap(container: HTMLElement, config: GenericMapConfig): void {
+  if (!container) return;
+  const el = createElement("div", { class: "generic-map" }, [
+    createElement("p", {}, ["Generic map placeholder"])
+  ]) as HTMLElement;
+  container.appendChild(el);
 }

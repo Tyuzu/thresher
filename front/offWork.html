@@ -3,14 +3,15 @@
 
 <head>
   <meta charset="UTF-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
   <title>OffWork | Scav</title>
 
   <meta name="description" content="Scav's offline lounge with a quick game and local scratchpad." />
 
-  <meta name="theme-color" content="#f4f6f8" />
+  <meta name="theme-color" content="#f4f6f8" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#202124" media="(prefers-color-scheme: dark)" />
+
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="OffWork" />
@@ -35,7 +36,7 @@
       --primary: #4285f4;
       --primary-dark: #3367d6;
 
-      --success: #34a853;
+      --success: #1e8e3e;
       --danger: #d93025;
 
       --radius: 14px;
@@ -152,6 +153,7 @@
       font-size: 3rem;
       font-weight: 700;
       line-height: 1;
+      font-variant-numeric: tabular-nums;
     }
 
     .game-status {
@@ -210,6 +212,8 @@
 
     .saved-status {
       color: var(--success);
+
+      transition: opacity 0.2s ease;
     }
 
     /* Buttons */
@@ -337,6 +341,9 @@
         --text: #f1f3f4;
         --muted: #bdc1c6;
         --border: #3c4043;
+
+        --success: #81c995;
+        --danger: #f28b82;
       }
     }
   </style>
@@ -546,7 +553,6 @@
         savedStatus.textContent = "Saving…";
 
         clearTimeout(saveTimer);
-
         saveTimer = setTimeout(saveNotes, 250);
       }
 
@@ -596,6 +602,14 @@
         announce("Scratchpad cleared.");
       }
 
+      // Flush unsaved notes immediately if user closes tab
+      window.addEventListener("beforeunload", () => {
+        if (saveTimer) {
+          clearTimeout(saveTimer);
+          saveNotes();
+        }
+      });
+
       notes.addEventListener("input", () => {
         updateCharacterCount();
         scheduleSave();
@@ -616,12 +630,6 @@
 
       window.addEventListener("online", () => {
         updateConnectionStatus(true);
-
-        /*
-         * Do not automatically redirect.
-         *
-         * The user may be writing notes or playing the game.
-         */
         announce(
           "Connection restored. Your offline tools are still available."
         );
@@ -629,7 +637,6 @@
 
       window.addEventListener("offline", () => {
         updateConnectionStatus(false);
-
         announce(
           "Connection lost. Offline tools remain available."
         );
