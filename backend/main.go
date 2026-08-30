@@ -105,8 +105,8 @@ func main() {
 
 	router := routes.SetupRouter(app, rateLimiter)
 
-	routes.AddNewChatRoutes(router, hub, app, rateLimiter)
-	routes.AddMeChatRoutes(router, mehub, app, rateLimiter)
+	newchat.AddNewChatRoutes(router, hub, app, rateLimiter)
+	mechat.AddMeChatRoutes(router, mehub, app, rateLimiter)
 	routes.AddStaticRoutes(router)
 
 	// Hardened readiness check using direct connectivity test

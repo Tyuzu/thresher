@@ -139,14 +139,14 @@ func main() {
 		rateLimiter,
 	)
 
-	routes.AddNewChatRoutes(
+	newchat.AddNewChatRoutes(
 		router,
 		hub,
 		app,
 		rateLimiter,
 	)
 
-	routes.AddMeChatRoutes(
+	mechat.AddMeChatRoutes(
 		router,
 		mehub,
 		app,
